@@ -1,0 +1,31 @@
+[package]
+name = "runi"
+version = "0.1.0"
+description = "Runi - An open-source Tauri desktop application"
+authors = ["Paul Breuler"]
+license = "MIT"
+repository = "https://github.com/paulbreuler/runi"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.9.5", features = ["devtools", "macos-private-api"] }
+tauri-plugin-shell = "2.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.49.0", features = ["full"] }
+reqwest = { version = "0.13.1", default-features = false, features = ["json"] }
+rustls = "0.23.13"
+anyhow = "1.0.39"
+
+[features]
+# This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
