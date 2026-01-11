@@ -1,7 +1,7 @@
 // Runi - Main entry point for Tauri application
 
-mod domain;
 mod application;
+mod domain;
 mod infrastructure;
 
 use infrastructure::commands::{create_proxy_service, hello_world};
