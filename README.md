@@ -101,4 +101,4 @@ Contributions are welcome! This is an experiment in public, so:
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-Copyright (c) 2025 Paul Breuler
+Copyright (c) 2026 Paul Breuler
