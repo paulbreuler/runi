@@ -4,11 +4,62 @@
 
 ## Phase 1: Foundation + Intelligence Hooks (High Priority)
 
+### Component Library Setup
+
+- [ ] Initialize shadcn-svelte with dark theme default
+- [ ] Add core components: input, select, tabs, textarea, card, table, button
+- [ ] Install paneforge for resizable panels
+- [ ] Install lucide-svelte for icons
+
+### Storybook Setup (Component Development)
+
+- [x] Run `npm install` to install Storybook dependencies
+- [x] Verify Storybook starts with `npm run storybook`
+- [x] Create Button.stories.svelte with all variants
+- [ ] Create stories for Input, Select, Tabs, Card, Table components
+- [ ] Create stories for layout components (MainLayout, Sidebar, StatusBar)
+- [ ] Create stories for request components (RequestHeader, TabPanel, KeyValueEditor)
+- [ ] Create stories for response components (ResponsePanel, StatusBadge, BodyViewer)
+
+### E2E Testing Infrastructure (Playwright)
+
+- [ ] Install Playwright (`npm init playwright@latest`)
+- [ ] Configure `playwright.config.ts` for SvelteKit
+- [ ] Create Tauri invoke mock fixture (`tests/fixtures/tauri-mock.ts`)
+- [ ] Add npm scripts: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`
+
+### Core HTTP Flow E2E Tests
+
+- [ ] Test: Page loads with URL input, method selector, send button
+- [ ] Test: URL input accepts and displays text
+- [ ] Test: Method selector changes HTTP method
+- [ ] Test: Send button triggers request and shows response
+- [ ] Test: Status badge shows correct color (2xx=green, 4xx=yellow, 5xx=red)
+- [ ] Test: Response body displays correctly
+- [ ] Test: Timing information displays
+
+### Interaction E2E Tests
+
+- [ ] Test: Enter key in URL input triggers send
+- [ ] Test: Loading state shows during request (button disabled)
+- [ ] Test: Error state displays error message on failure
+- [ ] Test: Send button disabled when URL is empty
+- [ ] Test: Method selector keyboard navigation works
+
+### Accessibility E2E Tests
+
+- [ ] Test: All interactive elements are keyboard accessible
+- [ ] Test: Tab order is logical (URL → Method → Send)
+- [ ] Test: Focus indicators are visible
+- [ ] Test: ARIA labels present on form controls
+- [ ] Test: Error messages have role="alert"
+
 ### Layout & Structure
 
-- [ ] Create three-panel layout component (sidebar, request panel, response panel)
-- [ ] Implement responsive panel resizing with drag handles
-- [ ] Add sidebar navigation for collections and history
+- [ ] Create MainLayout.svelte with paneforge vertical split pane (40/60 default)
+- [ ] Implement Sidebar.svelte (collapsible with ⌘B shortcut)
+- [ ] Add sidebar sections: Collections, History (placeholder content)
+- [ ] Create StatusBar.svelte (environment switcher, AI prompt hint ⌘I)
 - [ ] Create suggestion/warning display area in request panel
 
 ### HTTP Execution
@@ -26,19 +77,23 @@
 - [x] Connect URL input to request execution
 - [x] Display response in response panel
 
-### Request Builder UI
+### Request Builder UI (shadcn-svelte Components)
 
 - [x] URL input with method selector dropdown (GET, POST, PUT, PATCH, DELETE)
 - [x] Send button with loading state
 - [x] Response status badge with color coding
+- [ ] Create RequestHeader.svelte with shadcn Input, Select, Button
+- [ ] Method dropdown with color-coded triggers (GET=green, POST=blue, DELETE=red)
+- [ ] lucide-svelte Send icon on submit button
 
-### Response Viewer
+### Response Viewer (shadcn-svelte Components)
 
-- [ ] JSON syntax highlighting (consider using Shiki or Prism)
-- [ ] Response headers display
-- [ ] Response timing metrics
-- [ ] Raw/Pretty toggle for body view
+- [ ] JSON syntax highlighting with CodeMirror or Shiki
+- [ ] Response headers display in collapsible shadcn Table
+- [ ] Response timing metrics (total time, size)
+- [ ] Raw/Pretty toggle using shadcn Tabs
 - [ ] Implement basic error handling in UI for command failures
+- [ ] StatusBadge.svelte with color coding (2xx=green, 4xx=yellow, 5xx=red)
 
 ### Intelligence Infrastructure (AI-Ready Architecture)
 
@@ -51,18 +106,19 @@
 
 ## Phase 2: Request Building + Proactive Intelligence (High Priority)
 
-### Tabs Interface
+### Tabs Interface (shadcn-svelte)
 
-- [ ] Create tabbed interface for request configuration
-- [ ] Implement Headers tab with key-value editor
-- [ ] Implement Body tab with content-type selector
-- [ ] Implement Query Params tab with key-value editor
-- [ ] Implement Auth tab
+- [ ] Create TabPanel.svelte using shadcn Tabs
+- [ ] Tabs: Params | Headers | Body | Auth
+- [ ] Active tab indicator with theme-aware styling
+- [ ] Keyboard navigation between tabs (Arrow keys)
 
-### Key-Value Editor Component
+### Key-Value Editor Component (Reusable)
 
-- [ ] Reusable key-value pair editor with add/remove
+- [ ] KeyValueEditor.svelte with shadcn Input, Checkbox, Button
+- [ ] Add/remove rows with lucide-svelte Plus/Trash2 icons
 - [ ] Checkbox to enable/disable individual pairs
+- [ ] Auto-focus on new row when added
 - [ ] Auto-suggest for common header names (Content-Type, Accept, Authorization)
 
 ### Authentication Helpers
@@ -72,12 +128,14 @@
 - [ ] Basic Auth (username/password encoding)
 - [ ] Auth persistence per request
 
-### Body Editor
+### Body Editor (CodeMirror Integration)
 
-- [ ] Raw body input with content-type selector
-- [ ] JSON editor with syntax highlighting
-- [ ] Form data editor (key-value)
-- [ ] Form URL-encoded editor
+- [ ] Content-type selector using shadcn Select (none, JSON, form-data, form-urlencoded, raw)
+- [ ] JSON editor with CodeMirror + svelte-codemirror-editor
+- [ ] JSON validation with error indicator
+- [ ] Prettify button for JSON formatting
+- [ ] Form data editor using KeyValueEditor
+- [ ] Form URL-encoded editor using KeyValueEditor
 
 ### Proactive Header Suggestions (Rule-Based)
 

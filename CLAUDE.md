@@ -42,13 +42,14 @@ runi is not just an API client — it's an **intelligent partner** for API devel
 
 ### Competitive Positioning
 
-| Competitor    | Strength We Learn From    | Gap We Fill                       |
-| ------------- | ------------------------- | --------------------------------- |
-| Postman       | Testing suites, workflows | Cloud lock-in, heavy, telemetry   |
-| Bruno         | Git-friendly, local-first | No AI, limited ecosystem          |
-| Hoppscotch    | Lightweight, fast, clean  | No desktop, no AI                 |
-| Insomnia/Yaak | Clean UX, focused         | Limited AI, no MCP                |
-| Apidog        | AI automation attempts    | Cloud-dependent, privacy concerns |
+| Competitor    | Strength We Learn From        | Gap We Fill                       |
+| ------------- | ----------------------------- | --------------------------------- |
+| Postman       | Testing suites, workflows     | Cloud lock-in, heavy, telemetry   |
+| Bruno         | Git-friendly, local-first     | No AI, limited ecosystem          |
+| HTTPie        | CLI excellence, clean desktop | Commercial licensing, no MCP      |
+| Hoppscotch    | Lightweight, fast, clean      | No desktop, no AI                 |
+| Insomnia/Yaak | Clean UX, focused             | Limited AI, no MCP                |
+| Apidog        | AI automation attempts        | Cloud-dependent, privacy concerns |
 
 **runi's edge:** Local-first + AI-native + MCP-powered + Bruno-compatible.
 
@@ -727,6 +728,11 @@ Document significant technical decisions with rationale and references.
 | 2026-01-11 | Sequential workflows         | "Simple patterns are more robust than complex architectures" — loops via programmatic API | [mcp-agent](https://github.com/lastmile-ai/mcp-agent)                                                     |
 | 2026-01-11 | Human-in-the-loop workflows  | Approval steps for sensitive operations; keeps humans in control of agent actions         | [Red Hat MCP article](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp) |
 | 2026-01-11 | Skip visual workflow builder | 2026 market saturated (Lindy, n8n, Flowise, Vellum, etc.); not a differentiator for runi  | [AI Workflow Builders 2026](https://www.lindy.ai/blog/best-ai-agent-builders)                             |
+| 2026-01-12 | shadcn-svelte for UI         | Accessible, theme-aware, Tailwind-based components; best-in-class Svelte support          | [shadcn-svelte](https://www.shadcn-svelte.com/)                                                           |
+| 2026-01-12 | paneforge for resizable panes| Native Svelte resizable panels; better integration than generic solutions                 | [paneforge](https://paneforge.dev/)                                                                       |
+| 2026-01-12 | Distraction-free UI design   | Vertical split-pane layout, colorful method dropdowns, minimal chrome                     | Industry best practices                                                                                   |
+| 2026-01-12 | lucide-svelte for icons      | Modern icon library with Svelte-native components; consistent with shadcn ecosystem       | [lucide-svelte](https://lucide.dev/)                                                                      |
+| 2026-01-12 | Storybook for components     | Isolated component development; visual review before app integration; Svelte 5 support    | [Storybook SvelteKit](https://storybook.js.org/docs/get-started/frameworks/sveltekit)                     |
 
 ---
 
