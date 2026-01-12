@@ -2,9 +2,15 @@
 
 ## Project: runi
 
-Open-source desktop API client with AI-native features and MCP support.
+Open-source desktop API client that serves as an **intelligent partner** for API developers—not just another request/response tool.
 
 **Stack:** Rust (backend) + Tauri v2 (runtime) + Svelte 5 (frontend)
+
+**Core Identity:**
+
+- **AI-Native:** Intelligence built in, not bolted on
+- **MCP-Powered:** Agentic workflows, registry integration
+- **Local-First:** Privacy by design, Git-friendly storage
 
 ## Project Setup
 
@@ -168,6 +174,7 @@ Before moving to the next feature, ALL changes must be:
 - [ ] Pushed to remote repository
 - [ ] @fix_plan.md task marked complete
 - [ ] CI pipeline passes (`just ci`)
+- [ ] **Partner UX check:** Does this feature anticipate user needs or just respond to clicks?
 
 ## Common Issues & Solutions
 

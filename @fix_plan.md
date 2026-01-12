@@ -1,13 +1,18 @@
 # Ralph Fix Plan
 
-## Phase 1: Foundation (High Priority)
+> **Philosophy:** runi is an intelligent partner, not just a tool. AI and proactive intelligence are woven throughout—not bolted on at the end.
+
+## Phase 1: Foundation + Intelligence Hooks (High Priority)
 
 ### Layout & Structure
+
 - [ ] Create three-panel layout component (sidebar, request panel, response panel)
 - [ ] Implement responsive panel resizing with drag handles
 - [ ] Add sidebar navigation for collections and history
+- [ ] Create suggestion/warning display area in request panel
 
 ### HTTP Execution
+
 - [ ] Implement `execute_request` Tauri command in Rust
 - [ ] Add RequestParams struct (url, method, headers, body)
 - [ ] Add HttpResponse struct (status, headers, body, timing)
@@ -15,26 +20,39 @@
 - [ ] Write unit tests for HTTP execution
 
 ### Frontend-Backend Integration
+
 - [ ] Create TypeScript types matching Rust structs
 - [ ] Implement invoke wrapper for `execute_request`
 - [ ] Connect URL input to request execution
 - [ ] Display response in response panel
 
 ### Request Builder UI
+
 - [ ] URL input with method selector dropdown (GET, POST, PUT, PATCH, DELETE)
 - [ ] Send button with loading state
 - [ ] Response status badge with color coding
 
 ### Response Viewer
+
 - [ ] JSON syntax highlighting (consider using Shiki or Prism)
 - [ ] Response headers display
 - [ ] Response timing metrics
 - [ ] Raw/Pretty toggle for body view
-- [ ] Implement basic error handling in UI for command failures (display Rust error strings)
+- [ ] Implement basic error handling in UI for command failures
 
-## Phase 2: Request Building (Medium Priority)
+### Intelligence Infrastructure (AI-Ready Architecture)
+
+- [ ] Create `Suggestion` type (id, type, message, action, dismissed)
+- [ ] Create `SecurityWarning` type (code, severity, message, details)
+- [ ] Implement suggestion display component (inline, dismissable)
+- [ ] Implement warning display component (color-coded by severity)
+- [ ] Add `get_suggestions` Tauri command (returns empty for now, hooks ready)
+- [ ] Add `validate_security` Tauri command (returns empty for now, hooks ready)
+
+## Phase 2: Request Building + Proactive Intelligence (High Priority)
 
 ### Tabs Interface
+
 - [ ] Create tabbed interface for request configuration
 - [ ] Implement Headers tab with key-value editor
 - [ ] Implement Body tab with content-type selector
@@ -42,125 +60,231 @@
 - [ ] Implement Auth tab
 
 ### Key-Value Editor Component
+
 - [ ] Reusable key-value pair editor with add/remove
 - [ ] Checkbox to enable/disable individual pairs
-- [ ] Auto-suggest for common header names
+- [ ] Auto-suggest for common header names (Content-Type, Accept, Authorization)
 
 ### Authentication Helpers
-- [ ] API Key auth (header or query param)
-- [ ] Support query param placement for API Key (common in legacy/public APIs)
+
+- [ ] API Key auth (header or query param placement)
 - [ ] Bearer Token auth
 - [ ] Basic Auth (username/password encoding)
 - [ ] Auth persistence per request
 
 ### Body Editor
+
 - [ ] Raw body input with content-type selector
 - [ ] JSON editor with syntax highlighting
 - [ ] Form data editor (key-value)
 - [ ] Form URL-encoded editor
 
-## Phase 3: Persistence (Medium Priority)
+### Proactive Header Suggestions (Rule-Based)
+
+- [ ] Suggest Content-Type based on body content detection
+- [ ] Suggest Accept header based on common patterns
+- [ ] Suggest Authorization header format based on auth type
+- [ ] Show suggestions inline, one-click to apply
+
+### Security Validation (OWASP-Inspired, Rule-Based)
+
+- [ ] Detect Authorization/Cookie headers over HTTP (non-localhost) → warning
+- [ ] Detect Basic Auth over HTTP → error level warning
+- [ ] JWT expiry detection (decode, check exp claim) → warning if expired
+- [ ] Implement validation on request change (debounced)
+- [ ] Display warnings prominently before send
+
+### Error Analysis Panel (Rule-Based Initially)
+
+- [ ] Detect 4xx responses → show common causes (401=auth, 403=permissions, 404=path)
+- [ ] Detect 5xx responses → show generic server error guidance
+- [ ] Detect timeout → suggest timeout increase or connectivity check
+- [ ] Detect connection refused → suggest URL/port check
+- [ ] Placeholder for AI-powered analysis (Phase 4)
+
+## Phase 3: Persistence + Interoperability (Medium-High Priority)
 
 ### Request History
+
 - [ ] Define history entry schema (YAML)
 - [ ] Implement history storage in app data directory
 - [ ] Add history list in sidebar
 - [ ] Implement history item click to restore request
 - [ ] Add clear history functionality
+- [ ] Mask sensitive headers (Authorization, Cookie) in history display
 
 ### Collections
-- [ ] Define collection schema (YAML)
+
+- [ ] Define collection schema (YAML, runi native format)
 - [ ] Create collection CRUD operations
 - [ ] Implement folder structure for collections
 - [ ] Add collection tree view in sidebar
 - [ ] Implement drag-and-drop organization
 
 ### Environment Variables
+
 - [ ] Define environment schema
 - [ ] Implement `{{variable}}` substitution in requests
 - [ ] Create environment selector dropdown
 - [ ] Add environment editor modal
-- [ ] Support multiple environments (dev, staging, prod)
+- [ ] Support secret variables (masked in UI)
 
 ### Save/Load
+
 - [ ] Save request to collection
 - [ ] Load request from collection
 - [ ] Export single request to file
 - [ ] Import request from file
 
-### Bruno Compatibility
-- [ ] Support Bruno collection format import/export (v3 YAML) — Bruno is the leading Git-friendly OSS alternative in 2026
+### Bruno v3 / OpenCollection Compatibility (Key Differentiator)
 
-## Phase 4: Import/Export (Low Priority)
+- [ ] Parse OpenCollection YAML format (Bruno v3 default as of Jan 2026)
+- [ ] Import Bruno .bru files (legacy format, still supported)
+- [ ] Export to OpenCollection YAML format
+- [ ] Preserve folder structure on import/export
+- [ ] Map Bruno variables to runi environments
 
 ### OpenAPI Import
-- [ ] Parse OpenAPI 3.x specification
-- [ ] Generate collection from OpenAPI
+
+- [ ] Parse OpenAPI 3.x specification (YAML/JSON)
+- [ ] Generate collection from OpenAPI paths
 - [ ] Map OpenAPI operations to requests
+- [ ] Import schemas as example request bodies
 
 ### Postman Import
+
 - [ ] Parse Postman collection v2.1 format
 - [ ] Convert Postman requests to runi format
 - [ ] Handle Postman environments
 
-### Export
-- [ ] Export collection to runi YAML format
-- [ ] Export collection to OpenAPI format
+## Phase 4: AI Partner Features (High Priority)
 
-## Phase 5: AI Features (Low Priority)
+> AI features are core to runi's identity as a "partner"—not a nice-to-have.
 
 ### Ollama Integration
-- [ ] Configure Ollama endpoint
-- [ ] Test Ollama connectivity
-- [ ] Create AI service abstraction
 
-### Natural Language Requests
-- [ ] Implement prompt for request generation
-- [ ] Parse AI response to request params
-- [ ] UI for natural language input
+- [ ] Create AI provider abstraction (interface for multiple backends)
+- [ ] Implement Ollama provider (default: `http://localhost:11434`)
+- [ ] Test Ollama connectivity with health check
+- [ ] Model selection from available models
+- [ ] Graceful fallback when Ollama unavailable (rule-based only)
 
-### Error Analysis
-- [ ] Detect failed requests
-- [ ] Send error context to AI
-- [ ] Display AI suggestions
+### AI-Powered Error Analysis
 
-## Phase 6: MCP Support (Low Priority)
+- [ ] Send request + response context to AI on 4xx/5xx
+- [ ] Generate specific fix suggestions based on error
+- [ ] Display AI suggestions inline with response
+- [ ] "Explain this error" button for detailed breakdown
+- [ ] Rate-limit AI calls to prevent overuse
+
+### Natural Language Request Generation
+
+- [ ] Natural language input bar (secondary to URL bar)
+- [ ] Prompt engineering for request extraction
+- [ ] Parse AI response to RequestParams
+- [ ] Show generated request for confirmation before sending
+- [ ] Support context: "test the login endpoint with bad creds"
+
+### Intent Interpretation
+
+- [ ] Understand collection context ("the login endpoint" → find it)
+- [ ] Generate test cases from intent ("test with bad credentials")
+- [ ] Support chained intents ("then try with expired token")
+
+### Smart Suggestions (AI-Enhanced)
+
+- [ ] Use collection context to suggest similar requests
+- [ ] Suggest headers based on API patterns in collection
+- [ ] Suggest auth based on other requests to same host
+
+## Phase 5: MCP & Agentic Workflows (High Priority)
+
+> MCP is a core differentiator—runi as an agentic API development partner.
 
 ### MCP Server Generation
-- [ ] Design MCP server template
-- [ ] Generate server code from collection
-- [ ] Export as standalone MCP server
 
-### MCP Testing
-- [ ] Implement MCP tool invocation
-- [ ] Display MCP tool results
-- [ ] MCP server discovery
+- [ ] Design MCP server template (TypeScript)
+- [ ] Design MCP server template (Python)
+- [ ] Map collection requests to MCP tools
+- [ ] Include request params as tool input schema
+- [ ] Generate standalone server with all dependencies
+- [ ] Export with README and usage instructions
+- [ ] Auto-generate tool descriptions from collection metadata (name, method, path)
+- [ ] Auto-inject environment variables into generated server configs
+- [ ] Generate `.env.example` with placeholders for secrets
+- [ ] Include example requests/responses in tool schemas (from history)
+
+### MCP Testing Interface
+
+- [ ] Connect to running MCP servers (stdio, HTTP)
+- [ ] Discover available tools via MCP protocol
+- [ ] Display tool schemas and descriptions
+- [ ] Execute tools with parameter input
+- [ ] Display tool results with formatting
+
+### MCP Registry Integration
+
+- [ ] Browse registry.modelcontextprotocol.io
+- [ ] Search servers by name/description
+- [ ] Display server metadata and capabilities
+- [ ] One-click install to local MCP config
+- [ ] Track installed servers
+
+### Agentic Workflows
+
+- [ ] Define workflow YAML schema:
+
+  ```yaml
+  workflow:
+    name: string
+    steps:
+      - tool: string
+        inputs: object
+        assert: object      # JSONPath assertions
+        extract: object     # Variable extraction
+        approval: boolean   # Human-in-the-loop (optional)
+    on_failure: stop | continue | retry(n)
+  ```
+
+- [ ] Implement workflow parser
+- [ ] Implement workflow runner (execute steps sequentially)
+- [ ] Support variable extraction between steps (`extract: { token: body.token }`)
+- [ ] Support assertions (`assert: { status: 200, body.token: exists }`)
+- [ ] Human-in-the-loop approval steps (pause, show state, await confirmation)
+- [ ] Retry with configurable backoff (`retry(3)` with exponential backoff)
+- [ ] Workflow history with pass/fail status and error context
+- [ ] Notification hooks on workflow failure (optional)
+
+### MCP 2025-11-25 Spec Features
+
+- [ ] Implement elicitation support (server-initiated user prompts)
+- [ ] Implement URL-mode elicitation (OAuth flows in browser)
+- [ ] Progress tracking for long-running tools
+- [ ] Cancellation support for running tools
 
 ## Quality & Polish
 
 ### Testing
+
 - [ ] Achieve 85% Rust code coverage
 - [ ] Achieve 85% TypeScript code coverage
 - [ ] Add integration tests for frontend-backend
 - [ ] Add E2E tests for critical workflows
+- [ ] Test security validation rules thoroughly
 
 ### Performance
+
 - [ ] Verify bundle size <50MB
 - [ ] Verify startup time <5 seconds
 - [ ] Verify request overhead <80ms vs curl
 
-## Competitive Parity & Differentiation (Post-MVP)
-
-### Future Considerations
-
-- [ ] Consider WebSocket support for v1.0.1 (many competitors now include it; users increasingly expect real-time testing)
-
 ### Accessibility
 
 - [ ] Keyboard navigation for all controls
-- [ ] Screen reader labels (ARIA)
+- [ ] Screen reader labels (ARIA) for suggestions and warnings
 - [ ] High contrast mode support
 - [ ] Focus indicators
+- [ ] Announce suggestions/warnings to screen readers
 
 ## Completed
 
@@ -175,3 +299,27 @@
 - Use Svelte 5 runes syntax (`$state`, `$derived`, `$effect`)
 - Store collections as YAML for Git-friendliness
 - No telemetry, no cloud dependencies
+- **Partner UX:** Every feature should anticipate needs, not just respond to clicks
+
+## Future Considerations
+
+> These items are intentionally deferred. They may add value but are not current priorities.
+
+- [ ] Visual drag-and-drop workflow builder (market saturated; YAML-first preferred)
+- [ ] Agent profile templates (API Tester, Security Auditor personas)
+- [ ] Workflow template library (auth flows, CRUD sequences)
+- [ ] MCP server marketplace (share generated servers via Git)
+- [ ] Agent simulation mode (test workflows before deploying to external agents)
+- [ ] Tool usage analytics (track which tools are most effective)
+- [ ] Declarative loop syntax (`loop_until`) — use programmatic API for complex logic instead
+
+## Research References
+
+- [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25)
+- [MCP Registry](https://registry.modelcontextprotocol.io)
+- [Bruno OpenCollection RFC](https://github.com/usebruno/bruno/discussions/6634)
+- [OpenCollection Schema](https://schema.opencollection.com)
+- [OWASP API Security Top 10 2023](https://owasp.org/API-Security/)
+- [OWASP Top 10 2025](https://owasp.org/Top10/2025/)
+- [mcp-agent Framework](https://github.com/lastmile-ai/mcp-agent)
+- [Building Effective AI Agents with MCP](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp)

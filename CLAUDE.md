@@ -725,6 +725,10 @@ Document significant technical decisions with rationale and references.
 | 2026-01-11 | Pedantic Clippy | Catch issues early, enforce idioms, consistent codebase | [Clippy docs](https://doc.rust-lang.org/clippy/) |
 | 2026-01-11 | Just over Make | Simpler syntax, better error messages, cross-platform | [Just manual](https://just.systems/man/en/) |
 | 2026-01-11 | Partner UX paradigm | Differentiate from "dumb tools" — proactive, intent-deriving | Competitive analysis |
+| 2026-01-11 | YAML-first workflows | Git-friendly, version-controllable; visual builders are commoditized (Flowise, n8n, etc.) | [mcp-agent philosophy](https://github.com/lastmile-ai/mcp-agent) |
+| 2026-01-11 | Sequential workflows | "Simple patterns are more robust than complex architectures" — loops via programmatic API | [mcp-agent](https://github.com/lastmile-ai/mcp-agent) |
+| 2026-01-11 | Human-in-the-loop workflows | Approval steps for sensitive operations; keeps humans in control of agent actions | [Red Hat MCP article](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp) |
+| 2026-01-11 | Skip visual workflow builder | 2026 market saturated (Lindy, n8n, Flowise, Vellum, etc.); not a differentiator for runi | [AI Workflow Builders 2026](https://www.lindy.ai/blog/best-ai-agent-builders) |
 
 ---
 
