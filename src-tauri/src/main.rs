@@ -5,6 +5,7 @@ mod domain;
 mod infrastructure;
 
 use infrastructure::commands::{create_proxy_service, hello_world};
+use infrastructure::http::execute_request;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -21,7 +22,7 @@ pub fn run() {
             Ok(())
         })
         .manage(create_proxy_service())
-        .invoke_handler(tauri::generate_handler![hello_world])
+        .invoke_handler(tauri::generate_handler![hello_world, execute_request])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
