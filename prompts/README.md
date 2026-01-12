@@ -1,138 +1,109 @@
 # Ralph Prompts for runi Phase 1
 
-This directory contains focused prompts for Ralph loop runs, following best practices from [Geoffrey Huntley's Ralph technique](https://ghuntley.com/ralph/) and [Ralph Orchestrator](https://github.com/mikeyobrien/ralph-orchestrator).
+This directory contains focused prompts for Ralph loop runs using [frankbria/ralph-claude-code](https://github.com/frankbria/ralph-claude-code).
 
-## Why Split Prompts?
+## How Ralph Detects Completion
 
-Based on Ralph best practices:
+Ralph automatically exits when it detects:
 
-- **5-10 iterations** for small tasks, **30-50** for larger ones
-- **Fix ONE issue per iteration** - focused work converges faster
-- **Machine-verifiable success criteria** - checkboxes + test commands
-- **Smaller batches** are easier to review and debug
+1. **All tasks in `@fix_plan.md` marked `[x]`**
+2. Multiple consecutive "done" signals from Claude
+3. Too many test-focused loops (feature completeness)
+4. Circuit breaker activation (repeated errors)
 
-Phase 1 has ~27 items. Running all at once would need 80+ iterations with higher failure risk. Splitting into 4 focused runs (15-20 iterations each) is more reliable.
+## Two Approaches
 
-## Run Order (Sequential)
+### Option A: Single Run with Master PROMPT.md (Recommended)
 
-Each run builds on the previous:
-
-| Run | Prompt | Focus | Est. Iterations | Est. Cost |
-|-----|--------|-------|-----------------|-----------|
-| 1 | `PROMPT-1-http-core.md` | HTTP execution backend + basic UI | 15-20 | ~$6-8 |
-| 2 | `PROMPT-2-layout-ui.md` | Three-panel layout + response viewer | 15-20 | ~$6-8 |
-| 3 | `PROMPT-3-request-builder.md` | Tabs, headers, body, auth | 20-25 | ~$8-10 |
-| 4 | `PROMPT-4-intelligence.md` | Suggestions & warnings infrastructure | 15-20 | ~$6-8 |
-
-**Total Phase 1:** ~65-85 iterations, ~$26-34
-
-## How to Run
-
-### Using Ralph Orchestrator CLI
+Use the root `PROMPT.md` + `@fix_plan.md` for automatic exit detection:
 
 ```bash
-# Install
-pip install ralph-orchestrator
+# From project root
+ralph --monitor --verbose
+```
 
+Ralph will work through `@fix_plan.md` tasks and auto-exit when Phase 1 is complete.
+
+### Option B: Split Runs by Phase
+
+For more control, use phase-specific prompts:
+
+```bash
 # Run 1: HTTP Core
-ralph-orchestrator --prompt prompts/PROMPT-1-http-core.md \
-  --max-iterations 20 \
-  --max-cost 10.0 \
-  --completion-promise "RUN_1_COMPLETE" \
-  --verbose
+ralph -p prompts/PROMPT-1-http-core.md --monitor
 
-# Run 2: Layout UI (after Run 1 complete)
-ralph-orchestrator --prompt prompts/PROMPT-2-layout-ui.md \
-  --max-iterations 20 \
-  --max-cost 10.0 \
-  --completion-promise "RUN_2_COMPLETE" \
-  --verbose
+# Run 2: Layout UI (after Run 1)
+ralph -p prompts/PROMPT-2-layout-ui.md --monitor
 
-# Run 3: Request Builder (after Run 2 complete)
-ralph-orchestrator --prompt prompts/PROMPT-3-request-builder.md \
-  --max-iterations 25 \
-  --max-cost 12.0 \
-  --completion-promise "RUN_3_COMPLETE" \
-  --verbose
+# Run 3: Request Builder (after Run 2)
+ralph -p prompts/PROMPT-3-request-builder.md --monitor
 
-# Run 4: Intelligence (after Run 3 complete)
-ralph-orchestrator --prompt prompts/PROMPT-4-intelligence.md \
-  --max-iterations 20 \
-  --max-cost 10.0 \
-  --completion-promise "RUN_4_COMPLETE" \
-  --verbose
+# Run 4: Intelligence (after Run 3)
+ralph -p prompts/PROMPT-4-intelligence.md --monitor
 ```
 
-### Using Claude Code Ralph Plugin
+**Note:** When using `-p`, Ralph may not auto-detect completion from `@fix_plan.md`. Each prompt has its own completion checklist.
 
-```bash
-# Run 1
-/ralph-loop "Complete PROMPT-1-http-core.md" --max-iterations 20 --completion-promise "RUN_1_COMPLETE"
+## Ralph CLI Reference
 
-# Run 2 (after Run 1)
-/ralph-loop "Complete PROMPT-2-layout-ui.md" --max-iterations 20 --completion-promise "RUN_2_COMPLETE"
+| Option | Description |
+|--------|-------------|
+| `-p, --prompt FILE` | Set prompt file (default: PROMPT.md) |
+| `-c, --calls NUM` | Max calls per hour (default: 100) |
+| `-t, --timeout MIN` | Timeout per execution in minutes (default: 15) |
+| `-m, --monitor` | Start with tmux monitoring |
+| `-v, --verbose` | Show detailed progress |
+| `--reset-circuit` | Reset circuit breaker if stuck |
+| `--reset-session` | Clear session context |
+| `-s, --status` | Show current status |
 
-# etc.
-```
+## Run Order (if using split prompts)
 
-## Completion Signals
-
-Each prompt uses a unique completion promise:
-
-- Run 1: `<promise>RUN_1_COMPLETE</promise>`
-- Run 2: `<promise>RUN_2_COMPLETE</promise>`
-- Run 3: `<promise>RUN_3_COMPLETE</promise>`
-- Run 4: `<promise>RUN_4_COMPLETE</promise>`
+| Run | Prompt | Focus |
+|-----|--------|-------|
+| 1 | `PROMPT-1-http-core.md` | HTTP execution backend + basic UI |
+| 2 | `PROMPT-2-layout-ui.md` | Three-panel layout + response viewer |
+| 3 | `PROMPT-3-request-builder.md` | Tabs, headers, body, auth |
+| 4 | `PROMPT-4-intelligence.md` | Suggestions & warnings infrastructure |
 
 ## Verification Between Runs
 
-Before starting the next run, verify:
-
 ```bash
-# All tests pass
+# Check all tests pass
 cd src-tauri && cargo test && cd ..
 npm test
 
-# Lint clean
+# Check lint clean
 cd src-tauri && cargo clippy -- -D warnings && cd ..
 npm run lint
 
-# Type checks pass
+# Type checks
 npm run check
 
 # App builds
 npm run build
 ```
 
-## Rollback Strategy
-
-Each run should commit its work. If a run fails badly:
+## Troubleshooting
 
 ```bash
-# See what Ralph did
-git log --oneline -10
+# Check current status
+ralph --status
 
-# Rollback to before the failed run
-git reset --hard <commit-before-run>
+# Reset if stuck in error loop
+ralph --reset-circuit
 
-# Try again with adjusted prompt or lower iteration count
+# Start fresh session
+ralph --reset-session
+
+# View logs
+tail -f logs/ralph.log
 ```
 
-## Monitoring Costs
+## Best Practices (per frankbria/ralph-claude-code)
 
-Ralph Orchestrator tracks costs in `.agent/metrics/`. Watch for:
-
-- Token usage per iteration
-- Cost accumulation
-- Iteration count vs progress
-
-If stuck in a loop (same error repeating), the `--max-iterations` limit will stop it.
-
-## After Phase 1
-
-Once all 4 runs complete successfully:
-
-1. Verify full integration works (`npm run dev`)
-2. Run E2E tests (`VITE_PLAYWRIGHT=true npx playwright test`)
-3. Update `@fix_plan.md` to mark Phase 1 complete
-4. Create prompts for Phase 2 if needed
+1. **Be specific** - Clear requirements produce better outcomes
+2. **Use @fix_plan.md** - Ralph monitors this for completion
+3. **Set clear boundaries** - Define in-scope and out-of-scope
+4. **Provide examples** - Demonstrate expected patterns
+5. **Document decisions** - Record in CLAUDE.md Decision Log
