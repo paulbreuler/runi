@@ -39,6 +39,7 @@ runi uses a distraction-free, developer-focused layout: a collapsible left sideb
 ```
 
 **Design Principles:**
+
 - Request builder occupies top ~40% by default (resizable vertically)
 - Response viewer below, expanding to fill remaining space
 - Real-time preview as a toggleable right panel within request builder or bottom tab
@@ -52,19 +53,20 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 
 ### Key Components & Rationale
 
-| Component | Use Case | Why |
-|-----------|----------|-----|
-| [Input](https://www.shadcn-svelte.com/docs/components/input) | URL bar | Supports placeholders, validation, cURL paste/auto-complete; customizable for inline query/path param highlighting |
-| [Select](https://www.shadcn-svelte.com/docs/components/select) | Method dropdown (GET, POST, etc.) | Colorful custom triggers (e.g., `bg-green-600` for GET), popover content for vibrant method-specific styling |
-| [Tabs](https://www.shadcn-svelte.com/docs/components/tabs) | Request builder (Params/Headers/Body/Auth), Response viewer (Body/Headers/Stats) | Accessible, theme-aware tab switching with minimal overhead |
-| [Textarea](https://www.shadcn-svelte.com/docs/components/textarea) | Body editor base | Multi-line input with auto-resizing; extend with CodeMirror for syntax highlighting |
-| [Card](https://www.shadcn-svelte.com/docs/components/card) | Request/response panels, preview | Subtle shadows/rounded corners for premium feel; built-in header/content/footer slots |
-| [Table](https://www.shadcn-svelte.com/docs/components/table) | Response headers (collapsible) | Clean, sortable key-value display with hover effects |
-| [Resizable](https://paneforge.dev/) | Vertical split pane | Drag-and-drop resizing via paneforge for Svelte compatibility |
+| Component                                                          | Use Case                                                                         | Why                                                                                                                |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| [Input](https://www.shadcn-svelte.com/docs/components/input)       | URL bar                                                                          | Supports placeholders, validation, cURL paste/auto-complete; customizable for inline query/path param highlighting |
+| [Select](https://www.shadcn-svelte.com/docs/components/select)     | Method dropdown (GET, POST, etc.)                                                | Colorful custom triggers (e.g., `bg-green-600` for GET), popover content for vibrant method-specific styling       |
+| [Tabs](https://www.shadcn-svelte.com/docs/components/tabs)         | Request builder (Params/Headers/Body/Auth), Response viewer (Body/Headers/Stats) | Accessible, theme-aware tab switching with minimal overhead                                                        |
+| [Textarea](https://www.shadcn-svelte.com/docs/components/textarea) | Body editor base                                                                 | Multi-line input with auto-resizing; extend with CodeMirror for syntax highlighting                                |
+| [Card](https://www.shadcn-svelte.com/docs/components/card)         | Request/response panels, preview                                                 | Subtle shadows/rounded corners for premium feel; built-in header/content/footer slots                              |
+| [Table](https://www.shadcn-svelte.com/docs/components/table)       | Response headers (collapsible)                                                   | Clean, sortable key-value display with hover effects                                                               |
+| [Resizable](https://paneforge.dev/)                                | Vertical split pane                                                              | Drag-and-drop resizing via paneforge for Svelte compatibility                                                      |
 
 ### Theme Integration
 
 Use shadcn-svelte's built-in Tailwind config for dark/light modes with cyan/blue accents:
+
 - Automatic system theme switching
 - High contrast in light mode
 - Monospaced fonts for code/data
@@ -75,6 +77,7 @@ Use shadcn-svelte's built-in Tailwind config for dark/light modes with cyan/blue
 All boxes must be checked AND tests must pass:
 
 ### Layout Structure
+
 - [ ] Three-panel layout component (sidebar, request panel, response panel)
 - [ ] Responsive panel resizing with paneforge drag handles
 - [ ] Sidebar collapsible with `⌘B` keyboard shortcut
@@ -82,6 +85,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Status bar with environment indicator
 
 ### Request Header Bar
+
 - [ ] URL input with placeholder "Enter URL or paste cURL"
 - [ ] Method selector dropdown with color-coded options:
   - GET: `bg-green-600`
@@ -93,6 +97,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Icons from lucide-svelte (Send icon on button)
 
 ### Response Viewer
+
 - [ ] Response status badge with color coding (2xx green, 4xx yellow, 5xx red)
 - [ ] JSON syntax highlighting in response body (use Shiki or CodeMirror)
 - [ ] Response headers display in collapsible Table component
@@ -101,6 +106,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Error handling UI for failed requests
 
 ### Storybook Stories (Required)
+
 - [ ] `MainLayout.stories.svelte` - Shows layout with mock content
 - [ ] `Sidebar.stories.svelte` - Collapsed/expanded states
 - [ ] `StatusBar.stories.svelte` - Environment switcher states
@@ -112,6 +118,7 @@ All boxes must be checked AND tests must pass:
 - [ ] `TimingDisplay.stories.svelte` - Various timing values
 
 ### Quality Gates
+
 - [ ] `npm run check` passes
 - [ ] `npm run lint` passes
 - [ ] `just storybook` runs without errors
@@ -125,10 +132,16 @@ All boxes must be checked AND tests must pass:
 
 ```svelte
 <script lang="ts">
-  import { Input } from "$lib/components/ui/input";
-  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "$lib/components/ui/select";
-  import { Button } from "$lib/components/ui/button";
-  import { Send } from "lucide-svelte";
+  import { Input } from '$lib/components/ui/input';
+  import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from '$lib/components/ui/select';
+  import { Button } from '$lib/components/ui/button';
+  import { Send } from 'lucide-svelte';
 
   let method = $state('GET');
   let url = $state('');
@@ -178,7 +191,8 @@ All boxes must be checked AND tests must pass:
     disabled={loading}
     data-testid="send-button"
   >
-    <Send size={16} /> {loading ? 'Sending...' : 'Send'}
+    <Send size={16} />
+    {loading ? 'Sending...' : 'Send'}
   </Button>
 </div>
 ```
@@ -187,10 +201,10 @@ All boxes must be checked AND tests must pass:
 
 ```svelte
 <script lang="ts">
-  import { PaneGroup, Pane, PaneResizer } from "paneforge";
-  import RequestBuilder from "./RequestBuilder.svelte";
-  import ResponseViewer from "./ResponseViewer.svelte";
-  import Sidebar from "./Sidebar.svelte";
+  import { PaneGroup, Pane, PaneResizer } from 'paneforge';
+  import RequestBuilder from './RequestBuilder.svelte';
+  import ResponseViewer from './ResponseViewer.svelte';
+  import Sidebar from './Sidebar.svelte';
 
   let sidebarVisible = $state(true);
 
@@ -199,12 +213,14 @@ All boxes must be checked AND tests must pass:
   }
 </script>
 
-<svelte:window on:keydown={(e) => {
-  if (e.metaKey && e.key === 'b') {
-    e.preventDefault();
-    toggleSidebar();
-  }
-}} />
+<svelte:window
+  on:keydown={(e) => {
+    if (e.metaKey && e.key === 'b') {
+      e.preventDefault();
+      toggleSidebar();
+    }
+  }}
+/>
 
 <div class="flex h-screen">
   {#if sidebarVisible}

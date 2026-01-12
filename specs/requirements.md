@@ -451,6 +451,7 @@ runi uses a distraction-free, developer-focused layout optimized for API workflo
 The main window features a collapsible left sidebar for navigation, a central vertical split-pane dividing the top request builder from the bottom response viewer, and subtle accents for interactivity.
 
 **Design Principles:**
+
 - Request builder occupies top ~40% by default (resizable vertically)
 - Response viewer below, expanding to fill remaining space
 - Real-time preview as a toggleable right panel within request builder or bottom tab
@@ -462,15 +463,15 @@ The main window features a collapsible left sidebar for navigation, a central ve
 
 Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation. These are accessible, theme-aware, and Tailwind-based.
 
-| Component | Use Case | Reference |
-|-----------|----------|-----------|
-| Input | URL bar with placeholders, validation, cURL paste | [shadcn-svelte/input](https://www.shadcn-svelte.com/docs/components/input) |
-| Select | Method dropdown with colorful triggers | [shadcn-svelte/select](https://www.shadcn-svelte.com/docs/components/select) |
-| Tabs | Request/response sections | [shadcn-svelte/tabs](https://www.shadcn-svelte.com/docs/components/tabs) |
-| Textarea | Body editor (extend with CodeMirror) | [shadcn-svelte/textarea](https://www.shadcn-svelte.com/docs/components/textarea) |
-| Card | Request/response panels, preview | [shadcn-svelte/card](https://www.shadcn-svelte.com/docs/components/card) |
-| Table | Response headers (collapsible) | [shadcn-svelte/table](https://www.shadcn-svelte.com/docs/components/table) |
-| Resizable | Vertical split pane | [paneforge](https://paneforge.dev/) |
+| Component | Use Case                                          | Reference                                                                        |
+| --------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Input     | URL bar with placeholders, validation, cURL paste | [shadcn-svelte/input](https://www.shadcn-svelte.com/docs/components/input)       |
+| Select    | Method dropdown with colorful triggers            | [shadcn-svelte/select](https://www.shadcn-svelte.com/docs/components/select)     |
+| Tabs      | Request/response sections                         | [shadcn-svelte/tabs](https://www.shadcn-svelte.com/docs/components/tabs)         |
+| Textarea  | Body editor (extend with CodeMirror)              | [shadcn-svelte/textarea](https://www.shadcn-svelte.com/docs/components/textarea) |
+| Card      | Request/response panels, preview                  | [shadcn-svelte/card](https://www.shadcn-svelte.com/docs/components/card)         |
+| Table     | Response headers (collapsible)                    | [shadcn-svelte/table](https://www.shadcn-svelte.com/docs/components/table)       |
+| Resizable | Vertical split pane                               | [paneforge](https://paneforge.dev/)                                              |
 
 ### Three-Panel Layout Wireframe
 
@@ -548,13 +549,13 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 
 ### Method Dropdown Colors
 
-| Method | Color | Tailwind Class |
-|--------|-------|----------------|
-| GET | Green | `bg-green-600 hover:bg-green-700` |
-| POST | Blue | `bg-blue-600 hover:bg-blue-700` |
-| PUT | Yellow | `bg-yellow-600 hover:bg-yellow-700` |
-| DELETE | Red | `bg-red-600 hover:bg-red-700` |
-| PATCH | Purple | `bg-purple-600 hover:bg-purple-700` |
+| Method | Color  | Tailwind Class                      |
+| ------ | ------ | ----------------------------------- |
+| GET    | Green  | `bg-green-600 hover:bg-green-700`   |
+| POST   | Blue   | `bg-blue-600 hover:bg-blue-700`     |
+| PUT    | Yellow | `bg-yellow-600 hover:bg-yellow-700` |
+| DELETE | Red    | `bg-red-600 hover:bg-red-700`       |
+| PATCH  | Purple | `bg-purple-600 hover:bg-purple-700` |
 
 ### Component Specifications
 

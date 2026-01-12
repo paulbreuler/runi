@@ -62,13 +62,13 @@ ralph -p prompts/PROMPT-4-intelligence.md --monitor
 
 ## Run Order (if using split prompts)
 
-| Run | Prompt                              | Focus                                 |
-| --- | ----------------------------------- | ------------------------------------- |
+| Run | Prompt                               | Focus                                             |
+| --- | ------------------------------------ | ------------------------------------------------- |
 | 1.5 | `PROMPT-1.5-tech-stack-alignment.md` | Tech stack alignment, Storybook + Tailwind v4 fix |
-| 1   | `PROMPT-1-http-core.md`             | HTTP execution backend + basic UI     |
-| 2   | `PROMPT-2-layout-ui.md`              | Three-panel layout + response viewer |
-| 3   | `PROMPT-3-request-builder.md`       | Tabs, headers, body, auth (shadcn-svelte) |
-| 4   | `PROMPT-4-intelligence.md`           | Suggestions & warnings infrastructure |
+| 1   | `PROMPT-1-http-core.md`              | HTTP execution backend + basic UI                 |
+| 2   | `PROMPT-2-layout-ui.md`              | Three-panel layout + response viewer              |
+| 3   | `PROMPT-3-request-builder.md`        | Tabs, headers, body, auth (shadcn-svelte)         |
+| 4   | `PROMPT-4-intelligence.md`           | Suggestions & warnings infrastructure             |
 
 **Note:** Run 1.5 should be executed first to ensure tech stack alignment before building features.
 
@@ -109,6 +109,7 @@ tail -f logs/ralph.log
 ### Ralph Exits Immediately with "Strong completion indicators"
 
 **Symptom:** Ralph exits on loop 1 with message:
+
 ```
 Exit condition: Strong completion indicators (2)
 project_complete
@@ -117,6 +118,7 @@ project_complete
 **Cause:** The `.exit_signals` file contains stale `completion_indicators` from a previous successful run. Ralph's `--reset-session` and `--reset-circuit` do NOT clear this file (this is a [known issue](https://github.com/frankbria/ralph-claude-code/issues)).
 
 **Fix:** Manually clear the exit signals file:
+
 ```bash
 # Option 1: Delete the file (Ralph recreates it)
 rm .exit_signals
@@ -132,6 +134,7 @@ Then restart Ralph.
 **Symptom:** Ralph runs many loops but tasks aren't getting completed.
 
 **Fix:**
+
 1. Check `@fix_plan.md` - are tasks clearly defined?
 2. Check if Claude is hitting errors: `tail -100 logs/ralph.log`
 3. Reset circuit breaker: `ralph --reset-circuit`
@@ -144,12 +147,15 @@ Then restart Ralph.
 **Cause:** Ralph accumulates `completion_indicators` each loop by detecting completion-like signals in Claude's output. When it reaches 2 indicators, it triggers exit. This can happen even when Claude didn't explicitly output a completion signal - Ralph may detect phrases that look like completion.
 
 **Fix:**
+
 1. Clear the accumulated indicators:
+
    ```bash
    echo '{"test_only_loops":[],"done_signals":[],"completion_indicators":[]}' > .exit_signals
    ```
 
 2. Add explicit anti-completion instruction to your prompt:
+
    ```markdown
    ## IMPORTANT: Do NOT signal completion prematurely
 
@@ -165,6 +171,7 @@ Then restart Ralph.
 ### Clean Slate Reset
 
 If Ralph is in a bad state, do a full reset:
+
 ```bash
 rm .exit_signals status.json .ralph_session 2>/dev/null
 ralph --reset-session --reset-circuit
@@ -250,15 +257,16 @@ environment and Badge for counts. Position fixed at bottom of viewport."
 
 All prompts should reference the established component library:
 
-| Component | Package | Use Case |
-|-----------|---------|----------|
-| Input, Select, Tabs, Card, Table, Button | `shadcn-svelte` | Core UI |
-| Checkbox, Label, Textarea | `shadcn-svelte` | Form elements |
-| Resizable (Pane, PaneGroup, PaneResizer) | `paneforge` | Split panels |
-| Icons (Send, Plus, Trash2, etc.) | `lucide-svelte` | Action icons |
-| Code highlighting | `codemirror` + `svelte-codemirror-editor` | JSON/body editor |
+| Component                                | Package                                   | Use Case         |
+| ---------------------------------------- | ----------------------------------------- | ---------------- |
+| Input, Select, Tabs, Card, Table, Button | `shadcn-svelte`                           | Core UI          |
+| Checkbox, Label, Textarea                | `shadcn-svelte`                           | Form elements    |
+| Resizable (Pane, PaneGroup, PaneResizer) | `paneforge`                               | Split panels     |
+| Icons (Send, Plus, Trash2, etc.)         | `lucide-svelte`                           | Action icons     |
+| Code highlighting                        | `codemirror` + `svelte-codemirror-editor` | JSON/body editor |
 
 Install commands:
+
 ```bash
 npx shadcn-svelte@latest init
 npx shadcn-svelte@latest add input select tabs textarea card table button checkbox label

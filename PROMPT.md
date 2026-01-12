@@ -287,8 +287,8 @@ npm install paneforge lucide-svelte
 
 ```svelte
 <script lang="ts">
-  import { Input } from "$lib/components/ui/input";
-  import { Button } from "$lib/components/ui/button";
+  import { Input } from '$lib/components/ui/input';
+  import { Button } from '$lib/components/ui/button';
 
   // Use runes: $state, $derived, $effect, $props
   let url = $state('');
