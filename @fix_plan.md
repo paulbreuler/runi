@@ -240,9 +240,9 @@
     steps:
       - tool: string
         inputs: object
-        assert: object      # JSONPath assertions
-        extract: object     # Variable extraction
-        approval: boolean   # Human-in-the-loop (optional)
+        assert: object # JSONPath assertions
+        extract: object # Variable extraction
+        approval: boolean # Human-in-the-loop (optional)
     on_failure: stop | continue | retry(n)
   ```
 

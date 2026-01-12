@@ -48,6 +48,7 @@ npm run check && npm run lint && npm test
 ## Files to Create/Modify
 
 ### Components (src/lib/components/)
+
 - `Request/TabPanel.svelte` - Tab container
 - `Request/Tab.svelte` - Individual tab
 - `Request/KeyValueEditor.svelte` - Reusable key-value pairs
@@ -58,9 +59,11 @@ npm run check && npm run lint && npm test
 - `Request/JsonEditor.svelte` - JSON body with highlighting
 
 ### Utils (src/lib/utils/)
+
 - `auth.ts` - Base64 encoding, auth header formatting
 
 ### Types (src/lib/types/)
+
 - `request.ts` - Tab state types, auth config types
 
 ## Process

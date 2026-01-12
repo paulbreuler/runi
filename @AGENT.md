@@ -75,17 +75,20 @@ just fmt-check
 ## Key Learnings
 
 ### Tauri v2 Specifics
+
 - Use `@tauri-apps/api/core` NOT `@tauri-apps/api/tauri` (v2 change)
 - All Tauri commands must be async
 - Commands return `Result<T, String>` for error handling
 - CORS is bypassed in Tauri - requests go through Rust
 
 ### Svelte 5 Specifics
+
 - Use runes: `$state()`, `$derived()`, `$effect()`, `$props()`
 - NOT writable/readable stores from Svelte 4
 - All script blocks must have `lang="ts"`
 
 ### Rust Specifics
+
 - Clippy is set to pedantic - warnings are errors
 - Some lints are intentionally allowed (see Cargo.toml)
 - Group imports: std -> external -> internal
@@ -127,6 +130,7 @@ runi/
   - Integration tests for Tauri commands
   - Component tests for Svelte components
 - **Coverage Validation**:
+
   ```bash
   # Rust coverage
   cd src-tauri && cargo tarpaulin --out Html
@@ -140,13 +144,16 @@ runi/
 Before moving to the next feature, ALL changes must be:
 
 1. **Committed with Clear Messages**:
+
    ```bash
    git commit -m "feat(http): add request timeout configuration"
    ```
+
    - Use conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
    - Include scope: `feat(api):`, `fix(ui):`, `test(auth):`
 
 2. **Verified with CI**:
+
    ```bash
    just ci
    ```
@@ -179,13 +186,17 @@ Before moving to the next feature, ALL changes must be:
 ## Common Issues & Solutions
 
 ### "Cannot find module @tauri-apps/api/tauri"
+
 Use `@tauri-apps/api/core` instead - this changed in Tauri v2.
 
 ### Clippy pedantic warnings
+
 Some are intentionally allowed in Cargo.toml. Check the lints section before trying to fix.
 
 ### Svelte 5 store errors
+
 Don't use `writable()` or `readable()`. Use `$state()` rune instead.
 
 ### Test isolation failures
+
 Each test must clean up its own state. Don't rely on test ordering.

@@ -28,27 +28,27 @@ You are an expert in **UX design for developer tools**, with deep knowledge of R
 
 ### runi: Your API Development Partner
 
-runi is not just an API client — it's an **intelligent partner** for API developers. While competitors offer request/response interfaces, runi understands *intent* and *context*.
+runi is not just an API client — it's an **intelligent partner** for API developers. While competitors offer request/response interfaces, runi understands _intent_ and _context_.
 
 **Core Philosophy:**
 
-| Principle | What It Means |
-| --------- | ------------- |
-| Local-First | All data stays on your machine. No accounts, no cloud sync, no telemetry |
-| Git-Friendly | YAML/JSON storage. Collections are code. Version control is native |
-| AI-Native | Intelligence built in, not bolted on. Proactive suggestions, not just chat |
-| Privacy-Focused | Your API keys, your data, your machine. Period |
-| Partner Experience | Conversational, proactive, intent-deriving — not just buttons and forms |
+| Principle          | What It Means                                                              |
+| ------------------ | -------------------------------------------------------------------------- |
+| Local-First        | All data stays on your machine. No accounts, no cloud sync, no telemetry   |
+| Git-Friendly       | YAML/JSON storage. Collections are code. Version control is native         |
+| AI-Native          | Intelligence built in, not bolted on. Proactive suggestions, not just chat |
+| Privacy-Focused    | Your API keys, your data, your machine. Period                             |
+| Partner Experience | Conversational, proactive, intent-deriving — not just buttons and forms    |
 
 ### Competitive Positioning
 
-| Competitor | Strength We Learn From | Gap We Fill |
-| ---------- | ---------------------- | ----------- |
-| Postman | Testing suites, workflows | Cloud lock-in, heavy, telemetry |
-| Bruno | Git-friendly, local-first | No AI, limited ecosystem |
-| Hoppscotch | Lightweight, fast, clean | No desktop, no AI |
-| Insomnia/Yaak | Clean UX, focused | Limited AI, no MCP |
-| Apidog | AI automation attempts | Cloud-dependent, privacy concerns |
+| Competitor    | Strength We Learn From    | Gap We Fill                       |
+| ------------- | ------------------------- | --------------------------------- |
+| Postman       | Testing suites, workflows | Cloud lock-in, heavy, telemetry   |
+| Bruno         | Git-friendly, local-first | No AI, limited ecosystem          |
+| Hoppscotch    | Lightweight, fast, clean  | No desktop, no AI                 |
+| Insomnia/Yaak | Clean UX, focused         | Limited AI, no MCP                |
+| Apidog        | AI automation attempts    | Cloud-dependent, privacy concerns |
 
 **runi's edge:** Local-first + AI-native + MCP-powered + Bruno-compatible.
 
@@ -72,13 +72,13 @@ runi understands:
 
 ### Proactive Intelligence
 
-| Feature | Behavior |
-| ------- | -------- |
-| Smart Suggestions | Detect missing headers, suggest auth patterns |
-| Error Analysis | Parse 4xx/5xx responses, explain causes, suggest fixes |
+| Feature             | Behavior                                                   |
+| ------------------- | ---------------------------------------------------------- |
+| Smart Suggestions   | Detect missing headers, suggest auth patterns              |
+| Error Analysis      | Parse 4xx/5xx responses, explain causes, suggest fixes     |
 | Security Validation | OWASP-inspired checks on requests (injection, auth issues) |
-| Request Generation | Natural language → valid HTTP request |
-| Documentation | Auto-generate API docs from collection |
+| Request Generation  | Natural language → valid HTTP request                      |
+| Documentation       | Auto-generate API docs from collection                     |
 
 ### Local LLM Integration
 
@@ -94,32 +94,32 @@ runi leverages MCP for **agentic API workflows**:
 
 ### Capabilities
 
-| MCP Feature | runi Implementation |
-| ----------- | ------------------- |
-| Tool Discovery | Browse `registry.modelcontextprotocol.io` |
-| Server Generation | Export collection as MCP server (TS/Python) |
-| Request Chaining | Chain requests as MCP tool sequences |
-| Async Operations | Long-running requests with progress callbacks |
-| Elicitation | Interactive prompts for missing parameters |
+| MCP Feature       | runi Implementation                           |
+| ----------------- | --------------------------------------------- |
+| Tool Discovery    | Browse `registry.modelcontextprotocol.io`     |
+| Server Generation | Export collection as MCP server (TS/Python)   |
+| Request Chaining  | Chain requests as MCP tool sequences          |
+| Async Operations  | Long-running requests with progress callbacks |
+| Elicitation       | Interactive prompts for missing parameters    |
 
 ### Agentic Workflows (Inspired by TestSprite, Pydantic AI)
 
 ```yaml
 # Example: Autonomous API testing workflow
 workflow:
-  name: "Auth Flow Validation"
+  name: 'Auth Flow Validation'
   steps:
     - tool: login
-      inputs: { email: "{{test_user}}", password: "{{test_pass}}" }
+      inputs: { email: '{{test_user}}', password: '{{test_pass}}' }
       assert: { status: 200, body.token: exists }
       extract: { token: body.token }
 
     - tool: protected_resource
-      inputs: { authorization: "Bearer {{token}}" }
+      inputs: { authorization: 'Bearer {{token}}' }
       assert: { status: 200 }
 
     - tool: protected_resource
-      inputs: { authorization: "invalid" }
+      inputs: { authorization: 'invalid' }
       assert: { status: 401 }
 ```
 
@@ -142,12 +142,12 @@ workflow:
 
 ### Format Support
 
-| Format | Import | Export | Notes |
-| ------ | ------ | ------ | ----- |
-| runi YAML | ✓ | ✓ | Native format, richest features |
-| Bruno v3 | ✓ | ✓ | Leading Git-friendly competitor |
-| OpenAPI 3.x | ✓ | ✓ | Industry standard |
-| Postman v2.1 | ✓ | — | Migration path from cloud tools |
+| Format       | Import | Export | Notes                           |
+| ------------ | ------ | ------ | ------------------------------- |
+| runi YAML    | ✓      | ✓      | Native format, richest features |
+| Bruno v3     | ✓      | ✓      | Leading Git-friendly competitor |
+| OpenAPI 3.x  | ✓      | ✓      | Industry standard               |
+| Postman v2.1 | ✓      | —      | Migration path from cloud tools |
 
 **Goal:** Establish `*.runi.yaml` as the gold standard for Git-friendly API collections while maintaining Bruno compatibility for ecosystem adoption.
 
@@ -155,13 +155,13 @@ workflow:
 
 ## Technology Stack
 
-| Layer | Technology | Version | Purpose |
-| ----- | ---------- | ------- | ------- |
-| Backend | Rust | 1.80+ (2024 edition) | Core logic, HTTP execution, file I/O |
-| Runtime | Tauri | v2.9.x | Desktop app container, IPC bridge |
-| Frontend | Svelte | 5.46.x (runes mandatory) | Reactive UI components |
-| Storage | YAML/JSON | — | Collections, history, environments |
-| AI | Ollama | optional | Local LLM inference |
+| Layer    | Technology | Version                  | Purpose                              |
+| -------- | ---------- | ------------------------ | ------------------------------------ |
+| Backend  | Rust       | 1.80+ (2024 edition)     | Core logic, HTTP execution, file I/O |
+| Runtime  | Tauri      | v2.9.x                   | Desktop app container, IPC bridge    |
+| Frontend | Svelte     | 5.46.x (runes mandatory) | Reactive UI components               |
+| Storage  | YAML/JSON  | —                        | Collections, history, environments   |
+| AI       | Ollama     | optional                 | Local LLM inference                  |
 
 ---
 
@@ -267,7 +267,7 @@ export default tseslint.config(
       '@typescript-eslint/strict-boolean-expressions': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
-  },
+  }
 );
 ```
 
@@ -304,9 +304,7 @@ export default tseslint.config(
   "tabWidth": 2,
   "useTabs": false,
   "plugins": ["prettier-plugin-svelte"],
-  "overrides": [
-    { "files": "*.svelte", "options": { "parser": "svelte" } }
-  ]
+  "overrides": [{ "files": "*.svelte", "options": { "parser": "svelte" } }]
 }
 ```
 
@@ -693,12 +691,12 @@ src/lib/
 
 runi will proactively warn about common API security issues:
 
-| Check | Description |
-| ----- | ----------- |
-| Auth Headers | Warn if Authorization header sent over HTTP (not HTTPS) |
-| Injection Patterns | Flag suspicious payloads in request bodies |
-| Sensitive Data | Mask tokens/keys in history, warn before sharing |
-| Certificate Validation | Default TLS verification, explicit opt-out for testing |
+| Check                  | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| Auth Headers           | Warn if Authorization header sent over HTTP (not HTTPS) |
+| Injection Patterns     | Flag suspicious payloads in request bodies              |
+| Sensitive Data         | Mask tokens/keys in history, warn before sharing        |
+| Certificate Validation | Default TLS verification, explicit opt-out for testing  |
 
 ### Privacy by Design
 
@@ -713,22 +711,22 @@ runi will proactively warn about common API security issues:
 
 Document significant technical decisions with rationale and references.
 
-| Date | Decision | Rationale | Reference |
-| ---- | -------- | --------- | --------- |
-| 2026-01-11 | Tauri v2 over Electron | Smaller bundle (<10MB vs 150MB+), Rust backend, native performance | [Tauri docs](https://v2.tauri.app/) |
-| 2026-01-11 | Svelte 5 runes | Modern reactivity model, smaller bundle, better DX | [Svelte 5 announcement](https://svelte.dev/blog/svelte-5-is-alive) |
-| 2026-01-11 | ESLint + Prettier over Biome | Biome has only partial Svelte support as of 2025 | [Biome limitations](https://biomejs.dev/formatter/differences-with-prettier/) |
-| 2026-01-11 | YAML for collections | Git-friendly, human-readable, Bruno precedent | Industry standard |
-| 2026-01-11 | Bruno v3 compatibility | Largest Git-friendly competitor, eases migration | [Bruno docs](https://docs.usebruno.com/) |
-| 2026-01-11 | MCP 2025-11-25 spec | Async ops, elicitation, registry discovery — future-proof | [MCP spec](https://modelcontextprotocol.io/) |
-| 2026-01-11 | TDD mandatory | Higher quality, better design, confidence in refactoring | Best practice |
-| 2026-01-11 | Pedantic Clippy | Catch issues early, enforce idioms, consistent codebase | [Clippy docs](https://doc.rust-lang.org/clippy/) |
-| 2026-01-11 | Just over Make | Simpler syntax, better error messages, cross-platform | [Just manual](https://just.systems/man/en/) |
-| 2026-01-11 | Partner UX paradigm | Differentiate from "dumb tools" — proactive, intent-deriving | Competitive analysis |
-| 2026-01-11 | YAML-first workflows | Git-friendly, version-controllable; visual builders are commoditized (Flowise, n8n, etc.) | [mcp-agent philosophy](https://github.com/lastmile-ai/mcp-agent) |
-| 2026-01-11 | Sequential workflows | "Simple patterns are more robust than complex architectures" — loops via programmatic API | [mcp-agent](https://github.com/lastmile-ai/mcp-agent) |
-| 2026-01-11 | Human-in-the-loop workflows | Approval steps for sensitive operations; keeps humans in control of agent actions | [Red Hat MCP article](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp) |
-| 2026-01-11 | Skip visual workflow builder | 2026 market saturated (Lindy, n8n, Flowise, Vellum, etc.); not a differentiator for runi | [AI Workflow Builders 2026](https://www.lindy.ai/blog/best-ai-agent-builders) |
+| Date       | Decision                     | Rationale                                                                                 | Reference                                                                                                 |
+| ---------- | ---------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 2026-01-11 | Tauri v2 over Electron       | Smaller bundle (<10MB vs 150MB+), Rust backend, native performance                        | [Tauri docs](https://v2.tauri.app/)                                                                       |
+| 2026-01-11 | Svelte 5 runes               | Modern reactivity model, smaller bundle, better DX                                        | [Svelte 5 announcement](https://svelte.dev/blog/svelte-5-is-alive)                                        |
+| 2026-01-11 | ESLint + Prettier over Biome | Biome has only partial Svelte support as of 2025                                          | [Biome limitations](https://biomejs.dev/formatter/differences-with-prettier/)                             |
+| 2026-01-11 | YAML for collections         | Git-friendly, human-readable, Bruno precedent                                             | Industry standard                                                                                         |
+| 2026-01-11 | Bruno v3 compatibility       | Largest Git-friendly competitor, eases migration                                          | [Bruno docs](https://docs.usebruno.com/)                                                                  |
+| 2026-01-11 | MCP 2025-11-25 spec          | Async ops, elicitation, registry discovery — future-proof                                 | [MCP spec](https://modelcontextprotocol.io/)                                                              |
+| 2026-01-11 | TDD mandatory                | Higher quality, better design, confidence in refactoring                                  | Best practice                                                                                             |
+| 2026-01-11 | Pedantic Clippy              | Catch issues early, enforce idioms, consistent codebase                                   | [Clippy docs](https://doc.rust-lang.org/clippy/)                                                          |
+| 2026-01-11 | Just over Make               | Simpler syntax, better error messages, cross-platform                                     | [Just manual](https://just.systems/man/en/)                                                               |
+| 2026-01-11 | Partner UX paradigm          | Differentiate from "dumb tools" — proactive, intent-deriving                              | Competitive analysis                                                                                      |
+| 2026-01-11 | YAML-first workflows         | Git-friendly, version-controllable; visual builders are commoditized (Flowise, n8n, etc.) | [mcp-agent philosophy](https://github.com/lastmile-ai/mcp-agent)                                          |
+| 2026-01-11 | Sequential workflows         | "Simple patterns are more robust than complex architectures" — loops via programmatic API | [mcp-agent](https://github.com/lastmile-ai/mcp-agent)                                                     |
+| 2026-01-11 | Human-in-the-loop workflows  | Approval steps for sensitive operations; keeps humans in control of agent actions         | [Red Hat MCP article](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp) |
+| 2026-01-11 | Skip visual workflow builder | 2026 market saturated (Lindy, n8n, Flowise, Vellum, etc.); not a differentiator for runi  | [AI Workflow Builders 2026](https://www.lindy.ai/blog/best-ai-agent-builders)                             |
 
 ---
 

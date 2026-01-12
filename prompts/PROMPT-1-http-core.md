@@ -41,11 +41,13 @@ cd src-tauri && cargo test && cargo clippy -- -D warnings && cd .. && npm run ch
 ## Files to Create/Modify
 
 ### Rust (src-tauri/src/)
+
 - `commands/http.rs` - HTTP execution command
 - `domain/http.rs` - RequestParams, HttpResponse, RequestTiming structs
 - `lib.rs` - Export commands
 
 ### Frontend (src/)
+
 - `lib/types/http.ts` - TypeScript types
 - `lib/api/http.ts` - invoke wrapper
 - `routes/+page.svelte` - Basic request UI

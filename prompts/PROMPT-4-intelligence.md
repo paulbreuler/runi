@@ -15,6 +15,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 All boxes must be checked AND tests must pass:
 
 ### Rust Backend
+
 - [ ] `Suggestion` struct (id, suggestion_type, severity, message, action)
 - [ ] `SuggestionAction` enum (AddHeader, SetAuth, ModifyBody, Custom)
 - [ ] `SecurityWarning` struct (code, severity, message, details, remediation)
@@ -27,6 +28,7 @@ All boxes must be checked AND tests must pass:
 - [ ] `cargo clippy` passes
 
 ### Frontend
+
 - [ ] TypeScript types matching Rust structs
 - [ ] `invoke` wrappers for intelligence commands
 - [ ] SuggestionCard component (inline, dismissable, "Apply" button)
@@ -54,23 +56,28 @@ cd src-tauri && cargo test && cargo clippy -- -D warnings && cd .. && npm run ch
 ## Files to Create/Modify
 
 ### Rust (src-tauri/src/)
+
 - `domain/intelligence.rs` - Suggestion, SecurityWarning, etc.
 - `commands/intelligence.rs` - get_suggestions, validate_security
 - `lib.rs` - Export new commands
 
 ### Frontend Types (src/lib/types/)
+
 - `intelligence.ts` - Suggestion, SecurityWarning, etc.
 
 ### Frontend API (src/lib/api/)
+
 - `intelligence.ts` - invoke wrappers
 
 ### Components (src/lib/components/)
+
 - `Intelligence/SuggestionCard.svelte` - Individual suggestion
 - `Intelligence/SuggestionList.svelte` - List of suggestions
 - `Intelligence/WarningBanner.svelte` - Security warning
 - `Intelligence/WarningList.svelte` - List of warnings
 
 ### Integration
+
 - Update `Request/` components to show suggestions
 - Update `routes/+page.svelte` to display warnings
 
