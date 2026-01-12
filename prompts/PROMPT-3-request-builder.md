@@ -14,14 +14,14 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 
 Build on the shadcn-svelte foundation established in Run 2. Key components for this run:
 
-| Component | Use Case | Reference |
-|-----------|----------|-----------|
-| [Tabs](https://www.shadcn-svelte.com/docs/components/tabs) | Request builder sections (Params/Headers/Body/Auth) | Tab container and individual tabs |
-| [Input](https://www.shadcn-svelte.com/docs/components/input) | Key-value inputs, auth fields | Text input with validation |
-| [Textarea](https://www.shadcn-svelte.com/docs/components/textarea) | Body editor base | Multi-line with auto-resize |
-| [Select](https://www.shadcn-svelte.com/docs/components/select) | Content-type selector, auth type selector | Dropdown with options |
-| [Checkbox](https://www.shadcn-svelte.com/docs/components/checkbox) | Enable/disable key-value pairs | Toggle individual rows |
-| [Button](https://www.shadcn-svelte.com/docs/components/button) | Add/remove buttons, apply actions | Icon buttons for row operations |
+| Component                                                          | Use Case                                            | Reference                         |
+| ------------------------------------------------------------------ | --------------------------------------------------- | --------------------------------- |
+| [Tabs](https://www.shadcn-svelte.com/docs/components/tabs)         | Request builder sections (Params/Headers/Body/Auth) | Tab container and individual tabs |
+| [Input](https://www.shadcn-svelte.com/docs/components/input)       | Key-value inputs, auth fields                       | Text input with validation        |
+| [Textarea](https://www.shadcn-svelte.com/docs/components/textarea) | Body editor base                                    | Multi-line with auto-resize       |
+| [Select](https://www.shadcn-svelte.com/docs/components/select)     | Content-type selector, auth type selector           | Dropdown with options             |
+| [Checkbox](https://www.shadcn-svelte.com/docs/components/checkbox) | Enable/disable key-value pairs                      | Toggle individual rows            |
+| [Button](https://www.shadcn-svelte.com/docs/components/button)     | Add/remove buttons, apply actions                   | Icon buttons for row operations   |
 
 ### Additional Dependencies
 
@@ -38,12 +38,14 @@ npm install shiki
 All boxes must be checked AND tests must pass:
 
 ### Tabs Interface
+
 - [ ] Tabbed interface component using shadcn Tabs
 - [ ] Tabs: Params | Headers | Body | Auth
 - [ ] Active tab indicator with theme-aware styling
 - [ ] Keyboard navigation between tabs (Arrow keys)
 
 ### Key-Value Editor Component (Reusable)
+
 - [ ] Reusable key-value pair editor with shadcn Input
 - [ ] Key-value pairs with add/remove buttons (lucide-svelte icons: Plus, Trash2)
 - [ ] Checkbox to enable/disable individual pairs using shadcn Checkbox
@@ -51,16 +53,19 @@ All boxes must be checked AND tests must pass:
 - [ ] Delete with keyboard (Backspace on empty row)
 
 ### Headers Tab
+
 - [ ] Uses key-value editor component
 - [ ] Auto-suggest for common header names (Content-Type, Accept, Authorization)
 - [ ] Validation for header format
 
 ### Query Params Tab
+
 - [ ] Uses key-value editor component
 - [ ] URL preview showing query string being built
 - [ ] URL encoding applied automatically
 
 ### Body Tab
+
 - [ ] Content-type selector using shadcn Select:
   - none
   - JSON (`application/json`)
@@ -74,6 +79,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Form-urlencoded editor using key-value component
 
 ### Auth Tab
+
 - [ ] Auth type selector using shadcn Select:
   - None
   - API Key
@@ -91,11 +97,13 @@ All boxes must be checked AND tests must pass:
   - Preview of Base64-encoded value
 
 ### Integration
+
 - [ ] Request params integrated with `execute_request` command
 - [ ] Auth applied to request headers automatically
 - [ ] Body content-type header set automatically
 
 ### Storybook Stories (Required)
+
 - [ ] `TabPanel.stories.svelte` - All tabs, keyboard navigation
 - [ ] `KeyValueEditor.stories.svelte` - Empty, with rows, disabled rows
 - [ ] `HeadersTab.stories.svelte` - Common headers, auto-suggest
@@ -105,6 +113,7 @@ All boxes must be checked AND tests must pass:
 - [ ] `JsonEditor.stories.svelte` - Valid/invalid JSON, prettify
 
 ### Quality Gates
+
 - [ ] `npm run check` passes
 - [ ] `npm run lint` passes
 - [ ] `just storybook` runs without errors
@@ -118,7 +127,7 @@ All boxes must be checked AND tests must pass:
 
 ```svelte
 <script lang="ts">
-  import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs";
+  import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
 
   let activeTab = $state('params');
 </script>
@@ -149,10 +158,10 @@ All boxes must be checked AND tests must pass:
 
 ```svelte
 <script lang="ts">
-  import { Input } from "$lib/components/ui/input";
-  import { Button } from "$lib/components/ui/button";
-  import { Checkbox } from "$lib/components/ui/checkbox";
-  import { Plus, Trash2 } from "lucide-svelte";
+  import { Input } from '$lib/components/ui/input';
+  import { Button } from '$lib/components/ui/button';
+  import { Checkbox } from '$lib/components/ui/checkbox';
+  import { Plus, Trash2 } from 'lucide-svelte';
 
   interface KeyValuePair {
     id: string;
@@ -167,24 +176,25 @@ All boxes must be checked AND tests must pass:
     valuePlaceholder?: string;
   }
 
-  let { pairs = $bindable([]), keyPlaceholder = 'Key', valuePlaceholder = 'Value' }: Props = $props();
+  let {
+    pairs = $bindable([]),
+    keyPlaceholder = 'Key',
+    valuePlaceholder = 'Value',
+  }: Props = $props();
 
   function addPair(): void {
     pairs = [...pairs, { id: crypto.randomUUID(), key: '', value: '', enabled: true }];
   }
 
   function removePair(id: string): void {
-    pairs = pairs.filter(p => p.id !== id);
+    pairs = pairs.filter((p) => p.id !== id);
   }
 </script>
 
 <div class="space-y-2">
   {#each pairs as pair (pair.id)}
     <div class="flex items-center gap-2">
-      <Checkbox
-        bind:checked={pair.enabled}
-        data-testid={`kv-enabled-${pair.id}`}
-      />
+      <Checkbox bind:checked={pair.enabled} data-testid={`kv-enabled-${pair.id}`} />
       <Input
         bind:value={pair.key}
         placeholder={keyPlaceholder}
@@ -217,9 +227,15 @@ All boxes must be checked AND tests must pass:
 
 ```svelte
 <script lang="ts">
-  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "$lib/components/ui/select";
-  import { Input } from "$lib/components/ui/input";
-  import { Label } from "$lib/components/ui/label";
+  import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from '$lib/components/ui/select';
+  import { Input } from '$lib/components/ui/input';
+  import { Label } from '$lib/components/ui/label';
 
   type AuthType = 'none' | 'api-key' | 'bearer' | 'basic';
 
@@ -256,8 +272,17 @@ All boxes must be checked AND tests must pass:
 
   {#if authType === 'api-key'}
     <div class="space-y-2">
-      <Input bind:value={apiKeyName} placeholder="Key name (e.g., X-API-Key)" data-testid="api-key-name" />
-      <Input bind:value={apiKeyValue} placeholder="Key value" type="password" data-testid="api-key-value" />
+      <Input
+        bind:value={apiKeyName}
+        placeholder="Key name (e.g., X-API-Key)"
+        data-testid="api-key-name"
+      />
+      <Input
+        bind:value={apiKeyValue}
+        placeholder="Key value"
+        type="password"
+        data-testid="api-key-value"
+      />
       <Select bind:value={apiKeyPlacement}>
         <SelectTrigger data-testid="api-key-placement">
           <SelectValue />
@@ -269,11 +294,21 @@ All boxes must be checked AND tests must pass:
       </Select>
     </div>
   {:else if authType === 'bearer'}
-    <Input bind:value={bearerToken} placeholder="Token" type="password" data-testid="bearer-token" />
+    <Input
+      bind:value={bearerToken}
+      placeholder="Token"
+      type="password"
+      data-testid="bearer-token"
+    />
   {:else if authType === 'basic'}
     <div class="space-y-2">
       <Input bind:value={basicUsername} placeholder="Username" data-testid="basic-username" />
-      <Input bind:value={basicPassword} placeholder="Password" type="password" data-testid="basic-password" />
+      <Input
+        bind:value={basicPassword}
+        placeholder="Password"
+        type="password"
+        data-testid="basic-password"
+      />
       {#if basicEncoded}
         <p class="text-xs text-muted-foreground font-mono">
           Authorization: Basic {basicEncoded}
@@ -299,18 +334,24 @@ All boxes must be checked AND tests must pass:
 </script>
 
 <Story name="Empty" args={{ pairs: [], keyPlaceholder: 'Key', valuePlaceholder: 'Value' }} />
-<Story name="With Rows" args={{
-  pairs: [
-    { id: '1', key: 'Content-Type', value: 'application/json', enabled: true },
-    { id: '2', key: 'Authorization', value: 'Bearer token', enabled: true },
-    { id: '3', key: 'X-Debug', value: 'true', enabled: false },
-  ]
-}} />
-<Story name="Headers" args={{
-  pairs: [{ id: '1', key: 'Accept', value: 'application/json', enabled: true }],
-  keyPlaceholder: 'Header name',
-  valuePlaceholder: 'Header value',
-}} />
+<Story
+  name="With Rows"
+  args={{
+    pairs: [
+      { id: '1', key: 'Content-Type', value: 'application/json', enabled: true },
+      { id: '2', key: 'Authorization', value: 'Bearer token', enabled: true },
+      { id: '3', key: 'X-Debug', value: 'true', enabled: false },
+    ],
+  }}
+/>
+<Story
+  name="Headers"
+  args={{
+    pairs: [{ id: '1', key: 'Accept', value: 'application/json', enabled: true }],
+    keyPlaceholder: 'Header name',
+    valuePlaceholder: 'Header value',
+  }}
+/>
 ```
 
 ## Test Command
