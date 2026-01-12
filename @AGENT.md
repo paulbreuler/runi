@@ -1,49 +1,112 @@
 # Agent Build Instructions
 
+## Project: runi
+
+Open-source desktop API client with AI-native features and MCP support.
+
+**Stack:** Rust (backend) + Tauri v2 (runtime) + Svelte 5 (frontend)
+
 ## Project Setup
+
 ```bash
-# Install dependencies (example for Node.js project)
+# Install all dependencies
+just install
+
+# Or manually:
 npm install
+cd src-tauri && cargo fetch
+```
 
-# Or for Python project
-pip install -r requirements.txt
+## Development Commands
 
-# Or for Rust project  
-cargo build
+```bash
+# Start development server (hot-reload enabled)
+just dev
+
+# Build for production
+just build
+```
+
+## Quality Gates (Run Before Committing)
+
+```bash
+# Run complete CI pipeline locally
+just ci
+
+# Individual checks:
+just check        # Type checking (cargo check + npm run check)
+just lint         # Linting (clippy pedantic + ESLint)
+just fmt-check    # Format verification (rustfmt + prettier)
+just test         # Run all tests (cargo test + npm test)
 ```
 
 ## Running Tests
+
 ```bash
-# Node.js
-npm test
+# All tests
+just test
 
-# Python
-pytest
+# Rust tests only
+just test-rust
 
-# Rust
-cargo test
+# Frontend tests only
+just test-frontend
+
+# With coverage
+just test-coverage
 ```
 
-## Build Commands
-```bash
-# Production build
-npm run build
-# or
-cargo build --release
-```
+## Formatting
 
-## Development Server
 ```bash
-# Start development server
-npm run dev
-# or
-cargo run
+# Fix all formatting issues
+just fmt
+
+# Check formatting without fixing
+just fmt-check
 ```
 
 ## Key Learnings
-- Update this section when you learn new build optimizations
-- Document any gotchas or special setup requirements
-- Keep track of the fastest test/build cycle
+
+### Tauri v2 Specifics
+- Use `@tauri-apps/api/core` NOT `@tauri-apps/api/tauri` (v2 change)
+- All Tauri commands must be async
+- Commands return `Result<T, String>` for error handling
+- CORS is bypassed in Tauri - requests go through Rust
+
+### Svelte 5 Specifics
+- Use runes: `$state()`, `$derived()`, `$effect()`, `$props()`
+- NOT writable/readable stores from Svelte 4
+- All script blocks must have `lang="ts"`
+
+### Rust Specifics
+- Clippy is set to pedantic - warnings are errors
+- Some lints are intentionally allowed (see Cargo.toml)
+- Group imports: std -> external -> internal
+- All public items need doc comments
+
+## File Structure
+
+```
+runi/
+├── src/                      # Svelte frontend
+│   ├── lib/
+│   │   ├── components/       # PascalCase.svelte
+│   │   ├── stores/           # camelCase.ts (Svelte 5 runes)
+│   │   └── utils/            # camelCase.ts
+│   └── routes/               # SvelteKit routes
+├── src-tauri/                # Rust backend
+│   ├── src/
+│   │   ├── main.rs           # Tauri entry
+│   │   ├── lib.rs            # Command exports
+│   │   └── commands/         # Tauri commands
+│   └── Cargo.toml
+├── specs/                    # Technical specifications
+│   └── requirements.md
+├── @fix_plan.md              # Task tracking
+├── PROMPT.md                 # Ralph instructions
+└── CLAUDE.md                 # Project conventions
+```
 
 ## Feature Development Quality Standards
 
@@ -55,17 +118,16 @@ cargo run
 - **Test Pass Rate**: 100% - all tests must pass, no exceptions
 - **Test Types Required**:
   - Unit tests for all business logic and services
-  - Integration tests for API endpoints or main functionality
-  - End-to-end tests for critical user workflows
-- **Coverage Validation**: Run coverage reports before marking features complete:
+  - Integration tests for Tauri commands
+  - Component tests for Svelte components
+- **Coverage Validation**:
   ```bash
-  # Examples by language/framework
+  # Rust coverage
+  cd src-tauri && cargo tarpaulin --out Html
+
+  # Frontend coverage
   npm run test:coverage
-  pytest --cov=src tests/ --cov-report=term-missing
-  cargo tarpaulin --out Html
   ```
-- **Test Quality**: Tests must validate behavior, not just achieve coverage metrics
-- **Test Documentation**: Complex test scenarios must include comments explaining the test strategy
 
 ### Git Workflow Requirements
 
@@ -73,86 +135,50 @@ Before moving to the next feature, ALL changes must be:
 
 1. **Committed with Clear Messages**:
    ```bash
-   git add .
-   git commit -m "feat(module): descriptive message following conventional commits"
+   git commit -m "feat(http): add request timeout configuration"
    ```
-   - Use conventional commit format: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, etc.
-   - Include scope when applicable: `feat(api):`, `fix(ui):`, `test(auth):`
-   - Write descriptive messages that explain WHAT changed and WHY
+   - Use conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
+   - Include scope: `feat(api):`, `fix(ui):`, `test(auth):`
 
-2. **Pushed to Remote Repository**:
+2. **Verified with CI**:
+   ```bash
+   just ci
+   ```
+
+3. **Pushed to Remote**:
    ```bash
    git push origin <branch-name>
    ```
-   - Never leave completed features uncommitted
-   - Push regularly to maintain backup and enable collaboration
-   - Ensure CI/CD pipelines pass before considering feature complete
-
-3. **Branch Hygiene**:
-   - Work on feature branches, never directly on `main`
-   - Branch naming convention: `feature/<feature-name>`, `fix/<issue-name>`, `docs/<doc-update>`
-   - Create pull requests for all significant changes
-
-4. **Ralph Integration**:
-   - Update @fix_plan.md with new tasks before starting work
-   - Mark items complete in @fix_plan.md upon completion
-   - Update PROMPT.md if development patterns change
-   - Test features work within Ralph's autonomous loop
 
 ### Documentation Requirements
 
-**ALL implementation documentation MUST remain synchronized with the codebase**:
-
-1. **Code Documentation**:
-   - Language-appropriate documentation (JSDoc, docstrings, etc.)
-   - Update inline comments when implementation changes
-   - Remove outdated comments immediately
-
-2. **Implementation Documentation**:
-   - Update relevant sections in this AGENT.md file
-   - Keep build and test commands current
-   - Update configuration examples when defaults change
-   - Document breaking changes prominently
-
-3. **README Updates**:
-   - Keep feature lists current
-   - Update setup instructions when dependencies change
-   - Maintain accurate command examples
-   - Update version compatibility information
-
-4. **AGENT.md Maintenance**:
-   - Add new build patterns to relevant sections
-   - Update "Key Learnings" with new insights
-   - Keep command examples accurate and tested
-   - Document new testing patterns or quality gates
+- Update specs/requirements.md if behavior changes
+- Add doc comments for Rust public items
+- Add JSDoc comments for TypeScript exports
+- Update this file if new build patterns are introduced
 
 ### Feature Completion Checklist
 
-Before marking ANY feature as complete, verify:
+- [ ] All tests pass (`just test`)
+- [ ] Code coverage meets 85% minimum
+- [ ] Formatting passes (`just fmt-check`)
+- [ ] Linting passes (`just lint`)
+- [ ] Type checking passes (`just check`)
+- [ ] Committed with conventional commit message
+- [ ] Pushed to remote repository
+- [ ] @fix_plan.md task marked complete
+- [ ] CI pipeline passes (`just ci`)
 
-- [ ] All tests pass with appropriate framework command
-- [ ] Code coverage meets 85% minimum threshold
-- [ ] Coverage report reviewed for meaningful test quality
-- [ ] Code formatted according to project standards
-- [ ] Type checking passes (if applicable)
-- [ ] All changes committed with conventional commit messages
-- [ ] All commits pushed to remote repository
-- [ ] @fix_plan.md task marked as complete
-- [ ] Implementation documentation updated
-- [ ] Inline code comments updated or added
-- [ ] AGENT.md updated (if new patterns introduced)
-- [ ] Breaking changes documented
-- [ ] Features tested within Ralph loop (if applicable)
-- [ ] CI/CD pipeline passes
+## Common Issues & Solutions
 
-### Rationale
+### "Cannot find module @tauri-apps/api/tauri"
+Use `@tauri-apps/api/core` instead - this changed in Tauri v2.
 
-These standards ensure:
-- **Quality**: High test coverage and pass rates prevent regressions
-- **Traceability**: Git commits and @fix_plan.md provide clear history of changes
-- **Maintainability**: Current documentation reduces onboarding time and prevents knowledge loss
-- **Collaboration**: Pushed changes enable team visibility and code review
-- **Reliability**: Consistent quality gates maintain production stability
-- **Automation**: Ralph integration ensures continuous development practices
+### Clippy pedantic warnings
+Some are intentionally allowed in Cargo.toml. Check the lints section before trying to fix.
 
-**Enforcement**: AI agents should automatically apply these standards to all feature development tasks without requiring explicit instruction for each task.
+### Svelte 5 store errors
+Don't use `writable()` or `readable()`. Use `$state()` rune instead.
+
+### Test isolation failures
+Each test must clean up its own state. Don't rely on test ordering.
