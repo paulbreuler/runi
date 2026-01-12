@@ -1,23 +1,31 @@
-# Show available commands
+# runi Workspace - Build and Test Automation
+# Requires: just (https://github.com/casey/just)
+# Install: cargo install just
+
+# Show common commands
 default:
+    @just help
+
+# Show all commands
+list:
     @just --list
 
-# ─────────────────────────────────────────────────────────────
-# INSTALLATION
-# ─────────────────────────────────────────────────────────────
+# ============================================================================
+# 🚀 Quick Start
+# ============================================================================
 
-# Install all dependencies
+# Install all development dependencies
 install:
     npm install
     cd src-tauri && cargo fetch
 
-# ─────────────────────────────────────────────────────────────
-# DEVELOPMENT
-# ─────────────────────────────────────────────────────────────
-
 # Start development server
 dev:
     npm run tauri dev
+
+# ============================================================================
+# 🛠️ Development
+# ============================================================================
 
 # Build for production
 build:
@@ -27,24 +35,18 @@ build:
 build-frontend:
     npm run build
 
-# ─────────────────────────────────────────────────────────────
-# QUALITY: LINTING
-# ─────────────────────────────────────────────────────────────
+# ============================================================================
+# 📦 Dependencies
+# ============================================================================
 
-# Run all linters (same as CI)
-lint: lint-rust lint-frontend
+# Update all dependencies
+update:
+    npm update
+    cd src-tauri && cargo update
 
-# Lint Rust with pedantic clippy (requires frontend build for Tauri context)
-lint-rust: build-frontend
-    cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
-
-# Lint TypeScript/Svelte
-lint-frontend:
-    npm run lint
-
-# ─────────────────────────────────────────────────────────────
-# QUALITY: FORMATTING
-# ─────────────────────────────────────────────────────────────
+# ============================================================================
+# 🎨 Code Quality: Formatting
+# ============================================================================
 
 # Check all formatting (same as CI)
 fmt-check: fmt-check-rust fmt-check-frontend
@@ -68,9 +70,24 @@ fmt-rust:
 fmt-frontend:
     npm run format
 
-# ─────────────────────────────────────────────────────────────
-# QUALITY: TYPE CHECKING
-# ─────────────────────────────────────────────────────────────
+# ============================================================================
+# 🔍 Code Quality: Linting
+# ============================================================================
+
+# Run all linters (same as CI)
+lint: lint-rust lint-frontend
+
+# Lint Rust with pedantic clippy (requires frontend build for Tauri context)
+lint-rust: build-frontend
+    cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+# Lint TypeScript/Svelte
+lint-frontend:
+    npm run lint
+
+# ============================================================================
+# ✅ Code Quality: Type Checking
+# ============================================================================
 
 # Run all type checks (same as CI)
 check: check-rust check-frontend
@@ -83,9 +100,9 @@ check-rust: build-frontend
 check-frontend:
     npm run check
 
-# ─────────────────────────────────────────────────────────────
-# TESTING
-# ─────────────────────────────────────────────────────────────
+# ============================================================================
+# 🧪 Testing
+# ============================================================================
 
 # Run all tests (same as CI)
 test: test-rust test-frontend
@@ -98,9 +115,9 @@ test-rust: build-frontend
 test-frontend:
     npm run test -- --run
 
-# ─────────────────────────────────────────────────────────────
-# CI: FULL PIPELINE
-# ─────────────────────────────────────────────────────────────
+# ============================================================================
+# 🔄 CI Pipeline
+# ============================================================================
 
 # Run complete CI pipeline locally (use before pushing)
 ci: fmt-check lint check test
@@ -110,9 +127,9 @@ ci: fmt-check lint check test
 pre-commit: fmt-check-rust fmt-check-frontend check-frontend
     @echo "✅ Pre-commit checks passed!"
 
-# ─────────────────────────────────────────────────────────────
-# UTILITIES
-# ─────────────────────────────────────────────────────────────
+# ============================================================================
+# 🧹 Cleanup
+# ============================================================================
 
 # Clean build artifacts
 clean:
@@ -121,11 +138,64 @@ clean:
     rm -rf build
     rm -rf .svelte-kit
 
-# Update dependencies
-update:
-    npm update
-    cd src-tauri && cargo update
+# Remove all ralph session files
+clean-ralph:
+    rm -f .call_count
+    rm -f .circuit_breaker_history
+    rm -f .circuit_breaker_state
+    rm -f .claude_session_id
+    rm -f .exit_signals
+    rm -f .last_reset
+    rm -f .ralph_session
+    rm -f .ralph_session_history
+    rm -f .response_analysis
+    rm -f progress.json
+    rm -f status.json
+    @echo "✅ All ralph session files removed"
+
+# ============================================================================
+# 📚 Documentation
+# ============================================================================
 
 # Generate Rust documentation
 docs:
     cd src-tauri && cargo doc --no-deps --open
+
+# ============================================================================
+# 📖 Help
+# ============================================================================
+
+# Show help and common commands
+help:
+    @echo "🔌 runi - Your API Development Partner"
+    @echo "======================================"
+    @echo ""
+    @echo "Quick Start:"
+    @echo "  just install       - Install all dependencies"
+    @echo "  just dev           - Start the development server"
+    @echo ""
+    @echo "Development:"
+    @echo "  just dev           - Start Tauri development server"
+    @echo "  just build         - Build for production"
+    @echo "  just build-frontend - Build frontend only"
+    @echo ""
+    @echo "Code Quality:"
+    @echo "  just fmt           - Fix all formatting"
+    @echo "  just fmt-check     - Check all formatting"
+    @echo "  just lint          - Run all linters"
+    @echo "  just check         - Run all type checks"
+    @echo "  just ci            - Run complete CI pipeline"
+    @echo ""
+    @echo "Testing:"
+    @echo "  just test          - Run all tests"
+    @echo "  just test-rust     - Run Rust tests only"
+    @echo "  just test-frontend - Run frontend tests only"
+    @echo ""
+    @echo "Cleanup:"
+    @echo "  just clean         - Clean build artifacts"
+    @echo "  just clean-ralph   - Remove all ralph session files"
+    @echo ""
+    @echo "Documentation:"
+    @echo "  just docs          - Generate Rust documentation"
+    @echo ""
+    @echo "For a full list of commands: just list"
