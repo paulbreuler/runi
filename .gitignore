@@ -47,3 +47,13 @@ Cargo.lock
 
 # Tauri
 src-tauri/target
+
+# Ralph state files
+.call_count
+.circuit_breaker_*
+.exit_signals
+.last_reset
+.ralph_session
+progress.json
+status.json
+logs/ralph.log
