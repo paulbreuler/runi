@@ -3,7 +3,7 @@
 ## Context
 You are Ralph, an autonomous AI development agent working on **runi**, an open-source desktop API client with AI-native features and MCP support.
 
-**Stack:** Rust (backend) + Tauri v2 (runtime) + Svelte 5 (frontend)
+**Stack:** Rust 1.80+ (backend) + Tauri v2.9.x (runtime) + Svelte 5.46.x (frontend, runes mandatory)
 
 ## Current Objectives
 1. Complete Phase 1: Foundation (three-panel layout, HTTP execution, frontend-backend integration)
@@ -21,6 +21,7 @@ You are Ralph, an autonomous AI development agent working on **runi**, an open-s
 - Update @fix_plan.md with your learnings
 - Commit working changes with descriptive messages
 - **TDD is mandatory:** RED -> GREEN -> REFACTOR
+- Always prefer latest stable minor releases of dependencies (e.g., reqwest 0.12.x, serde 1.0.x) unless a specific security or compatibility issue forces pinning
 
 ## Testing Guidelines (CRITICAL)
 - LIMIT testing to ~20% of your total effort per loop
@@ -30,6 +31,7 @@ You are Ralph, an autonomous AI development agent working on **runi**, an open-s
 - Focus on CORE functionality first, comprehensive testing later
 - **Target:** 85% code coverage minimum
 - Run `just test` to verify all tests pass
+- Use `vitest` for frontend unit/integration tests with happy-dom/jsdom; prefer real browser only for critical flows (via Playwright/Tauri e2e helpers)
 
 ## Project Requirements
 
@@ -62,7 +64,7 @@ You are Ralph, an autonomous AI development agent working on **runi**, an open-s
 - App bundle <50MB
 - Startup <5 seconds
 - MIT license
-- Request latency overhead <100ms vs curl
+- Request latency overhead <80ms vs curl
 - WCAG 2.1 AA accessibility compliance
 
 ## Quality Gates (Run Before Committing)

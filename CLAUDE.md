@@ -21,9 +21,9 @@ runi is an open-source desktop API client with AI-native features and MCP suppor
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| Backend | Rust | 1.75+ (2024 edition) |
-| Runtime | Tauri | v2 |
-| Frontend | Svelte | 5 (runes) |
+| Backend | Rust | 1.80+ (2024 edition) |
+| Runtime | Tauri | v2.9.x |
+| Frontend | Svelte | 5.46.x (runes mandatory) |
 | Storage | YAML/JSON | - |
 
 ## Development Philosophy
