@@ -42,13 +42,14 @@ runi is not just an API client — it's an **intelligent partner** for API devel
 
 ### Competitive Positioning
 
-| Competitor    | Strength We Learn From    | Gap We Fill                       |
-| ------------- | ------------------------- | --------------------------------- |
-| Postman       | Testing suites, workflows | Cloud lock-in, heavy, telemetry   |
-| Bruno         | Git-friendly, local-first | No AI, limited ecosystem          |
-| Hoppscotch    | Lightweight, fast, clean  | No desktop, no AI                 |
-| Insomnia/Yaak | Clean UX, focused         | Limited AI, no MCP                |
-| Apidog        | AI automation attempts    | Cloud-dependent, privacy concerns |
+| Competitor    | Strength We Learn From        | Gap We Fill                       |
+| ------------- | ----------------------------- | --------------------------------- |
+| Postman       | Testing suites, workflows     | Cloud lock-in, heavy, telemetry   |
+| Bruno         | Git-friendly, local-first     | No AI, limited ecosystem          |
+| HTTPie        | CLI excellence, clean desktop | Commercial licensing, no MCP      |
+| Hoppscotch    | Lightweight, fast, clean      | No desktop, no AI                 |
+| Insomnia/Yaak | Clean UX, focused             | Limited AI, no MCP                |
+| Apidog        | AI automation attempts        | Cloud-dependent, privacy concerns |
 
 **runi's edge:** Local-first + AI-native + MCP-powered + Bruno-compatible.
 
@@ -711,22 +712,27 @@ runi will proactively warn about common API security issues:
 
 Document significant technical decisions with rationale and references.
 
-| Date       | Decision                     | Rationale                                                                                 | Reference                                                                                                 |
-| ---------- | ---------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 2026-01-11 | Tauri v2 over Electron       | Smaller bundle (<10MB vs 150MB+), Rust backend, native performance                        | [Tauri docs](https://v2.tauri.app/)                                                                       |
-| 2026-01-11 | Svelte 5 runes               | Modern reactivity model, smaller bundle, better DX                                        | [Svelte 5 announcement](https://svelte.dev/blog/svelte-5-is-alive)                                        |
-| 2026-01-11 | ESLint + Prettier over Biome | Biome has only partial Svelte support as of 2025                                          | [Biome limitations](https://biomejs.dev/formatter/differences-with-prettier/)                             |
-| 2026-01-11 | YAML for collections         | Git-friendly, human-readable, Bruno precedent                                             | Industry standard                                                                                         |
-| 2026-01-11 | Bruno v3 compatibility       | Largest Git-friendly competitor, eases migration                                          | [Bruno docs](https://docs.usebruno.com/)                                                                  |
-| 2026-01-11 | MCP 2025-11-25 spec          | Async ops, elicitation, registry discovery — future-proof                                 | [MCP spec](https://modelcontextprotocol.io/)                                                              |
-| 2026-01-11 | TDD mandatory                | Higher quality, better design, confidence in refactoring                                  | Best practice                                                                                             |
-| 2026-01-11 | Pedantic Clippy              | Catch issues early, enforce idioms, consistent codebase                                   | [Clippy docs](https://doc.rust-lang.org/clippy/)                                                          |
-| 2026-01-11 | Just over Make               | Simpler syntax, better error messages, cross-platform                                     | [Just manual](https://just.systems/man/en/)                                                               |
-| 2026-01-11 | Partner UX paradigm          | Differentiate from "dumb tools" — proactive, intent-deriving                              | Competitive analysis                                                                                      |
-| 2026-01-11 | YAML-first workflows         | Git-friendly, version-controllable; visual builders are commoditized (Flowise, n8n, etc.) | [mcp-agent philosophy](https://github.com/lastmile-ai/mcp-agent)                                          |
-| 2026-01-11 | Sequential workflows         | "Simple patterns are more robust than complex architectures" — loops via programmatic API | [mcp-agent](https://github.com/lastmile-ai/mcp-agent)                                                     |
-| 2026-01-11 | Human-in-the-loop workflows  | Approval steps for sensitive operations; keeps humans in control of agent actions         | [Red Hat MCP article](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp) |
-| 2026-01-11 | Skip visual workflow builder | 2026 market saturated (Lindy, n8n, Flowise, Vellum, etc.); not a differentiator for runi  | [AI Workflow Builders 2026](https://www.lindy.ai/blog/best-ai-agent-builders)                             |
+| Date       | Decision                      | Rationale                                                                                 | Reference                                                                                                 |
+| ---------- | ----------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 2026-01-11 | Tauri v2 over Electron        | Smaller bundle (<10MB vs 150MB+), Rust backend, native performance                        | [Tauri docs](https://v2.tauri.app/)                                                                       |
+| 2026-01-11 | Svelte 5 runes                | Modern reactivity model, smaller bundle, better DX                                        | [Svelte 5 announcement](https://svelte.dev/blog/svelte-5-is-alive)                                        |
+| 2026-01-11 | ESLint + Prettier over Biome  | Biome has only partial Svelte support as of 2025                                          | [Biome limitations](https://biomejs.dev/formatter/differences-with-prettier/)                             |
+| 2026-01-11 | YAML for collections          | Git-friendly, human-readable, Bruno precedent                                             | Industry standard                                                                                         |
+| 2026-01-11 | Bruno v3 compatibility        | Largest Git-friendly competitor, eases migration                                          | [Bruno docs](https://docs.usebruno.com/)                                                                  |
+| 2026-01-11 | MCP 2025-11-25 spec           | Async ops, elicitation, registry discovery — future-proof                                 | [MCP spec](https://modelcontextprotocol.io/)                                                              |
+| 2026-01-11 | TDD mandatory                 | Higher quality, better design, confidence in refactoring                                  | Best practice                                                                                             |
+| 2026-01-11 | Pedantic Clippy               | Catch issues early, enforce idioms, consistent codebase                                   | [Clippy docs](https://doc.rust-lang.org/clippy/)                                                          |
+| 2026-01-11 | Just over Make                | Simpler syntax, better error messages, cross-platform                                     | [Just manual](https://just.systems/man/en/)                                                               |
+| 2026-01-11 | Partner UX paradigm           | Differentiate from "dumb tools" — proactive, intent-deriving                              | Competitive analysis                                                                                      |
+| 2026-01-11 | YAML-first workflows          | Git-friendly, version-controllable; visual builders are commoditized (Flowise, n8n, etc.) | [mcp-agent philosophy](https://github.com/lastmile-ai/mcp-agent)                                          |
+| 2026-01-11 | Sequential workflows          | "Simple patterns are more robust than complex architectures" — loops via programmatic API | [mcp-agent](https://github.com/lastmile-ai/mcp-agent)                                                     |
+| 2026-01-11 | Human-in-the-loop workflows   | Approval steps for sensitive operations; keeps humans in control of agent actions         | [Red Hat MCP article](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp) |
+| 2026-01-11 | Skip visual workflow builder  | 2026 market saturated (Lindy, n8n, Flowise, Vellum, etc.); not a differentiator for runi  | [AI Workflow Builders 2026](https://www.lindy.ai/blog/best-ai-agent-builders)                             |
+| 2026-01-12 | shadcn-svelte for UI          | Accessible, theme-aware, Tailwind-based components; best-in-class Svelte support          | [shadcn-svelte](https://www.shadcn-svelte.com/)                                                           |
+| 2026-01-12 | paneforge for resizable panes | Native Svelte resizable panels; better integration than generic solutions                 | [paneforge](https://paneforge.dev/)                                                                       |
+| 2026-01-12 | Distraction-free UI design    | Vertical split-pane layout, colorful method dropdowns, minimal chrome                     | Industry best practices                                                                                   |
+| 2026-01-12 | lucide-svelte for icons       | Modern icon library with Svelte-native components; consistent with shadcn ecosystem       | [lucide-svelte](https://lucide.dev/)                                                                      |
+| 2026-01-12 | Storybook for components      | Isolated component development; visual review before app integration; Svelte 5 support    | [Storybook SvelteKit](https://storybook.js.org/docs/get-started/frameworks/sveltekit)                     |
 
 ---
 

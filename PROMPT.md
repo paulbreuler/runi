@@ -272,8 +272,24 @@ pub async fn validate_security(request: RequestParams) -> Result<SecurityReport,
 
 ## Svelte 5 Patterns
 
+### Component Library: shadcn-svelte
+
+Use [shadcn-svelte](https://www.shadcn-svelte.com/) for UI components with [paneforge](https://paneforge.dev/) for resizable panels and [lucide-svelte](https://lucide.dev/) for icons.
+
+```bash
+# Setup (one-time)
+npx shadcn-svelte@latest init
+npx shadcn-svelte@latest add input select tabs textarea card table button checkbox label
+npm install paneforge lucide-svelte
+```
+
+### State Management with Runes
+
 ```svelte
 <script lang="ts">
+  import { Input } from '$lib/components/ui/input';
+  import { Button } from '$lib/components/ui/button';
+
   // Use runes: $state, $derived, $effect, $props
   let url = $state('');
   let isValid = $derived(url.length > 0);
