@@ -1,0 +1,26 @@
+# Build outputs
+build/
+dist/
+.svelte-kit/
+
+# Dependencies
+node_modules/
+
+# Rust
+src-tauri/target/
+src-tauri/gen/
+
+# Package manager
+package-lock.json
+pnpm-lock.yaml
+
+# IDE
+.vscode/
+.idea/
+
+# Ralph
+logs/
+.ralph_session*
+.response_analysis
+.claude_session_id
+status.json

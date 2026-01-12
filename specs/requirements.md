@@ -2,9 +2,10 @@
 
 ## Overview
 
-**runi** is an open-source desktop API client that serves as an **intelligent partner** for API developers. Unlike traditional API clients that offer request/response interfaces, runi understands *intent* and *context*, providing proactive intelligence throughout the development workflow.
+**runi** is an open-source desktop API client that serves as an **intelligent partner** for API developers. Unlike traditional API clients that offer request/response interfaces, runi understands _intent_ and _context_, providing proactive intelligence throughout the development workflow.
 
 **Core Identity:**
+
 - **AI-Native:** Intelligence built in, not bolted on
 - **MCP-Powered:** Agentic workflows, not just chat
 - **Local-First:** Privacy by design, Git-friendly storage
@@ -13,13 +14,13 @@
 
 ### Technology Stack
 
-| Layer | Technology | Version | Purpose |
-|-------|------------|---------|---------|
-| Backend | Rust | 1.80+ (2024 edition) | Core logic, HTTP execution, file I/O |
-| Runtime | Tauri | v2.9.x | Desktop app container, IPC bridge |
-| Frontend | Svelte | 5.46.x (runes mandatory) | Reactive UI components |
-| Storage | YAML/JSON | - | Collections, history, environments |
-| AI | Ollama | optional | Local LLM inference |
+| Layer    | Technology | Version                  | Purpose                              |
+| -------- | ---------- | ------------------------ | ------------------------------------ |
+| Backend  | Rust       | 1.80+ (2024 edition)     | Core logic, HTTP execution, file I/O |
+| Runtime  | Tauri      | v2.9.x                   | Desktop app container, IPC bridge    |
+| Frontend | Svelte     | 5.46.x (runes mandatory) | Reactive UI components               |
+| Storage  | YAML/JSON  | -                        | Collections, history, environments   |
+| AI       | Ollama     | optional                 | Local LLM inference                  |
 
 ### High-Level Architecture
 
@@ -70,13 +71,13 @@ Suggestions   Security Checks   Error Analysis
 
 **Components:**
 
-| Component | Purpose | AI Required |
-|-----------|---------|-------------|
-| Rule Engine | Pattern-based suggestions (headers, auth) | No |
-| Security Validator | OWASP-inspired checks | No |
-| Error Analyzer | Response analysis, fix suggestions | Optional (enhanced) |
-| Intent Interpreter | Natural language → requests | Yes |
-| Context Engine | Collection-aware suggestions | Optional (enhanced) |
+| Component          | Purpose                                   | AI Required         |
+| ------------------ | ----------------------------------------- | ------------------- |
+| Rule Engine        | Pattern-based suggestions (headers, auth) | No                  |
+| Security Validator | OWASP-inspired checks                     | No                  |
+| Error Analyzer     | Response analysis, fix suggestions        | Optional (enhanced) |
+| Intent Interpreter | Natural language → requests               | Yes                 |
+| Context Engine     | Collection-aware suggestions              | Optional (enhanced) |
 
 ## Data Models
 
@@ -101,12 +102,12 @@ body:
   content: string
 auth:
   type: none | api-key | bearer | basic
-  config: object  # type-specific configuration
+  config: object # type-specific configuration
 created: ISO8601 timestamp
 updated: ISO8601 timestamp
 # Intelligence metadata (transient, not persisted)
-_suggestions: Suggestion[]      # Populated at runtime
-_securityWarnings: Warning[]    # Populated at runtime
+_suggestions: Suggestion[] # Populated at runtime
+_securityWarnings: Warning[] # Populated at runtime
 ```
 
 ### Suggestion
@@ -119,7 +120,7 @@ severity: info | warning
 message: string
 action:
   type: add_header | set_auth | modify_body | custom
-  payload: object  # Action-specific data
+  payload: object # Action-specific data
 dismissed: boolean
 ```
 
@@ -131,7 +132,7 @@ code: AUTH_OVER_HTTP | BASIC_AUTH_HTTP | EXPIRED_JWT | INJECTION_PATTERN | SENSI
 severity: info | warning | error
 message: string
 details: string
-remediation: string  # Suggested fix
+remediation: string # Suggested fix
 ```
 
 ### Collection
@@ -144,13 +145,13 @@ description: string
 variables:
   - key: string
     value: string
-    secret: boolean  # Mask in UI if true
+    secret: boolean # Mask in UI if true
 folders:
   - id: string
     name: string
     requests: Request[]
-    folders: Folder[]  # nested folders
-requests: Request[]  # root-level requests
+    folders: Folder[] # nested folders
+requests: Request[] # root-level requests
 created: ISO8601 timestamp
 updated: ISO8601 timestamp
 ```
@@ -160,11 +161,11 @@ updated: ISO8601 timestamp
 ```yaml
 # Environment schema
 id: string (uuid)
-name: string  # e.g., "Development", "Production"
+name: string # e.g., "Development", "Production"
 variables:
   - key: string
     value: string
-    secret: boolean  # mask in UI if true
+    secret: boolean # mask in UI if true
 active: boolean
 ```
 
@@ -176,7 +177,7 @@ id: string (uuid)
 request:
   method: string
   url: string
-  headers: Header[]  # Sensitive headers masked
+  headers: Header[] # Sensitive headers masked
   body: Body
 response:
   status: number
@@ -189,10 +190,10 @@ response:
     connect: number (ms)
     tls: number (ms)
     firstByte: number (ms)
-analysis:  # Intelligence layer output
+analysis: # Intelligence layer output
   errorType: string | null
   suggestions: string[]
-  aiAnalysis: string | null  # If AI was used
+  aiAnalysis: string | null # If AI was used
 timestamp: ISO8601 timestamp
 ```
 
@@ -205,15 +206,15 @@ name: string
 description: string
 steps:
   - id: string
-    tool: string  # Request name or MCP tool
+    tool: string # Request name or MCP tool
     inputs: object
     assert:
       status: number | null
-      body: object  # JSONPath assertions
+      body: object # JSONPath assertions
     extract:
       variableName: jsonPath
 on_failure: stop | continue | retry
-variables: object  # Extracted values during run
+variables: object # Extracted values during run
 created: ISO8601 timestamp
 ```
 
@@ -490,6 +491,7 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 ### Component Specifications
 
 #### Sidebar (250px default width, resizable)
+
 - Collapsible sections: Collections, History
 - Tree view for collections with folders
 - Search/filter input
@@ -498,6 +500,7 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 - History entries show masked sensitive headers
 
 #### Request Panel (top 60% of main area)
+
 - Method selector: dropdown with GET, POST, PUT, PATCH, DELETE
 - URL input: full-width, with placeholder "Enter request URL"
 - Natural language input (toggle): "Describe what you want to test..."
@@ -508,6 +511,7 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 - **Warning area**: Security warnings above send button, color-coded
 
 #### Response Panel (bottom 40% of main area, resizable)
+
 - Status badge: color-coded (2xx green, 3xx blue, 4xx yellow, 5xx red)
 - Timing display: total time, size
 - View toggle: Pretty (formatted JSON) / Raw
@@ -527,14 +531,14 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 
 ## Performance Requirements
 
-| Metric | Target | Measurement Method |
-|--------|--------|-------------------|
-| Startup time | <5 seconds | Time from app launch to interactive UI |
-| Request overhead | <80ms | Difference between runi and curl for same request |
-| Bundle size | <50MB | Total app package size |
-| Memory usage | <200MB | Idle memory consumption |
-| Suggestion latency | <100ms | Time to show rule-based suggestions |
-| AI analysis latency | <5 seconds | Time for Ollama-enhanced analysis |
+| Metric              | Target     | Measurement Method                                |
+| ------------------- | ---------- | ------------------------------------------------- |
+| Startup time        | <5 seconds | Time from app launch to interactive UI            |
+| Request overhead    | <80ms      | Difference between runi and curl for same request |
+| Bundle size         | <50MB      | Total app package size                            |
+| Memory usage        | <200MB     | Idle memory consumption                           |
+| Suggestion latency  | <100ms     | Time to show rule-based suggestions               |
+| AI analysis latency | <5 seconds | Time for Ollama-enhanced analysis                 |
 
 ## Security Validation (OWASP API Security Inspired)
 
@@ -542,13 +546,13 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 
 Based on [OWASP API Security Top 10 2023](https://owasp.org/API-Security/):
 
-| Code | Check | Trigger | Severity | Remediation |
-|------|-------|---------|----------|-------------|
-| AUTH_OVER_HTTP | Authorization header over HTTP | `http://` URL (non-localhost) + Authorization header | Warning | Switch to HTTPS or confirm intent |
-| BASIC_AUTH_HTTP | Basic Auth over HTTP | `http://` URL + Basic Auth | Error | Block or require explicit confirmation |
-| EXPIRED_JWT | JWT token expired | Bearer token with past `exp` claim | Warning | Refresh token |
-| INJECTION_PATTERN | SQL/NoSQL injection | Body contains `'; DROP`, `$where`, etc. | Info | Review highlighted patterns |
-| SENSITIVE_EXPOSURE | Sensitive data in URL | API keys, tokens in query params | Warning | Move to headers |
+| Code               | Check                          | Trigger                                              | Severity | Remediation                            |
+| ------------------ | ------------------------------ | ---------------------------------------------------- | -------- | -------------------------------------- |
+| AUTH_OVER_HTTP     | Authorization header over HTTP | `http://` URL (non-localhost) + Authorization header | Warning  | Switch to HTTPS or confirm intent      |
+| BASIC_AUTH_HTTP    | Basic Auth over HTTP           | `http://` URL + Basic Auth                           | Error    | Block or require explicit confirmation |
+| EXPIRED_JWT        | JWT token expired              | Bearer token with past `exp` claim                   | Warning  | Refresh token                          |
+| INJECTION_PATTERN  | SQL/NoSQL injection            | Body contains `'; DROP`, `$where`, etc.              | Info     | Review highlighted patterns            |
+| SENSITIVE_EXPOSURE | Sensitive data in URL          | API keys, tokens in query params                     | Warning  | Move to headers                        |
 
 ### Privacy by Design
 
@@ -583,11 +587,11 @@ Based on [OWASP API Security Top 10 2023](https://owasp.org/API-Security/):
 
 ### Platform-Specific Paths
 
-| Platform | Path |
-|----------|------|
-| macOS | `~/Library/Application Support/com.runi.app/` |
-| Windows | `%APPDATA%\runi\` |
-| Linux | `~/.config/runi/` |
+| Platform | Path                                          |
+| -------- | --------------------------------------------- |
+| macOS    | `~/Library/Application Support/com.runi.app/` |
+| Windows  | `%APPDATA%\runi\`                             |
+| Linux    | `~/.config/runi/`                             |
 
 ## Import/Export Specifications
 
@@ -691,12 +695,12 @@ Based on [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specific
 
 ### MCP 2025-11-25 Features
 
-| Feature | Description | Implementation |
-|---------|-------------|----------------|
-| Elicitation | Server-initiated user prompts | Display JSON Schema form, return user input |
-| URL-mode Elicitation | OAuth flows in browser | Open browser for auth, receive callback |
-| Progress Tracking | Long-running tool feedback | Show progress bar during execution |
-| Cancellation | Cancel running tools | Send cancellation request, handle cleanup |
+| Feature              | Description                   | Implementation                              |
+| -------------------- | ----------------------------- | ------------------------------------------- |
+| Elicitation          | Server-initiated user prompts | Display JSON Schema form, return user input |
+| URL-mode Elicitation | OAuth flows in browser        | Open browser for auth, receive callback     |
+| Progress Tracking    | Long-running tool feedback    | Show progress bar during execution          |
+| Cancellation         | Cancel running tools          | Send cancellation request, handle cleanup   |
 
 ### Agentic Workflows
 
@@ -704,12 +708,12 @@ Inspired by [mcp-agent](https://github.com/lastmile-ai/mcp-agent) philosophy: "S
 
 ```yaml
 workflow:
-  name: "Auth Flow Validation"
+  name: 'Auth Flow Validation'
   steps:
     - tool: login
       inputs:
-        email: "{{test_user}}"
-        password: "{{test_pass}}"
+        email: '{{test_user}}'
+        password: '{{test_pass}}'
       assert:
         status: 200
         body.token: exists
@@ -718,17 +722,17 @@ workflow:
 
     - tool: protected_resource
       inputs:
-        authorization: "Bearer {{token}}"
+        authorization: 'Bearer {{token}}'
       assert:
         status: 200
 
     - tool: delete_user
       inputs:
-        user_id: "{{user_id}}"
-      approval: true  # Human-in-the-loop for destructive action
+        user_id: '{{user_id}}'
+      approval: true # Human-in-the-loop for destructive action
       assert:
         status: 204
-  on_failure: retry(3)  # Retry with exponential backoff
+  on_failure: retry(3) # Retry with exponential backoff
 ```
 
 **Workflow Features:**

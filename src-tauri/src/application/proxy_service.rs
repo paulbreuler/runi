@@ -6,10 +6,13 @@ use crate::domain::models::HelloWorldResponse;
 pub struct ProxyService;
 
 impl ProxyService {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self
     }
 
+    #[must_use]
+    #[allow(clippy::unused_self)] // Method signature for future state access
     pub fn hello_world(&self) -> HelloWorldResponse {
         HelloWorldResponse::new("Hello from Runi!".to_string())
     }

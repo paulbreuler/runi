@@ -30,13 +30,13 @@ runi bridges this gap: local-first + AI-native + privacy-focused + proactive par
 
 ## Competitive Positioning
 
-| Competitor | Strength We Learn From | Gap We Fill |
-|------------|------------------------|-------------|
-| Postman | Testing suites, workflows | Cloud lock-in, heavy, telemetry |
-| Bruno | Git-friendly, local-first | No AI, limited ecosystem |
-| Hoppscotch | Lightweight, fast, clean | No desktop, no AI |
-| Insomnia/Yaak | Clean UX, focused | Limited AI, no MCP |
-| Apidog | AI automation attempts | Cloud-dependent, privacy concerns |
+| Competitor    | Strength We Learn From    | Gap We Fill                       |
+| ------------- | ------------------------- | --------------------------------- |
+| Postman       | Testing suites, workflows | Cloud lock-in, heavy, telemetry   |
+| Bruno         | Git-friendly, local-first | No AI, limited ecosystem          |
+| Hoppscotch    | Lightweight, fast, clean  | No desktop, no AI                 |
+| Insomnia/Yaak | Clean UX, focused         | Limited AI, no MCP                |
+| Apidog        | AI automation attempts    | Cloud-dependent, privacy concerns |
 
 **runi's edge:** Local-first + AI-native + MCP-powered + Bruno-compatible.
 
@@ -44,13 +44,13 @@ runi bridges this gap: local-first + AI-native + privacy-focused + proactive par
 
 ### Stack Decisions
 
-| Component | Technology | Rationale |
-|-----------|------------|-----------|
-| Backend | Rust 1.80+ | Performance, memory safety, `reqwest` for HTTP |
-| Runtime | Tauri v2.9.x | Cross-platform, small bundle, native performance |
-| Frontend | Svelte 5.46.x | Reactive, minimal bundle, runes syntax mandatory |
-| Storage | YAML/JSON files | Git-friendly, no database needed |
-| AI | Ollama (optional) | Local LLM inference, privacy-preserving |
+| Component | Technology        | Rationale                                        |
+| --------- | ----------------- | ------------------------------------------------ |
+| Backend   | Rust 1.80+        | Performance, memory safety, `reqwest` for HTTP   |
+| Runtime   | Tauri v2.9.x      | Cross-platform, small bundle, native performance |
+| Frontend  | Svelte 5.46.x     | Reactive, minimal bundle, runes syntax mandatory |
+| Storage   | YAML/JSON files   | Git-friendly, no database needed                 |
+| AI        | Ollama (optional) | Local LLM inference, privacy-preserving          |
 
 ### Constraints
 
@@ -73,57 +73,57 @@ runi bridges this gap: local-first + AI-native + privacy-focused + proactive par
 
 ### Core API Client + Intelligence (Must Have - Phase 1-2)
 
-| ID | Requirement |
-|----|-------------|
-| FR-1.1 | REST requests (GET, POST, PUT, PATCH, DELETE) |
-| FR-1.2 | Request builder: URL, method, headers, body, query params |
-| FR-1.3 | Auth helpers: API Key, Bearer Token, Basic Auth |
-| FR-1.4 | Response viewer with JSON syntax highlighting |
-| FR-1.5 | Request history with file-based persistence |
-| FR-1.6 | Collections for organizing requests (YAML files) |
-| FR-1.7 | Environment variables with `{{variable}}` substitution |
-| FR-1.8 | **Proactive header suggestions** (Content-Type, Accept based on context) |
-| FR-1.9 | **Security warnings** (auth over HTTP, expired JWT, injection patterns) |
-| FR-1.10 | **Inline error analysis** (rule-based initially, AI-enhanced later) |
+| ID      | Requirement                                                              |
+| ------- | ------------------------------------------------------------------------ |
+| FR-1.1  | REST requests (GET, POST, PUT, PATCH, DELETE)                            |
+| FR-1.2  | Request builder: URL, method, headers, body, query params                |
+| FR-1.3  | Auth helpers: API Key, Bearer Token, Basic Auth                          |
+| FR-1.4  | Response viewer with JSON syntax highlighting                            |
+| FR-1.5  | Request history with file-based persistence                              |
+| FR-1.6  | Collections for organizing requests (YAML files)                         |
+| FR-1.7  | Environment variables with `{{variable}}` substitution                   |
+| FR-1.8  | **Proactive header suggestions** (Content-Type, Accept based on context) |
+| FR-1.9  | **Security warnings** (auth over HTTP, expired JWT, injection patterns)  |
+| FR-1.10 | **Inline error analysis** (rule-based initially, AI-enhanced later)      |
 
 ### Persistence + Interoperability (Must Have - Phase 3)
 
-| ID | Requirement |
-|----|-------------|
+| ID     | Requirement                                            |
+| ------ | ------------------------------------------------------ |
 | FR-2.1 | Bruno v3 / OpenCollection YAML import (migration path) |
-| FR-2.2 | Export to runi YAML and OpenCollection formats |
-| FR-2.3 | OpenAPI 3.x import |
-| FR-2.4 | Postman v2.1 collection import |
+| FR-2.2 | Export to runi YAML and OpenCollection formats         |
+| FR-2.3 | OpenAPI 3.x import                                     |
+| FR-2.4 | Postman v2.1 collection import                         |
 
 ### AI Partner Features (High Priority - Phase 4)
 
-| ID | Requirement |
-|----|-------------|
-| FR-3.1 | Natural language → request generation |
-| FR-3.2 | AI-powered error analysis (explain 4xx/5xx, suggest fixes) |
+| ID     | Requirement                                                    |
+| ------ | -------------------------------------------------------------- |
+| FR-3.1 | Natural language → request generation                          |
+| FR-3.2 | AI-powered error analysis (explain 4xx/5xx, suggest fixes)     |
 | FR-3.3 | Local model support via Ollama (provider-agnostic abstraction) |
-| FR-3.4 | Smart suggestions based on collection context |
-| FR-3.5 | Intent interpretation ("test login with bad credentials") |
+| FR-3.4 | Smart suggestions based on collection context                  |
+| FR-3.5 | Intent interpretation ("test login with bad credentials")      |
 
 ### MCP & Agentic Workflows (High Priority - Phase 5)
 
-| ID | Requirement |
-|----|-------------|
-| FR-4.1 | Generate MCP server from collection (TypeScript/Python) |
-| FR-4.2 | MCP tool testing interface |
-| FR-4.3 | MCP Registry browsing (registry.modelcontextprotocol.io) |
+| ID     | Requirement                                               |
+| ------ | --------------------------------------------------------- |
+| FR-4.1 | Generate MCP server from collection (TypeScript/Python)   |
+| FR-4.2 | MCP tool testing interface                                |
+| FR-4.3 | MCP Registry browsing (registry.modelcontextprotocol.io)  |
 | FR-4.4 | Agentic workflows with assertions and variable extraction |
-| FR-4.5 | Request chaining as MCP tool sequences |
-| FR-4.6 | Human-in-the-loop approval steps in workflows |
+| FR-4.5 | Request chaining as MCP tool sequences                    |
+| FR-4.6 | Human-in-the-loop approval steps in workflows             |
 
 ### Security Validation - OWASP-Inspired (Integrated Throughout)
 
-| ID | Requirement |
-|----|-------------|
-| FR-5.1 | Auth header over HTTP warning (non-localhost) |
-| FR-5.2 | JWT expiry detection and warning |
-| FR-5.3 | Injection pattern detection in request bodies |
-| FR-5.4 | Sensitive data masking in history |
+| ID     | Requirement                                      |
+| ------ | ------------------------------------------------ |
+| FR-5.1 | Auth header over HTTP warning (non-localhost)    |
+| FR-5.2 | JWT expiry detection and warning                 |
+| FR-5.3 | Injection pattern detection in request bodies    |
+| FR-5.4 | Sensitive data masking in history                |
 | FR-5.5 | TLS certificate validation with explicit opt-out |
 
 ## Non-Functional Requirements
@@ -147,15 +147,15 @@ runi bridges this gap: local-first + AI-native + privacy-focused + proactive par
 
 ## Success Criteria
 
-| Metric | Target |
-|--------|--------|
-| Time to first request | <2 minutes from launch |
-| Test coverage | >=85% |
-| All tests passing | 100% |
-| Bundle size | <50MB |
-| Proactive suggestions shown | >=1 per complex request |
-| Security warnings on risky requests | 100% detection rate |
-| Error analysis available | For all 4xx/5xx responses |
+| Metric                              | Target                    |
+| ----------------------------------- | ------------------------- |
+| Time to first request               | <2 minutes from launch    |
+| Test coverage                       | >=85%                     |
+| All tests passing                   | 100%                      |
+| Bundle size                         | <50MB                     |
+| Proactive suggestions shown         | >=1 per complex request   |
+| Security warnings on risky requests | 100% detection rate       |
+| Error analysis available            | For all 4xx/5xx responses |
 
 ## Development Approach
 

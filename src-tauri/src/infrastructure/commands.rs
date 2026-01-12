@@ -27,8 +27,7 @@ mod tests {
     async fn test_hello_world_command() {
         let service = create_proxy_service();
         // Test the service directly as integration tests will cover the command
-        let service_guard = service.lock().await;
-        let response = service_guard.hello_world();
+        let response = service.lock().await.hello_world();
         assert_eq!(response.message, "Hello from Runi!");
     }
 }
