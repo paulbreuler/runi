@@ -138,7 +138,7 @@ clean:
     rm -rf build
     rm -rf .svelte-kit
 
-# Remove all ralph session files
+# Remove all ralph session files and reset circuit breaker
 clean-ralph:
     rm -f .call_count
     rm -f .circuit_breaker_history
@@ -151,7 +151,8 @@ clean-ralph:
     rm -f .response_analysis
     rm -f progress.json
     rm -f status.json
-    @echo "✅ All ralph session files removed"
+    @ralph --reset-circuit || true
+    @echo "✅ All ralph session files removed and circuit breaker reset"
 
 # ============================================================================
 # 📚 Documentation

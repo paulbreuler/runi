@@ -32,6 +32,13 @@ export default tseslint.config(
     },
   },
   {
+    // Disable navigation rule for shadcn-svelte generated UI components
+    files: ['src/lib/components/ui/**/*.svelte'],
+    rules: {
+      'svelte/no-navigation-without-resolve': 'off',
+    },
+  },
+  {
     ignores: ['build/', '.svelte-kit/', 'dist/', 'node_modules/', 'src-tauri/target/'],
   }
 );
