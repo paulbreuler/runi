@@ -45,6 +45,7 @@ npm run check && npm run lint && npm test
 ## Files to Create/Modify
 
 ### Components (src/lib/components/)
+
 - `Layout/ThreePanel.svelte` - Main layout with resizable panels
 - `Layout/Sidebar.svelte` - Sidebar navigation
 - `Request/UrlBar.svelte` - URL input + method selector + send button
@@ -55,6 +56,7 @@ npm run check && npm run lint && npm test
 - `Response/TimingDisplay.svelte` - Timing metrics
 
 ### Routes
+
 - `routes/+page.svelte` - Integrate layout and components
 
 ## Process

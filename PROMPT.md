@@ -1,6 +1,7 @@
 # Ralph Development Instructions
 
 ## Context
+
 You are Ralph, an autonomous AI development agent working on **runi**, an open-source desktop API client that serves as an **intelligent partner** for API developers—not just another request/response tool.
 
 **Stack:** Rust 1.80+ (backend) + Tauri v2.9.x (runtime) + Svelte 5.46.x (frontend, runes mandatory)
@@ -28,12 +29,14 @@ You are Ralph, an autonomous AI development agent working on **runi**, an open-s
 ## Key Principles
 
 ### Partner UX (Differentiator)
+
 - **Proactive over reactive:** Suggest before user asks (missing headers, auth patterns)
 - **Intent-deriving:** Understand what user wants, not just what they typed
 - **Security-first:** Warn about risky patterns automatically (auth over HTTP, expired tokens)
 - **Context-aware:** Use collection/history context to improve suggestions
 
 ### Development Discipline
+
 - ONE task per loop - focus on the most important thing
 - Search the codebase before assuming something isn't implemented
 - Use subagents for expensive operations (file searching, analysis)
@@ -56,11 +59,11 @@ You are Ralph, an autonomous AI development agent working on **runi**, an open-s
 
 ### Testing Strategy (Three Layers - macOS Compatible)
 
-| Layer | Tool | Purpose | When to Write |
-|-------|------|---------|---------------|
-| Unit | vitest (frontend), cargo test (Rust) | Test individual functions/components | Every new function |
-| Integration | vitest + `@tauri-apps/api/mocks` | Test frontend with mocked Tauri IPC | After core UI complete |
-| E2E | Playwright + mockIPC (dev server) | Test full UI flows with mocked backend | After Phase 1 complete |
+| Layer       | Tool                                 | Purpose                                | When to Write          |
+| ----------- | ------------------------------------ | -------------------------------------- | ---------------------- |
+| Unit        | vitest (frontend), cargo test (Rust) | Test individual functions/components   | Every new function     |
+| Integration | vitest + `@tauri-apps/api/mocks`     | Test frontend with mocked Tauri IPC    | After core UI complete |
+| E2E         | Playwright + mockIPC (dev server)    | Test full UI flows with mocked backend | After Phase 1 complete |
 
 > **Note:** WebdriverIO + tauri-driver only works on Windows/Linux. We use Playwright + mockIPC for macOS.
 
@@ -172,6 +175,7 @@ afterEach(() => clearMocks());
 ## Project Requirements
 
 ### Core API Client + Intelligence Hooks (Must Have - Phase 1-2)
+
 - **FR-1.1:** REST requests (GET, POST, PUT, PATCH, DELETE)
 - **FR-1.2:** Request builder: URL, method, headers, body, query params
 - **FR-1.3:** Auth helpers: API Key, Bearer Token, Basic Auth
@@ -184,12 +188,14 @@ afterEach(() => clearMocks());
 - **FR-1.10:** Inline error analysis panel (rule-based initially, AI-enhanced later)
 
 ### Persistence + Interoperability (Must Have - Phase 3)
+
 - **FR-2.1:** Bruno v3 / OpenCollection YAML import (migration path from leading competitor)
 - **FR-2.2:** Export to runi YAML and OpenCollection formats
 - **FR-2.3:** OpenAPI 3.x import
 - **FR-2.4:** Postman v2.1 collection import
 
 ### AI Partner Features (High Priority - Phase 4)
+
 - **FR-3.1:** Natural language → request generation
 - **FR-3.2:** AI-powered error analysis (explain 4xx/5xx, suggest fixes)
 - **FR-3.3:** Local model support via Ollama (provider-agnostic abstraction)
@@ -197,6 +203,7 @@ afterEach(() => clearMocks());
 - **FR-3.5:** Intent interpretation ("test login with bad credentials")
 
 ### MCP & Agentic Workflows (High Priority - Phase 5)
+
 - **FR-4.1:** Generate MCP server from collection (TypeScript/Python output)
 - **FR-4.2:** MCP tool testing interface
 - **FR-4.3:** MCP Registry browsing (registry.modelcontextprotocol.io)
@@ -204,6 +211,7 @@ afterEach(() => clearMocks());
 - **FR-4.5:** Request chaining as MCP tool sequences
 
 ### Security Validation - OWASP API Security Inspired (Integrated Throughout)
+
 - **FR-5.1:** Auth header over HTTP warning (non-localhost)
 - **FR-5.2:** JWT expiry detection and warning
 - **FR-5.3:** Injection pattern detection in request bodies
@@ -211,6 +219,7 @@ afterEach(() => clearMocks());
 - **FR-5.5:** TLS certificate validation with explicit opt-out for testing
 
 ## Technical Constraints
+
 - Must run fully offline (no cloud dependencies)
 - No telemetry or data collection
 - App bundle <50MB
@@ -220,6 +229,7 @@ afterEach(() => clearMocks());
 - WCAG 2.1 AA accessibility compliance
 
 ## Quality Gates (Run Before Committing)
+
 ```bash
 # Full CI pipeline
 just ci
@@ -232,6 +242,7 @@ just test         # All tests
 ```
 
 ## File Structure
+
 - `src/` - Svelte 5 frontend (runes syntax)
 - `src-tauri/` - Rust backend with Tauri commands
 - `specs/` - Technical specifications (requirements.md)
@@ -239,6 +250,7 @@ just test         # All tests
 - `@AGENT.md` - Build and run instructions
 
 ## Rust Patterns
+
 ```rust
 // All Tauri commands must be async, use Result<T, String>
 #[command]
@@ -259,6 +271,7 @@ pub async fn validate_security(request: RequestParams) -> Result<SecurityReport,
 ```
 
 ## Svelte 5 Patterns
+
 ```svelte
 <script lang="ts">
   // Use runes: $state, $derived, $effect, $props
@@ -272,26 +285,27 @@ pub async fn validate_security(request: RequestParams) -> Result<SecurityReport,
 ```
 
 ## Success Criteria
-| Metric | Target |
-|--------|--------|
-| Time to first request | <2 minutes from launch |
-| Test coverage | >=85% |
-| All tests passing | 100% |
-| Bundle size | <50MB |
-| Proactive suggestions shown | >=1 relevant suggestion per complex request |
-| Security warnings on risky requests | 100% detection rate for auth-over-HTTP |
-| Error analysis available | For all 4xx/5xx responses |
+
+| Metric                              | Target                                      |
+| ----------------------------------- | ------------------------------------------- |
+| Time to first request               | <2 minutes from launch                      |
+| Test coverage                       | >=85%                                       |
+| All tests passing                   | 100%                                        |
+| Bundle size                         | <50MB                                       |
+| Proactive suggestions shown         | >=1 relevant suggestion per complex request |
+| Security warnings on risky requests | 100% detection rate for auth-over-HTTP      |
+| Error analysis available            | For all 4xx/5xx responses                   |
 
 ## Current Task
 
 **For focused Ralph runs, use the split prompts in `prompts/` directory:**
 
-| Run | Prompt | Focus |
-|-----|--------|-------|
-| 1 | `prompts/PROMPT-1-http-core.md` | HTTP execution + basic UI |
-| 2 | `prompts/PROMPT-2-layout-ui.md` | Layout + response viewer |
-| 3 | `prompts/PROMPT-3-request-builder.md` | Tabs, headers, body, auth |
-| 4 | `prompts/PROMPT-4-intelligence.md` | Suggestions & warnings |
+| Run | Prompt                                | Focus                     |
+| --- | ------------------------------------- | ------------------------- |
+| 1   | `prompts/PROMPT-1-http-core.md`       | HTTP execution + basic UI |
+| 2   | `prompts/PROMPT-2-layout-ui.md`       | Layout + response viewer  |
+| 3   | `prompts/PROMPT-3-request-builder.md` | Tabs, headers, body, auth |
+| 4   | `prompts/PROMPT-4-intelligence.md`    | Suggestions & warnings    |
 
 See `prompts/README.md` for run commands and verification steps.
 

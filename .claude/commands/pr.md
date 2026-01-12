@@ -27,6 +27,7 @@ Create a pull request following runi's conventions.
    - Example: `fix(ui): resolve header tab overflow on small screens`
 
 5. Create the PR with this body format:
+
    ```
    ## Summary
    - <bullet point 1>
@@ -42,6 +43,7 @@ Create a pull request following runi's conventions.
    ```
 
 6. Push to remote with `-u` flag if needed, then create the PR:
+
    ```bash
    gh pr create --title "<type>(<scope>): <description>" --body "$(cat <<'EOF'
    ## Summary

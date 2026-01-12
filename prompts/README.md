@@ -46,25 +46,25 @@ ralph -p prompts/PROMPT-4-intelligence.md --monitor
 
 ## Ralph CLI Reference
 
-| Option | Description |
-|--------|-------------|
-| `-p, --prompt FILE` | Set prompt file (default: PROMPT.md) |
-| `-c, --calls NUM` | Max calls per hour (default: 100) |
+| Option              | Description                                    |
+| ------------------- | ---------------------------------------------- |
+| `-p, --prompt FILE` | Set prompt file (default: PROMPT.md)           |
+| `-c, --calls NUM`   | Max calls per hour (default: 100)              |
 | `-t, --timeout MIN` | Timeout per execution in minutes (default: 15) |
-| `-m, --monitor` | Start with tmux monitoring |
-| `-v, --verbose` | Show detailed progress |
-| `--reset-circuit` | Reset circuit breaker if stuck |
-| `--reset-session` | Clear session context |
-| `-s, --status` | Show current status |
+| `-m, --monitor`     | Start with tmux monitoring                     |
+| `-v, --verbose`     | Show detailed progress                         |
+| `--reset-circuit`   | Reset circuit breaker if stuck                 |
+| `--reset-session`   | Clear session context                          |
+| `-s, --status`      | Show current status                            |
 
 ## Run Order (if using split prompts)
 
-| Run | Prompt | Focus |
-|-----|--------|-------|
-| 1 | `PROMPT-1-http-core.md` | HTTP execution backend + basic UI |
-| 2 | `PROMPT-2-layout-ui.md` | Three-panel layout + response viewer |
-| 3 | `PROMPT-3-request-builder.md` | Tabs, headers, body, auth |
-| 4 | `PROMPT-4-intelligence.md` | Suggestions & warnings infrastructure |
+| Run | Prompt                        | Focus                                 |
+| --- | ----------------------------- | ------------------------------------- |
+| 1   | `PROMPT-1-http-core.md`       | HTTP execution backend + basic UI     |
+| 2   | `PROMPT-2-layout-ui.md`       | Three-panel layout + response viewer  |
+| 3   | `PROMPT-3-request-builder.md` | Tabs, headers, body, auth             |
+| 4   | `PROMPT-4-intelligence.md`    | Suggestions & warnings infrastructure |
 
 ## Verification Between Runs
 
