@@ -23,6 +23,10 @@ dev:
 build:
     npm run tauri build
 
+# Build frontend only (required for Rust compilation)
+build-frontend:
+    npm run build
+
 # ─────────────────────────────────────────────────────────────
 # QUALITY: LINTING
 # ─────────────────────────────────────────────────────────────
@@ -30,8 +34,8 @@ build:
 # Run all linters (same as CI)
 lint: lint-rust lint-frontend
 
-# Lint Rust with pedantic clippy
-lint-rust:
+# Lint Rust with pedantic clippy (requires frontend build for Tauri context)
+lint-rust: build-frontend
     cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 # Lint TypeScript/Svelte
@@ -71,8 +75,8 @@ fmt-frontend:
 # Run all type checks (same as CI)
 check: check-rust check-frontend
 
-# Type check Rust
-check-rust:
+# Type check Rust (requires frontend build for Tauri context)
+check-rust: build-frontend
     cd src-tauri && cargo check --workspace --all-targets
 
 # Type check TypeScript/Svelte
@@ -86,8 +90,8 @@ check-frontend:
 # Run all tests (same as CI)
 test: test-rust test-frontend
 
-# Run Rust tests
-test-rust:
+# Run Rust tests (requires frontend build for Tauri context)
+test-rust: build-frontend
     cd src-tauri && cargo test --workspace
 
 # Run frontend tests
@@ -103,7 +107,7 @@ ci: fmt-check lint check test
     @echo "✅ All CI checks passed!"
 
 # Pre-commit hook: fast checks only
-pre-commit: fmt-check-rust fmt-check-frontend check
+pre-commit: fmt-check-rust fmt-check-frontend check-frontend
     @echo "✅ Pre-commit checks passed!"
 
 # ─────────────────────────────────────────────────────────────
