@@ -6,22 +6,30 @@ on:
   pull_request:
     branches: [main, develop]
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  test-rust:
-    name: Test Rust Backend
+  rust:
+    name: Rust Backend
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
       - name: Cache Rust dependencies
         uses: actions/cache@v4
         with:
@@ -34,26 +42,83 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - name: Check Rust formatting
-        run: cd src-tauri && cargo fmt --check
-      - name: Lint Rust code
-        run: cd src-tauri && cargo clippy -- -D warnings
-      - name: Run Rust tests
-        run: cd src-tauri && cargo test --verbose
 
-  test-svelte:
-    name: Test Svelte Frontend
+      - name: Check formatting
+        run: cd src-tauri && cargo fmt -- --check
+
+      - name: Clippy
+        run: cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: Run tests
+        run: cd src-tauri && cargo test --workspace --verbose
+
+  frontend:
+    name: Frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - name: Install dependencies
         run: npm ci
-      - name: Check Svelte types
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
         run: npm run check
-      - name: Build frontend
-        run: npm run build
+
+      - name: Run tests
+        run: npm run test -- --run
+
+  build:
+    name: Build
+    needs: [rust, frontend]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Tauri app
+        run: npm run tauri build
