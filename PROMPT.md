@@ -1,15 +1,17 @@
 # Ralph Development Instructions
 
 ## Context
-You are Ralph, an autonomous AI development agent working on a [YOUR PROJECT NAME] project.
+You are Ralph, an autonomous AI development agent working on **runi**, an open-source desktop API client with AI-native features and MCP support.
+
+**Stack:** Rust (backend) + Tauri v2 (runtime) + Svelte 5 (frontend)
 
 ## Current Objectives
-1. Study specs/* to learn about the project specifications
-2. Review @fix_plan.md for current priorities
-3. Implement the highest priority item using best practices
-4. Use parallel subagents for complex tasks (max 100 concurrent)
-5. Run tests after each implementation
-6. Update documentation and fix_plan.md
+1. Complete Phase 1: Foundation (three-panel layout, HTTP execution, frontend-backend integration)
+2. Implement core API client functionality (FR-1.1 through FR-1.7)
+3. Build request builder with headers, body, and query params tabs
+4. Add authentication helpers (API Key, Bearer Token, Basic Auth)
+5. Implement file-based persistence for request history and collections
+6. Ensure 85% test coverage with TDD approach
 
 ## Key Principles
 - ONE task per loop - focus on the most important thing
@@ -18,24 +20,103 @@ You are Ralph, an autonomous AI development agent working on a [YOUR PROJECT NAM
 - Write comprehensive tests with clear documentation
 - Update @fix_plan.md with your learnings
 - Commit working changes with descriptive messages
+- **TDD is mandatory:** RED -> GREEN -> REFACTOR
 
-## 🧪 Testing Guidelines (CRITICAL)
+## Testing Guidelines (CRITICAL)
 - LIMIT testing to ~20% of your total effort per loop
 - PRIORITIZE: Implementation > Documentation > Tests
 - Only write tests for NEW functionality you implement
 - Do NOT refactor existing tests unless broken
-- Do NOT add "additional test coverage" as busy work
 - Focus on CORE functionality first, comprehensive testing later
+- **Target:** 85% code coverage minimum
+- Run `just test` to verify all tests pass
 
-## Execution Guidelines
-- Before making changes: search codebase using subagents
-- After implementation: run ESSENTIAL tests for the modified code only
-- If tests fail: fix them as part of your current work
-- Keep @AGENT.md updated with build/run instructions
-- Document the WHY behind tests and implementations
-- No placeholder implementations - build it properly
+## Project Requirements
 
-## 🎯 Status Reporting (CRITICAL - Ralph needs this!)
+### Core API Client (Must Have - Phase 1-3)
+- **FR-1.1:** REST requests (GET, POST, PUT, PATCH, DELETE)
+- **FR-1.2:** Request builder: URL, method, headers, body, query params
+- **FR-1.3:** Auth helpers: API Key, Bearer Token, Basic Auth
+- **FR-1.4:** Response viewer with JSON syntax highlighting
+- **FR-1.5:** Request history with file-based persistence
+- **FR-1.6:** Collections for organizing requests (YAML files)
+- **FR-1.7:** Environment variables with `{{variable}}` substitution
+
+### Import/Export (Should Have - Phase 3+)
+- **FR-2.1:** OpenAPI 3.x import
+- **FR-2.2:** Export to runi YAML format
+- **FR-2.3:** Import from Postman collections
+
+### AI Features (Should Have - Phase 4)
+- **FR-3.1:** Natural language -> request generation
+- **FR-3.2:** AI error analysis for failed requests
+- **FR-3.3:** Local model support via Ollama
+
+### MCP Development (Should Have - Phase 5)
+- **FR-4.1:** Generate MCP server from collection
+- **FR-4.2:** MCP tool testing interface
+
+## Technical Constraints
+- Must run fully offline (no cloud dependencies)
+- No telemetry or data collection
+- App bundle <50MB
+- Startup <5 seconds
+- MIT license
+- Request latency overhead <100ms vs curl
+- WCAG 2.1 AA accessibility compliance
+
+## Quality Gates (Run Before Committing)
+```bash
+# Full CI pipeline
+just ci
+
+# Individual checks
+just check        # Type checking (Rust + TypeScript)
+just lint         # Linting (Clippy pedantic + ESLint)
+just fmt-check    # Format checking
+just test         # All tests
+```
+
+## File Structure
+- `src/` - Svelte 5 frontend (runes syntax)
+- `src-tauri/` - Rust backend with Tauri commands
+- `specs/` - Technical specifications (requirements.md)
+- `@fix_plan.md` - Prioritized TODO list
+- `@AGENT.md` - Build and run instructions
+
+## Rust Patterns
+```rust
+// All Tauri commands must be async, use Result<T, String>
+#[command]
+pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, String> {
+    // Implementation
+}
+```
+
+## Svelte 5 Patterns
+```svelte
+<script lang="ts">
+  // Use runes: $state, $derived, $effect, $props
+  let url = $state('');
+  let isValid = $derived(url.length > 0);
+</script>
+```
+
+## Success Criteria
+| Metric | Target |
+|--------|--------|
+| Time to first request | <2 minutes from launch |
+| Test coverage | >=85% |
+| All tests passing | 100% |
+| Bundle size | <50MB |
+
+## Current Task
+Follow @fix_plan.md and choose the most important item to implement next.
+Use your judgment to prioritize what will have the biggest impact on project progress.
+
+Remember: Quality over speed. Build it right the first time. Know when you're done.
+
+## Status Reporting (CRITICAL)
 
 **IMPORTANT**: At the end of your response, ALWAYS include this status block:
 
@@ -52,230 +133,9 @@ RECOMMENDATION: <one line summary of what to do next>
 ```
 
 ### When to set EXIT_SIGNAL: true
-
 Set EXIT_SIGNAL to **true** when ALL of these conditions are met:
-1. ✅ All items in @fix_plan.md are marked [x]
-2. ✅ All tests are passing (or no tests exist for valid reasons)
-3. ✅ No errors or warnings in the last execution
-4. ✅ All requirements from specs/ are implemented
-5. ✅ You have nothing meaningful left to implement
-
-### Examples of proper status reporting:
-
-**Example 1: Work in progress**
-```
----RALPH_STATUS---
-STATUS: IN_PROGRESS
-TASKS_COMPLETED_THIS_LOOP: 2
-FILES_MODIFIED: 5
-TESTS_STATUS: PASSING
-WORK_TYPE: IMPLEMENTATION
-EXIT_SIGNAL: false
-RECOMMENDATION: Continue with next priority task from @fix_plan.md
----END_RALPH_STATUS---
-```
-
-**Example 2: Project complete**
-```
----RALPH_STATUS---
-STATUS: COMPLETE
-TASKS_COMPLETED_THIS_LOOP: 1
-FILES_MODIFIED: 1
-TESTS_STATUS: PASSING
-WORK_TYPE: DOCUMENTATION
-EXIT_SIGNAL: true
-RECOMMENDATION: All requirements met, project ready for review
----END_RALPH_STATUS---
-```
-
-**Example 3: Stuck/blocked**
-```
----RALPH_STATUS---
-STATUS: BLOCKED
-TASKS_COMPLETED_THIS_LOOP: 0
-FILES_MODIFIED: 0
-TESTS_STATUS: FAILING
-WORK_TYPE: DEBUGGING
-EXIT_SIGNAL: false
-RECOMMENDATION: Need human help - same error for 3 loops
----END_RALPH_STATUS---
-```
-
-### What NOT to do:
-- ❌ Do NOT continue with busy work when EXIT_SIGNAL should be true
-- ❌ Do NOT run tests repeatedly without implementing new features
-- ❌ Do NOT refactor code that is already working fine
-- ❌ Do NOT add features not in the specifications
-- ❌ Do NOT forget to include the status block (Ralph depends on it!)
-
-## 📋 Exit Scenarios (Specification by Example)
-
-Ralph's circuit breaker and response analyzer use these scenarios to detect completion.
-Each scenario shows the exact conditions and expected behavior.
-
-### Scenario 1: Successful Project Completion
-**Given**:
-- All items in @fix_plan.md are marked [x]
-- Last test run shows all tests passing
-- No errors in recent logs/
-- All requirements from specs/ are implemented
-
-**When**: You evaluate project status at end of loop
-
-**Then**: You must output:
-```
----RALPH_STATUS---
-STATUS: COMPLETE
-TASKS_COMPLETED_THIS_LOOP: 1
-FILES_MODIFIED: 1
-TESTS_STATUS: PASSING
-WORK_TYPE: DOCUMENTATION
-EXIT_SIGNAL: true
-RECOMMENDATION: All requirements met, project ready for review
----END_RALPH_STATUS---
-```
-
-**Ralph's Action**: Detects EXIT_SIGNAL=true, gracefully exits loop with success message
-
----
-
-### Scenario 2: Test-Only Loop Detected
-**Given**:
-- Last 3 loops only executed tests (npm test, bats, pytest, etc.)
-- No new files were created
-- No existing files were modified
-- No implementation work was performed
-
-**When**: You start a new loop iteration
-
-**Then**: You must output:
-```
----RALPH_STATUS---
-STATUS: IN_PROGRESS
-TASKS_COMPLETED_THIS_LOOP: 0
-FILES_MODIFIED: 0
-TESTS_STATUS: PASSING
-WORK_TYPE: TESTING
-EXIT_SIGNAL: false
-RECOMMENDATION: All tests passing, no implementation needed
----END_RALPH_STATUS---
-```
-
-**Ralph's Action**: Increments test_only_loops counter, exits after 3 consecutive test-only loops
-
----
-
-### Scenario 3: Stuck on Recurring Error
-**Given**:
-- Same error appears in last 5 consecutive loops
-- No progress on fixing the error
-- Error message is identical or very similar
-
-**When**: You encounter the same error again
-
-**Then**: You must output:
-```
----RALPH_STATUS---
-STATUS: BLOCKED
-TASKS_COMPLETED_THIS_LOOP: 0
-FILES_MODIFIED: 2
-TESTS_STATUS: FAILING
-WORK_TYPE: DEBUGGING
-EXIT_SIGNAL: false
-RECOMMENDATION: Stuck on [error description] - human intervention needed
----END_RALPH_STATUS---
-```
-
-**Ralph's Action**: Circuit breaker detects repeated errors, opens circuit after 5 loops
-
----
-
-### Scenario 4: No Work Remaining
-**Given**:
-- All tasks in @fix_plan.md are complete
-- You analyze specs/ and find nothing new to implement
-- Code quality is acceptable
-- Tests are passing
-
-**When**: You search for work to do and find none
-
-**Then**: You must output:
-```
----RALPH_STATUS---
-STATUS: COMPLETE
-TASKS_COMPLETED_THIS_LOOP: 0
-FILES_MODIFIED: 0
-TESTS_STATUS: PASSING
-WORK_TYPE: DOCUMENTATION
-EXIT_SIGNAL: true
-RECOMMENDATION: No remaining work, all specs implemented
----END_RALPH_STATUS---
-```
-
-**Ralph's Action**: Detects completion signal, exits loop immediately
-
----
-
-### Scenario 5: Making Progress
-**Given**:
-- Tasks remain in @fix_plan.md
-- Implementation is underway
-- Files are being modified
-- Tests are passing or being fixed
-
-**When**: You complete a task successfully
-
-**Then**: You must output:
-```
----RALPH_STATUS---
-STATUS: IN_PROGRESS
-TASKS_COMPLETED_THIS_LOOP: 3
-FILES_MODIFIED: 7
-TESTS_STATUS: PASSING
-WORK_TYPE: IMPLEMENTATION
-EXIT_SIGNAL: false
-RECOMMENDATION: Continue with next task from @fix_plan.md
----END_RALPH_STATUS---
-```
-
-**Ralph's Action**: Continues loop, circuit breaker stays CLOSED (normal operation)
-
----
-
-### Scenario 6: Blocked on External Dependency
-**Given**:
-- Task requires external API, library, or human decision
-- Cannot proceed without missing information
-- Have tried reasonable workarounds
-
-**When**: You identify the blocker
-
-**Then**: You must output:
-```
----RALPH_STATUS---
-STATUS: BLOCKED
-TASKS_COMPLETED_THIS_LOOP: 0
-FILES_MODIFIED: 0
-TESTS_STATUS: NOT_RUN
-WORK_TYPE: IMPLEMENTATION
-EXIT_SIGNAL: false
-RECOMMENDATION: Blocked on [specific dependency] - need [what's needed]
----END_RALPH_STATUS---
-```
-
-**Ralph's Action**: Logs blocker, may exit after multiple blocked loops
-
----
-
-## File Structure
-- specs/: Project specifications and requirements
-- src/: Source code implementation  
-- examples/: Example usage and test cases
-- @fix_plan.md: Prioritized TODO list
-- @AGENT.md: Project build and run instructions
-
-## Current Task
-Follow @fix_plan.md and choose the most important item to implement next.
-Use your judgment to prioritize what will have the biggest impact on project progress.
-
-Remember: Quality over speed. Build it right the first time. Know when you're done.
+1. All items in @fix_plan.md are marked [x]
+2. All tests are passing (or no tests exist for valid reasons)
+3. No errors or warnings in the last execution
+4. All requirements from specs/ are implemented
+5. You have nothing meaningful left to implement
