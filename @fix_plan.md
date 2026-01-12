@@ -13,24 +13,24 @@
 
 ### HTTP Execution
 
-- [ ] Implement `execute_request` Tauri command in Rust
-- [ ] Add RequestParams struct (url, method, headers, body)
-- [ ] Add HttpResponse struct (status, headers, body, timing)
-- [ ] Enable HTTP/2 by default in `execute_request` (reqwest supports it natively)
-- [ ] Write unit tests for HTTP execution
+- [x] Implement `execute_request` Tauri command in Rust
+- [x] Add RequestParams struct (url, method, headers, body)
+- [x] Add HttpResponse struct (status, headers, body, timing)
+- [x] Enable HTTP/2 by default in `execute_request` (reqwest supports it natively)
+- [x] Write unit tests for HTTP execution
 
 ### Frontend-Backend Integration
 
-- [ ] Create TypeScript types matching Rust structs
-- [ ] Implement invoke wrapper for `execute_request`
-- [ ] Connect URL input to request execution
-- [ ] Display response in response panel
+- [x] Create TypeScript types matching Rust structs
+- [x] Implement invoke wrapper for `execute_request`
+- [x] Connect URL input to request execution
+- [x] Display response in response panel
 
 ### Request Builder UI
 
-- [ ] URL input with method selector dropdown (GET, POST, PUT, PATCH, DELETE)
-- [ ] Send button with loading state
-- [ ] Response status badge with color coding
+- [x] URL input with method selector dropdown (GET, POST, PUT, PATCH, DELETE)
+- [x] Send button with loading state
+- [x] Response status badge with color coding
 
 ### Response Viewer
 
@@ -240,9 +240,9 @@
     steps:
       - tool: string
         inputs: object
-        assert: object      # JSONPath assertions
-        extract: object     # Variable extraction
-        approval: boolean   # Human-in-the-loop (optional)
+        assert: object # JSONPath assertions
+        extract: object # Variable extraction
+        approval: boolean # Human-in-the-loop (optional)
     on_failure: stop | continue | retry(n)
   ```
 

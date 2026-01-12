@@ -16,8 +16,7 @@ tauri-plugin-shell = "2.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.49.0", features = ["full"] }
-reqwest = { version = "0.13.1", default-features = false, features = ["json"] }
-rustls = "0.23.13"
+reqwest = { version = "0.13.1", default-features = false, features = ["json", "rustls", "http2"] }
 anyhow = "1.0.39"
 
 [features]
@@ -29,3 +28,16 @@ opt-level = 3
 lto = true
 codegen-units = 1
 strip = true
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+# Pedantic by default
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+
+# Specific overrides (document why each is allowed)
+module_name_repetitions = "allow"  # Common in API design
+missing_errors_doc = "allow"       # Tauri commands use String errors
+missing_panics_doc = "allow"       # We avoid panics
