@@ -440,7 +440,65 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 
 ## User Interface Requirements
 
-### Three-Panel Layout
+### Design Philosophy
+
+runi uses a distraction-free, developer-focused layout optimized for API workflows. The design prioritizes:
+
+- **Focus on the request:** Minimal chrome, maximum workspace
+- **Visual feedback:** Color-coded methods, status badges, syntax highlighting
+- **Intelligent assistance:** Proactive suggestions and security warnings integrated naturally
+
+The main window features a collapsible left sidebar for navigation, a central vertical split-pane dividing the top request builder from the bottom response viewer, and subtle accents for interactivity.
+
+**Design Principles:**
+- Request builder occupies top ~40% by default (resizable vertically)
+- Response viewer below, expanding to fill remaining space
+- Real-time preview as a toggleable right panel within request builder or bottom tab
+- Native Tauri window controls handle titlebar functions (no custom bars)
+- Dark mode default with system auto-switch for themes
+- Minimal, intuitive flow: build requests top, view responses bottom, manage library left
+
+### Component Library: shadcn-svelte
+
+Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation. These are accessible, theme-aware, and Tailwind-based.
+
+| Component | Use Case | Reference |
+|-----------|----------|-----------|
+| Input | URL bar with placeholders, validation, cURL paste | [shadcn-svelte/input](https://www.shadcn-svelte.com/docs/components/input) |
+| Select | Method dropdown with colorful triggers | [shadcn-svelte/select](https://www.shadcn-svelte.com/docs/components/select) |
+| Tabs | Request/response sections | [shadcn-svelte/tabs](https://www.shadcn-svelte.com/docs/components/tabs) |
+| Textarea | Body editor (extend with CodeMirror) | [shadcn-svelte/textarea](https://www.shadcn-svelte.com/docs/components/textarea) |
+| Card | Request/response panels, preview | [shadcn-svelte/card](https://www.shadcn-svelte.com/docs/components/card) |
+| Table | Response headers (collapsible) | [shadcn-svelte/table](https://www.shadcn-svelte.com/docs/components/table) |
+| Resizable | Vertical split pane | [paneforge](https://paneforge.dev/) |
+
+### Three-Panel Layout Wireframe
+
+```
+[Native Tauri Titlebar: Window controls, app menu]
+
++---------------+-----------------------------------+
+|               | [Request Builder]                 |
+| [Sidebar]     | - Method Dropdown (colored) + URL |
+| (Collapsible) |   Input + Send Button             |
+| - Spaces      | - Tabs: Params | Headers | Body   |
+| - Collections |         | Auth | Preview        |
+| - History     | - Body Editor (syntax-highlighted)|
+| (Drag-drop)   |                                   |
++---------------+-----------------------------------+
+|               | [Resizable Divider]               |
++---------------+-----------------------------------+
+|               | [Response Viewer]                 |
+|               | - Tabs: Body | Headers | Stats    |
+|               | - Body: Rendered/Source/JSONPath  |
+|               | - Headers: Collapsible Table      |
+|               | - Stats: Timing/Size (hover)      |
++---------------+-----------------------------------+
+
+[Status Bar: Environment switcher, AI prompt (⌘I), variables]
+```
+
+### Detailed Layout with Intelligence UI
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -487,6 +545,16 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 │            │  └──────────────────────────────────────────────┘  │
 └────────────┴─────────────────────────────────────────────────────┘
 ```
+
+### Method Dropdown Colors
+
+| Method | Color | Tailwind Class |
+|--------|-------|----------------|
+| GET | Green | `bg-green-600 hover:bg-green-700` |
+| POST | Blue | `bg-blue-600 hover:bg-blue-700` |
+| PUT | Yellow | `bg-yellow-600 hover:bg-yellow-700` |
+| DELETE | Red | `bg-red-600 hover:bg-red-700` |
+| PATCH | Purple | `bg-purple-600 hover:bg-purple-700` |
 
 ### Component Specifications
 
