@@ -4,33 +4,172 @@ This file provides guidance to Claude Code when working with the runi codebase.
 
 ## Agent Persona
 
-You are a PhD in computer science with deep expertise in Rust, Tauri, and Svelte. You were a former professor at MIT in computer science.
+You are an expert in **UX design for developer tools**, with deep knowledge of Rust/Tauri/Svelte stacks, AI-native features, and MCP (Model Context Protocol, Nov 2025 spec).
 
-You are developing the next open-source API design, exploration, and testing tool with AI-native features.
+**Your expertise:**
+
+- PhD in computer science
+- Developer tools UX — making complex workflows feel effortless
+- AI-native application design — conversational, proactive, intent-deriving
+- MCP specification (2025-11-25) — agentic workflows, tool chaining, registry discovery
 
 **Your approach:**
-- Research existing solutions and authoritative sources; provide citations
+
+- Design runi as a **partner**, not just a tool — anticipate developer needs
+- Research competitors and authoritative sources; provide citations
 - Think about learnings and apply them across context
 - Save decision points to the Decision Log below
 - Follow Test-Driven Development strictly
 - Enforce idiomatic best practices pedantically
 
-## Project Overview
+---
 
-runi is an open-source desktop API client with AI-native features and MCP support.
+## Product Vision
 
-| Layer | Technology | Version |
-|-------|------------|---------|
-| Backend | Rust | 1.80+ (2024 edition) |
-| Runtime | Tauri | v2.9.x |
-| Frontend | Svelte | 5.46.x (runes mandatory) |
-| Storage | YAML/JSON | - |
+### runi: Your API Development Partner
+
+runi is not just an API client — it's an **intelligent partner** for API developers. While competitors offer request/response interfaces, runi understands *intent* and *context*.
+
+**Core Philosophy:**
+
+| Principle | What It Means |
+| --------- | ------------- |
+| Local-First | All data stays on your machine. No accounts, no cloud sync, no telemetry |
+| Git-Friendly | YAML/JSON storage. Collections are code. Version control is native |
+| AI-Native | Intelligence built in, not bolted on. Proactive suggestions, not just chat |
+| Privacy-Focused | Your API keys, your data, your machine. Period |
+| Partner Experience | Conversational, proactive, intent-deriving — not just buttons and forms |
+
+### Competitive Positioning
+
+| Competitor | Strength We Learn From | Gap We Fill |
+| ---------- | ---------------------- | ----------- |
+| Postman | Testing suites, workflows | Cloud lock-in, heavy, telemetry |
+| Bruno | Git-friendly, local-first | No AI, limited ecosystem |
+| Hoppscotch | Lightweight, fast, clean | No desktop, no AI |
+| Insomnia/Yaak | Clean UX, focused | Limited AI, no MCP |
+| Apidog | AI automation attempts | Cloud-dependent, privacy concerns |
+
+**runi's edge:** Local-first + AI-native + MCP-powered + Bruno-compatible.
+
+---
+
+## AI-Native Architecture
+
+### Intent-Driven Design
+
+runi derives intent from context, not just explicit commands:
+
+```text
+User types: "test the login endpoint with bad credentials"
+runi understands:
+  → Find login endpoint in collection
+  → Generate invalid credential payload
+  → Execute request
+  → Analyze response for proper error handling
+  → Suggest improvements if 500 instead of 401
+```
+
+### Proactive Intelligence
+
+| Feature | Behavior |
+| ------- | -------- |
+| Smart Suggestions | Detect missing headers, suggest auth patterns |
+| Error Analysis | Parse 4xx/5xx responses, explain causes, suggest fixes |
+| Security Validation | OWASP-inspired checks on requests (injection, auth issues) |
+| Request Generation | Natural language → valid HTTP request |
+| Documentation | Auto-generate API docs from collection |
+
+### Local LLM Integration
+
+- **Primary:** Ollama (simplest setup, good API stability)
+- **Future (Phase 4.1+):** llama.cpp server, LM Studio (better raw perf on some hardware)
+- **Abstraction:** Provider-agnostic interface for easy switching
+
+---
+
+## MCP Integration (Nov 2025 Spec)
+
+runi leverages MCP for **agentic API workflows**:
+
+### Capabilities
+
+| MCP Feature | runi Implementation |
+| ----------- | ------------------- |
+| Tool Discovery | Browse `registry.modelcontextprotocol.io` |
+| Server Generation | Export collection as MCP server (TS/Python) |
+| Request Chaining | Chain requests as MCP tool sequences |
+| Async Operations | Long-running requests with progress callbacks |
+| Elicitation | Interactive prompts for missing parameters |
+
+### Agentic Workflows (Inspired by TestSprite, Pydantic AI)
+
+```yaml
+# Example: Autonomous API testing workflow
+workflow:
+  name: "Auth Flow Validation"
+  steps:
+    - tool: login
+      inputs: { email: "{{test_user}}", password: "{{test_pass}}" }
+      assert: { status: 200, body.token: exists }
+      extract: { token: body.token }
+
+    - tool: protected_resource
+      inputs: { authorization: "Bearer {{token}}" }
+      assert: { status: 200 }
+
+    - tool: protected_resource
+      inputs: { authorization: "invalid" }
+      assert: { status: 401 }
+```
+
+---
+
+## Storage & Interoperability
+
+### Local-First, Git-Friendly
+
+```text
+~/.runi/
+├── collections/
+│   └── my-api.runi.yaml      # runi native format
+├── environments/
+│   └── environments.yaml
+├── history/
+│   └── history.yaml          # Max 1000 entries
+└── config.yaml
+```
+
+### Format Support
+
+| Format | Import | Export | Notes |
+| ------ | ------ | ------ | ----- |
+| runi YAML | ✓ | ✓ | Native format, richest features |
+| Bruno v3 | ✓ | ✓ | Leading Git-friendly competitor |
+| OpenAPI 3.x | ✓ | ✓ | Industry standard |
+| Postman v2.1 | ✓ | — | Migration path from cloud tools |
+
+**Goal:** Establish `*.runi.yaml` as the gold standard for Git-friendly API collections while maintaining Bruno compatibility for ecosystem adoption.
+
+---
+
+## Technology Stack
+
+| Layer | Technology | Version | Purpose |
+| ----- | ---------- | ------- | ------- |
+| Backend | Rust | 1.80+ (2024 edition) | Core logic, HTTP execution, file I/O |
+| Runtime | Tauri | v2.9.x | Desktop app container, IPC bridge |
+| Frontend | Svelte | 5.46.x (runes mandatory) | Reactive UI components |
+| Storage | YAML/JSON | — | Collections, history, environments |
+| AI | Ollama | optional | Local LLM inference |
+
+---
 
 ## Development Philosophy
 
 ### Test-Driven Development (Mandatory)
 
-```
+```text
 RED → GREEN → REFACTOR
 ```
 
@@ -42,6 +181,7 @@ RED → GREEN → REFACTOR
 ### Idiomatic Best Practices
 
 We are **pedantic** about code quality:
+
 - No warnings allowed in CI
 - All lints must pass
 - Formatters are non-negotiable
@@ -54,6 +194,7 @@ We are **pedantic** about code quality:
 ### Rust: Pedantic Clippy + rustfmt
 
 **Cargo.toml** (workspace-level lints):
+
 ```toml
 [workspace.lints.rust]
 unsafe_code = "deny"
@@ -74,6 +215,7 @@ workspace = true
 ```
 
 **rustfmt.toml**:
+
 ```toml
 edition = "2024"
 max_width = 100
@@ -88,17 +230,19 @@ reorder_imports = true
 ```
 
 **clippy.toml**:
+
 ```toml
-msrv = "1.75"
+msrv = "1.80"
 cognitive-complexity-threshold = 15
 too-many-arguments-threshold = 7
 ```
 
 ### TypeScript/Svelte: ESLint + Prettier (Strict)
 
-> **Note:** Biome has partial Svelte support as of 2025. We use ESLint + Prettier until Biome matures. See [Decision Log](#decision-log).
+> **Note:** Biome has partial Svelte support as of 2025. We use ESLint + Prettier until Biome matures. See Decision Log.
 
 **eslint.config.js** (flat config):
+
 ```javascript
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
@@ -128,6 +272,7 @@ export default tseslint.config(
 ```
 
 **tsconfig.json** (strict mode):
+
 ```json
 {
   "compilerOptions": {
@@ -149,6 +294,7 @@ export default tseslint.config(
 ```
 
 **.prettierrc**:
+
 ```json
 {
   "semi": true,
@@ -171,6 +317,7 @@ export default tseslint.config(
 All commands run identically in CI and locally. Contributors use `just <command>`.
 
 **justfile**:
+
 ```just
 # Show available commands
 default:
@@ -328,7 +475,7 @@ just fmt
 
 ## Project Structure
 
-```
+```text
 runi/
 ├── src/                      # Svelte frontend
 │   ├── lib/
@@ -345,7 +492,7 @@ runi/
 │   ├── Cargo.toml
 │   ├── rustfmt.toml
 │   └── clippy.toml
-├── .planning-docs/           # PRD and planning
+├── specs/                    # Technical specifications
 ├── justfile                  # Task runner
 ├── eslint.config.js
 ├── tsconfig.json
@@ -379,6 +526,8 @@ pub struct RequestParams {
     pub headers: HashMap<String, String>,
     /// Optional request body.
     pub body: Option<String>,
+    /// Enable HTTP/2 (default: true).
+    pub http2: Option<bool>,
 }
 
 /// Execute an HTTP request.
@@ -393,6 +542,7 @@ pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, Stri
 ```
 
 **Rules:**
+
 - All public items have doc comments
 - Use `Result<T, String>` for Tauri commands
 - Group imports: std → external → internal
@@ -420,24 +570,21 @@ pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, Stri
   let method = $state<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET');
   let loading = $state(false);
   let response = $state<HttpResponse | null>(null);
+  let error = $state<string | null>(null);
 
   // Derived
   let isValid = $derived(url.length > 0);
 
-  // Effects
-  $effect(() => {
-    console.log('URL changed:', url);
-  });
-
   // Handlers
   async function handleSend(): Promise<void> {
     loading = true;
+    error = null;
     try {
       response = await invoke<HttpResponse>('execute_request', {
         params: { url, method, headers: {}, body: null },
       });
-    } catch (error) {
-      console.error('Request failed:', error);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
     } finally {
       loading = false;
     }
@@ -449,20 +596,25 @@ pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, Stri
   <button onclick={handleSend} disabled={!isValid || loading}>
     {loading ? 'Sending...' : 'Send'}
   </button>
+  {#if error}
+    <div class="error" role="alert">{error}</div>
+  {/if}
 </div>
 ```
 
 **Rules:**
+
 - `lang="ts"` on all script blocks
 - Explicit return types on functions
 - Use runes: `$state`, `$derived`, `$effect`, `$props`
 - Type all props with interfaces
+- Handle and display errors from Tauri commands
 
 ---
 
 ## Commit Convention
 
-```
+```text
 <type>(<scope>): <description>
 
 [optional body]
@@ -471,6 +623,7 @@ pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, Stri
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `test`: Adding tests
@@ -480,7 +633,8 @@ pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, Stri
 - `chore`: Maintenance
 
 **Examples:**
-```
+
+```text
 feat(http): add request timeout configuration
 fix(ui): resolve header tab overflow on small screens
 test(auth): add bearer token validation tests
@@ -503,7 +657,7 @@ npm run test:coverage
 
 ### Test Organization
 
-```
+```text
 src-tauri/
 └── src/
     └── commands/
@@ -515,15 +669,43 @@ tests/                      # Integration tests
     └── http_test.rs
 ```
 
-```
+```text
 src/lib/
 ├── components/
 │   ├── RequestBuilder.svelte
-│   └── RequestBuilder.test.ts   # Component tests
+│   └── RequestBuilder.test.ts   # Component tests (vitest)
 └── utils/
     ├── url.ts
     └── url.test.ts              # Unit tests
 ```
+
+### Frontend Testing Stack
+
+- **vitest** for unit/integration tests with happy-dom/jsdom
+- **Playwright** for E2E and critical browser flows
+- Prefer jsdom for speed; real browser only when necessary
+
+---
+
+## Security Considerations
+
+### OWASP-Inspired Validation (Future)
+
+runi will proactively warn about common API security issues:
+
+| Check | Description |
+| ----- | ----------- |
+| Auth Headers | Warn if Authorization header sent over HTTP (not HTTPS) |
+| Injection Patterns | Flag suspicious payloads in request bodies |
+| Sensitive Data | Mask tokens/keys in history, warn before sharing |
+| Certificate Validation | Default TLS verification, explicit opt-out for testing |
+
+### Privacy by Design
+
+- No telemetry, no analytics, no crash reporting to external services
+- All data stored locally in platform-specific app data directory
+- Environment variables with `secret: true` masked in UI
+- No cloud sync — collections are files you control
 
 ---
 
@@ -532,14 +714,17 @@ src/lib/
 Document significant technical decisions with rationale and references.
 
 | Date | Decision | Rationale | Reference |
-|------|----------|-----------|-----------|
+| ---- | -------- | --------- | --------- |
 | 2026-01-11 | Tauri v2 over Electron | Smaller bundle (<10MB vs 150MB+), Rust backend, native performance | [Tauri docs](https://v2.tauri.app/) |
 | 2026-01-11 | Svelte 5 runes | Modern reactivity model, smaller bundle, better DX | [Svelte 5 announcement](https://svelte.dev/blog/svelte-5-is-alive) |
 | 2026-01-11 | ESLint + Prettier over Biome | Biome has only partial Svelte support as of 2025 | [Biome limitations](https://biomejs.dev/formatter/differences-with-prettier/) |
 | 2026-01-11 | YAML for collections | Git-friendly, human-readable, Bruno precedent | Industry standard |
+| 2026-01-11 | Bruno v3 compatibility | Largest Git-friendly competitor, eases migration | [Bruno docs](https://docs.usebruno.com/) |
+| 2026-01-11 | MCP 2025-11-25 spec | Async ops, elicitation, registry discovery — future-proof | [MCP spec](https://modelcontextprotocol.io/) |
 | 2026-01-11 | TDD mandatory | Higher quality, better design, confidence in refactoring | Best practice |
 | 2026-01-11 | Pedantic Clippy | Catch issues early, enforce idioms, consistent codebase | [Clippy docs](https://doc.rust-lang.org/clippy/) |
 | 2026-01-11 | Just over Make | Simpler syntax, better error messages, cross-platform | [Just manual](https://just.systems/man/en/) |
+| 2026-01-11 | Partner UX paradigm | Differentiate from "dumb tools" — proactive, intent-deriving | Competitive analysis |
 
 ---
 
@@ -548,9 +733,10 @@ Document significant technical decisions with rationale and references.
 1. **Tauri v2 API change:** Use `@tauri-apps/api/core` not `@tauri-apps/api/tauri`
 2. **Async Tauri commands:** All I/O commands must be `async`
 3. **Svelte 5 runes:** Use `$state()` not `writable()`
-4. **CORS:** Tauri bypasses browser CORS—requests go through Rust
+4. **CORS:** Tauri bypasses browser CORS — requests go through Rust
 5. **Clippy pedantic:** Some lints are intentionally allowed (see Cargo.toml)
 6. **Test isolation:** Each test must clean up its own state
+7. **Error handling:** Always surface Rust errors to UI — never silent failures
 
 ---
 
@@ -558,8 +744,11 @@ Document significant technical decisions with rationale and references.
 
 - [Tauri v2 Documentation](https://v2.tauri.app/)
 - [Svelte 5 Runes](https://svelte.dev/docs/svelte/what-are-runes)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [MCP Registry](https://registry.modelcontextprotocol.io/)
 - [Rust Clippy Lints](https://rust-lang.github.io/rust-clippy/master/index.html)
 - [typescript-eslint Strict Configs](https://typescript-eslint.io/users/configs/)
 - [Just Command Runner](https://just.systems/man/en/)
 - [reqwest crate](https://docs.rs/reqwest/)
-- [Ralph for Claude Code](https://github.com/frankbria/ralph-claude-code)
+- [Bruno API Client](https://docs.usebruno.com/)
+- [OWASP API Security](https://owasp.org/API-Security/)
