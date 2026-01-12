@@ -11,6 +11,7 @@
 - [ ] Implement `execute_request` Tauri command in Rust
 - [ ] Add RequestParams struct (url, method, headers, body)
 - [ ] Add HttpResponse struct (status, headers, body, timing)
+- [ ] Enable HTTP/2 by default in `execute_request` (reqwest supports it natively)
 - [ ] Write unit tests for HTTP execution
 
 ### Frontend-Backend Integration
@@ -29,6 +30,7 @@
 - [ ] Response headers display
 - [ ] Response timing metrics
 - [ ] Raw/Pretty toggle for body view
+- [ ] Implement basic error handling in UI for command failures (display Rust error strings)
 
 ## Phase 2: Request Building (Medium Priority)
 
@@ -46,6 +48,7 @@
 
 ### Authentication Helpers
 - [ ] API Key auth (header or query param)
+- [ ] Support query param placement for API Key (common in legacy/public APIs)
 - [ ] Bearer Token auth
 - [ ] Basic Auth (username/password encoding)
 - [ ] Auth persistence per request
@@ -84,6 +87,9 @@
 - [ ] Load request from collection
 - [ ] Export single request to file
 - [ ] Import request from file
+
+### Bruno Compatibility
+- [ ] Support Bruno collection format import/export (v3 YAML) — Bruno is the leading Git-friendly OSS alternative in 2026
 
 ## Phase 4: Import/Export (Low Priority)
 
@@ -141,19 +147,28 @@
 ### Performance
 - [ ] Verify bundle size <50MB
 - [ ] Verify startup time <5 seconds
-- [ ] Verify request overhead <100ms vs curl
+- [ ] Verify request overhead <80ms vs curl
+
+## Competitive Parity & Differentiation (Post-MVP)
+
+### Future Considerations
+
+- [ ] Consider WebSocket support for v1.0.1 (many competitors now include it; users increasingly expect real-time testing)
 
 ### Accessibility
+
 - [ ] Keyboard navigation for all controls
 - [ ] Screen reader labels (ARIA)
 - [ ] High contrast mode support
 - [ ] Focus indicators
 
 ## Completed
+
 - [x] Initial Tauri + Svelte project scaffold
 - [x] Project initialization and CLAUDE.md setup
 
 ## Notes
+
 - Use `just ci` before each commit to verify quality gates
 - Follow TDD: write failing test, implement, refactor
 - All Tauri commands must be async with `Result<T, String>`

@@ -10,9 +10,9 @@
 
 | Layer | Technology | Version | Purpose |
 |-------|------------|---------|---------|
-| Backend | Rust | 1.75+ (2024 edition) | Core logic, HTTP execution, file I/O |
-| Runtime | Tauri | v2 | Desktop app container, IPC bridge |
-| Frontend | Svelte | 5 (runes) | Reactive UI components |
+| Backend | Rust | 1.80+ (2024 edition) | Core logic, HTTP execution, file I/O |
+| Runtime | Tauri | v2.9.x | Desktop app container, IPC bridge |
+| Frontend | Svelte | 5.46.x (runes mandatory) | Reactive UI components |
 | Storage | YAML/JSON | - | Collections, history, environments |
 | AI | Ollama | optional | Local LLM inference |
 
@@ -65,6 +65,7 @@ body:
 auth:
   type: none | api-key | bearer | basic
   config: object  # type-specific configuration
+websocket: false  # placeholder for future v1.x WebSocket requests
 created: ISO8601 timestamp
 updated: ISO8601 timestamp
 ```
@@ -142,6 +143,7 @@ pub struct RequestParams {
     pub headers: HashMap<String, String>,
     pub body: Option<String>,
     pub timeout_ms: Option<u64>,
+    pub http2: Option<bool>,  // default true
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -284,7 +286,7 @@ pub async fn delete_environment(id: String) -> Result<(), String>;
 | Metric | Target | Measurement Method |
 |--------|--------|-------------------|
 | Startup time | <5 seconds | Time from app launch to interactive UI |
-| Request overhead | <100ms | Difference between runi and curl for same request |
+| Request overhead | <80ms | Difference between runi and curl for same request |
 | Bundle size | <50MB | Total app package size |
 | Memory usage | <200MB | Idle memory consumption |
 | Crash rate | <5% | Percentage of sessions with crashes |
@@ -353,6 +355,8 @@ pub async fn delete_environment(id: String) -> Result<(), String>;
 - Support model selection from available models
 - Configurable context window and temperature
 
+> **Future abstraction (Phase 4.1+):** Consider supporting llama.cpp server or LM Studio endpoints as alternatives for better raw performance on certain hardware. Ollama remains the best default for simplicity and API stability.
+
 ### Natural Language Request Generation
 - Parse natural language descriptions to request parameters
 - Example: "GET users from api.example.com with Authorization header"
@@ -377,18 +381,23 @@ pub async fn delete_environment(id: String) -> Result<(), String>;
 - Execute tools with parameter input
 - Display tool results
 
+> **MCP Spec Update (Phase 6):** Target MCP specification 2025-11-25 which includes async operations, elicitation, and registry discovery. Registry browsing (`https://registry.modelcontextprotocol.io`) could become a differentiating feature for v1.1.
+
 ## Testing Requirements
 
 ### Unit Test Coverage
+
 - Minimum 85% line coverage for Rust backend
 - Minimum 85% line coverage for TypeScript frontend
 
 ### Test Categories
+
 1. **Unit Tests:** Individual functions and components
 2. **Integration Tests:** Frontend-backend communication
 3. **E2E Tests:** Critical user workflows
 
 ### Critical Test Scenarios
+
 1. Execute GET request and display response
 2. Add custom headers and verify they're sent
 3. Save request to collection and reload
