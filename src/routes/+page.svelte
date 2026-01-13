@@ -4,6 +4,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import * as Select from '$lib/components/ui/select';
+  import MainLayout from '$lib/components/Layout/MainLayout.svelte';
 
   // State
   let url = $state('https://httpbin.org/get');
@@ -58,86 +59,98 @@
   }
 </script>
 
-<div class="flex min-h-screen flex-col p-6 mx-auto max-w-5xl">
-  <header class="text-center mb-8">
-    <h1 class="text-3xl font-bold text-foreground">runi</h1>
-    <p class="text-muted-foreground text-sm mt-1">Your API Development Partner</p>
-  </header>
+<MainLayout>
+  {#snippet requestContent()}
+    <div class="h-full flex flex-col p-4">
+      <header class="mb-4">
+        <h1 class="text-xl font-bold text-foreground">Request</h1>
+      </header>
 
-  <section class="mb-6">
-    <div class="flex gap-2 items-stretch">
-      <Select.Root type="single" value={method} onValueChange={handleMethodChange}>
-        <Select.Trigger
-          class="w-28 font-semibold"
-          data-testid="method-select"
-          disabled={loading}
-          aria-label="HTTP Method"
+      <section class="mb-4">
+        <div class="flex gap-2 items-stretch">
+          <Select.Root type="single" value={method} onValueChange={handleMethodChange}>
+            <Select.Trigger
+              class="w-28 font-semibold"
+              data-testid="method-select"
+              disabled={loading}
+              aria-label="HTTP Method"
+            >
+              {method}
+            </Select.Trigger>
+            <Select.Content>
+              {#each httpMethods as httpMethod (httpMethod)}
+                <Select.Item value={httpMethod}>{httpMethod}</Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
+
+          <Input
+            type="text"
+            bind:value={url}
+            onkeydown={handleKeyDown}
+            placeholder="Enter URL"
+            data-testid="url-input"
+            disabled={loading}
+            aria-label="Request URL"
+            class="flex-1"
+          />
+
+          <Button
+            onclick={handleSend}
+            disabled={!isValidUrl || loading}
+            data-testid="send-button"
+            aria-label="Send Request"
+          >
+            {loading ? 'Sending...' : 'Send'}
+          </Button>
+        </div>
+      </section>
+
+      {#if error}
+        <section
+          class="p-4 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive"
+          role="alert"
+          data-testid="error-panel"
         >
-          {method}
-        </Select.Trigger>
-        <Select.Content>
-          {#each httpMethods as httpMethod (httpMethod)}
-            <Select.Item value={httpMethod}>{httpMethod}</Select.Item>
-          {/each}
-        </Select.Content>
-      </Select.Root>
-
-      <Input
-        type="text"
-        bind:value={url}
-        onkeydown={handleKeyDown}
-        placeholder="Enter URL"
-        data-testid="url-input"
-        disabled={loading}
-        aria-label="Request URL"
-        class="flex-1"
-      />
-
-      <Button
-        onclick={handleSend}
-        disabled={!isValidUrl || loading}
-        data-testid="send-button"
-        aria-label="Send Request"
-      >
-        {loading ? 'Sending...' : 'Send'}
-      </Button>
+          <strong>Error:</strong>
+          {error}
+        </section>
+      {/if}
     </div>
-  </section>
+  {/snippet}
 
-  {#if error}
-    <section
-      class="p-4 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive"
-      role="alert"
-      data-testid="error-panel"
-    >
-      <strong>Error:</strong>
-      {error}
-    </section>
-  {/if}
+  {#snippet responseContent()}
+    <div class="h-full flex flex-col">
+      <header class="p-4 border-b border-border">
+        <h1 class="text-xl font-bold text-foreground">Response</h1>
+      </header>
 
-  {#if response}
-    <section
-      class="flex-1 flex flex-col border border-border rounded-lg overflow-hidden"
-      data-testid="response-panel"
-    >
-      <div class="flex justify-between items-center px-4 py-3 bg-muted border-b border-border">
-        <span
-          class="font-semibold px-2 py-1 rounded text-sm {statusColorClass}"
-          data-testid="response-status"
-        >
-          {response.status}
-          {response.status_text}
-        </span>
-        <span class="text-muted-foreground text-sm" data-testid="response-timing">
-          {response.timing.total_ms}ms
-        </span>
-      </div>
+      {#if response}
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <div class="flex justify-between items-center px-4 py-3 bg-muted border-b border-border">
+            <span
+              class="font-semibold px-2 py-1 rounded text-sm {statusColorClass}"
+              data-testid="response-status"
+            >
+              {response.status}
+              {response.status_text}
+            </span>
+            <span class="text-muted-foreground text-sm" data-testid="response-timing">
+              {response.timing.total_ms}ms
+            </span>
+          </div>
 
-      <div class="flex-1 overflow-auto p-4 bg-card">
-        <pre
-          class="font-mono text-sm whitespace-pre-wrap wrap-break-word"
-          data-testid="response-body">{response.body}</pre>
-      </div>
-    </section>
-  {/if}
-</div>
+          <div class="flex-1 overflow-auto p-4 bg-card">
+            <pre
+              class="font-mono text-sm whitespace-pre-wrap break-words"
+              data-testid="response-body">{response.body}</pre>
+          </div>
+        </div>
+      {:else}
+        <div class="flex-1 flex items-center justify-center text-muted-foreground">
+          Send a request to see the response
+        </div>
+      {/if}
+    </div>
+  {/snippet}
+</MainLayout>

@@ -316,14 +316,14 @@ npm install paneforge lucide-svelte
 
 **For focused Ralph runs, use the split prompts in `prompts/` directory:**
 
-| Run | Prompt                                | Focus                     |
-| --- | ------------------------------------- | ------------------------- |
-| 1   | `prompts/PROMPT-1-http-core.md`              | HTTP execution + basic UI |
-| 2A  | `prompts/PROMPT-2A-layout-foundation.md`     | VS Code-style layout foundation |
-| 2B  | `prompts/PROMPT-2B-request-response-basics.md`| Request header + response basics |
-| 2C  | `prompts/PROMPT-2C-response-viewer-polish.md` | Response viewer polish |
-| 3   | `prompts/PROMPT-3-request-builder.md`        | Tabs, headers, body, auth |
-| 4   | `prompts/PROMPT-4-intelligence.md`           | Suggestions & warnings    |
+| Run | Prompt                                         | Focus                            |
+| --- | ---------------------------------------------- | -------------------------------- |
+| 1   | `prompts/PROMPT-1-http-core.md`                | HTTP execution + basic UI        |
+| 2A  | `prompts/PROMPT-2A-layout-foundation.md`       | VS Code-style layout foundation  |
+| 2B  | `prompts/PROMPT-2B-request-response-basics.md` | Request header + response basics |
+| 2C  | `prompts/PROMPT-2C-response-viewer-polish.md`  | Response viewer polish           |
+| 3   | `prompts/PROMPT-3-request-builder.md`          | Tabs, headers, body, auth        |
+| 4   | `prompts/PROMPT-4-intelligence.md`             | Suggestions & warnings           |
 
 See `prompts/README.md` for run commands and verification steps.
 

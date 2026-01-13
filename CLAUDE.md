@@ -507,18 +507,21 @@ runi/
 ### Component Organization
 
 **Directory Structure:**
+
 - `Layout/` - App-level layout components (MainLayout, Sidebar, StatusBar)
 - `Request/` - Request building components (RequestHeader, TabPanel, KeyValueEditor, etc.)
 - `Response/` - Response viewing components (ResponsePanel, StatusBadge, BodyViewer, etc.)
 - `ui/` - shadcn-svelte base components (button, input, select, tabs, etc.)
 
 **Naming Conventions:**
+
 - Components: `PascalCase.svelte` (e.g., `MainLayout.svelte`, `RequestHeader.svelte`)
 - Stories: `ComponentName.stories.svelte` (e.g., `MainLayout.stories.svelte`)
 - Tests: `ComponentName.test.ts` (e.g., `RequestHeader.test.ts`)
 - Utilities: `camelCase.ts` (e.g., `url.ts`, `cn.ts`)
 
 **Storybook Story Patterns:**
+
 - Stories live adjacent to components: `Component.stories.svelte`
 - Use `@storybook/addon-svelte-csf` for Svelte 5 compatibility
 - Story titles follow: `Category/ComponentName` (e.g., `Response/StatusBadge`, `Layout/Sidebar`)
@@ -657,6 +660,7 @@ For vertical or horizontal split panes, use [paneforge](https://paneforge.dev/):
 ```
 
 **Notes:**
+
 - `direction="vertical"` for top/bottom split, `direction="horizontal"` for left/right
 - `defaultSize` is percentage (0-100)
 - `minSize` prevents panes from becoming too small
@@ -786,8 +790,8 @@ Document significant technical decisions with rationale and references.
 | 2026-01-12 | Distraction-free UI design    | Vertical split-pane layout, colorful method dropdowns, minimal chrome                     | Industry best practices                                                                                   |
 | 2026-01-12 | lucide-svelte for icons       | Modern icon library with Svelte-native components; consistent with shadcn ecosystem       | [lucide-svelte](https://lucide.dev/)                                                                      |
 | 2026-01-12 | Storybook for components      | Isolated component development; visual review before app integration; Svelte 5 support    | [Storybook SvelteKit](https://storybook.js.org/docs/get-started/frameworks/sveltekit)                     |
-| 2026-01-12 | Component directory structure | Layout/, Request/, Response/ organization for maintainability                            | Project structure best practices                                                                           |
-| 2026-01-12 | Storybook story patterns      | Stories adjacent to components; Category/ComponentName titles; autodocs tags            | [Storybook Svelte CSF](https://storybook.js.org/docs/api/svelte-frameworks)                                |
+| 2026-01-12 | Component directory structure | Layout/, Request/, Response/ organization for maintainability                             | Project structure best practices                                                                          |
+| 2026-01-12 | Storybook story patterns      | Stories adjacent to components; Category/ComponentName titles; autodocs tags              | [Storybook Svelte CSF](https://storybook.js.org/docs/api/svelte-frameworks)                               |
 
 ---
 

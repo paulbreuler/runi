@@ -63,5 +63,9 @@
     "vite": "^5.4.0",
     "vitest": "^2.1.9"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "lucide-svelte": "^0.562.0",
+    "paneforge": "^1.0.2"
+  }
 }

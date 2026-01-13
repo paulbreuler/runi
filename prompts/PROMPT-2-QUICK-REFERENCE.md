@@ -18,16 +18,19 @@ ralph -p prompts/PROMPT-2C-response-viewer-polish.md --monitor
 ## What Each Run Delivers
 
 ### 2A: Layout Foundation
+
 **Creates:** MainLayout, Sidebar, StatusBar  
 **Enables:** App structure, navigation, keyboard shortcuts  
 **Stories:** 3 stories (MainLayout, Sidebar, StatusBar)
 
 ### 2B: Request Header & Response Basics
+
 **Creates:** RequestHeader, StatusBadge, TimingDisplay, ResponsePanel (basic)  
 **Enables:** Send requests, see responses, status feedback  
 **Stories:** 3 stories (RequestHeader, StatusBadge, TimingDisplay)
 
 ### 2C: Response Viewer & Polish
+
 **Creates:** BodyViewer, HeadersViewer, ResponsePanel (enhanced)  
 **Enables:** Syntax highlighting, headers table, tabs, beautiful viewing  
 **Stories:** 3 stories (ResponsePanel, BodyViewer, HeadersViewer)
@@ -62,15 +65,18 @@ src/lib/components/
 ## Dependencies by Run
 
 ### 2A
+
 - `paneforge` - Resizable panes
 - `lucide-svelte` - Icons
 - `shadcn-svelte card` - Card component
 
 ### 2B
+
 - (Uses dependencies from 2A)
 - (Uses existing HTTP execution from Run 1)
 
 ### 2C
+
 - `shiki` - Syntax highlighting (or CodeMirror/Prism)
 - `shadcn-svelte tabs` - Tab component
 - `shadcn-svelte table` - Table component
@@ -78,6 +84,7 @@ src/lib/components/
 ## Success Criteria Summary
 
 ### 2A Success
+
 - ✅ Three-panel layout renders
 - ✅ Sidebar toggles with ⌘B
 - ✅ Panes resize smoothly
@@ -85,6 +92,7 @@ src/lib/components/
 - ✅ All quality gates pass
 
 ### 2B Success
+
 - ✅ RequestHeader sends requests
 - ✅ Method dropdown has colors
 - ✅ Response displays with status badge
@@ -92,6 +100,7 @@ src/lib/components/
 - ✅ All quality gates pass
 
 ### 2C Success
+
 - ✅ JSON syntax highlighting works
 - ✅ Response tabs work (Body/Headers/Stats)
 - ✅ Headers table is collapsible
@@ -119,20 +128,25 @@ just ci
 ## Common Issues & Solutions
 
 ### Issue: paneforge not working
+
 **Solution:** Ensure `npm install paneforge` completed successfully
 
 ### Issue: Syntax highlighting not working
+
 **Solution:** Check Shiki installation, verify theme matches your app theme
 
 ### Issue: Keyboard shortcuts not working
+
 **Solution:** Verify `$effect` hook is set up correctly for keydown listener
 
 ### Issue: Storybook stories not rendering
+
 **Solution:** Check that `@storybook/addon-svelte-csf` is installed and configured
 
 ## Next Steps After 2C
 
 Once all three runs are complete:
+
 1. ✅ Update `@fix_plan.md` with all completed items
 2. ✅ Verify all 9 Storybook stories render correctly
 3. ✅ Test full request/response flow end-to-end

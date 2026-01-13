@@ -476,14 +476,14 @@ The main window features a VS Code/Cursor-style three-panel layout: a collapsibl
 Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation. These are accessible, theme-aware, and Tailwind-based.
 
 | Component | Use Case                                          | Reference                                                                        |
-| --------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| --------- | ------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------- |
 | Input     | URL bar with placeholders, validation, cURL paste | [shadcn-svelte/input](https://www.shadcn-svelte.com/docs/components/input)       |
 | Select    | Method dropdown with colorful triggers            | [shadcn-svelte/select](https://www.shadcn-svelte.com/docs/components/select)     |
 | Tabs      | Request/response sections                         | [shadcn-svelte/tabs](https://www.shadcn-svelte.com/docs/components/tabs)         |
 | Textarea  | Body editor (extend with CodeMirror)              | [shadcn-svelte/textarea](https://www.shadcn-svelte.com/docs/components/textarea) |
 | Card      | Request/response panels, preview                  | [shadcn-svelte/card](https://www.shadcn-svelte.com/docs/components/card)         |
 | Table     | Response headers (collapsible)                    | [shadcn-svelte/table](https://www.shadcn-svelte.com/docs/components/table)       |
-| Resizable | Horizontal split pane (Request | Response side-by-side) | [paneforge](https://paneforge.dev/)                                              |
+| Resizable | Horizontal split pane (Request                    | Response side-by-side)                                                           | [paneforge](https://paneforge.dev/) |
 
 ### Three-Panel Layout Wireframe (VS Code/Cursor Style)
 
@@ -504,6 +504,7 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 ```
 
 **Key Layout Features:**
+
 - **Horizontal Split:** Request (left) and Response (right) side-by-side (like VS Code's editor split view)
 - **Resizable:** Drag divider to adjust request/response pane widths (50/50 default, min 30% each)
 - **Familiar Pattern:** Matches VS Code/Cursor mental model for developers
@@ -540,6 +541,7 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 ```
 
 **Key Changes (VS Code/Cursor Style):**
+
 - **Horizontal Split:** Request (left) and Response (right) side-by-side
 - **Resizable Divider:** Vertical divider between request/response panes
 - **Familiar Pattern:** Matches VS Code's editor split view mental model

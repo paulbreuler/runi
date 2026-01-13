@@ -6,7 +6,8 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 
 **Stack:** Rust 1.80+ (backend) + Tauri v2.9.x (runtime) + Svelte 5.46.x (frontend, runes mandatory)
 
-**Prerequisites:** 
+**Prerequisites:**
+
 - Run 1 (HTTP Core) must be complete
 - Run 2A (Layout Foundation) must be complete
 
@@ -15,6 +16,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 ## Design Rationale
 
 **Why This Second:** Users need to send requests and see responses. This run enables:
+
 - Visual request building (method selection, URL input)
 - Request execution (send button with loading state)
 - Response feedback (status, timing, basic body display)
@@ -22,6 +24,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 **User Value:** "I can send HTTP requests and see the results."
 
 **HTTPie-Inspired Design Principles:**
+
 - **Color-Coded Methods:** Distinct, bold colors for each HTTP method (GET=green, POST=blue, etc.)
 - **Clean Request Bar:** Minimal chrome, focus on URL and method
 - **Immediate Feedback:** Status badges and timing visible immediately
@@ -48,6 +51,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 All boxes must be checked AND tests must pass:
 
 ### Request Header Component
+
 - [ ] Create `RequestHeader.svelte` in `Request/` directory
 - [ ] URL input with placeholder "Enter URL or paste cURL"
 - [ ] Method selector dropdown with color-coded options:
@@ -68,12 +72,14 @@ All boxes must be checked AND tests must pass:
 - [ ] High contrast for URL input (clear background, readable text)
 
 ### Request Integration
+
 - [ ] RequestHeader integrates with existing `executeRequest` function
 - [ ] RequestHeader replaces placeholder in MainLayout request pane
 - [ ] Request state managed with Svelte 5 runes (`$state`)
 - [ ] Loading state properly managed (prevents double-sends)
 
 ### Response Status Badge
+
 - [ ] Create `StatusBadge.svelte` in `Response/` directory
 - [ ] Color coding based on status code:
   - 2xx (200-299): Green (`bg-green-600` or `text-green-600`)
@@ -87,6 +93,7 @@ All boxes must be checked AND tests must pass:
 - [ ] High contrast colors (text is clearly readable on colored backgrounds)
 
 ### Response Timing Display
+
 - [ ] Create `TimingDisplay.svelte` in `Response/` directory
 - [ ] Displays total request time in milliseconds
 - [ ] Displays response size (if available from HttpResponse)
@@ -96,6 +103,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Hover shows timing breakdown (optional, nice-to-have: DNS, connect, transfer times)
 
 ### Basic Response Panel
+
 - [ ] Create `ResponsePanel.svelte` in `Response/` directory
 - [ ] Displays status badge and timing in header area
 - [ ] Displays response body in scrollable area
@@ -107,6 +115,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Smooth transitions when response updates (fade-in or subtle animation)
 
 ### Storybook Stories
+
 - [ ] `RequestHeader.stories.svelte` - Request header states
   - Story: "Default State" - Empty URL, GET method
   - Story: "With URL" - URL filled, ready to send
@@ -124,6 +133,7 @@ All boxes must be checked AND tests must pass:
   - Story: "Large Response" - 125ms, 2.4MB
 
 ### Quality Gates
+
 - [ ] `npm run check` passes
 - [ ] `npm run lint` passes
 - [ ] `just storybook` runs without errors
@@ -207,13 +217,11 @@ All boxes must be checked AND tests must pass:
   export { response, error };
 </script>
 
-<div class="flex items-center gap-2 p-4 border-b border-border bg-background" data-testid="request-header">
-  <Select.Root
-    type="single"
-    value={method}
-    onValueChange={handleMethodChange}
-    disabled={loading}
-  >
+<div
+  class="flex items-center gap-2 p-4 border-b border-border bg-background"
+  data-testid="request-header"
+>
+  <Select.Root type="single" value={method} onValueChange={handleMethodChange} disabled={loading}>
     <Select.Trigger
       class="w-28 font-semibold {methodColors[method] ?? 'bg-gray-600 text-white'}"
       data-testid="method-select"
@@ -258,6 +266,7 @@ All boxes must be checked AND tests must pass:
 ```
 
 **HTTPie-Inspired Notes:**
+
 - Method selector: Bold, confident colors (GET=green-600, POST=blue-600, etc.)
 - URL input: High contrast, clear placeholder, smooth focus states
 - Send button: Smooth loading animation, clear disabled state
@@ -289,7 +298,8 @@ All boxes must be checked AND tests must pass:
   data-testid="status-badge"
   aria-label="HTTP Status {status} {statusText}"
 >
-  {status} {statusText}
+  {status}
+  {statusText}
 </span>
 ```
 
@@ -312,24 +322,28 @@ All boxes must be checked AND tests must pass:
 </script>
 
 <span class="text-xs text-muted-foreground font-mono" data-testid="timing-display">
-  {timingMs}ms{#if formattedSize()} • {formattedSize()}{/if}
+  {timingMs}ms{#if formattedSize()}
+    • {formattedSize()}{/if}
 </span>
 ```
 
 ## Files to Create/Modify
 
 ### Components to Create
+
 - `src/lib/components/Request/RequestHeader.svelte`
 - `src/lib/components/Response/ResponsePanel.svelte`
 - `src/lib/components/Response/StatusBadge.svelte`
 - `src/lib/components/Response/TimingDisplay.svelte`
 
 ### Stories to Create
+
 - `src/lib/components/Request/RequestHeader.stories.svelte`
 - `src/lib/components/Response/StatusBadge.stories.svelte`
 - `src/lib/components/Response/TimingDisplay.stories.svelte`
 
 ### Components to Modify
+
 - `src/lib/components/Layout/MainLayout.svelte` - Replace placeholders with RequestHeader and ResponsePanel
 
 ## Process
@@ -358,6 +372,7 @@ Then update `@fix_plan.md` to mark completed items with [x].
 ## Out of Scope (Future Runs)
 
 **DO NOT** work on:
+
 - JSON syntax highlighting (Run 2C)
 - Response headers table (Run 2C)
 - Raw/Pretty toggle (Run 2C)

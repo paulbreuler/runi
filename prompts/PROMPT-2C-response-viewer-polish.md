@@ -6,7 +6,8 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 
 **Stack:** Rust 1.80+ (backend) + Tauri v2.9.x (runtime) + Svelte 5.46.x (frontend, runes mandatory)
 
-**Prerequisites:** 
+**Prerequisites:**
+
 - Run 1 (HTTP Core) must be complete
 - Run 2A (Layout Foundation) must be complete
 - Run 2B (Request Header & Response Basics) must be complete
@@ -16,6 +17,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 ## Design Rationale
 
 **Why This Third:** Users need to understand responses deeply. This run enables:
+
 - Beautiful code display (syntax highlighting)
 - Structured data viewing (headers table)
 - Multiple view modes (raw vs pretty)
@@ -24,6 +26,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 **User Value:** "I can read and understand API responses easily."
 
 **HTTPie-Inspired Design Principles:**
+
 - **Clean Code Display:** High contrast syntax highlighting, monospaced fonts
 - **Readable Format:** Properly indented, easy to scan
 - **Contextual Details:** Hover to see full header values, tooltips for guidance
@@ -53,6 +56,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 All boxes must be checked AND tests must pass:
 
 ### JSON Syntax Highlighting
+
 - [ ] Choose syntax highlighting library (Shiki recommended for Svelte 5 compatibility)
 - [ ] Install syntax highlighting library (`npm install shiki` or similar)
 - [ ] Create `BodyViewer.svelte` in `Response/` directory
@@ -66,6 +70,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Line numbers optional (for very large responses, nice-to-have)
 
 ### Response Headers Viewer
+
 - [ ] Create `HeadersViewer.svelte` in `Response/` directory
 - [ ] Uses shadcn Table component for headers display
 - [ ] Headers displayed as key-value pairs
@@ -78,6 +83,7 @@ All boxes must be checked AND tests must pass:
 - [ ] High contrast for header names and values (readable text)
 
 ### Response Panel Tabs
+
 - [ ] Update `ResponsePanel.svelte` to use shadcn Tabs
 - [ ] Three tabs: "Body", "Headers", "Stats"
 - [ ] Active tab indicator works correctly
@@ -87,6 +93,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Tabs use subtle hover effects (`hover:bg-muted/50`)
 
 ### Body Viewer Features
+
 - [ ] Raw/Pretty toggle (or separate tabs: "Pretty" and "Raw")
 - [ ] Pretty view: Syntax-highlighted, formatted JSON
 - [ ] Raw view: Unformatted response body (as received)
@@ -96,6 +103,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Smooth animations for view mode changes (200ms transitions)
 
 ### Stats Tab
+
 - [ ] Create stats display in ResponsePanel
 - [ ] Shows timing information (from TimingDisplay component)
 - [ ] Shows response size
@@ -104,6 +112,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Formatted nicely (key-value pairs or table)
 
 ### Error Handling
+
 - [ ] Error responses display error message clearly
 - [ ] Network errors show user-friendly messages (HTTPie-style actionable guidance)
 - [ ] Timeout errors are distinguishable (clear messaging, not just "error")
@@ -112,6 +121,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Smooth error state transitions (subtle animation, not jarring)
 
 ### Storybook Stories
+
 - [ ] `ResponsePanel.stories.svelte` - Response panel states
   - Story: "Success Response" - 200 OK with JSON body
   - Story: "Error Response" - 404 Not Found
@@ -129,6 +139,7 @@ All boxes must be checked AND tests must pass:
   - Story: "Sensitive Headers" - Masked Authorization header
 
 ### Quality Gates
+
 - [ ] `npm run check` passes
 - [ ] `npm run lint` passes
 - [ ] `just storybook` runs without errors
@@ -147,6 +158,7 @@ All boxes must be checked AND tests must pass:
 ## Syntax Highlighting Options
 
 ### Option 1: Shiki (Recommended)
+
 **Pros:** Svelte 5 compatible, fast, good JSON support  
 **Cons:** Larger bundle size
 
@@ -155,6 +167,7 @@ npm install shiki
 ```
 
 ### Option 2: CodeMirror
+
 **Pros:** Feature-rich, extensible  
 **Cons:** More complex integration, may need Svelte wrapper
 
@@ -163,6 +176,7 @@ npm install codemirror @codemirror/lang-json
 ```
 
 ### Option 3: Prism.js
+
 **Pros:** Lightweight, simple  
 **Cons:** Less modern, may need Svelte wrapper
 
@@ -173,6 +187,7 @@ npm install prismjs
 **Recommendation:** Start with Shiki for best Svelte 5 compatibility.
 
 **HTTPie-Inspired Syntax Highlighting:**
+
 - Use high contrast themes (readable on both light and dark backgrounds)
 - Monospaced fonts for all code (consistent with HTTPie)
 - Proper indentation and formatting (easy to scan)
@@ -224,7 +239,12 @@ npm install prismjs
   });
 </script>
 
-<Tabs.Root value={viewMode} onValueChange={(v) => { if (v) viewMode = v as 'pretty' | 'raw'; }}>
+<Tabs.Root
+  value={viewMode}
+  onValueChange={(v) => {
+    if (v) viewMode = v as 'pretty' | 'raw';
+  }}
+>
   <Tabs.List>
     <Tabs.Trigger value="pretty" data-testid="body-tab-pretty">Pretty</Tabs.Trigger>
     <Tabs.Trigger value="raw" data-testid="body-tab-raw">Raw</Tabs.Trigger>
@@ -246,7 +266,14 @@ npm install prismjs
 
 ```svelte
 <script lang="ts">
-  import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
+  import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from '$lib/components/ui/table';
   import { ChevronDown, ChevronRight } from 'lucide-svelte';
   import { Button } from '$lib/components/ui/button';
 
@@ -270,7 +297,9 @@ npm install prismjs
   <Button
     variant="ghost"
     class="w-full justify-between"
-    onclick={() => { expanded = !expanded; }}
+    onclick={() => {
+      expanded = !expanded;
+    }}
     data-testid="headers-toggle"
   >
     <span>Response Headers ({Object.keys(headers).length})</span>
@@ -323,15 +352,19 @@ npm install prismjs
 
 <div class="flex flex-col h-full" data-testid="response-panel">
   {#if error}
-    <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive" role="alert">
-      <strong>Error:</strong> {error}
+    <div
+      class="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive"
+      role="alert"
+    >
+      <strong>Error:</strong>
+      {error}
     </div>
   {:else if response}
     <div class="flex items-center justify-between p-4 border-b border-border">
       <StatusBadge status={response.status} statusText={response.status_text} />
       <TimingDisplay timingMs={response.timing.total_ms} />
     </div>
-    
+
     <Tabs.Root value="body" class="flex-1 flex flex-col" data-testid="response-tabs">
       <Tabs.List class="border-b">
         <Tabs.Trigger value="body" data-testid="body-tab">Body</Tabs.Trigger>
@@ -364,17 +397,20 @@ npm install prismjs
 ## Files to Create/Modify
 
 ### Dependencies
+
 ```bash
 npm install shiki
 npx shadcn-svelte@latest add tabs table
 ```
 
 ### Components to Create/Update
+
 - `src/lib/components/Response/BodyViewer.svelte` (new)
 - `src/lib/components/Response/HeadersViewer.svelte` (new)
 - `src/lib/components/Response/ResponsePanel.svelte` (update with tabs)
 
 ### Stories to Create
+
 - `src/lib/components/Response/ResponsePanel.stories.svelte`
 - `src/lib/components/Response/BodyViewer.stories.svelte`
 - `src/lib/components/Response/HeadersViewer.stories.svelte`
@@ -406,6 +442,7 @@ Then update `@fix_plan.md` to mark completed items with [x].
 ## Out of Scope (Future Runs)
 
 **DO NOT** work on:
+
 - Tab content editors (Params/Headers/Body/Auth) - Run 3
 - Collections/History functionality - Phase 3
 - AI features - Phase 4

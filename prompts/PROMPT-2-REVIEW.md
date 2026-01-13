@@ -6,17 +6,20 @@
 ## Current State Assessment
 
 ### ✅ Already Complete
+
 - Storybook is set up and working
 - Basic shadcn-svelte components exist: `button`, `input`, `select`, `separator`
 - HTTP core functionality is complete (Run 1)
 - Basic page layout exists (`src/routes/+page.svelte`)
 
 ### ❌ Missing Dependencies
+
 - `paneforge` - NOT installed (required for resizable panes)
 - `lucide-svelte` - NOT installed (required for icons)
 - Additional shadcn components: `tabs`, `textarea`, `card`, `table`
 
 ### 📋 Component Structure Needed
+
 ```
 src/lib/components/
 ├── Layout/
@@ -36,8 +39,9 @@ src/lib/components/
 ## PROMPT-2 Scope Analysis
 
 ### Total Tasks Breakdown
+
 - **Layout Structure:** 5 items
-- **Request Header Bar:** 3 items  
+- **Request Header Bar:** 3 items
 - **Response Viewer:** 6 items
 - **Storybook Stories:** 9 stories
 - **Quality Gates:** 7 items
@@ -47,18 +51,21 @@ src/lib/components/
 ### Complexity Assessment
 
 **High Complexity Items:**
+
 1. MainLayout with paneforge integration (new dependency, new pattern)
 2. JSON syntax highlighting (CodeMirror/Shiki integration)
 3. Response viewer with multiple tabs and views
 4. 9 Storybook stories (significant time investment)
 
 **Medium Complexity:**
+
 1. Sidebar with ⌘B keyboard shortcut
 2. Color-coded method dropdown
 3. StatusBadge with color coding
 4. HeadersViewer with collapsible table
 
 **Low Complexity:**
+
 1. StatusBar (placeholder content)
 2. TimingDisplay (simple metrics)
 3. Basic component structure
@@ -66,12 +73,15 @@ src/lib/components/
 ## Recommendation: Break Down PROMPT-2
 
 ### Option A: Keep as Single Run (Current)
+
 **Pros:**
+
 - Single completion signal
 - All layout work in one batch
 - Easier to track in `@fix_plan.md`
 
 **Cons:**
+
 - Very large scope (~30 deliverables)
 - High risk of incomplete work
 - Difficult to test incrementally
@@ -80,9 +90,11 @@ src/lib/components/
 ### Option B: Split into 3 Sub-Runs (Recommended)
 
 #### PROMPT-2A: Layout Foundation
+
 **Focus:** Core layout structure, dependencies, basic components
 
 **Tasks:**
+
 - Install paneforge, lucide-svelte
 - Add shadcn components: tabs, textarea, card, table
 - Create MainLayout.svelte with paneforge vertical split
@@ -92,6 +104,7 @@ src/lib/components/
 - Basic Storybook stories: MainLayout, Sidebar, StatusBar
 
 **Success Criteria:**
+
 - Layout renders with three panels
 - Sidebar toggles with ⌘B
 - Panes resize with paneforge
@@ -100,9 +113,11 @@ src/lib/components/
 **Estimated Deliverables:** ~8-10 items
 
 #### PROMPT-2B: Request Header & Response Basics
+
 **Focus:** Request header bar and basic response display
 
 **Tasks:**
+
 - Create RequestHeader.svelte with colored method dropdown
 - Integrate RequestHeader into MainLayout
 - Create StatusBadge.svelte
@@ -111,6 +126,7 @@ src/lib/components/
 - Storybook stories: RequestHeader, StatusBadge, TimingDisplay
 
 **Success Criteria:**
+
 - Method dropdown shows colors (GET=green, POST=blue, etc.)
 - Send button works with loading state
 - Response displays with status badge and timing
@@ -119,9 +135,11 @@ src/lib/components/
 **Estimated Deliverables:** ~8-10 items
 
 #### PROMPT-2C: Response Viewer & Polish
+
 **Focus:** Advanced response viewer, syntax highlighting, final stories
 
 **Tasks:**
+
 - Integrate JSON syntax highlighting (CodeMirror or Shiki)
 - Create BodyViewer.svelte with raw/pretty toggle
 - Create HeadersViewer.svelte with collapsible table
@@ -130,6 +148,7 @@ src/lib/components/
 - Final quality gates (WCAG, testids, etc.)
 
 **Success Criteria:**
+
 - JSON syntax highlighting works
 - Response tabs switch correctly
 - Headers table is collapsible
@@ -141,12 +160,14 @@ src/lib/components/
 ### Option C: Split into 2 Runs (Balanced)
 
 #### PROMPT-2A: Layout & Request Header
+
 - Layout structure + Sidebar + StatusBar
 - RequestHeader with colored dropdown
 - Basic response display (no syntax highlighting)
 - Stories for layout and request components
 
 #### PROMPT-2B: Response Viewer & Polish
+
 - Advanced response viewer with syntax highlighting
 - All response components (BodyViewer, HeadersViewer, etc.)
 - Remaining Storybook stories
@@ -155,6 +176,7 @@ src/lib/components/
 ## Recommended Approach: Option B (3 Sub-Runs)
 
 **Rationale:**
+
 1. **Incremental Testing:** Each run produces testable, working code
 2. **Manageable Scope:** ~8-12 deliverables per run vs 30 in one
 3. **Clear Boundaries:** Each run has distinct focus
@@ -162,6 +184,7 @@ src/lib/components/
 5. **Easier Review:** Smaller PRs are easier to review
 
 **File Structure:**
+
 ```
 prompts/
 ├── PROMPT-2A-layout-foundation.md
@@ -173,6 +196,7 @@ prompts/
 ## CLAUDE.md Updates Needed
 
 ### Missing Information
+
 1. **paneforge Usage Pattern:** Document how to use paneforge for resizable panes
 2. **Component Organization:** Document Layout/, Request/, Response/ structure
 3. **Storybook Patterns:** Document story file naming and structure conventions
@@ -180,16 +204,18 @@ prompts/
 
 ### Suggested Additions
 
-```markdown
+````markdown
 ## Component Organization
 
 ### Directory Structure
+
 - `Layout/` - App-level layout components (MainLayout, Sidebar, StatusBar)
 - `Request/` - Request building components (RequestHeader, TabPanel, etc.)
 - `Response/` - Response viewing components (ResponsePanel, StatusBadge, etc.)
 - `ui/` - shadcn-svelte base components (button, input, select, etc.)
 
 ### Storybook Story Patterns
+
 - Stories live adjacent to components: `Component.stories.svelte`
 - Use `@storybook/addon-svelte-csf` for Svelte 5 compatibility
 - Story titles follow: `Category/ComponentName` (e.g., `Response/StatusBadge`)
@@ -211,6 +237,8 @@ prompts/
   </Pane>
 </PaneGroup>
 ```
+````
+
 ```
 
 ## Action Items
@@ -253,3 +281,4 @@ prompts/
 - [lucide-svelte Icons](https://lucide.dev/)
 - [shadcn-svelte Components](https://www.shadcn-svelte.com/)
 - [Storybook Svelte 5 Guide](https://storybook.js.org/docs/get-started/frameworks/sveltekit)
+```

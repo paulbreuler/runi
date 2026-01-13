@@ -13,6 +13,7 @@ Heal and improve Ralph documentation files using a Claude-guided prompt.
 5. **Help apply changes** by providing file-specific edits based on the analysis
 
 **Example:**
+
 - User types: `/heal-ralph update all layout references to use horizontal split`
 - You execute: `just heal-ralph "update all layout references to use horizontal split"`
 - You display the output and use it to suggest file edits
@@ -38,6 +39,7 @@ or
 ```
 
 **When invoked, this command will:**
+
 1. Execute `just heal-ralph` with your prompt
 2. Display the generated analysis
 3. Help you apply the suggested changes using Claude Code
@@ -60,6 +62,7 @@ When you invoke this command, Claude will:
 3. **Help apply changes:** Claude will use the analysis to suggest specific file edits
 
 **The underlying script (`scripts/heal-ralph.sh`):**
+
 - Discovers files automatically: `@fix_plan.md`, `specs/requirements.md`, `PROMPT.md`, `CLAUDE.md`, and all `prompts/*.md` files
 - Generates analysis prompts for Claude
 - Adapts to your project structure (no maintenance needed)
@@ -67,16 +70,19 @@ When you invoke this command, Claude will:
 ## Examples
 
 ### Fix Layout References
+
 ```
 /heal-ralph update all layout references to use VS Code-style horizontal split (Request left, Response right)
 ```
 
 ### Add Design Principles
+
 ```
 /heal-ralph add HTTPie design principles (high contrast, subtle interactions, clean interface) to all prompts
 ```
 
 ### Update Terminology
+
 ```
 /heal-ralph replace "vertical split" with "horizontal split" and update all wireframes
 ```

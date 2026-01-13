@@ -6,27 +6,32 @@
 ## Core Design Principles
 
 ### 1. Clean & Focused Interface
+
 - **Minimal Chrome:** Reduce visual noise, focus on content
 - **High Contrast:** Code/data areas use clear backgrounds and readable text
 - **Visual Hierarchy:** Primary actions are prominent, secondary info is subtle
 
 ### 2. Subtle Interactions (HTTPie)
+
 - **Hover Effects:** Use `hover:bg-muted/50 transition-colors duration-200`
 - **No Pointer Cursor:** Only use `cursor-pointer` on actual links/buttons
 - **Smooth Transitions:** 200ms duration, ease-in-out timing
 - **Quiet Interface:** Less visual noise, more focus on content
 
 ### 3. Color-Coded Elements (HTTPie)
+
 - **HTTP Methods:** GET (green-600), POST (blue-600), PUT (yellow-600), DELETE (red-600), PATCH (purple-600)
 - **Status Codes:** 2xx (green), 3xx (blue), 4xx (yellow), 5xx (red)
 - **Bold & Confident:** Method names and status codes are prominent
 
 ### 4. Performance (HTTPie)
+
 - **Fast Rendering:** Optimize component rendering, use virtual scrolling for large content
 - **Smooth Animations:** 60fps, use CSS transforms
 - **Quick Feedback:** Immediate visual response to user actions
 
 ### 5. Contextual Guidance (HTTPie)
+
 - **Tooltips:** Strategic placement, not intrusive
 - **Clear Error Messages:** Actionable guidance, not just "error"
 - **Helpful Placeholders:** Guide users on what to do
@@ -34,6 +39,7 @@
 ## Implementation Patterns
 
 ### Hover States
+
 ```svelte
 <!-- Good: Subtle background change -->
 <div class="hover:bg-muted/50 transition-colors duration-200">
@@ -45,6 +51,7 @@
 ```
 
 ### Color Coding
+
 ```svelte
 <!-- HTTP Methods -->
 const methodColors = {
@@ -65,6 +72,7 @@ const statusColors = {
 ```
 
 ### Typography
+
 ```svelte
 <!-- UI Text -->
 <div class="text-sm text-foreground">UI Text</div>
@@ -77,37 +85,38 @@ const statusColors = {
 ```
 
 ### Transitions
+
 ```svelte
 <!-- Smooth state changes -->
-<div class="transition-all duration-200 ease-in-out">
-  Content
-</div>
+<div class="transition-all duration-200 ease-in-out">Content</div>
 
 <!-- Color transitions -->
-<button class="transition-colors duration-200">
-  Button
-</button>
+<button class="transition-colors duration-200"> Button </button>
 ```
 
 ## Component-Specific Guidelines
 
 ### Request Header
+
 - Method selector: Bold, color-coded, prominent
 - URL input: High contrast, clear placeholder
 - Send button: Smooth loading animation, clear disabled state
 
 ### Status Badge
+
 - Color-coded by status range
 - Bold, readable text
 - Tooltip on hover (optional)
 
 ### Response Viewer
+
 - Monospaced font for all code/data
 - High contrast syntax highlighting
 - Smooth tab switching
 - Collapsible sections with subtle animations
 
 ### Headers Table
+
 - Scannable layout (clear separation)
 - Truncated values with hover tooltips
 - Masked sensitive headers

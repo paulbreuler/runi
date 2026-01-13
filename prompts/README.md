@@ -68,15 +68,15 @@ ralph -p prompts/PROMPT-4-intelligence.md --monitor
 
 ## Run Order (if using split prompts)
 
-| Run | Prompt                               | Focus                                             |
-| --- | ------------------------------------ | ------------------------------------------------- |
-| 1.5 | `PROMPT-1.5-tech-stack-alignment.md` | Tech stack alignment, Storybook + Tailwind v4 fix |
-| 1   | `PROMPT-1-http-core.md`              | HTTP execution backend + basic UI                 |
-| 2A  | `PROMPT-2A-layout-foundation.md`     | VS Code-style layout foundation                   |
-| 2B  | `PROMPT-2B-request-response-basics.md` | Request header + response basics |
-| 2C  | `PROMPT-2C-response-viewer-polish.md` | Response viewer polish (syntax highlighting)      |
-| 3   | `PROMPT-3-request-builder.md`        | Tabs, headers, body, auth (shadcn-svelte)         |
-| 4   | `PROMPT-4-intelligence.md`           | Suggestions & warnings infrastructure             |
+| Run | Prompt                                 | Focus                                             |
+| --- | -------------------------------------- | ------------------------------------------------- |
+| 1.5 | `PROMPT-1.5-tech-stack-alignment.md`   | Tech stack alignment, Storybook + Tailwind v4 fix |
+| 1   | `PROMPT-1-http-core.md`                | HTTP execution backend + basic UI                 |
+| 2A  | `PROMPT-2A-layout-foundation.md`       | VS Code-style layout foundation                   |
+| 2B  | `PROMPT-2B-request-response-basics.md` | Request header + response basics                  |
+| 2C  | `PROMPT-2C-response-viewer-polish.md`  | Response viewer polish (syntax highlighting)      |
+| 3   | `PROMPT-3-request-builder.md`          | Tabs, headers, body, auth (shadcn-svelte)         |
+| 4   | `PROMPT-4-intelligence.md`             | Suggestions & warnings infrastructure             |
 
 **Note:** Run 1.5 should be executed first to ensure tech stack alignment before building features.
 
