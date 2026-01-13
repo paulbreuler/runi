@@ -68,7 +68,7 @@
 </Story>
 
 <Story name="All Variants" args={{}}>
-  {#snippet template(args: Record<string, any>)}
+  {#snippet template(_args: Record<string, any>)}
     <div class="flex gap-4 flex-wrap">
       <Button variant="default">Default</Button>
       <Button variant="destructive">Destructive</Button>

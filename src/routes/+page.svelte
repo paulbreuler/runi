@@ -135,7 +135,7 @@
 
       <div class="flex-1 overflow-auto p-4 bg-card">
         <pre
-          class="font-mono text-sm whitespace-pre-wrap break-words"
+          class="font-mono text-sm whitespace-pre-wrap wrap-break-word"
           data-testid="response-body">{response.body}</pre>
       </div>
     </section>
