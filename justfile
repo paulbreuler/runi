@@ -1,3 +1,4 @@
+
 # runi Workspace - Build and Test Automation
 # Requires: just (https://github.com/casey/just)
 # Install: cargo install just
@@ -116,6 +117,25 @@ test-frontend:
     npm run test -- --run
 
 # ============================================================================
+# 📚 Storybook
+# ============================================================================
+
+# Start Storybook development server (with hot reload for development)
+storybook:
+    npm run storybook
+
+# Build static Storybook site (production build, no server)
+storybook-build:
+    npm run build-storybook
+
+# Build and serve the final production Storybook site
+# Use this to preview the production build locally (no hot reload, static files only)
+# Differs from 'storybook' which is a dev server with hot reload
+# Differs from 'storybook-build' which only builds without serving
+storybook-serve: storybook-build
+    npx serve storybook-static -p 6006
+
+# ============================================================================
 # 🔄 CI Pipeline
 # ============================================================================
 
@@ -191,6 +211,11 @@ help:
     @echo "  just test          - Run all tests"
     @echo "  just test-rust     - Run Rust tests only"
     @echo "  just test-frontend - Run frontend tests only"
+    @echo ""
+    @echo "Storybook:"
+    @echo "  just storybook      - Start Storybook development server"
+    @echo "  just storybook-build - Build static Storybook site"
+    @echo "  just storybook-serve - Build and serve static Storybook"
     @echo ""
     @echo "Cleanup:"
     @echo "  just clean         - Clean build artifacts"

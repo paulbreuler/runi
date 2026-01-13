@@ -20,6 +20,7 @@ coverage
 build
 dist
 .svelte-kit
+storybook-static
 
 # Misc
 .DS_Store
