@@ -59,6 +59,7 @@
     "@storybook/svelte": "^8.5.9",
     "@storybook/sveltekit": "^8.5.9",
     "@storybook/test": "^8.5.9",
+    "serve": "^14.2.4",
     "storybook": "^8.5.9"
   },
   "type": "module"
