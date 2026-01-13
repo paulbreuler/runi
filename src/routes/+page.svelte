@@ -1,6 +1,9 @@
 <script lang="ts">
   import { executeRequest } from '$lib/api/http';
   import { createRequestParams, type HttpMethod, type HttpResponse } from '$lib/types/http';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import * as Select from '$lib/components/ui/select';
 
   // State
   let url = $state('https://httpbin.org/get');
@@ -11,15 +14,18 @@
 
   // Derived
   let isValidUrl = $derived(url.length > 0);
-  let statusClass = $derived(
-    response
-      ? response.status >= 200 && response.status < 300
-        ? 'status-success'
+  let statusColorClass = $derived(
+    !response
+      ? ''
+      : response.status >= 200 && response.status < 300
+        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
         : response.status >= 400
-          ? 'status-error'
-          : 'status-info'
-      : ''
+          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
   );
+
+  // HTTP methods for select
+  const httpMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
   // Handlers
   async function handleSend(): Promise<void> {
@@ -44,32 +50,39 @@
       handleSend();
     }
   }
+
+  function handleMethodChange(value: string | undefined): void {
+    if (value) {
+      method = value as HttpMethod;
+    }
+  }
 </script>
 
-<div class="container">
-  <header class="header">
-    <h1>runi</h1>
-    <p class="subtitle">Your API Development Partner</p>
+<div class="flex min-h-screen flex-col p-6 mx-auto max-w-5xl">
+  <header class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-foreground">runi</h1>
+    <p class="text-muted-foreground text-sm mt-1">Your API Development Partner</p>
   </header>
 
-  <section class="request-builder">
-    <div class="url-bar">
-      <select
-        bind:value={method}
-        data-testid="method-select"
-        disabled={loading}
-        aria-label="HTTP Method"
-      >
-        <option value="GET">GET</option>
-        <option value="POST">POST</option>
-        <option value="PUT">PUT</option>
-        <option value="PATCH">PATCH</option>
-        <option value="DELETE">DELETE</option>
-        <option value="HEAD">HEAD</option>
-        <option value="OPTIONS">OPTIONS</option>
-      </select>
+  <section class="mb-6">
+    <div class="flex gap-2 items-stretch">
+      <Select.Root type="single" value={method} onValueChange={handleMethodChange}>
+        <Select.Trigger
+          class="w-28 font-semibold"
+          data-testid="method-select"
+          disabled={loading}
+          aria-label="HTTP Method"
+        >
+          {method}
+        </Select.Trigger>
+        <Select.Content>
+          {#each httpMethods as httpMethod (httpMethod)}
+            <Select.Item value={httpMethod}>{httpMethod}</Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
 
-      <input
+      <Input
         type="text"
         bind:value={url}
         onkeydown={handleKeyDown}
@@ -77,203 +90,54 @@
         data-testid="url-input"
         disabled={loading}
         aria-label="Request URL"
+        class="flex-1"
       />
 
-      <button
+      <Button
         onclick={handleSend}
         disabled={!isValidUrl || loading}
         data-testid="send-button"
         aria-label="Send Request"
       >
         {loading ? 'Sending...' : 'Send'}
-      </button>
+      </Button>
     </div>
   </section>
 
   {#if error}
-    <section class="error-panel" role="alert" data-testid="error-panel">
+    <section
+      class="p-4 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive"
+      role="alert"
+      data-testid="error-panel"
+    >
       <strong>Error:</strong>
       {error}
     </section>
   {/if}
 
   {#if response}
-    <section class="response-panel" data-testid="response-panel">
-      <div class="response-header">
-        <span class="status {statusClass}" data-testid="response-status">
+    <section
+      class="flex-1 flex flex-col border border-border rounded-lg overflow-hidden"
+      data-testid="response-panel"
+    >
+      <div class="flex justify-between items-center px-4 py-3 bg-muted border-b border-border">
+        <span
+          class="font-semibold px-2 py-1 rounded text-sm {statusColorClass}"
+          data-testid="response-status"
+        >
           {response.status}
           {response.status_text}
         </span>
-        <span class="timing" data-testid="response-timing">
+        <span class="text-muted-foreground text-sm" data-testid="response-timing">
           {response.timing.total_ms}ms
         </span>
       </div>
 
-      <div class="response-body">
-        <pre data-testid="response-body">{response.body}</pre>
+      <div class="flex-1 overflow-auto p-4 bg-card">
+        <pre
+          class="font-mono text-sm whitespace-pre-wrap break-words"
+          data-testid="response-body">{response.body}</pre>
       </div>
     </section>
   {/if}
 </div>
-
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    padding: 1.5rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .header {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  h1 {
-    font-size: 2rem;
-    margin: 0;
-    color: #333;
-  }
-
-  .subtitle {
-    color: #666;
-    margin: 0.5rem 0 0;
-    font-size: 0.875rem;
-  }
-
-  .request-builder {
-    margin-bottom: 1.5rem;
-  }
-
-  .url-bar {
-    display: flex;
-    gap: 0.5rem;
-    align-items: stretch;
-  }
-
-  select {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    min-width: 100px;
-  }
-
-  select:disabled {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-  }
-
-  input[type='text'] {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-
-  input[type='text']:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
-  }
-
-  input[type='text']:disabled {
-    background-color: #e9ecef;
-  }
-
-  button {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: background-color 0.15s;
-  }
-
-  button:hover:not(:disabled) {
-    background-color: #0056b3;
-  }
-
-  button:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-  }
-
-  .error-panel {
-    padding: 1rem;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 0.375rem;
-    color: #721c24;
-    margin-bottom: 1rem;
-  }
-
-  .response-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    overflow: hidden;
-  }
-
-  .response-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-  }
-
-  .status {
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-  }
-
-  .status-success {
-    background-color: #d4edda;
-    color: #155724;
-  }
-
-  .status-error {
-    background-color: #f8d7da;
-    color: #721c24;
-  }
-
-  .status-info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-  }
-
-  .timing {
-    color: #6c757d;
-    font-size: 0.875rem;
-  }
-
-  .response-body {
-    flex: 1;
-    overflow: auto;
-    padding: 1rem;
-    background-color: #fff;
-  }
-
-  pre {
-    margin: 0;
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-    font-size: 0.8125rem;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-</style>
