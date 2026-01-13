@@ -39,6 +39,14 @@ export default tseslint.config(
     },
   },
   {
+    // Allow `any` in Storybook story files (required by Storybook API)
+    files: ['**/*.stories.svelte', '**/*.stories.ts', '**/*.stories.js'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
     ignores: ['build/', '.svelte-kit/', 'dist/', 'node_modules/', 'src-tauri/target/'],
   }
 );

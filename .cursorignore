@@ -1,0 +1,23 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+
+# Dependencies
+node_modules/
+
+# Frontend build artifacts
+build/
+dist/
+.svelte-kit/
+storybook-static/
+
+# Rust build artifacts
+target/
+src-tauri/target/
+
+# Logs / reports / test output
+logs/
+coverage/
+playwright-report/
+test-results/
+
+# Generated artifacts that are typically noisy for retrieval
+src-tauri/gen/
