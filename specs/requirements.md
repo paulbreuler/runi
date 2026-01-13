@@ -448,16 +448,28 @@ runi uses a distraction-free, developer-focused layout optimized for API workflo
 - **Visual feedback:** Color-coded methods, status badges, syntax highlighting
 - **Intelligent assistance:** Proactive suggestions and security warnings integrated naturally
 
-The main window features a collapsible left sidebar for navigation, a central vertical split-pane dividing the top request builder from the bottom response viewer, and subtle accents for interactivity.
+The main window features a VS Code/Cursor-style three-panel layout: a collapsible left sidebar for navigation, a central horizontal split-pane dividing the request builder (left) from the response viewer (right), and a bottom status bar. The design is inspired by HTTPie's clean, focused interface principles.
 
-**Design Principles:**
+**Layout Structure (VS Code/Cursor Style):**
 
-- Request builder occupies top ~40% by default (resizable vertically)
-- Response viewer below, expanding to fill remaining space
-- Real-time preview as a toggleable right panel within request builder or bottom tab
+- **Left Sidebar:** Collections, History (collapsible with ⌘B)
+- **Center Area:** Horizontal split pane (paneforge)
+  - **Left Pane:** Request Builder (50% default, min 30%)
+  - **Right Pane:** Response Viewer (50% default, min 30%)
+- **Bottom Status Bar:** Environment indicator, AI prompt hint (⌘I)
+
+**Design Principles (HTTPie-Inspired):**
+
+- **Clean & Focused:** Minimal chrome, high contrast for readability
+- **Subtle Interactions:** Hover effects use background color changes (`hover:bg-muted/50`), not cursor changes (only pointer for actual links/buttons)
+- **Visual Hierarchy:** Clear distinction between primary actions and secondary information
+- **Color-Coded Elements:** HTTP methods (GET=green, POST=blue, etc.) and status codes (2xx=green, 4xx=yellow, etc.)
+- **Performance:** Smooth animations (200ms transitions, 60fps), optimized rendering
+- **Contextual Guidance:** Tooltips and hints where helpful, but not intrusive
+- **Typography:** Monospaced fonts for all code/data (HTTPie style), high contrast
 - Native Tauri window controls handle titlebar functions (no custom bars)
 - Dark mode default with system auto-switch for themes
-- Minimal, intuitive flow: build requests top, view responses bottom, manage library left
+- Minimal, intuitive flow: build requests left, view responses right, manage library left
 
 ### Component Library: shadcn-svelte
 
@@ -471,81 +483,66 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 | Textarea  | Body editor (extend with CodeMirror)              | [shadcn-svelte/textarea](https://www.shadcn-svelte.com/docs/components/textarea) |
 | Card      | Request/response panels, preview                  | [shadcn-svelte/card](https://www.shadcn-svelte.com/docs/components/card)         |
 | Table     | Response headers (collapsible)                    | [shadcn-svelte/table](https://www.shadcn-svelte.com/docs/components/table)       |
-| Resizable | Vertical split pane                               | [paneforge](https://paneforge.dev/)                                              |
+| Resizable | Horizontal split pane (Request | Response side-by-side) | [paneforge](https://paneforge.dev/)                                              |
 
-### Three-Panel Layout Wireframe
+### Three-Panel Layout Wireframe (VS Code/Cursor Style)
 
 ```
 [Native Tauri Titlebar: Window controls, app menu]
 
-+---------------+-----------------------------------+
-|               | [Request Builder]                 |
-| [Sidebar]     | - Method Dropdown (colored) + URL |
-| (Collapsible) |   Input + Send Button             |
-| - Spaces      | - Tabs: Params | Headers | Body   |
-| - Collections |         | Auth | Preview        |
-| - History     | - Body Editor (syntax-highlighted)|
-| (Drag-drop)   |                                   |
-+---------------+-----------------------------------+
-|               | [Resizable Divider]               |
-+---------------+-----------------------------------+
-|               | [Response Viewer]                 |
-|               | - Tabs: Body | Headers | Stats    |
-|               | - Body: Rendered/Source/JSONPath  |
-|               | - Headers: Collapsible Table      |
-|               | - Stats: Timing/Size (hover)      |
-+---------------+-----------------------------------+
++--------+--------------------------+------------------+
+|        | [Request Builder]        | [Response Viewer]|
+| [Left] | - Method Dropdown        | - Tabs: Body |   |
+| Sidebar|   (colored) + URL Input  |   Headers | Stats|
+|        |   + Send Button          | - Body: Syntax   |
+| - Coll | - Tabs: Params | Headers |   highlighted    |
+| - Hist |   | Body | Auth         | - Headers: Table |
+|        | - Body Editor            | - Stats: Timing |
++--------+--------------------------+------------------+
 
 [Status Bar: Environment switcher, AI prompt (⌘I), variables]
 ```
 
-### Detailed Layout with Intelligence UI
+**Key Layout Features:**
+- **Horizontal Split:** Request (left) and Response (right) side-by-side (like VS Code's editor split view)
+- **Resizable:** Drag divider to adjust request/response pane widths (50/50 default, min 30% each)
+- **Familiar Pattern:** Matches VS Code/Cursor mental model for developers
+
+### Detailed Layout with Intelligence UI (VS Code/Cursor Style)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [Logo] runi                              [Env: Dev ▼] [⚙]     │
-├────────────┬────────────────────────┬───────────────────────────┤
-│            │  [GET ▼] [Enter URL...│.....................] [▶] │
-│  COLLECTIONS│├─────┬───────┬────────┬──────┤                    │
-│  ▶ My APIs  ││Params│Headers│ Body  │ Auth │                    │
-│    GET /users││─────────────────────────────│                    │
-│    POST /login│                             │                    │
-│  ▶ External ││  Key    │  Value   │ [+]   │                    │
-│            ││──────────┼──────────┼────────│                    │
-│  HISTORY    ││  Accept  │ app/json │ [✓][x]│                    │
-│  GET /users ││  Auth... │ Bearer...│ [✓][x]│                    │
-│  POST /login││                             │                    │
-│            ││  ┌─────────────────────────┐ │                    │
-│            ││  │ 💡 Suggestion: Add      │ │ ← Intelligence UI  │
-│            ││  │ Content-Type header     │ │                    │
-│            ││  │ [Apply] [Dismiss]       │ │                    │
-│            ││  └─────────────────────────┘ │                    │
-│            ││  ┌─────────────────────────┐ │                    │
-│            ││  │ ⚠️ Warning: Auth over  │ │ ← Security Warning │
-│            ││  │ HTTP (non-localhost)    │ │                    │
-│            ││  └─────────────────────────┘ │                    │
-├────────────┼─────────────────────────────────┴───────────────────┤
-│            │  Response                                           │
-│            │  ┌──────────────────────────────────────────────┐  │
-│            │  │ 200 OK  │ 156ms │ 2.3 KB │ [Pretty] [Raw]   │  │
-│            │  ├──────────────────────────────────────────────┤  │
-│            │  │ {                                            │  │
-│            │  │   "users": [                                 │  │
-│            │  │     { "id": 1, "name": "Alice" },            │  │
-│            │  │     { "id": 2, "name": "Bob" }               │  │
-│            │  │   ]                                          │  │
-│            │  │ }                                            │  │
-│            │  └──────────────────────────────────────────────┘  │
-│            │  ┌──────────────────────────────────────────────┐  │
-│            │  │ Error Analysis (for 4xx/5xx)                 │  │ ← Error Analysis
-│            │  │ 401 Unauthorized: Missing or invalid auth   │  │
-│            │  │ Suggestions:                                 │  │
-│            │  │ • Check Authorization header format          │  │
-│            │  │ • Token may be expired (check exp claim)     │  │
-│            │  │ [🤖 Get AI Analysis]                         │  │
-│            │  └──────────────────────────────────────────────┘  │
-└────────────┴─────────────────────────────────────────────────────┘
+│  [Native Tauri Titlebar: Window controls, app menu]            │
+├────────────┬──────────────────────────┬──────────────────────────┤
+│            │ [Request Builder]        │ [Response Viewer]        │
+│  COLLECTIONS│ [GET ▼] [Enter URL...] │ [Body│Headers│Stats]     │
+│  ▶ My APIs  │ [▶ Send]                │ ──────────────────────  │
+│    GET /users│├─────┬───────┬────────┤ │ 200 OK │ 156ms │ 2.3KB │
+│    POST /login││Params│Headers│ Body │ │ ──────────────────────  │
+│  ▶ External ││─────────────────────│ │ {                      │
+│            ││  Key    │  Value   │ │   "users": [            │
+│  HISTORY    ││──────────┼──────────│ │     { "id": 1, ... }   │
+│  GET /users ││  Accept  │ app/json│ │   ]                    │
+│  POST /login││  Auth... │ Bearer..│ │ }                      │
+│            ││                     │ │                        │
+│            ││  ┌─────────────────┐ │ │                        │
+│            ││  │ 💡 Suggestion:   │ │ │                        │
+│            ││  │ Add Content-Type │ │ │                        │
+│            ││  │ [Apply][Dismiss]│ │ │                        │
+│            ││  └─────────────────┘ │ │                        │
+│            ││  ┌─────────────────┐ │ │                        │
+│            ││  │ ⚠️ Warning:    │ │ │                        │
+│            ││  │ Auth over HTTP │ │ │                        │
+│            ││  └─────────────────┘ │ │                        │
+├────────────┴──────────────────────────┴──────────────────────────┤
+│ [Status Bar: Environment: Dev | Press ⌘I for AI assistance]      │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+**Key Changes (VS Code/Cursor Style):**
+- **Horizontal Split:** Request (left) and Response (right) side-by-side
+- **Resizable Divider:** Vertical divider between request/response panes
+- **Familiar Pattern:** Matches VS Code's editor split view mental model
 
 ### Method Dropdown Colors
 
@@ -568,18 +565,20 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 - Drag-and-drop for reordering
 - History entries show masked sensitive headers
 
-#### Request Panel (top 60% of main area)
+#### Request Panel (left 50% of main area, resizable)
 
-- Method selector: dropdown with GET, POST, PUT, PATCH, DELETE
-- URL input: full-width, with placeholder "Enter request URL"
-- Natural language input (toggle): "Describe what you want to test..."
+- Method selector: dropdown with GET, POST, PUT, PATCH, DELETE (color-coded, HTTPie-inspired)
+- URL input: full-width, with placeholder "Enter URL or paste cURL"
+- Natural language input (toggle): "Describe what you want to test..." (future feature)
 - Send button: primary action, shows spinner when loading
+- High contrast for readability (HTTPie-inspired)
+- Subtle hover effects (not pointer cursor on non-clickable areas)
 - Tabs: Params, Headers, Body, Auth
 - Key-value editor: table with key, value, enabled checkbox, delete button
 - **Suggestion area**: Inline suggestions below tabs, dismissable
 - **Warning area**: Security warnings above send button, color-coded
 
-#### Response Panel (bottom 40% of main area, resizable)
+#### Response Panel (right 50% of main area, resizable)
 
 - Status badge: color-coded (2xx green, 3xx blue, 4xx yellow, 5xx red)
 - Timing display: total time, size

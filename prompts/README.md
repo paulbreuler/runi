@@ -35,8 +35,14 @@ ralph -p prompts/PROMPT-1.5-tech-stack-alignment.md --monitor
 # Run 1: HTTP Core
 ralph -p prompts/PROMPT-1-http-core.md --monitor
 
-# Run 2: Layout UI (after Run 1)
-ralph -p prompts/PROMPT-2-layout-ui.md --monitor
+# Run 2A: Layout Foundation (after Run 1)
+ralph -p prompts/PROMPT-2A-layout-foundation.md --monitor
+
+# Run 2B: Request/Response Basics (after Run 2A)
+ralph -p prompts/PROMPT-2B-request-response-basics.md --monitor
+
+# Run 2C: Response Viewer Polish (after Run 2B)
+ralph -p prompts/PROMPT-2C-response-viewer-polish.md --monitor
 
 # Run 3: Request Builder (after Run 2)
 ralph -p prompts/PROMPT-3-request-builder.md --monitor
@@ -66,7 +72,9 @@ ralph -p prompts/PROMPT-4-intelligence.md --monitor
 | --- | ------------------------------------ | ------------------------------------------------- |
 | 1.5 | `PROMPT-1.5-tech-stack-alignment.md` | Tech stack alignment, Storybook + Tailwind v4 fix |
 | 1   | `PROMPT-1-http-core.md`              | HTTP execution backend + basic UI                 |
-| 2   | `PROMPT-2-layout-ui.md`              | Three-panel layout + response viewer              |
+| 2A  | `PROMPT-2A-layout-foundation.md`     | VS Code-style layout foundation                   |
+| 2B  | `PROMPT-2B-request-response-basics.md` | Request header + response basics |
+| 2C  | `PROMPT-2C-response-viewer-polish.md` | Response viewer polish (syntax highlighting)      |
 | 3   | `PROMPT-3-request-builder.md`        | Tabs, headers, body, auth (shadcn-svelte)         |
 | 4   | `PROMPT-4-intelligence.md`           | Suggestions & warnings infrastructure             |
 

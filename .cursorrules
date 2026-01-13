@@ -1,0 +1,30 @@
+# Cursor Rules for runi
+
+## Ralph File Management
+
+When working with Ralph documentation files, use these commands:
+
+### CLI Commands (Chainable, Recommended for Automation)
+
+```bash
+# Normalize files
+just normalize-ralph
+
+# Validate consistency
+just validate-ralph
+
+# Heal files with prompt
+just heal-ralph "your healing prompt here"
+just heal-ralph --prompt-file prompts/heal-request.md
+just heal-ralph --dry-run "preview changes"
+
+# Clean session
+just clean-ralph
+```
+
+## File Discovery
+
+Ralph files are discovered dynamically:
+- Core files: `@fix_plan.md`, `specs/requirements.md`, `PROMPT.md`, `CLAUDE.md`
+- All `prompts/*.md` files (automatically found)
+- No hardcoded file lists - adapts to project structure

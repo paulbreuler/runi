@@ -478,8 +478,12 @@ just fmt
 runi/
 ├── src/                      # Svelte frontend
 │   ├── lib/
-│   │   ├── components/       # PascalCase.svelte
-│   │   ├── stores/           # camelCase.ts
+│   │   ├── components/       # Component library
+│   │   │   ├── Layout/       # App-level layout (MainLayout, Sidebar, StatusBar)
+│   │   │   ├── Request/      # Request building (RequestHeader, TabPanel, etc.)
+│   │   │   ├── Response/     # Response viewing (ResponsePanel, StatusBadge, etc.)
+│   │   │   └── ui/           # shadcn-svelte base components
+│   │   ├── stores/           # camelCase.ts (Svelte 5 runes)
 │   │   └── utils/            # camelCase.ts
 │   ├── routes/               # SvelteKit routes
 │   └── app.html
@@ -492,12 +496,33 @@ runi/
 │   ├── rustfmt.toml
 │   └── clippy.toml
 ├── specs/                    # Technical specifications
+├── prompts/                  # Ralph prompt files
 ├── justfile                  # Task runner
 ├── eslint.config.js
 ├── tsconfig.json
 ├── .prettierrc
 └── CLAUDE.md
 ```
+
+### Component Organization
+
+**Directory Structure:**
+- `Layout/` - App-level layout components (MainLayout, Sidebar, StatusBar)
+- `Request/` - Request building components (RequestHeader, TabPanel, KeyValueEditor, etc.)
+- `Response/` - Response viewing components (ResponsePanel, StatusBadge, BodyViewer, etc.)
+- `ui/` - shadcn-svelte base components (button, input, select, tabs, etc.)
+
+**Naming Conventions:**
+- Components: `PascalCase.svelte` (e.g., `MainLayout.svelte`, `RequestHeader.svelte`)
+- Stories: `ComponentName.stories.svelte` (e.g., `MainLayout.stories.svelte`)
+- Tests: `ComponentName.test.ts` (e.g., `RequestHeader.test.ts`)
+- Utilities: `camelCase.ts` (e.g., `url.ts`, `cn.ts`)
+
+**Storybook Story Patterns:**
+- Stories live adjacent to components: `Component.stories.svelte`
+- Use `@storybook/addon-svelte-csf` for Svelte 5 compatibility
+- Story titles follow: `Category/ComponentName` (e.g., `Response/StatusBadge`, `Layout/Sidebar`)
+- Use `defineMeta` with `tags: ['autodocs']` for auto-generated documentation
 
 ---
 
@@ -608,6 +633,34 @@ pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, Stri
 - Use runes: `$state`, `$derived`, `$effect`, `$props`
 - Type all props with interfaces
 - Handle and display errors from Tauri commands
+
+### Resizable Panes with paneforge
+
+For vertical or horizontal split panes, use [paneforge](https://paneforge.dev/):
+
+```svelte
+<script lang="ts">
+  import { PaneGroup, Pane, PaneResizer } from 'paneforge';
+  import RequestBuilder from './RequestBuilder.svelte';
+  import ResponseViewer from './ResponseViewer.svelte';
+</script>
+
+<PaneGroup direction="vertical" class="flex-1">
+  <Pane defaultSize={40} minSize={20}>
+    <RequestBuilder />
+  </Pane>
+  <PaneResizer class="h-2 bg-border hover:bg-primary/20 cursor-row-resize" />
+  <Pane minSize={20}>
+    <ResponseViewer />
+  </Pane>
+</PaneGroup>
+```
+
+**Notes:**
+- `direction="vertical"` for top/bottom split, `direction="horizontal"` for left/right
+- `defaultSize` is percentage (0-100)
+- `minSize` prevents panes from becoming too small
+- Style `PaneResizer` for visual feedback on hover
 
 ---
 
@@ -733,6 +786,8 @@ Document significant technical decisions with rationale and references.
 | 2026-01-12 | Distraction-free UI design    | Vertical split-pane layout, colorful method dropdowns, minimal chrome                     | Industry best practices                                                                                   |
 | 2026-01-12 | lucide-svelte for icons       | Modern icon library with Svelte-native components; consistent with shadcn ecosystem       | [lucide-svelte](https://lucide.dev/)                                                                      |
 | 2026-01-12 | Storybook for components      | Isolated component development; visual review before app integration; Svelte 5 support    | [Storybook SvelteKit](https://storybook.js.org/docs/get-started/frameworks/sveltekit)                     |
+| 2026-01-12 | Component directory structure | Layout/, Request/, Response/ organization for maintainability                            | Project structure best practices                                                                           |
+| 2026-01-12 | Storybook story patterns      | Stories adjacent to components; Category/ComponentName titles; autodocs tags            | [Storybook Svelte CSF](https://storybook.js.org/docs/api/svelte-frameworks)                                |
 
 ---
 

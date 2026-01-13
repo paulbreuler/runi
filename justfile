@@ -148,6 +148,30 @@ pre-commit: fmt-check-rust fmt-check-frontend check-frontend
     @echo "✅ Pre-commit checks passed!"
 
 # ============================================================================
+# 📋 Ralph/Claude Normalization
+# ============================================================================
+
+# Normalize Ralph-related files (prompts, specs, fix plan)
+# This ensures consistency across all documentation files
+normalize-ralph:
+    @bash scripts/normalize-ralph.sh
+
+# Validate Ralph file consistency
+validate-ralph:
+    @echo "🔍 Validating Ralph file consistency..."
+    @echo "Checking @fix_plan.md references..."
+    @grep -q "VS Code\|horizontal split\|Request.*left.*Response.*right" @fix_plan.md || (echo "❌ @fix_plan.md missing layout updates" && exit 1)
+    @echo "Checking specs/requirements.md references..."
+    @grep -q "VS Code\|horizontal split\|Request.*left.*Response.*right" specs/requirements.md || (echo "❌ specs/requirements.md missing layout updates" && exit 1)
+    @echo "Checking HTTPie references..."
+    @grep -q "HTTPie\|hover:bg-muted\|subtle.*interactions" @fix_plan.md || (echo "⚠️  @fix_plan.md missing HTTPie principles" && exit 1)
+    @echo "✅ Basic validation passed"
+
+# Heal and improve Ralph files using a Claude-guided prompt
+heal-ralph *args:
+    @bash scripts/heal-ralph.sh {{ args }}
+
+# ============================================================================
 # 🧹 Cleanup
 # ============================================================================
 
@@ -217,9 +241,14 @@ help:
     @echo "  just storybook-build - Build static Storybook site"
     @echo "  just storybook-serve - Build and serve static Storybook"
     @echo ""
+    @echo "Ralph/Claude:"
+    @echo "  just normalize-ralph - Normalize Ralph documentation files"
+    @echo "  just validate-ralph  - Validate Ralph file consistency"
+    @echo "  just heal-ralph      - Heal/improve Ralph files with prompt"
+    @echo "  just clean-ralph     - Remove all ralph session files"
+    @echo ""
     @echo "Cleanup:"
     @echo "  just clean         - Clean build artifacts"
-    @echo "  just clean-ralph   - Remove all ralph session files"
     @echo ""
     @echo "Documentation:"
     @echo "  just docs          - Generate Rust documentation"
