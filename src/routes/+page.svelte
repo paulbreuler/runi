@@ -14,13 +14,15 @@
 
   // Derived
   let isValidUrl = $derived(url.length > 0);
-  let statusColorClass = $derived(() => {
-    if (!response) return '';
-    if (response.status >= 200 && response.status < 300)
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    if (response.status >= 400) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-  });
+  let statusColorClass = $derived(
+    !response
+      ? ''
+      : response.status >= 200 && response.status < 300
+        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+        : response.status >= 400
+          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+  );
 
   // HTTP methods for select
   const httpMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
@@ -120,7 +122,7 @@
     >
       <div class="flex justify-between items-center px-4 py-3 bg-muted border-b border-border">
         <span
-          class="font-semibold px-2 py-1 rounded text-sm {statusColorClass()}"
+          class="font-semibold px-2 py-1 rounded text-sm {statusColorClass}"
           data-testid="response-status"
         >
           {response.status}
