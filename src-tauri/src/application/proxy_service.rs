@@ -11,9 +11,11 @@ impl ProxyService {
         Self
     }
 
+    /// Returns a hello world response.
+    ///
+    /// This is a placeholder method that will be expanded with actual proxy functionality.
     #[must_use]
-    #[allow(clippy::unused_self)] // Method signature for future state access
-    pub fn hello_world(&self) -> HelloWorldResponse {
+    pub fn hello_world() -> HelloWorldResponse {
         HelloWorldResponse::new("Hello from Runi!".to_string())
     }
 }
@@ -24,8 +26,7 @@ mod tests {
 
     #[test]
     fn test_hello_world() {
-        let service = ProxyService::new();
-        let response = service.hello_world();
+        let response = ProxyService::hello_world();
         assert_eq!(response.message, "Hello from Runi!");
         assert!(response.timestamp > 0);
     }

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { svelteTesting } from '@testing-library/svelte/vite';
 import path from 'path';
 
 export default defineConfig({
@@ -13,6 +14,7 @@ export default defineConfig({
         dev: process.env.NODE_ENV !== 'production',
       },
     }),
+    svelteTesting(),
   ],
   resolve: {
     alias: {
@@ -25,6 +27,22 @@ export default defineConfig({
     globals: true,
     passWithNoTests: true,
     setupFiles: ['./vitest.setup.ts'],
+    coverage: {
+      include: ['src/lib/**/*.{ts,svelte}'],
+      exclude: [
+        'src/lib/**/*.stories.svelte',
+        'src/lib/**/*.test.ts',
+        'src/lib/components/ui/**/*',
+      ],
+      reporter: ['text', 'html'],
+      reportsDirectory: './coverage',
+      thresholds: {
+        lines: 85,
+        functions: 85,
+        branches: 85,
+        statements: 85,
+      },
+    },
   },
   define: {
     'import.meta.vitest': 'undefined',

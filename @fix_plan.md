@@ -54,13 +54,22 @@
 - [ ] Test: ARIA labels present on form controls
 - [ ] Test: Error messages have role="alert"
 
-### Layout & Structure
+### Layout & Structure (VS Code/Cursor Style)
 
-- [ ] Create MainLayout.svelte with paneforge vertical split pane (40/60 default)
+- [ ] Create MainLayout.svelte with VS Code-style three-panel layout:
+  - Left sidebar (collapsible with ⌘B)
+  - Center: Horizontal split pane (paneforge) - Request (left) | Response (right), 50/50 default
+  - Bottom: Status bar
 - [ ] Implement Sidebar.svelte (collapsible with ⌘B shortcut)
+  - High contrast for readability
+  - Subtle hover effects (not pointer cursor on non-clickable areas)
+  - Smooth transitions (200ms)
 - [ ] Add sidebar sections: Collections, History (placeholder content)
 - [ ] Create StatusBar.svelte (environment switcher, AI prompt hint ⌘I)
+  - Monospaced font for technical values
+  - High contrast for readability
 - [ ] Create suggestion/warning display area in request panel
+- [ ] Apply design principles: clean interface, subtle interactions, high contrast
 
 ### HTTP Execution
 
@@ -83,17 +92,40 @@
 - [x] Send button with loading state
 - [x] Response status badge with color coding
 - [ ] Create RequestHeader.svelte with shadcn Input, Select, Button
-- [ ] Method dropdown with color-coded triggers (GET=green, POST=blue, DELETE=red)
+- [ ] Method dropdown with color-coded triggers:
+  - GET: green-600, POST: blue-600, PUT: yellow-600, DELETE: red-600, PATCH: purple-600
+  - Bold, confident styling (method name prominent)
+  - Smooth transitions (200ms)
 - [ ] lucide-svelte Send icon on submit button
+- [ ] High contrast URL input (clear background, readable text)
+- [ ] Subtle hover effects (hover:bg-muted/50, not pointer cursor everywhere)
+- [ ] Tooltips on method selector (optional, nice-to-have)
 
 ### Response Viewer (shadcn-svelte Components)
 
-- [ ] JSON syntax highlighting with CodeMirror or Shiki
+- [ ] JSON syntax highlighting with Shiki (recommended for Svelte 5)
+  - High contrast themes (readable on light/dark)
+  - Monospaced fonts for all code
+  - Fast rendering (optimize for large responses)
 - [ ] Response headers display in collapsible shadcn Table
+  - Scannable layout (clear separation)
+  - Truncated values with hover tooltips
+  - Masked sensitive headers
+  - Subtle hover effects
 - [ ] Response timing metrics (total time, size)
+  - Monospaced font for numbers
+  - Compact format (e.g., "45ms • 1.2KB")
+  - Hover shows timing breakdown (optional)
 - [ ] Raw/Pretty toggle using shadcn Tabs
+  - Smooth tab switching (200ms transitions)
+  - High contrast for code display
 - [ ] Implement basic error handling in UI for command failures
-- [ ] StatusBadge.svelte with color coding (2xx=green, 4xx=yellow, 5xx=red)
+  - Clear, actionable error messages
+  - High contrast error states
+- [ ] StatusBadge.svelte with color coding:
+  - 2xx: green-600, 3xx: blue-600, 4xx: yellow-600, 5xx: red-600
+  - Bold, readable text
+  - Tooltip on hover (optional)
 
 ### Intelligence Infrastructure (AI-Ready Architecture)
 

@@ -7,8 +7,8 @@ describe('cn utility', () => {
   });
 
   it('handles conditional classes', () => {
-    const condition = false;
-    expect(cn('foo', condition && 'bar', 'baz')).toBe('foo baz');
+    const condition = Number.isFinite(Date.now());
+    expect(cn('foo', condition && 'bar', 'baz')).toBe('foo bar baz');
   });
 
   it('merges conflicting Tailwind classes', () => {

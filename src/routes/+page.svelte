@@ -1,9 +1,9 @@
 <script lang="ts">
   import { executeRequest } from '$lib/api/http';
   import { createRequestParams, type HttpMethod, type HttpResponse } from '$lib/types/http';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import * as Select from '$lib/components/ui/select';
+  import MainLayout from '$lib/components/Layout/MainLayout.svelte';
+  import RequestHeader from '$lib/components/Request/RequestHeader.svelte';
+  import StatusBadge from '$lib/components/Response/StatusBadge.svelte';
 
   // State
   let url = $state('https://httpbin.org/get');
@@ -13,19 +13,7 @@
   let error = $state<string | null>(null);
 
   // Derived
-  let isValidUrl = $derived(url.length > 0);
-  let statusColorClass = $derived(
-    !response
-      ? ''
-      : response.status >= 200 && response.status < 300
-        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-        : response.status >= 400
-          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-  );
-
-  // HTTP methods for select
-  const httpMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
+  const isValidUrl = $derived(url.length > 0);
 
   // Handlers
   async function handleSend(): Promise<void> {
@@ -45,99 +33,73 @@
     }
   }
 
-  function handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !loading && isValidUrl) {
-      handleSend();
-    }
-  }
-
-  function handleMethodChange(value: string | undefined): void {
-    if (value) {
-      method = value as HttpMethod;
-    }
+  function handleMethodChange(newMethod: HttpMethod): void {
+    method = newMethod;
   }
 </script>
 
-<div class="flex min-h-screen flex-col p-6 mx-auto max-w-5xl">
-  <header class="text-center mb-8">
-    <h1 class="text-3xl font-bold text-foreground">runi</h1>
-    <p class="text-muted-foreground text-sm mt-1">Your API Development Partner</p>
-  </header>
+<MainLayout>
+  {#snippet headerContent()}
+    <RequestHeader
+      bind:url
+      {method}
+      {loading}
+      onMethodChange={handleMethodChange}
+      onSend={handleSend}
+    />
+  {/snippet}
 
-  <section class="mb-6">
-    <div class="flex gap-2 items-stretch">
-      <Select.Root type="single" value={method} onValueChange={handleMethodChange}>
-        <Select.Trigger
-          class="w-28 font-semibold"
-          data-testid="method-select"
-          disabled={loading}
-          aria-label="HTTP Method"
+  {#snippet requestContent()}
+    <div class="h-full flex flex-col">
+      {#if error}
+        <div
+          class="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive m-4"
+          role="alert"
+          data-testid="error-panel"
         >
-          {method}
-        </Select.Trigger>
-        <Select.Content>
-          {#each httpMethods as httpMethod (httpMethod)}
-            <Select.Item value={httpMethod}>{httpMethod}</Select.Item>
-          {/each}
-        </Select.Content>
-      </Select.Root>
-
-      <Input
-        type="text"
-        bind:value={url}
-        onkeydown={handleKeyDown}
-        placeholder="Enter URL"
-        data-testid="url-input"
-        disabled={loading}
-        aria-label="Request URL"
-        class="flex-1"
-      />
-
-      <Button
-        onclick={handleSend}
-        disabled={!isValidUrl || loading}
-        data-testid="send-button"
-        aria-label="Send Request"
-      >
-        {loading ? 'Sending...' : 'Send'}
-      </Button>
-    </div>
-  </section>
-
-  {#if error}
-    <section
-      class="p-4 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive"
-      role="alert"
-      data-testid="error-panel"
-    >
-      <strong>Error:</strong>
-      {error}
-    </section>
-  {/if}
-
-  {#if response}
-    <section
-      class="flex-1 flex flex-col border border-border rounded-lg overflow-hidden"
-      data-testid="response-panel"
-    >
-      <div class="flex justify-between items-center px-4 py-3 bg-muted border-b border-border">
+          <strong>Error:</strong>
+          {error}
+        </div>
+      {/if}
+      <div class="flex-1 flex items-center justify-center text-muted-foreground">
         <span
-          class="font-semibold px-2 py-1 rounded text-sm {statusColorClass}"
-          data-testid="response-status"
+          class="text-xs font-semibold bg-muted px-2 py-1 rounded mr-2"
+          style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', emoji, sans-serif;"
         >
-          {response.status}
-          {response.status_text}
+          🚧 WIP
         </span>
-        <span class="text-muted-foreground text-sm" data-testid="response-timing">
-          {response.timing.total_ms}ms
-        </span>
+        Request builder content will go here
       </div>
+    </div>
+  {/snippet}
 
-      <div class="flex-1 overflow-auto p-4 bg-card">
-        <pre
-          class="font-mono text-sm whitespace-pre-wrap wrap-break-word"
-          data-testid="response-body">{response.body}</pre>
-      </div>
-    </section>
-  {/if}
-</div>
+  {#snippet responseContent()}
+    <div class="h-full flex flex-col">
+      {#if response}
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <div
+            class="flex justify-between items-center px-4 py-2 border-b border-border bg-muted/30"
+          >
+            <StatusBadge status={response.status} statusText={response.status_text} />
+            <span
+              class="text-muted-foreground text-sm font-mono transition-colors duration-200"
+              data-testid="response-timing"
+            >
+              {response.timing.total_ms}ms
+            </span>
+          </div>
+
+          <div class="flex-1 overflow-auto p-4 bg-card">
+            <pre
+              class="font-mono text-sm whitespace-pre-wrap break-words text-foreground"
+              data-testid="response-body">{response.body}</pre>
+          </div>
+        </div>
+      {:else}
+        <div class="flex-1 flex items-center justify-center text-muted-foreground">
+          Send a request to see the response
+        </div>
+      {/if}
+    </div>
+  {/snippet}
+</MainLayout>

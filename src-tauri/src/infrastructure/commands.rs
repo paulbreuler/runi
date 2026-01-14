@@ -13,10 +13,45 @@ pub fn create_proxy_service() -> Arc<Mutex<ProxyService>> {
 /// Hello world command handler
 #[tauri::command]
 pub async fn hello_world(
-    service: tauri::State<'_, Arc<Mutex<ProxyService>>>,
+    _service: tauri::State<'_, Arc<Mutex<ProxyService>>>,
 ) -> Result<HelloWorldResponse, String> {
-    let service = service.lock().await;
-    Ok(service.hello_world())
+    Ok(ProxyService::hello_world())
+}
+
+/// Get the operating system platform.
+///
+/// Returns the platform string: "darwin" (macOS), "win32" (Windows), or "linux" (Linux).
+///
+/// # Errors
+///
+/// Returns an error if the platform is not supported.
+///
+/// # Note
+///
+/// This function must return `Result<String, String>` to satisfy Tauri's command handler
+/// signature requirements, even though it never fails on supported platforms.
+#[tauri::command]
+#[allow(clippy::unnecessary_wraps)] // Required by Tauri: all commands must return Result<T, String>
+pub fn get_platform() -> Result<String, String> {
+    #[cfg(target_os = "macos")]
+    {
+        Ok("darwin".to_string())
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        Ok("win32".to_string())
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Ok("linux".to_string())
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    {
+        Err("Unsupported platform".to_string())
+    }
 }
 
 #[cfg(test)]
@@ -25,9 +60,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_hello_world_command() {
-        let service = create_proxy_service();
         // Test the service directly as integration tests will cover the command
-        let response = service.lock().await.hello_world();
+        let response = ProxyService::hello_world();
         assert_eq!(response.message, "Hello from Runi!");
     }
 }

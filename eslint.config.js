@@ -6,7 +6,7 @@ import globals from 'globals';
 
 export default tseslint.config(
   eslint.configs.recommended,
-  ...tseslint.configs.strict,
+  ...tseslint.configs.strictTypeChecked,
   ...svelte.configs['flat/recommended'],
   prettier,
   ...svelte.configs['flat/prettier'],
@@ -16,6 +16,16 @@ export default tseslint.config(
         ...globals.browser,
         ...globals.node,
       },
+      parserOptions: {
+        projectService: true,
+        extraFileExtensions: ['.svelte'],
+      },
+    },
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/strict-boolean-expressions': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
   {
@@ -24,11 +34,6 @@ export default tseslint.config(
       parserOptions: {
         parser: tseslint.parser,
       },
-    },
-  },
-  {
-    rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
   {
@@ -47,6 +52,30 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['build/', '.svelte-kit/', 'dist/', 'node_modules/', 'src-tauri/target/'],
+    // Generated types from ts-rs - don't lint these
+    files: ['src/lib/types/generated/**/*.ts', 'src-tauri/bindings/**/*.ts'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    ignores: [
+      'build/',
+      '.svelte-kit/',
+      '.storybook/',
+      '.cursor/',
+      'dist/',
+      'node_modules/',
+      'src-tauri/target/',
+      'src-tauri/bindings/',
+      'storybook-static/',
+      'coverage/',
+      'src/lib/types/generated/',
+      '*.config.js',
+      '*.config.ts',
+      'vitest.setup.ts',
+      'playwright*.ts',
+    ],
   }
 );

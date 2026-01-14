@@ -1,4 +1,12 @@
-# Ralph Run 2: Layout & Response UI
+# Ralph Run 2: Layout & Response UI (DEPRECATED)
+
+> **⚠️ This prompt has been split into three sub-runs for better manageability:**
+>
+> - **PROMPT-2A:** Layout Foundation (VS Code-style layout)
+> - **PROMPT-2B:** Request Header & Response Basics
+> - **PROMPT-2C:** Response Viewer & Polish
+>
+> **Use the split prompts instead:** See `prompts/README.md` for execution order.
 
 ## Context
 
@@ -9,6 +17,8 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 **Prerequisites:** Run 1 (HTTP Core) must be complete.
 
 **This Run's Focus:** Build the three-panel layout with resizable panes and response viewer.
+
+**Note:** This prompt is kept for reference but has been superseded by PROMPT-2A, 2B, and 2C.
 
 ## High-Level Wireframe
 
