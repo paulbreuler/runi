@@ -123,8 +123,12 @@ If you find yourself:
 - Writing component code before tests → **STOP. Write tests first.**
 - Writing tests after implementation → **STOP. Delete component, write tests first.**
 - Skipping tests because "it's just UI" → **STOP. UI components need tests too.**
+- Skipping Storybook stories → **STOP. Stories are required for completion.**
+- Creating stories before tests → **STOP. Follow TDD first, then create stories.**
 
-**Remember:** TDD is not optional. It's a requirement. Every component must have tests written FIRST.
+**Remember:**
+- TDD is not optional. It's a requirement. Every component must have tests written FIRST.
+- Storybook stories are not optional. They're required for completion. Every component must have stories.
 
 ## Design Rationale
 

@@ -1,0 +1,41 @@
+{
+  "command": "heal-ralph",
+  "title": "Ralph: Heal Files",
+  "category": "Ralph",
+  "description": "Heal and improve Ralph documentation files using a Claude-guided prompt",
+  "script": "scripts/heal-ralph.sh",
+  "args": [
+    {
+      "name": "prompt",
+      "type": "string",
+      "description": "Healing prompt describing what needs to be fixed/improved",
+      "required": true
+    },
+    {
+      "name": "promptFile",
+      "type": "string",
+      "description": "Path to prompt file (alternative to inline prompt)",
+      "required": false
+    },
+    {
+      "name": "dryRun",
+      "type": "boolean",
+      "description": "Preview changes without applying",
+      "default": false
+    }
+  ],
+  "examples": [
+    {
+      "description": "Fix layout references",
+      "command": "heal-ralph --prompt \"update all layout references to use horizontal split\""
+    },
+    {
+      "description": "Use prompt file",
+      "command": "heal-ralph --prompt-file prompts/heal-layout.md"
+    },
+    {
+      "description": "Dry run",
+      "command": "heal-ralph --dry-run --prompt \"add HTTPie principles\""
+    }
+  ]
+}

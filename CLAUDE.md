@@ -648,12 +648,15 @@ For vertical or horizontal split panes, use [paneforge](https://paneforge.dev/):
   import ResponseViewer from './ResponseViewer.svelte';
 </script>
 
-<PaneGroup direction="vertical" class="flex-1">
-  <Pane defaultSize={40} minSize={20}>
+<!-- Horizontal split: Request (left) | Response (right) -->
+<PaneGroup direction="horizontal" class="flex-1">
+  <Pane defaultSize={50} minSize={30}>
     <RequestBuilder />
   </Pane>
-  <PaneResizer class="h-2 bg-border hover:bg-primary/20 cursor-row-resize" />
-  <Pane minSize={20}>
+  <PaneResizer
+    class="w-2 bg-border hover:bg-primary/20 cursor-col-resize transition-colors duration-200"
+  />
+  <Pane minSize={30}>
     <ResponseViewer />
   </Pane>
 </PaneGroup>
@@ -661,10 +664,13 @@ For vertical or horizontal split panes, use [paneforge](https://paneforge.dev/):
 
 **Notes:**
 
-- `direction="vertical"` for top/bottom split, `direction="horizontal"` for left/right
-- `defaultSize` is percentage (0-100)
-- `minSize` prevents panes from becoming too small
-- Style `PaneResizer` for visual feedback on hover
+- `direction="horizontal"` for left/right split (Request left, Response right - VS Code style)
+- `direction="vertical"` for top/bottom split (not used in runi's main layout)
+- `defaultSize` is percentage (0-100), typically 50 for equal split
+- `minSize` prevents panes from becoming too small (30% minimum)
+- For **horizontal split** (left/right): Use `w-2` width and `cursor-col-resize` on `PaneResizer`
+- For **vertical split** (top/bottom): Use `h-2` height and `cursor-row-resize` on `PaneResizer`
+- Always include `transition-colors duration-200` for smooth hover effects
 
 ---
 

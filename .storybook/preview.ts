@@ -9,6 +9,15 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
+    // Enable interaction testing
+    actions: { argTypesRegex: '^on[A-Z].*' },
+    // Run interactions automatically
+    interactions: {
+      locators: {
+        sidebar: '[data-testid="sidebar"]',
+        'status-bar': '[data-testid="status-bar"]',
+      },
+    },
   },
 };
 

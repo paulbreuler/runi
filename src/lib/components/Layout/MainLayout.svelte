@@ -5,17 +5,21 @@
   import type { Snippet } from 'svelte';
 
   interface Props {
-    /** Content to render in the request pane (left side of center area) */
+    /** Content to render in the request header bar (top panel with method/URL/send) */
+    headerContent?: Snippet;
+    /** Content to render in the request builder pane (left side of bottom area) */
     requestContent?: Snippet;
-    /** Content to render in the response pane (right side of center area) */
+    /** Content to render in the response viewer pane (right side of bottom area) */
     responseContent?: Snippet;
     /** Initial sidebar visibility state */
     initialSidebarVisible?: boolean;
   }
 
-  let { requestContent, responseContent, initialSidebarVisible = true }: Props = $props();
+  const { headerContent, requestContent, responseContent, initialSidebarVisible = true }: Props =
+    $props();
 
-  let sidebarVisible = $state(initialSidebarVisible);
+  // Intentionally capture initial value only - sidebar state is managed internally
+  let sidebarVisible = $state(initialSidebarVisible as boolean);
 
   function toggleSidebar(): void {
     sidebarVisible = !sidebarVisible;
@@ -51,62 +55,51 @@
       {/if}
     </div>
 
-    <!-- Sidebar toggle button -->
-    <button
-      type="button"
-      onclick={toggleSidebar}
-      class="absolute top-2 left-2 z-10 p-1.5 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-      class:left-2={!sidebarVisible}
-      class:left-[17rem]={sidebarVisible}
-      data-testid="sidebar-toggle"
-      aria-label={sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
-      title="Toggle sidebar (⌘B)"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-        <line x1="9" x2="9" y1="3" y2="21" />
-      </svg>
-    </button>
+    <!-- Vertical layout: Fixed header bar + split content area -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Fixed header bar (no resizer) -->
+      <div class="shrink-0" data-testid="header-bar">
+        {#if headerContent}
+          {@render headerContent()}
+        {:else}
+          <div class="h-14 p-2 text-muted-foreground flex items-center">
+            Header bar placeholder
+          </div>
+        {/if}
+      </div>
 
-    <!-- Horizontal split: Request (left) | Response (right) -->
-    <PaneGroup direction="horizontal" class="flex-1">
-      <Pane defaultSize={50} minSize={30}>
-        <div class="h-full" data-testid="request-pane">
-          {#if requestContent}
-            {@render requestContent()}
-          {:else}
-            <div class="h-full p-4 text-muted-foreground flex items-center justify-center">
-              Request Builder (placeholder - will be built in Run 2B)
+      <!-- Horizontal split: Request/Response -->
+      <div class="flex-1 overflow-hidden">
+        <PaneGroup direction="horizontal" class="h-full">
+          <Pane defaultSize={50} minSize={30}>
+            <div class="h-full" data-testid="request-pane">
+              {#if requestContent}
+                {@render requestContent()}
+              {:else}
+                <div class="h-full p-4 text-muted-foreground flex items-center justify-center">
+                  Request Builder (placeholder - will be built in Run 2B)
+                </div>
+              {/if}
             </div>
-          {/if}
-        </div>
-      </Pane>
-      <PaneResizer
-        class="w-2 bg-border hover:bg-primary/20 cursor-col-resize transition-colors"
-        data-testid="pane-resizer"
-      />
-      <Pane minSize={30}>
-        <div class="h-full" data-testid="response-pane">
-          {#if responseContent}
-            {@render responseContent()}
-          {:else}
-            <div class="h-full p-4 text-muted-foreground flex items-center justify-center">
-              Response Viewer (placeholder - will be built in Run 2C)
+          </Pane>
+          <PaneResizer
+            class="w-2 bg-border hover:bg-primary/20 cursor-col-resize transition-colors duration-200"
+            data-testid="pane-resizer"
+          />
+          <Pane minSize={30}>
+            <div class="h-full" data-testid="response-pane">
+              {#if responseContent}
+                {@render responseContent()}
+              {:else}
+                <div class="h-full p-4 text-muted-foreground flex items-center justify-center">
+                  Response Viewer (placeholder - will be built in Run 2C)
+                </div>
+              {/if}
             </div>
-          {/if}
-        </div>
-      </Pane>
-    </PaneGroup>
+          </Pane>
+        </PaneGroup>
+      </div>
+    </div>
   </div>
   <StatusBar />
 </div>

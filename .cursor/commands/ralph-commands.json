@@ -1,0 +1,33 @@
+{
+  "commands": [
+    {
+      "command": "ralph.normalize",
+      "title": "Ralph: Normalize Files",
+      "category": "Ralph",
+      "description": "Normalize Ralph documentation files for consistency",
+      "script": "scripts/normalize-ralph.sh"
+    },
+    {
+      "command": "ralph.validate",
+      "title": "Ralph: Validate Consistency",
+      "category": "Ralph",
+      "description": "Validate Ralph file consistency",
+      "script": "scripts/validate-ralph.sh"
+    },
+    {
+      "command": "ralph.heal",
+      "title": "Ralph: Heal Files",
+      "category": "Ralph",
+      "description": "Heal and improve Ralph files with a prompt",
+      "script": "scripts/heal-ralph.sh",
+      "interactive": true
+    },
+    {
+      "command": "ralph.clean",
+      "title": "Ralph: Clean Session",
+      "category": "Ralph",
+      "description": "Remove all Ralph session files",
+      "script": "scripts/clean-ralph.sh"
+    }
+  ]
+}

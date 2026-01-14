@@ -4,7 +4,7 @@
 </script>
 
 <aside
-  class="w-64 border-r border-border bg-muted/30 flex flex-col transition-all duration-200"
+  class="w-64 h-full border-r border-border bg-muted/30 flex flex-col transition-all duration-200"
   data-testid="sidebar"
 >
   <Card.Root class="flex-1 rounded-none border-0 border-r bg-transparent">

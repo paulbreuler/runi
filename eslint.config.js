@@ -47,6 +47,14 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['build/', '.svelte-kit/', 'dist/', 'node_modules/', 'src-tauri/target/'],
+    ignores: [
+      'build/',
+      '.svelte-kit/',
+      'dist/',
+      'node_modules/',
+      'src-tauri/target/',
+      'storybook-static/',
+      'coverage/',
+    ],
   }
 );
