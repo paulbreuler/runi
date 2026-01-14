@@ -61,9 +61,7 @@
           {error}
         </div>
       {/if}
-      <div class="flex-1 p-4 text-muted-foreground">
-        Request builder content will go here
-      </div>
+      <div class="flex-1 p-4 text-muted-foreground">Request builder content will go here</div>
     </div>
   {/snippet}
 
@@ -71,7 +69,9 @@
     <div class="h-full flex flex-col">
       {#if response}
         <div class="flex-1 flex flex-col overflow-hidden">
-          <div class="flex justify-between items-center px-4 py-2 border-b border-border bg-muted/30">
+          <div
+            class="flex justify-between items-center px-4 py-2 border-b border-border bg-muted/30"
+          >
             <StatusBadge status={response.status} statusText={response.status_text} />
             <span
               class="text-muted-foreground text-sm font-mono transition-colors duration-200"

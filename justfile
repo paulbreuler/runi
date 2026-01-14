@@ -116,6 +116,14 @@ test-rust: build-frontend
 test-frontend:
     npm run test -- --run
 
+# Run E2E tests (Playwright)
+test-e2e:
+    npx playwright test
+
+# Install Playwright browsers (needed for CI)
+test-e2e-install:
+    npx playwright install --with-deps chromium
+
 # ============================================================================
 # 📚 Storybook
 # ============================================================================
@@ -235,6 +243,7 @@ help:
     @echo "  just test          - Run all tests"
     @echo "  just test-rust     - Run Rust tests only"
     @echo "  just test-frontend - Run frontend tests only"
+    @echo "  just test-e2e      - Run E2E tests (Playwright)"
     @echo ""
     @echo "Storybook:"
     @echo "  just storybook      - Start Storybook development server"

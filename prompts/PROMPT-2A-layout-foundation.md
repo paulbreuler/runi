@@ -12,6 +12,7 @@
 4. **STORYBOOK:** Create stories for visual documentation (REQUIRED for completion)
 
 **Violation = Failure:**
+
 - If you write component code before tests, you have failed this run.
 - If you skip Storybook stories, you have failed this run.
 
@@ -127,6 +128,7 @@ If you find yourself:
 - Creating stories before tests → **STOP. Follow TDD first, then create stories.**
 
 **Remember:**
+
 - TDD is not optional. It's a requirement. Every component must have tests written FIRST.
 - Storybook stories are not optional. They're required for completion. Every component must have stories.
 
@@ -504,6 +506,7 @@ When ALL success criteria are met (including TDD tests and Storybook stories), o
 ```
 
 **Completion Checklist:**
+
 - ✅ All test files written FIRST (before components)
 - ✅ All tests pass (`npm run test`)
 - ✅ Test coverage ≥85% (`npm run test:coverage`)

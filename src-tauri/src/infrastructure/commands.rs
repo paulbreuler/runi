@@ -19,6 +19,24 @@ pub async fn hello_world(
     Ok(service.hello_world())
 }
 
+/// Get the operating system platform.
+///
+/// Returns the platform string: "darwin" (macOS), "win32" (Windows), or "linux" (Linux).
+#[tauri::command]
+pub fn get_platform() -> Result<String, String> {
+    #[cfg(target_os = "macos")]
+    return Ok("darwin".to_string());
+
+    #[cfg(target_os = "windows")]
+    return Ok("win32".to_string());
+
+    #[cfg(target_os = "linux")]
+    return Ok("linux".to_string());
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    Err("Unsupported platform".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

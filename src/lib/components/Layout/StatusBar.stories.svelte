@@ -20,23 +20,14 @@
       <StatusBar />
     </div>
   {/snippet}
-  
+
   {#snippet play({ canvasElement })}
-    const canvas = within(canvasElement);
-    const statusBar = canvas.getByTestId('status-bar');
-    
-    // Verify status bar is rendered
-    await expect(statusBar).toBeInTheDocument();
-    
-    // Verify environment indicator displays
-    await expect(canvas.getByText(/Environment:/)).toBeInTheDocument();
-    await expect(canvas.getByText('default')).toBeInTheDocument();
-    
-    // Verify AI hint text displays
-    await expect(canvas.getByText(/Press.*⌘I.*for AI assistance/)).toBeInTheDocument();
-    
-    // Check monospaced font is applied to environment value
-    const envValue = canvas.getByText('default');
+    const canvas = within(canvasElement); const statusBar = canvas.getByTestId('status-bar'); //
+    Verify status bar is rendered await expect(statusBar).toBeInTheDocument(); // Verify environment
+    indicator displays await expect(canvas.getByText(/Environment:/)).toBeInTheDocument(); await
+    expect(canvas.getByText('default')).toBeInTheDocument(); // Verify AI hint text displays await
+    expect(canvas.getByText(/Press.*⌘I.*for AI assistance/)).toBeInTheDocument(); // Check
+    monospaced font is applied to environment value const envValue = canvas.getByText('default');
     const envStyle = window.getComputedStyle(envValue);
     expect(envStyle.fontFamily).toMatch(/mono/i);
   {/snippet}
@@ -51,20 +42,13 @@
       <StatusBar />
     </div>
   {/snippet}
-  
+
   {#snippet play({ canvasElement })}
-    const canvas = within(canvasElement);
-    const statusBar = canvas.getByTestId('status-bar');
-    
-    // Verify status bar is rendered
-    await expect(statusBar).toBeInTheDocument();
-    
-    // Verify all elements are visible
-    await expect(canvas.getByText(/Environment:/)).toBeInTheDocument();
-    await expect(canvas.getByText('default')).toBeInTheDocument();
-    await expect(canvas.getByText(/Press.*⌘I.*for AI assistance/)).toBeInTheDocument();
-    
-    // Verify status bar has correct styling classes
-    await expect(statusBar).toHaveClass('h-8', 'border-t', 'flex');
+    const canvas = within(canvasElement); const statusBar = canvas.getByTestId('status-bar'); //
+    Verify status bar is rendered await expect(statusBar).toBeInTheDocument(); // Verify all
+    elements are visible await expect(canvas.getByText(/Environment:/)).toBeInTheDocument(); await
+    expect(canvas.getByText('default')).toBeInTheDocument(); await
+    expect(canvas.getByText(/Press.*⌘I.*for AI assistance/)).toBeInTheDocument(); // Verify status
+    bar has correct styling classes await expect(statusBar).toHaveClass('h-8', 'border-t', 'flex');
   {/snippet}
 </Story>

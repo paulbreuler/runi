@@ -42,20 +42,15 @@
       {/snippet}
     </MainLayout>
   {/snippet}
-  
+
   {#snippet play({ canvasElement })}
-    const canvas = within(canvasElement);
-    
-    // Verify all panels are rendered
-    await expect(canvas.getByTestId('main-layout')).toBeInTheDocument();
-    await expect(canvas.getByTestId('sidebar')).toBeInTheDocument();
-    await expect(canvas.getByTestId('request-pane')).toBeInTheDocument();
-    await expect(canvas.getByTestId('response-pane')).toBeInTheDocument();
-    await expect(canvas.getByTestId('status-bar')).toBeInTheDocument();
-    
-    // Verify pane resizer is visible
-    const resizer = canvas.getByTestId('pane-resizer');
-    await expect(resizer).toBeInTheDocument();
+    const canvas = within(canvasElement); // Verify all panels are rendered await
+    expect(canvas.getByTestId('main-layout')).toBeInTheDocument(); await
+    expect(canvas.getByTestId('sidebar')).toBeInTheDocument(); await
+    expect(canvas.getByTestId('request-pane')).toBeInTheDocument(); await
+    expect(canvas.getByTestId('response-pane')).toBeInTheDocument(); await
+    expect(canvas.getByTestId('status-bar')).toBeInTheDocument(); // Verify pane resizer is visible
+    const resizer = canvas.getByTestId('pane-resizer'); await expect(resizer).toBeInTheDocument();
   {/snippet}
 </Story>
 
@@ -82,15 +77,12 @@
       {/snippet}
     </MainLayout>
   {/snippet}
-  
+
   {#snippet play({ canvasElement })}
-    const canvas = within(canvasElement);
-    
-    // Verify sidebar is initially hidden
-    await expect(canvas.queryByTestId('sidebar')).not.toBeInTheDocument();
-    
-    // Note: Sidebar toggling is done via keyboard shortcut (⌘B/Ctrl+B)
-    // Keyboard shortcut functionality is tested in E2E tests (tests/e2e/layout.spec.ts)
+    const canvas = within(canvasElement); // Verify sidebar is initially hidden await
+    expect(canvas.queryByTestId('sidebar')).not.toBeInTheDocument(); // Note: Sidebar toggling is
+    done via keyboard shortcut (⌘B/Ctrl+B) // Keyboard shortcut functionality is tested in E2E tests
+    (tests/e2e/layout.spec.ts)
   {/snippet}
 </Story>
 
@@ -117,18 +109,13 @@
       {/snippet}
     </MainLayout>
   {/snippet}
-  
+
   {#snippet play({ canvasElement })}
-    const canvas = within(canvasElement);
-    
-    // Verify pane resizer is interactive
-    const resizer = canvas.getByTestId('pane-resizer');
-    await expect(resizer).toBeInTheDocument();
-    await expect(resizer).toHaveClass('cursor-col-resize');
-    
-    // Verify both panes are visible
-    await expect(canvas.getByTestId('request-pane')).toBeInTheDocument();
-    await expect(canvas.getByTestId('response-pane')).toBeInTheDocument();
+    const canvas = within(canvasElement); // Verify pane resizer is interactive const resizer =
+    canvas.getByTestId('pane-resizer'); await expect(resizer).toBeInTheDocument(); await
+    expect(resizer).toHaveClass('cursor-col-resize'); // Verify both panes are visible await
+    expect(canvas.getByTestId('request-pane')).toBeInTheDocument(); await
+    expect(canvas.getByTestId('response-pane')).toBeInTheDocument();
   {/snippet}
 </Story>
 

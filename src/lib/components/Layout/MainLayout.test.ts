@@ -4,8 +4,11 @@ import MainLayout from './MainLayout.svelte';
 
 describe('MainLayout', () => {
   beforeEach(() => {
-    // Mock navigator.platform for consistent keyboard shortcut testing
-    vi.stubGlobal('navigator', { platform: 'MacIntel' });
+    // Mock navigator for consistent keyboard shortcut testing
+    vi.stubGlobal('navigator', {
+      platform: 'MacIntel',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+    });
   });
 
   afterEach(() => {
@@ -55,8 +58,11 @@ describe('MainLayout', () => {
   });
 
   it('toggles sidebar with Ctrl+B keyboard shortcut on Windows/Linux', async () => {
-    // Mock navigator.platform for Windows
-    vi.stubGlobal('navigator', { platform: 'Win32' });
+    // Mock navigator for Windows
+    vi.stubGlobal('navigator', {
+      platform: 'Win32',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    });
 
     render(MainLayout);
 

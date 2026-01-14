@@ -18,5 +18,6 @@
   class="font-semibold px-3 py-1.5 rounded-md text-sm transition-colors duration-200 {colorClass}"
   data-testid="status-badge"
 >
-  {status} {statusText}
+  {status}
+  {statusText}
 </span>

@@ -11,8 +11,8 @@ describe('StatusBadge', () => {
       },
     });
 
-    expect(screen.getByText('200')).toBeInTheDocument();
-    expect(screen.getByText('OK')).toBeInTheDocument();
+    const badge = screen.getByTestId('status-badge');
+    expect(badge).toHaveTextContent('200 OK');
   });
 
   it('applies green color for 2xx status', () => {
