@@ -90,8 +90,11 @@ lint: lint-rust lint-frontend
 lint-rust: build-frontend
     cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-# Lint TypeScript/Svelte
+# Lint TypeScript/Svelte (ensure types are synced first)
 lint-frontend:
+    @echo "🔄 Syncing SvelteKit types for ESLint..."
+    npx svelte-kit sync
+
     npm run lint
 
 # ============================================================================
