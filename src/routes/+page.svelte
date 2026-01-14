@@ -61,7 +61,15 @@
           {error}
         </div>
       {/if}
-      <div class="flex-1 p-4 text-muted-foreground">Request builder content will go here</div>
+      <div class="flex-1 flex items-center justify-center text-muted-foreground">
+        <span
+          class="text-xs font-semibold bg-muted px-2 py-1 rounded mr-2"
+          style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', emoji, sans-serif;"
+        >
+          🚧 WIP
+        </span>
+        Request builder content will go here
+      </div>
     </div>
   {/snippet}
 
