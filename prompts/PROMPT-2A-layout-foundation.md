@@ -150,7 +150,7 @@ If you find yourself:
 - **Bottom Status Bar:** Context and hints (like VS Code's status bar)
 - This matches developer mental models from VS Code/Cursor, reducing cognitive load
 
-**HTTPie-Inspired Design Principles:**
+**Design Principles:**
 
 - **Clean & Focused:** Minimal chrome, high contrast for readability
 - **Subtle Interactions:** Hover effects use background color changes, not cursor changes (only pointer for actual links/buttons)
@@ -354,7 +354,7 @@ All boxes must be checked AND tests must pass:
 - Resizer uses `cursor-col-resize` and `w-2` (vertical divider, not horizontal)
 - Panes are side-by-side like VS Code's editor split view
 
-### Sidebar.svelte Structure (HTTPie-Inspired)
+### Sidebar.svelte Structure
 
 ```svelte
 <script lang="ts">
@@ -392,7 +392,7 @@ All boxes must be checked AND tests must pass:
 </aside>
 ```
 
-**HTTPie-Inspired Notes:**
+**Design Notes:**
 
 - High contrast: `text-foreground` for titles, `text-muted-foreground` for secondary text
 - Subtle backgrounds: `bg-muted/30` for sidebar, not heavy borders

@@ -4,7 +4,7 @@
 # Usage (CLI - chainable):
 #   just heal-ralph "fix layout references to use VS Code style"
 #   just heal-ralph --prompt-file prompts/heal-layout.md
-#   just heal-ralph --dry-run "add HTTPie principles to all prompts"
+#   just heal-ralph --dry-run "add design principles to all prompts"
 #
 # Usage (Cursor Command):
 #   Command Palette → "Ralph: Heal Files" → Enter prompt
@@ -108,7 +108,7 @@ Examples:
   just heal-ralph --prompt-file prompts/heal-requests.md
 
   # Dry run to see what would change
-  just heal-ralph --dry-run "add HTTPie design principles everywhere"
+  just heal-ralph --dry-run "add design principles everywhere"
 
   # Use Claude API (if available)
   just heal-ralph --use-claude-api "fix all layout references"
@@ -116,7 +116,7 @@ Examples:
 Files discovered dynamically:
   - Core files: @fix_plan.md, specs/requirements.md, PROMPT.md, CLAUDE.md
   - Prompt files: prompts/PROMPT-*.md
-  - Other files: prompts/README.md, prompts/HTTPIE-LEARNINGS.md, etc.
+  - Other files: prompts/README.md, etc.
 
 Note: This command generates analysis prompts. For direct file editing,
       use the Cursor command palette: "Ralph: Heal Files"

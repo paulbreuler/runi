@@ -35,7 +35,7 @@ Type `/heal-ralph` followed by your healing prompt:
 or
 
 ```
-/heal-ralph add HTTPie design principles to all prompts
+/heal-ralph add design principles to all prompts
 ```
 
 **When invoked, this command will:**
@@ -78,7 +78,7 @@ When you invoke this command, Claude will:
 ### Add Design Principles
 
 ```
-/heal-ralph add HTTPie design principles (high contrast, subtle interactions, clean interface) to all prompts
+/heal-ralph add design principles (high contrast, subtle interactions, clean interface) to all prompts
 ```
 
 ### Update Terminology

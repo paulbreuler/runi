@@ -1,14 +1,13 @@
 /**
- * HTTP method and status code color utilities (HTTPie-inspired).
+ * HTTP method and status code color utilities.
  *
- * Provides color classes for HTTP methods and status codes following
- * HTTPie's color-coding scheme for visual consistency.
+ * Provides color classes for HTTP methods and status codes for visual consistency.
  */
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
 /**
- * Color classes for HTTP methods (HTTPie-inspired).
+ * Color classes for HTTP methods.
  * Each method has a distinct color for easy visual identification.
  */
 export const methodColors: Record<HttpMethod, string> = {
@@ -32,7 +31,7 @@ export function getMethodColor(method: HttpMethod): string {
 }
 
 /**
- * Get color classes for an HTTP status code (HTTPie-inspired).
+ * Get color classes for an HTTP status code.
  *
  * Status ranges:
  * - 2xx: Green (success)

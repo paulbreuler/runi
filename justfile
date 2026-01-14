@@ -179,8 +179,8 @@ validate-ralph:
     @grep -q "VS Code\|horizontal split\|Request.*left.*Response.*right" @fix_plan.md || (echo "❌ @fix_plan.md missing layout updates" && exit 1)
     @echo "Checking specs/requirements.md references..."
     @grep -q "VS Code\|horizontal split\|Request.*left.*Response.*right" specs/requirements.md || (echo "❌ specs/requirements.md missing layout updates" && exit 1)
-    @echo "Checking HTTPie references..."
-    @grep -q "HTTPie\|hover:bg-muted\|subtle.*interactions" @fix_plan.md || (echo "⚠️  @fix_plan.md missing HTTPie principles" && exit 1)
+    @echo "Checking design principles..."
+    @grep -q "hover:bg-muted\|subtle.*interactions\|high contrast" @fix_plan.md || (echo "⚠️  @fix_plan.md missing design principles" && exit 1)
     @echo "✅ Basic validation passed"
 
 # Heal and improve Ralph files using a Claude-guided prompt

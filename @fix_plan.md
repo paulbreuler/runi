@@ -54,14 +54,14 @@
 - [ ] Test: ARIA labels present on form controls
 - [ ] Test: Error messages have role="alert"
 
-### Layout & Structure (VS Code/Cursor Style + HTTPie-Inspired)
+### Layout & Structure (VS Code/Cursor Style)
 
 - [ ] Create MainLayout.svelte with VS Code-style three-panel layout:
   - Left sidebar (collapsible with ⌘B)
   - Center: Horizontal split pane (paneforge) - Request (left) | Response (right), 50/50 default
   - Bottom: Status bar
 - [ ] Implement Sidebar.svelte (collapsible with ⌘B shortcut)
-  - High contrast for readability (HTTPie-inspired)
+  - High contrast for readability
   - Subtle hover effects (not pointer cursor on non-clickable areas)
   - Smooth transitions (200ms)
 - [ ] Add sidebar sections: Collections, History (placeholder content)
@@ -69,7 +69,7 @@
   - Monospaced font for technical values
   - High contrast for readability
 - [ ] Create suggestion/warning display area in request panel
-- [ ] Apply HTTPie design principles: clean interface, subtle interactions, high contrast
+- [ ] Apply design principles: clean interface, subtle interactions, high contrast
 
 ### HTTP Execution
 
@@ -86,13 +86,13 @@
 - [x] Connect URL input to request execution
 - [x] Display response in response panel
 
-### Request Builder UI (shadcn-svelte Components + HTTPie-Inspired)
+### Request Builder UI (shadcn-svelte Components)
 
 - [x] URL input with method selector dropdown (GET, POST, PUT, PATCH, DELETE)
 - [x] Send button with loading state
 - [x] Response status badge with color coding
 - [ ] Create RequestHeader.svelte with shadcn Input, Select, Button
-- [ ] Method dropdown with color-coded triggers (HTTPie-inspired):
+- [ ] Method dropdown with color-coded triggers:
   - GET: green-600, POST: blue-600, PUT: yellow-600, DELETE: red-600, PATCH: purple-600
   - Bold, confident styling (method name prominent)
   - Smooth transitions (200ms)
@@ -101,11 +101,11 @@
 - [ ] Subtle hover effects (hover:bg-muted/50, not pointer cursor everywhere)
 - [ ] Tooltips on method selector (optional, nice-to-have)
 
-### Response Viewer (shadcn-svelte Components + HTTPie-Inspired)
+### Response Viewer (shadcn-svelte Components)
 
 - [ ] JSON syntax highlighting with Shiki (recommended for Svelte 5)
   - High contrast themes (readable on light/dark)
-  - Monospaced fonts for all code (HTTPie style)
+  - Monospaced fonts for all code
   - Fast rendering (optimize for large responses)
 - [ ] Response headers display in collapsible shadcn Table
   - Scannable layout (clear separation)
@@ -120,9 +120,9 @@
   - Smooth tab switching (200ms transitions)
   - High contrast for code display
 - [ ] Implement basic error handling in UI for command failures
-  - Clear, actionable error messages (HTTPie-style)
+  - Clear, actionable error messages
   - High contrast error states
-- [ ] StatusBadge.svelte with color coding (HTTPie-inspired):
+- [ ] StatusBadge.svelte with color coding:
   - 2xx: green-600, 3xx: blue-600, 4xx: yellow-600, 5xx: red-600
   - Bold, readable text
   - Tooltip on hover (optional)

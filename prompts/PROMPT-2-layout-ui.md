@@ -3,7 +3,7 @@
 > **⚠️ This prompt has been split into three sub-runs for better manageability:**
 >
 > - **PROMPT-2A:** Layout Foundation (VS Code-style layout)
-> - **PROMPT-2B:** Request Header & Response Basics (HTTPie-inspired)
+> - **PROMPT-2B:** Request Header & Response Basics
 > - **PROMPT-2C:** Response Viewer & Polish
 >
 > **Use the split prompts instead:** See `prompts/README.md` for execution order.

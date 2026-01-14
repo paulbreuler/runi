@@ -28,10 +28,10 @@ if ! grep -q "VS Code\|horizontal split\|Request.*left.*Response.*right" specs/r
   ERRORS=$((ERRORS + 1))
 fi
 
-# Check HTTPie references
-echo "Checking HTTPie references..."
-if ! grep -q "HTTPie\|hover:bg-muted\|subtle.*interactions" @fix_plan.md 2>/dev/null; then
-  echo "⚠️  @fix_plan.md missing HTTPie principles"
+# Check design principles
+echo "Checking design principles..."
+if ! grep -q "hover:bg-muted\|subtle.*interactions\|high contrast" @fix_plan.md 2>/dev/null; then
+  echo "⚠️  @fix_plan.md missing design principles"
 fi
 
 if [[ $ERRORS -eq 0 ]]; then

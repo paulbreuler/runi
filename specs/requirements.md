@@ -448,7 +448,7 @@ runi uses a distraction-free, developer-focused layout optimized for API workflo
 - **Visual feedback:** Color-coded methods, status badges, syntax highlighting
 - **Intelligent assistance:** Proactive suggestions and security warnings integrated naturally
 
-The main window features a VS Code/Cursor-style three-panel layout: a collapsible left sidebar for navigation, a central horizontal split-pane dividing the request builder (left) from the response viewer (right), and a bottom status bar. The design is inspired by HTTPie's clean, focused interface principles.
+The main window features a VS Code/Cursor-style three-panel layout: a collapsible left sidebar for navigation, a central horizontal split-pane dividing the request builder (left) from the response viewer (right), and a bottom status bar. The design takes inspiration from the best practices of modern developer tools including VS Code, Cursor, Bruno, Postman, Burp Suite, and HTTPie.
 
 **Layout Structure (VS Code/Cursor Style):**
 
@@ -458,7 +458,7 @@ The main window features a VS Code/Cursor-style three-panel layout: a collapsibl
   - **Right Pane:** Response Viewer (50% default, min 30%)
 - **Bottom Status Bar:** Environment indicator, AI prompt hint (⌘I)
 
-**Design Principles (HTTPie-Inspired):**
+**Design Principles (Inspired by Modern Developer Tools):**
 
 - **Clean & Focused:** Minimal chrome, high contrast for readability
 - **Subtle Interactions:** Hover effects use background color changes (`hover:bg-muted/50`), not cursor changes (only pointer for actual links/buttons)
@@ -466,7 +466,7 @@ The main window features a VS Code/Cursor-style three-panel layout: a collapsibl
 - **Color-Coded Elements:** HTTP methods (GET=green, POST=blue, etc.) and status codes (2xx=green, 4xx=yellow, etc.)
 - **Performance:** Smooth animations (200ms transitions, 60fps), optimized rendering
 - **Contextual Guidance:** Tooltips and hints where helpful, but not intrusive
-- **Typography:** Monospaced fonts for all code/data (HTTPie style), high contrast
+- **Typography:** Monospaced fonts for all code/data, high contrast
 - Native Tauri window controls handle titlebar functions (no custom bars)
 - Dark mode default with system auto-switch for themes
 - Minimal, intuitive flow: build requests left, view responses right, manage library left
@@ -569,11 +569,11 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 
 #### Request Panel (left 50% of main area, resizable)
 
-- Method selector: dropdown with GET, POST, PUT, PATCH, DELETE (color-coded, HTTPie-inspired)
+- Method selector: dropdown with GET, POST, PUT, PATCH, DELETE (color-coded)
 - URL input: full-width, with placeholder "Enter URL or paste cURL"
 - Natural language input (toggle): "Describe what you want to test..." (future feature)
 - Send button: primary action, shows spinner when loading
-- High contrast for readability (HTTPie-inspired)
+- High contrast for readability
 - Subtle hover effects (not pointer cursor on non-clickable areas)
 - Tabs: Params, Headers, Body, Auth
 - Key-value editor: table with key, value, enabled checkbox, delete button

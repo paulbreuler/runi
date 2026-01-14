@@ -1,7 +1,7 @@
-# PROMPT-2 Design Guidelines (HTTPie-Inspired)
+# PROMPT-2 Design Guidelines
 
 **Date:** 2026-01-12  
-**Source:** HTTPie Desktop Application + VS Code/Cursor Layout
+**Source:** Best practices from VS Code, Cursor, Bruno, Postman, Burp Suite, HTTPie, and other modern developer tools
 
 ## Core Design Principles
 
@@ -11,26 +11,26 @@
 - **High Contrast:** Code/data areas use clear backgrounds and readable text
 - **Visual Hierarchy:** Primary actions are prominent, secondary info is subtle
 
-### 2. Subtle Interactions (HTTPie)
+### 2. Subtle Interactions
 
 - **Hover Effects:** Use `hover:bg-muted/50 transition-colors duration-200`
 - **No Pointer Cursor:** Only use `cursor-pointer` on actual links/buttons
 - **Smooth Transitions:** 200ms duration, ease-in-out timing
 - **Quiet Interface:** Less visual noise, more focus on content
 
-### 3. Color-Coded Elements (HTTPie)
+### 3. Color-Coded Elements
 
 - **HTTP Methods:** GET (green-600), POST (blue-600), PUT (yellow-600), DELETE (red-600), PATCH (purple-600)
 - **Status Codes:** 2xx (green), 3xx (blue), 4xx (yellow), 5xx (red)
 - **Bold & Confident:** Method names and status codes are prominent
 
-### 4. Performance (HTTPie)
+### 4. Performance
 
 - **Fast Rendering:** Optimize component rendering, use virtual scrolling for large content
 - **Smooth Animations:** 60fps, use CSS transforms
 - **Quick Feedback:** Immediate visual response to user actions
 
-### 5. Contextual Guidance (HTTPie)
+### 5. Contextual Guidance
 
 - **Tooltips:** Strategic placement, not intrusive
 - **Clear Error Messages:** Actionable guidance, not just "error"
@@ -77,7 +77,7 @@ const statusColors = {
 <!-- UI Text -->
 <div class="text-sm text-foreground">UI Text</div>
 
-<!-- Code/Data (HTTPie style) -->
+<!-- Code/Data -->
 <pre class="font-mono text-sm text-foreground bg-muted/30">Code</pre>
 
 <!-- Secondary Text -->
@@ -139,6 +139,5 @@ const statusColors = {
 
 ## References
 
-- [HTTPie Learnings](./HTTPIE-LEARNINGS.md)
 - [VS Code Design Principles](https://code.visualstudio.com/docs/getstarted/userinterface)
 - [shadcn-svelte Components](https://www.shadcn-svelte.com/)

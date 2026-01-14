@@ -23,7 +23,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 
 **User Value:** "I can send HTTP requests and see the results."
 
-**HTTPie-Inspired Design Principles:**
+**Design Principles:**
 
 - **Color-Coded Methods:** Distinct, bold colors for each HTTP method (GET=green, POST=blue, etc.)
 - **Clean Request Bar:** Minimal chrome, focus on URL and method
@@ -98,7 +98,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Displays total request time in milliseconds
 - [ ] Displays response size (if available from HttpResponse)
 - [ ] Compact format (e.g., "45ms • 1.2KB")
-- [ ] Monospaced font for numbers (consistent with HTTPie's approach)
+- [ ] Monospaced font for numbers
 - [ ] High contrast for readability (clear text on muted background)
 - [ ] Hover shows timing breakdown (optional, nice-to-have: DNS, connect, transfer times)
 
@@ -109,7 +109,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Displays response body in scrollable area
 - [ ] High contrast for code/data (monospaced font, clear background)
 - [ ] Basic error handling (shows error message if request fails)
-- [ ] Error messages are clear and actionable (HTTPie-style guidance)
+- [ ] Error messages are clear and actionable
 - [ ] Empty state when no response yet (helpful placeholder text)
 - [ ] ResponsePanel replaces placeholder in MainLayout response pane
 - [ ] Smooth transitions when response updates (fade-in or subtle animation)
@@ -265,7 +265,7 @@ All boxes must be checked AND tests must pass:
 </div>
 ```
 
-**HTTPie-Inspired Notes:**
+**Design Notes:**
 
 - Method selector: Bold, confident colors (GET=green-600, POST=blue-600, etc.)
 - URL input: High contrast, clear placeholder, smooth focus states

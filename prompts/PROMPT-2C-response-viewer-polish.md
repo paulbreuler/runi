@@ -25,7 +25,7 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 
 **User Value:** "I can read and understand API responses easily."
 
-**HTTPie-Inspired Design Principles:**
+**Design Principles:**
 
 - **Clean Code Display:** High contrast syntax highlighting, monospaced fonts
 - **Readable Format:** Properly indented, easy to scan
@@ -62,7 +62,7 @@ All boxes must be checked AND tests must pass:
 - [ ] Create `BodyViewer.svelte` in `Response/` directory
 - [ ] JSON syntax highlighting works for response bodies
 - [ ] Code is properly formatted (indented, readable)
-- [ ] Monospaced font for code display (consistent with HTTPie)
+- [ ] Monospaced font for code display
 - [ ] High contrast syntax highlighting (readable colors, clear backgrounds)
 - [ ] Handles large responses efficiently (virtual scrolling or pagination)
 - [ ] Handles non-JSON responses gracefully (fallback to plain text with monospaced font)
@@ -114,7 +114,7 @@ All boxes must be checked AND tests must pass:
 ### Error Handling
 
 - [ ] Error responses display error message clearly
-- [ ] Network errors show user-friendly messages (HTTPie-style actionable guidance)
+- [ ] Network errors show user-friendly messages with actionable guidance
 - [ ] Timeout errors are distinguishable (clear messaging, not just "error")
 - [ ] Error state is visually distinct (red border, error icon, high contrast)
 - [ ] Error messages are actionable (suggest fixes when possible)
@@ -186,10 +186,10 @@ npm install prismjs
 
 **Recommendation:** Start with Shiki for best Svelte 5 compatibility.
 
-**HTTPie-Inspired Syntax Highlighting:**
+**Syntax Highlighting:**
 
 - Use high contrast themes (readable on both light and dark backgrounds)
-- Monospaced fonts for all code (consistent with HTTPie)
+- Monospaced fonts for all code
 - Proper indentation and formatting (easy to scan)
 - Fast rendering (optimize for large responses)
 

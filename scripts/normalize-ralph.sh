@@ -59,32 +59,31 @@ fi
 
 echo ""
 
-# Validate HTTPie design principles
-echo "🔍 Validating HTTPie design principles..."
+# Validate design principles
+echo "🔍 Validating design principles..."
 
-HTTPIE_PATTERNS=(
-  "HTTPie"
+DESIGN_PATTERNS=(
   "hover:bg-muted"
   "subtle.*interaction"
   "high contrast"
   "monospaced"
 )
 
-MISSING_HTTPIE=()
+MISSING_PATTERNS=()
 
-for pattern in "${HTTPIE_PATTERNS[@]}"; do
+for pattern in "${DESIGN_PATTERNS[@]}"; do
   if ! grep -q -i "$pattern" "@fix_plan.md" specs/requirements.md prompts/*.md 2>/dev/null; then
-    MISSING_HTTPIE+=("$pattern")
+    MISSING_PATTERNS+=("$pattern")
   fi
 done
 
-if [[ ${#MISSING_HTTPIE[@]} -gt 0 ]]; then
-  echo "⚠️  Missing HTTPie patterns in some files:"
-  for pattern in "${MISSING_HTTPIE[@]}"; do
+if [[ ${#MISSING_PATTERNS[@]} -gt 0 ]]; then
+  echo "⚠️  Missing design patterns in some files:"
+  for pattern in "${MISSING_PATTERNS[@]}"; do
     echo "   - $pattern"
   done
 else
-  echo "✅ HTTPie design principles consistent"
+  echo "✅ Design principles consistent"
 fi
 
 echo ""
@@ -113,7 +112,7 @@ PROMPT_FILES=(
 for file in "${PROMPT_FILES[@]}"; do
   if [[ ! -f "$file" ]]; then
     echo "⚠️  Missing prompt file: $file"
-  elif ! grep -q "VS Code\|HTTPie" "$file" 2>/dev/null; then
+  elif ! grep -q "VS Code\|design principles\|high contrast" "$file" 2>/dev/null; then
     echo "⚠️  Prompt file missing design principles: $file"
   fi
 done
