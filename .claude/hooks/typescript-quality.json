@@ -1,0 +1,10 @@
+{
+  "on_file_written": {
+    "command": "bash",
+    "args": ["-c", "scripts/typescript-quality.sh \"$1\"", "--", "{{file_path}}"],
+    "filter": {
+      "file_path": "src/**/*.{ts,svelte}"
+    },
+    "description": "Auto-fix TypeScript/ESLint/Prettier issues on file write"
+  }
+}

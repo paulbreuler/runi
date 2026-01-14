@@ -1,7 +1,7 @@
 // HTTP execution command handler
 
 use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
-use reqwest::{header::HeaderMap, header::HeaderName, header::HeaderValue, Client, Method};
+use reqwest::{Client, Method, header::HeaderMap, header::HeaderName, header::HeaderValue};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::time::Instant;
@@ -74,10 +74,11 @@ pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, Stri
 
     // Build timing info (detailed timing requires connection events which
     // reqwest doesn't expose directly, so we only have total time)
-    #[allow(clippy::cast_possible_truncation)]
-    // HTTP request duration will never exceed u64::MAX ms
+    // Cast is safe: HTTP request duration in milliseconds will never exceed u64::MAX
+    // (u64::MAX ms = ~584 million years, far beyond any realistic request time)
+    let total_ms = u64::try_from(elapsed.as_millis()).unwrap_or(u64::MAX); // Clamp to u64::MAX if somehow exceeded
     let timing = RequestTiming {
-        total_ms: elapsed.as_millis() as u64,
+        total_ms,
         dns_ms: None,
         connect_ms: None,
         tls_ms: None,

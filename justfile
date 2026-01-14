@@ -36,6 +36,14 @@ build:
 build-frontend:
     npm run build
 
+# Generate TypeScript types from Rust structs (ts-rs)
+generate-types:
+    @echo "🔄 Generating TypeScript types from Rust..."
+    cd src-tauri && TS_RS_EXPORT_DIR="./bindings" cargo test --quiet
+    mkdir -p src/lib/types/generated
+    cp src-tauri/bindings/*.ts src/lib/types/generated/
+    @echo "✅ Types generated in src/lib/types/generated/"
+
 # ============================================================================
 # 📦 Dependencies
 # ============================================================================
@@ -82,8 +90,11 @@ lint: lint-rust lint-frontend
 lint-rust: build-frontend
     cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-# Lint TypeScript/Svelte
+# Lint TypeScript/Svelte (ensure types are synced first)
 lint-frontend:
+    @echo "🔄 Syncing SvelteKit types for ESLint..."
+    npx svelte-kit sync
+
     npm run lint
 
 # ============================================================================
@@ -116,6 +127,14 @@ test-rust: build-frontend
 test-frontend:
     npm run test -- --run
 
+# Run E2E tests (Playwright)
+test-e2e:
+    npx playwright test
+
+# Install Playwright browsers (needed for CI)
+test-e2e-install:
+    npx playwright install --with-deps chromium
+
 # ============================================================================
 # 📚 Storybook
 # ============================================================================
@@ -146,6 +165,30 @@ ci: fmt-check lint check test
 # Pre-commit hook: fast checks only
 pre-commit: fmt-check-rust fmt-check-frontend check-frontend
     @echo "✅ Pre-commit checks passed!"
+
+# ============================================================================
+# 📋 Ralph/Claude Normalization
+# ============================================================================
+
+# Normalize Ralph-related files (prompts, specs, fix plan)
+# This ensures consistency across all documentation files
+normalize-ralph:
+    @bash scripts/normalize-ralph.sh
+
+# Validate Ralph file consistency
+validate-ralph:
+    @echo "🔍 Validating Ralph file consistency..."
+    @echo "Checking @fix_plan.md references..."
+    @grep -q "VS Code\|horizontal split\|Request.*left.*Response.*right" @fix_plan.md || (echo "❌ @fix_plan.md missing layout updates" && exit 1)
+    @echo "Checking specs/requirements.md references..."
+    @grep -q "VS Code\|horizontal split\|Request.*left.*Response.*right" specs/requirements.md || (echo "❌ specs/requirements.md missing layout updates" && exit 1)
+    @echo "Checking design principles..."
+    @grep -q "hover:bg-muted\|subtle.*interactions\|high contrast" @fix_plan.md || (echo "⚠️  @fix_plan.md missing design principles" && exit 1)
+    @echo "✅ Basic validation passed"
+
+# Heal and improve Ralph files using a Claude-guided prompt
+heal-ralph *args:
+    @bash scripts/heal-ralph.sh {{ args }}
 
 # ============================================================================
 # 🧹 Cleanup
@@ -211,15 +254,21 @@ help:
     @echo "  just test          - Run all tests"
     @echo "  just test-rust     - Run Rust tests only"
     @echo "  just test-frontend - Run frontend tests only"
+    @echo "  just test-e2e      - Run E2E tests (Playwright)"
     @echo ""
     @echo "Storybook:"
     @echo "  just storybook      - Start Storybook development server"
     @echo "  just storybook-build - Build static Storybook site"
     @echo "  just storybook-serve - Build and serve static Storybook"
     @echo ""
+    @echo "Ralph/Claude:"
+    @echo "  just normalize-ralph - Normalize Ralph documentation files"
+    @echo "  just validate-ralph  - Validate Ralph file consistency"
+    @echo "  just heal-ralph      - Heal/improve Ralph files with prompt"
+    @echo "  just clean-ralph     - Remove all ralph session files"
+    @echo ""
     @echo "Cleanup:"
     @echo "  just clean         - Clean build artifacts"
-    @echo "  just clean-ralph   - Remove all ralph session files"
     @echo ""
     @echo "Documentation:"
     @echo "  just docs          - Generate Rust documentation"

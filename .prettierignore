@@ -18,6 +18,9 @@ pnpm-lock.yaml
 .vscode/
 .idea/
 
+# Templates (contain placeholder syntax)
+.cursor/templates/
+
 # Ralph
 logs/
 .ralph_session*

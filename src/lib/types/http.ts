@@ -1,54 +1,14 @@
 /**
- * HTTP types matching Rust domain structs exactly.
+ * HTTP types - re-exported from generated Rust bindings.
+ *
+ * The base types (RequestParams, HttpResponse, RequestTiming) are generated
+ * from Rust structs using ts-rs. This ensures type safety across the IPC boundary.
+ *
+ * This file re-exports those types and adds TypeScript-only helpers.
  */
 
-/**
- * Timing information for HTTP request phases.
- */
-export interface RequestTiming {
-  /** Total request duration in milliseconds. */
-  total_ms: number;
-  /** DNS resolution time in milliseconds. */
-  dns_ms: number | null;
-  /** TCP connection time in milliseconds. */
-  connect_ms: number | null;
-  /** TLS handshake time in milliseconds. */
-  tls_ms: number | null;
-  /** Time to first byte in milliseconds. */
-  first_byte_ms: number | null;
-}
-
-/**
- * Parameters for an HTTP request.
- */
-export interface RequestParams {
-  /** The target URL. */
-  url: string;
-  /** HTTP method (GET, POST, PUT, PATCH, DELETE, etc.). */
-  method: string;
-  /** Request headers as key-value pairs. */
-  headers: Record<string, string>;
-  /** Optional request body. */
-  body: string | null;
-  /** Request timeout in milliseconds (default: 30000). */
-  timeout_ms: number;
-}
-
-/**
- * Response from an HTTP request.
- */
-export interface HttpResponse {
-  /** HTTP status code. */
-  status: number;
-  /** HTTP status text (e.g., "OK", "Not Found"). */
-  status_text: string;
-  /** Response headers as key-value pairs. */
-  headers: Record<string, string>;
-  /** Response body as a string. */
-  body: string;
-  /** Timing information for the request. */
-  timing: RequestTiming;
-}
+// Re-export generated types from Rust
+export type { HttpResponse, RequestParams, RequestTiming } from './generated';
 
 /**
  * HTTP methods supported by the API client.
@@ -66,8 +26,8 @@ export const DEFAULT_TIMEOUT_MS = 30000;
 export function createRequestParams(
   url: string,
   method: HttpMethod = 'GET',
-  options?: Partial<Pick<RequestParams, 'headers' | 'body' | 'timeout_ms'>>
-): RequestParams {
+  options?: Partial<Pick<import('./generated').RequestParams, 'headers' | 'body' | 'timeout_ms'>>
+): import('./generated').RequestParams {
   return {
     url,
     method,

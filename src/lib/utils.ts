@@ -11,7 +11,7 @@ import { twMerge } from 'tailwind-merge';
  * that will be combined and merged.
  * @returns A single space-separated string of merged class names.
  */
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 

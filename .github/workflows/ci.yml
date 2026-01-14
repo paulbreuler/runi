@@ -16,6 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -26,16 +29,16 @@ jobs:
         run: npm ci
 
       - name: Check formatting
-        run: npm run format:check
+        run: just fmt-check-frontend
 
       - name: Lint
-        run: npm run lint
+        run: just lint-frontend
 
       - name: Type check
-        run: npm run check
+        run: just check-frontend
 
       - name: Run tests
-        run: npm run test -- --run
+        run: just test-frontend
 
   rust:
     name: Rust Backend
@@ -45,6 +48,9 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -60,9 +66,6 @@ jobs:
 
       - name: Install npm dependencies
         run: npm ci
-
-      - name: Build frontend
-        run: npm run build
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -83,13 +86,41 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Check formatting
-        run: cd src-tauri && cargo fmt -- --check
+        run: just fmt-check-rust
 
       - name: Clippy
-        run: cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: just lint-rust
+
+      - name: Type check
+        run: just check-rust
 
       - name: Run tests
-        run: cd src-tauri && cargo test --workspace --verbose
+        run: just test-rust
+
+  e2e:
+    name: E2E Tests
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: just test-e2e-install
+
+      - name: Run E2E tests
+        run: just test-e2e
 
   build:
     name: Build App
@@ -100,6 +131,9 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -133,4 +167,4 @@ jobs:
         run: npm ci
 
       - name: Build Tauri app
-        run: npm run tauri build
+        run: just build
