@@ -136,7 +136,7 @@ describe('parseUrl', () => {
    - All tests must still pass
 
 4. **COMMIT:** Only commit when tests pass
-   - Run `just test` before commit
+   - Run `just test` during iteration, and **always finish with `just ci`** before commit
    - Ensure ≥85% coverage
 
 ## Coverage Requirements
@@ -198,7 +198,8 @@ Generates:
 ## Related Commands
 
 - `/code-review` - Review code including tests
-- `just test` - Run all tests
+- `just test` - Run all tests (iteration)
+- `just ci` - Full CI gate (required final run)
 - `just test-coverage` - Run tests with coverage report
 
 ## Notes

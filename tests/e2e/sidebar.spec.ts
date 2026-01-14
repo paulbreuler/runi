@@ -7,7 +7,8 @@ test.describe('Sidebar', () => {
     // Mock Tauri IPC
     await page.evaluate(() => {
       (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
-        invoke: async () => ({ status: 200, body: '{}', headers: {} }),
+        invoke: (): Promise<{ status: number; body: string; headers: Record<string, string> }> =>
+          Promise.resolve({ status: 200, body: '{}', headers: {} }),
       };
     });
   });
@@ -19,11 +20,11 @@ test.describe('Sidebar', () => {
     await expect(sidebar).toBeVisible();
 
     // Verify Collections section
-    await expect(page.getByText('Collections')).toBeVisible();
+    await expect(page.getByText('Collections', { exact: true })).toBeVisible();
     await expect(page.getByText('No collections yet')).toBeVisible();
 
     // Verify History section
-    await expect(page.getByText('History')).toBeVisible();
+    await expect(page.getByText('History', { exact: true })).toBeVisible();
     await expect(page.getByText('No history yet')).toBeVisible();
   });
 
@@ -49,7 +50,8 @@ test.describe('Sidebar', () => {
     await expect(sidebar).toBeVisible();
 
     // Get viewport height
-    const viewportHeight = page.viewportSize()?.height || 800;
+    const viewport = page.viewportSize();
+    const viewportHeight = viewport ? viewport.height : 800;
 
     // Get sidebar height
     const boundingBox = await sidebar.boundingBox();

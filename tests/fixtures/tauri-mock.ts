@@ -41,18 +41,12 @@ export function setupTauriMock(handler: TauriInvokeHandler): void {
 
   // Create a mock IPC object on window
   win.__TAURI_INTERNALS__ = {
-    invoke: async (cmd: string, args?: unknown) => {
-      const result = handler(cmd, args);
-      return Promise.resolve(result);
-    },
+    invoke: (cmd: string, args?: unknown): Promise<unknown> => Promise.resolve(handler(cmd, args)),
   };
 
   // Also mock the invoke function if it exists directly on window
   win.__TAURI__ = {
-    invoke: async (cmd: string, args?: unknown) => {
-      const result = handler(cmd, args);
-      return Promise.resolve(result);
-    },
+    invoke: (cmd: string, args?: unknown): Promise<unknown> => Promise.resolve(handler(cmd, args)),
   };
 }
 

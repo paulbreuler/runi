@@ -20,6 +20,10 @@
     initialSidebarVisible?: boolean;
   }
 
+  interface SidebarVisibilityPayload {
+    visible: boolean;
+  }
+
   const {
     headerContent,
     requestContent,
@@ -88,15 +92,12 @@
 
   // Listen to sidebar visibility changes from events (for extensibility)
   $effect(() => {
-    const unsubscribe = globalEventBus.on('sidebar.visible-changed', (event) => {
-      if (
-        typeof event.payload === 'object' &&
-        event.payload !== null &&
-        'visible' in event.payload
-      ) {
-        sidebarVisible = event.payload.visible as boolean;
+    const unsubscribe = globalEventBus.on<SidebarVisibilityPayload>(
+      'sidebar.visible-changed',
+      (event) => {
+        sidebarVisible = event.payload.visible;
       }
-    });
+    );
     return unsubscribe;
   });
 </script>

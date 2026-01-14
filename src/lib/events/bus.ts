@@ -77,7 +77,7 @@ export class EventBus {
    * @param payload - The event payload
    * @param source - Optional source identifier
    */
-  emit<T>(type: EventType, payload: T, source?: string): void {
+  emit<T>(type: EventType, payload: T, source?: string): Event<T> {
     const event: Event<T> = {
       type,
       payload,
@@ -96,6 +96,7 @@ export class EventBus {
         }
       });
     }
+    return event;
   }
 
   /**

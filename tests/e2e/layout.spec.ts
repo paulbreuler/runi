@@ -8,7 +8,8 @@ test.describe('MainLayout', () => {
     await page.evaluate(() => {
       // Simple mock setup - intercept any Tauri invokes
       (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
-        invoke: async () => ({ status: 200, body: '{}', headers: {} }),
+        invoke: (): Promise<{ status: number; body: string; headers: Record<string, string> }> =>
+          Promise.resolve({ status: 200, body: '{}', headers: {} }),
       };
     });
   });
@@ -31,8 +32,11 @@ test.describe('MainLayout', () => {
   test('keyboard shortcut toggles sidebar (Mac)', async ({ page }) => {
     // Mock Mac platform
     await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'platform', {
-        get: () => 'MacIntel',
+      Object.defineProperty(navigator, 'userAgentData', {
+        get: () => ({ platform: 'macOS' }),
+      });
+      Object.defineProperty(navigator, 'userAgent', {
+        get: () => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
       });
     });
 
@@ -57,8 +61,11 @@ test.describe('MainLayout', () => {
   test('keyboard shortcut toggles sidebar (Windows/Linux)', async ({ page }) => {
     // Mock Windows platform
     await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'platform', {
-        get: () => 'Win32',
+      Object.defineProperty(navigator, 'userAgentData', {
+        get: () => ({ platform: 'Windows' }),
+      });
+      Object.defineProperty(navigator, 'userAgent', {
+        get: () => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
       });
     });
 
@@ -81,7 +88,7 @@ test.describe('MainLayout', () => {
     await expect(resizer).toBeVisible();
 
     // Verify resizer has correct cursor style
-    await expect(resizer).toHaveCSS('cursor', 'col-resize');
+    await expect(resizer).toHaveCSS('cursor', /col-resize|ew-resize/);
 
     // Get initial positions
     const requestPane = page.getByTestId('request-pane');

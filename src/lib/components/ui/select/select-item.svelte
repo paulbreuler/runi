@@ -1,16 +1,26 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import CheckIcon from 'lucide-svelte/icons/check';
   import { Select as SelectPrimitive } from 'bits-ui';
-  import { cn, type WithoutChild } from '$lib/utils.js';
+  import { cn, type WithoutChild } from '$lib/utils';
+
+  type SelectItemChildrenArgs = { selected: boolean; highlighted: boolean };
+  type SelectItemProps = Omit<WithoutChild<SelectPrimitive.ItemProps>, 'value' | 'label'> & {
+    value?: string;
+    label?: string;
+    children?: Snippet<[SelectItemChildrenArgs]>;
+  };
 
   let {
     ref = $bindable(null),
     class: className,
-    value,
-    label,
+    value = '',
+    label = '',
     children: childrenProp,
     ...restProps
-  }: WithoutChild<SelectPrimitive.ItemProps> = $props();
+  }: SelectItemProps = $props();
+
+  const displayLabel = $derived((): string => (label.length > 0 ? label : value));
 </script>
 
 <SelectPrimitive.Item
@@ -30,9 +40,9 @@
       {/if}
     </span>
     {#if childrenProp}
-      {@render childrenProp({ selected, highlighted })}
+      {@render childrenProp({ selected: Boolean(selected), highlighted: Boolean(highlighted) })}
     {:else}
-      {label || value}
+      {displayLabel}
     {/if}
   {/snippet}
 </SelectPrimitive.Item>

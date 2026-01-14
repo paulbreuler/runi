@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMediaQuery, useMediaQuery, createMobileQuery, breakpoints } from './responsive';
+import { createMediaQuery, useMediaQuery, createCompactQuery, breakpoints } from './responsive';
 
 describe('responsive utilities', () => {
   const originalMatchMedia = window.matchMedia;
@@ -121,8 +121,8 @@ describe('responsive utilities', () => {
     });
   });
 
-  describe('createMobileQuery', () => {
-    it('creates mobile breakpoint query', () => {
+  describe('createCompactQuery', () => {
+    it('creates compact breakpoint query', () => {
       const mockMatchMedia = vi.fn((query: string) => ({
         matches: true,
         media: query,
@@ -136,7 +136,7 @@ describe('responsive utilities', () => {
 
       window.matchMedia = mockMatchMedia;
 
-      const result = createMobileQuery();
+      const result = createCompactQuery();
 
       expect(result.media).toContain('max-width');
       expect(result.media).toContain(String(breakpoints.md - 1));

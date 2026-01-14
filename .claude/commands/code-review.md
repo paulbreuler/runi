@@ -15,7 +15,8 @@ Perform a comprehensive code review following runi's quality standards and best 
    - `just fmt-check` - Check formatting (should pass)
    - `just lint` - Check linting (should pass)
    - `just check` - Check type checking (should pass)
-   - `just test` - Run tests (should pass)
+   - `just test` - Run tests (iteration)
+   - `just ci` - Final gate (required)
    - Check test coverage if available
 
 3. **Review code against runi's standards**:
@@ -81,6 +82,7 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] Run `just lint` - linting must pass (pedantic for Rust, strict for TS)
 - [ ] Run `just check` - type checking must pass
 - [ ] Run `just test` - all tests must pass
+- [ ] Run `just ci` - final gate before merge
 - [ ] Check test coverage (target: ≥85%)
 
 ### Code Quality
@@ -218,6 +220,7 @@ just check
 
 # Tests (must pass - 100% pass rate)
 just test
+just ci
 
 # Coverage (target: ≥85%)
 cd src-tauri && cargo tarpaulin --out Html
@@ -284,4 +287,5 @@ Reviews all changes compared to main branch.
 - `just ci` - Run full CI pipeline locally
 - `just fmt` - Fix formatting issues
 - `just lint` - Check for linting issues
-- `just test` - Run tests
+- `just test` - Run tests (iteration)
+- `just ci` - Full CI gate (required final run)

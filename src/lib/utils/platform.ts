@@ -33,10 +33,9 @@ async function detectPlatform(): Promise<string> {
   }
 
   // Modern API (Chrome/Edge 92+)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userAgentData = (navigator as any).userAgentData;
-  if (userAgentData?.platform) {
-    const platform = String(userAgentData.platform).toLowerCase();
+  const userAgentData = getNavigatorUAData();
+  if (typeof userAgentData?.platform === 'string' && userAgentData.platform.length > 0) {
+    const platform = userAgentData.platform.toLowerCase();
     if (platform.includes('mac')) return 'macOS';
     if (platform.includes('win')) return 'Windows';
     if (platform.includes('linux')) return 'Linux';
@@ -47,13 +46,6 @@ async function detectPlatform(): Promise<string> {
   if (ua.includes('mac os x') || ua.includes('macintosh')) return 'macOS';
   if (ua.includes('win')) return 'Windows';
   if (ua.includes('linux')) return 'Linux';
-
-  // Last resort: navigator.platform (deprecated but widely supported)
-  // navigator.platform is deprecated but widely supported
-  const platform = navigator.platform.toUpperCase();
-  if (platform.includes('MAC')) return 'macOS';
-  if (platform.includes('WIN')) return 'Windows';
-  if (platform.includes('LINUX')) return 'Linux';
 
   return 'Unknown';
 }
@@ -139,10 +131,9 @@ export function getPlatformSync(): string {
     return 'Unknown';
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userAgentData = (navigator as any).userAgentData;
-  if (userAgentData?.platform) {
-    const platform = String(userAgentData.platform).toLowerCase();
+  const userAgentData = getNavigatorUAData();
+  if (typeof userAgentData?.platform === 'string' && userAgentData.platform.length > 0) {
+    const platform = userAgentData.platform.toLowerCase();
     if (platform.includes('mac')) return 'macOS';
     if (platform.includes('win')) return 'Windows';
     if (platform.includes('linux')) return 'Linux';
@@ -153,13 +144,21 @@ export function getPlatformSync(): string {
   if (ua.includes('win')) return 'Windows';
   if (ua.includes('linux')) return 'Linux';
 
-  // navigator.platform is deprecated but widely supported
-  const platform = navigator.platform.toUpperCase();
-  if (platform.includes('MAC')) return 'macOS';
-  if (platform.includes('WIN')) return 'Windows';
-  if (platform.includes('LINUX')) return 'Linux';
-
   return 'Unknown';
+}
+
+interface NavigatorUAData {
+  platform?: string;
+}
+
+function getNavigatorUAData(): NavigatorUAData | undefined {
+  if (typeof navigator === 'undefined') {
+    return undefined;
+  }
+  if ('userAgentData' in navigator) {
+    return (navigator as Navigator & { userAgentData?: NavigatorUAData }).userAgentData;
+  }
+  return undefined;
 }
 
 /**

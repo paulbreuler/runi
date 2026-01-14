@@ -43,7 +43,8 @@ just ci
 just check        # Type checking (cargo check + npm run check)
 just lint         # Linting (clippy pedantic + ESLint)
 just fmt-check    # Format verification (rustfmt + prettier)
-just test         # Run all tests (cargo test + npm test)
+just test         # Run all tests (iteration)
+just ci           # Full CI gate (required final run)
 ```
 
 ## Running Tests
@@ -173,6 +174,7 @@ Before moving to the next feature, ALL changes must be:
 ### Feature Completion Checklist
 
 - [ ] All tests pass (`just test`)
+- [ ] Final CI gate passes (`just ci`)
 - [ ] Code coverage meets 85% minimum
 - [ ] Formatting passes (`just fmt-check`)
 - [ ] Linting passes (`just lint`)

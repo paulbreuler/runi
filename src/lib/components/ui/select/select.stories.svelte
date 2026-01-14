@@ -18,12 +18,13 @@
 </script>
 
 <Story name="Default" args={{ value: 'option1' }}>
-  {#snippet template(args: Record<string, any>)}
-    {@const selectedValue = args.value ?? 'option1'}
+  {#snippet template(args)}
+    {@const safeArgs = args as { value?: string; disabled?: boolean }}
+    {@const selectedValue = safeArgs.value ?? 'option1'}
     {@const triggerContent =
       options.find((opt) => opt.value === selectedValue)?.label ?? 'Select option'}
-    <Select.Root type="single" value={selectedValue} disabled={args.disabled}>
-      <Select.Trigger disabled={args.disabled}>{triggerContent}</Select.Trigger>
+    <Select.Root type="single" value={selectedValue} disabled={safeArgs.disabled}>
+      <Select.Trigger disabled={safeArgs.disabled}>{triggerContent}</Select.Trigger>
       <Select.Content>
         {#each options as option (option.value)}
           <Select.Item value={option.value}>{option.label}</Select.Item>
@@ -34,12 +35,13 @@
 </Story>
 
 <Story name="WithValue" args={{ value: 'option2' }}>
-  {#snippet template(args: Record<string, any>)}
-    {@const selectedValue = args.value ?? 'option2'}
+  {#snippet template(args)}
+    {@const safeArgs = args as { value?: string; disabled?: boolean }}
+    {@const selectedValue = safeArgs.value ?? 'option2'}
     {@const triggerContent =
       options.find((opt) => opt.value === selectedValue)?.label ?? 'Select option'}
-    <Select.Root type="single" value={selectedValue} disabled={args.disabled}>
-      <Select.Trigger disabled={args.disabled}>{triggerContent}</Select.Trigger>
+    <Select.Root type="single" value={selectedValue} disabled={safeArgs.disabled}>
+      <Select.Trigger disabled={safeArgs.disabled}>{triggerContent}</Select.Trigger>
       <Select.Content>
         {#each options as option (option.value)}
           <Select.Item value={option.value}>{option.label}</Select.Item>
@@ -50,12 +52,13 @@
 </Story>
 
 <Story name="Disabled" args={{ disabled: true }}>
-  {#snippet template(args: Record<string, any>)}
-    {@const selectedValue = args.value ?? 'option1'}
+  {#snippet template(args)}
+    {@const safeArgs = args as { value?: string; disabled?: boolean }}
+    {@const selectedValue = safeArgs.value ?? 'option1'}
     {@const triggerContent =
       options.find((opt) => opt.value === selectedValue)?.label ?? 'Select option'}
-    <Select.Root type="single" value={selectedValue} disabled={args.disabled}>
-      <Select.Trigger disabled={args.disabled}>{triggerContent}</Select.Trigger>
+    <Select.Root type="single" value={selectedValue} disabled={safeArgs.disabled}>
+      <Select.Trigger disabled={safeArgs.disabled}>{triggerContent}</Select.Trigger>
       <Select.Content>
         {#each options as option (option.value)}
           <Select.Item value={option.value}>{option.label}</Select.Item>

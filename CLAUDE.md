@@ -27,7 +27,8 @@ just dev          # Development server
 just ci           # Full CI pipeline (before pushing)
 just pre-commit   # Fast checks (before committing)
 just fmt          # Fix formatting
-just test         # Run all tests
+just test         # Run all tests (iteration)
+just ci           # Full CI pipeline (required final run)
 ```
 
 **Type Generation:**

@@ -238,7 +238,8 @@ just ci
 just check        # Type checking (Rust + TypeScript)
 just lint         # Linting (Clippy pedantic + ESLint)
 just fmt-check    # Format checking
-just test         # All tests
+just test         # Tests during iteration
+just ci           # Final CI gate (required)
 ```
 
 ## File Structure

@@ -1,13 +1,13 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
-  import { cn, type WithElementRef } from '$lib/utils.js';
+  import { cn, type WithElementRef } from '$lib/utils';
 
-  let {
-    ref = $bindable(null),
-    class: className,
-    children,
-    ...restProps
-  }: WithElementRef<HTMLAttributes<HTMLDivElement>> = $props();
+  type CardProps = WithElementRef<HTMLAttributes<HTMLDivElement>> & {
+    children?: Snippet;
+  };
+
+  let { ref = $bindable(null), class: className, children, ...restProps }: CardProps = $props();
 </script>
 
 <div

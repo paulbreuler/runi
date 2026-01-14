@@ -76,26 +76,41 @@ export function useKeyboardShortcut(_shortcut: KeyboardShortcut): void {
  */
 export function createKeyboardHandler(shortcut: KeyboardShortcut): () => void {
   function handleKeyDown(e: KeyboardEvent): void {
+    const modifier = shortcut.modifier;
     // Check modifier key
     let modifierMatch = true;
-    if (shortcut.modifier) {
-      if (shortcut.modifier === 'meta') {
+    switch (modifier) {
+      case 'meta':
         modifierMatch = e.metaKey;
-      } else if (shortcut.modifier === 'ctrl') {
+        break;
+      case 'ctrl':
         modifierMatch = e.ctrlKey;
-      } else if (shortcut.modifier === 'shift') {
+        break;
+      case 'shift':
         modifierMatch = e.shiftKey;
-      } else if (shortcut.modifier === 'alt') {
+        break;
+      case 'alt':
         modifierMatch = e.altKey;
-      }
+        break;
+      default:
+        break;
     }
 
     // Check if other modifiers are NOT pressed (to avoid conflicts)
-    const otherModifiersPressed =
-      (shortcut.modifier !== 'meta' && e.metaKey) ||
-      (shortcut.modifier !== 'ctrl' && e.ctrlKey) ||
-      (shortcut.modifier !== 'shift' && e.shiftKey) ||
-      (shortcut.modifier !== 'alt' && e.altKey);
+    const otherModifiersPressed = ((): boolean => {
+      switch (modifier) {
+        case 'meta':
+          return e.ctrlKey || e.shiftKey || e.altKey;
+        case 'ctrl':
+          return e.metaKey || e.shiftKey || e.altKey;
+        case 'shift':
+          return e.metaKey || e.ctrlKey || e.altKey;
+        case 'alt':
+          return e.metaKey || e.ctrlKey || e.shiftKey;
+        default:
+          return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+      }
+    })();
 
     // Match key and modifier
     if (modifierMatch && !otherModifiersPressed && e.key === shortcut.key) {

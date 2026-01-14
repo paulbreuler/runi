@@ -8,7 +8,7 @@
     /** Current HTTP method */
     method: HttpMethod;
     /** Current URL value */
-    url: string;
+    url?: string;
     /** Loading state */
     loading?: boolean;
     /** Callback when method changes */
@@ -17,14 +17,14 @@
     onSend?: () => void;
   }
 
-  let { method, url, loading = false, onMethodChange, onSend }: Props = $props();
+  let { method, url = $bindable(), loading = false, onMethodChange, onSend }: Props = $props();
 
   // HTTP methods for select
   const httpMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
   // Derived
   const methodColorClass = $derived(getMethodColor(method));
-  const isValidUrl = $derived(url.length > 0);
+  const isValidUrl = $derived((url ?? '').length > 0);
 
   // Handlers
   function handleMethodChange(value: string | undefined): void {
@@ -34,7 +34,7 @@
   }
 
   function handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !loading && isValidUrl && onSend) {
+    if (event.key === 'Enter' && !loading && isValidUrl && onSend !== undefined) {
       onSend();
     }
   }
@@ -71,7 +71,7 @@
   />
 
   <Button
-    onclick={onSend}
+    onclick={(): void => onSend?.()}
     disabled={!isValidUrl || loading}
     data-testid="send-button"
     aria-label="Send Request"
