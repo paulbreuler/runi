@@ -4,8 +4,16 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Timing information for HTTP request phases.
+///
+/// All timing values are in milliseconds. The `_ms` suffix is intentional
+/// to make the unit explicit and avoid confusion with other time units.
+///
+/// # Note
+///
+/// The `_ms` suffix on all fields is intentional for API clarity and consistency.
+/// This is a domain-specific naming convention that improves code readability.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[allow(clippy::struct_field_names)] // _ms suffix is intentional for clarity
+#[allow(clippy::struct_field_names)] // _ms suffix is intentional domain convention for clarity
 pub struct RequestTiming {
     /// Total request duration in milliseconds.
     pub total_ms: u64,

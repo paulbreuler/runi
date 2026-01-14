@@ -49,7 +49,7 @@ async function detectPlatform(): Promise<string> {
   if (ua.includes('linux')) return 'Linux';
 
   // Last resort: navigator.platform (deprecated but widely supported)
-  // eslint-disable-next-line deprecation/deprecation
+  // navigator.platform is deprecated but widely supported
   const platform = navigator.platform.toUpperCase();
   if (platform.includes('MAC')) return 'macOS';
   if (platform.includes('WIN')) return 'Windows';
@@ -153,7 +153,7 @@ export function getPlatformSync(): string {
   if (ua.includes('win')) return 'Windows';
   if (ua.includes('linux')) return 'Linux';
 
-  // eslint-disable-next-line deprecation/deprecation
+  // navigator.platform is deprecated but widely supported
   const platform = navigator.platform.toUpperCase();
   if (platform.includes('MAC')) return 'macOS';
   if (platform.includes('WIN')) return 'Windows';

@@ -18,6 +18,16 @@
 
 export type TauriInvokeHandler = (cmd: string, args?: unknown) => unknown;
 
+// Type for window with Tauri internals
+type WindowWithTauri = Window & {
+  __TAURI_INTERNALS__?: {
+    invoke: (cmd: string, args?: unknown) => Promise<unknown>;
+  };
+  __TAURI__?: {
+    invoke: (cmd: string, args?: unknown) => Promise<unknown>;
+  };
+};
+
 /**
  * Sets up Tauri IPC mocking in the browser context.
  *
@@ -27,8 +37,10 @@ export type TauriInvokeHandler = (cmd: string, args?: unknown) => unknown;
  * @param handler - Function that handles Tauri command invocations
  */
 export function setupTauriMock(handler: TauriInvokeHandler): void {
+  const win = window as WindowWithTauri;
+
   // Create a mock IPC object on window
-  (window as any).__TAURI_INTERNALS__ = {
+  win.__TAURI_INTERNALS__ = {
     invoke: async (cmd: string, args?: unknown) => {
       const result = handler(cmd, args);
       return Promise.resolve(result);
@@ -36,7 +48,7 @@ export function setupTauriMock(handler: TauriInvokeHandler): void {
   };
 
   // Also mock the invoke function if it exists directly on window
-  (window as any).__TAURI__ = {
+  win.__TAURI__ = {
     invoke: async (cmd: string, args?: unknown) => {
       const result = handler(cmd, args);
       return Promise.resolve(result);
@@ -48,18 +60,19 @@ export function setupTauriMock(handler: TauriInvokeHandler): void {
  * Clears all Tauri IPC mocks.
  */
 export function clearTauriMock(): void {
-  delete (window as any).__TAURI_INTERNALS__;
-  delete (window as any).__TAURI__;
+  const win = window as WindowWithTauri;
+  delete win.__TAURI_INTERNALS__;
+  delete win.__TAURI__;
 }
 
 /**
  * Default mock responses for common Tauri commands.
  */
 export const defaultMocks = {
-  execute_request: () => ({
+  execute_request: (): { status: number; body: string; headers: Record<string, string> } => ({
     status: 200,
     body: '{"ok":true}',
-    headers: {} as Record<string, string>,
+    headers: {},
   }),
-  hello_world: () => ({ message: 'Hello from Tauri!' }),
+  hello_world: (): { message: string } => ({ message: 'Hello from Tauri!' }),
 };

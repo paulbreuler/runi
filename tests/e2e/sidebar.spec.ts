@@ -6,7 +6,7 @@ test.describe('Sidebar', () => {
 
     // Mock Tauri IPC
     await page.evaluate(() => {
-      (window as any).__TAURI_INTERNALS__ = {
+      (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
         invoke: async () => ({ status: 200, body: '{}', headers: {} }),
       };
     });

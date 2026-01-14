@@ -5,8 +5,6 @@
  * in a consistent, extensible way.
  */
 
-import { getModifierKey } from './platform';
-
 /**
  * Keyboard shortcut configuration.
  */
@@ -45,7 +43,7 @@ export interface KeyboardShortcut {
  * </script>
  * ```
  */
-export function useKeyboardShortcut(shortcut: KeyboardShortcut): void {
+export function useKeyboardShortcut(_shortcut: KeyboardShortcut): void {
   // Use Svelte 5 runes for reactivity
   // Note: This is a utility function, not a Svelte component
   // The actual effect will be set up in the component using $effect

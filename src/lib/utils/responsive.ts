@@ -123,16 +123,18 @@ export function useMediaQuery(query: string): {
 
   // Fallback for very old browsers (IE11, etc.) - use deprecated API only if modern API unavailable
   // This should rarely execute in modern browsers
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, deprecation/deprecation
-  const legacyMq = mq as any;
+  const legacyMq = mq as unknown as {
+    addListener?: (h: (e: MediaQueryListEvent) => void) => void;
+    removeListener?: (h: (e: MediaQueryListEvent) => void) => void;
+  };
   if (legacyMq.addListener) {
-    // eslint-disable-next-line deprecation/deprecation
+    // addListener is deprecated but needed for legacy browser support
     legacyMq.addListener(handler);
     return {
       matches,
       cleanup: () => {
-        // eslint-disable-next-line deprecation/deprecation
-        legacyMq.removeListener(handler);
+        // removeListener is deprecated but needed for legacy browser support
+        legacyMq.removeListener?.(handler);
       },
     };
   }

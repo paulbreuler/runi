@@ -16,7 +16,7 @@ describe('StatusBadge', () => {
   });
 
   it('applies green color for 2xx status', () => {
-    const { container } = render(StatusBadge, {
+    render(StatusBadge, {
       props: {
         status: 200,
         statusText: 'OK',

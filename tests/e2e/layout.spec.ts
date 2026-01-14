@@ -7,7 +7,7 @@ test.describe('MainLayout', () => {
     // Mock Tauri IPC for these tests
     await page.evaluate(() => {
       // Simple mock setup - intercept any Tauri invokes
-      (window as any).__TAURI_INTERNALS__ = {
+      (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
         invoke: async () => ({ status: 200, body: '{}', headers: {} }),
       };
     });

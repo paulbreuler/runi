@@ -9,6 +9,13 @@ import {
   resetPlatformCache,
 } from './platform';
 
+// Type for mocking navigator
+type MockNavigator = {
+  userAgentData?: { platform: string };
+  userAgent: string;
+  platform?: string;
+};
+
 describe('platform utilities', () => {
   const originalNavigator = global.navigator;
 
@@ -24,41 +31,34 @@ describe('platform utilities', () => {
 
   describe('isMac (async)', () => {
     it('detects macOS using userAgentData.platform (modern API)', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'macOS' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'macOS' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isMac()).toBe(true);
     });
 
     it('detects macOS using userAgent fallback', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).userAgentData;
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      delete (global.navigator as unknown as MockNavigator).userAgentData;
+      (global.navigator as unknown as MockNavigator).userAgent =
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isMac()).toBe(true);
     });
 
     it('detects macOS using navigator.platform (deprecated fallback)', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).userAgentData;
-      (global.navigator as any).userAgent = 'Mozilla/5.0';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).platform = 'MacIntel';
+      delete (global.navigator as unknown as MockNavigator).userAgentData;
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0';
+      (global.navigator as unknown as MockNavigator).platform = 'MacIntel';
 
       expect(await isMac()).toBe(true);
     });
 
     it('returns false for non-Mac platforms', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'Windows' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Windows NT 10.0)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'Windows' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Windows NT 10.0)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isMac()).toBe(false);
     });
@@ -66,31 +66,26 @@ describe('platform utilities', () => {
 
   describe('isWindows (async)', () => {
     it('detects Windows using userAgentData.platform', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'Windows' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'Windows' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isWindows()).toBe(true);
     });
 
     it('detects Windows using userAgent fallback', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).userAgentData;
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      delete (global.navigator as unknown as MockNavigator).userAgentData;
+      (global.navigator as unknown as MockNavigator).userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isWindows()).toBe(true);
     });
 
     it('returns false for non-Windows platforms', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'macOS' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Macintosh)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'macOS' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Macintosh)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isWindows()).toBe(false);
     });
@@ -98,31 +93,25 @@ describe('platform utilities', () => {
 
   describe('isLinux (async)', () => {
     it('detects Linux using userAgentData.platform', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'Linux' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'Linux' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isLinux()).toBe(true);
     });
 
     it('detects Linux using userAgent fallback', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).userAgentData;
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (X11; Linux x86_64)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      delete (global.navigator as unknown as MockNavigator).userAgentData;
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (X11; Linux x86_64)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isLinux()).toBe(true);
     });
 
     it('returns false for non-Linux platforms', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'macOS' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Macintosh)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'macOS' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Macintosh)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(await isLinux()).toBe(false);
     });
@@ -130,21 +119,17 @@ describe('platform utilities', () => {
 
   describe('isMacSync', () => {
     it('detects macOS synchronously using browser APIs', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'macOS' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Macintosh)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'macOS' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Macintosh)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(isMacSync()).toBe(true);
     });
 
     it('returns false for non-Mac platforms', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'Windows' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Windows NT)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'Windows' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Windows NT)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(isMacSync()).toBe(false);
     });
@@ -152,11 +137,9 @@ describe('platform utilities', () => {
 
   describe('getModifierKey', () => {
     it('returns metaKey for Mac platform', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'macOS' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Macintosh)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'macOS' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Macintosh)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       const event = {
         metaKey: true,
@@ -167,11 +150,9 @@ describe('platform utilities', () => {
     });
 
     it('returns ctrlKey for non-Mac platform', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'Windows' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Windows NT)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'Windows' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Windows NT)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       const event = {
         metaKey: false,
@@ -184,21 +165,17 @@ describe('platform utilities', () => {
 
   describe('getModifierKeyName', () => {
     it('returns ⌘ for Mac platform', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'macOS' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Macintosh)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'macOS' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Macintosh)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(getModifierKeyName()).toBe('⌘');
     });
 
     it('returns Ctrl for non-Mac platform', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.navigator as any).userAgentData = { platform: 'Windows' };
-      (global.navigator as any).userAgent = 'Mozilla/5.0 (Windows NT)';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (global.navigator as any).platform;
+      (global.navigator as unknown as MockNavigator).userAgentData = { platform: 'Windows' };
+      (global.navigator as unknown as MockNavigator).userAgent = 'Mozilla/5.0 (Windows NT)';
+      delete (global.navigator as unknown as MockNavigator).platform;
 
       expect(getModifierKeyName()).toBe('Ctrl');
     });

@@ -1,4 +1,7 @@
-// Runi - Main entry point for Tauri application
+//! Runi - An intelligent API development partner.
+//!
+//! This crate provides the Tauri backend for the runi desktop application,
+//! handling HTTP request execution, command handlers, and application state management.
 
 mod application;
 mod domain;
@@ -7,6 +10,10 @@ mod infrastructure;
 use infrastructure::commands::{create_proxy_service, get_platform, hello_world};
 use infrastructure::http::execute_request;
 
+/// Initialize and run the Tauri application.
+///
+/// Sets up the Tauri builder with plugins, command handlers, and managed state.
+/// In debug mode, automatically opens developer tools.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()

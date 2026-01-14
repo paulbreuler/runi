@@ -106,10 +106,12 @@ export class EventBus {
    * @returns Unsubscribe function
    */
   on<T>(type: EventType, handler: EventHandler<T>): () => void {
-    if (!this.listeners.has(type)) {
-      this.listeners.set(type, new Set());
+    let handlers = this.listeners.get(type);
+    if (!handlers) {
+      handlers = new Set();
+      this.listeners.set(type, handlers);
     }
-    this.listeners.get(type)!.add(handler as EventHandler);
+    handlers.add(handler as EventHandler);
 
     // Return unsubscribe function
     return () => {

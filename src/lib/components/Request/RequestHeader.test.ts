@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import RequestHeader from './RequestHeader.svelte';
-import type { HttpMethod } from '$lib/types/http';
 
 describe('RequestHeader', () => {
   it('renders with method, URL input, and send button', () => {
@@ -137,7 +136,7 @@ describe('RequestHeader', () => {
   });
 
   it('applies method color classes to method selector', () => {
-    const { container } = render(RequestHeader, {
+    render(RequestHeader, {
       props: {
         method: 'GET',
         url: '',
