@@ -101,7 +101,7 @@ export function useMediaQuery(query: string): {
   cleanup: () => void;
 } {
   if (typeof window === 'undefined') {
-    return { matches: false, cleanup: () => {} };
+    return { matches: false, cleanup: (): void => {} };
   }
 
   const mq = window.matchMedia(query);
@@ -113,7 +113,7 @@ export function useMediaQuery(query: string): {
 
   // Always use modern addEventListener API
   // For legacy browsers that don't support it, TypeScript will error but runtime will work
-  if (mq.addEventListener) {
+  if (typeof mq.addEventListener === 'function') {
     mq.addEventListener('change', handler);
     return {
       matches,
@@ -134,7 +134,7 @@ export function useMediaQuery(query: string): {
     legacyMq.addListener(handler);
     return {
       matches,
-      cleanup: () => {
+      cleanup: (): void => {
         // removeListener is deprecated but needed for legacy browser support
         legacyMq.removeListener?.(handler);
       },
@@ -144,7 +144,7 @@ export function useMediaQuery(query: string): {
   // No listener API available (shouldn't happen in practice)
   return {
     matches,
-    cleanup: () => {},
+    cleanup: (): void => {},
   };
 }
 
@@ -157,7 +157,7 @@ export function useMediaQuery(query: string): {
  * @returns Media query state for compact window size
  */
 export function createCompactQuery(): MediaQueryState {
-  return createMediaQuery(`(max-width: ${breakpoints.md - 1}px)`);
+  return createMediaQuery(`(max-width: ${String(breakpoints.md - 1)}px)`);
 }
 
 /**
@@ -169,7 +169,7 @@ export function createCompactQuery(): MediaQueryState {
  */
 export function createStandardQuery(): MediaQueryState {
   return createMediaQuery(
-    `(min-width: ${breakpoints.md}px) and (max-width: ${breakpoints.lg - 1}px)`
+    `(min-width: ${String(breakpoints.md)}px) and (max-width: ${String(breakpoints.lg - 1)}px)`
   );
 }
 
@@ -181,7 +181,7 @@ export function createStandardQuery(): MediaQueryState {
  * @returns Media query state for spacious window size
  */
 export function createSpaciousQuery(): MediaQueryState {
-  return createMediaQuery(`(min-width: ${breakpoints.lg}px)`);
+  return createMediaQuery(`(min-width: ${String(breakpoints.lg)}px)`);
 }
 
 /**

@@ -37,7 +37,8 @@ describe('EventBus', () => {
 
       const call = handler.mock.calls[0];
       expect(call).toBeDefined();
-      const event = call![0] as Event;
+      const event = (call !== undefined ? call[0] : null) as Event;
+      expect(event).not.toBeNull();
       expect(event.timestamp).toBeGreaterThanOrEqual(before);
       expect(event.timestamp).toBeLessThanOrEqual(after);
     });

@@ -30,7 +30,7 @@
   // Sidebar state - managed internally but can be controlled via commands/events
   // Capture initial value in closure to avoid Svelte warning
   let sidebarVisible = $state(
-    (() => {
+    ((): boolean => {
       const initial = initialSidebarVisible;
       return initial;
     })()
@@ -71,7 +71,7 @@
     });
 
     // Cleanup on unmount
-    return () => {
+    return (): void => {
       globalCommandRegistry.unregister('sidebar.toggle');
     };
   });
@@ -127,7 +127,7 @@
         type="button"
         class="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 cursor-pointer"
         onclick={toggleSidebar}
-        onkeydown={(e) => {
+        onkeydown={(e): void => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             toggleSidebar();

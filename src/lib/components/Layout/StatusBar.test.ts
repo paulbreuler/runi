@@ -21,7 +21,8 @@ describe('StatusBar', () => {
       screen.getByText((_content, element) => {
         return (
           element?.tagName === 'SPAN' &&
-          (element.textContent?.includes('for AI assistance') ?? false)
+          element.textContent !== null &&
+          element.textContent.includes('for AI assistance')
         );
       })
     ).toBeInTheDocument();

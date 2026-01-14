@@ -28,7 +28,7 @@
 
   // Handlers
   function handleMethodChange(value: string | undefined): void {
-    if (value && onMethodChange) {
+    if (value !== undefined && value.length > 0 && onMethodChange !== undefined) {
       onMethodChange(value as HttpMethod);
     }
   }
