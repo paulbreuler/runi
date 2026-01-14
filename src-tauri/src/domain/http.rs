@@ -3,6 +3,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[cfg(test)]
+use ts_rs::TS;
+
 /// Timing information for HTTP request phases.
 ///
 /// All timing values are in milliseconds. The `_ms` suffix is intentional
@@ -13,22 +16,31 @@ use std::collections::HashMap;
 /// The `_ms` suffix on all fields is intentional for API clarity and consistency.
 /// This is a domain-specific naming convention that improves code readability.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(TS))]
+#[cfg_attr(test, ts(export))]
 #[allow(clippy::struct_field_names)] // _ms suffix is intentional domain convention for clarity
 pub struct RequestTiming {
     /// Total request duration in milliseconds.
+    #[cfg_attr(test, ts(type = "number"))]
     pub total_ms: u64,
     /// DNS resolution time in milliseconds.
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub dns_ms: Option<u64>,
     /// TCP connection time in milliseconds.
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub connect_ms: Option<u64>,
     /// TLS handshake time in milliseconds.
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub tls_ms: Option<u64>,
     /// Time to first byte in milliseconds.
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub first_byte_ms: Option<u64>,
 }
 
 /// Parameters for an HTTP request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(test, derive(TS))]
+#[cfg_attr(test, ts(export))]
 pub struct RequestParams {
     /// The target URL.
     pub url: String,
@@ -36,11 +48,13 @@ pub struct RequestParams {
     pub method: String,
     /// Request headers as key-value pairs.
     #[serde(default)]
+    #[cfg_attr(test, ts(type = "Record<string, string>"))]
     pub headers: HashMap<String, String>,
     /// Optional request body.
     pub body: Option<String>,
     /// Request timeout in milliseconds (default: 30000).
     #[serde(default = "default_timeout")]
+    #[cfg_attr(test, ts(type = "number"))]
     pub timeout_ms: u64,
 }
 
@@ -51,12 +65,15 @@ const fn default_timeout() -> u64 {
 
 /// Response from an HTTP request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(test, derive(TS))]
+#[cfg_attr(test, ts(export))]
 pub struct HttpResponse {
     /// HTTP status code.
     pub status: u16,
     /// HTTP status text (e.g., "OK", "Not Found").
     pub status_text: String,
     /// Response headers as key-value pairs.
+    #[cfg_attr(test, ts(type = "Record<string, string>"))]
     pub headers: HashMap<String, String>,
     /// Response body as a string.
     pub body: String,

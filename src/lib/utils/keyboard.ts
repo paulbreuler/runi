@@ -107,5 +107,7 @@ export function createKeyboardHandler(shortcut: KeyboardShortcut): () => void {
   }
 
   window.addEventListener('keydown', handleKeyDown);
-  return () => window.removeEventListener('keydown', handleKeyDown);
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+  };
 }

@@ -17,7 +17,7 @@
     onSend?: () => void;
   }
 
-  let { method, url = $bindable(''), loading = false, onMethodChange, onSend }: Props = $props();
+  let { method, url, loading = false, onMethodChange, onSend }: Props = $props();
 
   // HTTP methods for select
   const httpMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];

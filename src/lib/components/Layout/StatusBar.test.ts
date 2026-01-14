@@ -18,7 +18,7 @@ describe('StatusBar', () => {
     render(StatusBar);
     // Use a function matcher because the text is split across elements (kbd)
     expect(
-      screen.getByText((content, element) => {
+      screen.getByText((_content, element) => {
         return (
           element?.tagName === 'SPAN' &&
           (element.textContent?.includes('for AI assistance') ?? false)

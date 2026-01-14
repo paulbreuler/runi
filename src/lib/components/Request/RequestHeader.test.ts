@@ -39,8 +39,8 @@ describe('RequestHeader', () => {
       },
     });
 
-    const urlInput = screen.getByTestId('url-input') as HTMLInputElement;
-    expect(urlInput.value).toBe('https://example.com');
+    const urlInput = screen.getByTestId('url-input');
+    expect(urlInput).toHaveValue('https://example.com');
   });
 
   it('calls onMethodChange when method changes', async () => {

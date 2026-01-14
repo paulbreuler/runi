@@ -52,14 +52,30 @@ export default tseslint.config(
     },
   },
   {
+    // Generated types from ts-rs - don't lint these
+    files: ['src/lib/types/generated/**/*.ts', 'src-tauri/bindings/**/*.ts'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
     ignores: [
       'build/',
       '.svelte-kit/',
+      '.storybook/',
+      '.cursor/',
       'dist/',
       'node_modules/',
       'src-tauri/target/',
+      'src-tauri/bindings/',
       'storybook-static/',
       'coverage/',
+      'src/lib/types/generated/',
+      '*.config.js',
+      '*.config.ts',
+      'vitest.setup.ts',
+      'playwright*.ts',
     ],
   }
 );

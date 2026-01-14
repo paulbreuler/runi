@@ -117,7 +117,9 @@ export function useMediaQuery(query: string): {
     mq.addEventListener('change', handler);
     return {
       matches,
-      cleanup: () => mq.removeEventListener('change', handler),
+      cleanup: (): void => {
+        mq.removeEventListener('change', handler);
+      },
     };
   }
 

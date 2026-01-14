@@ -15,19 +15,23 @@ tauri = { version = "2.9.5", features = ["devtools", "macos-private-api"] }
 tauri-plugin-shell = "2.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.49.0", features = ["full"] }
+tokio = { version = "1.49.0", features = ["rt-multi-thread", "macros", "time"] }
 reqwest = { version = "0.13.1", default-features = false, features = ["json", "rustls", "http2"] }
 anyhow = "1.0.39"
+
+[dev-dependencies]
+ts-rs = "10"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
 
 [profile.release]
-opt-level = 3
+opt-level = "s"      # Optimize for size over speed
 lto = true
 codegen-units = 1
 strip = true
+panic = "abort"      # Smaller binary, no unwinding
 
 [lints.rust]
 unsafe_code = "deny"

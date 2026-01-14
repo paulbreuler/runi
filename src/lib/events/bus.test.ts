@@ -35,7 +35,9 @@ describe('EventBus', () => {
       bus.emit('response.received', { status: 200 });
       const after = Date.now();
 
-      const event = handler.mock.calls[0][0] as Event;
+      const call = handler.mock.calls[0];
+      expect(call).toBeDefined();
+      const event = call![0] as Event;
       expect(event.timestamp).toBeGreaterThanOrEqual(before);
       expect(event.timestamp).toBeLessThanOrEqual(after);
     });
@@ -54,7 +56,9 @@ describe('EventBus', () => {
     });
 
     it('does nothing if no handlers registered', () => {
-      expect(() => bus.emit('request.send', {})).not.toThrow();
+      expect(() => {
+        bus.emit('request.send', {});
+      }).not.toThrow();
     });
 
     it('catches and logs handler errors without breaking other handlers', () => {
@@ -126,7 +130,9 @@ describe('EventBus', () => {
 
     it('does nothing for non-existent handler', () => {
       const handler = vi.fn();
-      expect(() => bus.off('response.error', handler)).not.toThrow();
+      expect(() => {
+        bus.off('response.error', handler);
+      }).not.toThrow();
     });
 
     it('cleans up empty handler sets', () => {

@@ -34,9 +34,9 @@ describe('CommandRegistry', () => {
 
       registry.register(command);
 
-      expect(() => registry.register(command)).toThrow(
-        "Command 'duplicate.command' is already registered"
-      );
+      expect(() => {
+        registry.register(command);
+      }).toThrow("Command 'duplicate.command' is already registered");
     });
   });
 
@@ -56,7 +56,9 @@ describe('CommandRegistry', () => {
     });
 
     it('does nothing for non-existent commands', () => {
-      expect(() => registry.unregister('nonexistent')).not.toThrow();
+      expect(() => {
+        registry.unregister('nonexistent');
+      }).not.toThrow();
     });
   });
 
@@ -139,7 +141,9 @@ describe('CommandRegistry', () => {
         { id: 'cmd.three', title: 'Three', handler: vi.fn() },
       ];
 
-      commands.forEach((cmd) => registry.register(cmd));
+      commands.forEach((cmd) => {
+        registry.register(cmd);
+      });
 
       const all = registry.getAll();
       expect(all).toHaveLength(3);

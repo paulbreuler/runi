@@ -113,7 +113,9 @@ describe('responsive utilities', () => {
       const { matches, cleanup } = useMediaQuery('(max-width: 768px)');
 
       expect(matches).toBe(false);
-      expect(() => cleanup()).not.toThrow();
+      expect(() => {
+        cleanup();
+      }).not.toThrow();
 
       global.window = originalWindow;
     });

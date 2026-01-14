@@ -36,6 +36,14 @@ build:
 build-frontend:
     npm run build
 
+# Generate TypeScript types from Rust structs (ts-rs)
+generate-types:
+    @echo "🔄 Generating TypeScript types from Rust..."
+    cd src-tauri && TS_RS_EXPORT_DIR="./bindings" cargo test --quiet
+    mkdir -p src/lib/types/generated
+    cp src-tauri/bindings/*.ts src/lib/types/generated/
+    @echo "✅ Types generated in src/lib/types/generated/"
+
 # ============================================================================
 # 📦 Dependencies
 # ============================================================================
