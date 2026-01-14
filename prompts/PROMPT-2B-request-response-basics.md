@@ -23,14 +23,21 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 
 **User Value:** "I can send HTTP requests and see the results."
 
+**Design Philosophy:**
+
+runi's design follows a "clean sketchy" aesthetic—like graphite drawings with strategic color splashes. Most of the interface is monochrome (using semantic grays), with color reserved for meaningful, functional elements that need to stand out.
+
+Think of a graphite drawing of a dog—mostly black and white shading, except the dog's startling blue eyes that are the only splash of color, drawing your attention. runi should feel like that: **clean, sketchy, mostly grayscale, with strategic color that matters.**
+
 **Design Principles:**
 
-- **Color-Coded Methods:** Distinct, bold colors for each HTTP method (GET=green, POST=blue, etc.)
-- **Clean Request Bar:** Minimal chrome, focus on URL and method
-- **Immediate Feedback:** Status badges and timing visible immediately
-- **High Contrast:** Code/data areas use monospaced fonts with clear backgrounds
-- **Subtle Interactions:** Hover states are subtle (background color changes), not intrusive
+- **Strategic Color:** Color is rare and meaningful. HTTP methods get color because they're semantic/functional—they communicate meaning. Status codes get color for the same reason. Most UI should be grayscale using semantic tokens (`bg-background`, `bg-card`, `text-foreground`, `bg-muted`).
+- **Clean Request Bar:** Minimal chrome, focus on URL and method. Mostly grayscale with strategic color splash for the method selector.
+- **Immediate Feedback:** Status badges and timing visible immediately. Status badges use strategic color (semantic/functional).
+- **High Contrast:** Code/data areas use monospaced fonts with clear backgrounds. Most backgrounds should be grayscale (semantic tokens).
+- **Subtle Interactions:** Hover states are subtle (background color changes using grayscale tokens like `hover:bg-muted/50`), not intrusive. Only use `cursor-pointer` on actual buttons/links.
 - **Performance:** Fast response display, smooth loading states
+- **Experience Over Tool:** This is an experience, not just a tool. Every element should feel intentional and human.
 
 ## High-Level Wireframe
 
@@ -54,7 +61,7 @@ All boxes must be checked AND tests must pass:
 
 - [ ] Create `RequestHeader.svelte` in `Request/` directory
 - [ ] URL input with placeholder "Enter URL or paste cURL"
-- [ ] Method selector dropdown with color-coded options:
+- [ ] Method selector dropdown with strategic color (semantic/functional—methods communicate meaning):
   - GET: `bg-green-600 hover:bg-green-700 text-white`
   - POST: `bg-blue-600 hover:bg-blue-700 text-white`
   - PUT: `bg-yellow-600 hover:bg-yellow-700 text-white`
@@ -81,7 +88,7 @@ All boxes must be checked AND tests must pass:
 ### Response Status Badge
 
 - [ ] Create `StatusBadge.svelte` in `Response/` directory
-- [ ] Color coding based on status code:
+- [ ] Strategic color based on status code (semantic/functional—status codes communicate response state):
   - 2xx (200-299): Green (`bg-green-600` or `text-green-600`)
   - 3xx (300-399): Blue (`bg-blue-600` or `text-blue-600`)
   - 4xx (400-499): Yellow/Orange (`bg-yellow-600` or `text-yellow-600`)
@@ -120,7 +127,7 @@ All boxes must be checked AND tests must pass:
   - Story: "Default State" - Empty URL, GET method
   - Story: "With URL" - URL filled, ready to send
   - Story: "Loading State" - Request in progress
-  - Story: "All Methods" - Show each method's color (GET, POST, PUT, DELETE, PATCH)
+  - Story: "All Methods" - Show each method's strategic color (GET, POST, PUT, DELETE, PATCH)
 - [ ] `StatusBadge.stories.svelte` - Status badge variants
   - Story: "Success (200)" - Green badge
   - Story: "Created (201)" - Green badge
@@ -267,11 +274,12 @@ All boxes must be checked AND tests must pass:
 
 **Design Notes:**
 
-- Method selector: Bold, confident colors (GET=green-600, POST=blue-600, etc.)
-- URL input: High contrast, clear placeholder, smooth focus states
-- Send button: Smooth loading animation, clear disabled state
+- Method selector: Strategic color (semantic/functional). HTTP methods get color because they communicate meaning—this is a "blue eyes" moment in the mostly grayscale interface. Most other UI elements should use grayscale semantic tokens.
+- URL input: High contrast, clear placeholder, smooth focus states. Use grayscale semantic tokens (`bg-background`, `border-input`, `text-foreground`).
+- Send button: Smooth loading animation, clear disabled state. Use semantic tokens, not colored unless it's a primary CTA (use sparingly).
 - Subtle transitions: `transition-colors duration-200` for all interactive elements
 - No pointer cursor on non-clickable areas (only on actual buttons/links)
+- Most UI should be grayscale: Use semantic tokens like `bg-background`, `bg-card`, `text-foreground`, `bg-muted` for most elements
 
 ### StatusBadge.svelte
 
@@ -350,8 +358,8 @@ All boxes must be checked AND tests must pass:
 
 1. **Create Request directory** - `Request/` in components
 2. **Create Response directory** - `Response/` in components
-3. **Build RequestHeader** - Method selector, URL input, send button
-4. **Build StatusBadge** - Color-coded status display
+3. **Build RequestHeader** - Method selector (strategic color), URL input (grayscale), send button (grayscale)
+4. **Build StatusBadge** - Strategic color status display (semantic/functional)
 5. **Build TimingDisplay** - Timing and size metrics
 6. **Build ResponsePanel** - Container for status, timing, body
 7. **Integrate** - Wire RequestHeader to executeRequest, display response in ResponsePanel

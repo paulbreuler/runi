@@ -90,9 +90,9 @@
 
 - [x] URL input with method selector dropdown (GET, POST, PUT, PATCH, DELETE)
 - [x] Send button with loading state
-- [x] Response status badge with color coding
+- [x] Response status badge with strategic color
 - [ ] Create RequestHeader.svelte with shadcn Input, Select, Button
-- [ ] Method dropdown with color-coded triggers:
+- [ ] Method dropdown with strategic color triggers (semantic/functional—methods communicate meaning):
   - GET: green-600, POST: blue-600, PUT: yellow-600, DELETE: red-600, PATCH: purple-600
   - Bold, confident styling (method name prominent)
   - Smooth transitions (200ms)
@@ -122,7 +122,7 @@
 - [ ] Implement basic error handling in UI for command failures
   - Clear, actionable error messages
   - High contrast error states
-- [ ] StatusBadge.svelte with color coding:
+- [ ] StatusBadge.svelte with strategic color (semantic/functional—status codes communicate response state):
   - 2xx: green-600, 3xx: blue-600, 4xx: yellow-600, 5xx: red-600
   - Bold, readable text
   - Tooltip on hover (optional)
@@ -132,7 +132,7 @@
 - [ ] Create `Suggestion` type (id, type, message, action, dismissed)
 - [ ] Create `SecurityWarning` type (code, severity, message, details)
 - [ ] Implement suggestion display component (inline, dismissable)
-- [ ] Implement warning display component (color-coded by severity)
+- [ ] Implement warning display component (strategic color by severity—critical feedback needs attention)
 - [ ] Add `get_suggestions` Tauri command (returns empty for now, hooks ready)
 - [ ] Add `validate_security` Tauri command (returns empty for now, hooks ready)
 

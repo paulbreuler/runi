@@ -442,10 +442,12 @@ pub async fn run_workflow(workflow: Workflow) -> Result<WorkflowResult, String>;
 
 ### Design Philosophy
 
-runi uses a distraction-free, developer-focused layout optimized for API workflows. The design prioritizes:
+runi's design follows a "clean sketchy" aesthetic—like graphite drawings with strategic color splashes. Most of the interface is monochrome (using semantic grays), with color reserved for meaningful, functional elements that need to stand out.
+
+The design prioritizes:
 
 - **Focus on the request:** Minimal chrome, maximum workspace
-- **Visual feedback:** Color-coded methods, status badges, syntax highlighting
+- **Visual feedback:** Strategic color for HTTP methods and status codes (semantic/functional), mostly grayscale for other UI
 - **Intelligent assistance:** Proactive suggestions and security warnings integrated naturally
 
 The main window features a VS Code/Cursor-style three-panel layout: a collapsible left sidebar for navigation, a central horizontal split-pane dividing the request builder (left) from the response viewer (right), and a bottom status bar. The design takes inspiration from the best practices of modern developer tools including VS Code, Cursor, Bruno, Postman, Burp Suite, and HTTPie.
@@ -460,10 +462,11 @@ The main window features a VS Code/Cursor-style three-panel layout: a collapsibl
 
 **Design Principles (Inspired by Modern Developer Tools):**
 
+- **Clean Sketchy Aesthetic:** Mostly monochrome interface using semantic grays (`bg-background`, `bg-card`, `text-foreground`, `bg-muted`). Color is rare and meaningful—reserved for HTTP methods, status codes, critical feedback, and AI interactions.
+- **Strategic Color:** HTTP methods get color because they're semantic/functional—they communicate meaning. Status codes get color for the same reason. Everything else should be grayscale.
 - **Clean & Focused:** Minimal chrome, high contrast for readability
 - **Subtle Interactions:** Hover effects use background color changes (`hover:bg-muted/50`), not cursor changes (only pointer for actual links/buttons)
 - **Visual Hierarchy:** Clear distinction between primary actions and secondary information
-- **Color-Coded Elements:** HTTP methods (GET=green, POST=blue, etc.) and status codes (2xx=green, 4xx=yellow, etc.)
 - **Performance:** Smooth animations (200ms transitions, 60fps), optimized rendering
 - **Contextual Guidance:** Tooltips and hints where helpful, but not intrusive
 - **Typography:** Monospaced fonts for all code/data, high contrast
@@ -478,7 +481,7 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 | Component | Use Case                                          | Reference                                                                        |
 | --------- | ------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------- |
 | Input     | URL bar with placeholders, validation, cURL paste | [shadcn-svelte/input](https://www.shadcn-svelte.com/docs/components/input)       |
-| Select    | Method dropdown with colorful triggers            | [shadcn-svelte/select](https://www.shadcn-svelte.com/docs/components/select)     |
+| Select    | Method dropdown with strategic color triggers     | [shadcn-svelte/select](https://www.shadcn-svelte.com/docs/components/select)     |
 | Tabs      | Request/response sections                         | [shadcn-svelte/tabs](https://www.shadcn-svelte.com/docs/components/tabs)         |
 | Textarea  | Body editor (extend with CodeMirror)              | [shadcn-svelte/textarea](https://www.shadcn-svelte.com/docs/components/textarea) |
 | Card      | Request/response panels, preview                  | [shadcn-svelte/card](https://www.shadcn-svelte.com/docs/components/card)         |
@@ -569,7 +572,7 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 
 #### Request Panel (left 50% of main area, resizable)
 
-- Method selector: dropdown with GET, POST, PUT, PATCH, DELETE (color-coded)
+- Method selector: dropdown with GET, POST, PUT, PATCH, DELETE (strategic color—semantic/functional)
 - URL input: full-width, with placeholder "Enter URL or paste cURL"
 - Natural language input (toggle): "Describe what you want to test..." (future feature)
 - Send button: primary action, shows spinner when loading
@@ -578,11 +581,11 @@ Use [shadcn-svelte](https://www.shadcn-svelte.com/) components as the foundation
 - Tabs: Params, Headers, Body, Auth
 - Key-value editor: table with key, value, enabled checkbox, delete button
 - **Suggestion area**: Inline suggestions below tabs, dismissable
-- **Warning area**: Security warnings above send button, color-coded
+- **Warning area**: Security warnings above send button, strategic color (critical feedback)
 
 #### Response Panel (right 50% of main area, resizable)
 
-- Status badge: color-coded (2xx green, 3xx blue, 4xx yellow, 5xx red)
+- Status badge: strategic color (2xx green, 3xx blue, 4xx yellow, 5xx red)—semantic/functional
 - Timing display: total time, size
 - View toggle: Pretty (formatted JSON) / Raw
 - Headers tab

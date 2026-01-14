@@ -27,12 +27,13 @@ You are Ralph, an autonomous AI agent building **runi**, an intelligent API clie
 
 **Design Principles:**
 
-- **Clean Code Display:** High contrast syntax highlighting, monospaced fonts
+- **Clean Sketchy Aesthetic:** Most of the interface is monochrome (using semantic grays like `bg-background`, `bg-card`, `text-foreground`, `bg-muted`). Color is reserved for meaningful, functional elements. Response viewer should be mostly grayscale.
+- **Clean Code Display:** High contrast syntax highlighting, monospaced fonts. Use grayscale backgrounds with semantic tokens.
 - **Readable Format:** Properly indented, easy to scan
-- **Contextual Details:** Hover to see full header values, tooltips for guidance
+- **Contextual Details:** Hover to see full header values, tooltips for guidance. Use grayscale hover states (`hover:bg-muted/50`).
 - **Performance:** Fast rendering even for large responses (virtual scrolling)
-- **Subtle Interactions:** Collapsible sections use smooth animations, not jarring transitions
-- **Visual Hierarchy:** Tabs clearly indicate active state, headers are scannable
+- **Subtle Interactions:** Collapsible sections use smooth animations, not jarring transitions. Only use `cursor-pointer` on actual buttons/links.
+- **Visual Hierarchy:** Tabs clearly indicate active state, headers are scannable. Use semantic tokens for most UI elements.
 
 ## High-Level Wireframe
 

@@ -233,13 +233,14 @@ RequestBuilder, displaying cURL-equivalent text with syntax highlighting,
 and add export buttons for code snippets (cURL, fetch, Python requests)."
 ```
 
-### Method Dropdown with Colors
+### Method Dropdown with Strategic Color
 
 ```text
 "Implement the method selector dropdown using shadcn-svelte Select with
-color-coded triggers: GET (green-600), POST (blue-600), PUT (yellow-600),
-DELETE (red-600), PATCH (purple-600). Include hover states and smooth
-transitions."
+strategic color triggers (semantic/functional—HTTP methods communicate meaning):
+GET (green-600), POST (blue-600), PUT (yellow-600), DELETE (red-600),
+PATCH (purple-600). Most other UI should be grayscale. Include hover states
+and smooth transitions."
 ```
 
 ### Key-Value Editor

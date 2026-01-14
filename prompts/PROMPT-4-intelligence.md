@@ -32,7 +32,7 @@ All boxes must be checked AND tests must pass:
 - [ ] TypeScript types matching Rust structs
 - [ ] `invoke` wrappers for intelligence commands
 - [ ] SuggestionCard component (inline, dismissable, "Apply" button)
-- [ ] WarningBanner component (color-coded by severity)
+- [ ] WarningBanner component (strategic color by severity—critical feedback needs attention)
 - [ ] Suggestion display area in request panel
 - [ ] Warning display area above send button
 - [ ] `npm run check` passes
@@ -48,7 +48,7 @@ cd src-tauri && cargo test && cargo clippy -- -D warnings && cd .. && npm run ch
 
 - Intelligence commands return empty/placeholder data for now
 - UI must be ready to display suggestions when populated
-- Warnings color-coded: info (blue), warning (yellow), error (red)
+- Warnings use strategic color: info (blue), warning (yellow), error (red). Color is reserved for critical feedback that needs immediate attention—this is a "blue eyes" moment in the mostly grayscale interface.
 - Suggestions dismissable with X button
 - "Apply" button on suggestions (wires to action handler)
 - Use `aria-live` regions for screen reader announcements
