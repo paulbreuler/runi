@@ -1,39 +1,60 @@
-# Pull Request Generation
+# Pull Request Creation
 
-Generate a comprehensive PR description from staged changes or recent commits.
+Create a pull request on GitHub with a comprehensive description from staged changes or recent commits.
 
 ## Instructions for Claude
 
 **When this command is invoked, you must:**
 
-1. **Analyze git changes:**
-   - Check `git status` for staged changes
-   - If no staged changes, analyze recent commits (`git log`)
+1. **Check prerequisites:**
+   - Verify current branch is not main/master
+   - Check if branch is pushed to remote (`git push --dry-run`)
+   - Verify GitHub CLI is available (`gh --version`)
+   - Check if PR already exists (`gh pr view`)
+
+2. **Analyze git changes:**
+   - Get current branch name
+   - Determine base branch (default: main/master)
+   - Use `git log` to get commits since base branch
    - Use `git diff` to understand what changed
-2. **Generate PR description:**
+   - Count files changed and lines changed
+
+3. **Generate PR description (in memory, NO files):**
    - Summary of changes
+   - Detailed changes list
    - Test plan
    - Breaking changes (if any)
-   - Related issues
-   - Conventional commit format
-3. **Format for GitHub:**
+   - Related issues (if mentioned in commits)
+   - Review checklist
    - Use markdown formatting
    - Include code references where helpful
-   - Add checkboxes for review checklist
-4. **Suggest commit message:**
-   - Follow conventional commits format
-   - Format: `<type>(<scope>): <description>`
+
+4. **Create PR on GitHub:**
+   - Push branch if not already pushed (`git push -u origin <branch>`)
+   - Use `gh pr create` with generated description
+   - Set base branch correctly
+   - Use conventional commit format for title
+   - Display PR URL when created
+
+5. **Handle errors gracefully:**
+   - If PR already exists: show existing PR URL
+   - If GitHub CLI not available: show instructions
+   - If branch not pushed: push first, then create PR
+   - If no changes: inform user
+
+**CRITICAL: DO NOT create any files (NO PR_DESCRIPTION.md or similar). Generate description in memory and pass directly to `gh pr create`.**
 
 ## What This Does
 
-This command generates a comprehensive PR description that includes:
+This command creates a pull request on GitHub with:
 
 - **Summary:** Clear description of what changed and why
 - **Changes:** List of modified files with brief descriptions
 - **Testing:** Test plan and coverage information
 - **Breaking Changes:** Any breaking changes with migration guide
-- **Related Issues:** Links to related issues or discussions
+- **Related Issues:** Links to related issues (from commit messages)
 - **Checklist:** Review checklist for maintainers
+- **PR Creation:** Actually creates the PR on GitHub (doesn't just generate description)
 
 ## Usage
 
@@ -59,10 +80,12 @@ Generate PR for specific branch:
 
 **When invoked, this command will:**
 
-1. Analyze git changes
-2. Generate PR description
-3. Suggest commit message
-4. Display formatted output ready for GitHub
+1. Check prerequisites (branch, GitHub CLI, existing PR)
+2. Analyze git changes
+3. Generate PR description (in memory)
+4. Push branch if needed
+5. Create PR on GitHub using `gh pr create`
+6. Display PR URL
 
 ### Via Command Palette
 
@@ -196,22 +219,56 @@ Compares current branch with main and generates PR description.
 
 ## Integration with Code Review
 
-After code review, use `/pr` to generate PR description:
+After code review, use `/pr` to create the PR:
 
 1. Run `/code-review` to review changes
 2. Fix any issues
-3. Run `/pr` to generate PR description
-4. Copy to GitHub PR
+3. Run `/pr` to create PR on GitHub (description auto-generated)
+
+## Error Handling
+
+### PR Already Exists
+
+If a PR already exists for the current branch:
+
+- Show existing PR URL
+- Suggest using `/pr-comments` to manage PR comments
+- Exit gracefully
+
+### GitHub CLI Not Available
+
+If GitHub CLI is not installed or not authenticated:
+
+- Show error message
+- Provide instructions to install GitHub CLI
+- Suggest alternative: generate description manually (but this command creates PR, not just description)
+
+### Branch Not Pushed
+
+If branch is not pushed to remote:
+
+- Push branch automatically with `git push -u origin <branch>`
+- Then create PR
+
+### No Changes
+
+If no commits exist since base branch:
+
+- Inform user
+- Suggest committing changes first
 
 ## Related Commands
 
 - `/code-review` - Review code before creating PR
+- `/pr-comments` - Get and address PR comments
 - `just ci` - Run CI checks before PR
-- `git commit` - Commit with generated message
+- `git commit` - Commit changes before creating PR
 
 ## Notes
 
-- **Conventional Commits:** All commit messages follow conventional format
+- **No Files Created:** Description is generated in memory and passed directly to GitHub CLI
+- **Conventional Commits:** PR title follows conventional commit format
 - **Test Coverage:** PR includes coverage information
 - **Breaking Changes:** Clearly marked with migration guide
 - **Review Checklist:** Helps maintainers review efficiently
+- **GitHub CLI Required:** This command uses `gh pr create` to actually create the PR
