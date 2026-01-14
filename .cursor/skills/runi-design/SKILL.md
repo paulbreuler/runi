@@ -3,21 +3,31 @@ name: runi-design
 description: Build UI components and pages following the runi design system. Use this skill when creating Svelte components, pages, or UI elements for runi. Enforces the "clean sketchy" aesthetic—mostly monochrome with strategic color splashes—creating an experience, not just a tool. AI-native design where conversation and intent matter more than clicks.
 ---
 
-# runi design
+# runi Design System
 
 This skill guides creation of UI components and pages that follow runi's design system. All components should feel like an **experience**—clean, sketchy, and purposeful—not just another tool.
 
 **IMPORTANT: runi uses semantic CSS variables via Tailwind utility classes.** Always use semantic color tokens (e.g., `bg-background`, `text-foreground`, `bg-card`) to ensure dark mode compatibility and consistent theming.
 
-## Design Philosophy: Clean Sketchy with Strategic Color
+## When to Use
+
+- Use this skill when creating or modifying Svelte components, pages, or UI elements in runi
+- Use this skill when making design decisions about color, typography, spacing, or interactions
+- Use this skill when reviewing UI code to ensure it follows the design system
+- Use this skill when designing AI-native features that prioritize conversation over traditional UI patterns
+- Use this skill when you need guidance on when to use color vs. grayscale
+
+## Instructions
+
+### Design Philosophy: Clean Sketchy with Strategic Color
 
 runi's design is inspired by **graphite drawings with strategic color splashes**—like a sketch where most of the composition is monochrome, but key elements draw the eye with purposeful color. In the age of AI, we're re-envisioning what user interface means: **less about where you click, more about what you say.**
 
-### The Artistic Vision
+**The Artistic Vision:**
 
 Think of a graphite drawing of a dog—mostly black and white shading, except the dog's startling blue eyes that are the only splash of color, drawing your attention. Or lilies where small color accents guide the eye. runi should feel like that: **clean, sketchy, mostly grayscale, with strategic color that matters.**
 
-### Core Principles
+**Core Principles:**
 
 - **Clean Sketchy**: Like graphite shading—subtle, textural, purposeful. Mostly grayscale with semantic tones.
 - **Strategic Color**: Color is rare and meaningful. Use it for: HTTP methods, status codes, critical feedback, AI interactions, and key actions—not for decoration.
@@ -27,11 +37,11 @@ Think of a graphite drawing of a dog—mostly black and white shading, except th
 
 **NOT**: Overuse of color, flashy animations, heavy UI chrome, color for decoration, tool-first thinking
 
-## Color System: Mostly Monochrome, Strategic Splashes
+### Color System: Mostly Monochrome, Strategic Splashes
 
 **The Foundation:** Most of runi's interface should be grayscale—using semantic grays for backgrounds, text, borders, and structure. Color is reserved for **meaningful, functional elements** that need to stand out.
 
-### Semantic Colors (Dark Mode Compatible)
+**Semantic Colors (Dark Mode Compatible):**
 
 Use these Tailwind classes for the **grayscale foundation**—this is your graphite palette:
 
@@ -48,7 +58,7 @@ Use these Tailwind classes for the **grayscale foundation**—this is your graph
 | `bg-input` / `border-input`                      | Form inputs, selectors          |
 | `ring-ring`                                      | Focus rings                     |
 
-### Strategic Color: When and Where
+**Strategic Color: When and Where**
 
 Color should be used **sparingly and purposefully**. These are your "blue eyes" moments—elements that need to draw attention and convey meaning:
 
@@ -60,7 +70,7 @@ Color should be used **sparingly and purposefully**. These are your "blue eyes" 
 
 **Everything else should be grayscale** using semantic tokens.
 
-### HTTP Method Colors (Strategic Splash #1)
+**HTTP Method Colors (Strategic Splash #1):**
 
 HTTP methods get color because they're **functional and semantic**—they communicate meaning:
 
@@ -76,7 +86,7 @@ HTTP methods get color because they're **functional and semantic**—they commun
 
 **Always include text-white** for method badges/buttons.
 
-### HTTP Status Code Colors (Strategic Splash #2)
+**HTTP Status Code Colors (Strategic Splash #2):**
 
 Status codes get color because they're **functional and semantic**—they communicate response state:
 
@@ -88,7 +98,7 @@ Status codes get color because they're **functional and semantic**—they commun
 | 5xx   | `bg-red-600 text-white`    | Server errors |
 | Other | `bg-gray-600 text-white`   | Unknown       |
 
-### Strategic Color Guidelines
+**Strategic Color Guidelines:**
 
 ```svelte
 <!-- BAD - using color for decoration -->
@@ -111,9 +121,11 @@ Status codes get color because they're **functional and semantic**—they commun
 
 **Key Rule:** When in doubt, use grayscale. Color should feel surprising and meaningful—like a splash of blue in a graphite drawing.
 
-## Typography: Clean and Readable
+### Typography: Clean and Readable
 
 Typography should support the "clean sketchy" aesthetic—clear, readable, and purposeful. Like graphite shading, text should have subtle variation and clear hierarchy.
+
+**Font Families:**
 
 ```css
 /* Code and data (monospaced) */
@@ -123,7 +135,7 @@ font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberati
 font-family: ui-sans-serif, system-ui, sans-serif;
 ```
 
-### Type Hierarchy
+**Type Hierarchy:**
 
 | Element        | Font      | Weight  | Size      | Usage                    |
 | -------------- | --------- | ------- | --------- | ------------------------ |
@@ -132,7 +144,7 @@ font-family: ui-sans-serif, system-ui, sans-serif;
 | Code/Data      | Monospace | Regular | `text-sm` | Request/response content |
 | Secondary Text | System    | Regular | `text-xs` | Metadata, hints          |
 
-### Typography Patterns
+**Typography Patterns:**
 
 ```svelte
 <!-- UI Text -->
@@ -148,9 +160,9 @@ font-family: ui-sans-serif, system-ui, sans-serif;
 <h3 class="text-lg font-medium text-foreground">Section Title</h3>
 ```
 
-## Component Architecture
+### Component Architecture
 
-### Import from shadcn-svelte UI Components
+**Import from shadcn-svelte UI Components:**
 
 Always use components from `src/lib/components/ui/`:
 
@@ -163,12 +175,9 @@ import { Tabs } from '$lib/components/ui/tabs';
 // ... etc
 ```
 
-Available UI components:
+Available UI components: button, card, input, select, separator, tabs (and additional components as needed).
 
-- button, card, input, select, separator, tabs
-- (Additional components as needed)
-
-### Button Variants
+**Button Variants:**
 
 ```typescript
 // From button.svelte - use these variants
@@ -176,23 +185,23 @@ variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 size: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';
 ```
 
-**Default button style:**
+Default button style:
 
 - Rounded corners: `rounded-md`
 - Shadow: `shadow-xs`
 - Transition: `transition-all`
 - Focus ring: `focus-visible:ring-[3px]`
 
-### Card Patterns
+**Card Patterns:**
 
 - Use `rounded-xl` for larger cards
 - Subtle borders: `border border-border`
 - Background: `bg-card`
 - Shadow: `shadow-sm` (subtle elevation)
 
-## Design Patterns
+### Design Patterns
 
-### Rounded Corners
+**Rounded Corners:**
 
 runi uses consistent border radius:
 
@@ -200,7 +209,7 @@ runi uses consistent border radius:
 - Cards/containers: `rounded-xl`
 - Pill shapes: `rounded-full` (when needed)
 
-### Hover States
+**Hover States:**
 
 ```svelte
 <!-- Subtle background change (not cursor change) -->
@@ -212,21 +221,15 @@ runi uses consistent border radius:
 
 **Key Rule:** Only use `cursor-pointer` on actual clickable/interactive elements. Use `hover:bg-muted/50` for hover feedback on list items and containers.
 
-### Transitions
+**Transitions:**
 
 Always use smooth transitions for state changes:
 
-```svelte
-<!-- Color transitions (200ms) -->
-<div class="transition-colors duration-200">Content</div>
+- Color transitions: `transition-colors duration-200`
+- All transitions: `transition-all duration-200 ease-in-out`
+- Standard duration: 200ms for smooth, responsive feel
 
-<!-- All transitions (200ms) -->
-<div class="transition-all duration-200 ease-in-out">Content</div>
-```
-
-**Standard duration:** 200ms for smooth, responsive feel.
-
-### Shadows
+**Shadows:**
 
 Use subtle shadows for elevation:
 
@@ -234,15 +237,13 @@ Use subtle shadows for elevation:
 - `shadow-sm` - Cards, elevated surfaces
 - `shadow-md` - Modals, popovers (when needed)
 
-## Layout Guidelines
-
-### Spacing
+**Spacing:**
 
 - Use consistent padding: `p-4`, `p-6`, `p-8`
 - Card gaps: `gap-4` or `gap-6`
 - Section margins: `my-4`, `my-6`, `my-8`
 
-### Resizable Panes (paneforge)
+**Resizable Panes (paneforge):**
 
 ```svelte
 <PaneGroup direction="horizontal" class="flex-1">
@@ -258,17 +259,9 @@ Use subtle shadows for elevation:
 - Vertical split: `h-2` height, `cursor-row-resize`
 - Always include `transition-colors duration-200`
 
-### Responsive Patterns
+### Svelte 5 Patterns
 
-```svelte
-<!-- Mobile-first approach (runi is desktop-first, but consider window resizing) -->
-<div class="p-4 md:p-6 lg:p-8">
-<div class="text-sm md:text-base">
-```
-
-## Svelte 5 Patterns
-
-### Use Runes (NOT Stores)
+**Use Runes (NOT Stores):**
 
 ```svelte
 <script lang="ts">
@@ -289,7 +282,7 @@ Use subtle shadows for elevation:
 - Use `$state()`, `$derived()`, `$effect()`, `$props()` (NOT `writable()`)
 - Type all props with interfaces
 
-### Component Props
+**Component Props:**
 
 ```svelte
 <script lang="ts">
@@ -310,11 +303,11 @@ Use subtle shadows for elevation:
 </div>
 ```
 
-## Component Construction Patterns
+### Component Construction Patterns
 
-### Building New Components
+**Building New Components:**
 
-**1. Start with UI components from `$lib/components/ui/`**
+1. Start with UI components from `$lib/components/ui/`
 
 ```svelte
 <script lang="ts">
@@ -342,7 +335,7 @@ Use subtle shadows for elevation:
 </Card>
 ```
 
-**2. Use tailwind-variants for variants**
+2. Use tailwind-variants for variants
 
 ```svelte
 <script lang="ts" module>
@@ -374,29 +367,17 @@ Use subtle shadows for elevation:
 </script>
 ```
 
-### Accessibility Patterns
+**Accessibility Patterns:**
+
+- Always include proper aria attributes
+- Use semantic HTML (`<nav>`, `<main>`, `<aside>`)
+- Focus management is handled by shadcn-svelte components
+
+**Error Handling:**
+
+Always display Rust/Tauri errors in UI:
 
 ```svelte
-<!-- Always include proper aria attributes -->
-<button
-  aria-label="Close dialog"
-  aria-expanded={isOpen}
-  aria-controls="menu-content"
->
-
-<!-- Use semantic HTML -->
-<nav aria-label="Main navigation">
-<main role="main">
-<aside aria-label="Sidebar">
-
-<!-- Focus management (handled by shadcn-svelte components) -->
-<Button>Action</Button>
-```
-
-### Error Handling
-
-```svelte
-<!-- Always display Rust/Tauri errors in UI -->
 {#if error}
   <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
     {error}
@@ -404,7 +385,7 @@ Use subtle shadows for elevation:
 {/if}
 ```
 
-## Implementation Checklist
+### Implementation Checklist
 
 1. **Default to grayscale** - Use semantic grays (`bg-background`, `bg-card`, `text-foreground`, `bg-muted`) for most UI
 2. **Color is strategic** - Only use color for HTTP methods, status codes, critical feedback, AI interactions, and key actions
@@ -419,13 +400,14 @@ Use subtle shadows for elevation:
 11. **Display errors** - Always show Tauri command errors in UI
 12. **Design for conversation** - In AI-native features, prioritize conversational flow over traditional UI patterns
 
-## Example Components
+### Example Components
 
-### HTTP Method Badge
+**HTTP Method Badge:**
 
 ```svelte
 <script lang="ts">
   import { httpMethodColors } from '$lib/utils/http-colors';
+  import { cn } from '$lib/utils';
 
   interface Props {
     method: string;
@@ -443,7 +425,7 @@ Use subtle shadows for elevation:
 </span>
 ```
 
-### Status Badge
+**Status Badge:**
 
 ```svelte
 <script lang="ts">
@@ -465,7 +447,7 @@ Use subtle shadows for elevation:
 </span>
 ```
 
-### Request Card (Grayscale with Strategic Color)
+**Request Card (Grayscale with Strategic Color):**
 
 ```svelte
 <script lang="ts">
@@ -509,7 +491,7 @@ Use subtle shadows for elevation:
 </Card>
 ```
 
-### AI Interaction (The "Blue Eyes" Moment)
+**AI Interaction (The "Blue Eyes" Moment):**
 
 AI prompts and suggestions are where color can shine—this is the conversational, intelligent moment:
 
