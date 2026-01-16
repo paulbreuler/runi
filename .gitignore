@@ -61,3 +61,16 @@ logs/ralph.log
 .response_analysis
 .ralph_session_history
 .claude_session_id
+
+
+# Planning documents (internal, not public)
+.planning-docs/*
+
+# Internal documentation (not public)
+prd.md
+specs/
+@fix_plan.md
+@AGENT.md
+
+# Prompts (working documents, not tracked)
+prompts/

@@ -10,18 +10,19 @@ Scaffold a new component, command, or utility with proper structure, tests, and 
    - Format: `/scaffold <type> <name> [options]`
    - Types: `component`, `command`, `utility`, `store`
 2. **Determine the target location:**
-   - Components: `src/lib/components/<Category>/<Name>.svelte`
+   - Components: `src/components/<Category>/<Name>.tsx`
    - Commands: `src-tauri/src/commands/<name>.rs`
-   - Utilities: `src/lib/utils/<name>.ts`
-   - Stores: `src/lib/stores/<name>.ts`
+   - Utilities: `src/utils/<name>.ts`
+   - Stores: `src/stores/use<Name>Store.ts`
 3. **Generate files:**
    - Main file with proper structure
    - Test file (failing test first - TDD)
    - Storybook story (for components)
    - Update exports if needed
 4. **Follow runi's conventions:**
-   - Svelte 5 runes (`$state`, `$derived`, `$props`)
-   - TypeScript strict mode
+   - React 19 functional components with TypeScript
+   - Zustand for global state
+   - Motion 12 for animations (import from `motion/react`)
    - Rust pedantic clippy
    - Proper directory structure
 
@@ -29,10 +30,10 @@ Scaffold a new component, command, or utility with proper structure, tests, and 
 
 This command scaffolds new code following runi's strict standards:
 
-- **Components:** Creates Svelte component with tests and Storybook story
+- **Components:** Creates React component with tests and Storybook story
 - **Commands:** Creates Rust Tauri command with tests
 - **Utilities:** Creates TypeScript utility with tests
-- **Stores:** Creates Svelte 5 runes-based store (if needed)
+- **Stores:** Creates Zustand store
 
 All scaffolds follow TDD: test file is created first with failing tests.
 
@@ -42,19 +43,19 @@ All scaffolds follow TDD: test file is created first with failing tests.
 
 Type `/scaffold` followed by type and name:
 
-```
+```text
 /scaffold component Request/RequestBuilder
 ```
 
-```
+```text
 /scaffold command execute_request
 ```
 
-```
+```text
 /scaffold utility url
 ```
 
-```
+```text
 /scaffold component Response/StatusBadge --with-storybook
 ```
 
@@ -73,57 +74,67 @@ Type `/scaffold` followed by type and name:
 
 ### Component
 
-Creates a Svelte component in the appropriate category directory:
+Creates a React component in the appropriate category directory:
 
-```
+```text
 /scaffold component Request/RequestBuilder
 ```
 
 **Generates:**
 
-- `src/lib/components/Request/RequestBuilder.svelte`
-- `src/lib/components/Request/RequestBuilder.test.ts`
-- `src/lib/components/Request/RequestBuilder.stories.svelte`
+- `src/components/Request/RequestBuilder.tsx`
+- `src/components/Request/RequestBuilder.test.tsx`
+- `src/components/Request/RequestBuilder.stories.tsx`
 
 **Structure:**
 
-```svelte
-<script lang="ts">
-  /**
-   * RequestBuilder component for constructing HTTP requests.
-   */
+```tsx
+import { useState } from 'react';
+import { motion } from 'motion/react';
+import { cn } from '@/lib/utils';
 
-  import type { RequestParams } from '$lib/types';
+/**
+ * RequestBuilder component for constructing HTTP requests.
+ */
 
-  // Props
-  interface Props {
-    initialUrl?: string;
-  }
-  let { initialUrl = '' }: Props = $props();
+interface RequestBuilderProps {
+  initialUrl?: string;
+  className?: string;
+}
 
-  // State (runes)
-  let url = $state(initialUrl);
-  let loading = $state(false);
+export const RequestBuilder = ({
+  initialUrl = '',
+  className,
+}: RequestBuilderProps): JSX.Element => {
+  // State
+  const [url, setUrl] = useState(initialUrl);
+  const [loading, setLoading] = useState(false);
 
   // Derived
-  let isValid = $derived(url.length > 0);
+  const isValid = url.length > 0;
 
   // Handlers
-  async function handleSend(): Promise<void> {
+  const handleSend = async (): Promise<void> => {
     // Implementation
-  }
-</script>
+  };
 
-<div class="request-builder">
-  <!-- Component content -->
-</div>
+  return (
+    <motion.div
+      className={cn('request-builder', className)}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      {/* Component content */}
+    </motion.div>
+  );
+};
 ```
 
 ### Command
 
 Creates a Rust Tauri command:
 
-```
+```text
 /scaffold command execute_request
 ```
 
@@ -162,14 +173,14 @@ pub async fn execute_request(params: RequestParams) -> Result<String, String> {
 
 Creates a TypeScript utility function:
 
-```
+```text
 /scaffold utility url
 ```
 
 **Generates:**
 
-- `src/lib/utils/url.ts`
-- `src/lib/utils/url.test.ts`
+- `src/utils/url.ts`
+- `src/utils/url.test.ts`
 
 **Structure:**
 
@@ -186,6 +197,43 @@ export function parseUrl(url: string): URL {
 }
 ```
 
+### Store
+
+Creates a Zustand store:
+
+```text
+/scaffold store request
+```
+
+**Generates:**
+
+- `src/stores/useRequestStore.ts`
+- `src/stores/useRequestStore.test.ts`
+
+**Structure:**
+
+```typescript
+import { create } from 'zustand';
+
+interface RequestState {
+  url: string;
+  method: string;
+  loading: boolean;
+  setUrl: (url: string) => void;
+  setMethod: (method: string) => void;
+  setLoading: (loading: boolean) => void;
+}
+
+export const useRequestStore = create<RequestState>((set) => ({
+  url: '',
+  method: 'GET',
+  loading: false,
+  setUrl: (url) => set({ url }),
+  setMethod: (method) => set({ method }),
+  setLoading: (loading) => set({ loading }),
+}));
+```
+
 ## Directory Structure
 
 Components are organized by category:
@@ -193,23 +241,25 @@ Components are organized by category:
 - **Layout/** - App-level layout components (MainLayout, Sidebar, StatusBar)
 - **Request/** - Request building components (RequestHeader, TabPanel, etc.)
 - **Response/** - Response viewing components (ResponsePanel, StatusBadge, etc.)
-- **ui/** - shadcn-svelte base components (button, input, select, etc.)
+- **Intelligence/** - AI and drift detection components
+- **ui/** - Base UI components (button, input, select, etc.)
 
 The scaffold command automatically determines the category from the path:
 
-```
-/scaffold component Request/RequestBuilder  → src/lib/components/Request/
-/scaffold component Response/StatusBadge   → src/lib/components/Response/
-/scaffold component Layout/Sidebar         → src/lib/components/Layout/
-/scaffold component ui/Button             → src/lib/components/ui/
+```text
+/scaffold component Request/RequestBuilder  → src/components/Request/
+/scaffold component Response/StatusBadge   → src/components/Response/
+/scaffold component Layout/Sidebar         → src/components/Layout/
+/scaffold component ui/Button             → src/components/ui/
 ```
 
 ## Naming Conventions
 
-- **Components:** `PascalCase.svelte` (e.g., `RequestBuilder.svelte`)
-- **Tests:** `ComponentName.test.ts` (e.g., `RequestBuilder.test.ts`)
-- **Stories:** `ComponentName.stories.svelte` (e.g., `RequestBuilder.stories.svelte`)
+- **Components:** `PascalCase.tsx` (e.g., `RequestBuilder.tsx`)
+- **Tests:** `ComponentName.test.tsx` (e.g., `RequestBuilder.test.tsx`)
+- **Stories:** `ComponentName.stories.tsx` (e.g., `RequestBuilder.stories.tsx`)
 - **Utilities:** `camelCase.ts` (e.g., `url.ts`)
+- **Stores:** `use<Name>Store.ts` (e.g., `useRequestStore.ts`)
 - **Commands:** `snake_case.rs` (e.g., `execute_request.rs`)
 
 ## TDD Workflow
@@ -224,46 +274,44 @@ Scaffolded tests are **failing by default** - this enforces TDD:
 
 Component scaffolds automatically include Storybook stories:
 
-```svelte
-<!-- RequestBuilder.stories.svelte -->
-<script lang="ts">
-  import type { Meta, StoryObj } from '@storybook/svelte';
-  import RequestBuilder from './RequestBuilder.svelte';
+```tsx
+// RequestBuilder.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { RequestBuilder } from './RequestBuilder';
 
-  const meta = {
-    title: 'Request/RequestBuilder',
-    component: RequestBuilder,
-    tags: ['autodocs'],
-  } satisfies Meta<RequestBuilder>;
+const meta: Meta<typeof RequestBuilder> = {
+  title: 'Request/RequestBuilder',
+  component: RequestBuilder,
+  tags: ['autodocs'],
+};
 
-  export default meta;
-  type Story = StoryObj<typeof meta>;
+export default meta;
+type Story = StoryObj<typeof meta>;
 
-  export const Default: Story = {
-    args: {
-      initialUrl: 'https://api.example.com',
-    },
-  };
-</script>
+export const Default: Story = {
+  args: {
+    initialUrl: 'https://api.example.com',
+  },
+};
 ```
 
 ## Examples
 
 ### Scaffold Request Component
 
-```
+```text
 /scaffold component Request/RequestBuilder
 ```
 
 Creates:
 
-- Component with proper Svelte 5 runes structure
+- Component with proper React 19 + TypeScript structure
 - Failing test file (TDD)
 - Storybook story with autodocs
 
 ### Scaffold Rust Command
 
-```
+```text
 /scaffold command execute_request
 ```
 
@@ -275,7 +323,7 @@ Creates:
 
 ### Scaffold Utility Function
 
-```
+```text
 /scaffold utility url
 ```
 
@@ -284,6 +332,17 @@ Creates:
 - TypeScript utility with strict typing
 - Failing test file (TDD)
 - Proper exports
+
+### Scaffold Zustand Store
+
+```text
+/scaffold store request
+```
+
+Creates:
+
+- Zustand store with typed state and actions
+- Failing test file (TDD)
 
 ## Related Commands
 
@@ -297,3 +356,5 @@ Creates:
 - **Consistent Structure:** Follows runi's established patterns
 - **Type Safety:** All scaffolds use strict TypeScript/Rust
 - **Documentation:** Components include Storybook stories
+- **Motion 12:** Import from `motion/react`, not `framer-motion`
+- **Zustand:** Use for global state, not React Context

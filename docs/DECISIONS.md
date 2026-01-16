@@ -2,11 +2,25 @@
 
 Document significant technical decisions with rationale and references. This file is for historical reference; Claude should read it only when understanding specific architectural choices.
 
+For architecturally significant decisions with detailed context, see [Architecture Decision Records](./adr/).
+
+## Active Decisions
+
 | Date       | Decision                       | Rationale                                                                                 | Reference                                                                                                 |
 | ---------- | ------------------------------ | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 2026-01-14 | React 19 migration             | AI assistant support, ecosystem maturity, Motion 12 integration                           | [ADR-0001](./adr/0001-migrate-from-svelte-to-react.md)                                                    |
+| 2026-01-13 | ts-rs for type generation      | Single source of truth for Rust/TypeScript types; eliminates manual sync                  | [ts-rs](https://github.com/Aleph-Alpha/ts-rs)                                                             |
+| 2026-01-13 | Binary size optimizations      | opt-level="s", panic="abort" → 6.2MB (35% smaller than 9.6MB)                             | [Rust performance book](https://nnethercote.github.io/perf-book/)                                         |
+| 2026-01-13 | WASM for response viewer       | Future optimization for syntax highlighting (tree-sitter) in Phase 2C                     | [tree-sitter WASM](https://tree-sitter.github.io/tree-sitter/)                                            |
+| 2026-01-12 | Distraction-free UI design     | Vertical split-pane layout, colorful method dropdowns, minimal chrome                     | Industry best practices                                                                                   |
+| 2026-01-12 | Component directory structure  | Layout/, Request/, Response/ organization for maintainability                             | Project structure best practices                                                                          |
+| 2026-01-12 | Claude commands for AI support | `/test`, `/scaffold`, `/pr`, `/prime` commands accelerate solo maintainer workflow        | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)                                |
+| 2026-01-12 | Component/command templates    | Reusable templates ensure consistency and speed up development                            | [awesome-claude-code patterns](https://github.com/hesreallyhim/awesome-claude-code/tree/main/templates)   |
+| 2026-01-12 | TDD Guard hook                 | Automated TDD enforcement blocks file writes without tests                                | [TDD Guard](https://github.com/nizos/tdd-guard)                                                           |
+| 2026-01-12 | TypeScript quality hook        | Auto-format and lint on file write for instant feedback                                   | [TypeScript Quality Hooks](https://github.com/bartolli/claude-code-typescript-hooks)                      |
+| 2026-01-12 | API testing skill              | Specialized knowledge for API testing patterns, auth flows, error handling                | [awesome-claude-code skills](https://github.com/hesreallyhim/awesome-claude-code#agent-skills-)           |
 | 2026-01-11 | Tauri v2 over Electron         | Smaller bundle (<10MB vs 150MB+), Rust backend, native performance                        | [Tauri docs](https://v2.tauri.app/)                                                                       |
-| 2026-01-11 | Svelte 5 runes                 | Modern reactivity model, smaller bundle, better DX                                        | [Svelte 5 announcement](https://svelte.dev/blog/svelte-5-is-alive)                                        |
-| 2026-01-11 | ESLint + Prettier over Biome   | Biome has only partial Svelte support as of 2025                                          | [Biome limitations](https://biomejs.dev/formatter/differences-with-prettier/)                             |
+| 2026-01-11 | ESLint + Prettier over Biome   | Biome has only partial framework support as of 2025                                       | [Biome limitations](https://biomejs.dev/formatter/differences-with-prettier/)                             |
 | 2026-01-11 | YAML for collections           | Git-friendly, human-readable, Bruno precedent                                             | Industry standard                                                                                         |
 | 2026-01-11 | Bruno v3 compatibility         | Largest Git-friendly competitor, eases migration                                          | [Bruno docs](https://docs.usebruno.com/)                                                                  |
 | 2026-01-11 | MCP 2025-11-25 spec            | Async ops, elicitation, registry discovery — future-proof                                 | [MCP spec](https://modelcontextprotocol.io/)                                                              |
@@ -18,19 +32,7 @@ Document significant technical decisions with rationale and references. This fil
 | 2026-01-11 | Sequential workflows           | "Simple patterns are more robust than complex architectures" — loops via programmatic API | [mcp-agent](https://github.com/lastmile-ai/mcp-agent)                                                     |
 | 2026-01-11 | Human-in-the-loop workflows    | Approval steps for sensitive operations; keeps humans in control of agent actions         | [Red Hat MCP article](https://developers.redhat.com/articles/2026/01/08/building-effective-ai-agents-mcp) |
 | 2026-01-11 | Skip visual workflow builder   | 2026 market saturated (Lindy, n8n, Flowise, Vellum, etc.); not a differentiator for runi  | [AI Workflow Builders 2026](https://www.lindy.ai/blog/best-ai-agent-builders)                             |
-| 2026-01-12 | shadcn-svelte for UI           | Accessible, theme-aware, Tailwind-based components; best-in-class Svelte support          | [shadcn-svelte](https://www.shadcn-svelte.com/)                                                           |
-| 2026-01-12 | paneforge for resizable panes  | Native Svelte resizable panels; better integration than generic solutions                 | [paneforge](https://paneforge.dev/)                                                                       |
-| 2026-01-12 | Distraction-free UI design     | Vertical split-pane layout, colorful method dropdowns, minimal chrome                     | Industry best practices                                                                                   |
-| 2026-01-12 | lucide-svelte for icons        | Modern icon library with Svelte-native components; consistent with shadcn ecosystem       | [lucide-svelte](https://lucide.dev/)                                                                      |
-| 2026-01-12 | Storybook for components       | Isolated component development; visual review before app integration; Svelte 5 support    | [Storybook SvelteKit](https://storybook.js.org/docs/get-started/frameworks/sveltekit)                     |
-| 2026-01-12 | Component directory structure  | Layout/, Request/, Response/ organization for maintainability                             | Project structure best practices                                                                          |
-| 2026-01-12 | Storybook story patterns       | Stories adjacent to components; Category/ComponentName titles; autodocs tags              | [Storybook Svelte CSF](https://storybook.js.org/docs/api/svelte-frameworks)                               |
-| 2026-01-12 | Cursor commands for AI support | `/test`, `/scaffold`, `/pr`, `/prime` commands accelerate solo maintainer workflow        | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)                                |
-| 2026-01-12 | Component/command templates    | Reusable templates ensure consistency and speed up development                            | [awesome-claude-code patterns](https://github.com/hesreallyhim/awesome-claude-code/tree/main/templates)   |
-| 2026-01-12 | TDD Guard hook                 | Automated TDD enforcement blocks file writes without tests                                | [TDD Guard](https://github.com/nizos/tdd-guard)                                                           |
-| 2026-01-12 | TypeScript quality hook        | Auto-format and lint on file write for instant feedback                                   | [TypeScript Quality Hooks](https://github.com/bartolli/claude-code-typescript-hooks)                      |
-| 2026-01-12 | API testing skill              | Specialized knowledge for API testing patterns, auth flows, error handling                | [awesome-claude-code skills](https://github.com/hesreallyhim/awesome-claude-code#agent-skills-)           |
-| 2026-01-13 | ts-rs for type generation      | Single source of truth for Rust/TypeScript types; eliminates manual sync                  | [ts-rs](https://github.com/Aleph-Alpha/ts-rs)                                                             |
-| 2026-01-13 | Binary size optimizations      | opt-level="s", panic="abort" → 6.2MB (35% smaller than 9.6MB)                             | [Rust performance book](https://nnethercote.github.io/perf-book/)                                         |
-| 2026-01-13 | Keep Tauri + Svelte (vs WASM)  | WASM doesn't help HTTP execution (sandboxed); current arch is optimal                     | Architecture analysis                                                                                     |
-| 2026-01-13 | WASM for response viewer       | Future optimization for syntax highlighting (tree-sitter) in Phase 2C                     | [tree-sitter WASM](https://tree-sitter.github.io/tree-sitter/)                                            |
+
+## Superseded Decisions
+
+See [ADR-0001](./adr/0001-migrate-from-svelte-to-react.md) for the complete history of the Svelte 5 → React 19 migration, including the original Svelte decisions and why they were superseded.
