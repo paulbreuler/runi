@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/runi-logo.svg" alt="runi" width="120" />
+  <img src=".github/assets/runi-tmp-logo-halp-need-designer.png" alt="runi" width="120" />
 </p>
 
 <h1 align="center">runi</h1>
