@@ -168,4 +168,31 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByText('Body').closest('button');
     expect(bodyTab).toHaveClass(/text-text-muted/);
   });
+
+  it('shows right overflow cue when tabs overflow', () => {
+    render(<RequestBuilder />);
+
+    const tabScroller = screen.getByLabelText('Request tabs');
+    Object.defineProperty(tabScroller, 'scrollWidth', { value: 480, configurable: true });
+    Object.defineProperty(tabScroller, 'clientWidth', { value: 200, configurable: true });
+    Object.defineProperty(tabScroller, 'scrollLeft', { value: 0, configurable: true, writable: true });
+
+    fireEvent.scroll(tabScroller);
+
+    expect(screen.getByTestId('request-tabs-overflow-right')).toBeInTheDocument();
+    expect(screen.queryByTestId('request-tabs-overflow-left')).not.toBeInTheDocument();
+  });
+
+  it('shows left overflow cue after scrolling tabs', () => {
+    render(<RequestBuilder />);
+
+    const tabScroller = screen.getByLabelText('Request tabs');
+    Object.defineProperty(tabScroller, 'scrollWidth', { value: 480, configurable: true });
+    Object.defineProperty(tabScroller, 'clientWidth', { value: 200, configurable: true });
+    Object.defineProperty(tabScroller, 'scrollLeft', { value: 120, configurable: true, writable: true });
+
+    fireEvent.scroll(tabScroller);
+
+    expect(screen.getByTestId('request-tabs-overflow-left')).toBeInTheDocument();
+  });
 });

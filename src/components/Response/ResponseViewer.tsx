@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import type { HttpResponse } from '@/types/http';
 import {
@@ -8,6 +8,7 @@ import {
   syntaxHighlightTheme,
 } from '@/components/CodeHighlighting/syntaxHighlighting';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
+import { motion, useReducedMotion } from 'motion/react';
 
 interface ResponseViewerProps {
   response: HttpResponse;
@@ -80,6 +81,57 @@ function formatSize(body: string): string {
 
 export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Element => {
   const [activeTab, setActiveTab] = useState<TabId>('body');
+  const prefersReducedMotion = useReducedMotion() === true;
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isScrollIdle, setIsScrollIdle] = useState(true);
+  const scrollIdleTimeout = useRef<number | undefined>(undefined);
+
+  const updateScrollState = useCallback((): void => {
+    const container = tabScrollRef.current;
+    if (!container) return;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const hasScrollableOverflow = maxScroll > 4;
+    setHasOverflow(hasScrollableOverflow);
+    setCanScrollLeft(container.scrollLeft > 2);
+    setCanScrollRight(container.scrollLeft < maxScroll - 2);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const container = tabScrollRef.current;
+    if (!container) return;
+
+    const handleScroll = (): void => {
+      updateScrollState();
+      setIsScrollIdle(false);
+      if (scrollIdleTimeout.current !== undefined) {
+        window.clearTimeout(scrollIdleTimeout.current);
+      }
+      scrollIdleTimeout.current = window.setTimeout(() => {
+        setIsScrollIdle(true);
+      }, 220);
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollState();
+    });
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    resizeObserver.observe(container);
+
+    return (): void => {
+      container.removeEventListener('scroll', handleScroll);
+      resizeObserver.disconnect();
+      if (scrollIdleTimeout.current !== undefined) {
+        window.clearTimeout(scrollIdleTimeout.current);
+      }
+    };
+  }, [updateScrollState]);
+
+  const showOverflowCue = hasOverflow;
   
   const headerCount = Object.keys(response.headers).length;
   const bodySize = formatSize(response.body);
@@ -90,26 +142,65 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
   return (
     <div className="h-full flex flex-col" data-testid="response-viewer">
       {/* Tab bar */}
-      <div className="flex items-center gap-1 px-4 py-2 border-b border-border-subtle bg-bg-surface">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => { setActiveTab(tab.id); }}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-              activeTab === tab.id
-                ? 'bg-bg-raised text-text-primary font-medium'
-                : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
-            }`}
-          >
-            {tab.label}
-            {tab.id === 'headers' && (
-              <span className="ml-1.5 text-xs text-text-muted">({headerCount})</span>
-            )}
-          </button>
-        ))}
-        
+      <div className="relative flex items-center gap-2 px-4 py-2 border-b border-border-subtle bg-bg-surface">
+        <div
+          ref={tabScrollRef}
+          className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
+          aria-label="Response tabs"
+        >
+          <div className="flex items-center gap-1 pr-2 min-w-max">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); }}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-bg-raised text-text-primary font-medium'
+                    : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
+                }`}
+              >
+                {tab.label}
+                {tab.id === 'headers' && (
+                  <span className="ml-1.5 text-xs text-text-muted">({headerCount})</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showOverflowCue && canScrollLeft && (
+          <motion.div
+            className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
+            data-testid="response-tabs-overflow-left"
+            initial={false}
+            animate={
+              prefersReducedMotion
+                ? { opacity: 0.35 }
+                : isScrollIdle
+                  ? { opacity: [0.2, 0.4, 0.2], x: [0, 3, 0] }
+                  : { opacity: 0.25, x: 0 }
+            }
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
+        {showOverflowCue && canScrollRight && (
+          <motion.div
+            className="pointer-events-none absolute inset-y-0 right-20 w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
+            data-testid="response-tabs-overflow-right"
+            initial={false}
+            animate={
+              prefersReducedMotion
+                ? { opacity: 0.35 }
+                : isScrollIdle
+                  ? { opacity: [0.2, 0.4, 0.2], x: [0, -3, 0] }
+                  : { opacity: 0.25, x: 0 }
+            }
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
+
         {/* Meta info */}
-        <div className="ml-auto flex items-center gap-4 text-xs text-text-muted font-mono">
+        <div className="flex items-center gap-4 text-xs text-text-muted font-mono shrink-0">
           <span>{bodySize}</span>
           <span>{response.timing.total_ms}ms</span>
         </div>

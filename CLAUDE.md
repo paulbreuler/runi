@@ -269,6 +269,41 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 
 ---
 
+## Storybook Best Practices
+
+Stories are **visual documentation**, not automated test suites.
+
+**Do:**
+- Create stories that showcase component states and variations
+- Use stories for manual interaction testing (drag, resize, click)
+- Keep stories minimal and focused (1 concept per story)
+- Add brief JSDoc comments explaining each story's purpose
+- Use `play` functions only for basic verification assertions
+
+**Don't:**
+- Put performance tests in stories (use `*.test.tsx` files instead)
+- Create stories with complex automated test logic (loops, timing, etc.)
+- Duplicate unit test coverage in stories
+- Add more than 6-8 stories per component
+
+**Story Naming:**
+- `Default` - basic component with default props
+- `WithContent` - component with realistic content
+- `[StateName]` - specific state (e.g., `SidebarCollapsed`, `Loading`, `Error`)
+- `FullIntegration` - component with real child components
+
+**Example:**
+```tsx
+/**
+ * Sidebar starts collapsed. Click the left edge to expand.
+ */
+export const SidebarCollapsed: Story = {
+  render: () => <MainLayout initialSidebarVisible={false} />,
+};
+```
+
+---
+
 ## Type Generation (ts-rs)
 
 **Critical:** When changing Rust types that are used in TypeScript:

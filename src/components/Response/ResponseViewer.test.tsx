@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import { ResponseViewer } from './ResponseViewer';
@@ -94,5 +94,32 @@ describe('ResponseViewer', () => {
     const rawText = screen.getByTestId('response-raw-text').textContent ?? '';
     expect(rawText).toContain('HTTP/1.1 200 OK');
     expect(screen.getByTestId('response-raw').querySelector('[data-language="http"]')).toBeTruthy();
+  });
+
+  it('shows right overflow cue when tabs overflow', () => {
+    render(<ResponseViewer response={mockResponse} />);
+
+    const tabScroller = screen.getByLabelText('Response tabs');
+    Object.defineProperty(tabScroller, 'scrollWidth', { value: 420, configurable: true });
+    Object.defineProperty(tabScroller, 'clientWidth', { value: 160, configurable: true });
+    Object.defineProperty(tabScroller, 'scrollLeft', { value: 0, configurable: true, writable: true });
+
+    fireEvent.scroll(tabScroller);
+
+    expect(screen.getByTestId('response-tabs-overflow-right')).toBeInTheDocument();
+    expect(screen.queryByTestId('response-tabs-overflow-left')).not.toBeInTheDocument();
+  });
+
+  it('shows left overflow cue after scrolling tabs', () => {
+    render(<ResponseViewer response={mockResponse} />);
+
+    const tabScroller = screen.getByLabelText('Response tabs');
+    Object.defineProperty(tabScroller, 'scrollWidth', { value: 420, configurable: true });
+    Object.defineProperty(tabScroller, 'clientWidth', { value: 160, configurable: true });
+    Object.defineProperty(tabScroller, 'scrollLeft', { value: 120, configurable: true, writable: true });
+
+    fireEvent.scroll(tabScroller);
+
+    expect(screen.getByTestId('response-tabs-overflow-left')).toBeInTheDocument();
   });
 });

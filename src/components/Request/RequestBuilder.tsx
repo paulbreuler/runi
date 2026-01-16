@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useRequestStore } from '@/stores/useRequestStore';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { HeaderEditor } from './HeaderEditor';
 import { BodyEditor } from './BodyEditor';
 import { ParamsEditor } from './ParamsEditor';
@@ -27,31 +26,120 @@ const tabs: Tab[] = [
  */
 export const RequestBuilder = (): React.JSX.Element => {
   const [activeTab, setActiveTab] = useState<TabId>('headers');
+  const prefersReducedMotion = useReducedMotion() === true;
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isScrollIdle, setIsScrollIdle] = useState(true);
+  const scrollIdleTimeout = useRef<number | undefined>(undefined);
+
+  const updateScrollState = useCallback((): void => {
+    const container = tabScrollRef.current;
+    if (!container) return;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const hasScrollableOverflow = maxScroll > 4;
+    setHasOverflow(hasScrollableOverflow);
+    setCanScrollLeft(container.scrollLeft > 2);
+    setCanScrollRight(container.scrollLeft < maxScroll - 2);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const container = tabScrollRef.current;
+    if (!container) return;
+
+    const handleScroll = (): void => {
+      updateScrollState();
+      setIsScrollIdle(false);
+      if (scrollIdleTimeout.current !== undefined) {
+        window.clearTimeout(scrollIdleTimeout.current);
+      }
+      scrollIdleTimeout.current = window.setTimeout(() => {
+        setIsScrollIdle(true);
+      }, 220);
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollState();
+    });
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    resizeObserver.observe(container);
+
+    return (): void => {
+      container.removeEventListener('scroll', handleScroll);
+      resizeObserver.disconnect();
+      if (scrollIdleTimeout.current !== undefined) {
+        window.clearTimeout(scrollIdleTimeout.current);
+      }
+    };
+  }, [updateScrollState]);
+
+  const showOverflowCue = hasOverflow;
 
   return (
     <div className="h-full flex flex-col bg-bg-app" data-testid="request-builder">
       {/* Tab navigation */}
-      <div className="flex items-center gap-1 px-4 py-2 border-b border-border-subtle bg-bg-surface">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <motion.button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id); }}
-              className={cn(
-                'px-3 py-1.5 text-sm rounded-lg transition-colors duration-200 font-medium',
-                isActive
-                  ? 'bg-bg-raised text-text-primary'
-                  : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
-              )}
-              whileHover={!isActive ? { scale: 1.02 } : undefined}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-            >
-              {tab.label}
-            </motion.button>
-          );
-        })}
+      <div className="relative flex items-center px-4 py-2 border-b border-border-subtle bg-bg-surface">
+        <div
+          ref={tabScrollRef}
+          className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
+          aria-label="Request tabs"
+        >
+          <div className="flex items-center gap-1 pr-2 min-w-max">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <motion.button
+                  key={tab.id}
+                  onClick={() => { setActiveTab(tab.id); }}
+                  className={cn(
+                    'px-3 py-1.5 text-sm rounded-lg transition-colors duration-200 font-medium',
+                    isActive
+                      ? 'bg-bg-raised text-text-primary'
+                      : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
+                  )}
+                  whileHover={!isActive ? { scale: 1.02 } : undefined}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {tab.label}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+        {showOverflowCue && canScrollLeft && (
+          <motion.div
+            className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
+            data-testid="request-tabs-overflow-left"
+            initial={false}
+            animate={
+              prefersReducedMotion
+                ? { opacity: 0.35 }
+                : isScrollIdle
+                  ? { opacity: [0.2, 0.4, 0.2], x: [0, 3, 0] }
+                  : { opacity: 0.25, x: 0 }
+            }
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
+        {showOverflowCue && canScrollRight && (
+          <motion.div
+            className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
+            data-testid="request-tabs-overflow-right"
+            initial={false}
+            animate={
+              prefersReducedMotion
+                ? { opacity: 0.35 }
+                : isScrollIdle
+                  ? { opacity: [0.2, 0.4, 0.2], x: [0, -3, 0] }
+                  : { opacity: 0.25, x: 0 }
+            }
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
       </div>
 
       {/* Tab content - overflow hidden to prevent scrollbar flash during transitions */}

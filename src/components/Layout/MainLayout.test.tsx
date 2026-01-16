@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MainLayout } from './MainLayout';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -41,8 +41,21 @@ vi.mock('motion/react', async () => {
       return <Component {...cleanProps}>{children}</Component>;
     };
 
+  // Create a synchronous mock for useSpring that updates immediately (no animation delay)
+  const useSpringMock = (initialValue: number) => {
+    let currentValue = initialValue;
+    return {
+      get: () => currentValue,
+      set: (newValue: number) => { currentValue = newValue; },
+      // Minimal MotionValue interface needed for useTransform
+      on: () => () => {},
+      destroy: () => {},
+    };
+  };
+
   return {
     ...actual,
+    useSpring: useSpringMock,
     motion: {
       ...actual.motion,
       div: createMock('div'),
@@ -317,6 +330,60 @@ describe('MainLayout', () => {
       // This is tested via interaction tests
       expect(requestPane).toBeInTheDocument();
       expect(responsePane).toBeInTheDocument();
+    });
+  });
+
+  describe('Sidebar Drag-to-Close', () => {
+    it('collapses sidebar when dragged left by any amount (direction-based)', () => {
+      render(<MainLayout />);
+
+      // Verify sidebar starts visible
+      expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+
+      const resizer = screen.getByTestId('sidebar-resizer');
+
+      // Mock setPointerCapture/releasePointerCapture
+      resizer.setPointerCapture = vi.fn();
+      resizer.releasePointerCapture = vi.fn();
+
+      // Start drag at x=256 (default sidebar width)
+      fireEvent.pointerDown(resizer, { clientX: 256, pointerId: 1 });
+
+      // Drag left by just 10px (to x=246)
+      // This is a small leftward drag that should collapse with direction-based logic
+      fireEvent.pointerMove(resizer, { clientX: 246 });
+
+      // End drag
+      fireEvent.pointerUp(resizer, { clientX: 246, pointerId: 1 });
+
+      // With direction-based logic: any leftward drag should collapse
+      // With old threshold logic: 10px left would NOT collapse (needs 50px + below MIN_SIDEBAR_WIDTH)
+      expect(useSettingsStore.getState().sidebarVisible).toBe(false);
+    });
+
+    it('resizes sidebar when dragged right (not collapsed)', () => {
+      render(<MainLayout />);
+
+      // Verify sidebar starts visible
+      expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+
+      const resizer = screen.getByTestId('sidebar-resizer');
+
+      // Mock setPointerCapture/releasePointerCapture
+      resizer.setPointerCapture = vi.fn();
+      resizer.releasePointerCapture = vi.fn();
+
+      // Start drag at x=256 (default sidebar width)
+      fireEvent.pointerDown(resizer, { clientX: 256, pointerId: 1 });
+
+      // Drag right by 50px (to x=306)
+      fireEvent.pointerMove(resizer, { clientX: 306 });
+
+      // End drag
+      fireEvent.pointerUp(resizer, { clientX: 306, pointerId: 1 });
+
+      // Should remain visible (dragging right = resize intent)
+      expect(useSettingsStore.getState().sidebarVisible).toBe(true);
     });
   });
 

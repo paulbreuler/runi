@@ -81,6 +81,9 @@ export const MainLayout = ({
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
+  const isSidebarDraggingRef = useRef(false); // Sync ref for pointer handlers (state is async)
+  const sidebarDragStartWidth = useRef(DEFAULT_SIDEBAR_WIDTH);
+  const sidebarDragCurrentWidth = useRef(DEFAULT_SIDEBAR_WIDTH); // Track actual drag position (spring lags)
   const isInitialMount = useRef(true);
 
   // Initialize sidebar visibility on mount only
@@ -192,35 +195,61 @@ export const MainLayout = ({
   }, [isPaneDragging, splitRatio]);
 
   // Sidebar resizer handlers - works both expanded and collapsed
+  // Uses refs for synchronous state in pointer handlers (React state updates are async)
   const handleSidebarPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
+
+    // Set ref synchronously so pointermove can read it immediately
+    isSidebarDraggingRef.current = true;
     setIsSidebarDragging(true);
+
+    // Track where we started for collapse detection
+    const startWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
+    sidebarDragStartWidth.current = startWidth;
+    sidebarDragCurrentWidth.current = startWidth;
 
     // If collapsed, immediately set to visible so drag feels responsive
     if (!sidebarVisible) {
       setSidebarVisible(true);
     }
-  }, [sidebarVisible, setSidebarVisible]);
+  }, [sidebarVisible, sidebarWidth, setSidebarVisible]);
 
   const handleSidebarPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isSidebarDragging) return;
+    // Use ref for synchronous check (state may not have updated yet)
+    if (!isSidebarDraggingRef.current) return;
 
     const newWidth = e.clientX;
-    const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
+    // Allow dragging below MIN for the "page turning" feel
+    const clamped = Math.max(COLLAPSED_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
+    sidebarDragCurrentWidth.current = clamped; // Track actual position (spring lags behind)
     sidebarWidthSpring.set(clamped);
-  }, [isSidebarDragging, sidebarWidthSpring]);
+  }, [sidebarWidthSpring]);
 
   const handleSidebarPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isSidebarDragging) return;
+    // Use ref for synchronous check
+    if (!isSidebarDraggingRef.current) return;
 
     e.currentTarget.releasePointerCapture(e.pointerId);
 
-    const finalWidth = sidebarWidthSpring.get();
-    const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
-    setSidebarWidth(clamped);
+    // Use tracked position, not spring (spring animates and lags behind actual drag)
+    const finalWidth = sidebarDragCurrentWidth.current;
+    const startWidth = sidebarDragStartWidth.current;
+
+    // Direction-based: dragging LEFT = close intent, dragging RIGHT = resize
+    if (finalWidth < startWidth) {
+      // User dragged left from start position → collapse
+      setSidebarVisible(false);
+    } else {
+      // User dragged right from start position → resize, clamp to valid range
+      const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
+      setSidebarWidth(clamped);
+    }
+
+    // Clear both ref and state
+    isSidebarDraggingRef.current = false;
     setIsSidebarDragging(false);
-  }, [isSidebarDragging, sidebarWidthSpring]);
+  }, [setSidebarVisible]);
 
   // Double-click on sash to toggle sidebar
   const handleSashDoubleClick = useCallback(() => {
