@@ -39,10 +39,10 @@ export const RequestHeader = ({
   };
 
   return (
-    <div className="flex gap-3 items-center px-6 py-4 border-b border-border-default bg-bg-surface">
+    <div className="flex gap-3 items-center px-6 py-4 border-b border-border-subtle bg-bg-surface">
       <Select.Select value={method} onValueChange={handleMethodChange}>
         <Select.SelectTrigger
-          className={`w-28 font-semibold transition-colors duration-200 ${methodColorClass}`}
+          className={`w-28 font-semibold transition-all duration-200 ${methodColorClass}`}
           data-testid="method-select"
           disabled={loading}
           aria-label="HTTP Method"
@@ -67,7 +67,7 @@ export const RequestHeader = ({
         data-testid="url-input"
         disabled={loading}
         aria-label="Request URL"
-        className="flex-1 transition-colors duration-200"
+        className="flex-1 transition-all duration-200 bg-bg-app border-border-subtle focus:border-accent-blue/50 focus:ring-accent-blue/20"
       />
 
       <Button
@@ -76,7 +76,7 @@ export const RequestHeader = ({
         data-testid="send-button"
         aria-label="Send Request"
         size="lg"
-        className="transition-colors duration-200 min-w-[100px]"
+        className="transition-all duration-200 min-w-[100px]"
       >
         {loading ? 'Sending...' : 'Send'}
       </Button>

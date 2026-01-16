@@ -1,35 +1,40 @@
 import { Folder, History } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const Sidebar = (): React.JSX.Element => {
   return (
     <aside
-      className="w-64 h-full border-r border-border-default bg-bg-surface flex flex-col transition-all duration-200"
+      className="w-64 h-full border-r border-border-subtle bg-bg-surface flex flex-col transition-all duration-200"
       data-testid="sidebar"
     >
-      <Card className="flex-1 rounded-none border-0 bg-transparent">
-        <CardHeader className="px-6 pb-4">
-          <CardTitle className="text-base font-semibold text-text-primary">Collections</CardTitle>
-        </CardHeader>
-        <CardContent className="px-6">
-          <div className="flex items-center gap-3 text-sm text-text-secondary hover:bg-bg-raised rounded-lg px-3 py-2.5 transition-colors cursor-pointer">
-            <Folder size={18} className="text-text-muted" />
-            <span>No collections yet</span>
+      {/* Collections Section */}
+      <div className="flex-1 py-5">
+        <div className="px-5 mb-3">
+          <h2 className="text-base font-semibold text-text-primary tracking-tight">Collections</h2>
+        </div>
+        <div className="px-3">
+          <div className="flex items-center gap-3 text-sm text-text-muted hover:text-text-secondary hover:bg-bg-raised/50 rounded-lg px-3 py-2.5 transition-all duration-200 cursor-pointer group">
+            <div className="w-8 h-8 rounded-lg border border-border-subtle group-hover:border-accent-blue/30 flex items-center justify-center transition-colors">
+              <Folder size={16} className="text-text-muted group-hover:text-accent-blue/70" />
+            </div>
+            <span className="opacity-70 group-hover:opacity-100 transition-opacity">No collections yet</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card className="flex-1 rounded-none border-0 border-t border-border-subtle bg-transparent">
-        <CardHeader className="px-6 pb-4">
-          <CardTitle className="text-base font-semibold text-text-primary">History</CardTitle>
-        </CardHeader>
-        <CardContent className="px-6">
-          <div className="flex items-center gap-3 text-sm text-text-secondary hover:bg-bg-raised rounded-lg px-3 py-2.5 transition-colors cursor-pointer">
-            <History size={18} className="text-text-muted" />
-            <span>No history yet</span>
+      {/* History Section */}
+      <div className="flex-1 border-t border-border-subtle py-5">
+        <div className="px-5 mb-3">
+          <h2 className="text-base font-semibold text-text-primary tracking-tight">History</h2>
+        </div>
+        <div className="px-3">
+          <div className="flex items-center gap-3 text-sm text-text-muted hover:text-text-secondary hover:bg-bg-raised/50 rounded-lg px-3 py-2.5 transition-all duration-200 cursor-pointer group">
+            <div className="w-8 h-8 rounded-lg border border-border-subtle group-hover:border-signal-warning/30 flex items-center justify-center transition-colors">
+              <History size={16} className="text-text-muted group-hover:text-signal-warning/70" />
+            </div>
+            <span className="opacity-70 group-hover:opacity-100 transition-opacity">No history yet</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </aside>
   );
 };

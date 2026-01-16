@@ -7,7 +7,8 @@ describe('StatusBadge', () => {
     render(<StatusBadge status={200} statusText="OK" />);
     
     const badge = screen.getByTestId('status-badge');
-    expect(badge).toHaveTextContent('200 OK');
+    expect(badge).toHaveTextContent('200');
+    expect(badge).toHaveTextContent('OK');
   });
 
   it('has proper padding for professional look', () => {
@@ -29,29 +30,35 @@ describe('StatusBadge', () => {
     render(<StatusBadge status={200} statusText="OK" />);
     
     const badge = screen.getByTestId('status-badge');
-    expect(badge).toHaveClass('font-semibold');
+    expect(badge).toHaveClass('font-medium');
     expect(badge).toHaveClass('text-sm');
   });
 
-  it('applies success color for 2xx status', () => {
+  it('applies success styling for 2xx status with opacity-based background', () => {
     render(<StatusBadge status={200} statusText="OK" />);
     
     const badge = screen.getByTestId('status-badge');
-    // Should have green-related class for success
-    expect(badge.className).toMatch(/signal-success|method-get|green/);
+    // basestate.io style: bg-signal-success/15 with border
+    expect(badge).toHaveClass('bg-signal-success/15');
+    expect(badge).toHaveClass('text-signal-success');
+    expect(badge).toHaveClass('border-signal-success/30');
   });
 
-  it('applies warning color for 4xx status', () => {
+  it('applies warning styling for 4xx status', () => {
     render(<StatusBadge status={404} statusText="Not Found" />);
     
     const badge = screen.getByTestId('status-badge');
-    expect(badge).toHaveTextContent('404 Not Found');
+    expect(badge).toHaveTextContent('404');
+    expect(badge).toHaveClass('bg-signal-warning/15');
+    expect(badge).toHaveClass('text-signal-warning');
   });
 
-  it('applies error color for 5xx status', () => {
+  it('applies error styling for 5xx status', () => {
     render(<StatusBadge status={500} statusText="Internal Server Error" />);
     
     const badge = screen.getByTestId('status-badge');
-    expect(badge).toHaveTextContent('500 Internal Server Error');
+    expect(badge).toHaveTextContent('500');
+    expect(badge).toHaveClass('bg-signal-error/15');
+    expect(badge).toHaveClass('text-signal-error');
   });
 });

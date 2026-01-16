@@ -27,7 +27,8 @@ describe('Sidebar', () => {
     
     const collectionsTitle = screen.getByText('Collections');
     expect(collectionsTitle).toHaveClass('font-semibold');
-    expect(collectionsTitle).toHaveClass('text-base'); // Larger than text-sm
+    expect(collectionsTitle).toHaveClass('text-base');
+    expect(collectionsTitle).toHaveClass('tracking-tight');
   });
 
   it('shows empty state for collections', () => {
@@ -56,11 +57,11 @@ describe('Sidebar', () => {
     expect(sidebar).toHaveClass('bg-bg-surface');
   });
 
-  it('has proper border styling', () => {
+  it('has subtle border styling for zen aesthetic', () => {
     render(<Sidebar />);
     
     const sidebar = screen.getByTestId('sidebar');
     expect(sidebar).toHaveClass('border-r');
-    expect(sidebar).toHaveClass('border-border-default');
+    expect(sidebar).toHaveClass('border-border-subtle');
   });
 });
