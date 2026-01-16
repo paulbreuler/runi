@@ -29,7 +29,14 @@ const preview: Preview = {
   },
   decorators: [
     (Story) => (
-      <div style={{ padding: '2rem', minHeight: '100vh', backgroundColor: '#0a0a0a' }}>
+      <div style={{ 
+        padding: '1.5rem', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        minHeight: '100%',
+        backgroundColor: '#0a0a0a' 
+      }}>
         <Story />
       </div>
     ),

@@ -33,7 +33,7 @@ export const Default: Story = {
 
 export const Types: Story = {
   render: () => (
-    <div className="flex flex-col gap-4 w-64">
+    <div className="flex flex-col gap-3 w-64">
       <Input type="text" placeholder="Text input" />
       <Input type="email" placeholder="Email address" />
       <Input type="password" placeholder="Password" />
@@ -46,7 +46,7 @@ export const Types: Story = {
 
 export const States: Story = {
   render: () => (
-    <div className="flex flex-col gap-4 w-64">
+    <div className="flex flex-col gap-3 w-64">
       <Input placeholder="Normal input" />
       <Input placeholder="Disabled input" disabled />
       <Input defaultValue="With value" />
