@@ -6,6 +6,8 @@ For architecturally significant decisions with detailed context, see [Architectu
 
 ## Active Decisions
 
+Sorted reverse chronologically (newest first).
+
 | Date       | Decision                       | Rationale                                                                                 | Reference                                                                                                 |
 | ---------- | ------------------------------ | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | 2026-01-14 | React 19 migration             | AI assistant support, ecosystem maturity, Motion 12 integration                           | [ADR-0001](./adr/0001-migrate-from-svelte-to-react.md)                                                    |

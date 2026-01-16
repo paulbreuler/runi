@@ -1,0 +1,27 @@
+{
+  "recommendations": [
+    // Core development
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "rust-lang.rust-analyzer",
+
+    // React / TypeScript
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+
+    // Testing
+    "vitest.explorer",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Quality of life
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker"
+  ],
+  "unwantedRecommendations": [
+    // Svelte extensions (no longer needed)
+    "svelte.svelte-vscode",
+    "ardenivanov.svelte-intellisense"
+  ]
+}

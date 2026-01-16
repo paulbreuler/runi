@@ -40,9 +40,9 @@ build-frontend:
 generate-types:
     @echo "🔄 Generating TypeScript types from Rust..."
     cd src-tauri && TS_RS_EXPORT_DIR="./bindings" cargo test --quiet
-    mkdir -p src/lib/types/generated
-    cp src-tauri/bindings/*.ts src/lib/types/generated/
-    @echo "✅ Types generated in src/lib/types/generated/"
+    mkdir -p src/types/generated
+    cp src-tauri/bindings/*.ts src/types/generated/
+    @echo "✅ Types generated in src/types/generated/"
 
 # ============================================================================
 # 📦 Dependencies
@@ -90,11 +90,8 @@ lint: lint-rust lint-frontend
 lint-rust: build-frontend
     cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-# Lint TypeScript/Svelte (ensure types are synced first)
+# Lint TypeScript/React
 lint-frontend:
-    @echo "🔄 Syncing SvelteKit types for ESLint..."
-    npx svelte-kit sync
-
     npm run lint
 
 # ============================================================================
@@ -108,7 +105,7 @@ check: check-rust check-frontend
 check-rust: build-frontend
     cd src-tauri && cargo check --workspace --all-targets
 
-# Type check TypeScript/Svelte
+# Type check TypeScript/React
 check-frontend:
     npm run check
 
@@ -199,7 +196,7 @@ clean:
     cd src-tauri && cargo clean
     rm -rf node_modules/.vite
     rm -rf build
-    rm -rf .svelte-kit
+    rm -rf dist
 
 # Remove all ralph session files and reset circuit breaker
 clean-ralph:

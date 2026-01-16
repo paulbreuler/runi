@@ -1,10 +1,16 @@
-import { sveltekit } from '@sveltejs/kit/vite';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
 
 export default defineConfig({
-  plugins: [sveltekit(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
   clearScreen: false,
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,

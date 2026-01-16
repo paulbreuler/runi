@@ -27,3 +27,9 @@ logs/
 .response_analysis
 .claude_session_id
 status.json
+
+# Test results and reports
+test-results/
+playwright-report/
+coverage/
+html/

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for E2E tests against SvelteKit dev server.
+ * Playwright configuration for E2E tests against Vite dev server.
  *
  * This configuration tests the app running in dev mode with mocked Tauri IPC.
  * For macOS compatibility, we test against the dev server rather than the built
