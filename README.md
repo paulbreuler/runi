@@ -1,239 +1,292 @@
-# runi
+<p align="center">
+  <img src=".github/assets/runi-logo.svg" alt="runi" width="120" />
+</p>
 
-> An intelligent, local-first HTTP client for API developers. Your proactive partner, not just another request/response tool.
+<h1 align="center">runi</h1>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <strong>See the truth about your APIs</strong>
+</p>
 
-runi is an open-source desktop application that combines **local-first architecture**, **AI-native intelligence**, and **Model Context Protocol (MCP)** support to provide a powerful, privacy-focused API development experience.
+<p align="center">
+  An open-source API client that verifies what AI generates.<br/>
+  Local-first. Git-friendly. No account required. Ever.
+</p>
 
-## ✨ Features (WIP)
+<p align="center">
+  <a href="https://github.com/paulbreuler/runi/releases"><img src="https://img.shields.io/github/v/release/paulbreuler/runi?style=flat-square" alt="Release" /></a>
+  <a href="https://github.com/paulbreuler/runi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/paulbreuler/runi/stargazers"><img src="https://img.shields.io/github/stars/paulbreuler/runi?style=flat-square" alt="Stars" /></a>
+  <a href="https://discord.gg/basestate"><img src="https://img.shields.io/discord/000000000?style=flat-square&logo=discord&logoColor=white&label=Discord" alt="Discord" /></a>
+</p>
 
-### 🎯 Core Capabilities
+<p align="center">
+  <a href="#installation">Installation</a> •
+  <a href="#why-runi">Why runi?</a> •
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#roadmap">Roadmap</a> •
+  <a href="#contributing">Contributing</a>
+</p>
 
-- **REST API Client** — Full support for GET, POST, PUT, PATCH, DELETE with custom headers, bodies, and query parameters
-- **Request Builder** — Intuitive interface for constructing and organizing API requests
-- **Response Viewer** — Syntax-highlighted JSON response viewer with detailed timing information
-- **Collections** — Organize requests in Git-friendly YAML files
-- **Environment Variables** — Manage variables with `{{variable}}` substitution
-- **Request History** — Track and replay previous requests
+---
 
-### 🧠 Intelligence Features
+> **Pre-alpha.** runi is under active development. The vision is solidifying, the foundations are being laid. Expect rough edges — and rapid evolution. Star the repo to follow along.
 
-- **Proactive Suggestions** — Context-aware header and configuration suggestions
-- **Security Warnings** — OWASP-inspired validation (auth over HTTP, JWT expiry, injection patterns)
-- **Error Analysis** — Rule-based error analysis with AI-enhanced insights (coming soon)
-- **Natural Language Requests** — Generate requests from plain English (coming soon)
+---
 
-### 🔌 MCP Support
+## The Problem
 
-- **MCP Server Generation** — Generate MCP servers from API collections (coming soon)
-- **MCP Registry Integration** — Browse and test MCP tools (coming soon)
-- **Agentic Workflows** — Run sequential workflows with assertions and variable extraction (coming soon)
+You're using AI to write API integration code. So is everyone else — [84% of developers now use AI tools](https://survey.stackoverflow.co/2025/ai), with [89% using generative AI in their workflow](https://www.postman.com/state-of-api/2025/).
 
-### 🔒 Privacy & Local-First
+But here's what nobody talks about: **[46% of developers don't trust the accuracy of AI output](https://stackoverflow.co/company/press/archive/stack-overflow-2025-developer-survey/)** — up from 31% last year. The biggest frustration? [66% cite "solutions that are almost right, but not quite."](https://survey.stackoverflow.co/2025/ai)
 
-- **No Cloud Dependency** — Works fully offline
-- **No Telemetry** — Zero data collection or tracking
-- **Git-Friendly** — All data stored in YAML/JSON files
-- **Bruno-Compatible** — Import/export Bruno v3 collections
+The tools generating code are getting better. The tools verifying that code? They don't exist.
 
-## 🛠️ Tech Stack
+Meanwhile, your HTTP client wants you to create an account, sync to their cloud, and hope your credentials don't leak. When you refuse, half the features disappear.
 
-- **Backend:** Rust 1.80+ with Tauri v2.9.x
-- **Frontend:** Svelte 5.46.x with TypeScript
-- **UI Components:** shadcn-svelte with Tailwind CSS
-- **HTTP Client:** reqwest (Rust)
-- **Storage:** YAML/JSON files (no database)
-- **Testing:** Vitest (unit), Playwright (E2E)
+**runi is different.**
 
-## 📋 Prerequisites
+---
 
-- **Rust** 1.80 or later ([install](https://www.rust-lang.org/tools/install))
-- **Node.js** 18+ and npm ([install](https://nodejs.org/))
-- **just** command runner ([install](https://github.com/casey/just#installation))
+## Why runi?
 
-### Installing just
+| What You're Used To                  | What runi Does                                            |
+| ------------------------------------ | --------------------------------------------------------- |
+| Create account to use                | No account. Ever.                                         |
+| Data synced to cloud                 | Local-first. Your data stays yours.                       |
+| Collections in proprietary format    | YAML files. Git-friendly. Diff them.                      |
+| AI generates code, you hope it works | AI generates code, **runi verifies it against your spec** |
+| Spec changes break things silently   | Drift detection catches it before production              |
+| "What changed?" = archaeology        | Temporal awareness shows spec evolution                   |
 
-```bash
-# macOS/Linux
-cargo install just
+---
 
-# macOS (Homebrew)
-brew install just
+## Features
 
-# Or see: https://github.com/casey/just#installation
+### HTTP Client (The Familiar Door)
+
+Everything you expect, nothing you don't:
+
+- Full REST control — methods, headers, body, params, auth
+- Response viewer with syntax highlighting & timing
+- Environment variables with `{{substitution}}`
+- **Collections as YAML** — version control your API workflows
+- Import from Postman, Bruno, Insomnia, OpenAPI
+- Export to cURL, JavaScript, Python
+
+```yaml
+# Your collections are just files
+# .runi/collections/stripe.yaml
+name: Stripe API
+requests:
+  - name: List Customers
+    method: GET
+    url: '{{base_url}}/v1/customers'
+    headers:
+      Authorization: 'Bearer {{stripe_key}}'
 ```
 
-## 🚀 Quick Start
+### Spec Intelligence (The Unexpected Room)
 
-### Installation
+This is why you'll stay:
 
-1. Clone the repository:
+**Drift Detection**
+
+[75% of production APIs don't match their published specs.](https://apicontext.com/resources/api-drift-white-paper/) runi catches this before you ship.
+
+- Bind requests to your OpenAPI spec
+- Real-time validation as you work
+- Yellow badge = your request doesn't match the spec anymore
+- One-click: "Show me what changed"
+
+**AI Verification**
+
+When [46% of developers don't trust AI output](https://stackoverflow.co/company/press/archive/stack-overflow-2025-developer-survey/), you need a second opinion. runi is that opinion.
+
+- Paste AI-generated code → runi validates against bound spec
+- Catches hallucinated endpoints before you waste an hour debugging
+- Flags deprecated fields the AI didn't know about
+- **Purple until verified. Green when safe.**
+
+**Temporal Awareness**
+
+- See how your API evolved over time
+- Diff between spec versions
+- "When did this field become required?"
+
+**Semantic Links**
+
+- `Stripe:Customer` ↔ `YourAPI:User` — see the relationship
+- Cross-API mapping for complex integrations
+- Finally understand how systems connect
+
+### Spatial Canvas
+
+APIs as territory, not lists:
+
+- Endpoints as visual nodes
+- Drag, arrange, zoom, pan
+- See data flow between requests
+- Non-technical teammates can finally understand the integration
+
+---
+
+## Installation
+
+### Build from Source
 
 ```bash
-git clone https://github.com/yourusername/runi.git
+git clone https://github.com/paulbreuler/runi.git
 cd runi
+pnpm install
+pnpm tauri build
 ```
 
-2. Install dependencies:
+**Requirements:** Rust 1.80+, Node.js 20+, pnpm
+
+---
+
+## Quick Start
 
 ```bash
-just install
+# 1. Launch runi
+runi
+
+# 2. Send your first request
+#    Just paste a URL and hit Enter
+
+# 3. Import your OpenAPI spec
+#    File → Import Spec → Select your openapi.yaml
+
+# 4. Bind a request to the spec
+#    Right-click request → Bind to Spec → Select operation
+
+# 5. Watch drift detection work
+#    Change your spec. See the yellow badge appear.
 ```
 
-3. Start the development server:
+---
+
+## Tech Stack
+
+| Component | Technology                     |
+| --------- | ------------------------------ |
+| Runtime   | [Tauri](https://tauri.app/) v2 |
+| Backend   | Rust 1.80+                     |
+| Frontend  | React 19 + TypeScript          |
+| Animation | [Motion](https://motion.dev/)  |
+| Styling   | Tailwind CSS 4                 |
+| Storage   | YAML/JSON files (no database)  |
+| AI        | Ollama (local, optional)       |
+
+**Bundle size:** <50MB
+**Startup time:** <3 seconds
+**Telemetry:** None. Zero. We don't even have the infrastructure to collect it.
+
+---
+
+## Roadmap
+
+### Now
+
+- [x] HTTP client core
+- [ ] Collections as YAML
+- [ ] Import/export (Postman, Bruno, OpenAPI)
+- [ ] Spec binding and drift detection
+- [ ] Response validation
+
+### Next
+
+- [ ] AI verification against bound specs
+- [ ] Temporal awareness (spec version history)
+- [ ] Semantic links between specs
+- [ ] [MCP](https://modelcontextprotocol.io/) server generation
+
+### Later
+
+- [ ] Spatial canvas view
+- [ ] Collaborative features (local-first sync)
+- [ ] Plugin system
+
+See the full [roadmap](./docs/ROADMAP.md) for details.
+
+---
+
+## Migrating from Postman/Bruno
 
 ```bash
-just dev
+# From Postman
+runi import postman ./your-collection.json
+
+# From Bruno
+runi import bruno ./your-bruno-folder
+
+# From OpenAPI spec
+runi import openapi ./openapi.yaml
 ```
 
-The application will open in a new window with hot-reload enabled.
+Your existing workflows should just work. If they don't, [open an issue](https://github.com/paulbreuler/runi/issues).
 
-## 🏗️ Development
+---
 
-### Available Commands
+## Philosophy
 
-All commands use `just` (see `justfile` for the complete list):
+**Verification beats generation.**
+
+While everyone builds tools to write more code, we're building the tool that lets you trust it.
+
+- **Local-first**: Your data never leaves your machine unless you explicitly share it
+- **Git-friendly**: Collections are YAML. Diff them. Review them. Version them.
+- **Spec-bound**: The OpenAPI spec is the source of truth. Everything validates against it.
+- **No account required**: We don't want your email. We don't want your data. We want you to be productive.
+
+Read the full [vision](./docs/VISION.md).
+
+---
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ```bash
-# Development
-just dev              # Start Tauri development server
-just build            # Build for production
-just build-frontend   # Build frontend only (required before Rust compilation)
-
-# Code Quality
-just fmt              # Fix all formatting
-just fmt-check        # Check formatting (CI)
-just lint             # Run all linters
-just check            # Run all type checks
-just ci               # Run complete CI pipeline (before pushing)
-
-# Testing
-just test             # Run all tests
-just test-rust        # Run Rust tests only
-just test-frontend    # Run frontend tests only
-just test-e2e         # Run E2E tests (Playwright)
-
-# Type Generation (after changing Rust types)
-just generate-types   # Generate TypeScript types from Rust (ts-rs)
-
-# Storybook
-just storybook        # Start Storybook development server
-
-# Documentation
-just docs             # Generate Rust documentation
+# Development setup
+git clone https://github.com/paulbreuler/runi.git
+cd runi
+pnpm install
+pnpm tauri dev
 ```
 
-### Project Structure
+### Good First Issues
 
-```
-runi/
-├── src/                      # Svelte frontend
-│   ├── lib/
-│   │   ├── components/       # Component library
-│   │   │   ├── Layout/       # App-level layout
-│   │   │   ├── Request/      # Request building
-│   │   │   ├── Response/     # Response viewing
-│   │   │   └── ui/           # shadcn-svelte base components
-│   │   ├── stores/           # Svelte 5 runes stores
-│   │   ├── types/            # TypeScript types
-│   │   │   └── generated/    # Auto-generated from Rust (ts-rs)
-│   │   └── utils/            # Utilities
-│   └── routes/               # SvelteKit routes
-├── src-tauri/                # Rust backend
-│   ├── src/
-│   │   ├── main.rs           # Tauri entry
-│   │   ├── lib.rs            # Command exports
-│   │   └── commands/         # Tauri commands
-│   └── Cargo.toml
-├── specs/                    # Technical specifications
-├── prompts/                  # Ralph prompt files
-└── justfile                  # Task runner
-```
+Look for issues labeled [`good first issue`](https://github.com/paulbreuler/runi/labels/good%20first%20issue).
 
-### Type Generation
+---
 
-When you change Rust types used in TypeScript:
+## Community
 
-1. Update the Rust struct/enum
-2. Run `just generate-types`
-3. Types are automatically copied to `src/lib/types/generated/`
-4. Import from `$lib/types/generated/` in the frontend
+- [Discord](https://discord.gg/basestate) — Chat with the team and community
+- [Twitter/X](https://twitter.com/basestate) — Updates and announcements
+- [Blog](https://basestate.io/blog) — Deep dives and tutorials
 
-**Never manually edit files in `src/lib/types/generated/`** — they are auto-generated.
+---
 
-## 🧪 Testing
+## License
 
-We follow **Test-Driven Development (TDD)**
+[MIT](./LICENSE) — Use it however you want.
 
-### Running Tests
+---
 
-```bash
-# All tests
-just test
+## Acknowledgments
 
-# Specific suites
-just test-rust        # Rust unit tests
-just test-frontend    # Frontend component tests
-just test-e2e         # End-to-end Playwright tests
-```
+Named after **Kiki runi** — a German Shepherd who sniffs out what's hidden and guards the perimeter.
 
-### Test Organization
+Built by [BaseState](https://basestate.io) in Fargo, North Dakota.
 
-- **Rust:** Unit tests adjacent to source files (`http_test.rs` next to `http.rs`)
-- **Frontend:** Component tests adjacent to components (`Component.test.ts`)
-- **E2E:** Playwright tests in `tests/e2e/`
+_"Collapse uncertainty into truth"_
 
-## 📦 Building
+---
 
-### Development Build
-
-```bash
-just dev
-```
-
-### Production Build
-
-```bash
-just build
-```
-
-This will create platform-specific binaries in `src-tauri/target/release/`.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. **Read the docs:**
-   - [`CLAUDE.md`](./CLAUDE.md) — Development guidelines and coding standards
-   - [`prd.md`](./prd.md) — Product requirements and roadmap
-   - [`docs/DECISIONS.md`](./docs/DECISIONS.md) — Historical architectural decisions
-
-2. **Follow TDD:**
-   - Write failing tests first
-   - Implement minimum code to pass
-   - Refactor while keeping tests green
-
-3. **Code Quality:**
-   - Run `just ci` before pushing (must pass)
-   - Follow Rust and TypeScript linting rules
-   - Maintain 85% test coverage minimum
-
-4. **Commit Convention:**
-
-   ```
-   <type>(<scope>): <description>
-   ```
-
-   Types: `feat`, `fix`, `test`, `refactor`, `docs`, `style`, `chore`
-
-5. **Pull Request:**
-   - Ensure all CI checks pass
-   - Update documentation if needed
-   - Follow the project's coding standards
-
-## 📄 License
-
-This project is licensed under the MIT License — see the [LICENSE](./LICENSE) file for details.
-
-**Made with ❤️ for API developers who value privacy, performance, and intelligence.**
+<p align="center">
+  <sub>If runi helps you, consider giving it a star ⭐</sub>
+</p>
