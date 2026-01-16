@@ -90,29 +90,35 @@ export const MainLayout = ({
     description: `${getModifierKeyName()}B - Toggle sidebar`,
   });
 
-  // Container width tracking - cached to avoid expensive reads during drag
+  // Container width and position tracking - cached to avoid expensive reads during drag
   const containerWidthRef = useRef<number>(0);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const containerLeftRef = useRef<number>(0);
 
-  // Update container width when container is available
+  // Update container width and position when container is available
   useEffect(() => {
-    const updateWidth = (): void => {
+    const updateDimensions = (): void => {
       if (containerRef.current) {
-        const width = containerRef.current.getBoundingClientRect().width;
-        containerWidthRef.current = width;
-        setContainerWidth(width);
+        const rect = containerRef.current.getBoundingClientRect();
+        containerWidthRef.current = rect.width;
+        containerLeftRef.current = rect.left;
       }
     };
     
-    updateWidth();
-    const resizeObserver = new ResizeObserver(updateWidth);
+    updateDimensions();
+    const resizeObserver = new ResizeObserver(updateDimensions);
     
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
     
+    // Also update on scroll/resize for accurate positioning
+    window.addEventListener('scroll', updateDimensions, true);
+    window.addEventListener('resize', updateDimensions);
+    
     return () => {
       resizeObserver.disconnect();
+      window.removeEventListener('scroll', updateDimensions, true);
+      window.removeEventListener('resize', updateDimensions);
     };
   }, []);
 
@@ -127,18 +133,7 @@ export const MainLayout = ({
     }
   }, [requestPaneSize, splitRatio, isDragging]);
 
-  // Transform ratio to flexGrow values (official Motion.dev pattern)
-  // Using flexGrow instead of width avoids layout thrashing
-  const requestFlexGrow = useTransform(splitRatio, (ratio) => {
-    const clamped = Math.max(MIN_PANE_SIZE / 100, Math.min(MAX_PANE_SIZE / 100, ratio));
-    return clamped;
-  });
-  const responseFlexGrow = useTransform(splitRatio, (ratio) => {
-    const clamped = Math.max(MIN_PANE_SIZE / 100, Math.min(MAX_PANE_SIZE / 100, ratio));
-    return 1 - clamped;
-  });
-
-  // For width-based layout (fallback), transform to percentage strings
+  // Transform ratio to percentage strings for width-based layout
   const requestWidth = useTransform(splitRatio, (ratio) => {
     const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
     return `${String(clamped)}%`;
@@ -148,30 +143,37 @@ export const MainLayout = ({
     return `${String(100 - clamped)}%`;
   });
 
-  // Store initial ratio at drag start
-  const dragStartRatio = useRef(DEFAULT_SPLIT / 100);
-
   // Handle drag start
   const handleDragStart = useCallback(() => {
     setIsDragging(true);
-    dragStartRatio.current = splitRatio.get();
-  }, [splitRatio]);
+    // Update container position at drag start for accurate calculations
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      containerLeftRef.current = rect.left;
+    }
+  }, []);
 
-  // Handle drag - update ratio based on drag offset (official Motion.dev pattern)
-  // Optimized for extreme drag scenarios (all the way left/right, rapid jitter)
+  // Handle drag - use absolute position (like sidebar) for perfect sync
+  // This matches the sidebar implementation which works perfectly
   const handleDrag = useCallback(
-    (_event: PointerEvent, info: { offset: { x: number } }) => {
+    (_event: PointerEvent, info: { point: { x: number } }) => {
       const containerWidth = containerWidthRef.current;
+      const containerLeft = containerLeftRef.current;
+      
       if (containerWidth > 0) {
-        // Convert pixel offset to ratio change
-        const deltaRatio = info.offset.x / containerWidth;
-        const newRatio = dragStartRatio.current + deltaRatio;
+        // Calculate position relative to container (like sidebar uses point.x directly)
+        const relativeX = info.point.x - containerLeft;
+        
+        // Convert to ratio (0-1) based on container width
+        const newRatio = relativeX / containerWidth;
+        
+        // Clamp to min/max constraints
         const minRatio = MIN_PANE_SIZE / 100;
         const maxRatio = MAX_PANE_SIZE / 100;
-        // Clamp immediately to ensure perfect sync even during rapid movements
         const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
+        
         // Use MotionValue.set() for immediate, synchronous update
-        // This ensures perfect sync even during rapid jittering
+        // This ensures perfect sync like the sidebar
         splitRatio.set(clamped);
       }
     },
