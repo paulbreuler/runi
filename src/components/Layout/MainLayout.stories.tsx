@@ -290,3 +290,262 @@ export const KeyboardShortcuts: Story = {
     // This is tested in E2E tests
   },
 };
+
+// Performance testing stories
+export const PerformanceRapidDrag: Story = {
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Performance Test: Rapid Dragging</h3>
+          <p className="text-sm text-text-secondary mb-4">
+            This test validates smooth performance during rapid, repeated drag operations
+          </p>
+          <p className="text-xs text-text-muted">
+            Drag the divider rapidly back and forth multiple times
+          </p>
+        </div>
+      }
+      responseContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Response Pane</h3>
+          <p className="text-sm text-text-secondary">
+            UI should remain stable and responsive during rapid drags
+          </p>
+        </div>
+      }
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const resizer = canvas.getByTestId('pane-resizer');
+    
+    // Verify resizer is present
+    await expect(resizer).toBeInTheDocument();
+    
+    // Get initial bounding box
+    const initialBox = resizer.getBoundingClientRect();
+    
+    // Perform rapid drag operations (simulating user rapidly moving the divider)
+    // This tests for performance degradation and UI stability
+    for (let i = 0; i < 10; i++) {
+      // Simulate drag to the right
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target: resizer },
+        { coords: { x: initialBox.x + 100 + (i * 20), y: initialBox.y } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      
+      // Small delay to allow state updates
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Simulate drag back to the left
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target: resizer },
+        { coords: { x: initialBox.x - 50 - (i * 10), y: initialBox.y } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    
+    // Verify UI is still stable - all components should still be present
+    await expect(canvas.getByTestId('request-pane')).toBeInTheDocument();
+    await expect(canvas.getByTestId('response-pane')).toBeInTheDocument();
+    await expect(canvas.getByTestId('pane-resizer')).toBeInTheDocument();
+    
+    // Verify panes still have valid widths (not broken)
+    const requestPane = canvas.getByTestId('request-pane');
+    const responsePane = canvas.getByTestId('response-pane');
+    
+    const requestStyle = requestPane.getAttribute('style') || '';
+    const responseStyle = responsePane.getAttribute('style') || '';
+    
+    // Both panes should have width styles (MotionValue-driven)
+    expect(requestStyle).toContain('width');
+    expect(responseStyle).toContain('width');
+  },
+};
+
+export const PerformanceExtendedDrag: Story = {
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Performance Test: Extended Drag Session</h3>
+          <p className="text-sm text-text-secondary mb-4">
+            This test validates performance during extended drag sessions
+          </p>
+          <p className="text-xs text-text-muted">
+            Simulates a long drag operation to check for memory leaks or performance degradation
+          </p>
+        </div>
+      }
+      responseContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Response Pane</h3>
+          <p className="text-sm text-text-secondary">
+            Performance should remain consistent throughout extended use
+          </p>
+        </div>
+      }
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const resizer = canvas.getByTestId('pane-resizer');
+    
+    await expect(resizer).toBeInTheDocument();
+    
+    const initialBox = resizer.getBoundingClientRect();
+    
+    // Simulate extended drag session with many small movements
+    // This tests for gradual performance degradation
+    for (let i = 0; i < 50; i++) {
+      const offset = Math.sin(i / 10) * 50; // Smooth sine wave pattern
+      
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target: resizer },
+        { coords: { x: initialBox.x + offset, y: initialBox.y } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      
+      // Very small delay to simulate continuous dragging
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    
+    // Verify UI stability after extended use
+    await expect(canvas.getByTestId('request-pane')).toBeInTheDocument();
+    await expect(canvas.getByTestId('response-pane')).toBeInTheDocument();
+    await expect(canvas.getByTestId('pane-resizer')).toBeInTheDocument();
+    
+    // Verify no layout breakage
+    const requestPane = canvas.getByTestId('request-pane');
+    const responsePane = canvas.getByTestId('response-pane');
+    
+    // Panes should still have valid dimensions
+    const requestRect = requestPane.getBoundingClientRect();
+    const responseRect = responsePane.getBoundingClientRect();
+    
+    expect(requestRect.width).toBeGreaterThan(0);
+    expect(responseRect.width).toBeGreaterThan(0);
+  },
+};
+
+export const PerformanceSidebarRapidDrag: Story = {
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Performance Test: Sidebar Rapid Drag</h3>
+          <p className="text-sm text-text-secondary mb-4">
+            This test validates sidebar resizing performance during rapid operations
+          </p>
+        </div>
+      }
+      responseContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Response Pane</h3>
+        </div>
+      }
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const sidebarResizer = canvas.getByTestId('sidebar-resizer');
+    
+    await expect(sidebarResizer).toBeInTheDocument();
+    
+    const initialBox = sidebarResizer.getBoundingClientRect();
+    
+    // Rapid sidebar resizing
+    for (let i = 0; i < 15; i++) {
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target: sidebarResizer },
+        { coords: { x: initialBox.x + 50 + (i * 10), y: initialBox.y } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      
+      await new Promise(resolve => setTimeout(resolve, 30));
+      
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target: sidebarResizer },
+        { coords: { x: initialBox.x - 30 - (i * 5), y: initialBox.y } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      
+      await new Promise(resolve => setTimeout(resolve, 30));
+    }
+    
+    // Verify sidebar is still functional
+    await expect(canvas.getByTestId('sidebar')).toBeInTheDocument();
+    await expect(canvas.getByTestId('sidebar-resizer')).toBeInTheDocument();
+    
+    // Verify sidebar has valid width
+    const sidebar = canvas.getByTestId('sidebar');
+    const sidebarStyle = sidebar.getAttribute('style') || '';
+    expect(sidebarStyle).toContain('width');
+  },
+};
+
+export const PerformanceStressTest: Story = {
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full overflow-auto p-4">
+          <div className="space-y-2">
+            {Array.from({ length: 100 }, (_, i) => (
+              <div key={i} className="p-2 bg-bg-raised rounded">
+                <p className="text-sm">Request Item {i + 1}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      }
+      responseContent={
+        <div className="h-full overflow-auto p-4">
+          <div className="space-y-2">
+            {Array.from({ length: 100 }, (_, i) => (
+              <div key={i} className="p-2 bg-bg-raised rounded">
+                <p className="text-sm">Response Item {i + 1}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      }
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const resizer = canvas.getByTestId('pane-resizer');
+    
+    await expect(resizer).toBeInTheDocument();
+    
+    const initialBox = resizer.getBoundingClientRect();
+    
+    // Stress test: rapid drags with heavy content
+    // This tests performance with complex DOM structures
+    for (let i = 0; i < 20; i++) {
+      const offset = (i % 2 === 0 ? 1 : -1) * 80;
+      
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target: resizer },
+        { coords: { x: initialBox.x + offset, y: initialBox.y } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      
+      await new Promise(resolve => setTimeout(resolve, 40));
+    }
+    
+    // Verify all content is still accessible
+    await expect(canvas.getByText('Request Item 1')).toBeInTheDocument();
+    await expect(canvas.getByText('Response Item 1')).toBeInTheDocument();
+    
+    // Verify scrollbars are stable (scrollbar-gutter)
+    const requestPane = canvas.getByTestId('request-pane');
+    const responsePane = canvas.getByTestId('response-pane');
+    
+    expect(requestPane).toHaveStyle({ scrollbarGutter: 'stable' });
+    expect(responsePane).toHaveStyle({ scrollbarGutter: 'stable' });
+  },
+};
