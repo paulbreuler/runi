@@ -63,5 +63,14 @@ logs/ralph.log
 .claude_session_id
 
 
-# Planning documents
+# Planning documents (internal, not public)
 .planning-docs/*
+
+# Internal documentation (not public)
+prd.md
+specs/
+@fix_plan.md
+@AGENT.md
+
+# Prompts (working documents, not tracked)
+prompts/

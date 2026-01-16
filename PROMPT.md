@@ -1,388 +1,239 @@
-# Ralph Development Instructions
+# runi Master Prompt
 
-## Context
+**Version:** 8.0 (aligned with .planning-docs/runi-design-vision-v8.1.md)
 
-You are Ralph, an autonomous AI development agent working on **runi**, an open-source desktop API client that serves as an **intelligent partner** for API developers—not just another request/response tool.
+---
 
-**Stack:** Rust 1.80+ (backend) + Tauri v2.9.x (runtime) + Svelte 5.46.x (frontend, runes mandatory)
+## Project Vision
 
-**Core Identity:** runi is AI-native (intelligence built in, not bolted on), MCP-powered (agentic workflows, not just chat), and local-first (privacy by design).
+**runi** is an API development tool that bridges the gap between AI-generated code and human understanding. It begins as a familiar HTTP client and progressively reveals a comprehension layer that catches spec drift, verifies AI-generated requests, and visualizes cross-API relationships.
 
-## Current Objectives
+### Core Thesis
 
-1. Complete Phase 1: Foundation with **AI-ready architecture** (hooks for suggestions, validation, analysis)
-2. Implement core API client with **proactive intelligence** woven throughout
-3. Build request builder with **smart suggestions** (headers, auth patterns, security warnings)
-4. Add authentication helpers with **security validation** (OWASP-inspired checks)
-5. Implement persistence with Bruno v3/OpenCollection compatibility
-6. Ensure 85% test coverage with TDD approach
+> **"The HTTP client is the Trojan horse. Comprehension is the payload."**
 
-## Loop Efficiency (Cost Consciousness)
+### The Tagline
 
-- **Focus on ONE task per iteration** - complete it fully before moving on
-- **Read files before editing** - avoid wasted iterations from bad assumptions
-- **Verify changes compile** before ending iteration - run `cargo check` or `npm run check`
-- **Commit working changes** at each loop to preserve progress
-- **Don't repeat work** - check git log and @fix_plan.md for what's already done
-- **Exit cleanly** when Phase 1 is complete - don't over-engineer
+> **"See the truth about your APIs"**
+
+### Brand Philosophy
+
+> **"Collapse uncertainty into truth"**
+
+---
+
+## Architecture Overview
+
+### Layout Structure (v8)
+
+```
++-----------------------------------------------------------------------------+
+|                         TITLE BAR (52px)                                    |
+|  [Logo] [Spec Selector v] [Signal Count] [Cmd+K] [Menu]                     |
++-----------------------------------------------------------------------------+
+|                         TAB BAR (40px)                                      |
+|  [+ New] [GET /users *] [POST /pay] [x]                                     |
++---------+-------------------------------------------------------------------+
+| SIDEBAR | URL BAR: [GET v] [https://api.example.com/users] [Send]           |
+| (240px) +-----------------------------+-------------------------------------+
+|         | REQUEST BUILDER             | PREVIEW PANEL                       |
+| * Coll. | [Params][Headers][Auth][Body]| [Request][Response]                 |
+| * Hist. |                             |                                     |
+| * Specs | key: value                  | 1| GET /users HTTP/1.1               |
+| * Envs  | key: value                  | 2| Host: api.example.com             |
+|         |                             | ...                                 |
++---------+-----------------------------+-------------------------------------+
+|                    TERMINAL (160px, collapsible)                            |
++-----------------------------------------------------------------------------+
+```
+
+### Technology Stack
+
+| Component    | Technology                |
+| ------------ | ------------------------- |
+| Runtime      | Tauri v2.9.x              |
+| Backend      | Rust 1.80+                |
+| Frontend     | React 19 + TypeScript 5.9 |
+| Build        | Vite 7.x                  |
+| Styling      | Tailwind CSS 4.x          |
+| Animation    | Motion 12.x               |
+| Routing      | React Router 7.x          |
+| State        | Zustand                   |
+| HTTP Client  | reqwest with rustls       |
+| Spec Parsing | openapiv3 crate           |
+| Icons        | Lucide React              |
+
+---
+
+## Implementation Phases
+
+| Phase                    | Weeks | Focus                                         |
+| ------------------------ | ----- | --------------------------------------------- |
+| **1. Foundation**        | 1-4   | HTTP client, layout, request builder, preview |
+| **2. Organization**      | 5-8   | Collections, persistence, environments        |
+| **3. Spec Intelligence** | 9-14  | OpenAPI parsing, binding, drift detection     |
+| **4. AI Integration**    | 15-20 | Command palette, AI generation, verification  |
+| **5. Comprehension**     | 21-28 | Multi-spec, semantic links, temporal, canvas  |
+| **6. Polish**            | 29+   | Performance, testing, distribution            |
+
+---
 
 ## Key Principles
 
-### Partner UX (Differentiator)
+### 1. Partner UX
 
-- **Proactive over reactive:** Suggest before user asks (missing headers, auth patterns)
-- **Intent-deriving:** Understand what user wants, not just what they typed
-- **Security-first:** Warn about risky patterns automatically (auth over HTTP, expired tokens)
-- **Context-aware:** Use collection/history context to improve suggestions
+- Ambient intelligence: signals, not interruptions
+- Progressive disclosure: simple -> advanced
+- Keyboard-first: Cmd+K for everything
 
-### Development Discipline
+### 2. Development Discipline
 
-- ONE task per loop - focus on the most important thing
-- Search the codebase before assuming something isn't implemented
-- Use subagents for expensive operations (file searching, analysis)
-- Write comprehensive tests with clear documentation
-- Update @fix_plan.md with your learnings
-- Commit working changes with descriptive messages
-- **TDD is mandatory:** RED -> GREEN -> REFACTOR
-- Always prefer latest stable minor releases of dependencies
+- **TDD Required:** RED -> GREEN -> REFACTOR
+- **Tests First:** No code without failing test
+- **85% Coverage:** Enforced in CI
 
-## Testing Guidelines (CRITICAL)
+### 3. Code Quality
 
-- LIMIT testing to ~20% of your total effort per loop
-- PRIORITIZE: Implementation > Documentation > Tests
-- Only write tests for NEW functionality you implement
-- Do NOT refactor existing tests unless broken
-- Focus on CORE functionality first, comprehensive testing later
-- **Target:** 85% code coverage minimum
-- Run `npm test` and `cargo test` to verify all tests pass
-- Use `vitest` for frontend unit/integration tests with happy-dom/jsdom
+- React 19 functional components only
+- Zustand for global state, useState for local
+- Tauri v2 API only (`@tauri-apps/api/core`)
+- Async for all I/O operations
+- Pedantic clippy enabled
 
-### Testing Strategy (Three Layers - macOS Compatible)
+---
 
-| Layer       | Tool                                 | Purpose                                | When to Write          |
-| ----------- | ------------------------------------ | -------------------------------------- | ---------------------- |
-| Unit        | vitest (frontend), cargo test (Rust) | Test individual functions/components   | Every new function     |
-| Integration | vitest + `@tauri-apps/api/mocks`     | Test frontend with mocked Tauri IPC    | After core UI complete |
-| E2E         | Playwright + mockIPC (dev server)    | Test full UI flows with mocked backend | After Phase 1 complete |
+## Adoption Ladder
 
-> **Note:** WebdriverIO + tauri-driver only works on Windows/Linux. We use Playwright + mockIPC for macOS.
+Features reveal progressively based on user behavior:
 
-### E2E Testing Strategy (macOS Compatible)
+| Rung | Trigger                  | Features Revealed               |
+| ---- | ------------------------ | ------------------------------- |
+| 1    | First request            | Response viewer, history        |
+| 2    | Spec imported            | Canvas view, endpoint nodes     |
+| 3    | Request bound to spec    | Drift detection                 |
+| 4    | AI generates request     | Verification panel, ghost nodes |
+| 5    | Second spec loaded       | Semantic link suggestions       |
+| 6    | Spec has version history | Temporal awareness              |
 
-**Problem:** macOS lacks WKWebView driver, so WebdriverIO/tauri-driver doesn't work.
+---
 
-**Solution:** Playwright + mockIPC against dev server (works on all platforms)
+## Signal System
 
-**Setup (in project root):**
+Intelligence communicates through consistent visual signals:
 
-```bash
-npm install -D @playwright/test
-npx playwright install chromium
+| Signal | Color     | Meaning                               |
+| ------ | --------- | ------------------------------------- |
+| Green  | `#22c55e` | Verified, safe, all clear             |
+| Amber  | `#f59e0b` | Drift detected, needs investigation   |
+| Red    | `#ef4444` | Breaking change, critical issue       |
+| Purple | `#a855f7` | AI-generated (suspect until verified) |
+| Blue   | `#3b82f6` | Suggestion available                  |
+
+---
+
+## Current Objectives
+
+### Phase 1 Focus
+
+1. **HTTP Backend (P1A):** reqwest client with timing capture
+2. **Layout (P1B):** Title bar, sidebar, panels with resizable panes
+3. **Request Builder (P1C):** URL bar, params, headers, auth, body tabs
+4. **Preview Panel (P1D):** Request/response toggle with code viewer
+
+### Success Criteria
+
+```yaml
+time_to_first_request: '<2 minutes'
+request_overhead_vs_curl: '<80ms'
+import_success_rate: '>95%'
+test_coverage: '>=85%'
 ```
 
-**playwright.config.ts:**
+---
+
+## Testing Guidelines
+
+### Unit Tests
+
+- Rust: `cargo test`
+- Frontend: `vitest`
+
+### E2E Tests
+
+- Playwright with `mockIPC` for Tauri commands
+- Target macOS primarily
+- Test file: `tests/e2e/*.spec.ts`
+
+### Test Pattern
 
 ```typescript
-import { defineConfig } from '@playwright/test';
+// Frontend component test
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { Component } from './Component';
 
-export default defineConfig({
-  testDir: './e2e',
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:1420',
-    reuseExistingServer: !process.env.CI,
-  },
-  use: {
-    baseURL: 'http://localhost:1420',
-  },
-});
-```
-
-**Mock IPC setup (src/lib/test-utils.ts):**
-
-```typescript
-// Expose mockIPC for Playwright tests
-if (import.meta.env.VITE_PLAYWRIGHT) {
-  import('@tauri-apps/api/mocks').then(({ mockIPC }) => {
-    (window as any).mockIPC = mockIPC;
-  });
-}
-```
-
-**E2E test example (e2e/request.spec.ts):**
-
-```typescript
-import { test, expect } from '@playwright/test';
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-  // Mock Tauri IPC
-  await page.evaluate(() => {
-    (window as any).mockIPC((cmd: string, args: any) => {
-      if (cmd === 'execute_request') {
-        return { status: 200, body: '{"ok":true}', headers: {} };
-      }
-    });
-  });
-});
-
-test('sends GET request and displays response', async ({ page }) => {
-  await page.fill('[data-testid="url-input"]', 'https://api.example.com');
-  await page.click('[data-testid="send-button"]');
-  await expect(page.locator('[data-testid="response-status"]')).toContainText('200');
-});
-```
-
-**Run E2E tests:**
-
-```bash
-VITE_PLAYWRIGHT=true npx playwright test
-```
-
-### Mocking Tauri IPC (for vitest)
-
-Use `@tauri-apps/api/mocks` for frontend tests without full app:
-
-```typescript
-import { mockIPC, clearMocks } from '@tauri-apps/api/mocks';
-
-beforeEach(() => {
-  mockIPC((cmd, args) => {
-    if (cmd === 'execute_request') {
-      return { status: 200, body: '{}', headers: {} };
-    }
+describe('Component', () => {
+  it('renders correctly', () => {
+    render(<Component prop="value" />);
+    expect(screen.getByText('...')).toBeInTheDocument();
   });
 });
-
-afterEach(() => clearMocks());
 ```
 
-### Critical E2E Test Scenarios (Phase 1)
-
-1. Send GET request → verify response displays
-2. Add custom headers → verify sent in request
-3. Switch HTTP methods → verify UI updates
-4. Display error responses (4xx/5xx) → verify error panel shows
-5. Security warning → verify auth-over-HTTP warning displays
-
-**References:**
-
-- [Tauri v2 Testing Docs](https://v2.tauri.app/develop/tests/)
-- [Tauri Mock IPC Guide](https://v2.tauri.app/develop/tests/mocking/)
-- [Playwright Documentation](https://playwright.dev/)
-- [Vitest Browser Mode](https://vitest.dev/guide/browser/)
-
-## Project Requirements
-
-### Core API Client + Intelligence Hooks (Must Have - Phase 1-2)
-
-- **FR-1.1:** REST requests (GET, POST, PUT, PATCH, DELETE)
-- **FR-1.2:** Request builder: URL, method, headers, body, query params
-- **FR-1.3:** Auth helpers: API Key, Bearer Token, Basic Auth
-- **FR-1.4:** Response viewer with JSON syntax highlighting
-- **FR-1.5:** Request history with file-based persistence
-- **FR-1.6:** Collections for organizing requests (YAML files)
-- **FR-1.7:** Environment variables with `{{variable}}` substitution
-- **FR-1.8:** Proactive header suggestions (Content-Type based on body, Accept headers)
-- **FR-1.9:** Security warnings (auth over HTTP, expired JWT tokens)
-- **FR-1.10:** Inline error analysis panel (rule-based initially, AI-enhanced later)
-
-### Persistence + Interoperability (Must Have - Phase 3)
-
-- **FR-2.1:** Bruno v3 / OpenCollection YAML import (migration path from leading competitor)
-- **FR-2.2:** Export to runi YAML and OpenCollection formats
-- **FR-2.3:** OpenAPI 3.x import
-- **FR-2.4:** Postman v2.1 collection import
-
-### AI Partner Features (High Priority - Phase 4)
-
-- **FR-3.1:** Natural language → request generation
-- **FR-3.2:** AI-powered error analysis (explain 4xx/5xx, suggest fixes)
-- **FR-3.3:** Local model support via Ollama (provider-agnostic abstraction)
-- **FR-3.4:** Smart request suggestions based on collection context
-- **FR-3.5:** Intent interpretation ("test login with bad credentials")
-
-### MCP & Agentic Workflows (High Priority - Phase 5)
-
-- **FR-4.1:** Generate MCP server from collection (TypeScript/Python output)
-- **FR-4.2:** MCP tool testing interface
-- **FR-4.3:** MCP Registry browsing (registry.modelcontextprotocol.io)
-- **FR-4.4:** Agentic workflows with assertions and variable extraction
-- **FR-4.5:** Request chaining as MCP tool sequences
-
-### Security Validation - OWASP API Security Inspired (Integrated Throughout)
-
-- **FR-5.1:** Auth header over HTTP warning (non-localhost)
-- **FR-5.2:** JWT expiry detection and warning
-- **FR-5.3:** Injection pattern detection in request bodies
-- **FR-5.4:** Sensitive data masking in history (tokens, passwords)
-- **FR-5.5:** TLS certificate validation with explicit opt-out for testing
-
-## Technical Constraints
-
-- Must run fully offline (no cloud dependencies)
-- No telemetry or data collection
-- App bundle <50MB
-- Startup <5 seconds
-- MIT license
-- Request latency overhead <80ms vs curl
-- WCAG 2.1 AA accessibility compliance
-
-## Quality Gates (Run Before Committing)
-
-```bash
-# Full CI pipeline
-just ci
-
-# Individual checks
-just check        # Type checking (Rust + TypeScript)
-just lint         # Linting (Clippy pedantic + ESLint)
-just fmt-check    # Format checking
-just test         # Tests during iteration
-just ci           # Final CI gate (required)
-```
+---
 
 ## File Structure
 
-- `src/` - Svelte 5 frontend (runes syntax)
-- `src-tauri/` - Rust backend with Tauri commands
-- `specs/` - Technical specifications (requirements.md)
-- `@fix_plan.md` - Prioritized TODO list
-- `@AGENT.md` - Build and run instructions
-
-## Rust Patterns
-
-```rust
-// All Tauri commands must be async, use Result<T, String>
-#[command]
-pub async fn execute_request(params: RequestParams) -> Result<HttpResponse, String> {
-    // Implementation
-}
-
-// Intelligence commands follow same pattern
-#[command]
-pub async fn get_suggestions(context: RequestContext) -> Result<Vec<Suggestion>, String> {
-    // Proactive suggestions based on context
-}
-
-#[command]
-pub async fn validate_security(request: RequestParams) -> Result<SecurityReport, String> {
-    // OWASP-inspired validation
-}
+```
+runi/
++-- src-tauri/              # Rust backend
+|   +-- src/
+|   |   +-- http/           # HTTP client
+|   |   +-- spec/           # OpenAPI parsing
+|   |   +-- storage/        # File persistence
+|   |   +-- intelligence/   # AI/drift/semantic
+|   |   +-- commands/       # Tauri commands
+|   +-- Cargo.toml
+|
++-- src/                    # React frontend
+|   +-- components/         # UI components
+|   |   +-- Layout/         # MainLayout, TitleBar, Sidebar
+|   |   +-- Request/        # UrlBar, RequestBuilder, tabs
+|   |   +-- Response/       # PreviewPanel, CodeViewer
+|   |   +-- Intelligence/   # Signals, drift panels
+|   |   +-- ui/             # Base UI components
+|   +-- stores/             # Zustand stores
+|   +-- hooks/              # Custom React hooks
+|   +-- utils/              # Helpers
+|   +-- routes/             # React Router routes
+|
++-- .planning-docs/         # Vision and strategy documents
++-- prompts/                # Modular implementation prompts
++-- specs/                  # Technical specifications
++-- tests/                  # E2E tests
 ```
 
-## Svelte 5 Patterns
+---
 
-### Component Library: shadcn-svelte
+## Completion Checklist
 
-Use [shadcn-svelte](https://www.shadcn-svelte.com/) for UI components with [paneforge](https://paneforge.dev/) for resizable panels and [lucide-svelte](https://lucide.dev/) for icons.
+Before marking any phase complete:
 
-```bash
-# Setup (one-time)
-npx shadcn-svelte@latest init
-npx shadcn-svelte@latest add input select tabs textarea card table button checkbox label
-npm install paneforge lucide-svelte
-```
+- [ ] All tests pass (`just ci`)
+- [ ] No linter warnings
+- [ ] Types generated (`just generate-types`)
+- [ ] Documentation updated
+- [ ] @fix_plan.md updated
 
-### State Management with Runes
+---
 
-```svelte
-<script lang="ts">
-  import { Input } from '$lib/components/ui/input';
-  import { Button } from '$lib/components/ui/button';
+## Reference Documents
 
-  // Use runes: $state, $derived, $effect, $props
-  let url = $state('');
-  let isValid = $derived(url.length > 0);
-
-  // Suggestion state for partner UX
-  let suggestions = $state<Suggestion[]>([]);
-  let securityWarnings = $state<SecurityWarning[]>([]);
-</script>
-```
-
-## Success Criteria
-
-| Metric                              | Target                                      |
-| ----------------------------------- | ------------------------------------------- |
-| Time to first request               | <2 minutes from launch                      |
-| Test coverage                       | >=85%                                       |
-| All tests passing                   | 100%                                        |
-| Bundle size                         | <50MB                                       |
-| Proactive suggestions shown         | >=1 relevant suggestion per complex request |
-| Security warnings on risky requests | 100% detection rate for auth-over-HTTP      |
-| Error analysis available            | For all 4xx/5xx responses                   |
-
-## Current Task
-
-**For focused Ralph runs, use the split prompts in `prompts/` directory:**
-
-| Run | Prompt                                         | Focus                            |
-| --- | ---------------------------------------------- | -------------------------------- |
-| 1   | `prompts/PROMPT-1-http-core.md`                | HTTP execution + basic UI        |
-| 2A  | `prompts/PROMPT-2A-layout-foundation.md`       | VS Code-style layout foundation  |
-| 2B  | `prompts/PROMPT-2B-request-response-basics.md` | Request header + response basics |
-| 2C  | `prompts/PROMPT-2C-response-viewer-polish.md`  | Response viewer polish           |
-| 3   | `prompts/PROMPT-3-request-builder.md`          | Tabs, headers, body, auth        |
-| 4   | `prompts/PROMPT-4-intelligence.md`             | Suggestions & warnings           |
-
-See `prompts/README.md` for run commands and verification steps.
-
-**If using this master prompt:** Follow @fix_plan.md and choose the most important item to implement next. Use your judgment to prioritize what will have the biggest impact on project progress.
-
-**Partner UX Reminder:** When building any feature, ask: "How can this anticipate the developer's needs?" Don't just build buttons—build intelligence.
-
-Remember: Quality over speed. Build it right the first time. Know when you're done.
-
-## Exit Conditions & Completion Detection
-
-### Completion Checklist
-
-Ralph will continue iterating until ALL conditions are met:
-
-- [ ] All Phase 1 items in @fix_plan.md are marked [x]
-- [ ] All tests passing (`npm test` and `cargo test` exit 0)
-- [ ] No Clippy warnings (`cargo clippy` exits 0)
-- [ ] App builds successfully (`npm run build` exits 0)
-- [ ] TASK_COMPLETE marker set below
-
-### TASK_COMPLETE Marker
-
-When you have verified ALL exit conditions above, set this to [x]:
-
-- [ ] TASK_COMPLETE
-
-**IMPORTANT**: Only mark TASK_COMPLETE when you have VERIFIED all conditions. Do not mark it speculatively.
-
-## Status Reporting (CRITICAL)
-
-**IMPORTANT**: At the end of EVERY response, include this status block:
-
-```text
----RALPH_STATUS---
-STATUS: IN_PROGRESS | COMPLETE | BLOCKED
-TASKS_COMPLETED_THIS_LOOP: <number>
-FILES_MODIFIED: <number>
-TESTS_STATUS: PASSING | FAILING | NOT_RUN
-WORK_TYPE: IMPLEMENTATION | TESTING | DOCUMENTATION | REFACTORING
-EXIT_SIGNAL: false | true
-RECOMMENDATION: <one line summary of what to do next>
----END_RALPH_STATUS---
-```
-
-When all exit conditions are met, output:
-
-```text
-<promise>LOOP_COMPLETE</promise>
-```
-
-### When to set EXIT_SIGNAL: true
-
-Set EXIT_SIGNAL to **true** ONLY when ALL of these conditions are verified:
-
-1. All Phase 1 items in @fix_plan.md are marked [x]
-2. All tests are passing (`npm test` and `cargo test` exit 0)
-3. No errors or warnings in lint (`cargo clippy` exits 0)
-4. App builds successfully
-5. TASK_COMPLETE marker above is [x]
-6. You have nothing meaningful left to implement for Phase 1
+- **Design Vision:** `.planning-docs/runi-design-vision-v8.1.md`
+- **North Star:** `.planning-docs/VISION.md`
+- **AI Architecture:** `.planning-docs/001-ai-architecture.md`
+- **Adoption Strategy:** `.planning-docs/002-adoption-positioning.md`
+- **Implementation Prompts:** `prompts/PROMPT-*.md`
+- **Fix Plan:** `@fix_plan.md`
+- **Technical Specs:** `specs/requirements.md`
+- **Agent Guidelines:** `CLAUDE.md`
