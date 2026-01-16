@@ -24,7 +24,7 @@ describe('ResponseViewer', () => {
 
   it('renders response viewer with tabs', () => {
     render(<ResponseViewer response={mockResponse} />);
-    
+
     expect(screen.getByTestId('response-viewer')).toBeInTheDocument();
     expect(screen.getByText('Body')).toBeInTheDocument();
     expect(screen.getByText('Headers')).toBeInTheDocument();
@@ -33,24 +33,26 @@ describe('ResponseViewer', () => {
 
   it('formats JSON with 2-space indentation', () => {
     render(<ResponseViewer response={mockResponse} />);
-    
+
     const raw = screen.getByTestId('response-body-raw');
-    const text = raw.textContent ?? '';
+    const text = raw.textContent || '';
 
     // Look for 2-space indentation on nested keys
     expect(text).toMatch(/\n {2}"headers": \{/);
-    expect(screen.getByTestId('response-body').querySelector('[data-language="json"]')).toBeTruthy();
+    expect(
+      screen.getByTestId('response-body').querySelector('[data-language="json"]')
+    ).toBeTruthy();
   });
 
   it('displays header count', () => {
     render(<ResponseViewer response={mockResponse} />);
-    
+
     expect(screen.getByText('(2)')).toBeInTheDocument();
   });
 
   it('displays body size and timing', () => {
     render(<ResponseViewer response={mockResponse} />);
-    
+
     expect(screen.getByText('150ms')).toBeInTheDocument();
     // Body size should be calculated and displayed
   });
@@ -58,10 +60,10 @@ describe('ResponseViewer', () => {
   it('switches between tabs', async () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
-    
+
     const headersTab = screen.getByText('Headers');
     await user.click(headersTab);
-    
+
     // Headers tab should be active
     expect(headersTab).toHaveClass('font-medium');
   });
@@ -69,11 +71,11 @@ describe('ResponseViewer', () => {
   it('displays headers in headers tab', async () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
-    
+
     // Click headers tab
     const headersTab = screen.getByText('Headers');
     await user.click(headersTab);
-    
+
     // Should show HTTP status line (react-syntax-highlighter renders in code elements)
     const viewer = screen.getByTestId('response-viewer');
     expect(viewer).toBeInTheDocument();
@@ -84,14 +86,14 @@ describe('ResponseViewer', () => {
   it('formats raw HTTP response', async () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
-    
+
     // Click raw tab
     const rawTab = screen.getByText('Raw');
     await user.click(rawTab);
-    
+
     // Raw tab should be active
     expect(rawTab).toHaveClass('font-medium');
-    const rawText = screen.getByTestId('response-raw-text').textContent ?? '';
+    const rawText = screen.getByTestId('response-raw-text').textContent || '';
     expect(rawText).toContain('HTTP/1.1 200 OK');
     expect(screen.getByTestId('response-raw').querySelector('[data-language="http"]')).toBeTruthy();
   });
@@ -102,7 +104,11 @@ describe('ResponseViewer', () => {
     const tabScroller = screen.getByLabelText('Response tabs');
     Object.defineProperty(tabScroller, 'scrollWidth', { value: 420, configurable: true });
     Object.defineProperty(tabScroller, 'clientWidth', { value: 160, configurable: true });
-    Object.defineProperty(tabScroller, 'scrollLeft', { value: 0, configurable: true, writable: true });
+    Object.defineProperty(tabScroller, 'scrollLeft', {
+      value: 0,
+      configurable: true,
+      writable: true,
+    });
 
     fireEvent.scroll(tabScroller);
 
@@ -116,7 +122,11 @@ describe('ResponseViewer', () => {
     const tabScroller = screen.getByLabelText('Response tabs');
     Object.defineProperty(tabScroller, 'scrollWidth', { value: 420, configurable: true });
     Object.defineProperty(tabScroller, 'clientWidth', { value: 160, configurable: true });
-    Object.defineProperty(tabScroller, 'scrollLeft', { value: 120, configurable: true, writable: true });
+    Object.defineProperty(tabScroller, 'scrollLeft', {
+      value: 120,
+      configurable: true,
+      writable: true,
+    });
 
     fireEvent.scroll(tabScroller);
 

@@ -14,9 +14,11 @@ const buttonVariants = cva(
         // Destructive: Soft error styling
         destructive: 'bg-signal-error/10 text-signal-error hover:bg-signal-error/20',
         // Outline: Subtle border, ghost-like
-        outline: 'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50',
+        outline:
+          'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50',
         // Secondary: Raised surface
-        secondary: 'bg-bg-raised border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-elevated',
+        secondary:
+          'bg-bg-raised border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-elevated',
         // Ghost: Invisible until hover
         ghost: 'bg-transparent text-text-muted hover:text-text-secondary hover:bg-bg-raised/50',
         // Link: Text only
@@ -70,58 +72,38 @@ const buttonMotionVariants: Record<string, Variant> = {
 };
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    Omit<
+      React.ButtonHTMLAttributes<HTMLButtonElement>,
+      'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd'
+    >,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      variant,
-      size,
-      asChild = false,
-      disabled,
-      onDrag,
-      onDragStart,
-      onDragEnd,
-      onAnimationStart,
-      onAnimationEnd,
-      ...props
-    },
-    ref
-  ) => {
+  ({ className, variant, size, asChild = false, disabled, ...props }, ref) => {
     if (asChild) {
       const Comp = Slot;
       return (
-        <Comp
-          className={cn(buttonVariants({ variant, size, className }))}
-          ref={ref}
-          {...props}
-        />
+        <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
       );
     }
 
     // Use Motion variants for cleaner, more maintainable animations
     // Following Motion docs: variants are better than inline whileHover/whileTap
-    const motionProps = {
-      ...props,
-      className: cn(buttonVariants({ variant, size, className })),
-      ref,
-      disabled,
-      variants: buttonMotionVariants,
-      initial: 'rest',
-      whileHover: disabled ? undefined : 'hover',
-      whileTap: disabled ? undefined : 'tap',
-      onDrag,
-      onDragStart,
-      onDragEnd,
-      onAnimationStart,
-      onAnimationEnd,
-    };
-
-    return <motion.button {...motionProps} />;
+    return (
+      <motion.button
+        {...props}
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={disabled}
+        variants={buttonMotionVariants}
+        initial="rest"
+        whileHover={disabled === true ? undefined : 'hover'}
+        whileTap={disabled === true ? undefined : 'tap'}
+      />
+    );
   }
 );
 Button.displayName = 'Button';

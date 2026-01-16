@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
 import { createCompactQuery, createStandardQuery } from '@/utils/responsive';
 
-export function useResponsive() {
+interface ResponsiveState {
+  isCompact: boolean;
+  isStandard: boolean;
+  isSpacious: boolean;
+}
+
+export function useResponsive(): ResponsiveState {
   const [isCompact, setIsCompact] = useState(false);
   const [isStandard, setIsStandard] = useState(false);
   const [isSpacious, setIsSpacious] = useState(true);
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const compactQuery = createCompactQuery();
     const standardQuery = createStandardQuery();
 
-    const updateCompact = () => {
+    const updateCompact = (): void => {
       setIsCompact(compactQuery.matches);
     };
-    const updateStandard = () => {
+    const updateStandard = (): void => {
       setIsStandard(standardQuery.matches);
     };
 
@@ -25,29 +31,23 @@ export function useResponsive() {
     // Listen for changes
     if (typeof window !== 'undefined') {
       const compactMq = window.matchMedia(`(max-width: 767px)`);
-      const standardMq = window.matchMedia(
-        `(min-width: 768px) and (max-width: 1023px)`
-      );
+      const standardMq = window.matchMedia(`(min-width: 768px) and (max-width: 1023px)`);
 
-      const handleCompactChange = (e: MediaQueryListEvent) => {
+      const handleCompactChange = (e: MediaQueryListEvent): void => {
         setIsCompact(e.matches);
         setIsSpacious(!e.matches && !standardMq.matches);
       };
-      const handleStandardChange = (e: MediaQueryListEvent) => {
+      const handleStandardChange = (e: MediaQueryListEvent): void => {
         setIsStandard(e.matches);
         setIsSpacious(!compactMq.matches && !e.matches);
       };
 
-      if (compactMq.addEventListener) {
-        compactMq.addEventListener('change', handleCompactChange);
-        standardMq.addEventListener('change', handleStandardChange);
-        return () => {
-          compactMq.removeEventListener('change', handleCompactChange);
-          standardMq.removeEventListener('change', handleStandardChange);
-        };
-      } else {
-        return undefined;
-      }
+      compactMq.addEventListener('change', handleCompactChange);
+      standardMq.addEventListener('change', handleStandardChange);
+      return (): void => {
+        compactMq.removeEventListener('change', handleCompactChange);
+        standardMq.removeEventListener('change', handleStandardChange);
+      };
     }
     return undefined;
   }, []);

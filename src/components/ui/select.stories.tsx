@@ -72,7 +72,9 @@ export const Disabled: Story = {
         </Select.SelectTrigger>
         <Select.SelectContent>
           <Select.SelectItem value="apple">Apple</Select.SelectItem>
-          <Select.SelectItem value="banana" disabled>Banana (disabled)</Select.SelectItem>
+          <Select.SelectItem value="banana" disabled>
+            Banana (disabled)
+          </Select.SelectItem>
           <Select.SelectItem value="orange">Orange</Select.SelectItem>
         </Select.SelectContent>
       </Select.Select>
@@ -87,13 +89,27 @@ export const HTTPMethods: Story = {
         <Select.SelectValue />
       </Select.SelectTrigger>
       <Select.SelectContent>
-        <Select.SelectItem value="GET" className="text-method-get">GET</Select.SelectItem>
-        <Select.SelectItem value="POST" className="text-method-post">POST</Select.SelectItem>
-        <Select.SelectItem value="PUT" className="text-method-put">PUT</Select.SelectItem>
-        <Select.SelectItem value="PATCH" className="text-method-patch">PATCH</Select.SelectItem>
-        <Select.SelectItem value="DELETE" className="text-method-delete">DELETE</Select.SelectItem>
-        <Select.SelectItem value="HEAD" className="text-method-head">HEAD</Select.SelectItem>
-        <Select.SelectItem value="OPTIONS" className="text-method-options">OPTIONS</Select.SelectItem>
+        <Select.SelectItem value="GET" className="text-method-get">
+          GET
+        </Select.SelectItem>
+        <Select.SelectItem value="POST" className="text-method-post">
+          POST
+        </Select.SelectItem>
+        <Select.SelectItem value="PUT" className="text-method-put">
+          PUT
+        </Select.SelectItem>
+        <Select.SelectItem value="PATCH" className="text-method-patch">
+          PATCH
+        </Select.SelectItem>
+        <Select.SelectItem value="DELETE" className="text-method-delete">
+          DELETE
+        </Select.SelectItem>
+        <Select.SelectItem value="HEAD" className="text-method-head">
+          HEAD
+        </Select.SelectItem>
+        <Select.SelectItem value="OPTIONS" className="text-method-options">
+          OPTIONS
+        </Select.SelectItem>
       </Select.SelectContent>
     </Select.Select>
   ),

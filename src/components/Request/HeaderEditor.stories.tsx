@@ -13,9 +13,9 @@ const StoreSeed = ({
   headers?: Record<string, string>;
   children: React.ReactNode;
 }): React.JSX.Element => {
-  useEffect(() => {
+  useEffect((): void | (() => void) => {
     useRequestStore.setState({ headers });
-    return () => {
+    return (): void => {
       useRequestStore.getState().reset();
     };
   }, [headers]);

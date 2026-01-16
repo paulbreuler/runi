@@ -60,9 +60,15 @@ export const WithContent: Story = {
     <MainLayout
       headerContent={
         <div className="h-14 p-2 flex items-center gap-2 border-b border-border-subtle bg-bg-surface">
-          <Button variant="ghost" size="sm">File</Button>
-          <Button variant="ghost" size="sm">Edit</Button>
-          <Button variant="ghost" size="sm">View</Button>
+          <Button variant="ghost" size="sm">
+            File
+          </Button>
+          <Button variant="ghost" size="sm">
+            Edit
+          </Button>
+          <Button variant="ghost" size="sm">
+            View
+          </Button>
         </div>
       }
       requestContent={
@@ -117,8 +123,12 @@ export const DragToClose: Story = {
         <div className="h-full p-4 flex flex-col items-center justify-center">
           <h3 className="text-lg font-semibold mb-4">Drag-to-Close Test</h3>
           <div className="space-y-2 text-sm text-text-secondary">
-            <p>• Drag the sidebar edge <strong>LEFT</strong> → collapses</p>
-            <p>• Drag the sidebar edge <strong>RIGHT</strong> → resizes</p>
+            <p>
+              • Drag the sidebar edge <strong>LEFT</strong> → collapses
+            </p>
+            <p>
+              • Drag the sidebar edge <strong>RIGHT</strong> → resizes
+            </p>
             <p>• Double-click the edge → toggles</p>
           </div>
         </div>

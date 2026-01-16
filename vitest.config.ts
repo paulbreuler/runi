@@ -17,11 +17,7 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     coverage: {
       include: ['src/**/*.{ts,tsx}'],
-      exclude: [
-        'src/**/*.stories.{ts,tsx}',
-        'src/**/*.test.{ts,tsx}',
-        'src/**/*.spec.{ts,tsx}',
-      ],
+      exclude: ['src/**/*.stories.{ts,tsx}', 'src/**/*.test.{ts,tsx}', 'src/**/*.spec.{ts,tsx}'],
       reporter: ['text', 'html'],
       reportsDirectory: './coverage',
       thresholds: {

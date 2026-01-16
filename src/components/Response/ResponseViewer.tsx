@@ -32,7 +32,7 @@ const tabs: Tab[] = [
  */
 function formatJson(body: string): string {
   try {
-    const parsed = JSON.parse(body);
+    const parsed = JSON.parse(body) as unknown;
     // Use 2 spaces for indentation as requested
     return JSON.stringify(parsed, null, 2);
   } catch {
@@ -45,27 +45,28 @@ function formatJson(body: string): string {
  */
 function formatRawHttp(response: HttpResponse): string {
   const lines: string[] = [];
-  
+
   // Status line
-  lines.push(`HTTP/1.1 ${response.status} ${response.status_text}`);
-  
+  lines.push(`HTTP/1.1 ${String(response.status)} ${response.status_text}`);
+
   // Headers
   Object.entries(response.headers).forEach(([key, value]) => {
     lines.push(`${key}: ${value}`);
   });
-  
+
   // Blank line before body
   lines.push('');
-  
+
   // Body (formatted if JSON with 2-space indent)
-  const contentTypeHeader = response.headers['content-type'] || response.headers['Content-Type'];
+  const contentTypeHeader =
+    response.headers['content-type'] ?? response.headers['Content-Type'] ?? undefined;
   const language = detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader });
   if (language === 'json') {
     lines.push(formatJson(response.body));
   } else {
     lines.push(response.body);
   }
-  
+
   return lines.join('\n');
 }
 
@@ -74,8 +75,12 @@ function formatRawHttp(response: HttpResponse): string {
  */
 function formatSize(body: string): string {
   const bytes = new Blob([body]).size;
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024) {
+    return `${String(bytes)} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -91,7 +96,9 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
 
   const updateScrollState = useCallback((): void => {
     const container = tabScrollRef.current;
-    if (!container) return;
+    if (container === null) {
+      return;
+    }
     const maxScroll = container.scrollWidth - container.clientWidth;
     const hasScrollableOverflow = maxScroll > 4;
     setHasOverflow(hasScrollableOverflow);
@@ -102,7 +109,9 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
   useEffect(() => {
     updateScrollState();
     const container = tabScrollRef.current;
-    if (!container) return;
+    if (container === null) {
+      return;
+    }
 
     const handleScroll = (): void => {
       updateScrollState();
@@ -132,10 +141,11 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
   }, [updateScrollState]);
 
   const showOverflowCue = hasOverflow;
-  
+
   const headerCount = Object.keys(response.headers).length;
   const bodySize = formatSize(response.body);
-  const contentTypeHeader = response.headers['content-type'] || response.headers['Content-Type'];
+  const contentTypeHeader =
+    response.headers['content-type'] ?? response.headers['Content-Type'] ?? undefined;
   const language = detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader });
   const formattedBody = language === 'json' ? formatJson(response.body) : response.body;
 
@@ -152,7 +162,9 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => { setActiveTab(tab.id); }}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                }}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                   activeTab === tab.id
                     ? 'bg-bg-raised text-text-primary font-medium'
@@ -207,13 +219,20 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
       </div>
 
       {/* Content - vertical scroll only, code blocks handle horizontal */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ scrollbarGutter: 'stable' }}>
+      <div
+        className="flex-1 overflow-y-auto overflow-x-hidden"
+        style={{ scrollbarGutter: 'stable' }}
+      >
         {activeTab === 'body' && (
-          <div className="p-4" data-testid="response-body">
+          <div className="p-4" data-testid="response-body" data-language={language}>
             <span className="sr-only" data-testid="response-body-raw">
               {formattedBody}
             </span>
-            <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
+            <div
+              className="overflow-x-auto"
+              style={{ scrollbarGutter: 'stable' }}
+              data-language={language}
+            >
               <SyntaxHighlighter
                 language={language}
                 style={syntaxHighlightTheme}
@@ -223,7 +242,6 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                 PreTag="div"
                 codeTagProps={{
                   style: syntaxHighlightCodeTagStyle,
-                  'data-language': language,
                 }}
               >
                 {formattedBody}
@@ -257,11 +275,15 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         )}
 
         {activeTab === 'raw' && (
-          <div className="p-4" data-testid="response-raw">
+          <div className="p-4" data-testid="response-raw" data-language="http">
             <span className="sr-only" data-testid="response-raw-text">
               {formatRawHttp(response)}
             </span>
-            <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
+            <div
+              className="overflow-x-auto"
+              style={{ scrollbarGutter: 'stable' }}
+              data-language="http"
+            >
               <SyntaxHighlighter
                 language="http"
                 style={syntaxHighlightTheme}
@@ -271,7 +293,6 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                 PreTag="div"
                 codeTagProps={{
                   style: syntaxHighlightCodeTagStyle,
-                  'data-language': 'http',
                 }}
               >
                 {formatRawHttp(response)}

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Plus, X } from 'lucide-react';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/utils/cn';
 
 /**
  * HeaderEditor component for managing HTTP request headers.
@@ -24,18 +23,21 @@ export const HeaderEditor = (): React.JSX.Element => {
   };
 
   const handleSaveHeader = (): void => {
-    if (!newKey.trim()) {
+    if (newKey.trim().length === 0) {
       setEditingKey(null);
       return;
     }
 
-    const updatedHeaders = { ...headers };
-    if (editingKey && editingKey !== 'new' && editingKey !== newKey.trim()) {
-      // Key was renamed, remove old key
-      delete updatedHeaders[editingKey];
+    const trimmedKey = newKey.trim();
+    // If renaming a header (not new), create new object without the old key
+    if (editingKey !== null && editingKey !== 'new' && editingKey !== trimmedKey) {
+      const newHeaders = Object.fromEntries(
+        Object.entries(headers).filter(([k]) => k !== editingKey)
+      );
+      setHeaders({ ...newHeaders, [trimmedKey]: newValue.trim() });
+    } else {
+      setHeaders({ ...headers, [trimmedKey]: newValue.trim() });
     }
-    updatedHeaders[newKey.trim()] = newValue.trim();
-    setHeaders(updatedHeaders);
     setEditingKey(null);
     setNewKey('');
     setNewValue('');
@@ -50,13 +52,12 @@ export const HeaderEditor = (): React.JSX.Element => {
   const handleEditHeader = (key: string): void => {
     setEditingKey(key);
     setNewKey(key);
-    setNewValue(headers[key] || '');
+    setNewValue(headers[key] ?? '');
   };
 
   const handleRemoveHeader = (key: string): void => {
-    const updatedHeaders = { ...headers };
-    delete updatedHeaders[key];
-    setHeaders(updatedHeaders);
+    const newHeaders = Object.fromEntries(Object.entries(headers).filter(([k]) => k !== key));
+    setHeaders(newHeaders);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -100,7 +101,9 @@ export const HeaderEditor = (): React.JSX.Element => {
                   <Input
                     glass={true}
                     value={newKey}
-                    onChange={(e) => { setNewKey(e.target.value); }}
+                    onChange={(e) => {
+                      setNewKey(e.target.value);
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder="Header name"
                     className="flex-1 font-mono text-sm"
@@ -110,7 +113,9 @@ export const HeaderEditor = (): React.JSX.Element => {
                   <Input
                     glass={true}
                     value={newValue}
-                    onChange={(e) => { setNewValue(e.target.value); }}
+                    onChange={(e) => {
+                      setNewValue(e.target.value);
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder="Header value"
                     className="flex-1 font-mono text-sm"
@@ -136,16 +141,22 @@ export const HeaderEditor = (): React.JSX.Element => {
                 <>
                   <div
                     className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-raised border border-border-subtle hover:border-border-default transition-colors cursor-pointer"
-                    onClick={() => { handleEditHeader(key); }}
+                    onClick={() => {
+                      handleEditHeader(key);
+                    }}
                   >
                     <span className="text-accent-blue font-mono text-sm font-medium">{key}</span>
                     <span className="text-text-muted">:</span>
-                    <span className="text-text-secondary font-mono text-sm flex-1 truncate">{value}</span>
+                    <span className="text-text-secondary font-mono text-sm flex-1 truncate">
+                      {value}
+                    </span>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => { handleRemoveHeader(key); }}
+                    onClick={() => {
+                      handleRemoveHeader(key);
+                    }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
                     data-testid={`remove-header-${key}`}
                   >
@@ -167,7 +178,9 @@ export const HeaderEditor = (): React.JSX.Element => {
               <Input
                 glass={true}
                 value={newKey}
-                onChange={(e) => { setNewKey(e.target.value); }}
+                onChange={(e) => {
+                  setNewKey(e.target.value);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Header name"
                 className="flex-1 font-mono text-sm"
@@ -177,7 +190,9 @@ export const HeaderEditor = (): React.JSX.Element => {
               <Input
                 glass={true}
                 value={newValue}
-                onChange={(e) => { setNewValue(e.target.value); }}
+                onChange={(e) => {
+                  setNewValue(e.target.value);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Header value"
                 className="flex-1 font-mono text-sm"

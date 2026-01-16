@@ -101,7 +101,13 @@ export function useMediaQuery(query: string): {
   cleanup: () => void;
 } {
   if (typeof window === 'undefined') {
-    return { matches: false, cleanup: (): void => {} };
+    // No-op cleanup for SSR - no event listeners to remove
+    return {
+      matches: false,
+      cleanup: (): void => {
+        /* noop for SSR */
+      },
+    };
   }
 
   const mq = window.matchMedia(query);
@@ -129,7 +135,7 @@ export function useMediaQuery(query: string): {
     addListener?: (h: (e: MediaQueryListEvent) => void) => void;
     removeListener?: (h: (e: MediaQueryListEvent) => void) => void;
   };
-  if (legacyMq.addListener) {
+  if (legacyMq.addListener !== undefined) {
     // addListener is deprecated but needed for legacy browser support
     legacyMq.addListener(handler);
     return {
@@ -144,7 +150,9 @@ export function useMediaQuery(query: string): {
   // No listener API available (shouldn't happen in practice)
   return {
     matches,
-    cleanup: (): void => {},
+    cleanup: (): void => {
+      /* noop - no listener API available */
+    },
   };
 }
 

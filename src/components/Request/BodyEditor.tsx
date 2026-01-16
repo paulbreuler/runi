@@ -25,7 +25,9 @@ export const BodyEditor = (): React.JSX.Element => {
   };
 
   const isJson = (value: string): boolean => {
-    if (!value.trim()) return false;
+    if (value.trim().length === 0) {
+      return false;
+    }
     try {
       JSON.parse(value);
       return true;
@@ -38,13 +40,17 @@ export const BodyEditor = (): React.JSX.Element => {
   const isJsonBody = useMemo(() => isJson(body), [body]);
 
   useLayoutEffect(() => {
-    if (typeof window === 'undefined' || !highlightRef.current) return;
+    if (typeof window === 'undefined' || highlightRef.current === null) {
+      return;
+    }
 
     const lineNumber = highlightRef.current.querySelector<HTMLElement>(
       '.react-syntax-highlighter-line-number'
     );
 
-    if (!lineNumber) return;
+    if (lineNumber === null) {
+      return;
+    }
 
     const updateGutterWidth = (): void => {
       const width = Math.ceil(lineNumber.getBoundingClientRect().width);
@@ -55,7 +61,9 @@ export const BodyEditor = (): React.JSX.Element => {
 
     updateGutterWidth();
 
-    if (typeof ResizeObserver === 'undefined') return;
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
 
     const observer = new ResizeObserver(updateGutterWidth);
     observer.observe(lineNumber);
@@ -66,9 +74,11 @@ export const BodyEditor = (): React.JSX.Element => {
   }, [language, lineNumberGutterWidth]);
 
   const formatJson = (): void => {
-    if (!body.trim()) return;
+    if (body.trim().length === 0) {
+      return;
+    }
     try {
-      const parsed = JSON.parse(body);
+      const parsed = JSON.parse(body) as unknown;
       setBody(JSON.stringify(parsed, null, 2));
     } catch {
       // Invalid JSON, do nothing
@@ -76,12 +86,14 @@ export const BodyEditor = (): React.JSX.Element => {
   };
 
   const syncHighlightScroll = (): void => {
-    if (!highlightRef.current || !textareaRef.current) return;
+    if (highlightRef.current === null || textareaRef.current === null) {
+      return;
+    }
     highlightRef.current.scrollTop = textareaRef.current.scrollTop;
     highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
   };
 
-  const gutterWidth = lineNumberGutterWidth > 0 ? `${lineNumberGutterWidth}px` : '3.5em';
+  const gutterWidth = lineNumberGutterWidth > 0 ? `${String(lineNumberGutterWidth)}px` : '3.5em';
 
   return (
     <div className="h-full flex flex-col" data-testid="body-editor">
@@ -93,20 +105,21 @@ export const BodyEditor = (): React.JSX.Element => {
           data-testid="body-syntax-layer"
         >
           <div className="p-4">
-            <SyntaxHighlighter
-              language={language}
-              style={syntaxHighlightTheme}
-              customStyle={syntaxHighlightBaseStyle}
-              showLineNumbers
-              lineNumberStyle={syntaxHighlightLineNumberStyle}
-              PreTag="div"
-              codeTagProps={{
-                style: syntaxHighlightCodeTagStyle,
-                'data-language': language,
-              }}
-            >
-              {body || ' '}
-            </SyntaxHighlighter>
+            <div data-language={language}>
+              <SyntaxHighlighter
+                language={language}
+                style={syntaxHighlightTheme}
+                customStyle={syntaxHighlightBaseStyle}
+                showLineNumbers
+                lineNumberStyle={syntaxHighlightLineNumberStyle}
+                PreTag="div"
+                codeTagProps={{
+                  style: syntaxHighlightCodeTagStyle,
+                }}
+              >
+                {body.length > 0 ? body : ' '}
+              </SyntaxHighlighter>
+            </div>
           </div>
         </div>
         <textarea
@@ -143,7 +156,7 @@ export const BodyEditor = (): React.JSX.Element => {
         />
 
         {/* JSON validation indicator */}
-        {body.trim() && (
+        {body.trim().length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}

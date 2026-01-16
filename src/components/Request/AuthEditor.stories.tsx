@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import React from 'react';
 import { AuthEditor } from './AuthEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 

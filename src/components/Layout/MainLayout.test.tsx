@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MainLayout } from './MainLayout';
@@ -7,63 +8,85 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 vi.mock('motion/react', async () => {
   const actual = await vi.importActual('motion/react');
 
-  const stripMotionProps = (props: Record<string, unknown>) => {
-    const {
-      layout,
-      layoutId,
-      variants,
-      initial,
-      animate,
-      exit,
-      transition,
-      whileHover,
-      whileTap,
-      whileDrag,
-      drag,
-      dragConstraints,
-      dragElastic,
-      dragMomentum,
-      dragPropagation,
-      dragSnapToOrigin,
-      dragDirectionLock,
-      onDrag,
-      onDragStart,
-      onDragEnd,
-      ...rest
-    } = props;
-    return rest;
+  const motionPropsToStrip = new Set([
+    'layout',
+    'layoutId',
+    'variants',
+    'initial',
+    'animate',
+    'exit',
+    'transition',
+    'whileHover',
+    'whileTap',
+    'whileDrag',
+    'drag',
+    'dragConstraints',
+    'dragElastic',
+    'dragMomentum',
+    'dragPropagation',
+    'dragSnapToOrigin',
+    'dragDirectionLock',
+    'onDrag',
+    'onDragStart',
+    'onDragEnd',
+  ]);
+
+  const stripMotionProps = (props: Record<string, unknown>): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(props)) {
+      if (!motionPropsToStrip.has(key)) {
+        result[key] = value;
+      }
+    }
+    return result;
   };
 
-  const createMock = (Tag: keyof JSX.IntrinsicElements) =>
-    ({ children, ...props }: any) => {
+  const createMock =
+    (Tag: keyof React.JSX.IntrinsicElements): React.FC<Record<string, unknown>> =>
+    ({ children, ...props }: Record<string, unknown>): React.JSX.Element => {
       const cleanProps = stripMotionProps(props);
-      const Component = Tag;
-      return <Component {...cleanProps}>{children}</Component>;
+      const Component = Tag as React.ElementType;
+      const htmlProps = cleanProps as React.HTMLAttributes<HTMLElement>;
+      return <Component {...htmlProps}>{children as React.ReactNode}</Component>;
     };
+
+  interface MockMotionValue {
+    get: () => number;
+    set: (newValue: number) => void;
+    on: () => () => void;
+    destroy: () => void;
+  }
 
   // Create a synchronous mock for useSpring that updates immediately (no animation delay)
-  const useSpringMock = (initialValue: number) => {
+  const useSpringMock = (initialValue: number): MockMotionValue => {
     let currentValue = initialValue;
     return {
-      get: () => currentValue,
-      set: (newValue: number) => { currentValue = newValue; },
+      get: (): number => currentValue,
+      set: (newValue: number): void => {
+        currentValue = newValue;
+      },
       // Minimal MotionValue interface needed for useTransform
-      on: () => () => {},
-      destroy: () => {},
+      on: (): (() => void) => (): void => {},
+      destroy: (): void => {},
     };
   };
 
+  const actualObj = actual as Record<string, unknown>;
   return {
-    ...actual,
+    ...actualObj,
     useSpring: useSpringMock,
     motion: {
-      ...actual.motion,
+      ...(actualObj.motion as Record<string, unknown>),
       div: createMock('div'),
       aside: createMock('aside'),
       button: createMock('button'),
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
-    LayoutGroup: ({ children }: any) => <>{children}</>,
+    AnimatePresence: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
+      <>{children}</>
+    ),
+    LayoutGroup: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
+      <>{children}</>
+    ),
   };
 });
 
@@ -71,7 +94,7 @@ describe('MainLayout', () => {
   beforeEach(() => {
     // Reset store state
     useSettingsStore.setState({ sidebarVisible: true });
-    
+
     // Mock getBoundingClientRect for consistent testing
     Element.prototype.getBoundingClientRect = vi.fn(() => ({
       width: 1200,
@@ -134,7 +157,7 @@ describe('MainLayout', () => {
       // The actual width calculation is tested in E2E tests
       expect(requestPane).toBeInTheDocument();
       expect(responsePane).toBeInTheDocument();
-      
+
       // Check that they have style attributes (MotionValues set width)
       const requestStyle = requestPane.getAttribute('style');
       const responseStyle = responsePane.getAttribute('style');
@@ -172,11 +195,11 @@ describe('MainLayout', () => {
   describe('Sidebar Functionality', () => {
     it('sidebar has resizer when visible', () => {
       render(<MainLayout />);
-      
+
       // Sidebar wrapper (motion.aside) has the test ID
       const sidebars = screen.getAllByTestId('sidebar');
       expect(sidebars.length).toBeGreaterThan(0);
-      
+
       // Sidebar resizer should be present
       const sidebarResizer = screen.queryByTestId('sidebar-resizer');
       expect(sidebarResizer).toBeInTheDocument();
@@ -209,15 +232,15 @@ describe('MainLayout', () => {
 
     it('sidebar can be toggled via store', () => {
       const { rerender } = render(<MainLayout />);
-      
+
       // Sidebar should be visible initially
       const initialSidebars = screen.getAllByTestId('sidebar');
       expect(initialSidebars.length).toBeGreaterThan(0);
-      
+
       // Hide sidebar
       useSettingsStore.setState({ sidebarVisible: false });
       rerender(<MainLayout />);
-      
+
       // Sidebar wrapper should not be visible (AnimatePresence removes it)
       // Note: In mocked Motion, AnimatePresence may not work as expected
       // This is better tested in E2E tests
@@ -254,20 +277,14 @@ describe('MainLayout', () => {
 
   describe('Custom Content', () => {
     it('renders custom header content', () => {
-      render(
-        <MainLayout
-          headerContent={<div data-testid="custom-header">Custom Header</div>}
-        />
-      );
+      render(<MainLayout headerContent={<div data-testid="custom-header">Custom Header</div>} />);
 
       expect(screen.getByTestId('custom-header')).toBeInTheDocument();
     });
 
     it('renders custom request content', () => {
       render(
-        <MainLayout
-          requestContent={<div data-testid="custom-request">Custom Request</div>}
-        />
+        <MainLayout requestContent={<div data-testid="custom-request">Custom Request</div>} />
       );
 
       expect(screen.getByTestId('custom-request')).toBeInTheDocument();
@@ -275,9 +292,7 @@ describe('MainLayout', () => {
 
     it('renders custom response content', () => {
       render(
-        <MainLayout
-          responseContent={<div data-testid="custom-response">Custom Response</div>}
-        />
+        <MainLayout responseContent={<div data-testid="custom-response">Custom Response</div>} />
       );
 
       expect(screen.getByTestId('custom-response')).toBeInTheDocument();
@@ -287,14 +302,14 @@ describe('MainLayout', () => {
   describe('Initial Sidebar State', () => {
     it('respects initialSidebarVisible prop', () => {
       const { rerender } = render(<MainLayout initialSidebarVisible={false} />);
-      
+
       // Sidebar should not be visible when initialSidebarVisible is false
       // Note: In mocked Motion, AnimatePresence may not work as expected
       // This is better tested in E2E tests
-      
+
       // Re-render with visible
       rerender(<MainLayout initialSidebarVisible={true} />);
-      
+
       // Sidebar should be visible
       const sidebars = screen.getAllByTestId('sidebar');
       expect(sidebars.length).toBeGreaterThan(0);
@@ -304,17 +319,17 @@ describe('MainLayout', () => {
   describe('Performance and Animations', () => {
     it('uses MotionValues for immediate updates during drag', () => {
       render(<MainLayout />);
-      
+
       // The component should use MotionValues internally
       // This is verified by the presence of motion components
       const requestPane = screen.getByTestId('request-pane');
       const responsePane = screen.getByTestId('response-pane');
-      
+
       // Both should have style attributes (MotionValues set width via style)
       // In mocked Motion, style may be set differently, but should exist
       const requestStyle = requestPane.getAttribute('style');
       const responseStyle = responsePane.getAttribute('style');
-      
+
       // Style should exist (may contain scrollbar-gutter or width)
       expect(requestStyle).toBeTruthy();
       expect(responseStyle).toBeTruthy();
@@ -322,10 +337,10 @@ describe('MainLayout', () => {
 
     it('disables layout animations during drag', () => {
       render(<MainLayout />);
-      
+
       const requestPane = screen.getByTestId('request-pane');
       const responsePane = screen.getByTestId('response-pane');
-      
+
       // Components should have layout prop (controlled by isDragging state)
       // This is tested via interaction tests
       expect(requestPane).toBeInTheDocument();
@@ -422,7 +437,7 @@ describe('MainLayout', () => {
       render(<MainLayout />);
 
       const resizer = screen.getByTestId('pane-resizer');
-      const style = resizer.getAttribute('style') || '';
+      const style = resizer.getAttribute('style') ?? '';
 
       // Should have transform for centering on split point
       // Note: The `left` style uses a MotionValue which Motion converts at runtime.

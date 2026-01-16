@@ -25,22 +25,22 @@ export const RequestHeader = ({
 
   const isValidUrl = url.length > 0;
   const methodColor = getMethodColor(method);
-  
+
   // Respect prefers-reduced-motion
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
-    
+
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReducedMotion(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent): void => {
       setPrefersReducedMotion(e.matches);
     };
-    
+
     mediaQuery.addEventListener('change', handleChange);
     return (): void => {
       mediaQuery.removeEventListener('change', handleChange);
@@ -48,13 +48,13 @@ export const RequestHeader = ({
   }, []);
 
   const handleMethodChange = (value: string | undefined): void => {
-    if (value !== undefined && value.length > 0 && onMethodChange) {
+    if (value !== undefined && value.length > 0 && onMethodChange !== undefined) {
       onMethodChange(value as HttpMethod);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter' && !loading && isValidUrl && onSend) {
+    if (e.key === 'Enter' && !loading && isValidUrl && onSend !== undefined) {
       onSend();
     }
   };
@@ -87,9 +87,9 @@ export const RequestHeader = ({
             {httpMethods.map((httpMethod) => {
               const color = getMethodColor(httpMethod);
               return (
-                <Select.SelectItem 
-                  key={httpMethod} 
-                  value={httpMethod} 
+                <Select.SelectItem
+                  key={httpMethod}
+                  value={httpMethod}
                   className={`${color} data-highlighted:bg-bg-raised/50`}
                 >
                   {httpMethod}

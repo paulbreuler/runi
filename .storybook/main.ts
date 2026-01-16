@@ -7,15 +7,8 @@ const config: StorybookConfig = {
     name: '@storybook/react-vite',
     options: {},
   },
-  stories: [
-    '../src/components/**/*.stories.@(tsx|ts|jsx|js)',
-    '../src/components/**/*.mdx',
-  ],
-  addons: [
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-    '@storybook/addon-a11y',
-  ],
+  stories: ['../src/components/**/*.stories.@(tsx|ts|jsx|js)', '../src/components/**/*.mdx'],
+  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions', '@storybook/addon-a11y'],
   staticDirs: ['../static'],
   async viteFinal(config) {
     return mergeConfig(config, {

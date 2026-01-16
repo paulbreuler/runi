@@ -31,7 +31,7 @@ export const syntaxHighlightLineNumberStyle = {
   paddingRight: '1em',
   color: 'var(--color-text-muted)',
   opacity: 0.5,
-  userSelect: 'none',
+  userSelect: 'none' as const,
 };
 
 export const syntaxHighlightCodeTagStyle = {

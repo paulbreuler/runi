@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Send } from 'lucide-react';
 import { executeRequest } from '@/api/http';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { RequestHeader } from '@/components/Request/RequestHeader';
@@ -12,8 +11,17 @@ import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
 
 export const HomePage = (): React.JSX.Element => {
-  const { method, response, isLoading, error, setMethod, setUrl, setResponse, setLoading, setError } =
-    useRequestStore();
+  const {
+    method,
+    response,
+    isLoading,
+    error,
+    setMethod,
+    setUrl,
+    setResponse,
+    setLoading,
+    setError,
+  } = useRequestStore();
 
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
@@ -21,7 +29,9 @@ export const HomePage = (): React.JSX.Element => {
   const isValidUrl = localUrl.length > 0;
 
   const handleSend = async (): Promise<void> => {
-    if (!isValidUrl) return;
+    if (!isValidUrl) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -50,6 +60,10 @@ export const HomePage = (): React.JSX.Element => {
     setLocalUrl(newUrl);
   };
 
+  const handleSendClick = (): void => {
+    void handleSend();
+  };
+
   return (
     <MainLayout
       headerContent={
@@ -59,12 +73,12 @@ export const HomePage = (): React.JSX.Element => {
           loading={isLoading}
           onMethodChange={handleMethodChange}
           onUrlChange={handleUrlChange}
-          onSend={handleSend}
+          onSend={handleSendClick}
         />
       }
       requestContent={
         <div className="h-full flex flex-col bg-bg-app">
-          {error && (
+          {error !== null && (
             <div
               className="p-4 mx-4 mt-4 bg-signal-error/10 border border-signal-error/20 rounded-lg text-signal-error text-sm"
               role="alert"
@@ -81,7 +95,7 @@ export const HomePage = (): React.JSX.Element => {
       responseContent={
         <div className="h-full flex flex-col bg-bg-app">
           <AnimatePresence mode="wait">
-            {response ? (
+            {response !== null ? (
               <motion.div
                 key="response"
                 initial={{ opacity: 0, y: 20 }}

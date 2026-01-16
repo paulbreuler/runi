@@ -39,7 +39,10 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
       await page.mouse.move(resizerBox!.x + 100, resizerBox!.y + resizerBox!.height / 2);
       await page.mouse.up();
@@ -65,7 +68,10 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
       // Drag far to the left
       await page.mouse.move(resizerBox!.x - 200, resizerBox!.y + resizerBox!.height / 2);
@@ -91,7 +97,10 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
       // Drag far to the right
       await page.mouse.move(resizerBox!.x + 500, resizerBox!.y + resizerBox!.height / 2);
@@ -170,7 +179,10 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
       await page.mouse.move(resizerBox!.x + 100, resizerBox!.y + resizerBox!.height / 2);
       await page.mouse.up();
@@ -198,10 +210,16 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
       // Drag far to the left
-      await page.mouse.move(resizerBox!.x - containerWidth * 0.5, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x - containerWidth * 0.5,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.up();
 
       await page.waitForTimeout(300);
@@ -227,10 +245,16 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
       // Drag far to the right
-      await page.mouse.move(resizerBox!.x + containerWidth * 0.5, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + containerWidth * 0.5,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.up();
 
       await page.waitForTimeout(300);
@@ -277,7 +301,10 @@ test.describe('Layout Resizing', () => {
       expect(resizerBox).not.toBeNull();
 
       // Start dragging
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
 
       // Check scrollbar-gutter during drag
@@ -304,7 +331,10 @@ test.describe('Layout Resizing', () => {
       // Measure resize performance
       const startTime = Date.now();
 
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, resizerBox!.y + resizerBox!.height / 2);
+      await page.mouse.move(
+        resizerBox!.x + resizerBox!.width / 2,
+        resizerBox!.y + resizerBox!.height / 2
+      );
       await page.mouse.down();
       await page.mouse.move(resizerBox!.x + 50, resizerBox!.y + resizerBox!.height / 2);
       await page.mouse.up();
@@ -336,7 +366,7 @@ test.describe('Layout Resizing', () => {
       const centerY = resizerBox!.y + resizerBox!.height / 2;
 
       // Test 1: Drag all the way LEFT (minimum - 20%)
-      const minX = containerBox!.x + (containerWidth * 0.2);
+      const minX = containerBox!.x + containerWidth * 0.2;
       await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, centerY);
       await page.mouse.down();
       await page.mouse.move(minX, centerY);
@@ -350,7 +380,7 @@ test.describe('Layout Resizing', () => {
       expect(requestPercentAfterMin).toBeGreaterThanOrEqual(18);
 
       // Test 2: Drag all the way RIGHT (maximum - 80%)
-      const maxX = containerBox!.x + (containerWidth * 0.8);
+      const maxX = containerBox!.x + containerWidth * 0.8;
       const resizerBoxAfterMin = await resizer.boundingBox();
       await page.mouse.move(resizerBoxAfterMin!.x + resizerBoxAfterMin!.width / 2, centerY);
       await page.mouse.down();
@@ -365,7 +395,7 @@ test.describe('Layout Resizing', () => {
       expect(requestPercentAfterMax).toBeLessThanOrEqual(82);
 
       // Test 3: Rapid jittering (wild mouse movements) - video game style
-      const centerX = containerBox!.x + (containerWidth * 0.5);
+      const centerX = containerBox!.x + containerWidth * 0.5;
       const jitterAmplitude = containerWidth * 0.3;
 
       for (let i = 0; i < 30; i++) {

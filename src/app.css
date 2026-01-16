@@ -9,8 +9,8 @@
 
 @theme {
   /* Typography */
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Background Colors - Dark Mode (default) */
   --color-bg-app: #0a0a0a;
@@ -106,7 +106,8 @@ body {
    ============================================ */
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -185,9 +186,9 @@ body {
 
 /* Prevent scrollbar flashing during drag/resize operations */
 /* Reserve space for scrollbars to prevent layout shifts */
-[data-testid="request-pane"],
-[data-testid="response-pane"],
-[data-testid="pane-container"] {
+[data-testid='request-pane'],
+[data-testid='response-pane'],
+[data-testid='pane-container'] {
   scrollbar-gutter: stable;
   /* Use overlay scrollbars on macOS to prevent flashing */
   scrollbar-width: thin;
@@ -196,42 +197,42 @@ body {
 }
 
 /* Ensure scrollable content areas maintain stable scrollbars */
-[data-testid="request-pane"] > *,
-[data-testid="response-pane"] > * {
+[data-testid='request-pane'] > *,
+[data-testid='response-pane'] > * {
   scrollbar-gutter: stable;
 }
 
 /* Prevent scrollbar flashing during sidebar resize */
-aside[data-testid="sidebar"] {
+aside[data-testid='sidebar'] {
   scrollbar-gutter: stable;
 }
 
 /* Prevent scrollbar flashing during drag/resize operations */
 .scroll-container,
-[data-testid="request-pane"],
-[data-testid="response-pane"],
-[data-testid="pane-container"] {
+[data-testid='request-pane'],
+[data-testid='response-pane'],
+[data-testid='pane-container'] {
   scrollbar-gutter: stable;
   /* Reserve space for scrollbar to prevent layout shifts */
 }
 
 /* Ensure scrollbars don't flash during layout animations */
-[data-testid="request-pane"] *,
-[data-testid="response-pane"] * {
+[data-testid='request-pane'] *,
+[data-testid='response-pane'] * {
   scrollbar-gutter: stable;
 }
 
 /* Prevent text color/rendering changes during resize */
 /* This fixes subpixel rendering artifacts that can cause text color shifts */
-[data-testid="request-pane"],
-[data-testid="response-pane"] {
+[data-testid='request-pane'],
+[data-testid='response-pane'] {
   /* Disable color transitions on text elements during resize */
   /* Only allow transitions on hover/focus, not during layout changes */
 }
 
 /* Ensure text elements don't transition color during layout changes */
-[data-testid="request-pane"] *,
-[data-testid="response-pane"] * {
+[data-testid='request-pane'] *,
+[data-testid='response-pane'] * {
   /* Text color transitions should only occur on hover/focus, not layout changes */
   /* This prevents color shifts during resize operations */
 }

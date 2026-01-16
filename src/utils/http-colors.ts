@@ -40,7 +40,7 @@ export const methodColors: Record<HttpMethod, string> = methodTextColors;
  * @returns Color classes string for the method
  */
 export function getMethodColor(method: HttpMethod): string {
-  return methodColors[method];
+  return methodTextColors[method];
 }
 
 /**

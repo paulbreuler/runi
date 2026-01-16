@@ -77,7 +77,7 @@ export class EventBus {
    * @param payload - The event payload
    * @param source - Optional source identifier
    */
-  emit<T>(type: EventType, payload: T, source?: string): Event<T> {
+  public emit<T>(type: EventType, payload: T, source?: string): Event<T> {
     const event: Event<T> = {
       type,
       payload,
@@ -86,7 +86,7 @@ export class EventBus {
     };
 
     const handlers = this.listeners.get(type);
-    if (handlers) {
+    if (handlers !== undefined) {
       handlers.forEach((handler) => {
         try {
           handler(event);
@@ -106,9 +106,9 @@ export class EventBus {
    * @param handler - The handler function
    * @returns Unsubscribe function
    */
-  on<T>(type: EventType, handler: EventHandler<T>): () => void {
+  public on<T>(type: EventType, handler: EventHandler<T>): () => void {
     let handlers = this.listeners.get(type);
-    if (!handlers) {
+    if (handlers === undefined) {
       handlers = new Set();
       this.listeners.set(type, handlers);
     }
@@ -126,9 +126,9 @@ export class EventBus {
    * @param type - The event type
    * @param handler - The handler function to remove
    */
-  off<T>(type: EventType, handler: EventHandler<T>): void {
+  public off<T>(type: EventType, handler: EventHandler<T>): void {
     const handlers = this.listeners.get(type);
-    if (handlers) {
+    if (handlers !== undefined) {
       handlers.delete(handler as EventHandler);
       if (handlers.size === 0) {
         this.listeners.delete(type);
@@ -145,7 +145,7 @@ export class EventBus {
    * @param handler - The handler function
    * @returns Unsubscribe function
    */
-  once<T>(type: EventType, handler: EventHandler<T>): () => void {
+  public once<T>(type: EventType, handler: EventHandler<T>): () => void {
     const wrappedHandler: EventHandler<T> = (event) => {
       handler(event);
       this.off(type, wrappedHandler);
@@ -158,8 +158,8 @@ export class EventBus {
    *
    * @param type - The event type (optional, removes all if not provided)
    */
-  removeAllListeners(type?: EventType): void {
-    if (type) {
+  public removeAllListeners(type?: EventType): void {
+    if (type !== undefined) {
       this.listeners.delete(type);
     } else {
       this.listeners.clear();
@@ -172,7 +172,7 @@ export class EventBus {
    * @param type - The event type
    * @returns Number of listeners
    */
-  listenerCount(type: EventType): number {
+  public listenerCount(type: EventType): number {
     return this.listeners.get(type)?.size ?? 0;
   }
 }

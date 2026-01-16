@@ -274,6 +274,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 Stories are **visual documentation**, not automated test suites.
 
 **Do:**
+
 - Create stories that showcase component states and variations
 - Use stories for manual interaction testing (drag, resize, click)
 - Keep stories minimal and focused (1 concept per story)
@@ -281,18 +282,21 @@ Stories are **visual documentation**, not automated test suites.
 - Use `play` functions only for basic verification assertions
 
 **Don't:**
+
 - Put performance tests in stories (use `*.test.tsx` files instead)
 - Create stories with complex automated test logic (loops, timing, etc.)
 - Duplicate unit test coverage in stories
 - Add more than 6-8 stories per component
 
 **Story Naming:**
+
 - `Default` - basic component with default props
 - `WithContent` - component with realistic content
 - `[StateName]` - specific state (e.g., `SidebarCollapsed`, `Loading`, `Error`)
 - `FullIntegration` - component with real child components
 
 **Example:**
+
 ```tsx
 /**
  * Sidebar starts collapsed. Click the left edge to expand.
@@ -375,15 +379,15 @@ Intelligence communicates through consistent visual signals:
 
 **HTTP Method Colors (Industry Standard):**
 
-| Method | Color     | Meaning            |
-| ------ | --------- | ------------------ |
-| GET    | `#3b82f6` | Read, safe         |
-| POST   | `#22c55e` | Create, positive   |
-| PUT    | `#f59e0b` | Update, caution    |
-| PATCH  | `#f59e0b` | Update, caution    |
-| DELETE | `#ef4444` | Destructive        |
-| HEAD   | `#6b7280` | Meta/secondary     |
-| OPTIONS| `#6b7280` | Meta/secondary     |
+| Method  | Color     | Meaning          |
+| ------- | --------- | ---------------- |
+| GET     | `#3b82f6` | Read, safe       |
+| POST    | `#22c55e` | Create, positive |
+| PUT     | `#f59e0b` | Update, caution  |
+| PATCH   | `#f59e0b` | Update, caution  |
+| DELETE  | `#ef4444` | Destructive      |
+| HEAD    | `#6b7280` | Meta/secondary   |
+| OPTIONS | `#6b7280` | Meta/secondary   |
 
 ---
 

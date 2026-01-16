@@ -54,7 +54,7 @@ export class CommandRegistry {
    * @param command - The command to register
    * @throws Error if command ID already exists
    */
-  register(command: Command): void {
+  public register(command: Command): void {
     if (this.commands.has(command.id)) {
       throw new Error(`Command '${command.id}' is already registered`);
     }
@@ -66,7 +66,7 @@ export class CommandRegistry {
    *
    * @param id - The command ID to unregister
    */
-  unregister(id: string): void {
+  public unregister(id: string): void {
     this.commands.delete(id);
   }
 
@@ -77,9 +77,9 @@ export class CommandRegistry {
    * @param args - Optional arguments to pass to the handler
    * @throws Error if command is not found
    */
-  async execute(id: string, args?: unknown): Promise<void> {
+  public async execute(id: string, args?: unknown): Promise<void> {
     const command = this.commands.get(id);
-    if (!command) {
+    if (command === undefined) {
       throw new Error(`Command '${id}' not found`);
     }
     await command.handler(args);
@@ -91,7 +91,7 @@ export class CommandRegistry {
    * @param id - The command ID
    * @returns The command, or undefined if not found
    */
-  get(id: string): Command | undefined {
+  public get(id: string): Command | undefined {
     return this.commands.get(id);
   }
 
@@ -100,7 +100,7 @@ export class CommandRegistry {
    *
    * @returns Array of all commands
    */
-  getAll(): Command[] {
+  public getAll(): Command[] {
     return Array.from(this.commands.values());
   }
 
@@ -110,7 +110,7 @@ export class CommandRegistry {
    * @param category - The category to filter by
    * @returns Array of commands in the category
    */
-  getByCategory(category: string): Command[] {
+  public getByCategory(category: string): Command[] {
     return this.getAll().filter((cmd) => cmd.category === category);
   }
 
@@ -120,7 +120,7 @@ export class CommandRegistry {
    * @param id - The command ID
    * @returns The keyboard shortcut, or undefined if not found
    */
-  getShortcut(id: string): KeyboardShortcut | undefined {
+  public getShortcut(id: string): KeyboardShortcut | undefined {
     return this.commands.get(id)?.shortcut;
   }
 
@@ -130,7 +130,7 @@ export class CommandRegistry {
    * @param id - The command ID
    * @returns True if the command is registered
    */
-  has(id: string): boolean {
+  public has(id: string): boolean {
     return this.commands.has(id);
   }
 }

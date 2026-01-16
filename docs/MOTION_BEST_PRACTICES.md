@@ -3,6 +3,7 @@
 This document outlines best practices, common issues, and setup recommendations for using the Motion library (motion.dev) based on 2025-2026 research and community feedback.
 
 ## Table of Contents
+
 - [Key Issues & Pitfalls](#key-issues--pitfalls)
 - [Best Practices](#best-practices)
 - [Performance Optimization](#performance-optimization)
@@ -12,26 +13,31 @@ This document outlines best practices, common issues, and setup recommendations 
 ## Key Issues & Pitfalls
 
 ### 1. Layout Thrashing & Performance Degradation
+
 - **Problem**: Animating layout properties (width, height, flex) causes expensive reflows
 - **Symptom**: UI breaks or becomes laggy during repeated drag operations
 - **Solution**: Use `transform` and `opacity` instead of layout properties
 
 ### 2. Frequent DOM Reads During Drag
+
 - **Problem**: Calling `getBoundingClientRect()` on every drag event is expensive
 - **Symptom**: Janky animations, frame drops
 - **Solution**: Cache measurements using ResizeObserver or refs
 
 ### 3. State Updates During Drag
+
 - **Problem**: React state updates on every drag frame cause re-renders
 - **Symptom**: Laggy, disconnected feeling during drag
 - **Solution**: Use MotionValues for immediate updates, commit to state only on dragEnd
 
 ### 4. Layout Animation Scope
+
 - **Problem**: Too many ancestors observing layout changes adds overhead
 - **Symptom**: Performance degradation with complex layouts
 - **Solution**: Use `layout="position"` instead of full `layout` when possible
 
 ### 5. Browser-Specific Rendering Differences
+
 - **Problem**: Chrome, Safari, Firefox render transforms/positioning differently
 - **Symptom**: Dividers misaligned in some browsers
 - **Solution**: Use absolute positioning for resizers, test across browsers
@@ -39,33 +45,41 @@ This document outlines best practices, common issues, and setup recommendations 
 ## Best Practices
 
 ### 1. Hardware-Accelerated Properties
+
 ✅ **DO**: Animate `transform` and `opacity`
+
 ```tsx
 // Good - GPU accelerated
 style={{ transform: 'translateX(100px)', opacity: 0.5 }}
 ```
 
 ❌ **DON'T**: Animate `width`, `height`, `top`, `left` directly
+
 ```tsx
 // Bad - causes layout recalculation
 style={{ width: '100px', height: '50px' }}
 ```
 
 ### 2. MotionValues for Continuous Updates
+
 ✅ **DO**: Use MotionValues for drag operations
+
 ```tsx
 const x = useMotionValue(0);
 const width = useTransform(x, (val) => `${val}%`);
 ```
 
 ❌ **DON'T**: Update React state on every drag frame
+
 ```tsx
 // Bad - causes re-renders
 onDrag={(e, info) => setWidth(info.point.x)}
 ```
 
 ### 3. Cache Measurements
+
 ✅ **DO**: Use ResizeObserver to cache container dimensions
+
 ```tsx
 const containerWidthRef = useRef<number>(0);
 useEffect(() => {
@@ -77,6 +91,7 @@ useEffect(() => {
 ```
 
 ❌ **DON'T**: Read DOM on every drag event
+
 ```tsx
 // Bad - expensive DOM read
 onDrag={(e, info) => {
@@ -85,7 +100,9 @@ onDrag={(e, info) => {
 ```
 
 ### 4. Batch State Updates
+
 ✅ **DO**: Use requestAnimationFrame to batch updates
+
 ```tsx
 onDragEnd={() => {
   requestAnimationFrame(() => {
@@ -96,37 +113,41 @@ onDragEnd={() => {
 ```
 
 ### 5. Absolute Positioning for Resizers
+
 ✅ **DO**: Position resizers absolutely to avoid layout shifts
+
 ```tsx
-<motion.div
-  className="absolute top-0 bottom-0"
-  style={{ left: resizerLeft }}
-/>
+<motion.div className="absolute top-0 bottom-0" style={{ left: resizerLeft }} />
 ```
 
 ### 6. Layout Animation Scope
+
 ✅ **DO**: Use `layout="position"` when only position changes
+
 ```tsx
 <motion.div layout="position" />
 ```
 
 ✅ **DO**: Use full `layout` only when size changes
+
 ```tsx
 <motion.div layout />
 ```
 
 ### 7. Reduce Bundle Size
+
 ✅ **DO**: Use LazyMotion for code splitting
+
 ```tsx
 import { LazyMotion, domAnimation } from 'motion/react';
 
-<LazyMotion features={domAnimation}>
-  {/* Your components */}
-</LazyMotion>
+<LazyMotion features={domAnimation}>{/* Your components */}</LazyMotion>;
 ```
 
 ### 8. Performance Hints
+
 ✅ **DO**: Use `willChange` appropriately
+
 ```tsx
 style={{
   willChange: isDragging ? 'transform' : 'auto'
@@ -134,7 +155,9 @@ style={{
 ```
 
 ### 9. Layout Groups
+
 ✅ **DO**: Use LayoutGroup for coordinated animations
+
 ```tsx
 <LayoutGroup>
   <motion.div layout />
@@ -143,7 +166,9 @@ style={{
 ```
 
 ### 10. Accessibility
+
 ✅ **DO**: Respect `prefers-reduced-motion`
+
 ```tsx
 const shouldReduceMotion = useReducedMotion();
 const transition = shouldReduceMotion ? { duration: 0 } : springTransition;
@@ -174,11 +199,13 @@ const transition = shouldReduceMotion ? { duration: 0 } : springTransition;
 ## Setup Recommendations
 
 ### Package Installation
+
 ```bash
 npm install motion
 ```
 
 ### Import Strategy
+
 ```tsx
 // For most use cases
 import { motion, useMotionValue, useTransform } from 'motion/react';
@@ -188,7 +215,9 @@ import { LazyMotion, domAnimation } from 'motion/react';
 ```
 
 ### TypeScript Configuration
+
 Ensure React 18+ types are available:
+
 ```json
 {
   "compilerOptions": {
@@ -198,6 +227,7 @@ Ensure React 18+ types are available:
 ```
 
 ### Storybook Setup
+
 - Add performance test stories
 - Test rapid interactions
 - Validate across viewport sizes
@@ -225,6 +255,7 @@ Ensure React 18+ types are available:
 ### 📊 Performance Metrics
 
 Our current implementation:
+
 - ✅ Caches container width (no getBoundingClientRect in drag events)
 - ✅ Uses MotionValues for immediate updates
 - ✅ Batches state commits with requestAnimationFrame
@@ -253,6 +284,7 @@ Our current implementation:
 ## Testing
 
 Run performance tests in Storybook:
+
 ```bash
 npm run storybook
 ```
@@ -260,6 +292,7 @@ npm run storybook
 Navigate to: `Components/Layout/MainLayout` → Performance test stories
 
 Test scenarios:
+
 1. **PerformanceRapidDrag**: Rapid repeated drags
 2. **PerformanceExtendedDrag**: Extended drag sessions
 3. **PerformanceSidebarRapidDrag**: Sidebar resizing performance

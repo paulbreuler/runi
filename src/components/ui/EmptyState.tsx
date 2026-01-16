@@ -84,23 +84,17 @@ export const EmptyState = ({
       }
     >
       {/* Icon - subtle, soft, Apple-style (only show when not muted) */}
-      {icon && !muted && (
-        <motion.div
-          variants={iconVariants}
-          className="mb-8"
-        >
+      {icon !== undefined && !muted && (
+        <motion.div variants={iconVariants} className="mb-8">
           {icon}
         </motion.div>
       )}
-      
+
       {/* Wrapper for muted content to match request empty states */}
       {muted ? (
-        <motion.div
-          variants={itemVariants}
-          className="text-text-muted/50 max-w-md px-6"
-        >
+        <motion.div variants={itemVariants} className="text-text-muted/50 max-w-md px-6">
           <p className="text-sm leading-relaxed">{title}</p>
-          {description && (
+          {description !== undefined && (
             <p className="text-xs mt-2 leading-relaxed">{description}</p>
           )}
         </motion.div>
@@ -115,7 +109,7 @@ export const EmptyState = ({
           </motion.h3>
 
           {/* Description - warm, helpful, Apple-style spacing */}
-          {description && (
+          {description !== undefined && (
             <motion.p
               variants={itemVariants}
               className="text-base text-text-secondary max-w-md leading-relaxed mb-8"
@@ -126,13 +120,8 @@ export const EmptyState = ({
         </>
       )}
 
-
       {/* Action - clear CTA */}
-      {action && (
-        <motion.div variants={itemVariants}>
-          {action}
-        </motion.div>
-      )}
+      {action !== undefined && <motion.div variants={itemVariants}>{action}</motion.div>}
     </motion.div>
   );
 };

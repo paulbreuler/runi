@@ -49,6 +49,10 @@ export const ServerError: Story = {
 };
 
 export const AllStatusRanges: Story = {
+  args: {
+    status: 200,
+    statusText: 'OK',
+  },
   render: () => (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-3">

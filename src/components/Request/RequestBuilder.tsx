@@ -36,7 +36,9 @@ export const RequestBuilder = (): React.JSX.Element => {
 
   const updateScrollState = useCallback((): void => {
     const container = tabScrollRef.current;
-    if (!container) return;
+    if (container === null) {
+      return;
+    }
     const maxScroll = container.scrollWidth - container.clientWidth;
     const hasScrollableOverflow = maxScroll > 4;
     setHasOverflow(hasScrollableOverflow);
@@ -47,7 +49,9 @@ export const RequestBuilder = (): React.JSX.Element => {
   useEffect(() => {
     updateScrollState();
     const container = tabScrollRef.current;
-    if (!container) return;
+    if (container === null) {
+      return;
+    }
 
     const handleScroll = (): void => {
       updateScrollState();
@@ -93,7 +97,9 @@ export const RequestBuilder = (): React.JSX.Element => {
               return (
                 <motion.button
                   key={tab.id}
-                  onClick={() => { setActiveTab(tab.id); }}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                  }}
                   className={cn(
                     'px-3 py-1.5 text-sm rounded-lg transition-colors duration-200 font-medium',
                     isActive

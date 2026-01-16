@@ -15,7 +15,7 @@ describe('RequestHeader', () => {
 
   it('renders with proper layout structure', () => {
     const { container } = render(<RequestHeader {...defaultProps} />);
-    
+
     // Should have professional spacing (px-6 py-4)
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toHaveClass('px-6');
@@ -24,7 +24,7 @@ describe('RequestHeader', () => {
 
   it('renders method select with colored text only', () => {
     render(<RequestHeader {...defaultProps} />);
-    
+
     const methodSelect = screen.getByTestId('method-select');
     expect(methodSelect).toBeInTheDocument();
     expect(methodSelect).toHaveClass('font-semibold');
@@ -37,7 +37,7 @@ describe('RequestHeader', () => {
 
   it('renders URL input with proper placeholder', () => {
     render(<RequestHeader {...defaultProps} url="" />);
-    
+
     const urlInput = screen.getByTestId('url-input');
     expect(urlInput).toBeInTheDocument();
     expect(urlInput).toHaveAttribute('placeholder', 'Enter request URL...');
@@ -45,7 +45,7 @@ describe('RequestHeader', () => {
 
   it('renders URL input with glass-morphism styling (Apple 2025 aesthetic)', () => {
     render(<RequestHeader {...defaultProps} url="" />);
-    
+
     const urlInput = screen.getByTestId('url-input');
     // Should be a motion component for glass effect
     expect(urlInput).toHaveAttribute('data-motion-component', 'input');
@@ -56,7 +56,7 @@ describe('RequestHeader', () => {
 
   it('applies Motion animations for glass effect', () => {
     render(<RequestHeader {...defaultProps} url="" />);
-    
+
     const urlInput = screen.getByTestId('url-input');
     // Should be a motion component with glass effect
     expect(urlInput).toHaveAttribute('data-motion-component', 'input');
@@ -64,7 +64,7 @@ describe('RequestHeader', () => {
 
   it('renders send button with proper styling', () => {
     render(<RequestHeader {...defaultProps} />);
-    
+
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeInTheDocument();
     expect(sendButton).toHaveTextContent('Send');
@@ -72,7 +72,7 @@ describe('RequestHeader', () => {
 
   it('shows loading state on send button', () => {
     render(<RequestHeader {...defaultProps} loading={true} />);
-    
+
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toHaveTextContent('Sending');
     expect(sendButton).toBeDisabled();
@@ -80,14 +80,14 @@ describe('RequestHeader', () => {
 
   it('disables send button when URL is empty', () => {
     render(<RequestHeader {...defaultProps} url="" />);
-    
+
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeDisabled();
   });
 
   it('enables send button when URL is valid', () => {
     render(<RequestHeader {...defaultProps} url="https://api.example.com" />);
-    
+
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).not.toBeDisabled();
   });
@@ -95,7 +95,7 @@ describe('RequestHeader', () => {
   it('calls onSend when send button is clicked', async () => {
     const onSend = vi.fn();
     render(<RequestHeader {...defaultProps} onSend={onSend} />);
-    
+
     await userEvent.click(screen.getByTestId('send-button'));
     expect(onSend).toHaveBeenCalledTimes(1);
   });
@@ -103,7 +103,7 @@ describe('RequestHeader', () => {
   it('calls onSend when Enter is pressed in URL input', async () => {
     const onSend = vi.fn();
     render(<RequestHeader {...defaultProps} onSend={onSend} />);
-    
+
     const urlInput = screen.getByTestId('url-input');
     await userEvent.type(urlInput, '{Enter}');
     expect(onSend).toHaveBeenCalledTimes(1);
@@ -112,7 +112,7 @@ describe('RequestHeader', () => {
   it('does not call onSend on Enter when URL is empty', async () => {
     const onSend = vi.fn();
     render(<RequestHeader {...defaultProps} url="" onSend={onSend} />);
-    
+
     const urlInput = screen.getByTestId('url-input');
     await userEvent.type(urlInput, '{Enter}');
     expect(onSend).not.toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('RequestHeader', () => {
   it('calls onUrlChange when typing in URL input', async () => {
     const onUrlChange = vi.fn();
     render(<RequestHeader {...defaultProps} url="" onUrlChange={onUrlChange} />);
-    
+
     const urlInput = screen.getByTestId('url-input');
     await userEvent.type(urlInput, 'test');
     expect(onUrlChange).toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe('RequestHeader', () => {
 
   it('has proper gap between elements', () => {
     const { container } = render(<RequestHeader {...defaultProps} />);
-    
+
     // Should have gap-3 for professional spacing
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toHaveClass('gap-3');

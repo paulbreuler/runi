@@ -1,12 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from './card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './card';
 import { Button } from './button';
 
 const meta = {
@@ -53,7 +46,7 @@ export const WithoutHover: Story = {
     <Card hover={false} className="w-96">
       <CardHeader>
         <CardTitle>Card Without Hover</CardTitle>
-        <CardDescription>This card doesn't lift on hover</CardDescription>
+        <CardDescription>This card does not lift on hover</CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-text-secondary">Hover over this card to see the difference.</p>

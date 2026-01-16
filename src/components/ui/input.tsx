@@ -2,7 +2,10 @@ import * as React from 'react';
 import { motion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 import { cn } from '@/utils/cn';
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd'
+> {
   /** Enable glass-morphism effect (Apple 2025 aesthetic) */
   glass?: boolean;
 }
@@ -13,17 +16,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const bgOpacity = useMotionValue(glass ? 0.05 : 1);
     const borderOpacity = useMotionValue(0.1);
     const blurAmount = useMotionValue(glass ? 8 : 0);
-    
+
     // Spring animations for smooth transitions
     const bgOpacitySpring = useSpring(bgOpacity, { stiffness: 200, damping: 25 });
     const borderOpacitySpring = useSpring(borderOpacity, { stiffness: 200, damping: 25 });
     const blurSpring = useSpring(blurAmount, { stiffness: 200, damping: 25 });
-    
+
     // Transform values to CSS strings using useMotionTemplate
     const backgroundColor = useMotionTemplate`rgba(255, 255, 255, ${bgOpacitySpring})`;
     const borderColor = useMotionTemplate`rgba(255, 255, 255, ${borderOpacitySpring})`;
     const backdropBlur = useMotionTemplate`blur(${blurSpring}px)`;
-    
+
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>): void => {
       if (glass) {
         bgOpacity.set(0.12);
@@ -32,7 +35,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       }
       onFocus?.(e);
     };
-    
+
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>): void => {
       if (glass) {
         bgOpacity.set(0.05);
@@ -41,7 +44,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       }
       onBlur?.(e);
     };
-    
+
     const baseClasses = cn(
       'text-text-primary placeholder:text-text-muted ring-offset-bg-app',
       'flex h-9 w-full min-w-0 rounded-lg px-3 py-1 text-sm',
@@ -64,7 +67,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       ],
       className
     );
-    
+
     // Use motion.input for glass effect, regular input otherwise
     if (glass) {
       return (
@@ -81,10 +84,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             WebkitBackdropFilter: backdropBlur,
           }}
           data-motion-component="input"
-          whileHover={{ 
+          whileHover={{
             scale: 1.005,
           }}
-          whileFocus={{ 
+          whileFocus={{
             scale: 1.01,
           }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -92,7 +95,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         />
       );
     }
-    
+
     return (
       <input
         type={type}

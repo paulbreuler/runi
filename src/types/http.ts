@@ -10,6 +10,8 @@
 // Re-export generated types from Rust
 export type { HttpResponse, RequestParams, RequestTiming } from './generated/index';
 
+import { type RequestParams } from './generated/index';
+
 /**
  * HTTP methods supported by the API client.
  */
@@ -26,8 +28,8 @@ export const DEFAULT_TIMEOUT_MS = 30000;
 export function createRequestParams(
   url: string,
   method: HttpMethod = 'GET',
-  options?: Partial<Pick<import('./generated').RequestParams, 'headers' | 'body' | 'timeout_ms'>>
-): import('./generated').RequestParams {
+  options?: Partial<Pick<RequestParams, 'headers' | 'body' | 'timeout_ms'>>
+): RequestParams {
   return {
     url,
     method,

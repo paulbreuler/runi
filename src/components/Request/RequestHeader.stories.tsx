@@ -16,10 +16,13 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: {
+    method: 'GET',
+  },
   render: () => {
     const [method, setMethod] = useState<HttpMethod>('GET');
     const [url, setUrl] = useState('https://api.example.com/users');
-    
+
     return (
       <div className="w-full border border-border-default bg-bg-app">
         <RequestHeader
@@ -37,49 +40,43 @@ export const Default: Story = {
 };
 
 export const Loading: Story = {
+  args: {
+    method: 'POST',
+  },
   render: () => (
     <div className="w-full border border-border-default bg-bg-app">
-      <RequestHeader
-        method="POST"
-        url="https://api.example.com/users"
-        loading={true}
-      />
+      <RequestHeader method="POST" url="https://api.example.com/users" loading={true} />
     </div>
   ),
 };
 
 export const EmptyUrl: Story = {
+  args: {
+    method: 'GET',
+  },
   render: () => {
     const [method, setMethod] = useState<HttpMethod>('GET');
     const [url, setUrl] = useState('');
-    
+
     return (
       <div className="w-full border border-border-default bg-bg-app">
-        <RequestHeader
-          method={method}
-          url={url}
-          onMethodChange={setMethod}
-          onUrlChange={setUrl}
-        />
+        <RequestHeader method={method} url={url} onMethodChange={setMethod} onUrlChange={setUrl} />
       </div>
     );
   },
 };
 
 export const AllMethods: Story = {
+  args: {
+    method: 'GET',
+  },
   render: () => {
-    const methods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
     const [method, setMethod] = useState<HttpMethod>('GET');
     const [url, setUrl] = useState('https://api.example.com/resource');
-    
+
     return (
       <div className="w-full border border-border-default bg-bg-app">
-        <RequestHeader
-          method={method}
-          url={url}
-          onMethodChange={setMethod}
-          onUrlChange={setUrl}
-        />
+        <RequestHeader method={method} url={url} onMethodChange={setMethod} onUrlChange={setUrl} />
       </div>
     );
   },

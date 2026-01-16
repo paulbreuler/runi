@@ -29,10 +29,12 @@ const preview: Preview = {
   },
   decorators: [
     (Story) => (
-      <div style={{ 
-        padding: '1rem',
-        backgroundColor: '#0a0a0a' 
-      }}>
+      <div
+        style={{
+          padding: '1rem',
+          backgroundColor: '#0a0a0a',
+        }}
+      >
         <Story />
       </div>
     ),

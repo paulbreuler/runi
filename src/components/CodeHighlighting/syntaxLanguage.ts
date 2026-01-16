@@ -29,12 +29,13 @@ const looksLikeJson = (body: string): boolean => {
 const looksLikeHtml = (body: string): boolean => /<!doctype html|<html[\s>]/i.test(body);
 
 const looksLikeXml = (body: string): boolean => {
-  if (!body.startsWith('<')) return false;
+  if (!body.startsWith('<')) {
+    return false;
+  }
   return /<([a-z][\w-]*)[\s>][\s\S]*<\/\1>/i.test(body);
 };
 
-const looksLikeYaml = (body: string): boolean =>
-  /^---\s*$|^\s*[\w-]+\s*:\s*.+/m.test(body);
+const looksLikeYaml = (body: string): boolean => /^---\s*$|^\s*[\w-]+\s*:\s*.+/m.test(body);
 
 export const detectSyntaxLanguage = ({
   body,
@@ -48,10 +49,20 @@ export const detectSyntaxLanguage = ({
   }
 
   const trimmed = body.trim();
-  if (!trimmed) return 'text';
-  if (looksLikeJson(trimmed)) return 'json';
-  if (looksLikeHtml(trimmed)) return 'html';
-  if (looksLikeXml(trimmed)) return 'xml';
-  if (looksLikeYaml(trimmed)) return 'yaml';
+  if (trimmed.length === 0) {
+    return 'text';
+  }
+  if (looksLikeJson(trimmed)) {
+    return 'json';
+  }
+  if (looksLikeHtml(trimmed)) {
+    return 'html';
+  }
+  if (looksLikeXml(trimmed)) {
+    return 'xml';
+  }
+  if (looksLikeYaml(trimmed)) {
+    return 'yaml';
+  }
   return 'text';
 };

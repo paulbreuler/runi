@@ -5,7 +5,6 @@ import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
-import { cn } from '@/utils/cn';
 
 type AuthType = 'none' | 'bearer' | 'basic' | 'custom';
 
@@ -15,22 +14,36 @@ type AuthType = 'none' | 'bearer' | 'basic' | 'custom';
 export const AuthEditor = (): React.JSX.Element => {
   const { headers, setHeaders } = useRequestStore();
   const [authType, setAuthType] = useState<AuthType>(() => {
-    if (headers['Authorization']?.startsWith('Bearer ')) return 'bearer';
-    if (headers['Authorization']?.startsWith('Basic ')) return 'basic';
-    if (headers['Authorization']) return 'custom';
+    const auth = headers.Authorization;
+    if (auth?.startsWith('Bearer ') === true) {
+      return 'bearer';
+    }
+    if (auth?.startsWith('Basic ') === true) {
+      return 'basic';
+    }
+    if (auth !== undefined && auth.length > 0) {
+      return 'custom';
+    }
     return 'none';
   });
   const [token, setToken] = useState(() => {
-    if (headers['Authorization']?.startsWith('Bearer ')) {
-      return headers['Authorization'].substring(7);
+    const auth = headers.Authorization;
+    if (auth?.startsWith('Bearer ') === true) {
+      return auth.substring(7);
     }
     return '';
   });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [customHeader, setCustomHeader] = useState(() => {
-    if (headers['Authorization'] && !headers['Authorization'].startsWith('Bearer ') && !headers['Authorization'].startsWith('Basic ')) {
-      return headers['Authorization'];
+    const auth = headers.Authorization;
+    if (
+      auth !== undefined &&
+      auth.length > 0 &&
+      !auth.startsWith('Bearer ') &&
+      !auth.startsWith('Basic ')
+    ) {
+      return auth;
     }
     return '';
   });
@@ -38,39 +51,40 @@ export const AuthEditor = (): React.JSX.Element => {
 
   const updateAuth = (type: AuthType, value: string): void => {
     const updatedHeaders = { ...headers };
-    
+
     // Remove existing Authorization header
-    delete updatedHeaders['Authorization'];
-    
+    delete updatedHeaders.Authorization;
+
     if (type === 'none') {
       setHeaders(updatedHeaders);
       return;
     }
-    
+
     if (type === 'bearer') {
-      updatedHeaders['Authorization'] = `Bearer ${value}`;
+      updatedHeaders.Authorization = `Bearer ${value}`;
     } else if (type === 'basic') {
       // Basic auth uses base64 encoded username:password
       const encoded = btoa(`${username}:${password}`);
-      updatedHeaders['Authorization'] = `Basic ${encoded}`;
-    } else if (type === 'custom') {
-      updatedHeaders['Authorization'] = value;
+      updatedHeaders.Authorization = `Basic ${encoded}`;
+    } else {
+      // type === 'custom'
+      updatedHeaders.Authorization = value;
     }
-    
+
     setHeaders(updatedHeaders);
   };
 
   const handleAuthTypeChange = (value: string | undefined): void => {
-    const newType = (value || 'none') as AuthType;
+    const newType = (value ?? 'none') as AuthType;
     setAuthType(newType);
-    
+
     if (newType === 'none') {
       updateAuth('none', '');
-    } else if (newType === 'bearer' && token) {
+    } else if (newType === 'bearer' && token.length > 0) {
       updateAuth('bearer', token);
-    } else if (newType === 'basic' && username && password) {
+    } else if (newType === 'basic' && username.length > 0 && password.length > 0) {
       updateAuth('basic', '');
-    } else if (newType === 'custom' && customHeader) {
+    } else if (newType === 'custom' && customHeader.length > 0) {
       updateAuth('custom', customHeader);
     }
   };
@@ -84,14 +98,14 @@ export const AuthEditor = (): React.JSX.Element => {
 
   const handleUsernameChange = (value: string): void => {
     setUsername(value);
-    if (authType === 'basic' && password) {
+    if (authType === 'basic' && password.length > 0) {
       updateAuth('basic', '');
     }
   };
 
   const handlePasswordChange = (value: string): void => {
     setPassword(value);
-    if (authType === 'basic' && username) {
+    if (authType === 'basic' && username.length > 0) {
       updateAuth('basic', '');
     }
   };
@@ -136,7 +150,9 @@ export const AuthEditor = (): React.JSX.Element => {
                 glass={true}
                 type="text"
                 value={token}
-                onChange={(e) => { handleTokenChange(e.target.value); }}
+                onChange={(e) => {
+                  handleTokenChange(e.target.value);
+                }}
                 placeholder="Enter bearer token"
                 className="font-mono text-sm"
               />
@@ -157,7 +173,9 @@ export const AuthEditor = (): React.JSX.Element => {
                   glass={true}
                   type="text"
                   value={username}
-                  onChange={(e) => { handleUsernameChange(e.target.value); }}
+                  onChange={(e) => {
+                    handleUsernameChange(e.target.value);
+                  }}
                   placeholder="Enter username"
                   className="font-mono text-sm"
                 />
@@ -169,14 +187,18 @@ export const AuthEditor = (): React.JSX.Element => {
                     glass={true}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => { handlePasswordChange(e.target.value); }}
+                    onChange={(e) => {
+                      handlePasswordChange(e.target.value);
+                    }}
                     placeholder="Enter password"
                     className="font-mono text-sm pr-10"
                   />
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => { setShowPassword(!showPassword); }}
+                    onClick={() => {
+                      setShowPassword(!showPassword);
+                    }}
                     className="absolute right-2 top-1/2 -translate-y-1/2"
                   >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -194,12 +216,16 @@ export const AuthEditor = (): React.JSX.Element => {
               transition={{ duration: 0.2 }}
               className="space-y-2"
             >
-              <label className="text-sm font-medium text-text-secondary">Authorization Header</label>
+              <label className="text-sm font-medium text-text-secondary">
+                Authorization Header
+              </label>
               <Input
                 glass={true}
                 type="text"
                 value={customHeader}
-                onChange={(e) => { handleCustomHeaderChange(e.target.value); }}
+                onChange={(e) => {
+                  handleCustomHeaderChange(e.target.value);
+                }}
                 placeholder="Enter custom authorization header value"
                 className="font-mono text-sm"
               />
@@ -216,7 +242,9 @@ export const AuthEditor = (): React.JSX.Element => {
             >
               <Key className="size-12 text-text-muted/25 mb-4" strokeWidth={1} />
               <p className="text-sm text-text-muted">No authentication configured</p>
-              <p className="text-xs text-text-muted/70 mt-1">Select an authentication type above to get started</p>
+              <p className="text-xs text-text-muted/70 mt-1">
+                Select an authentication type above to get started
+              </p>
             </motion.div>
           )}
         </div>

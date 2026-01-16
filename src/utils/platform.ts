@@ -19,9 +19,15 @@ async function detectPlatform(): Promise<string> {
     const { invoke } = await import('@tauri-apps/api/core');
     const osPlatform = await invoke<string>('get_platform');
     // Tauri returns: 'darwin', 'win32', 'linux'
-    if (osPlatform === 'darwin') return 'macOS';
-    if (osPlatform === 'win32') return 'Windows';
-    if (osPlatform === 'linux') return 'Linux';
+    if (osPlatform === 'darwin') {
+      return 'macOS';
+    }
+    if (osPlatform === 'win32') {
+      return 'Windows';
+    }
+    if (osPlatform === 'linux') {
+      return 'Linux';
+    }
     return 'Unknown';
   } catch {
     // Not in Tauri environment (web/SSR) - fall back to browser APIs
@@ -36,16 +42,28 @@ async function detectPlatform(): Promise<string> {
   const userAgentData = getNavigatorUAData();
   if (typeof userAgentData?.platform === 'string' && userAgentData.platform.length > 0) {
     const platform = userAgentData.platform.toLowerCase();
-    if (platform.includes('mac')) return 'macOS';
-    if (platform.includes('win')) return 'Windows';
-    if (platform.includes('linux')) return 'Linux';
+    if (platform.includes('mac')) {
+      return 'macOS';
+    }
+    if (platform.includes('win')) {
+      return 'Windows';
+    }
+    if (platform.includes('linux')) {
+      return 'Linux';
+    }
   }
 
   // Fallback: Parse userAgent
   const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes('mac os x') || ua.includes('macintosh')) return 'macOS';
-  if (ua.includes('win')) return 'Windows';
-  if (ua.includes('linux')) return 'Linux';
+  if (ua.includes('mac os x') || ua.includes('macintosh')) {
+    return 'macOS';
+  }
+  if (ua.includes('win')) {
+    return 'Windows';
+  }
+  if (ua.includes('linux')) {
+    return 'Linux';
+  }
 
   return 'Unknown';
 }
@@ -73,12 +91,10 @@ async function getPlatform(): Promise<string> {
     return platformCache;
   }
 
-  if (platformPromise === null) {
-    platformPromise = detectPlatform().then((platform) => {
-      platformCache = platform;
-      return platform;
-    });
-  }
+  platformPromise ??= detectPlatform().then((platform) => {
+    platformCache = platform;
+    return platform;
+  });
 
   return platformPromise;
 }
@@ -134,15 +150,27 @@ export function getPlatformSync(): string {
   const userAgentData = getNavigatorUAData();
   if (typeof userAgentData?.platform === 'string' && userAgentData.platform.length > 0) {
     const platform = userAgentData.platform.toLowerCase();
-    if (platform.includes('mac')) return 'macOS';
-    if (platform.includes('win')) return 'Windows';
-    if (platform.includes('linux')) return 'Linux';
+    if (platform.includes('mac')) {
+      return 'macOS';
+    }
+    if (platform.includes('win')) {
+      return 'Windows';
+    }
+    if (platform.includes('linux')) {
+      return 'Linux';
+    }
   }
 
   const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes('mac os x') || ua.includes('macintosh')) return 'macOS';
-  if (ua.includes('win')) return 'Windows';
-  if (ua.includes('linux')) return 'Linux';
+  if (ua.includes('mac os x') || ua.includes('macintosh')) {
+    return 'macOS';
+  }
+  if (ua.includes('win')) {
+    return 'Windows';
+  }
+  if (ua.includes('linux')) {
+    return 'Linux';
+  }
 
   return 'Unknown';
 }

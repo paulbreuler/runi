@@ -19,7 +19,10 @@ export function useTauriCommand<T>(command: string): UseTauriCommandResult<T> {
       setError(null);
 
       try {
-        const result = await invoke<T>(command, args.length > 0 ? (args[0] as Record<string, unknown>) : undefined);
+        const result = await invoke<T>(
+          command,
+          args.length > 0 ? (args[0] as Record<string, unknown>) : undefined
+        );
         setData(result);
         return result;
       } catch (err) {

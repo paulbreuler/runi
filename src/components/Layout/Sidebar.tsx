@@ -10,7 +10,13 @@ interface DrawerSectionProps {
   testId?: string;
 }
 
-const DrawerSection = ({ title, icon: _icon, defaultOpen = true, children, testId }: DrawerSectionProps): React.JSX.Element => {
+const DrawerSection = ({
+  title,
+  icon: _icon,
+  defaultOpen = true,
+  children,
+  testId,
+}: DrawerSectionProps): React.JSX.Element => {
   // icon parameter is kept for API consistency but not currently used in the UI
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -19,7 +25,9 @@ const DrawerSection = ({ title, icon: _icon, defaultOpen = true, children, testI
       <button
         type="button"
         className="w-full flex items-center gap-2 px-4 py-3 hover:bg-bg-raised/30 transition-colors cursor-pointer group"
-        onClick={() => { setIsOpen(!isOpen); }}
+        onClick={() => {
+          setIsOpen(!isOpen);
+        }}
         aria-expanded={isOpen}
       >
         <span className="text-text-muted group-hover:text-text-secondary transition-colors">
@@ -38,9 +46,7 @@ const DrawerSection = ({ title, icon: _icon, defaultOpen = true, children, testI
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3">
-              {children}
-            </div>
+            <div className="px-3 pb-3">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -50,23 +56,40 @@ const DrawerSection = ({ title, icon: _icon, defaultOpen = true, children, testI
 
 export const Sidebar = (): React.JSX.Element => {
   return (
-    <aside
-      className="w-full h-full bg-bg-surface flex flex-col"
-      data-testid="sidebar"
-    >
+    <aside className="w-full h-full bg-bg-surface flex flex-col" data-testid="sidebar">
       {/* Collections Drawer */}
-      <DrawerSection title="Collections" icon={<Folder size={14} />} defaultOpen={true} testId="collections-drawer">
+      <DrawerSection
+        title="Collections"
+        icon={<Folder size={14} />}
+        defaultOpen={true}
+        testId="collections-drawer"
+      >
         <div className="flex items-center gap-3 text-sm text-text-muted hover:text-text-secondary hover:bg-bg-raised/50 rounded-lg px-3 py-2 transition-all duration-200 cursor-pointer group">
-          <Folder size={15} className="text-text-muted/60 group-hover:text-accent-blue/70 transition-colors" />
-          <span className="opacity-60 group-hover:opacity-100 transition-opacity">No collections yet</span>
+          <Folder
+            size={15}
+            className="text-text-muted/60 group-hover:text-accent-blue/70 transition-colors"
+          />
+          <span className="opacity-60 group-hover:opacity-100 transition-opacity">
+            No collections yet
+          </span>
         </div>
       </DrawerSection>
 
       {/* History Drawer */}
-      <DrawerSection title="History" icon={<History size={14} />} defaultOpen={true} testId="history-drawer">
+      <DrawerSection
+        title="History"
+        icon={<History size={14} />}
+        defaultOpen={true}
+        testId="history-drawer"
+      >
         <div className="flex items-center gap-3 text-sm text-text-muted hover:text-text-secondary hover:bg-bg-raised/50 rounded-lg px-3 py-2 transition-all duration-200 cursor-pointer group">
-          <History size={15} className="text-text-muted/60 group-hover:text-signal-warning/70 transition-colors" />
-          <span className="opacity-60 group-hover:opacity-100 transition-opacity">No history yet</span>
+          <History
+            size={15}
+            className="text-text-muted/60 group-hover:text-signal-warning/70 transition-colors"
+          />
+          <span className="opacity-60 group-hover:opacity-100 transition-opacity">
+            No history yet
+          </span>
         </div>
       </DrawerSection>
 

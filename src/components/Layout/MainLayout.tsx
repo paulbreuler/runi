@@ -1,5 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence, LayoutGroup, useMotionValue, useTransform, useReducedMotion, useSpring } from 'motion/react';
+import {
+  motion,
+  AnimatePresence,
+  LayoutGroup,
+  useMotionValue,
+  useTransform,
+  useReducedMotion,
+  useSpring,
+} from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -127,7 +135,10 @@ export const MainLayout = ({
 
   // Sidebar width with spring animation - like turning a page
   const targetSidebarWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
-  const sidebarWidthSpring = useSpring(targetSidebarWidth, prefersReducedMotion ? { duration: 0 } : sidebarSpring);
+  const sidebarWidthSpring = useSpring(
+    targetSidebarWidth,
+    prefersReducedMotion ? { duration: 0 } : sidebarSpring
+  );
 
   // Update spring target when visibility or width changes
   useEffect(() => {
@@ -166,90 +177,113 @@ export const MainLayout = ({
     setIsPaneDragging(true);
   }, []);
 
-  const handlePanePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isPaneDragging) return;
+  const handlePanePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isPaneDragging) {
+        return;
+      }
 
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const relativeX = e.clientX - rect.left;
-      const newRatio = relativeX / rect.width;
+      if (containerRef.current !== null) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
+        const newRatio = relativeX / rect.width;
 
-      const minRatio = MIN_PANE_SIZE / 100;
-      const maxRatio = MAX_PANE_SIZE / 100;
-      const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
+        const minRatio = MIN_PANE_SIZE / 100;
+        const maxRatio = MAX_PANE_SIZE / 100;
+        const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
 
-      splitRatio.set(clamped);
-    }
-  }, [isPaneDragging, splitRatio]);
+        splitRatio.set(clamped);
+      }
+    },
+    [isPaneDragging, splitRatio]
+  );
 
-  const handlePanePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isPaneDragging) return;
+  const handlePanePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isPaneDragging) {
+        return;
+      }
 
-    e.currentTarget.releasePointerCapture(e.pointerId);
+      e.currentTarget.releasePointerCapture(e.pointerId);
 
-    const finalRatio = splitRatio.get();
-    const finalPercent = finalRatio * 100;
-    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalPercent));
-    setRequestPaneSize(clamped);
-    setIsPaneDragging(false);
-  }, [isPaneDragging, splitRatio]);
+      const finalRatio = splitRatio.get();
+      const finalPercent = finalRatio * 100;
+      const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalPercent));
+      setRequestPaneSize(clamped);
+      setIsPaneDragging(false);
+    },
+    [isPaneDragging, splitRatio]
+  );
 
   // Sidebar resizer handlers - works both expanded and collapsed
   // Uses refs for synchronous state in pointer handlers (React state updates are async)
-  const handleSidebarPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
+  const handleSidebarPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
 
-    // Set ref synchronously so pointermove can read it immediately
-    isSidebarDraggingRef.current = true;
-    setIsSidebarDragging(true);
+      // Set ref synchronously so pointermove can read it immediately
+      isSidebarDraggingRef.current = true;
+      setIsSidebarDragging(true);
 
-    // Track where we started for collapse detection
-    const startWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
-    sidebarDragStartWidth.current = startWidth;
-    sidebarDragCurrentWidth.current = startWidth;
+      // Track where we started for collapse detection
+      const startWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
+      sidebarDragStartWidth.current = startWidth;
+      sidebarDragCurrentWidth.current = startWidth;
 
-    // If collapsed, immediately set to visible so drag feels responsive
-    if (!sidebarVisible) {
-      setSidebarVisible(true);
-    }
-  }, [sidebarVisible, sidebarWidth, setSidebarVisible]);
+      // If collapsed, immediately set to visible so drag feels responsive
+      if (!sidebarVisible) {
+        setSidebarVisible(true);
+      }
+    },
+    [sidebarVisible, sidebarWidth, setSidebarVisible]
+  );
 
-  const handleSidebarPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    // Use ref for synchronous check (state may not have updated yet)
-    if (!isSidebarDraggingRef.current) return;
+  const handleSidebarPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      // Use ref for synchronous check (state may not have updated yet)
+      if (!isSidebarDraggingRef.current) {
+        return;
+      }
 
-    const newWidth = e.clientX;
-    // Allow dragging below MIN for the "page turning" feel
-    const clamped = Math.max(COLLAPSED_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
-    sidebarDragCurrentWidth.current = clamped; // Track actual position (spring lags behind)
-    sidebarWidthSpring.set(clamped);
-  }, [sidebarWidthSpring]);
+      const newWidth = e.clientX;
+      // Allow dragging below MIN for the "page turning" feel
+      const clamped = Math.max(COLLAPSED_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
+      sidebarDragCurrentWidth.current = clamped; // Track actual position (spring lags behind)
+      sidebarWidthSpring.set(clamped);
+    },
+    [sidebarWidthSpring]
+  );
 
-  const handleSidebarPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    // Use ref for synchronous check
-    if (!isSidebarDraggingRef.current) return;
+  const handleSidebarPointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      // Use ref for synchronous check
+      if (!isSidebarDraggingRef.current) {
+        return;
+      }
 
-    e.currentTarget.releasePointerCapture(e.pointerId);
+      e.currentTarget.releasePointerCapture(e.pointerId);
 
-    // Use tracked position, not spring (spring animates and lags behind actual drag)
-    const finalWidth = sidebarDragCurrentWidth.current;
-    const startWidth = sidebarDragStartWidth.current;
+      // Use tracked position, not spring (spring animates and lags behind actual drag)
+      const finalWidth = sidebarDragCurrentWidth.current;
+      const startWidth = sidebarDragStartWidth.current;
 
-    // Direction-based: dragging LEFT = close intent, dragging RIGHT = resize
-    if (finalWidth < startWidth) {
-      // User dragged left from start position → collapse
-      setSidebarVisible(false);
-    } else {
-      // User dragged right from start position → resize, clamp to valid range
-      const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
-      setSidebarWidth(clamped);
-    }
+      // Direction-based: dragging LEFT = close intent, dragging RIGHT = resize
+      if (finalWidth < startWidth) {
+        // User dragged left from start position → collapse
+        setSidebarVisible(false);
+      } else {
+        // User dragged right from start position → resize, clamp to valid range
+        const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
+        setSidebarWidth(clamped);
+      }
 
-    // Clear both ref and state
-    isSidebarDraggingRef.current = false;
-    setIsSidebarDragging(false);
-  }, [setSidebarVisible]);
+      // Clear both ref and state
+      isSidebarDraggingRef.current = false;
+      setIsSidebarDragging(false);
+    },
+    [setSidebarVisible]
+  );
 
   // Double-click on sash to toggle sidebar
   const handleSashDoubleClick = useCallback(() => {
@@ -298,7 +332,11 @@ export const MainLayout = ({
               onPointerUp={handleSidebarPointerUp}
               onPointerCancel={handleSidebarPointerUp}
               role="separator"
-              aria-label={sidebarVisible ? 'Resize sidebar (double-click to collapse)' : 'Drag or click to expand sidebar'}
+              aria-label={
+                sidebarVisible
+                  ? 'Resize sidebar (double-click to collapse)'
+                  : 'Drag or click to expand sidebar'
+              }
               aria-orientation="vertical"
               aria-valuenow={sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH}
               aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
@@ -316,7 +354,9 @@ export const MainLayout = ({
                 initial={{ x: -256, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -256, opacity: 0 }}
-                transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', ...sidebarSpring }}
+                transition={
+                  prefersReducedMotion ? { duration: 0 } : { type: 'spring', ...sidebarSpring }
+                }
                 style={{ width: 256 }}
                 data-testid="sidebar"
               >
@@ -346,7 +386,9 @@ export const MainLayout = ({
 
         <div className="flex flex-col flex-1 overflow-hidden min-w-0">
           <div className="shrink-0" data-testid="header-bar">
-            {headerContent !== undefined ? headerContent : (
+            {headerContent !== undefined ? (
+              headerContent
+            ) : (
               <div className="h-14 p-2 text-text-secondary flex items-center">
                 Header bar placeholder
               </div>
@@ -370,9 +412,13 @@ export const MainLayout = ({
                   width: requestWidth,
                   scrollbarGutter: 'stable',
                 }}
-                transition={isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
+                transition={
+                  isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+                }
               >
-                {requestContent !== undefined ? requestContent : (
+                {requestContent !== undefined ? (
+                  requestContent
+                ) : (
                   <div className="h-full p-4 text-text-secondary flex items-center justify-center">
                     Request Builder (placeholder - will be built in Run 2B)
                   </div>
@@ -387,9 +433,13 @@ export const MainLayout = ({
                   width: responseWidth,
                   scrollbarGutter: 'stable',
                 }}
-                transition={isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
+                transition={
+                  isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+                }
               >
-                {responseContent !== undefined ? responseContent : (
+                {responseContent !== undefined ? (
+                  responseContent
+                ) : (
                   <div className="h-full p-4 text-text-secondary flex items-center justify-center">
                     Response Viewer (placeholder - will be built in Run 2C)
                   </div>

@@ -11,24 +11,25 @@
  * The `_ms` suffix on all fields is intentional for API clarity and consistency.
  * This is a domain-specific naming convention that improves code readability.
  */
-export type RequestTiming = { 
-/**
- * Total request duration in milliseconds.
- */
-total_ms: number, 
-/**
- * DNS resolution time in milliseconds.
- */
-dns_ms: number | null, 
-/**
- * TCP connection time in milliseconds.
- */
-connect_ms: number | null, 
-/**
- * TLS handshake time in milliseconds.
- */
-tls_ms: number | null, 
-/**
- * Time to first byte in milliseconds.
- */
-first_byte_ms: number | null, };
+export type RequestTiming = {
+  /**
+   * Total request duration in milliseconds.
+   */
+  total_ms: number;
+  /**
+   * DNS resolution time in milliseconds.
+   */
+  dns_ms: number | null;
+  /**
+   * TCP connection time in milliseconds.
+   */
+  connect_ms: number | null;
+  /**
+   * TLS handshake time in milliseconds.
+   */
+  tls_ms: number | null;
+  /**
+   * Time to first byte in milliseconds.
+   */
+  first_byte_ms: number | null;
+};
