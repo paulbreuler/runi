@@ -61,3 +61,7 @@ logs/ralph.log
 .response_analysis
 .ralph_session_history
 .claude_session_id
+
+
+# Planning documents
+.planning-docs/*
