@@ -25,7 +25,7 @@ describe('Button', () => {
   it('applies variant classes', () => {
     const { container } = render(<Button variant="destructive">Delete</Button>);
     const button = container.querySelector('button');
-    expect(button).toHaveClass('bg-destructive');
+    expect(button).toHaveClass('bg-signal-error');
   });
 
   it('applies size classes', () => {

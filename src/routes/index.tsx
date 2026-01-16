@@ -59,10 +59,10 @@ export const HomePage = (): React.JSX.Element => {
         />
       }
       requestContent={
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col bg-bg-app">
           {error && (
             <div
-              className="p-4 bg-signal-error/10 border border-signal-error/20 rounded-lg text-signal-error m-4"
+              className="p-4 mx-6 mt-6 bg-signal-error/10 border border-signal-error/20 rounded-lg text-signal-error"
               role="alert"
               data-testid="error-panel"
             >
@@ -71,17 +71,17 @@ export const HomePage = (): React.JSX.Element => {
           )}
           <div className="flex-1 flex items-center justify-center text-text-secondary">
             <span
-              className="text-xs font-semibold bg-bg-raised px-2 py-1 rounded mr-2"
+              className="text-xs font-semibold bg-bg-raised px-2.5 py-1.5 rounded-lg mr-3"
               style={{ fontFamily: "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', emoji, sans-serif" }}
             >
               🚧 WIP
             </span>
-            Request builder content will go here
+            <span className="text-sm">Request builder content will go here</span>
           </div>
         </div>
       }
       responseContent={
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col bg-bg-app">
           <AnimatePresence mode="wait">
             {response ? (
               <motion.div
@@ -92,7 +92,7 @@ export const HomePage = (): React.JSX.Element => {
                 transition={{ duration: 0.2 }}
                 className="flex-1 flex flex-col overflow-hidden"
               >
-                <div className="flex justify-between items-center px-4 py-2 border-b border-border-default bg-bg-surface">
+                <div className="flex justify-between items-center px-6 py-4 border-b border-border-default bg-bg-surface">
                   <StatusBadge status={response.status} statusText={response.status_text} />
                   <span
                     className="text-text-secondary text-sm font-mono transition-colors duration-200"
@@ -102,9 +102,9 @@ export const HomePage = (): React.JSX.Element => {
                   </span>
                 </div>
 
-                <div className="flex-1 overflow-auto p-4 bg-bg-surface">
+                <div className="flex-1 overflow-auto p-6 bg-bg-surface">
                   <pre
-                    className="font-mono text-sm whitespace-pre-wrap break-words text-text-primary"
+                    className="font-mono text-sm whitespace-pre-wrap break-words text-text-primary leading-relaxed"
                     data-testid="response-body"
                   >
                     {response.body}
@@ -117,18 +117,18 @@ export const HomePage = (): React.JSX.Element => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center text-text-secondary px-6"
+                className="flex-1 flex flex-col items-center justify-center text-text-secondary px-8"
               >
-                <div className="text-center max-w-md">
-                  <h3 className="text-lg font-medium text-text-primary mb-2">
+                <div className="text-center max-w-lg">
+                  <h3 className="text-2xl font-semibold text-text-primary mb-4">
                     Ready to make your first request?
                   </h3>
-                  <p className="text-sm text-text-secondary mb-4">
-                    We've pre-filled a sample URL for you. Click <strong>Send</strong> to see it in action, or try your
+                  <p className="text-base text-text-secondary mb-6 leading-relaxed">
+                    We've pre-filled a sample URL for you. Click <strong className="text-text-primary">Send</strong> to see it in action, or try your
                     own API endpoint.
                   </p>
-                  <p className="text-xs text-text-muted">
-                    This is <strong>Rung 1</strong> of the Adoption Ladder: Your first request reveals the response
+                  <p className="text-sm text-text-muted leading-relaxed">
+                    This is <strong className="text-text-secondary">Rung 1</strong> of the Adoption Ladder — your first request reveals the response
                     viewer and request history.
                   </p>
                 </div>

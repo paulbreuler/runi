@@ -39,7 +39,7 @@ export const RequestHeader = ({
   };
 
   return (
-    <div className="flex gap-2 items-center px-4 py-3 border-b border-border-default bg-bg-surface">
+    <div className="flex gap-3 items-center px-6 py-4 border-b border-border-default bg-bg-surface">
       <Select.Select value={method} onValueChange={handleMethodChange}>
         <Select.SelectTrigger
           className={`w-28 font-semibold transition-colors duration-200 ${methodColorClass}`}
@@ -63,7 +63,7 @@ export const RequestHeader = ({
         value={url}
         onChange={(e) => onUrlChange?.(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Enter URL"
+        placeholder="Enter request URL..."
         data-testid="url-input"
         disabled={loading}
         aria-label="Request URL"
@@ -75,7 +75,8 @@ export const RequestHeader = ({
         disabled={!isValidUrl || loading}
         data-testid="send-button"
         aria-label="Send Request"
-        className="transition-colors duration-200"
+        size="lg"
+        className="transition-colors duration-200 min-w-[100px]"
       >
         {loading ? 'Sending...' : 'Send'}
       </Button>

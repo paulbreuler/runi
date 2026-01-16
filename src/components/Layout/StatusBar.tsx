@@ -5,21 +5,22 @@ export const StatusBar = (): React.JSX.Element => {
 
   return (
     <div
-      className="h-8 border-t border-border-default bg-bg-surface flex items-center justify-between px-4 text-xs text-text-secondary"
+      className="h-9 border-t border-border-default bg-bg-surface flex items-center justify-between px-6 text-xs text-text-secondary"
       data-testid="status-bar"
     >
-      <div className="flex items-center gap-4">
-        <span>
-          Environment: <strong className="font-mono text-text-primary">default</strong>
+      <div className="flex items-center gap-6">
+        <span className="flex items-center gap-2">
+          <span className="text-text-muted">Environment:</span>
+          <strong className="font-mono text-text-primary">default</strong>
         </span>
       </div>
-      <div className="flex items-center gap-4">
-        <span>
-          Press{' '}
-          <kbd className="px-1.5 py-0.5 bg-bg-app border border-border-default rounded text-xs">
+      <div className="flex items-center gap-6">
+        <span className="flex items-center gap-1.5">
+          <span className="text-text-muted">Press</span>
+          <kbd className="px-2 py-0.5 bg-bg-raised border border-border-subtle rounded-md text-xs font-mono text-text-secondary">
             {modifierKey}I
-          </kbd>{' '}
-          for AI assistance
+          </kbd>
+          <span className="text-text-muted">for AI assistance</span>
         </span>
       </div>
     </div>

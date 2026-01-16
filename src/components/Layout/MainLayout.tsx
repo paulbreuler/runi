@@ -112,7 +112,12 @@ export const MainLayout = ({
             </motion.div>
 
             {/* Resizer */}
-            <div className="w-2 bg-border-default hover:bg-accent-blue/20 transition-colors duration-200 cursor-col-resize" data-testid="pane-resizer" />
+            <div 
+              className="w-1 bg-border-default hover:bg-accent-blue/40 hover:w-1.5 transition-all duration-200 cursor-col-resize group"
+              data-testid="pane-resizer"
+            >
+              <div className="h-full w-full group-hover:bg-accent-blue/20" />
+            </div>
 
             {/* Response Pane */}
             <motion.div
