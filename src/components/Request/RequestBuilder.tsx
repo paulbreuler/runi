@@ -54,17 +54,18 @@ export const RequestBuilder = (): React.JSX.Element => {
         })}
       </div>
 
-      {/* Tab content */}
-      <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
+      {/* Tab content - overflow hidden to prevent scrollbar flash during transitions */}
+      <div className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           {activeTab === 'headers' && (
             <motion.div
               key="headers"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="h-full overflow-auto"
+              style={{ scrollbarGutter: 'stable' }}
             >
               <HeaderEditor />
             </motion.div>
@@ -73,11 +74,12 @@ export const RequestBuilder = (): React.JSX.Element => {
           {activeTab === 'body' && (
             <motion.div
               key="body"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="h-full overflow-auto"
+              style={{ scrollbarGutter: 'stable' }}
             >
               <BodyEditor />
             </motion.div>
@@ -86,11 +88,12 @@ export const RequestBuilder = (): React.JSX.Element => {
           {activeTab === 'params' && (
             <motion.div
               key="params"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="h-full overflow-auto"
+              style={{ scrollbarGutter: 'stable' }}
             >
               <ParamsEditor />
             </motion.div>
@@ -99,11 +102,12 @@ export const RequestBuilder = (): React.JSX.Element => {
           {activeTab === 'auth' && (
             <motion.div
               key="auth"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="h-full overflow-auto"
+              style={{ scrollbarGutter: 'stable' }}
             >
               <AuthEditor />
             </motion.div>
