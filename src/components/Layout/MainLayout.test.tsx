@@ -307,7 +307,8 @@ describe('MainLayout', () => {
       // Note: In mocked Motion, AnimatePresence may not work as expected
       // This is better tested in E2E tests
 
-      // Re-render with visible
+      // Show sidebar via store (rerender doesn't remount, so initialSidebarVisible won't apply)
+      useSettingsStore.setState({ sidebarVisible: true });
       rerender(<MainLayout initialSidebarVisible={true} />);
 
       // Sidebar should be visible

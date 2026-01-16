@@ -302,47 +302,46 @@ export const MainLayout = ({
   return (
     <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
       <div className="flex flex-1 overflow-hidden gap-0">
-        {/* Sidebar - always in DOM, animates between expanded and collapsed */}
+        {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
-          <motion.aside
-            className="flex flex-col border-r border-border-default bg-bg-surface overflow-hidden relative shrink-0"
-            style={{ width: sidebarWidthSpring }}
-            data-testid="sidebar"
-          >
-            {/* Sidebar content - fades out when collapsing */}
-            <motion.div
-              className="flex-1 overflow-hidden"
-              style={{ opacity: sidebarContentOpacity }}
-            >
-              <Sidebar />
-            </motion.div>
+          <AnimatePresence>
+            {sidebarVisible && (
+              <motion.aside
+                className="flex flex-col border-r border-border-default bg-bg-surface overflow-hidden relative shrink-0"
+                style={{ width: sidebarWidthSpring }}
+                data-testid="sidebar"
+                initial={false}
+                exit={{ width: 0, opacity: 0 }}
+                transition={prefersReducedMotion ? { duration: 0 } : sidebarSpring}
+              >
+                {/* Sidebar content - fades out when collapsing */}
+                <motion.div
+                  className="flex-1 overflow-hidden"
+                  style={{ opacity: sidebarContentOpacity }}
+                >
+                  <Sidebar />
+                </motion.div>
 
-            {/* Sash / collapsed indicator - drag or double-click to toggle */}
-            <div
-              className={cn(
-                getSashClasses('right', isSidebarDragging),
-                // When collapsed, the whole sidebar edge is the click/drag target
-                !sidebarVisible && 'w-full cursor-ew-resize hover:bg-border-default/30'
-              )}
-              data-testid="sidebar-resizer"
-              onClick={handleCollapsedClick}
-              onDoubleClick={handleSashDoubleClick}
-              onPointerDown={handleSidebarPointerDown}
-              onPointerMove={handleSidebarPointerMove}
-              onPointerUp={handleSidebarPointerUp}
-              onPointerCancel={handleSidebarPointerUp}
-              role="separator"
-              aria-label={
-                sidebarVisible
-                  ? 'Resize sidebar (double-click to collapse)'
-                  : 'Drag or click to expand sidebar'
-              }
-              aria-orientation="vertical"
-              aria-valuenow={sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH}
-              aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
-              aria-valuemax={MAX_SIDEBAR_WIDTH}
-            />
-          </motion.aside>
+                {/* Sash / collapsed indicator - drag or double-click to toggle */}
+                <div
+                  className={cn(getSashClasses('right', isSidebarDragging))}
+                  data-testid="sidebar-resizer"
+                  onClick={handleCollapsedClick}
+                  onDoubleClick={handleSashDoubleClick}
+                  onPointerDown={handleSidebarPointerDown}
+                  onPointerMove={handleSidebarPointerMove}
+                  onPointerUp={handleSidebarPointerUp}
+                  onPointerCancel={handleSidebarPointerUp}
+                  role="separator"
+                  aria-label="Resize sidebar (double-click to collapse)"
+                  aria-orientation="vertical"
+                  aria-valuenow={sidebarWidth}
+                  aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
+                  aria-valuemax={MAX_SIDEBAR_WIDTH}
+                />
+              </motion.aside>
+            )}
+          </AnimatePresence>
         )}
 
         {/* Overlay mode for compact screens */}
