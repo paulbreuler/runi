@@ -28,6 +28,8 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 **The brand philosophy:** _"Collapse uncertainty into truth"_
 
+**The visual tone:** Zen, calm, and book-like. Muted surfaces, soft contrast, and selective emphasis. Use color as a signal, not decoration.
+
 > **Planning Documents:** See `.planning-docs/` for detailed vision and architecture:
 >
 > - `VISION.md` — North star document
@@ -118,6 +120,7 @@ runi/
 │   ├── bindings/                 # ts-rs generated TypeScript types
 │   └── Cargo.toml
 ├── .planning-docs/               # Design vision and strategy documents
+├── .tmp/                         # Ephemeral files (git-ignored, auto-cleanup)
 ├── specs/                        # Technical specifications
 ├── prompts/                      # Ralph prompt files
 └── justfile                      # Task runner
@@ -151,6 +154,8 @@ runi/
 - Always handle and display errors from Tauri commands
 - Prefer `const` arrow functions for components
 - Use Motion for animations (not CSS transitions for complex motion)
+- Default to muted UI controls; only emphasize on hover or when critical
+- Format JSON with 2-space indentation in response views
 
 ### Component Pattern
 
@@ -224,6 +229,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 6. **Never surface errors silently** — Always display Rust errors in UI
 7. **Never use `any` type** — TypeScript strict mode, explicit types required
 8. **Never use class components** — Functional components only
+9. **Never create files unless explicitly requested** — Prefer editing existing files; do not create documentation, analysis, or planning files without explicit user direction
+10. **Never create ephemeral files in tracked directories** — For analysis, planning, or intermediary work that must be written to disk, use `.tmp/` (git-ignored); delete when no longer needed
 
 ---
 
@@ -259,6 +266,45 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 2. Write minimum code to pass
 3. Refactor while tests stay green
 4. Commit only when `just ci` passes
+
+---
+
+## Storybook Best Practices
+
+Stories are **visual documentation**, not automated test suites.
+
+**Do:**
+
+- Create stories that showcase component states and variations
+- Use stories for manual interaction testing (drag, resize, click)
+- Keep stories minimal and focused (1 concept per story)
+- Add brief JSDoc comments explaining each story's purpose
+- Use `play` functions only for basic verification assertions
+
+**Don't:**
+
+- Put performance tests in stories (use `*.test.tsx` files instead)
+- Create stories with complex automated test logic (loops, timing, etc.)
+- Duplicate unit test coverage in stories
+- Add more than 6-8 stories per component
+
+**Story Naming:**
+
+- `Default` - basic component with default props
+- `WithContent` - component with realistic content
+- `[StateName]` - specific state (e.g., `SidebarCollapsed`, `Loading`, `Error`)
+- `FullIntegration` - component with real child components
+
+**Example:**
+
+```tsx
+/**
+ * Sidebar starts collapsed. Click the left edge to expand.
+ */
+export const SidebarCollapsed: Story = {
+  render: () => <MainLayout initialSidebarVisible={false} />,
+};
+```
 
 ---
 
@@ -330,6 +376,18 @@ Intelligence communicates through consistent visual signals:
 | Red    | `#ef4444` | Breaking change, critical issue       |
 | Purple | `#a855f7` | AI-generated (suspect until verified) |
 | Blue   | `#3b82f6` | Suggestion available                  |
+
+**HTTP Method Colors (Industry Standard):**
+
+| Method  | Color     | Meaning          |
+| ------- | --------- | ---------------- |
+| GET     | `#3b82f6` | Read, safe       |
+| POST    | `#22c55e` | Create, positive |
+| PUT     | `#f59e0b` | Update, caution  |
+| PATCH   | `#f59e0b` | Update, caution  |
+| DELETE  | `#ef4444` | Destructive      |
+| HEAD    | `#6b7280` | Meta/secondary   |
+| OPTIONS | `#6b7280` | Meta/secondary   |
 
 ---
 

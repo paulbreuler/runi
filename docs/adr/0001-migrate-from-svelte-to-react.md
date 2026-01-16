@@ -6,6 +6,8 @@
 
 **Deciders:** Paul Breuler
 
+**Consulted:** N/A (solo maintainer decision)
+
 ---
 
 ## Context

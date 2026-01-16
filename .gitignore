@@ -14,7 +14,10 @@ node_modules
 
 # Testing
 coverage
+html
 *.lcov
+test-results/
+playwright-report/
 
 # Production
 build
@@ -74,3 +77,7 @@ specs/
 
 # Prompts (working documents, not tracked)
 prompts/
+
+# Temporary/ephemeral files (Claude analysis, planning, scratch work)
+.tmp/
+.cursor/code-review-report.md

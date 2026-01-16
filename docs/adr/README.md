@@ -39,6 +39,8 @@ Links to relevant resources.
 
 ## ADR Index
 
+Sorted chronologically (newest first).
+
 | ADR                                          | Title                             | Status   | Date       |
 | -------------------------------------------- | --------------------------------- | -------- | ---------- |
 | [0001](0001-migrate-from-svelte-to-react.md) | Migrate from Svelte 5 to React 19 | Accepted | 2026-01-14 |
