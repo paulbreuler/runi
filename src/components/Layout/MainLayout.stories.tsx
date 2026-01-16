@@ -570,3 +570,148 @@ export const PerformanceStressTest: Story = {
     expect(responsePane).toHaveStyle({ scrollbarGutter: 'stable' });
   },
 };
+
+/**
+ * Extreme Drag Test - Video Game Style
+ * 
+ * Tests perfect synchronization during extreme drag scenarios:
+ * - Drag all the way left (minimum constraint)
+ * - Drag all the way right (maximum constraint)
+ * - Rapid jittering movements (wild mouse movements)
+ * 
+ * All components must remain perfectly in sync, like a video game controller.
+ */
+export const ExtremeDragTest: Story = {
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Extreme Drag Test</h3>
+          <p className="text-sm text-text-secondary mb-4">
+            Drag all the way left, all the way right, then rapidly jitter
+          </p>
+          <p className="text-xs text-text-muted">
+            All components must stay perfectly in sync - like a video game controller
+          </p>
+          <div className="mt-4 p-4 bg-bg-raised rounded-lg">
+            <p className="text-xs text-text-muted">
+              Request Pane: Should clamp to 20-80% range
+            </p>
+          </div>
+        </div>
+      }
+      responseContent={
+        <div className="h-full p-4 flex flex-col items-center justify-center">
+          <h3 className="text-lg font-semibold mb-2">Response Pane</h3>
+          <p className="text-sm text-text-secondary">
+            Watch for perfect synchronization during extreme movements
+          </p>
+          <div className="mt-4 p-4 bg-bg-raised rounded-lg">
+            <p className="text-xs text-text-muted">
+              Response Pane: Should stay in sync with request pane
+            </p>
+          </div>
+        </div>
+      }
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const resizer = canvas.getByTestId('pane-resizer');
+    const requestPane = canvas.getByTestId('request-pane');
+    const responsePane = canvas.getByTestId('response-pane');
+    const container = canvas.getByTestId('pane-container');
+    
+    await expect(resizer).toBeInTheDocument();
+    
+    const containerBox = container.getBoundingClientRect();
+    const resizerBox = resizer.getBoundingClientRect();
+    const containerWidth = containerBox.width;
+    
+    // Test 1: Drag all the way LEFT (minimum constraint - 20%)
+    const minX = containerBox.x + (containerWidth * 0.2);
+    await userEvent.pointer([
+      { keys: '[MouseLeft>]', target: resizer },
+      { coords: { x: minX, y: resizerBox.y } },
+      { keys: '[/MouseLeft]' },
+    ]);
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify minimum constraint
+    const requestBoxAfterMin = requestPane.getBoundingClientRect();
+    const requestPercentAfterMin = (requestBoxAfterMin.width / containerWidth) * 100;
+    expect(requestPercentAfterMin).toBeGreaterThanOrEqual(18); // Allow tolerance
+    
+    // Test 2: Drag all the way RIGHT (maximum constraint - 80%)
+    const maxX = containerBox.x + (containerWidth * 0.8);
+    await userEvent.pointer([
+      { keys: '[MouseLeft>]', target: resizer },
+      { coords: { x: maxX, y: resizerBox.y } },
+      { keys: '[/MouseLeft]' },
+    ]);
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify maximum constraint
+    const requestBoxAfterMax = requestPane.getBoundingClientRect();
+    const requestPercentAfterMax = (requestBoxAfterMax.width / containerWidth) * 100;
+    expect(requestPercentAfterMax).toBeLessThanOrEqual(82); // Allow tolerance
+    
+    // Test 3: Rapid jittering (wild mouse movements)
+    // Simulate rapid back-and-forth movements like a video game
+    const centerX = containerBox.x + (containerWidth * 0.5);
+    const jitterAmplitude = containerWidth * 0.3; // 30% of container width
+    
+    for (let i = 0; i < 30; i++) {
+      // Rapid jitter: alternate between left and right with random amplitude
+      const jitterOffset = (i % 2 === 0 ? 1 : -1) * jitterAmplitude * (0.5 + Math.random() * 0.5);
+      const jitterX = centerX + jitterOffset;
+      
+      await userEvent.pointer([
+        { keys: '[MouseLeft>]', target: resizer },
+        { coords: { x: jitterX, y: resizerBox.y } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      
+      // Very small delay to simulate rapid jittering
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      // Verify components stay in sync after each jitter
+      const requestBox = requestPane.getBoundingClientRect();
+      const responseBox = responsePane.getBoundingClientRect();
+      const resizerBoxCurrent = resizer.getBoundingClientRect();
+      
+      // Panes should always be valid
+      expect(requestBox.width).toBeGreaterThan(0);
+      expect(responseBox.width).toBeGreaterThan(0);
+      
+      // Total width should equal container width (perfect sync)
+      const totalWidth = requestBox.width + responseBox.width;
+      expect(totalWidth).toBeCloseTo(containerWidth, 2);
+      
+      // Request pane should be within constraints
+      const requestPercent = (requestBox.width / containerWidth) * 100;
+      expect(requestPercent).toBeGreaterThanOrEqual(18);
+      expect(requestPercent).toBeLessThanOrEqual(82);
+    }
+    
+    // Final verification: All components still functional
+    await expect(canvas.getByTestId('request-pane')).toBeInTheDocument();
+    await expect(canvas.getByTestId('response-pane')).toBeInTheDocument();
+    await expect(canvas.getByTestId('pane-resizer')).toBeInTheDocument();
+    
+    // Final sync check
+    const finalRequestBox = requestPane.getBoundingClientRect();
+    const finalResponseBox = responsePane.getBoundingClientRect();
+    const finalTotal = finalRequestBox.width + finalResponseBox.width;
+    
+    expect(finalTotal).toBeCloseTo(containerWidth, 2);
+    
+    // Both panes should have valid styles
+    const requestStyle = requestPane.getAttribute('style') || '';
+    const responseStyle = responsePane.getAttribute('style') || '';
+    expect(requestStyle).toContain('width');
+    expect(responseStyle).toContain('width');
+  },
+};

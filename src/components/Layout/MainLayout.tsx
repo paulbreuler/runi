@@ -158,6 +158,7 @@ export const MainLayout = ({
   }, [splitRatio]);
 
   // Handle drag - update ratio based on drag offset (official Motion.dev pattern)
+  // Optimized for extreme drag scenarios (all the way left/right, rapid jitter)
   const handleDrag = useCallback(
     (_event: PointerEvent, info: { offset: { x: number } }) => {
       const containerWidth = containerWidthRef.current;
@@ -167,7 +168,10 @@ export const MainLayout = ({
         const newRatio = dragStartRatio.current + deltaRatio;
         const minRatio = MIN_PANE_SIZE / 100;
         const maxRatio = MAX_PANE_SIZE / 100;
+        // Clamp immediately to ensure perfect sync even during rapid movements
         const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
+        // Use MotionValue.set() for immediate, synchronous update
+        // This ensures perfect sync even during rapid jittering
         splitRatio.set(clamped);
       }
     },

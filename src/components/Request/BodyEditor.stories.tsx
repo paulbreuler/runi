@@ -22,7 +22,7 @@ const BodyStateDecorator = ({ body }: { body: string }): React.JSX.Element => {
   }, [body]);
 
   return (
-    <div className="h-[400px] border border-border-default bg-bg-app">
+    <div className="h-64 border border-border-default bg-bg-app">
       <BodyEditor />
     </div>
   );

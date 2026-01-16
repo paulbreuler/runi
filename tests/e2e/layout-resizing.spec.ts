@@ -320,5 +320,95 @@ test.describe('Layout Resizing', () => {
       const newBox = await requestPane.boundingBox();
       expect(newBox).not.toBeNull();
     });
+
+    test('extreme drag scenarios - all the way left, right, and rapid jitter', async ({ page }) => {
+      const resizer = page.getByTestId('pane-resizer');
+      const requestPane = page.getByTestId('request-pane');
+      const responsePane = page.getByTestId('response-pane');
+      const container = page.getByTestId('pane-container');
+
+      const containerBox = await container.boundingBox();
+      const resizerBox = await resizer.boundingBox();
+      expect(containerBox).not.toBeNull();
+      expect(resizerBox).not.toBeNull();
+
+      const containerWidth = containerBox!.width;
+      const centerY = resizerBox!.y + resizerBox!.height / 2;
+
+      // Test 1: Drag all the way LEFT (minimum - 20%)
+      const minX = containerBox!.x + (containerWidth * 0.2);
+      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, centerY);
+      await page.mouse.down();
+      await page.mouse.move(minX, centerY);
+      await page.mouse.up();
+      await page.waitForTimeout(100);
+
+      // Verify minimum constraint
+      const requestBoxAfterMin = await requestPane.boundingBox();
+      expect(requestBoxAfterMin).not.toBeNull();
+      const requestPercentAfterMin = (requestBoxAfterMin!.width / containerWidth) * 100;
+      expect(requestPercentAfterMin).toBeGreaterThanOrEqual(18);
+
+      // Test 2: Drag all the way RIGHT (maximum - 80%)
+      const maxX = containerBox!.x + (containerWidth * 0.8);
+      const resizerBoxAfterMin = await resizer.boundingBox();
+      await page.mouse.move(resizerBoxAfterMin!.x + resizerBoxAfterMin!.width / 2, centerY);
+      await page.mouse.down();
+      await page.mouse.move(maxX, centerY);
+      await page.mouse.up();
+      await page.waitForTimeout(100);
+
+      // Verify maximum constraint
+      const requestBoxAfterMax = await requestPane.boundingBox();
+      expect(requestBoxAfterMax).not.toBeNull();
+      const requestPercentAfterMax = (requestBoxAfterMax!.width / containerWidth) * 100;
+      expect(requestPercentAfterMax).toBeLessThanOrEqual(82);
+
+      // Test 3: Rapid jittering (wild mouse movements) - video game style
+      const centerX = containerBox!.x + (containerWidth * 0.5);
+      const jitterAmplitude = containerWidth * 0.3;
+
+      for (let i = 0; i < 30; i++) {
+        // Rapid jitter: alternate between left and right
+        const jitterOffset = (i % 2 === 0 ? 1 : -1) * jitterAmplitude * (0.5 + Math.random() * 0.5);
+        const jitterX = centerX + jitterOffset;
+
+        const currentResizerBox = await resizer.boundingBox();
+        await page.mouse.move(currentResizerBox!.x + currentResizerBox!.width / 2, centerY);
+        await page.mouse.down();
+        await page.mouse.move(jitterX, centerY);
+        await page.mouse.up();
+
+        // Very small delay for rapid jittering
+        await page.waitForTimeout(10);
+
+        // Verify perfect sync after each jitter
+        const requestBox = await requestPane.boundingBox();
+        const responseBox = await responsePane.boundingBox();
+        expect(requestBox).not.toBeNull();
+        expect(responseBox).not.toBeNull();
+
+        // Total width should equal container width (perfect sync)
+        const totalWidth = requestBox!.width + responseBox!.width;
+        expect(totalWidth).toBeCloseTo(containerWidth, 2);
+
+        // Request pane should be within constraints
+        const requestPercent = (requestBox!.width / containerWidth) * 100;
+        expect(requestPercent).toBeGreaterThanOrEqual(18);
+        expect(requestPercent).toBeLessThanOrEqual(82);
+      }
+
+      // Final verification: All components still functional and in sync
+      await expect(requestPane).toBeVisible();
+      await expect(responsePane).toBeVisible();
+      await expect(resizer).toBeVisible();
+
+      const finalRequestBox = await requestPane.boundingBox();
+      const finalResponseBox = await responsePane.boundingBox();
+      const finalTotal = finalRequestBox!.width + finalResponseBox!.width;
+
+      // Perfect sync check - total should equal container width
+      expect(finalTotal).toBeCloseTo(containerWidth, 2);
+    });
   });
 });
