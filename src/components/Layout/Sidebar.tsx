@@ -51,7 +51,7 @@ const DrawerSection = ({ title, icon: _icon, defaultOpen = true, children, testI
 export const Sidebar = (): React.JSX.Element => {
   return (
     <aside
-      className="w-64 h-full bg-bg-surface flex flex-col"
+      className="w-full h-full bg-bg-surface flex flex-col"
       data-testid="sidebar"
     >
       {/* Collections Drawer */}
