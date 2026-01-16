@@ -195,6 +195,9 @@ export const MainLayout = ({
   const requestWidth = useTransform(currentRequestWidth, (width) => `${String(width)}%`);
   const responseWidth = useTransform(currentRequestWidth, (width) => `${String(100 - width)}%`);
 
+  // Resizer left position - positioned at the right edge of request pane
+  const resizerLeft = useTransform(currentRequestWidth, (width) => `${String(width)}%`);
+
   // Sidebar width as MotionValue template
   const sidebarWidthStyle = useTransform(currentSidebarWidth, (width) => `${String(width)}px`);
 
@@ -357,9 +360,12 @@ export const MainLayout = ({
 
               {/* Resizer - using Motion's drag API with enhanced grabbing feel and handle */}
               <motion.div
-                layout="position"
-                className="w-1 bg-border-default cursor-col-resize group relative z-10 hover:w-2 transition-all border-l border-r border-border-subtle shrink-0"
+                className="absolute top-0 bottom-0 w-1 bg-border-default cursor-col-resize group z-10 hover:w-2 transition-all border-l border-r border-border-subtle"
                 data-testid="pane-resizer"
+                style={{
+                  left: resizerLeft,
+                  transform: 'translateX(-50%)',
+                }}
                 drag="x"
                 dragElastic={0}
                 dragMomentum={false}
