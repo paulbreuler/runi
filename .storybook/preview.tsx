@@ -31,10 +31,6 @@ const preview: Preview = {
     (Story) => (
       <div style={{ 
         padding: '1rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
         backgroundColor: '#0a0a0a' 
       }}>
         <Story />
