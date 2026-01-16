@@ -28,28 +28,34 @@
   --color-border-default: #2e2e2e;
   --color-border-emphasis: #404040;
 
-  /* Accent Colors - runi palette */
-  --color-accent-blue: #3b82f6;
-  --color-accent-blue-hover: #2563eb;
-  --color-accent-purple: #a855f7;
-  --color-accent-green: #22c55e;
-  --color-accent-amber: #f59e0b;
-  --color-accent-red: #ef4444;
+  /* Accent Colors - runi palette - using oklch for opacity modifier support */
+  --color-accent-blue: oklch(0.623 0.214 259.1);
+  --color-accent-blue-hover: oklch(0.546 0.245 262.9);
+  --color-accent-purple: oklch(0.627 0.265 303.9);
+  --color-accent-green: oklch(0.723 0.191 142.5);
+  --color-accent-amber: oklch(0.769 0.188 70.08);
+  --color-accent-red: oklch(0.637 0.237 25.33);
 
-  /* HTTP Method Colors */
-  --color-method-get: #22c55e;
-  --color-method-post: #3b82f6;
-  --color-method-put: #f59e0b;
-  --color-method-patch: #a855f7;
-  --color-method-delete: #ef4444;
-  --color-method-head: #636363;
-  --color-method-options: #14b8a6;
+  /* HTTP Method Colors - Industry Standard
+   * GET: Blue (read, safe, neutral)
+   * POST: Green (create, positive action)
+   * PUT/PATCH: Orange/Yellow (update, caution)
+   * DELETE: Red (destructive, warning)
+   * HEAD/OPTIONS: Gray (meta, less frequent)
+   */
+  --color-method-get: oklch(0.623 0.214 259.1); /* Blue - accent-blue */
+  --color-method-post: oklch(0.723 0.191 142.5); /* Green - signal-success */
+  --color-method-put: oklch(0.769 0.188 70.08); /* Orange - signal-warning */
+  --color-method-patch: oklch(0.769 0.188 70.08); /* Orange - same as PUT */
+  --color-method-delete: oklch(0.637 0.237 25.33); /* Red - signal-error */
+  --color-method-head: oklch(0.5 0 0); /* Gray - text-muted */
+  --color-method-options: oklch(0.5 0 0); /* Gray - same as HEAD */
 
-  /* Signal Colors */
-  --color-signal-success: #22c55e;
-  --color-signal-warning: #f59e0b;
-  --color-signal-error: #ef4444;
-  --color-signal-ai: #a855f7;
+  /* Signal Colors - using oklch for opacity modifier support */
+  --color-signal-success: oklch(0.723 0.191 142.5);
+  --color-signal-warning: oklch(0.769 0.188 70.08);
+  --color-signal-error: oklch(0.637 0.237 25.33);
+  --color-signal-ai: oklch(0.627 0.265 303.9);
 
   /* Legacy shadcn/ui compatibility - mapped to new semantic names */
   --color-background: var(--color-bg-app);

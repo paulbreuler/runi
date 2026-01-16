@@ -1,16 +1,30 @@
-import type { StorybookConfig } from '@storybook/sveltekit';
+import type { StorybookConfig } from '@storybook/react-vite';
+import { mergeConfig } from 'vite';
+import path from 'path';
 
 const config: StorybookConfig = {
-  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx|svelte)'],
+  framework: {
+    name: '@storybook/react-vite',
+    options: {},
+  },
+  stories: [
+    '../src/components/**/*.stories.@(tsx|ts|jsx|js)',
+    '../src/components/**/*.mdx',
+  ],
   addons: [
-    '@storybook/addon-links',
     '@storybook/addon-essentials',
     '@storybook/addon-interactions',
-    '@storybook/addon-svelte-csf',
+    '@storybook/addon-a11y',
   ],
-  framework: {
-    name: '@storybook/sveltekit',
-    options: {},
+  staticDirs: ['../static'],
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      resolve: {
+        alias: {
+          '@': path.resolve(__dirname, '../src'),
+        },
+      },
+    });
   },
   docs: {
     autodocs: 'tag',

@@ -22,12 +22,17 @@ describe('RequestHeader', () => {
     expect(wrapper).toHaveClass('py-4');
   });
 
-  it('renders method select with proper styling', () => {
+  it('renders method select with colored text only', () => {
     render(<RequestHeader {...defaultProps} />);
     
     const methodSelect = screen.getByTestId('method-select');
     expect(methodSelect).toBeInTheDocument();
     expect(methodSelect).toHaveClass('font-semibold');
+    // Text color based on method, transparent background, list-like hover
+    // GET is blue per industry standard (read, safe, neutral)
+    expect(methodSelect).toHaveClass('text-accent-blue');
+    expect(methodSelect).toHaveClass('bg-transparent');
+    expect(methodSelect).toHaveClass('border-0');
   });
 
   it('renders URL input with proper placeholder', () => {
@@ -36,6 +41,25 @@ describe('RequestHeader', () => {
     const urlInput = screen.getByTestId('url-input');
     expect(urlInput).toBeInTheDocument();
     expect(urlInput).toHaveAttribute('placeholder', 'Enter request URL...');
+  });
+
+  it('renders URL input with glass-morphism styling (Apple 2025 aesthetic)', () => {
+    render(<RequestHeader {...defaultProps} url="" />);
+    
+    const urlInput = screen.getByTestId('url-input');
+    // Should be a motion component for glass effect
+    expect(urlInput).toHaveAttribute('data-motion-component', 'input');
+    // Glass-morphism: should have border and shadow classes
+    expect(urlInput).toHaveClass('border');
+    expect(urlInput).toHaveClass('shadow-sm');
+  });
+
+  it('applies Motion animations for glass effect', () => {
+    render(<RequestHeader {...defaultProps} url="" />);
+    
+    const urlInput = screen.getByTestId('url-input');
+    // Should be a motion component with glass effect
+    expect(urlInput).toHaveAttribute('data-motion-component', 'input');
   });
 
   it('renders send button with proper styling', () => {

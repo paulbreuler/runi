@@ -25,7 +25,9 @@ describe('Button', () => {
   it('applies variant classes', () => {
     const { container } = render(<Button variant="destructive">Delete</Button>);
     const button = container.querySelector('button');
-    expect(button).toHaveClass('bg-signal-error');
+    // Destructive variant uses soft error styling
+    expect(button).toHaveClass('text-signal-error');
+    expect(button).toHaveClass('bg-signal-error/10');
   });
 
   it('applies size classes', () => {

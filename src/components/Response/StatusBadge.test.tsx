@@ -38,10 +38,10 @@ describe('StatusBadge', () => {
     render(<StatusBadge status={200} statusText="OK" />);
     
     const badge = screen.getByTestId('status-badge');
-    // basestate.io style: bg-signal-success/15 with border
-    expect(badge).toHaveClass('bg-signal-success/15');
+    // Zen aesthetic: very subtle background, colored text, subtle border
+    expect(badge).toHaveClass('bg-signal-success/10');
     expect(badge).toHaveClass('text-signal-success');
-    expect(badge).toHaveClass('border-signal-success/30');
+    expect(badge).toHaveClass('border-signal-success/20');
   });
 
   it('applies warning styling for 4xx status', () => {
@@ -49,7 +49,7 @@ describe('StatusBadge', () => {
     
     const badge = screen.getByTestId('status-badge');
     expect(badge).toHaveTextContent('404');
-    expect(badge).toHaveClass('bg-signal-warning/15');
+    expect(badge).toHaveClass('bg-signal-warning/10');
     expect(badge).toHaveClass('text-signal-warning');
   });
 
@@ -58,7 +58,7 @@ describe('StatusBadge', () => {
     
     const badge = screen.getByTestId('status-badge');
     expect(badge).toHaveTextContent('500');
-    expect(badge).toHaveClass('bg-signal-error/15');
+    expect(badge).toHaveClass('bg-signal-error/10');
     expect(badge).toHaveClass('text-signal-error');
   });
 });

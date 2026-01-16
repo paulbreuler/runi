@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { FileText, Send } from 'lucide-react';
 import { executeRequest } from '@/api/http';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { RequestHeader } from '@/components/Request/RequestHeader';
+import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { StatusBadge } from '@/components/Response/StatusBadge';
+import { ResponseViewer } from '@/components/Response/ResponseViewer';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
 
@@ -62,23 +66,15 @@ export const HomePage = (): React.JSX.Element => {
         <div className="h-full flex flex-col bg-bg-app">
           {error && (
             <div
-              className="p-4 mx-6 mt-6 bg-signal-error/10 border border-signal-error/20 rounded-xl text-signal-error"
+              className="p-4 mx-4 mt-4 bg-signal-error/10 border border-signal-error/20 rounded-lg text-signal-error text-sm"
               role="alert"
               data-testid="error-panel"
             >
-              <strong>Error:</strong> {error}
+              {error}
             </div>
           )}
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-bg-surface/50 border border-border-subtle">
-              <span
-                className="text-sm"
-                style={{ fontFamily: "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', emoji, sans-serif" }}
-              >
-                🚧
-              </span>
-              <span className="text-sm text-text-muted">Request builder coming soon</span>
-            </div>
+          <div className="flex-1 overflow-hidden">
+            <RequestBuilder />
           </div>
         </div>
       }
@@ -94,24 +90,13 @@ export const HomePage = (): React.JSX.Element => {
                 transition={{ duration: 0.2 }}
                 className="flex-1 flex flex-col overflow-hidden"
               >
-                <div className="flex justify-between items-center px-6 py-3 border-b border-border-subtle bg-bg-surface">
+                {/* Status bar */}
+                <div className="flex justify-between items-center px-4 py-2 border-b border-border-subtle bg-bg-surface">
                   <StatusBadge status={response.status} statusText={response.status_text} />
-                  <span
-                    className="text-text-muted text-xs font-mono transition-colors duration-200"
-                    data-testid="response-timing"
-                  >
-                    {response.timing.total_ms}ms
-                  </span>
                 </div>
 
-                <div className="flex-1 overflow-auto p-6 bg-bg-app">
-                  <pre
-                    className="font-mono text-sm whitespace-pre-wrap break-words text-text-secondary leading-relaxed"
-                    data-testid="response-body"
-                  >
-                    {response.body}
-                  </pre>
-                </div>
+                {/* Response viewer with tabs */}
+                <ResponseViewer response={response} />
               </motion.div>
             ) : (
               <motion.div
@@ -119,20 +104,13 @@ export const HomePage = (): React.JSX.Element => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center px-8"
+                className="flex-1"
               >
-                <div className="text-center max-w-md p-8 rounded-xl bg-bg-surface/30 border border-border-subtle">
-                  <h3 className="text-xl font-semibold text-text-primary mb-3 tracking-tight">
-                    Ready to make your first request?
-                  </h3>
-                  <p className="text-sm text-text-secondary mb-5 leading-relaxed">
-                    We've pre-filled a sample URL for you. Click{' '}
-                    <span className="text-accent-blue font-medium">Send</span> to see it in action.
-                  </p>
-                  <p className="text-xs text-text-muted leading-relaxed opacity-70">
-                    This is <span className="text-signal-success">Rung 1</span> of the Adoption Ladder — your first request reveals the response viewer.
-                  </p>
-                </div>
+                <EmptyState
+                  icon={<Send className="w-20 h-20 text-text-muted/25" strokeWidth={1} />}
+                  title="Response will appear here"
+                  description="Send a request to see the response, headers, and timing information displayed in a clear, readable format."
+                />
               </motion.div>
             )}
           </AnimatePresence>

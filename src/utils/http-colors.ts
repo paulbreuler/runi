@@ -7,18 +7,31 @@
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
 /**
- * Color classes for HTTP methods.
- * Each method has a distinct color for easy visual identification.
+ * Text color classes for HTTP methods.
+ * Industry standard colors:
+ * - GET: Blue (read, safe, neutral)
+ * - POST: Green (create, positive action)
+ * - PUT/PATCH: Orange (update, caution)
+ * - DELETE: Red (destructive, warning)
+ * - HEAD/OPTIONS: Gray (meta, less frequent)
+ *
+ * 2026 minimal design: Color only the text, no backgrounds.
+ * Background shading appears on hover like a list item.
  */
-export const methodColors: Record<HttpMethod, string> = {
-  GET: 'bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800',
-  POST: 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800',
-  PUT: 'bg-yellow-600 hover:bg-yellow-700 text-white dark:bg-yellow-700 dark:hover:bg-yellow-800',
-  PATCH: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-700 dark:hover:bg-purple-800',
-  DELETE: 'bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-800',
-  HEAD: 'bg-gray-600 hover:bg-gray-700 text-white dark:bg-gray-700 dark:hover:bg-gray-800',
-  OPTIONS: 'bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-700 dark:hover:bg-teal-800',
+export const methodTextColors: Record<HttpMethod, string> = {
+  GET: 'text-accent-blue', // Blue - read operation, safe
+  POST: 'text-signal-success', // Green - create, positive
+  PUT: 'text-signal-warning', // Orange - update, caution
+  PATCH: 'text-signal-warning', // Orange - same as PUT
+  DELETE: 'text-signal-error', // Red - destructive
+  HEAD: 'text-text-muted', // Gray - meta operation
+  OPTIONS: 'text-text-muted', // Gray - meta operation
 };
+
+/**
+ * @deprecated Use methodTextColors instead - zen aesthetic uses text color only
+ */
+export const methodColors: Record<HttpMethod, string> = methodTextColors;
 
 /**
  * Get color classes for an HTTP method.
