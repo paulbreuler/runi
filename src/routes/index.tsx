@@ -104,12 +104,12 @@ export const HomePage = (): React.JSX.Element => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex-1"
+                className="flex-1 h-full"
               >
                 <EmptyState
-                  icon={<Send className="w-20 h-20 text-text-muted/25" strokeWidth={1} />}
                   title="Response will appear here"
                   description="Send a request to see the response, headers, and timing information displayed in a clear, readable format."
+                  muted
                 />
               </motion.div>
             )}

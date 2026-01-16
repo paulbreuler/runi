@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { Input } from '@/components/ui/input';
 import * as Select from '@/components/ui/select';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
@@ -24,6 +25,27 @@ export const RequestHeader = ({
 
   const isValidUrl = url.length > 0;
   const methodColor = getMethodColor(method);
+  
+  // Respect prefers-reduced-motion
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handleChange = (e: MediaQueryListEvent): void => {
+      setPrefersReducedMotion(e.matches);
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return (): void => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   const handleMethodChange = (value: string | undefined): void => {
     if (value !== undefined && value.length > 0 && onMethodChange) {
@@ -82,9 +104,39 @@ export const RequestHeader = ({
         disabled={!isValidUrl || loading}
         data-testid="send-button"
         aria-label="Send Request"
-        className="inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50 bg-transparent text-text-muted hover:text-accent-blue hover:bg-bg-raised/50 px-5 py-2 text-sm h-9"
+        className="inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50 bg-transparent text-text-muted hover:text-accent-blue hover:bg-bg-raised/50 px-5 py-2 text-sm h-9 relative"
       >
-        {loading ? 'Sending...' : 'Send'}
+        {loading ? (
+          prefersReducedMotion ? (
+            <span className="text-accent-blue">Sending</span>
+          ) : (
+            <motion.span
+              className="inline-block"
+              style={{
+                backgroundImage:
+                  'linear-gradient(90deg, var(--color-text-muted) 0%, var(--color-text-muted) 20%, var(--color-accent-blue) 40%, var(--color-accent-blue) 60%, var(--color-text-muted) 80%, var(--color-text-muted) 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+                backgroundSize: '300% 100%',
+                willChange: 'background-position',
+              }}
+              animate={{
+                backgroundPosition: ['300% 0%', '-300% 0%'],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+              aria-hidden="false"
+            >
+              Sending
+            </motion.span>
+          )
+        ) : (
+          'Send'
+        )}
       </button>
     </div>
   );

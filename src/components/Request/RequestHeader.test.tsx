@@ -74,7 +74,7 @@ describe('RequestHeader', () => {
     render(<RequestHeader {...defaultProps} loading={true} />);
     
     const sendButton = screen.getByTestId('send-button');
-    expect(sendButton).toHaveTextContent('Sending...');
+    expect(sendButton).toHaveTextContent('Sending');
     expect(sendButton).toBeDisabled();
   });
 
