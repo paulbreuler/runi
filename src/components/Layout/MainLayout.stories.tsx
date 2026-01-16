@@ -12,7 +12,7 @@ const meta = {
     docs: {
       description: {
         component: `
-The MainLayout component provides a resizable, performant layout system following Apple's Zen design principles.
+The MainLayout component provides a resizable, performant layout system following **Motion.dev's official patterns** and Apple's Zen design principles.
 
 ## Features
 - **Resizable Sidebar**: Drag to resize between 256px (minimum) and 500px (maximum)
@@ -21,12 +21,33 @@ The MainLayout component provides a resizable, performant layout system followin
 - **Smooth Animations**: Motion-powered animations with immediate feedback during drag
 - **Scrollbar Stability**: Prevents scrollbar flashing during resize operations
 - **Visual Feedback**: Subtle handles appear on hover, following Apple's minimal aesthetic
+- **Accessibility**: Respects \`prefers-reduced-motion\` system preference
+
+## Official Motion.dev Pattern
+
+This implementation follows the **official Motion.dev pattern** for resizable panes:
+
+- **Flex-based layout**: Resizer is in flex flow (not absolutely positioned) - [Motion.dev Layout Animations](https://motion.dev/docs/react-layout-animations)
+- **MotionValues**: Uses \`useMotionValue\` and \`useTransform\` for immediate updates - [Motion.dev MotionValues](https://motion.dev/docs/react-motion-values)
+- **Drag API**: Uses \`drag="x"\` with \`dragConstraints\` - [Motion.dev Drag](https://motion.dev/docs/react-drag)
+- **Layout prop**: Uses \`layout\` for smooth size changes - [Motion.dev Layout Animations](https://motion.dev/docs/react-layout-animations)
+- **Performance**: Uses transforms (not width/height) - [Motion.dev Performance](https://motion.dev/docs/performance)
+- **Accessibility**: Uses \`useReducedMotion()\` - [Motion.dev Reduced Motion](https://motion.dev/motion/use-reduced-motion/)
 
 ## Performance
 - Uses MotionValues for immediate updates during drag (no React re-render lag)
 - Layout animations disabled during drag for instant feedback
 - CSS containment for optimized rendering
 - Scrollbar gutter reserved to prevent layout shifts
+- Cached container width (no expensive DOM reads during drag)
+
+## References
+- [Motion.dev Documentation](https://motion.dev)
+- [Motion.dev Layout Animations](https://motion.dev/docs/react-layout-animations)
+- [Motion.dev Drag API](https://motion.dev/docs/react-drag)
+- [Motion.dev Performance Guide](https://motion.dev/docs/performance)
+- [Motion.dev Reduced Motion](https://motion.dev/motion/use-reduced-motion/)
+- [Implementation Documentation](../../../docs/LAYOUT_IMPLEMENTATION.md)
         `,
       },
     },

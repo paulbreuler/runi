@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { HttpResponse } from '@/types/http';
+import {
+  syntaxHighlightBaseStyle,
+  syntaxHighlightCodeTagStyle,
+  syntaxHighlightLineNumberStyle,
+  syntaxHighlightTheme,
+} from '@/components/CodeHighlighting/syntaxHighlighting';
+import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 
 interface ResponseViewerProps {
   response: HttpResponse;
@@ -19,30 +25,6 @@ const tabs: Tab[] = [
   { id: 'headers', label: 'Headers' },
   { id: 'raw', label: 'Raw' },
 ];
-
-/**
- * Detect content type and format accordingly
- */
-function detectContentType(body: string, headers: Record<string, string>): string {
-  const contentType = headers['content-type'] || headers['Content-Type'] || '';
-  
-  if (contentType.includes('application/json')) return 'json';
-  if (contentType.includes('application/xml') || contentType.includes('text/xml')) return 'xml';
-  if (contentType.includes('text/html')) return 'html';
-  if (contentType.includes('text/css')) return 'css';
-  if (contentType.includes('text/javascript') || contentType.includes('application/javascript')) return 'javascript';
-  if (contentType.includes('application/yaml') || contentType.includes('text/yaml')) return 'yaml';
-  
-  // Try to detect JSON by parsing
-  try {
-    JSON.parse(body);
-    return 'json';
-  } catch {
-    // Not JSON
-  }
-  
-  return 'text';
-}
 
 /**
  * Format JSON with proper 2-space indentation
@@ -75,8 +57,9 @@ function formatRawHttp(response: HttpResponse): string {
   lines.push('');
   
   // Body (formatted if JSON with 2-space indent)
-  const contentType = detectContentType(response.body, response.headers);
-  if (contentType === 'json') {
+  const contentTypeHeader = response.headers['content-type'] || response.headers['Content-Type'];
+  const language = detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader });
+  if (language === 'json') {
     lines.push(formatJson(response.body));
   } else {
     lines.push(response.body);
@@ -95,34 +78,14 @@ function formatSize(body: string): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * Custom dark theme matching our zen aesthetic
- */
-const customDarkTheme = {
-  ...oneDark,
-  'code[class*="language-"]': {
-    ...oneDark['code[class*="language-"]'],
-    background: 'transparent',
-    color: 'var(--color-text-secondary)',
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.875rem',
-    lineHeight: '1.6',
-  },
-  'pre[class*="language-"]': {
-    ...oneDark['pre[class*="language-"]'],
-    background: 'transparent',
-    padding: 0,
-    margin: 0,
-  },
-};
-
 export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Element => {
   const [activeTab, setActiveTab] = useState<TabId>('body');
   
   const headerCount = Object.keys(response.headers).length;
   const bodySize = formatSize(response.body);
-  const contentType = detectContentType(response.body, response.headers);
-  const formattedBody = contentType === 'json' ? formatJson(response.body) : response.body;
+  const contentTypeHeader = response.headers['content-type'] || response.headers['Content-Type'];
+  const language = detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader });
+  const formattedBody = language === 'json' ? formatJson(response.body) : response.body;
 
   return (
     <div className="h-full flex flex-col" data-testid="response-viewer">
@@ -155,31 +118,21 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
       {/* Content */}
       <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
         {activeTab === 'body' && (
-          <div className="p-4">
+          <div className="p-4" data-testid="response-body">
+            <span className="sr-only" data-testid="response-body-raw">
+              {formattedBody}
+            </span>
             <SyntaxHighlighter
-              language={contentType}
-              style={customDarkTheme}
-              customStyle={{
-                background: 'transparent',
-                padding: 0,
-                margin: 0,
-                fontSize: '0.875rem',
-                lineHeight: '1.6',
-              }}
+              language={language}
+              style={syntaxHighlightTheme}
+              customStyle={syntaxHighlightBaseStyle}
               showLineNumbers
-              lineNumberStyle={{
-                minWidth: '2.5em',
-                paddingRight: '1em',
-                color: 'var(--color-text-muted)',
-                opacity: 0.5,
-                userSelect: 'none',
-              }}
+              lineNumberStyle={syntaxHighlightLineNumberStyle}
               // Use 2 spaces for indentation
               PreTag="div"
               codeTagProps={{
-                style: {
-                  fontFamily: 'var(--font-mono)',
-                },
+                style: syntaxHighlightCodeTagStyle,
+                'data-language': language,
               }}
             >
               {formattedBody}
@@ -212,30 +165,20 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         )}
 
         {activeTab === 'raw' && (
-          <div className="p-4">
+          <div className="p-4" data-testid="response-raw">
+            <span className="sr-only" data-testid="response-raw-text">
+              {formatRawHttp(response)}
+            </span>
             <SyntaxHighlighter
               language="http"
-              style={customDarkTheme}
-              customStyle={{
-                background: 'transparent',
-                padding: 0,
-                margin: 0,
-                fontSize: '0.875rem',
-                lineHeight: '1.6',
-              }}
+              style={syntaxHighlightTheme}
+              customStyle={syntaxHighlightBaseStyle}
               showLineNumbers
-              lineNumberStyle={{
-                minWidth: '2.5em',
-                paddingRight: '1em',
-                color: 'var(--color-text-muted)',
-                opacity: 0.5,
-                userSelect: 'none',
-              }}
+              lineNumberStyle={syntaxHighlightLineNumberStyle}
               PreTag="div"
               codeTagProps={{
-                style: {
-                  fontFamily: 'var(--font-mono)',
-                },
+                style: syntaxHighlightCodeTagStyle,
+                'data-language': 'http',
               }}
             >
               {formatRawHttp(response)}

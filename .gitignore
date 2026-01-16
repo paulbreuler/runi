@@ -74,3 +74,6 @@ specs/
 
 # Prompts (working documents, not tracked)
 prompts/
+
+# Temporary/ephemeral files (Claude analysis, planning, scratch work)
+.tmp/

@@ -1,27 +1,40 @@
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import { motion } from 'motion/react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { cn } from '@/utils/cn';
+import {
+  syntaxHighlightBaseStyle,
+  syntaxHighlightCodeTagStyle,
+  syntaxHighlightLineNumberStyle,
+  syntaxHighlightTheme,
+} from '@/components/CodeHighlighting/syntaxHighlighting';
+import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 
 /**
  * BodyEditor component for editing HTTP request body.
  */
 export const BodyEditor = (): React.JSX.Element => {
   const { body, setBody } = useRequestStore();
+  const highlightRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     setBody(e.target.value);
   };
 
-  const isJson = (): boolean => {
-    if (!body.trim()) return false;
+  const isJson = (value: string): boolean => {
+    if (!value.trim()) return false;
     try {
-      JSON.parse(body);
+      JSON.parse(value);
       return true;
     } catch {
       return false;
     }
   };
+
+  const language = useMemo(() => detectSyntaxLanguage({ body }), [body]);
+  const isJsonBody = useMemo(() => isJson(body), [body]);
 
   const formatJson = (): void => {
     if (!body.trim()) return;
@@ -33,12 +46,43 @@ export const BodyEditor = (): React.JSX.Element => {
     }
   };
 
+  const syncHighlightScroll = (): void => {
+    if (!highlightRef.current || !textareaRef.current) return;
+    highlightRef.current.scrollTop = textareaRef.current.scrollTop;
+    highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
+  };
+
   return (
     <div className="h-full flex flex-col" data-testid="body-editor">
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative bg-bg-app">
+        <div
+          className="absolute inset-0 pointer-events-none overflow-hidden"
+          aria-hidden
+          ref={highlightRef}
+          data-testid="body-syntax-layer"
+        >
+          <div className="p-4">
+            <SyntaxHighlighter
+              language={language}
+              style={syntaxHighlightTheme}
+              customStyle={syntaxHighlightBaseStyle}
+              showLineNumbers
+              lineNumberStyle={syntaxHighlightLineNumberStyle}
+              PreTag="div"
+              codeTagProps={{
+                style: syntaxHighlightCodeTagStyle,
+                'data-language': language,
+              }}
+            >
+              {body || ' '}
+            </SyntaxHighlighter>
+          </div>
+        </div>
         <textarea
+          ref={textareaRef}
           value={body}
           onChange={handleChange}
+          onScroll={syncHighlightScroll}
           onKeyDown={(e) => {
             if (e.key === 'Tab') {
               e.preventDefault();
@@ -54,11 +98,15 @@ export const BodyEditor = (): React.JSX.Element => {
           placeholder="Enter request body (JSON, XML, text, etc.)"
           className={cn(
             'w-full h-full p-4 font-mono text-sm leading-relaxed',
-            'bg-bg-app text-text-secondary',
+            'bg-transparent text-transparent',
             'border-0 outline-none resize-none',
             'focus:outline-none',
             'placeholder:text-text-muted/50'
           )}
+          style={{
+            paddingLeft: 'calc(1rem + 3.5em)',
+            caretColor: 'var(--color-text-secondary)',
+          }}
           data-testid="body-textarea"
           spellCheck={false}
         />
@@ -70,7 +118,7 @@ export const BodyEditor = (): React.JSX.Element => {
             animate={{ opacity: 1, y: 0 }}
             className="absolute top-4 right-4 flex items-center gap-2"
           >
-            {isJson() ? (
+            {isJsonBody ? (
               <div className="flex items-center gap-2 px-2 py-1 rounded bg-signal-success/10 text-signal-success text-xs">
                 <span className="size-1.5 rounded-full bg-signal-success" />
                 Valid JSON
@@ -81,7 +129,7 @@ export const BodyEditor = (): React.JSX.Element => {
                 Invalid JSON
               </div>
             )}
-            {isJson() && (
+            {isJsonBody && (
               <button
                 onClick={formatJson}
                 className="px-2 py-1 text-xs rounded bg-bg-raised text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"

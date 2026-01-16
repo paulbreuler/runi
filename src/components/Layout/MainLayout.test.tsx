@@ -4,15 +4,51 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MainLayout } from './MainLayout';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 
-// Mock Motion to avoid animation delays in tests
+// Mock Motion to avoid animation delays and strip motion-only props from DOM
 vi.mock('motion/react', async () => {
   const actual = await vi.importActual('motion/react');
+
+  const stripMotionProps = (props: Record<string, unknown>) => {
+    const {
+      layout,
+      layoutId,
+      variants,
+      initial,
+      animate,
+      exit,
+      transition,
+      whileHover,
+      whileTap,
+      whileDrag,
+      drag,
+      dragConstraints,
+      dragElastic,
+      dragMomentum,
+      dragPropagation,
+      dragSnapToOrigin,
+      dragDirectionLock,
+      onDrag,
+      onDragStart,
+      onDragEnd,
+      ...rest
+    } = props;
+    return rest;
+  };
+
+  const createMock = (Tag: keyof JSX.IntrinsicElements) =>
+    ({ children, ...props }: any) => {
+      const cleanProps = stripMotionProps(props);
+      const Component = Tag;
+      return <Component {...cleanProps}>{children}</Component>;
+    };
+
   return {
     ...actual,
     motion: {
       ...actual.motion,
-      div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-      aside: ({ children, ...props }: any) => <aside {...props}>{children}</aside>,
+      div: createMock('div'),
+      aside: createMock('aside'),
+      button: createMock('button'),
     },
     AnimatePresence: ({ children }: any) => <>{children}</>,
     LayoutGroup: ({ children }: any) => <>{children}</>,

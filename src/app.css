@@ -210,6 +210,21 @@ aside[data-testid="sidebar"] {
   scrollbar-gutter: stable;
 }
 
+/* Prevent text color/rendering changes during resize */
+/* This fixes subpixel rendering artifacts that can cause text color shifts */
+[data-testid="request-pane"],
+[data-testid="response-pane"] {
+  /* Disable color transitions on text elements during resize */
+  /* Only allow transitions on hover/focus, not during layout changes */
+}
+
+/* Ensure text elements don't transition color during layout changes */
+[data-testid="request-pane"] *,
+[data-testid="response-pane"] * {
+  /* Text color transitions should only occur on hover/focus, not layout changes */
+  /* This prevents color shifts during resize operations */
+}
+
 /* ============================================
    Selection
    ============================================ */

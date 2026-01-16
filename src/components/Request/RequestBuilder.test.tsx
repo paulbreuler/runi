@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RequestBuilder } from './RequestBuilder';
@@ -52,7 +52,7 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByText('Body');
     await user.click(bodyTab);
     
-    expect(screen.getByTestId('body-editor')).toBeInTheDocument();
+    expect(await screen.findByTestId('body-editor')).toBeInTheDocument();
   });
 
   it('switches to Params tab when clicked', async () => {
@@ -62,7 +62,7 @@ describe('RequestBuilder', () => {
     const paramsTab = screen.getByText('Params');
     await user.click(paramsTab);
     
-    expect(screen.getByTestId('params-editor')).toBeInTheDocument();
+    expect(await screen.findByTestId('params-editor')).toBeInTheDocument();
   });
 
   it('switches to Auth tab when clicked', async () => {
@@ -72,7 +72,7 @@ describe('RequestBuilder', () => {
     const authTab = screen.getByText('Auth');
     await user.click(authTab);
     
-    expect(screen.getByTestId('auth-editor')).toBeInTheDocument();
+    expect(await screen.findByTestId('auth-editor')).toBeInTheDocument();
   });
 
   it('displays empty state when no headers are configured', () => {
@@ -133,8 +133,10 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByText('Body');
     await user.click(bodyTab);
     
-    const bodyEditor = screen.getByTestId('body-editor');
+    const bodyEditor = await screen.findByTestId('body-editor');
     expect(bodyEditor).toBeInTheDocument();
+    expect(await screen.findByTestId('body-syntax-layer')).toBeInTheDocument();
+    expect(screen.getByTestId('body-syntax-layer').querySelector('[data-language="json"]')).toBeTruthy();
   });
 
   it('updates body when typing in body editor', async () => {
@@ -145,10 +147,12 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByText('Body');
     await user.click(bodyTab);
     
-    const bodyTextarea = screen.getByTestId('body-textarea');
-    await user.type(bodyTextarea, '{"test": true}');
+    const bodyTextarea = await screen.findByTestId('body-textarea');
+    act(() => {
+      fireEvent.change(bodyTextarea, { target: { value: '{"test": true}' } });
+    });
     
-    expect(mockSetBody).toHaveBeenCalled();
+    expect(mockSetBody).toHaveBeenCalledWith('{"test": true}');
   });
 
   it('shows active tab with proper styling', () => {

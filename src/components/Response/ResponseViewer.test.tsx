@@ -34,13 +34,12 @@ describe('ResponseViewer', () => {
   it('formats JSON with 2-space indentation', () => {
     render(<ResponseViewer response={mockResponse} />);
     
-    // The formatted JSON should be displayed
-    // react-syntax-highlighter will render it, but we can check the structure
-    const viewer = screen.getByTestId('response-viewer');
-    expect(viewer).toBeInTheDocument();
-    
-    // Verify the body contains formatted JSON (check for proper structure)
-    // The actual formatting is handled by JSON.stringify with 2-space indent
+    const raw = screen.getByTestId('response-body-raw');
+    const text = raw.textContent ?? '';
+
+    // Look for 2-space indentation on nested keys
+    expect(text).toMatch(/\n  "headers": \{/);
+    expect(screen.getByTestId('response-body').querySelector('[data-language="json"]')).toBeTruthy();
   });
 
   it('displays header count', () => {
@@ -92,5 +91,8 @@ describe('ResponseViewer', () => {
     
     // Raw tab should be active
     expect(rawTab).toHaveClass('font-medium');
+    const rawText = screen.getByTestId('response-raw-text').textContent ?? '';
+    expect(rawText).toContain('HTTP/1.1 200 OK');
+    expect(screen.getByTestId('response-raw').querySelector('[data-language="http"]')).toBeTruthy();
   });
 });

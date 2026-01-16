@@ -233,10 +233,22 @@ Our current implementation:
 
 ## References
 
-- [Motion.dev Documentation](https://motion.dev)
-- [Motion Performance Guide](https://motion.dev/docs/performance)
-- [Motion Layout Animations](https://motion.dev/docs/react-layout-animations)
-- [Framer Motion Best Practices (2025)](https://blog.maximeheckel.com/posts/framer-motion-layout-animations)
+### Official Motion.dev Documentation
+
+- **[Motion.dev Documentation](https://motion.dev)** - Main documentation hub
+- **[Motion.dev Performance Guide](https://motion.dev/docs/performance)** - Performance optimization best practices
+- **[Motion.dev Layout Animations](https://motion.dev/docs/react-layout-animations)** - Layout animation patterns
+- **[Motion.dev Drag API](https://motion.dev/docs/react-drag)** - Drag gesture implementation
+- **[Motion.dev MotionValues](https://motion.dev/docs/react-motion-values)** - MotionValue usage patterns
+- **[Motion.dev Reduced Motion](https://motion.dev/motion/use-reduced-motion/)** - Accessibility support
+- **[Motion.dev Resize API](https://motion.dev/docs/resize)** - Container resize detection
+
+### Implementation Documentation
+
+- **[Layout Implementation Documentation](../docs/LAYOUT_IMPLEMENTATION.md)** - Complete implementation guide with official references
+- **[MainLayout Component](../../src/components/Layout/MainLayout.tsx)** - Source code
+- **[MainLayout Tests](../../src/components/Layout/MainLayout.test.tsx)** - Unit tests
+- **[MainLayout Stories](../../src/components/Layout/MainLayout.stories.tsx)** - Storybook stories
 
 ## Testing
 

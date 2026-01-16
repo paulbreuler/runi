@@ -14,3 +14,15 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => false,
   }),
 });
+
+// Mock ResizeObserver for Motion layout measurements in jsdom
+class MockResizeObserver {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: MockResizeObserver,
+});

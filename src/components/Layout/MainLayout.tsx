@@ -379,6 +379,8 @@ export const MainLayout = ({
                   width: requestWidth,
                   scrollbarGutter: 'stable',
                   willChange: isDragging ? 'transform' : 'auto',
+                  // Prevent text rendering artifacts during resize
+                  textRendering: 'optimizeLegibility',
                 }}
                 transition={isDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
               >
@@ -459,6 +461,8 @@ export const MainLayout = ({
                   width: responseWidth,
                   scrollbarGutter: 'stable',
                   willChange: isDragging ? 'transform' : 'auto',
+                  // Prevent text rendering artifacts during resize
+                  textRendering: 'optimizeLegibility',
                 }}
                 transition={isDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
               >

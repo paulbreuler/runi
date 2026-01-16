@@ -20,6 +20,10 @@
 
 > **"Collapse uncertainty into truth"**
 
+### Visual Tone
+
+Zen, calm, and book-like. Muted surfaces, soft contrast, and selective emphasis. Use color as signal, not decoration.
+
 ---
 
 ## Architecture Overview
@@ -85,6 +89,8 @@
 - Ambient intelligence: signals, not interruptions
 - Progressive disclosure: simple -> advanced
 - Keyboard-first: Cmd+K for everything
+- Muted primary actions by default; emphasize on hover or when critical
+- JSON formatting uses 2-space indentation in the response viewer
 
 ### 2. Development Discipline
 

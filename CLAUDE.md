@@ -28,6 +28,8 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 **The brand philosophy:** _"Collapse uncertainty into truth"_
 
+**The visual tone:** Zen, calm, and book-like. Muted surfaces, soft contrast, and selective emphasis. Use color as a signal, not decoration.
+
 > **Planning Documents:** See `.planning-docs/` for detailed vision and architecture:
 >
 > - `VISION.md` — North star document
@@ -118,6 +120,7 @@ runi/
 │   ├── bindings/                 # ts-rs generated TypeScript types
 │   └── Cargo.toml
 ├── .planning-docs/               # Design vision and strategy documents
+├── .tmp/                         # Ephemeral files (git-ignored, auto-cleanup)
 ├── specs/                        # Technical specifications
 ├── prompts/                      # Ralph prompt files
 └── justfile                      # Task runner
@@ -151,6 +154,8 @@ runi/
 - Always handle and display errors from Tauri commands
 - Prefer `const` arrow functions for components
 - Use Motion for animations (not CSS transitions for complex motion)
+- Default to muted UI controls; only emphasize on hover or when critical
+- Format JSON with 2-space indentation in response views
 
 ### Component Pattern
 
@@ -224,6 +229,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 6. **Never surface errors silently** — Always display Rust errors in UI
 7. **Never use `any` type** — TypeScript strict mode, explicit types required
 8. **Never use class components** — Functional components only
+9. **Never create files unless explicitly requested** — Prefer editing existing files; do not create documentation, analysis, or planning files without explicit user direction
+10. **Never create ephemeral files in tracked directories** — For analysis, planning, or intermediary work that must be written to disk, use `.tmp/` (git-ignored); delete when no longer needed
 
 ---
 
@@ -330,6 +337,18 @@ Intelligence communicates through consistent visual signals:
 | Red    | `#ef4444` | Breaking change, critical issue       |
 | Purple | `#a855f7` | AI-generated (suspect until verified) |
 | Blue   | `#3b82f6` | Suggestion available                  |
+
+**HTTP Method Colors (Industry Standard):**
+
+| Method | Color     | Meaning            |
+| ------ | --------- | ------------------ |
+| GET    | `#3b82f6` | Read, safe         |
+| POST   | `#22c55e` | Create, positive   |
+| PUT    | `#f59e0b` | Update, caution    |
+| PATCH  | `#f59e0b` | Update, caution    |
+| DELETE | `#ef4444` | Destructive        |
+| HEAD   | `#6b7280` | Meta/secondary     |
+| OPTIONS| `#6b7280` | Meta/secondary     |
 
 ---
 
