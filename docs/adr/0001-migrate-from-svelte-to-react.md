@@ -44,11 +44,30 @@ The migration includes:
 
 - React 19 with TypeScript 5.9
 - Zustand for state management
-- Motion 12 (`motion/react`) for animations
-- Lucide React for icons
+- Motion 12 for animations (import from `motion/react`, not the deprecated `framer-motion`)
+- Lucide React for icons (default icon library for shadcn/ui ecosystem, 1,500+ tree-shakable icons)
 - React Router 7 for routing
 - Tailwind CSS 4 (unchanged)
 - Vite 7 (unchanged)
+
+### Supporting Library Choices
+
+**Icons: Lucide React** was chosen over alternatives:
+
+| Library     | Icons   | Why/Why Not                                                        |
+| ----------- | ------- | ------------------------------------------------------------------ |
+| Lucide      | 1,500+  | **Chosen** — Default for shadcn/ui, clean aesthetic, tree-shakable |
+| Heroicons   | 316     | Made by Tailwind team but smaller icon set                         |
+| React-Icons | 50,000+ | Meta-library adds complexity; Lucide is sufficient                 |
+| Radix Icons | 318     | Too minimal for app needs                                          |
+
+**Animation: Motion 12** was chosen because:
+
+- Framer Motion was [rebranded to Motion](https://motion.dev/) in Feb 2025
+- First-class React support via `motion/react` import
+- ~34kb bundle (reducible to ~6kb with LazyMotion)
+- Hybrid engine combining native browser animations with JS flexibility
+- No Svelte equivalent with same ecosystem support
 
 ---
 
@@ -158,8 +177,25 @@ This decision supersedes the following entries from `docs/DECISIONS.md`:
 
 ## References
 
+### Framework & State
+
 - [React 19 Documentation](https://react.dev/)
-- [Motion for React](https://motion.dev/docs/react-quick-start)
 - [Zustand](https://zustand.docs.pmnd.rs/)
 - [Svelte 5 Runes](https://svelte.dev/blog/svelte-5-is-alive) (original choice)
+
+### Animation
+
+- [Motion for React](https://motion.dev/docs/react-quick-start)
+- [Motion GitHub](https://github.com/motiondivision/motion)
+- [LogRocket: Creating React animations with Motion](https://blog.logrocket.com/creating-react-animations-with-motion/)
+
+### Icons
+
+- [Lucide Icons](https://lucide.dev/)
+- [shadcn/ui Icon Library Comparison](https://www.shadcndesign.com/blog/comparing-icon-libraries-shadcn-ui)
+- [Top React Icon Libraries 2026](https://lineicons.com/blog/react-icon-libraries)
+
+### ADR Format
+
 - [Michael Nygard's ADR format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
+- [AWS ADR Best Practices](https://aws.amazon.com/blogs/architecture/master-architecture-decision-records-adrs-best-practices-for-effective-decision-making/)
