@@ -177,23 +177,21 @@ describe('MainLayout', () => {
       expect(resizer).toHaveAttribute('aria-label', 'Resize sidebar');
       expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
       expect(resizer).toHaveAttribute('aria-valuenow', '256');
-      expect(resizer).toHaveAttribute('aria-valuemin', '256');
+      // aria-valuemin is COLLAPSED_SIDEBAR_WIDTH (8) since sidebar can collapse
+      expect(resizer).toHaveAttribute('aria-valuemin', '8');
       expect(resizer).toHaveAttribute('aria-valuemax', '500');
     });
 
-    it('sidebar starts at default width (256px)', () => {
+    it('sidebar is present when visible', () => {
       render(<MainLayout />);
-      
+
       // Sidebar wrapper (motion.aside) has the test ID
       const sidebars = screen.getAllByTestId('sidebar');
       expect(sidebars.length).toBeGreaterThan(0);
-      
-      // Check that sidebar wrapper has style set (via MotionValue)
-      // In mocked Motion, style may be set differently
-      const wrapper = sidebars[0];
-      const style = wrapper.getAttribute('style');
-      // Style should exist (may contain scrollbar-gutter or width)
-      expect(style).toBeTruthy();
+
+      // Sidebar resizer should also be present
+      const resizer = screen.getByTestId('sidebar-resizer');
+      expect(resizer).toBeInTheDocument();
     });
 
     it('sidebar can be toggled via store', () => {

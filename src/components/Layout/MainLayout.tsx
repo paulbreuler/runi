@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence, LayoutGroup, useMotionValue, useTransform, useReducedMotion } from 'motion/react';
+import { motion, AnimatePresence, LayoutGroup, useMotionValue, useTransform, useReducedMotion, useSpring } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -22,23 +22,18 @@ const DEFAULT_SPLIT = 50;
 const MIN_SIDEBAR_WIDTH = 256;
 const MAX_SIDEBAR_WIDTH = 500;
 const DEFAULT_SIDEBAR_WIDTH = 256;
-
-const sidebarVariants = {
-  hidden: { width: 0, opacity: 0 },
-  visible: { opacity: 1 },
-  overlay: { opacity: 1 },
-};
+const COLLAPSED_SIDEBAR_WIDTH = 8; // Slim page edge when collapsed
 
 const overlayVariants = {
   hidden: { opacity: 0, pointerEvents: 'none' as const },
   visible: { opacity: 1, pointerEvents: 'auto' as const },
 };
 
-const springTransition = {
-  type: 'spring' as const,
+// Smooth, calm spring for sidebar - like turning a book page
+const sidebarSpring = {
   stiffness: 300,
   damping: 30,
-  mass: 0.5,
+  mass: 0.8,
 };
 
 const layoutTransition = {
@@ -57,21 +52,12 @@ const immediateTransition = {
 
 /**
  * Sash classes - minimal, grounded resize handle styling
- *
- * Design: Nearly invisible at rest, subtle on hover, solid during drag.
- * Like the edge of a book page - you know it's there, it responds when touched.
  */
 const getSashClasses = (position: 'left' | 'right', isDragging: boolean): string =>
   cn(
-    // Base: thin, subtle, part of the structure
     'absolute top-0 bottom-0 z-10 touch-none',
     'cursor-col-resize select-none',
-    // Positioning
     position === 'right' ? 'right-0' : '',
-    // Visual: grounded, not floaty
-    // At rest: transparent, just a hit area
-    // On hover: subtle background hint
-    // Dragging: solid, present
     'w-[3px] bg-transparent',
     'hover:bg-border-default/50',
     isDragging && 'bg-border-default'
@@ -84,7 +70,7 @@ export const MainLayout = ({
   initialSidebarVisible = true,
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useSettingsStore();
-  const { isCompact, isSpacious } = useResponsive();
+  const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
 
   // Pane state
@@ -95,10 +81,14 @@ export const MainLayout = ({
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
-  const sidebarRef = useRef<HTMLElement>(null);
+  const isInitialMount = useRef(true);
 
-  React.useEffect(() => {
-    setSidebarVisible(initialSidebarVisible);
+  // Initialize sidebar visibility on mount only
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      setSidebarVisible(initialSidebarVisible);
+    }
   }, [initialSidebarVisible, setSidebarVisible]);
 
   useKeyboardShortcuts({
@@ -132,16 +122,23 @@ export const MainLayout = ({
     return `${String(clamped)}%`;
   });
 
-  // Sidebar width as MotionValue
-  const sidebarWidthMotion = useMotionValue(DEFAULT_SIDEBAR_WIDTH);
+  // Sidebar width with spring animation - like turning a page
+  const targetSidebarWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
+  const sidebarWidthSpring = useSpring(targetSidebarWidth, prefersReducedMotion ? { duration: 0 } : sidebarSpring);
 
+  // Update spring target when visibility or width changes
   useEffect(() => {
     if (!isSidebarDragging) {
-      sidebarWidthMotion.set(sidebarWidth);
+      sidebarWidthSpring.set(sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH);
     }
-  }, [sidebarWidth, sidebarWidthMotion, isSidebarDragging]);
+  }, [sidebarVisible, sidebarWidth, sidebarWidthSpring, isSidebarDragging]);
 
-  const sidebarWidthStyle = useTransform(sidebarWidthMotion, (width) => `${String(width)}px`);
+  // Sidebar content opacity - fade out when collapsing
+  const sidebarContentOpacity = useTransform(
+    sidebarWidthSpring,
+    [COLLAPSED_SIDEBAR_WIDTH, COLLAPSED_SIDEBAR_WIDTH + 50, MIN_SIDEBAR_WIDTH],
+    [0, 0, 1]
+  );
 
   // Prevent text selection during any drag
   useEffect((): (() => void) => {
@@ -194,107 +191,117 @@ export const MainLayout = ({
     setIsPaneDragging(false);
   }, [isPaneDragging, splitRatio]);
 
-  // Sidebar resizer handlers
+  // Sidebar resizer handlers (only when expanded)
   const handleSidebarPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!sidebarVisible) return; // Don't resize when collapsed
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     setIsSidebarDragging(true);
-  }, []);
+  }, [sidebarVisible]);
 
   const handleSidebarPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isSidebarDragging) return;
 
-    // Sidebar width = pointer X position (since sidebar is at left edge)
     const newWidth = e.clientX;
     const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
-    sidebarWidthMotion.set(clamped);
-  }, [isSidebarDragging, sidebarWidthMotion]);
+    sidebarWidthSpring.set(clamped);
+  }, [isSidebarDragging, sidebarWidthSpring]);
 
   const handleSidebarPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isSidebarDragging) return;
 
     e.currentTarget.releasePointerCapture(e.pointerId);
 
-    const finalWidth = sidebarWidthMotion.get();
+    const finalWidth = sidebarWidthSpring.get();
     const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
     setSidebarWidth(clamped);
     setIsSidebarDragging(false);
-  }, [isSidebarDragging, sidebarWidthMotion]);
+  }, [isSidebarDragging, sidebarWidthSpring]);
 
-  const shouldShowSidebar = sidebarVisible;
-  const isSidebarOverlay = shouldShowSidebar && isCompact;
+  // Click on collapsed sidebar edge to expand
+  const handleCollapsedClick = useCallback(() => {
+    if (!sidebarVisible) {
+      toggleSidebar();
+    }
+  }, [sidebarVisible, toggleSidebar]);
 
-  const sidebarVariant = isSidebarOverlay
-    ? 'overlay'
-    : shouldShowSidebar && isSpacious
-      ? 'visible'
-      : 'hidden';
+  const isSidebarOverlay = sidebarVisible && isCompact;
 
   return (
     <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
       <div className="flex flex-1 overflow-hidden gap-0">
-        <AnimatePresence mode="wait">
-          {shouldShowSidebar && (
-            <motion.aside
-              ref={sidebarRef}
-              className={cn(
-                'flex flex-col border-r border-border-default bg-bg-surface overflow-hidden relative shrink-0',
-                isSidebarOverlay && 'fixed inset-y-0 left-0 z-50 shadow-lg'
-              )}
-              variants={sidebarVariants}
-              initial="hidden"
-              animate={sidebarVariant}
-              exit="hidden"
-              transition={prefersReducedMotion ? { duration: 0 } : springTransition}
-              style={{
-                width: isSidebarOverlay ? 256 : sidebarWidthStyle,
-                scrollbarGutter: 'stable',
-              }}
-              layout={!isSidebarDragging}
-              data-testid="sidebar"
+        {/* Sidebar - always in DOM, animates between expanded and collapsed */}
+        {!isSidebarOverlay && (
+          <motion.aside
+            className="flex flex-col border-r border-border-default bg-bg-surface overflow-hidden relative shrink-0"
+            style={{ width: sidebarWidthSpring }}
+            data-testid="sidebar"
+          >
+            {/* Sidebar content - fades out when collapsing */}
+            <motion.div
+              className="flex-1 overflow-hidden"
+              style={{ opacity: sidebarContentOpacity }}
             >
               <Sidebar />
+            </motion.div>
 
-              {!isSidebarOverlay && (
-                <div
-                  className={getSashClasses('right', isSidebarDragging)}
-                  data-testid="sidebar-resizer"
-                  onPointerDown={handleSidebarPointerDown}
-                  onPointerMove={handleSidebarPointerMove}
-                  onPointerUp={handleSidebarPointerUp}
-                  onPointerCancel={handleSidebarPointerUp}
-                  role="separator"
-                  aria-label="Resize sidebar"
-                  aria-orientation="vertical"
-                  aria-valuenow={sidebarWidth}
-                  aria-valuemin={MIN_SIDEBAR_WIDTH}
-                  aria-valuemax={MAX_SIDEBAR_WIDTH}
-                />
+            {/* Sash / collapsed indicator */}
+            <div
+              className={cn(
+                getSashClasses('right', isSidebarDragging),
+                // When collapsed, the whole sidebar edge is the click target
+                !sidebarVisible && 'w-full cursor-pointer hover:bg-border-default/30'
               )}
-            </motion.aside>
-          )}
-        </AnimatePresence>
+              data-testid="sidebar-resizer"
+              onClick={handleCollapsedClick}
+              onPointerDown={sidebarVisible ? handleSidebarPointerDown : undefined}
+              onPointerMove={sidebarVisible ? handleSidebarPointerMove : undefined}
+              onPointerUp={sidebarVisible ? handleSidebarPointerUp : undefined}
+              onPointerCancel={sidebarVisible ? handleSidebarPointerUp : undefined}
+              role="separator"
+              aria-label={sidebarVisible ? 'Resize sidebar' : 'Expand sidebar'}
+              aria-orientation="vertical"
+              aria-valuenow={sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH}
+              aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
+              aria-valuemax={MAX_SIDEBAR_WIDTH}
+            />
+          </motion.aside>
+        )}
 
+        {/* Overlay mode for compact screens */}
         <AnimatePresence>
           {isSidebarOverlay && (
-            <motion.button
-              type="button"
-              className="fixed inset-0 bg-bg-app/80 backdrop-blur-sm z-40 cursor-pointer"
-              onClick={toggleSidebar}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggleSidebar();
-                }
-              }}
-              data-testid="sidebar-overlay"
-              aria-label="Close sidebar"
-              variants={overlayVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              transition={springTransition}
-            />
+            <>
+              <motion.aside
+                className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border-default bg-bg-surface shadow-lg"
+                initial={{ x: -256, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -256, opacity: 0 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', ...sidebarSpring }}
+                style={{ width: 256 }}
+                data-testid="sidebar"
+              >
+                <Sidebar />
+              </motion.aside>
+              <motion.button
+                type="button"
+                className="fixed inset-0 bg-bg-app/80 backdrop-blur-sm z-40 cursor-pointer"
+                onClick={toggleSidebar}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleSidebar();
+                  }
+                }}
+                data-testid="sidebar-overlay"
+                aria-label="Close sidebar"
+                variants={overlayVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                transition={{ duration: 0.2 }}
+              />
+            </>
           )}
         </AnimatePresence>
 
@@ -350,7 +357,7 @@ export const MainLayout = ({
                 )}
               </motion.div>
 
-              {/* Pane sash - positioned at split point */}
+              {/* Pane sash */}
               <motion.div
                 className={getSashClasses('left', isPaneDragging)}
                 data-testid="pane-resizer"
