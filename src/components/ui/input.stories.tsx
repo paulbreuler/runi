@@ -19,6 +19,9 @@ const meta = {
     placeholder: {
       control: 'text',
     },
+    glass: {
+      control: 'boolean',
+    },
   },
 } satisfies Meta<typeof Input>;
 
@@ -28,6 +31,13 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     placeholder: 'Enter text...',
+  },
+};
+
+export const Glass: Story = {
+  args: {
+    placeholder: 'Glass input',
+    glass: true,
   },
 };
 
@@ -48,6 +58,7 @@ export const States: Story = {
   render: () => (
     <div className="flex flex-col gap-3 w-64">
       <Input placeholder="Normal input" />
+      <Input placeholder="Glass input" glass />
       <Input placeholder="Disabled input" disabled />
       <Input defaultValue="With value" />
       <Input placeholder="Invalid input" aria-invalid="true" />

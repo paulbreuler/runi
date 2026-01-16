@@ -98,6 +98,7 @@ export const HeaderEditor = (): React.JSX.Element => {
               {editingKey === key ? (
                 <>
                   <Input
+                    glass={true}
                     value={newKey}
                     onChange={(e) => setNewKey(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -107,6 +108,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                   />
                   <span className="text-text-muted">:</span>
                   <Input
+                    glass={true}
                     value={newValue}
                     onChange={(e) => setNewValue(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -163,6 +165,7 @@ export const HeaderEditor = (): React.JSX.Element => {
               className="flex items-center gap-2"
             >
               <Input
+                glass={true}
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -172,6 +175,7 @@ export const HeaderEditor = (): React.JSX.Element => {
               />
               <span className="text-text-muted">:</span>
               <Input
+                glass={true}
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
                 onKeyDown={handleKeyDown}

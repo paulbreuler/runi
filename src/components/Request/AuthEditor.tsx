@@ -133,6 +133,7 @@ export const AuthEditor = (): React.JSX.Element => {
             >
               <label className="text-sm font-medium text-text-secondary">Token</label>
               <Input
+                glass={true}
                 type="text"
                 value={token}
                 onChange={(e) => handleTokenChange(e.target.value)}
@@ -153,6 +154,7 @@ export const AuthEditor = (): React.JSX.Element => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-secondary">Username</label>
                 <Input
+                  glass={true}
                   type="text"
                   value={username}
                   onChange={(e) => handleUsernameChange(e.target.value)}
@@ -164,6 +166,7 @@ export const AuthEditor = (): React.JSX.Element => {
                 <label className="text-sm font-medium text-text-secondary">Password</label>
                 <div className="relative">
                   <Input
+                    glass={true}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
@@ -193,6 +196,7 @@ export const AuthEditor = (): React.JSX.Element => {
             >
               <label className="text-sm font-medium text-text-secondary">Authorization Header</label>
               <Input
+                glass={true}
                 type="text"
                 value={customHeader}
                 onChange={(e) => handleCustomHeaderChange(e.target.value)}
