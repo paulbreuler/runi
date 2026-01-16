@@ -32,8 +32,9 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 >
 > - `VISION.md` — North star document
 > - `runi-design-vision-v8.1.md` — Complete design specification
-> - `001-ai-architecture.md` — AI provider abstraction and verification
-> - `002-adoption-positioning.md` — Go-to-market and adoption ladder
+> - `addendums/001-ai-architecture.md` — AI provider abstraction and verification
+> - `addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
+> - `addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
 
 ---
 
@@ -345,6 +346,7 @@ Intelligence communicates through consistent visual signals:
 
 - `.planning-docs/VISION.md` — North star
 - `.planning-docs/runi-design-vision-v8.1.md` — Full design spec
-- `.planning-docs/001-ai-architecture.md` — AI verification architecture
-- `.planning-docs/002-adoption-positioning.md` — Adoption strategy
+- `.planning-docs/addendums/001-ai-architecture.md` — AI verification architecture
+- `.planning-docs/addendums/002-adoption-positioning.md` — Adoption strategy
+- `.planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
 - `docs/DECISIONS.md` — Historical architectural decisions

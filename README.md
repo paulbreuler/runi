@@ -241,7 +241,7 @@ While everyone builds tools to write more code, we're building the tool that let
 - **Spec-bound**: The OpenAPI spec is the source of truth. Everything validates against it.
 - **No account required**: We don't want your email. We don't want your data. We want you to be productive.
 
-Read the full [vision](./docs/VISION.md).
+Read the full [vision](./.planning-docs/VISION.md).
 
 ---
 
