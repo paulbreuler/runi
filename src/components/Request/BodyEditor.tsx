@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useRequestStore } from '@/stores/useRequestStore';
@@ -18,6 +18,7 @@ export const BodyEditor = (): React.JSX.Element => {
   const { body, setBody } = useRequestStore();
   const highlightRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [lineNumberGutterWidth, setLineNumberGutterWidth] = useState<number>(0);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     setBody(e.target.value);
@@ -36,6 +37,34 @@ export const BodyEditor = (): React.JSX.Element => {
   const language = useMemo(() => detectSyntaxLanguage({ body }), [body]);
   const isJsonBody = useMemo(() => isJson(body), [body]);
 
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !highlightRef.current) return;
+
+    const lineNumber = highlightRef.current.querySelector<HTMLElement>(
+      '.react-syntax-highlighter-line-number'
+    );
+
+    if (!lineNumber) return;
+
+    const updateGutterWidth = (): void => {
+      const width = Math.ceil(lineNumber.getBoundingClientRect().width);
+      if (width > 0 && width !== lineNumberGutterWidth) {
+        setLineNumberGutterWidth(width);
+      }
+    };
+
+    updateGutterWidth();
+
+    if (typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(updateGutterWidth);
+    observer.observe(lineNumber);
+
+    return (): void => {
+      observer.disconnect();
+    };
+  }, [language, lineNumberGutterWidth]);
+
   const formatJson = (): void => {
     if (!body.trim()) return;
     try {
@@ -51,6 +80,8 @@ export const BodyEditor = (): React.JSX.Element => {
     highlightRef.current.scrollTop = textareaRef.current.scrollTop;
     highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
   };
+
+  const gutterWidth = lineNumberGutterWidth > 0 ? `${lineNumberGutterWidth}px` : '3.5em';
 
   return (
     <div className="h-full flex flex-col" data-testid="body-editor">
@@ -104,7 +135,7 @@ export const BodyEditor = (): React.JSX.Element => {
             'placeholder:text-text-muted/50'
           )}
           style={{
-            paddingLeft: 'calc(1rem + 3.5em)',
+            paddingLeft: `calc(1rem + ${gutterWidth})`,
             caretColor: 'var(--color-text-secondary)',
           }}
           data-testid="body-textarea"
