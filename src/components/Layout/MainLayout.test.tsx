@@ -328,17 +328,17 @@ describe('MainLayout', () => {
 
       const resizer = screen.getByTestId('pane-resizer');
 
-      // Should have hover class for width change
-      expect(resizer).toHaveClass('hover:w-2');
+      // Should have hover class for background hint
+      expect(resizer).toHaveClass('hover:bg-border-default/50');
     });
 
-    it('resizer has base styling', () => {
+    it('resizer has minimal styling (transparent at rest)', () => {
       render(<MainLayout />);
 
       const resizer = screen.getByTestId('pane-resizer');
 
-      // Should have base background
-      expect(resizer).toHaveClass('bg-border-default');
+      // Should be transparent at rest (zen aesthetic)
+      expect(resizer).toHaveClass('bg-transparent');
     });
   });
 

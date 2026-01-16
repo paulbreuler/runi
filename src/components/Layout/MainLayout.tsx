@@ -55,6 +55,28 @@ const immediateTransition = {
   },
 };
 
+/**
+ * Sash classes - minimal, grounded resize handle styling
+ *
+ * Design: Nearly invisible at rest, subtle on hover, solid during drag.
+ * Like the edge of a book page - you know it's there, it responds when touched.
+ */
+const getSashClasses = (position: 'left' | 'right', isDragging: boolean): string =>
+  cn(
+    // Base: thin, subtle, part of the structure
+    'absolute top-0 bottom-0 z-10 touch-none',
+    'cursor-col-resize select-none',
+    // Positioning
+    position === 'right' ? 'right-0' : '',
+    // Visual: grounded, not floaty
+    // At rest: transparent, just a hit area
+    // On hover: subtle background hint
+    // Dragging: solid, present
+    'w-[3px] bg-transparent',
+    'hover:bg-border-default/50',
+    isDragging && 'bg-border-default'
+  );
+
 export const MainLayout = ({
   headerContent,
   requestContent,
@@ -65,12 +87,15 @@ export const MainLayout = ({
   const { isCompact, isSpacious } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
 
+  // Pane state
   const [requestPaneSize, setRequestPaneSize] = useState(DEFAULT_SPLIT);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isPaneDragging, setIsPaneDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
 
   React.useEffect(() => {
     setSidebarVisible(initialSidebarVisible);
@@ -83,17 +108,15 @@ export const MainLayout = ({
     description: `${getModifierKeyName()}B - Toggle sidebar`,
   });
 
-  // Split ratio as MotionValue (0-1)
+  // Pane split ratio as MotionValue (0-1)
   const splitRatio = useMotionValue(DEFAULT_SPLIT / 100);
 
-  // Sync MotionValue with state when not dragging
   useEffect((): void => {
-    if (!isDragging) {
+    if (!isPaneDragging) {
       splitRatio.set(requestPaneSize / 100);
     }
-  }, [requestPaneSize, splitRatio, isDragging]);
+  }, [requestPaneSize, splitRatio, isPaneDragging]);
 
-  // Transform ratio to width strings
   const requestWidth = useTransform(splitRatio, (ratio) => {
     const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
     return `${String(clamped)}%`;
@@ -104,15 +127,25 @@ export const MainLayout = ({
     return `${String(100 - clamped)}%`;
   });
 
-  // Resizer position derived from splitRatio
   const resizerLeft = useTransform(splitRatio, (ratio) => {
     const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
     return `${String(clamped)}%`;
   });
 
-  // Prevent text selection and set cursor during any drag (pane or sidebar)
+  // Sidebar width as MotionValue
+  const sidebarWidthMotion = useMotionValue(DEFAULT_SIDEBAR_WIDTH);
+
+  useEffect(() => {
+    if (!isSidebarDragging) {
+      sidebarWidthMotion.set(sidebarWidth);
+    }
+  }, [sidebarWidth, sidebarWidthMotion, isSidebarDragging]);
+
+  const sidebarWidthStyle = useTransform(sidebarWidthMotion, (width) => `${String(width)}px`);
+
+  // Prevent text selection during any drag
   useEffect((): (() => void) => {
-    const isAnyDragging = isDragging || isSidebarDragging;
+    const isAnyDragging = isPaneDragging || isSidebarDragging;
     if (isAnyDragging) {
       document.body.style.userSelect = 'none';
       document.body.style.cursor = 'col-resize';
@@ -124,17 +157,17 @@ export const MainLayout = ({
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, isSidebarDragging]);
+  }, [isPaneDragging, isSidebarDragging]);
 
-  // Pane resizer: pointer events for full control
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  // Pane resizer handlers
+  const handlePanePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
-    setIsDragging(true);
+    setIsPaneDragging(true);
   }, []);
 
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
+  const handlePanePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPaneDragging) return;
 
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -147,10 +180,10 @@ export const MainLayout = ({
 
       splitRatio.set(clamped);
     }
-  }, [isDragging, splitRatio]);
+  }, [isPaneDragging, splitRatio]);
 
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
+  const handlePanePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPaneDragging) return;
 
     e.currentTarget.releasePointerCapture(e.pointerId);
 
@@ -158,42 +191,35 @@ export const MainLayout = ({
     const finalPercent = finalRatio * 100;
     const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalPercent));
     setRequestPaneSize(clamped);
-    setIsDragging(false);
-  }, [isDragging, splitRatio]);
+    setIsPaneDragging(false);
+  }, [isPaneDragging, splitRatio]);
 
-  // Sidebar resizing
-  const sidebarWidthMotion = useMotionValue(DEFAULT_SIDEBAR_WIDTH);
-
-  useEffect(() => {
-    if (!isSidebarDragging) {
-      sidebarWidthMotion.set(sidebarWidth);
-    }
-  }, [sidebarWidth, sidebarWidthMotion, isSidebarDragging]);
-
-  const sidebarWidthStyle = useTransform(sidebarWidthMotion, (width) => `${String(width)}px`);
-
-  const handleSidebarDragStart = useCallback(() => {
+  // Sidebar resizer handlers
+  const handleSidebarPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
     setIsSidebarDragging(true);
   }, []);
 
-  const handleSidebarDrag = useCallback(
-    (_event: PointerEvent, info: { point: { x: number } }) => {
-      const newWidth = info.point.x;
-      const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
-      sidebarWidthMotion.set(clamped);
-    },
-    [sidebarWidthMotion]
-  );
+  const handleSidebarPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isSidebarDragging) return;
 
-  const handleSidebarDragEnd = useCallback(() => {
-    requestAnimationFrame((): void => {
-      const finalWidth = sidebarWidthMotion.get();
-      const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
-      setSidebarWidth(clamped);
-      sidebarWidthMotion.set(clamped);
-      setIsSidebarDragging(false);
-    });
-  }, [sidebarWidthMotion]);
+    // Sidebar width = pointer X position (since sidebar is at left edge)
+    const newWidth = e.clientX;
+    const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
+    sidebarWidthMotion.set(clamped);
+  }, [isSidebarDragging, sidebarWidthMotion]);
+
+  const handleSidebarPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isSidebarDragging) return;
+
+    e.currentTarget.releasePointerCapture(e.pointerId);
+
+    const finalWidth = sidebarWidthMotion.get();
+    const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
+    setSidebarWidth(clamped);
+    setIsSidebarDragging(false);
+  }, [isSidebarDragging, sidebarWidthMotion]);
 
   const shouldShowSidebar = sidebarVisible;
   const isSidebarOverlay = shouldShowSidebar && isCompact;
@@ -210,8 +236,9 @@ export const MainLayout = ({
         <AnimatePresence mode="wait">
           {shouldShowSidebar && (
             <motion.aside
+              ref={sidebarRef}
               className={cn(
-                'flex flex-col border-r bg-bg-surface overflow-hidden relative shrink-0',
+                'flex flex-col border-r border-border-default bg-bg-surface overflow-hidden relative shrink-0',
                 isSidebarOverlay && 'fixed inset-y-0 left-0 z-50 shadow-lg'
               )}
               variants={sidebarVariants}
@@ -222,7 +249,6 @@ export const MainLayout = ({
               style={{
                 width: isSidebarOverlay ? 256 : sidebarWidthStyle,
                 scrollbarGutter: 'stable',
-                willChange: isSidebarDragging ? 'transform' : 'auto',
               }}
               layout={!isSidebarDragging}
               data-testid="sidebar"
@@ -230,61 +256,20 @@ export const MainLayout = ({
               <Sidebar />
 
               {!isSidebarOverlay && (
-                <motion.div
-                  className="absolute top-0 right-0 w-1 h-full bg-border-default cursor-col-resize group hover:w-2 transition-all z-10"
+                <div
+                  className={getSashClasses('right', isSidebarDragging)}
                   data-testid="sidebar-resizer"
-                  drag="x"
-                  dragElastic={0}
-                  dragMomentum={false}
-                  dragConstraints={{ left: MIN_SIDEBAR_WIDTH, right: MAX_SIDEBAR_WIDTH }}
-                  onDragStart={handleSidebarDragStart}
-                  onDrag={handleSidebarDrag}
-                  onDragEnd={handleSidebarDragEnd}
-                  whileHover={{
-                    width: 8,
-                    backgroundColor: 'oklch(0.623 0.214 259.1 / 0.15)',
-                    boxShadow: '0 0 0 1px oklch(0.623 0.214 259.1 / 0.2)',
-                  }}
-                  whileDrag={{
-                    width: 8,
-                    backgroundColor: 'oklch(0.623 0.214 259.1 / 0.25)',
-                    boxShadow: '0 0 0 1px oklch(0.623 0.214 259.1 / 0.3), 0 2px 8px oklch(0 0 0 / 0.3)',
-                    cursor: 'grabbing',
-                  }}
+                  onPointerDown={handleSidebarPointerDown}
+                  onPointerMove={handleSidebarPointerMove}
+                  onPointerUp={handleSidebarPointerUp}
+                  onPointerCancel={handleSidebarPointerUp}
                   role="separator"
                   aria-label="Resize sidebar"
                   aria-orientation="vertical"
                   aria-valuenow={sidebarWidth}
                   aria-valuemin={MIN_SIDEBAR_WIDTH}
                   aria-valuemax={MAX_SIDEBAR_WIDTH}
-                  transition={isSidebarDragging ? immediateTransition : layoutTransition}
-                >
-                  <motion.div
-                    className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center"
-                    initial={{ opacity: 0 }}
-                    whileHover={{ opacity: 1 }}
-                    whileDrag={{ opacity: 1 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <div className="flex flex-col items-center gap-1 py-2">
-                      {[0, 1, 2].map((i) => (
-                        <motion.div
-                          key={i}
-                          className="w-1 h-1 rounded-full bg-accent-blue/40"
-                          whileHover={{
-                            scale: 1.2,
-                            backgroundColor: 'oklch(0.623 0.214 259.1 / 0.6)',
-                          }}
-                          whileDrag={{
-                            scale: 1.3,
-                            backgroundColor: 'oklch(0.623 0.214 259.1 / 0.8)',
-                          }}
-                          transition={{ duration: 0.15 }}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                </motion.div>
+                />
               )}
             </motion.aside>
           )}
@@ -332,15 +317,14 @@ export const MainLayout = ({
               transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
             >
               <motion.div
-                layout={!isDragging}
-                className="h-full overflow-hidden shrink-0"
+                layout={!isPaneDragging}
+                className="h-full overflow-hidden shrink-0 border-r border-border-default"
                 data-testid="request-pane"
                 style={{
                   width: requestWidth,
                   scrollbarGutter: 'stable',
-                  willChange: isDragging ? 'width' : 'auto',
                 }}
-                transition={isDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
+                transition={isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
               >
                 {requestContent !== undefined ? requestContent : (
                   <div className="h-full p-4 text-text-secondary flex items-center justify-center">
@@ -350,15 +334,14 @@ export const MainLayout = ({
               </motion.div>
 
               <motion.div
-                layout={!isDragging}
+                layout={!isPaneDragging}
                 className="h-full overflow-hidden flex-1"
                 data-testid="response-pane"
                 style={{
                   width: responseWidth,
                   scrollbarGutter: 'stable',
-                  willChange: isDragging ? 'width' : 'auto',
                 }}
-                transition={isDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
+                transition={isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
               >
                 {responseContent !== undefined ? responseContent : (
                   <div className="h-full p-4 text-text-secondary flex items-center justify-center">
@@ -367,22 +350,18 @@ export const MainLayout = ({
                 )}
               </motion.div>
 
-              {/* Resizer: pure pointer events, no animation */}
+              {/* Pane sash - positioned at split point */}
               <motion.div
-                className={cn(
-                  'absolute top-0 bottom-0 w-1 bg-border-default cursor-col-resize z-10 touch-none',
-                  'hover:w-2 hover:bg-accent-blue/15',
-                  isDragging && 'w-2 bg-accent-blue/25'
-                )}
+                className={getSashClasses('left', isPaneDragging)}
                 data-testid="pane-resizer"
                 style={{
                   left: resizerLeft,
                   transform: 'translateX(-50%)',
                 }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
+                onPointerDown={handlePanePointerDown}
+                onPointerMove={handlePanePointerMove}
+                onPointerUp={handlePanePointerUp}
+                onPointerCancel={handlePanePointerUp}
                 role="separator"
                 aria-label="Resize panes"
                 aria-orientation="vertical"
