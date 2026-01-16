@@ -15,16 +15,14 @@ interface MainLayoutProps {
   initialSidebarVisible?: boolean;
 }
 
-const MIN_PANE_SIZE = 20; // Minimum 20% width
-const MAX_PANE_SIZE = 80; // Maximum 80% width
-const DEFAULT_SPLIT = 50; // 50/50 split
+const MIN_PANE_SIZE = 20;
+const MAX_PANE_SIZE = 80;
+const DEFAULT_SPLIT = 50;
 
-// Sidebar resizing constants
-const MIN_SIDEBAR_WIDTH = 256; // Minimum width in pixels (current default)
-const MAX_SIDEBAR_WIDTH = 500; // Maximum width in pixels
-const DEFAULT_SIDEBAR_WIDTH = 256; // Default width in pixels
+const MIN_SIDEBAR_WIDTH = 256;
+const MAX_SIDEBAR_WIDTH = 500;
+const DEFAULT_SIDEBAR_WIDTH = 256;
 
-// Animation variants following Motion best practices
 const sidebarVariants = {
   hidden: { width: 0, opacity: 0 },
   visible: { opacity: 1 },
@@ -51,7 +49,6 @@ const layoutTransition = {
   },
 };
 
-// Immediate transition for drag (no animation lag)
 const immediateTransition = {
   layout: {
     duration: 0,
@@ -66,23 +63,19 @@ export const MainLayout = ({
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const { isCompact, isSpacious } = useResponsive();
-  const prefersReducedMotion = useReducedMotion();
-  
-  // Pane split state (percentage for request pane) - this is the "committed" value
+  const prefersReducedMotion = useReducedMotion() === true;
+
   const [requestPaneSize, setRequestPaneSize] = useState(DEFAULT_SPLIT);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sidebar width state (pixels) - this is the "committed" value
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
 
-  // Initialize sidebar visibility
   React.useEffect(() => {
     setSidebarVisible(initialSidebarVisible);
   }, [initialSidebarVisible, setSidebarVisible]);
 
-  // Register keyboard shortcut
   useKeyboardShortcuts({
     key: 'b',
     modifier: isMacSync() ? 'meta' : 'ctrl',
@@ -90,127 +83,100 @@ export const MainLayout = ({
     description: `${getModifierKeyName()}B - Toggle sidebar`,
   });
 
-  // Container width tracking - cached to avoid expensive reads during drag
-  const containerWidthRef = useRef<number>(0);
-
-  // Update container width when container is available
-  useEffect(() => {
-    const updateWidth = (): void => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        containerWidthRef.current = rect.width;
-      }
-    };
-    
-    updateWidth();
-    const resizeObserver = new ResizeObserver(updateWidth);
-    
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-    
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  // Official Motion.dev pattern: Track split ratio (0-1) as MotionValue
-  // This is more performant than percentage and works better with flex layouts
+  // Split ratio as MotionValue (0-1)
   const splitRatio = useMotionValue(DEFAULT_SPLIT / 100);
-  
-  // Sync MotionValue with state when state changes (non-drag updates)
+
+  // Sync MotionValue with state when not dragging
   useEffect((): void => {
     if (!isDragging) {
       splitRatio.set(requestPaneSize / 100);
     }
   }, [requestPaneSize, splitRatio, isDragging]);
 
-  // Transform ratio to percentage strings for width-based layout
+  // Transform ratio to width strings
   const requestWidth = useTransform(splitRatio, (ratio) => {
     const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
     return `${String(clamped)}%`;
   });
+
   const responseWidth = useTransform(splitRatio, (ratio) => {
     const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
     return `${String(100 - clamped)}%`;
   });
 
-  // Handle drag start
-  const handleDragStart = useCallback(() => {
+  // Resizer position derived from splitRatio
+  const resizerLeft = useTransform(splitRatio, (ratio) => {
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
+    return `${String(clamped)}%`;
+  });
+
+  // Prevent text selection and set cursor during drag
+  useEffect((): (() => void) => {
+    if (isDragging) {
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    } else {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    return (): void => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isDragging]);
+
+  // Pane resizer: pointer events for full control
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
     setIsDragging(true);
   }, []);
 
-  // Handle drag - use absolute position relative to container right edge (like sidebar)
-  // This matches the sidebar pattern: calculate from right edge for perfect sync
-  const handleDrag = useCallback(
-    (_event: PointerEvent, info: { point: { x: number } }) => {
-      // Get fresh container dimensions on each drag event
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const containerWidth = rect.width;
-        const containerRight = rect.right;
-        
-        if (containerWidth > 0) {
-          // Calculate response pane width from right edge (like sidebar from left edge)
-          // responseWidth = containerRight - point.x
-          const responseWidth = containerRight - info.point.x;
-          
-          // Convert to ratio: responseRatio = responseWidth / containerWidth
-          const responseRatio = responseWidth / containerWidth;
-          
-          // Request pane ratio is the complement
-          const requestRatio = 1 - responseRatio;
-          
-          // Clamp to min/max constraints
-          const minRatio = MIN_PANE_SIZE / 100;
-          const maxRatio = MAX_PANE_SIZE / 100;
-          const clamped = Math.max(minRatio, Math.min(maxRatio, requestRatio));
-          
-          // Use MotionValue.set() for immediate, synchronous update
-          // This ensures perfect sync like the sidebar
-          splitRatio.set(clamped);
-          
-          // Update cache for next frame
-          containerWidthRef.current = containerWidth;
-        }
-      }
-    },
-    [splitRatio]
-  );
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
 
-  // Handle drag end - commit to state
-  const handleDragEnd = useCallback(() => {
-    requestAnimationFrame((): void => {
-      const finalRatio = splitRatio.get();
-      const finalPercent = finalRatio * 100;
-      const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalPercent));
-      setRequestPaneSize(clamped);
-      splitRatio.set(clamped / 100);
-      setIsDragging(false);
-    });
-  }, [splitRatio]);
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      const newRatio = relativeX / rect.width;
 
-  // Sidebar resizing: Use MotionValue for sidebar width in pixels
+      const minRatio = MIN_PANE_SIZE / 100;
+      const maxRatio = MAX_PANE_SIZE / 100;
+      const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
+
+      splitRatio.set(clamped);
+    }
+  }, [isDragging, splitRatio]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+
+    e.currentTarget.releasePointerCapture(e.pointerId);
+
+    const finalRatio = splitRatio.get();
+    const finalPercent = finalRatio * 100;
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalPercent));
+    setRequestPaneSize(clamped);
+    setIsDragging(false);
+  }, [isDragging, splitRatio]);
+
+  // Sidebar resizing
   const sidebarWidthMotion = useMotionValue(DEFAULT_SIDEBAR_WIDTH);
-  
-  // Sync sidebar MotionValue with state
+
   useEffect(() => {
     if (!isSidebarDragging) {
       sidebarWidthMotion.set(sidebarWidth);
     }
   }, [sidebarWidth, sidebarWidthMotion, isSidebarDragging]);
 
-  // Sidebar width as style string
   const sidebarWidthStyle = useTransform(sidebarWidthMotion, (width) => `${String(width)}px`);
 
-  // Sidebar drag handlers
   const handleSidebarDragStart = useCallback(() => {
     setIsSidebarDragging(true);
   }, []);
 
   const handleSidebarDrag = useCallback(
     (_event: PointerEvent, info: { point: { x: number } }) => {
-      // For sidebar, we drag from the right edge, so x is the new width
       const newWidth = info.point.x;
       const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
       sidebarWidthMotion.set(clamped);
@@ -231,7 +197,6 @@ export const MainLayout = ({
   const shouldShowSidebar = sidebarVisible;
   const isSidebarOverlay = shouldShowSidebar && isCompact;
 
-  // Determine sidebar variant based on state
   const sidebarVariant = isSidebarOverlay
     ? 'overlay'
     : shouldShowSidebar && isSpacious
@@ -241,7 +206,6 @@ export const MainLayout = ({
   return (
     <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
       <div className="flex flex-1 overflow-hidden gap-0">
-        {/* Sidebar with responsive behavior */}
         <AnimatePresence mode="wait">
           {shouldShowSidebar && (
             <motion.aside
@@ -254,7 +218,7 @@ export const MainLayout = ({
               animate={sidebarVariant}
               exit="hidden"
               transition={prefersReducedMotion ? { duration: 0 } : springTransition}
-              style={{ 
+              style={{
                 width: isSidebarOverlay ? 256 : sidebarWidthStyle,
                 scrollbarGutter: 'stable',
                 willChange: isSidebarDragging ? 'transform' : 'auto',
@@ -263,8 +227,7 @@ export const MainLayout = ({
               data-testid="sidebar"
             >
               <Sidebar />
-              
-              {/* Sidebar resizer - only show when not in overlay mode */}
+
               {!isSidebarOverlay && (
                 <motion.div
                   className="absolute top-0 right-0 w-1 h-full bg-border-default cursor-col-resize group hover:w-2 transition-all z-10"
@@ -295,7 +258,6 @@ export const MainLayout = ({
                   aria-valuemax={MAX_SIDEBAR_WIDTH}
                   transition={isSidebarDragging ? immediateTransition : layoutTransition}
                 >
-                  {/* Handle */}
                   <motion.div
                     className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center"
                     initial={{ opacity: 0 }}
@@ -327,7 +289,6 @@ export const MainLayout = ({
           )}
         </AnimatePresence>
 
-        {/* Overlay backdrop for compact window sidebar */}
         <AnimatePresence>
           {isSidebarOverlay && (
             <motion.button
@@ -351,131 +312,83 @@ export const MainLayout = ({
           )}
         </AnimatePresence>
 
-        {/* Vertical layout: Fixed header bar + split content area */}
         <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-          {/* Fixed header bar */}
           <div className="shrink-0" data-testid="header-bar">
-            {headerContent || (
+            {headerContent !== undefined ? headerContent : (
               <div className="h-14 p-2 text-text-secondary flex items-center">
                 Header bar placeholder
               </div>
             )}
           </div>
 
-          {/* Responsive split: Request/Response - Official Motion.dev flex-based pattern */}
           <LayoutGroup>
             <motion.div
               ref={containerRef}
               className="flex-1 overflow-hidden flex relative"
               data-testid="pane-container"
-              style={{
-                scrollbarGutter: 'stable',
-              }}
+              style={{ scrollbarGutter: 'stable' }}
               layout
               transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
             >
-              {/* Request Pane - Official Motion.dev pattern: use layout prop for smooth resizing */}
               <motion.div
                 layout={!isDragging}
                 className="h-full overflow-hidden shrink-0"
                 data-testid="request-pane"
-                style={{ 
+                style={{
                   width: requestWidth,
                   scrollbarGutter: 'stable',
-                  willChange: isDragging ? 'transform' : 'auto',
-                  // Prevent text rendering artifacts during resize
-                  textRendering: 'optimizeLegibility',
+                  willChange: isDragging ? 'width' : 'auto',
                 }}
                 transition={isDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
               >
-                {requestContent || (
+                {requestContent !== undefined ? requestContent : (
                   <div className="h-full p-4 text-text-secondary flex items-center justify-center">
                     Request Builder (placeholder - will be built in Run 2B)
                   </div>
                 )}
               </motion.div>
 
-              {/* Resizer - Official Motion.dev pattern: in flex flow, not absolutely positioned */}
               <motion.div
-                className="w-1 bg-border-default cursor-col-resize group shrink-0 hover:w-2 transition-all border-l border-r border-border-subtle relative z-10 touch-none"
+                layout={!isDragging}
+                className="h-full overflow-hidden flex-1"
+                data-testid="response-pane"
+                style={{
+                  width: responseWidth,
+                  scrollbarGutter: 'stable',
+                  willChange: isDragging ? 'width' : 'auto',
+                }}
+                transition={isDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
+              >
+                {responseContent !== undefined ? responseContent : (
+                  <div className="h-full p-4 text-text-secondary flex items-center justify-center">
+                    Response Viewer (placeholder - will be built in Run 2C)
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Resizer: pure pointer events, no animation */}
+              <motion.div
+                className={cn(
+                  'absolute top-0 bottom-0 w-1 bg-border-default cursor-col-resize z-10 touch-none',
+                  'hover:w-2 hover:bg-accent-blue/15',
+                  isDragging && 'w-2 bg-accent-blue/25'
+                )}
                 data-testid="pane-resizer"
-                drag="x"
-                dragElastic={0}
-                dragMomentum={false}
-                dragConstraints={containerRef}
-                onDragStart={handleDragStart}
-                onDrag={handleDrag}
-                onDragEnd={handleDragEnd}
-                whileHover={{
-                  width: 8,
-                  backgroundColor: 'oklch(0.623 0.214 259.1 / 0.15)',
-                  boxShadow: '0 0 0 1px oklch(0.623 0.214 259.1 / 0.2)',
+                style={{
+                  left: resizerLeft,
+                  transform: 'translateX(-50%)',
                 }}
-                whileDrag={{
-                  width: 8,
-                  backgroundColor: 'oklch(0.623 0.214 259.1 / 0.25)',
-                  boxShadow: '0 0 0 1px oklch(0.623 0.214 259.1 / 0.3), 0 2px 8px oklch(0 0 0 / 0.3)',
-                  cursor: 'grabbing',
-                }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
                 role="separator"
                 aria-label="Resize panes"
                 aria-orientation="vertical"
                 aria-valuenow={requestPaneSize}
                 aria-valuemin={MIN_PANE_SIZE}
                 aria-valuemax={MAX_PANE_SIZE}
-                transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
-                style={{
-                  willChange: isDragging ? 'transform' : 'auto',
-                }}
-              >
-                {/* Handle */}
-                <motion.div
-                  className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  whileDrag={{ opacity: 1 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
-                >
-                  <div className="flex flex-col items-center gap-1 py-2">
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="w-1 h-1 rounded-full bg-accent-blue/40"
-                        whileHover={{ 
-                          scale: prefersReducedMotion ? 1 : 1.2,
-                          backgroundColor: 'oklch(0.623 0.214 259.1 / 0.6)',
-                        }}
-                        whileDrag={{ 
-                          scale: prefersReducedMotion ? 1 : 1.3,
-                          backgroundColor: 'oklch(0.623 0.214 259.1 / 0.8)',
-                        }}
-                        transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-              </motion.div>
-
-              {/* Response Pane - Official Motion.dev pattern: use layout prop for smooth resizing */}
-              <motion.div
-                layout={!isDragging}
-                className="h-full overflow-hidden shrink-0"
-                data-testid="response-pane"
-                style={{ 
-                  width: responseWidth,
-                  scrollbarGutter: 'stable',
-                  willChange: isDragging ? 'transform' : 'auto',
-                  // Prevent text rendering artifacts during resize
-                  textRendering: 'optimizeLegibility',
-                }}
-                transition={isDragging || prefersReducedMotion ? immediateTransition : layoutTransition}
-              >
-                {responseContent || (
-                  <div className="h-full p-4 text-text-secondary flex items-center justify-center">
-                    Response Viewer (placeholder - will be built in Run 2C)
-                  </div>
-                )}
-              </motion.div>
+              />
             </motion.div>
           </LayoutGroup>
         </div>

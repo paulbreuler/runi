@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MainLayout } from './MainLayout';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -149,13 +148,11 @@ describe('MainLayout', () => {
       expect(resizer).toHaveClass('cursor-col-resize');
     });
 
-    it('pane resizer has visual handle (three dots)', () => {
+    it('pane resizer has touch-none for pointer capture', () => {
       render(<MainLayout />);
 
       const resizer = screen.getByTestId('pane-resizer');
-      // The handle should be present in the DOM
-      const handle = resizer.querySelector('.flex.flex-col.items-center.gap-1');
-      expect(handle).toBeInTheDocument();
+      expect(resizer).toHaveClass('touch-none');
     });
   });
 
@@ -217,8 +214,7 @@ describe('MainLayout', () => {
   });
 
   describe('Keyboard Shortcuts', () => {
-    it('registers keyboard shortcut for sidebar toggle', async () => {
-      const user = userEvent.setup();
+    it('registers keyboard shortcut for sidebar toggle', () => {
       render(<MainLayout />);
 
       // Sidebar should be visible initially
@@ -226,7 +222,7 @@ describe('MainLayout', () => {
       expect(sidebars.length).toBeGreaterThan(0);
 
       // Note: Testing keyboard shortcuts requires mocking the hook
-      // This is tested in E2E tests
+      // Full keyboard shortcut testing is done in E2E tests
     });
   });
 
@@ -329,23 +325,78 @@ describe('MainLayout', () => {
   describe('Visual Feedback', () => {
     it('resizer has hover styles', () => {
       render(<MainLayout />);
-      
+
       const resizer = screen.getByTestId('pane-resizer');
-      
-      // Should have hover class
-      expect(resizer).toHaveClass('group');
+
+      // Should have hover class for width change
       expect(resizer).toHaveClass('hover:w-2');
     });
 
-    it('resizer has border for visual prominence', () => {
+    it('resizer has base styling', () => {
       render(<MainLayout />);
-      
+
       const resizer = screen.getByTestId('pane-resizer');
-      
-      // Should have border classes
-      expect(resizer).toHaveClass('border-l');
-      expect(resizer).toHaveClass('border-r');
-      expect(resizer).toHaveClass('border-border-subtle');
+
+      // Should have base background
+      expect(resizer).toHaveClass('bg-border-default');
+    });
+  });
+
+  describe('Resizer Positioning Strategy', () => {
+    it('pane resizer uses absolute positioning like sidebar (no flex flow interference)', () => {
+      render(<MainLayout />);
+
+      const resizer = screen.getByTestId('pane-resizer');
+
+      // Resizer must be absolutely positioned to avoid competing forces
+      // between Motion's drag transform and flex layout repositioning
+      expect(resizer).toHaveClass('absolute');
+    });
+
+    it('pane resizer is positioned at the split point via style transform', () => {
+      render(<MainLayout />);
+
+      const resizer = screen.getByTestId('pane-resizer');
+      const style = resizer.getAttribute('style') || '';
+
+      // Should have transform for centering on split point
+      // Note: The `left` style uses a MotionValue which Motion converts at runtime.
+      // In mocked tests, we verify the transform is present (translateX for centering).
+      // Full left positioning is verified via Storybook interactive tests.
+      expect(style).toContain('translateX(-50%)');
+    });
+
+    it('sidebar resizer uses absolute positioning within sidebar', () => {
+      render(<MainLayout />);
+
+      const sidebarResizer = screen.getByTestId('sidebar-resizer');
+
+      // Sidebar resizer should be absolutely positioned
+      expect(sidebarResizer).toHaveClass('absolute');
+      expect(sidebarResizer).toHaveClass('right-0');
+    });
+
+    it('panes are siblings without resizer in flex flow', () => {
+      render(<MainLayout />);
+
+      const container = screen.getByTestId('pane-container');
+      const requestPane = screen.getByTestId('request-pane');
+      const responsePane = screen.getByTestId('response-pane');
+      const resizer = screen.getByTestId('pane-resizer');
+
+      // All three should be direct children of container
+      expect(requestPane.parentElement).toBe(container);
+      expect(responsePane.parentElement).toBe(container);
+      expect(resizer.parentElement).toBe(container);
+
+      // Request and response should be adjacent in DOM (no resizer between)
+      // This verifies the resizer is absolutely positioned, not in flex flow
+      const children = Array.from(container.children);
+      const requestIndex = children.indexOf(requestPane);
+      const responseIndex = children.indexOf(responsePane);
+
+      // They should be adjacent (index difference of 1)
+      expect(Math.abs(responseIndex - requestIndex)).toBe(1);
     });
   });
 });

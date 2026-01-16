@@ -1,15 +1,12 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import svelte from 'eslint-plugin-svelte';
 import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
-  ...svelte.configs['flat/recommended'],
   prettier,
-  ...svelte.configs['flat/prettier'],
   {
     languageOptions: {
       globals: {
@@ -18,7 +15,6 @@ export default tseslint.config(
       },
       parserOptions: {
         projectService: true,
-        extraFileExtensions: ['.svelte'],
       },
     },
     rules: {
@@ -29,23 +25,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.svelte'],
-    languageOptions: {
-      parserOptions: {
-        parser: tseslint.parser,
-      },
-    },
-  },
-  {
-    // Disable navigation rule for shadcn-svelte generated UI components
-    files: ['src/lib/components/ui/**/*.svelte'],
-    rules: {
-      'svelte/no-navigation-without-resolve': 'off',
-    },
-  },
-  {
     // Allow `any` in Storybook story files (required by Storybook API)
-    files: ['**/*.stories.svelte', '**/*.stories.ts', '**/*.stories.js'],
+    files: ['**/*.stories.ts', '**/*.stories.tsx', '**/*.stories.js'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -53,7 +34,7 @@ export default tseslint.config(
   },
   {
     // Generated types from ts-rs - don't lint these
-    files: ['src/lib/types/generated/**/*.ts', 'src-tauri/bindings/**/*.ts'],
+    files: ['src/types/generated/**/*.ts', 'src-tauri/bindings/**/*.ts'],
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
@@ -62,16 +43,15 @@ export default tseslint.config(
   {
     ignores: [
       'build/',
-      '.svelte-kit/',
-      '.storybook/',
-      '.cursor/',
       'dist/',
       'node_modules/',
       'src-tauri/target/',
       'src-tauri/bindings/',
       'storybook-static/',
       'coverage/',
-      'src/lib/types/generated/',
+      'src/types/generated/',
+      '.storybook/',
+      '.svelte-kit/',
       '*.config.js',
       '*.config.ts',
       'vitest.setup.ts',

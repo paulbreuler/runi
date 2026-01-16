@@ -23,15 +23,15 @@ The MainLayout component provides a resizable, performant layout system followin
 - **Visual Feedback**: Subtle handles appear on hover, following Apple's minimal aesthetic
 - **Accessibility**: Respects \`prefers-reduced-motion\` system preference
 
-## Official Motion.dev Pattern
+## Resizer Pattern (Sidebar-Matching)
 
-This implementation follows the **official Motion.dev pattern** for resizable panes:
+The pane resizer follows the **same pattern as the sidebar resizer** for perfect synchronization:
 
-- **Flex-based layout**: Resizer is in flex flow (not absolutely positioned) - [Motion.dev Layout Animations](https://motion.dev/docs/react-layout-animations)
+- **Absolute positioning**: Resizer is absolutely positioned (not in flex flow) to prevent competing forces between Motion drag transforms and flex layout repositioning
 - **MotionValues**: Uses \`useMotionValue\` and \`useTransform\` for immediate updates - [Motion.dev MotionValues](https://motion.dev/docs/react-motion-values)
 - **Drag API**: Uses \`drag="x"\` with \`dragConstraints\` - [Motion.dev Drag](https://motion.dev/docs/react-drag)
-- **Layout prop**: Uses \`layout\` for smooth size changes - [Motion.dev Layout Animations](https://motion.dev/docs/react-layout-animations)
-- **Performance**: Uses transforms (not width/height) - [Motion.dev Performance](https://motion.dev/docs/performance)
+- **Layout prop**: Uses \`layout\` for smooth size changes on panes - [Motion.dev Layout Animations](https://motion.dev/docs/react-layout-animations)
+- **Performance**: Resizer position driven by MotionValue, no competing forces - [Motion.dev Performance](https://motion.dev/docs/performance)
 - **Accessibility**: Uses \`useReducedMotion()\` - [Motion.dev Reduced Motion](https://motion.dev/motion/use-reduced-motion/)
 
 ## Performance
@@ -680,8 +680,7 @@ export const ExtremeDragTest: Story = {
       // Verify components stay in sync after each jitter
       const requestBox = requestPane.getBoundingClientRect();
       const responseBox = responsePane.getBoundingClientRect();
-      const resizerBoxCurrent = resizer.getBoundingClientRect();
-      
+
       // Panes should always be valid
       expect(requestBox.width).toBeGreaterThan(0);
       expect(responseBox.width).toBeGreaterThan(0);
