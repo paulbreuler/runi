@@ -45,22 +45,3 @@ Object.defineProperty(window, 'ResizeObserver', {
   writable: true,
   value: MockResizeObserver,
 });
-
-// Polyfill for PointerEvent APIs used by Radix UI
-if (typeof Element !== 'undefined') {
-  if (!Element.prototype.hasPointerCapture) {
-    Element.prototype.hasPointerCapture = function (_pointerId: number): boolean {
-      return false;
-    };
-  }
-  if (!Element.prototype.setPointerCapture) {
-    Element.prototype.setPointerCapture = function (_pointerId: number): void {
-      // No-op for jsdom
-    };
-  }
-  if (!Element.prototype.releasePointerCapture) {
-    Element.prototype.releasePointerCapture = function (_pointerId: number): void {
-      // No-op for jsdom
-    };
-  }
-}

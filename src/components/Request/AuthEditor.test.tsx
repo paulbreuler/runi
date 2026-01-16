@@ -178,7 +178,7 @@ describe('AuthEditor', () => {
 
     render(<AuthEditor />);
     const passwordInput = screen.getByPlaceholderText('Enter password');
-    expect(passwordInput.type).toBe('password');
+    expect((passwordInput as HTMLInputElement).type).toBe('password');
 
     const toggleButtons = screen.getAllByRole('button');
     const toggleButton = toggleButtons.find((btn) => {
@@ -190,7 +190,7 @@ describe('AuthEditor', () => {
       await user.click(toggleButton);
       await waitFor(() => {
         const updatedInput = screen.getByPlaceholderText('Enter password');
-        expect(updatedInput.type).toBe('text');
+        expect((updatedInput as HTMLInputElement).type).toBe('text');
       });
     }
   });

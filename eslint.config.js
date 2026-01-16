@@ -275,6 +275,7 @@ export default tseslint.config(
       'src-tauri/bindings/',
       'storybook-static/',
       'coverage/',
+      'html/', // Vitest HTML test reports
       'src/types/generated/',
       '.storybook/',
       'tests/',

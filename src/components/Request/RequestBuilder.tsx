@@ -102,7 +102,7 @@ export const RequestBuilder = (): React.JSX.Element => {
   return (
     <div className="h-full flex flex-col bg-bg-app" data-testid="request-builder">
       {/* Tab navigation */}
-      <div className="relative flex items-center px-4 py-2 border-b border-border-subtle bg-bg-surface">
+      <div className="relative flex items-center px-6 py-2 border-b border-border-subtle bg-bg-surface">
         <div
           ref={tabScrollRef}
           className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
