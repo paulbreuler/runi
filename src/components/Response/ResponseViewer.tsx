@@ -115,28 +115,29 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
+      {/* Content - vertical scroll only, code blocks handle horizontal */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ scrollbarGutter: 'stable' }}>
         {activeTab === 'body' && (
           <div className="p-4" data-testid="response-body">
             <span className="sr-only" data-testid="response-body-raw">
               {formattedBody}
             </span>
-            <SyntaxHighlighter
-              language={language}
-              style={syntaxHighlightTheme}
-              customStyle={syntaxHighlightBaseStyle}
-              showLineNumbers
-              lineNumberStyle={syntaxHighlightLineNumberStyle}
-              // Use 2 spaces for indentation
-              PreTag="div"
-              codeTagProps={{
-                style: syntaxHighlightCodeTagStyle,
-                'data-language': language,
-              }}
-            >
-              {formattedBody}
-            </SyntaxHighlighter>
+            <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
+              <SyntaxHighlighter
+                language={language}
+                style={syntaxHighlightTheme}
+                customStyle={syntaxHighlightBaseStyle}
+                showLineNumbers
+                lineNumberStyle={syntaxHighlightLineNumberStyle}
+                PreTag="div"
+                codeTagProps={{
+                  style: syntaxHighlightCodeTagStyle,
+                  'data-language': language,
+                }}
+              >
+                {formattedBody}
+              </SyntaxHighlighter>
+            </div>
           </div>
         )}
 
@@ -150,14 +151,14 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                 <span className="text-text-secondary">{response.status_text}</span>
               </span>
             </div>
-            
+
             {/* Headers */}
             <div className="space-y-1">
               {Object.entries(response.headers).map(([key, value]) => (
                 <div key={key} className="font-mono text-sm flex">
                   <span className="text-accent-blue">{key}</span>
                   <span className="text-text-muted mx-1">:</span>
-                  <span className="text-text-secondary">{value}</span>
+                  <span className="text-text-secondary break-all">{value}</span>
                 </div>
               ))}
             </div>
@@ -169,20 +170,22 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             <span className="sr-only" data-testid="response-raw-text">
               {formatRawHttp(response)}
             </span>
-            <SyntaxHighlighter
-              language="http"
-              style={syntaxHighlightTheme}
-              customStyle={syntaxHighlightBaseStyle}
-              showLineNumbers
-              lineNumberStyle={syntaxHighlightLineNumberStyle}
-              PreTag="div"
-              codeTagProps={{
-                style: syntaxHighlightCodeTagStyle,
-                'data-language': 'http',
-              }}
-            >
-              {formatRawHttp(response)}
-            </SyntaxHighlighter>
+            <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
+              <SyntaxHighlighter
+                language="http"
+                style={syntaxHighlightTheme}
+                customStyle={syntaxHighlightBaseStyle}
+                showLineNumbers
+                lineNumberStyle={syntaxHighlightLineNumberStyle}
+                PreTag="div"
+                codeTagProps={{
+                  style: syntaxHighlightCodeTagStyle,
+                  'data-language': 'http',
+                }}
+              >
+                {formatRawHttp(response)}
+              </SyntaxHighlighter>
+            </div>
           </div>
         )}
       </div>
