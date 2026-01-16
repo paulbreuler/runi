@@ -153,7 +153,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
         {activeTab === 'body' && (
           <div className="p-4">
             <SyntaxHighlighter

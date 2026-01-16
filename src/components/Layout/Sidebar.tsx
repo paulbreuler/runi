@@ -10,7 +10,8 @@ interface DrawerSectionProps {
   testId?: string;
 }
 
-const DrawerSection = ({ title, icon, defaultOpen = true, children, testId }: DrawerSectionProps) => {
+const DrawerSection = ({ title, icon: _icon, defaultOpen = true, children, testId }: DrawerSectionProps): React.JSX.Element => {
+  // icon parameter is kept for API consistency but not currently used in the UI
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
