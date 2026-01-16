@@ -8,6 +8,6 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   sidebarVisible: true,
-  toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
-  setSidebarVisible: (visible) => set({ sidebarVisible: visible }),
+  toggleSidebar: () => { set((state) => ({ sidebarVisible: !state.sidebarVisible })); },
+  setSidebarVisible: (visible) => { set({ sidebarVisible: visible }); },
 }));

@@ -126,7 +126,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                   <Input
                     glass={true}
                     value={newKey}
-                    onChange={(e) => setNewKey(e.target.value)}
+                    onChange={(e) => { setNewKey(e.target.value); }}
                     onKeyDown={handleKeyDown}
                     placeholder="Parameter name"
                     className="flex-1 font-mono text-sm"
@@ -136,7 +136,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                   <Input
                     glass={true}
                     value={newValue}
-                    onChange={(e) => setNewValue(e.target.value)}
+                    onChange={(e) => { setNewValue(e.target.value); }}
                     onKeyDown={handleKeyDown}
                     placeholder="Parameter value"
                     className="flex-1 font-mono text-sm"
@@ -162,7 +162,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                 <>
                   <div
                     className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-raised border border-border-subtle hover:border-border-default transition-colors cursor-pointer"
-                    onClick={() => handleEditParam(index)}
+                    onClick={() => { handleEditParam(index); }}
                   >
                     <span className="text-accent-blue font-mono text-sm font-medium">{param.key}</span>
                     <span className="text-text-muted">=</span>
@@ -171,7 +171,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => handleRemoveParam(index)}
+                    onClick={() => { handleRemoveParam(index); }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
                   >
                     <X />
@@ -192,7 +192,7 @@ export const ParamsEditor = (): React.JSX.Element => {
               <Input
                 glass={true}
                 value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
+                onChange={(e) => { setNewKey(e.target.value); }}
                 onKeyDown={handleKeyDown}
                 placeholder="Parameter name"
                 className="flex-1 font-mono text-sm"
@@ -202,7 +202,7 @@ export const ParamsEditor = (): React.JSX.Element => {
               <Input
                 glass={true}
                 value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
+                onChange={(e) => { setNewValue(e.target.value); }}
                 onKeyDown={handleKeyDown}
                 placeholder="Parameter value"
                 className="flex-1 font-mono text-sm"

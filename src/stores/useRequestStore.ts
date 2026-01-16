@@ -31,15 +31,15 @@ export const useRequestStore = create<RequestState>((set) => ({
   isLoading: false,
   error: null,
 
-  setMethod: (method) => set({ method }),
-  setUrl: (url) => set({ url }),
-  setHeaders: (headers) => set({ headers }),
-  setBody: (body) => set({ body }),
-  setResponse: (response) => set({ response }),
-  setLoading: (isLoading) => set({ isLoading }),
-  setError: (error) => set({ error }),
+  setMethod: (method) => { set({ method }); },
+  setUrl: (url) => { set({ url }); },
+  setHeaders: (headers) => { set({ headers }); },
+  setBody: (body) => { set({ body }); },
+  setResponse: (response) => { set({ response }); },
+  setLoading: (isLoading) => { set({ isLoading }); },
+  setError: (error) => { set({ error }); },
   reset: () =>
-    set({
+    { set({
       method: 'GET',
       url: 'https://httpbin.org/get',
       headers: {},
@@ -47,5 +47,5 @@ export const useRequestStore = create<RequestState>((set) => ({
       response: null,
       isLoading: false,
       error: null,
-    }),
+    }); },
 }));

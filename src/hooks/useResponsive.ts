@@ -24,7 +24,7 @@ export function useResponsive() {
 
     // Listen for changes
     if (typeof window !== 'undefined') {
-      const compactMq = window.matchMedia(`(max-width: ${767}px)`);
+      const compactMq = window.matchMedia(`(max-width: 767px)`);
       const standardMq = window.matchMedia(
         `(min-width: 768px) and (max-width: 1023px)`
       );

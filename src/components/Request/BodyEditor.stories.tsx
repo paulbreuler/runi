@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 const BodyStateDecorator = ({ body }: { body: string }): React.JSX.Element => {
   useEffect(() => {
     useRequestStore.setState({ body });
-    return () => useRequestStore.getState().reset();
+    return () => { useRequestStore.getState().reset(); };
   }, [body]);
 
   return (

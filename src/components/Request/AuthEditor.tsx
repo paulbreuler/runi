@@ -136,7 +136,7 @@ export const AuthEditor = (): React.JSX.Element => {
                 glass={true}
                 type="text"
                 value={token}
-                onChange={(e) => handleTokenChange(e.target.value)}
+                onChange={(e) => { handleTokenChange(e.target.value); }}
                 placeholder="Enter bearer token"
                 className="font-mono text-sm"
               />
@@ -157,7 +157,7 @@ export const AuthEditor = (): React.JSX.Element => {
                   glass={true}
                   type="text"
                   value={username}
-                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  onChange={(e) => { handleUsernameChange(e.target.value); }}
                   placeholder="Enter username"
                   className="font-mono text-sm"
                 />
@@ -169,14 +169,14 @@ export const AuthEditor = (): React.JSX.Element => {
                     glass={true}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    onChange={(e) => { handlePasswordChange(e.target.value); }}
                     placeholder="Enter password"
                     className="font-mono text-sm pr-10"
                   />
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => { setShowPassword(!showPassword); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2"
                   >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -199,7 +199,7 @@ export const AuthEditor = (): React.JSX.Element => {
                 glass={true}
                 type="text"
                 value={customHeader}
-                onChange={(e) => handleCustomHeaderChange(e.target.value)}
+                onChange={(e) => { handleCustomHeaderChange(e.target.value); }}
                 placeholder="Enter custom authorization header value"
                 className="font-mono text-sm"
               />

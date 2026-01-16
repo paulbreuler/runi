@@ -18,7 +18,7 @@ describe('BodyEditor', () => {
     render(<BodyEditor />);
 
     expect(screen.getByTestId('body-syntax-layer')).toBeInTheDocument();
-    const textarea = screen.getByTestId('body-textarea') as HTMLTextAreaElement;
+    const textarea = screen.getByTestId('body-textarea');
     expect(textarea.value).toBe('{"name":"Runi"}');
   });
 

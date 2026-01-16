@@ -38,7 +38,7 @@ describe('ResponseViewer', () => {
     const text = raw.textContent ?? '';
 
     // Look for 2-space indentation on nested keys
-    expect(text).toMatch(/\n  "headers": \{/);
+    expect(text).toMatch(/\n {2}"headers": \{/);
     expect(screen.getByTestId('response-body').querySelector('[data-language="json"]')).toBeTruthy();
   });
 

@@ -37,7 +37,7 @@ export const RequestBuilder = (): React.JSX.Element => {
           return (
             <motion.button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); }}
               className={cn(
                 'px-3 py-1.5 text-sm rounded-lg transition-colors duration-200 font-medium',
                 isActive

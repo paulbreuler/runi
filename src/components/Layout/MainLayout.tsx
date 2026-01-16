@@ -110,9 +110,10 @@ export const MainLayout = ({
     return `${String(clamped)}%`;
   });
 
-  // Prevent text selection and set cursor during drag
+  // Prevent text selection and set cursor during any drag (pane or sidebar)
   useEffect((): (() => void) => {
-    if (isDragging) {
+    const isAnyDragging = isDragging || isSidebarDragging;
+    if (isAnyDragging) {
       document.body.style.userSelect = 'none';
       document.body.style.cursor = 'col-resize';
     } else {
@@ -123,7 +124,7 @@ export const MainLayout = ({
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging]);
+  }, [isDragging, isSidebarDragging]);
 
   // Pane resizer: pointer events for full control
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {

@@ -94,7 +94,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => { setActiveTab(tab.id); }}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               activeTab === tab.id
                 ? 'bg-bg-raised text-text-primary font-medium'
