@@ -107,7 +107,9 @@ When [46% of developers don't trust AI output](https://stackoverflow.co/company/
 - Paste AI-generated code → runi validates against bound spec
 - Catches hallucinated endpoints before you waste an hour debugging
 - Flags deprecated fields the AI didn't know about
-- **Purple until verified. Green when safe.**
+- **Purple (`#a855f7`) until verified. Green (`#22c55e`) when safe.**
+
+> **Signal System:** runi uses consistent visual signals to communicate intelligence. Green = verified/safe, Amber = drift detected, Red = breaking change, Purple = AI-generated (suspect until verified), Blue = suggestion available. See [CLAUDE.md](./CLAUDE.md#signal-system) for the complete signal reference.
 
 **Temporal Awareness**
 
@@ -139,19 +141,21 @@ APIs as territory, not lists:
 ```bash
 git clone https://github.com/paulbreuler/runi.git
 cd runi
-pnpm install
-pnpm tauri build
+just install
+just build
 ```
 
-**Requirements:** Rust 1.80+, Node.js 20+, pnpm
+**Requirements:** Rust 1.80+, Node.js 20+, pnpm, [just](https://github.com/casey/just) (task runner)
+
+> **Note:** All commands use `just` for consistency between local development and CI. See `justfile` for the complete command list.
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Launch runi
-runi
+# 1. Start development server
+just dev
 
 # 2. Send your first request
 #    Just paste a URL and hit Enter
@@ -166,22 +170,29 @@ runi
 #    Change your spec. See the yellow badge appear.
 ```
 
+> **The Adoption Ladder:** runi reveals features progressively as you use it. Start with the HTTP client, discover drift detection, then AI verification, semantic links, and temporal awareness. See [the adoption strategy](./.planning-docs/addendums/002-adoption-positioning.md) for details.
+
 ---
 
 ## Tech Stack
 
-| Component | Technology                     |
-| --------- | ------------------------------ |
-| Runtime   | [Tauri](https://tauri.app/) v2 |
-| Backend   | Rust 1.80+                     |
-| Frontend  | React 19 + TypeScript          |
-| Animation | [Motion](https://motion.dev/)  |
-| Styling   | Tailwind CSS 4                 |
-| Storage   | YAML/JSON files (no database)  |
-| AI        | Ollama (local, optional)       |
+| Component  | Technology                            |
+| ---------- | ------------------------------------- |
+| Runtime    | [Tauri](https://v2.tauri.app/) v2.9.x |
+| Backend    | Rust 1.80+                            |
+| Frontend   | React 19 + TypeScript 5.9             |
+| Build      | Vite 7.x                              |
+| Styling    | Tailwind CSS 4.x                      |
+| Animation  | [Motion](https://motion.dev/) 12.x    |
+| Routing    | React Router 7.x                      |
+| State      | Zustand                               |
+| Icons      | Lucide                                |
+| Storage    | YAML/JSON files (no database)         |
+| AI (local) | Ollama (optional)                     |
+| AI (cloud) | Anthropic Claude API (optional)       |
 
-**Bundle size:** <50MB
-**Startup time:** <3 seconds
+**Bundle size:** <50MB  
+**Startup time:** <3 seconds  
 **Telemetry:** None. Zero. We don't even have the infrastructure to collect it.
 
 ---
@@ -215,6 +226,8 @@ See the full [roadmap](./docs/ROADMAP.md) for details.
 
 ## Migrating from Postman/Bruno
 
+Import functionality is coming soon. Planned commands:
+
 ```bash
 # From Postman
 runi import postman ./your-collection.json
@@ -240,8 +253,12 @@ While everyone builds tools to write more code, we're building the tool that let
 - **Git-friendly**: Collections are YAML. Diff them. Review them. Version them.
 - **Spec-bound**: The OpenAPI spec is the source of truth. Everything validates against it.
 - **No account required**: We don't want your email. We don't want your data. We want you to be productive.
+- **Progressive disclosure**: Features reveal based on user behavior, not menus
+- **MCP-powered**: Support for [MCP 2025-11-25 spec](https://modelcontextprotocol.io/) (async ops, elicitation)
 
-Read the full [vision](./.planning-docs/VISION.md).
+**The brand philosophy:** _"Collapse uncertainty into truth"_
+
+Read the full [vision](./.planning-docs/VISION.md) and [design specification](./.planning-docs/runi-design-vision-v8.1.md).
 
 ---
 
@@ -253,9 +270,23 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 # Development setup
 git clone https://github.com/paulbreuler/runi.git
 cd runi
-pnpm install
-pnpm tauri dev
+just install      # First-time setup
+just dev          # Start development server
+just ci           # Run full CI pipeline (before pushing)
+just pre-commit   # Fast checks (before committing)
 ```
+
+**Essential Commands:**
+
+- `just install` - Install all dependencies
+- `just dev` - Start development server
+- `just ci` - Full CI pipeline (format, lint, typecheck, test, E2E)
+- `just pre-commit` - Fast checks before committing
+- `just fmt` - Fix formatting
+- `just test` - Run all tests
+- `just generate-types` - Generate TypeScript types from Rust (ts-rs)
+
+See `justfile` for the complete command list.
 
 ### Good First Issues
 
