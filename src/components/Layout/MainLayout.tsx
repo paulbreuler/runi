@@ -128,14 +128,38 @@ export const MainLayout = ({
     dragX.set(0);
   }, [currentRequestWidth, dragX]);
 
+  // Cache container width to avoid expensive getBoundingClientRect calls
+  const containerWidthRef = useRef<number>(0);
+
+  // Update container width ref when container is available
+  useEffect(() => {
+    const updateWidth = (): void => {
+      if (containerRef.current) {
+        containerWidthRef.current = containerRef.current.getBoundingClientRect().width;
+      }
+    };
+    
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
+    
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   // Handle drag - update MotionValue immediately (no state, no lag)
   const handleDrag = useCallback(
     (_event: PointerEvent, info: { delta: { x: number }, offset: { x: number } }) => {
-      if (!containerRef.current) return;
+      // Use cached width to avoid expensive getBoundingClientRect calls
+      const containerWidth = containerWidthRef.current || (containerRef.current?.getBoundingClientRect().width ?? 0);
+      if (containerWidth === 0) return;
       
-      const containerRect = containerRef.current.getBoundingClientRect();
       // Use offset instead of delta for cumulative movement
-      const deltaPercent = (info.offset.x / containerRect.width) * 100;
+      const deltaPercent = (info.offset.x / containerWidth) * 100;
       const newSize = dragStartWidth.current + deltaPercent;
       
       // Clamp and update MotionValue immediately - this updates the width instantly
@@ -147,11 +171,17 @@ export const MainLayout = ({
 
   // Handle drag end - commit to state and reset
   const handleDragEnd = useCallback(() => {
-    const finalWidth = currentRequestWidth.get();
-    setRequestPaneSize(finalWidth);
-    // Reset drag position - resizer should stay in place visually
-    dragX.set(0);
-    setIsDragging(false);
+    // Use requestAnimationFrame to batch state updates and avoid race conditions
+    requestAnimationFrame((): void => {
+      const finalWidth = currentRequestWidth.get();
+      const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalWidth));
+      setRequestPaneSize(clamped);
+      // Ensure MotionValue is in sync
+      currentRequestWidth.set(clamped);
+      // Reset drag position - resizer should stay in place visually
+      dragX.set(0);
+      setIsDragging(false);
+    });
   }, [currentRequestWidth, dragX]);
 
   // Sidebar drag handlers
@@ -175,10 +205,16 @@ export const MainLayout = ({
   );
 
   const handleSidebarDragEnd = useCallback(() => {
-    const finalWidth = currentSidebarWidth.get();
-    setSidebarWidth(finalWidth);
-    sidebarDragX.set(0);
-    setIsSidebarDragging(false);
+    // Use requestAnimationFrame to batch state updates and avoid race conditions
+    requestAnimationFrame((): void => {
+      const finalWidth = currentSidebarWidth.get();
+      const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
+      setSidebarWidth(clamped);
+      // Ensure MotionValue is in sync
+      currentSidebarWidth.set(clamped);
+      sidebarDragX.set(0);
+      setIsSidebarDragging(false);
+    });
   }, [currentSidebarWidth, sidebarDragX]);
 
   const shouldShowSidebar = sidebarVisible;
@@ -192,11 +228,21 @@ export const MainLayout = ({
       : 'hidden';
 
   // Calculate pane widths - use MotionValue template for immediate updates
-  const requestWidth = useTransform(currentRequestWidth, (width) => `${String(width)}%`);
-  const responseWidth = useTransform(currentRequestWidth, (width) => `${String(100 - width)}%`);
+  // Memoize transforms to prevent recreation on every render
+  const requestWidth = useTransform(currentRequestWidth, (width) => {
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, width));
+    return `${String(clamped)}%`;
+  });
+  const responseWidth = useTransform(currentRequestWidth, (width) => {
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, width));
+    return `${String(100 - clamped)}%`;
+  });
 
   // Resizer left position - positioned at the right edge of request pane
-  const resizerLeft = useTransform(currentRequestWidth, (width) => `${String(width)}%`);
+  const resizerLeft = useTransform(currentRequestWidth, (width) => {
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, width));
+    return `${String(clamped)}%`;
+  });
 
   // Sidebar width as MotionValue template
   const sidebarWidthStyle = useTransform(currentSidebarWidth, (width) => `${String(width)}px`);
@@ -365,10 +411,12 @@ export const MainLayout = ({
                 style={{
                   left: resizerLeft,
                   transform: 'translateX(-50%)',
+                  willChange: isDragging ? 'left' : 'auto',
                 }}
                 drag="x"
                 dragElastic={0}
                 dragMomentum={false}
+                dragConstraints={false}
                 onDragStart={handleDragStart}
                 onDrag={handleDrag}
                 onDragEnd={handleDragEnd}
