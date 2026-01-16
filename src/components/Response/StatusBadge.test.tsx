@@ -61,4 +61,31 @@ describe('StatusBadge', () => {
     expect(badge).toHaveClass('bg-signal-error/10');
     expect(badge).toHaveClass('text-signal-error');
   });
+
+  it('applies blue styling for 3xx redirect status', () => {
+    render(<StatusBadge status={301} statusText="Moved Permanently" />);
+
+    const badge = screen.getByTestId('status-badge');
+    expect(badge).toHaveTextContent('301');
+    expect(badge).toHaveClass('bg-accent-blue/10');
+    expect(badge).toHaveClass('text-accent-blue');
+  });
+
+  it('applies default styling for 1xx status', () => {
+    render(<StatusBadge status={100} statusText="Continue" />);
+
+    const badge = screen.getByTestId('status-badge');
+    expect(badge).toHaveTextContent('100');
+    expect(badge).toHaveClass('bg-bg-raised/50');
+    expect(badge).toHaveClass('text-text-secondary');
+  });
+
+  it('applies default styling for status codes < 200', () => {
+    render(<StatusBadge status={100} statusText="Continue" />);
+
+    const badge = screen.getByTestId('status-badge');
+    expect(badge).toHaveTextContent('100');
+    expect(badge).toHaveClass('bg-bg-raised/50');
+    expect(badge).toHaveClass('text-text-secondary');
+  });
 });

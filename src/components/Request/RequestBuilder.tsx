@@ -82,6 +82,23 @@ export const RequestBuilder = (): React.JSX.Element => {
 
   const showOverflowCue = hasOverflow;
 
+  // Helper function to get overflow animation props
+  const getOverflowAnimation = (
+    direction: 'left' | 'right'
+  ): {
+    opacity: number | number[];
+    x: number | number[];
+  } => {
+    if (prefersReducedMotion) {
+      return { opacity: 0.35, x: 0 };
+    }
+    if (isScrollIdle) {
+      const xValue = direction === 'left' ? [0, 3, 0] : [0, -3, 0];
+      return { opacity: [0.2, 0.4, 0.2], x: xValue };
+    }
+    return { opacity: 0.25, x: 0 };
+  };
+
   return (
     <div className="h-full flex flex-col bg-bg-app" data-testid="request-builder">
       {/* Tab navigation */}
@@ -121,13 +138,7 @@ export const RequestBuilder = (): React.JSX.Element => {
             className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
             data-testid="request-tabs-overflow-left"
             initial={false}
-            animate={
-              prefersReducedMotion
-                ? { opacity: 0.35 }
-                : isScrollIdle
-                  ? { opacity: [0.2, 0.4, 0.2], x: [0, 3, 0] }
-                  : { opacity: 0.25, x: 0 }
-            }
+            animate={getOverflowAnimation('left')}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
@@ -136,13 +147,7 @@ export const RequestBuilder = (): React.JSX.Element => {
             className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
             data-testid="request-tabs-overflow-right"
             initial={false}
-            animate={
-              prefersReducedMotion
-                ? { opacity: 0.35 }
-                : isScrollIdle
-                  ? { opacity: [0.2, 0.4, 0.2], x: [0, -3, 0] }
-                  : { opacity: 0.25, x: 0 }
-            }
+            animate={getOverflowAnimation('right')}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}

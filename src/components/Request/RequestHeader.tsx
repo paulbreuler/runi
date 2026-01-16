@@ -59,6 +59,38 @@ export const RequestHeader = ({
     }
   };
 
+  // Helper function to render loading state
+  const renderLoadingState = (): React.JSX.Element => {
+    if (prefersReducedMotion) {
+      return <span className="text-accent-blue">Sending</span>;
+    }
+    return (
+      <motion.span
+        className="inline-block"
+        style={{
+          backgroundImage:
+            'linear-gradient(90deg, var(--color-text-muted) 0%, var(--color-text-muted) 20%, var(--color-accent-blue) 40%, var(--color-accent-blue) 60%, var(--color-text-muted) 80%, var(--color-text-muted) 100%)',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          color: 'transparent',
+          backgroundSize: '300% 100%',
+          willChange: 'background-position',
+        }}
+        animate={{
+          backgroundPosition: ['300% 0%', '-300% 0%'],
+        }}
+        transition={{
+          duration: 2.5,
+          repeat: Infinity,
+          ease: 'linear',
+        }}
+        aria-hidden="false"
+      >
+        Sending
+      </motion.span>
+    );
+  };
+
   return (
     <div className="flex gap-3 items-center px-6 py-4 border-b border-border-subtle bg-bg-surface">
       <motion.div
@@ -120,37 +152,7 @@ export const RequestHeader = ({
         aria-label="Send Request"
         className="inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50 bg-transparent text-text-muted hover:text-accent-blue hover:bg-bg-raised/50 px-5 py-2 text-sm h-9 relative"
       >
-        {loading ? (
-          prefersReducedMotion ? (
-            <span className="text-accent-blue">Sending</span>
-          ) : (
-            <motion.span
-              className="inline-block"
-              style={{
-                backgroundImage:
-                  'linear-gradient(90deg, var(--color-text-muted) 0%, var(--color-text-muted) 20%, var(--color-accent-blue) 40%, var(--color-accent-blue) 60%, var(--color-text-muted) 80%, var(--color-text-muted) 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                color: 'transparent',
-                backgroundSize: '300% 100%',
-                willChange: 'background-position',
-              }}
-              animate={{
-                backgroundPosition: ['300% 0%', '-300% 0%'],
-              }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-              aria-hidden="false"
-            >
-              Sending
-            </motion.span>
-          )
-        ) : (
-          'Send'
-        )}
+        {loading ? renderLoadingState() : 'Send'}
       </button>
     </div>
   );
