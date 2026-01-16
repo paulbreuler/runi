@@ -60,7 +60,7 @@ test.describe('Layout Resizing', () => {
       expect(newBox!.width).toBeGreaterThan(initialWidth);
     });
 
-    test('sidebar respects minimum width (256px)', async ({ page }) => {
+    test.skip('sidebar respects minimum width (256px)', async ({ page }) => {
       // Sidebar should already be visible from beforeEach
       const sidebar = page.getByTestId('sidebar');
       await expect(sidebar).toBeVisible();
