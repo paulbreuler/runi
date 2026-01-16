@@ -30,48 +30,49 @@ export interface KeyboardShortcut {
  * @param shortcut - The keyboard shortcut configuration
  *
  * @example
- * ```svelte
- * <script lang="ts">
- *   import { useKeyboardShortcut } from '$lib/utils/keyboard';
+ * ```tsx
+ * import { useKeyboardShortcut } from '@/utils/keyboard';
+ * import { useEffect } from 'react';
  *
- *   useKeyboardShortcut({
- *     key: 'b',
- *     modifier: 'meta',
- *     handler: () => toggleSidebar(),
- *     description: 'Toggle sidebar'
- *   });
- * </script>
+ * function MyComponent() {
+ *   useEffect(() => {
+ *     return useKeyboardShortcut({
+ *       key: 'b',
+ *       modifier: 'meta',
+ *       handler: () => toggleSidebar(),
+ *       description: 'Toggle sidebar'
+ *     });
+ *   }, []);
+ * }
  * ```
  */
 export function useKeyboardShortcut(_shortcut: KeyboardShortcut): void {
-  // Use Svelte 5 runes for reactivity
-  // Note: This is a utility function, not a Svelte component
-  // The actual effect will be set up in the component using $effect
-  // This function returns a cleanup function that should be called in $effect
-  // For now, we'll provide the logic that components can use
+  // This is a utility function for keyboard shortcuts.
+  // Components should use createKeyboardHandler with useEffect for proper cleanup.
 }
 
 /**
  * Creates a keyboard event handler for a shortcut.
  *
- * This is a lower-level utility that can be used with $effect.
+ * This is a lower-level utility that can be used with React's useEffect.
  *
  * @param shortcut - The keyboard shortcut configuration
  * @returns A cleanup function to remove the event listener
  *
  * @example
- * ```svelte
- * <script lang="ts">
- *   import { createKeyboardHandler } from '$lib/utils/keyboard';
+ * ```tsx
+ * import { createKeyboardHandler } from '@/utils/keyboard';
+ * import { useEffect } from 'react';
  *
- *   $effect(() => {
+ * function MyComponent() {
+ *   useEffect(() => {
  *     return createKeyboardHandler({
  *       key: 'b',
  *       modifier: 'meta',
  *       handler: () => toggleSidebar()
  *     });
- *   });
- * </script>
+ *   }, []);
+ * }
  * ```
  */
 export function createKeyboardHandler(shortcut: KeyboardShortcut): () => void {

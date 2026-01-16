@@ -27,7 +27,6 @@ export const breakpoints = {
 
 /**
  * Media query result state.
- * This is a simple object that components can use with Svelte runes.
  */
 export interface MediaQueryState {
   matches: boolean;
@@ -37,26 +36,17 @@ export interface MediaQueryState {
 /**
  * Creates a reactive media query observer.
  *
- * Returns a state object that can be used with Svelte runes.
- * Components should use this with $state to create reactive breakpoint checks.
- *
  * @param query - Media query string (e.g., '(max-width: 768px)')
  * @returns A state object with `matches` property
  *
  * @example
- * ```svelte
- * <script lang="ts">
- *   import { createMediaQuery } from '$lib/utils/responsive';
+ * ```tsx
+ * import { createMediaQuery } from '@/utils/responsive';
  *
- *   const mobileQuery = createMediaQuery('(max-width: 768px)');
- *   const isMobile = $derived(mobileQuery.matches);
+ * const mobileQuery = createMediaQuery('(max-width: 768px)');
+ * const isMobile = mobileQuery.matches;
  *
- *   {#if isMobile}
- *     <MobileLayout />
- *   {:else}
- *     <DesktopLayout />
- *   {/if}
- * </script>
+ * {isMobile ? <MobileLayout /> : <DesktopLayout />}
  * ```
  */
 export function createMediaQuery(query: string): MediaQueryState {
@@ -73,27 +63,30 @@ export function createMediaQuery(query: string): MediaQueryState {
 }
 
 /**
- * Creates a reactive media query hook for use in Svelte components.
+ * Creates a reactive media query hook for use in React components.
  *
- * This function should be called in a component's script block
- * and used with $effect to set up the media query listener.
+ * This function should be used with React hooks (e.g., useEffect) to set up
+ * the media query listener.
  *
  * @param query - Media query string
- * @returns A function that returns the current matches state and sets up listener
+ * @returns An object with the current matches state and a cleanup function
  *
  * @example
- * ```svelte
- * <script lang="ts">
- *   import { useMediaQuery } from '$lib/utils/responsive';
+ * ```tsx
+ * import { useMediaQuery } from '@/utils/responsive';
+ * import { useEffect, useState } from 'react';
  *
- *   let isMobile = $state(false);
+ * function MyComponent() {
+ *   const [isMobile, setIsMobile] = useState(false);
  *
- *   $effect(() => {
+ *   useEffect(() => {
  *     const { matches, cleanup } = useMediaQuery('(max-width: 768px)');
- *     isMobile = matches;
+ *     setIsMobile(matches);
  *     return cleanup;
- *   });
- * </script>
+ *   }, []);
+ *
+ *   return isMobile ? <MobileLayout /> : <DesktopLayout />;
+ * }
  * ```
  */
 export function useMediaQuery(query: string): {
