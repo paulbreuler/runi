@@ -191,13 +191,17 @@ export const MainLayout = ({
     setIsPaneDragging(false);
   }, [isPaneDragging, splitRatio]);
 
-  // Sidebar resizer handlers (only when expanded)
+  // Sidebar resizer handlers - works both expanded and collapsed
   const handleSidebarPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!sidebarVisible) return; // Don't resize when collapsed
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     setIsSidebarDragging(true);
-  }, [sidebarVisible]);
+
+    // If collapsed, immediately set to visible so drag feels responsive
+    if (!sidebarVisible) {
+      setSidebarVisible(true);
+    }
+  }, [sidebarVisible, setSidebarVisible]);
 
   const handleSidebarPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isSidebarDragging) return;
@@ -250,22 +254,22 @@ export const MainLayout = ({
               <Sidebar />
             </motion.div>
 
-            {/* Sash / collapsed indicator - double-click to toggle */}
+            {/* Sash / collapsed indicator - drag or double-click to toggle */}
             <div
               className={cn(
                 getSashClasses('right', isSidebarDragging),
-                // When collapsed, the whole sidebar edge is the click target
-                !sidebarVisible && 'w-full cursor-pointer hover:bg-border-default/30'
+                // When collapsed, the whole sidebar edge is the click/drag target
+                !sidebarVisible && 'w-full cursor-ew-resize hover:bg-border-default/30'
               )}
               data-testid="sidebar-resizer"
               onClick={handleCollapsedClick}
               onDoubleClick={handleSashDoubleClick}
-              onPointerDown={sidebarVisible ? handleSidebarPointerDown : undefined}
-              onPointerMove={sidebarVisible ? handleSidebarPointerMove : undefined}
-              onPointerUp={sidebarVisible ? handleSidebarPointerUp : undefined}
-              onPointerCancel={sidebarVisible ? handleSidebarPointerUp : undefined}
+              onPointerDown={handleSidebarPointerDown}
+              onPointerMove={handleSidebarPointerMove}
+              onPointerUp={handleSidebarPointerUp}
+              onPointerCancel={handleSidebarPointerUp}
               role="separator"
-              aria-label={sidebarVisible ? 'Resize sidebar (double-click to collapse)' : 'Expand sidebar'}
+              aria-label={sidebarVisible ? 'Resize sidebar (double-click to collapse)' : 'Drag or click to expand sidebar'}
               aria-orientation="vertical"
               aria-valuenow={sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH}
               aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
