@@ -9,8 +9,9 @@ Generate tests for the specified file or component following runi's TDD standard
 1. **Identify the target file** from the user's message (file path after `/test`)
 2. **Determine the test type:**
    - Rust files (`src-tauri/src/**/*.rs`) → Generate unit tests adjacent to source
-   - Svelte components (`src/lib/components/**/*.svelte`) → Generate vitest component tests
-   - TypeScript utilities (`src/lib/utils/**/*.ts`) → Generate vitest unit tests
+   - React components (`src/components/**/*.tsx`) → Generate vitest component tests
+   - TypeScript utilities (`src/utils/**/*.ts`) → Generate vitest unit tests
+   - Zustand stores (`src/stores/**/*.ts`) → Generate vitest store tests
 3. **Follow TDD workflow:**
    - Write failing test first (RED)
    - Test should be meaningful and cover edge cases
@@ -23,7 +24,7 @@ Generate tests for the specified file or component following runi's TDD standard
 This command generates test files following runi's strict TDD standards:
 
 - **Rust:** Unit tests in `*_test.rs` file adjacent to source (or in same file with `#[cfg(test)]`)
-- **Svelte:** Component tests using `@testing-library/svelte` and vitest
+- **React:** Component tests using `@testing-library/react` and vitest
 - **TypeScript:** Unit tests using vitest with proper mocking
 
 All tests follow the **RED → GREEN → REFACTOR** workflow.
@@ -35,7 +36,7 @@ All tests follow the **RED → GREEN → REFACTOR** workflow.
 Type `/test` followed by the file path:
 
 ```text
-/test src/lib/components/Request/RequestHeader.svelte
+/test src/components/Request/RequestHeader.tsx
 ```
 
 ```text
@@ -43,7 +44,7 @@ Type `/test` followed by the file path:
 ```
 
 ```text
-/test src/lib/utils/url.ts
+/test src/utils/url.ts
 ```
 
 **When invoked, this command will:**
@@ -82,40 +83,83 @@ mod tests {
 }
 ```
 
-### Svelte Component Tests
+### React Component Tests
 
 ```typescript
-// src/lib/components/Request/RequestHeader.test.ts
+// src/components/Request/RequestHeader.test.tsx
 
-import { render, screen } from '@testing-library/svelte';
-import { expect, test } from 'vitest';
-import RequestHeader from './RequestHeader.svelte';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+import { RequestHeader } from './RequestHeader';
 
-test('renders URL input', () => {
-  render(RequestHeader, { props: { initialUrl: 'https://api.example.com' } });
-  expect(screen.getByPlaceholderText(/enter url/i)).toBeInTheDocument();
+describe('RequestHeader', () => {
+  it('renders URL input', () => {
+    render(<RequestHeader initialUrl="https://api.example.com" />);
+    expect(screen.getByPlaceholderText(/enter url/i)).toBeInTheDocument();
+  });
+
+  it('calls onSend when button clicked', async () => {
+    const user = userEvent.setup();
+    const onSend = vi.fn();
+
+    render(<RequestHeader initialUrl="https://api.example.com" onSend={onSend} />);
+
+    await user.click(screen.getByRole('button', { name: /send/i }));
+
+    expect(onSend).toHaveBeenCalled();
+  });
 });
 ```
 
 ### TypeScript Utility Tests
 
 ```typescript
-// src/lib/utils/url.test.ts
+// src/utils/url.test.ts
 
 import { describe, it, expect } from 'vitest';
 import { parseUrl } from './url';
 
 describe('parseUrl', () => {
   it('parses valid URL', () => {
-    expect(parseUrl('https://api.example.com/users')).toEqual({
-      protocol: 'https:',
-      host: 'api.example.com',
-      pathname: '/users',
-    });
+    const result = parseUrl('https://api.example.com/users');
+    expect(result.protocol).toBe('https:');
+    expect(result.host).toBe('api.example.com');
+    expect(result.pathname).toBe('/users');
   });
 
   it('handles invalid URL', () => {
     expect(() => parseUrl('not-a-url')).toThrow();
+  });
+});
+```
+
+### Zustand Store Tests
+
+```typescript
+// src/stores/useRequestStore.test.ts
+
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useRequestStore } from './useRequestStore';
+
+describe('useRequestStore', () => {
+  beforeEach(() => {
+    // Reset store state between tests
+    useRequestStore.setState({
+      url: '',
+      method: 'GET',
+      loading: false,
+    });
+  });
+
+  it('updates url', () => {
+    useRequestStore.getState().setUrl('https://api.example.com');
+    expect(useRequestStore.getState().url).toBe('https://api.example.com');
+  });
+
+  it('updates method', () => {
+    useRequestStore.getState().setMethod('POST');
+    expect(useRequestStore.getState().method).toBe('POST');
   });
 });
 ```
@@ -160,12 +204,12 @@ describe('parseUrl', () => {
 ### Generate Tests for Component
 
 ```text
-/test src/lib/components/Response/StatusBadge.svelte
+/test src/components/Response/StatusBadge.tsx
 ```
 
 Generates:
 
-- `StatusBadge.test.ts` with component tests
+- `StatusBadge.test.tsx` with component tests
 - Tests for different status codes (200, 404, 500)
 - Tests for loading/error states
 
@@ -185,7 +229,7 @@ Generates:
 ### Generate Tests for Utility
 
 ```text
-/test src/lib/utils/url.ts
+/test src/utils/url.ts
 ```
 
 Generates:
@@ -194,6 +238,19 @@ Generates:
 - Tests for URL parsing
 - Tests for URL validation
 - Tests for edge cases (invalid URLs, special characters)
+
+### Generate Tests for Zustand Store
+
+```text
+/test src/stores/useRequestStore.ts
+```
+
+Generates:
+
+- `useRequestStore.test.ts` with store tests
+- Tests for state updates
+- Tests for action functions
+- Tests for derived state
 
 ## Related Commands
 
@@ -208,3 +265,5 @@ Generates:
 - **Coverage Minimum:** 85% for new code
 - **Test Isolation:** Each test must clean up its own state
 - **Fast Feedback:** Prefer unit tests; use integration/E2E only when necessary
+- **React Testing Library:** Use `@testing-library/react` for component tests
+- **Vitest:** Use vitest for all frontend tests

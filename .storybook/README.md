@@ -22,7 +22,7 @@ Interaction tests run automatically when viewing stories, but you need to:
 - **Layout/** - MainLayout, Sidebar, StatusBar components
 - **Request/** - Request building components (coming in Run 2B)
 - **Response/** - Response viewing components (coming in Run 2C)
-- **UI/** - Base shadcn-svelte components
+- **ui/** - Base UI components
 
 ## Running Tests
 

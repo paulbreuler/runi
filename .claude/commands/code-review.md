@@ -31,21 +31,23 @@ Perform a comprehensive code review following runi's quality standards and best 
    - ✅ Unit tests adjacent to source files
    - ✅ Idiomatic Rust patterns (use field init shorthand, try shorthand, etc.)
 
-   **Svelte/TypeScript Code (src/):**
+   **React/TypeScript Code (src/):**
    - ✅ Strict TypeScript compliance (no `any`, explicit return types)
-   - ✅ Svelte 5 runes usage (`$state`, `$derived`, `$props`, `$effect`)
+   - ✅ React 19 functional components with hooks
    - ✅ All functions have explicit return types
    - ✅ Component props typed with interfaces
    - ✅ Follows ESLint strict config (no implicit any, strict boolean expressions)
    - ✅ Follows Prettier formatting (100 char width, single quotes, etc.)
    - ✅ Test coverage ≥85% for new code
-   - ✅ Component tests use vitest with happy-dom/jsdom
+   - ✅ Component tests use vitest with @testing-library/react
    - ✅ TDD workflow followed (tests written first)
+   - ✅ Zustand for global state (not Redux, not Context for shared state)
+   - ✅ Motion 12 for animations (import from `motion/react`)
 
    **General Standards:**
    - ✅ Test-Driven Development (TDD) - tests written before implementation
    - ✅ All tests passing (100% pass rate required)
-   - ✅ Storybook stories for Svelte components (where applicable)
+   - ✅ Storybook stories for React components (where applicable)
    - ✅ Conventional commit messages (feat, fix, test, refactor, docs, style, chore)
    - ✅ No warnings in CI
    - ✅ Security considerations (OWASP-inspired for API requests)
@@ -66,12 +68,12 @@ Perform a comprehensive code review following runi's quality standards and best 
    ```
 
 6. **Check project-specific patterns**:
-   - Component organization (Layout/, Request/, Response/, ui/)
+   - Component organization (Layout/, Request/, Response/, Intelligence/, ui/)
    - Naming conventions (PascalCase for components, camelCase for utils/stores)
    - Tauri command patterns (async, Result<T, String>)
-   - Svelte 5 runes patterns (no stores for state, use runes)
-   - paneforge usage for resizable panes
-   - shadcn-svelte components for UI
+   - React 19 patterns (functional components, hooks, TypeScript)
+   - Zustand store patterns (`use<Name>Store` naming)
+   - Motion 12 animations (import from `motion/react`)
 
 ## Review Checklist
 
@@ -92,8 +94,8 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **Rust**: Proper error handling (Result types, no panics)
 - [ ] **TypeScript**: Strict mode compliance (no `any`, explicit types)
 - [ ] **TypeScript**: All functions have return types
-- [ ] **Svelte**: Using runes (`$state`, `$derived`, `$props`) not stores
-- [ ] **Svelte**: Component props typed with interfaces
+- [ ] **React**: Functional components with hooks
+- [ ] **React**: Component props typed with interfaces
 - [ ] **Formatting**: Follows rustfmt.toml / Prettier config
 - [ ] **Naming**: Follows conventions (PascalCase components, camelCase utils)
 
@@ -109,9 +111,9 @@ Perform a comprehensive code review following runi's quality standards and best 
 
 - [ ] **Component Organization**: Files in correct directories (Layout/, Request/, Response/, ui/)
 - [ ] **Tauri Commands**: Async, Result<T, String>, proper error handling
-- [ ] **Svelte Patterns**: Runes usage, proper reactivity
-- [ ] **UI Components**: shadcn-svelte for base components
-- [ ] **Resizable Panes**: paneforge for split panes
+- [ ] **React Patterns**: Functional components, hooks, proper state management
+- [ ] **Zustand**: Global state in stores, local state with useState
+- [ ] **Motion 12**: Animations import from `motion/react`
 
 ### Security & Privacy
 
@@ -183,13 +185,13 @@ Type `/code-review` to review staged changes:
 Or specify files/directories to review:
 
 ```text
-/code-review src/lib/components/Request/
+/code-review src/components/Request/
 ```
 
 Review specific files:
 
 ```text
-/code-review src/lib/api/http.ts src-tauri/src/commands/http.rs
+/code-review src/utils/url.ts src-tauri/src/commands/http.rs
 ```
 
 Review recent commits:
@@ -224,7 +226,7 @@ just ci
 
 # Coverage (target: ≥85%)
 cd src-tauri && cargo tarpaulin --out Html
-npm run test:coverage
+pnpm test:coverage
 ```
 
 ## Examples
@@ -240,7 +242,7 @@ Reviews all staged changes before commit.
 ### Review Specific Feature
 
 ```text
-/code-review src/lib/components/Request/
+/code-review src/components/Request/
 ```
 
 Reviews all files in the Request component directory.
@@ -267,7 +269,7 @@ Reviews all changes compared to main branch.
 - **justfile** - CI pipeline commands
 - **rustfmt.toml** - Rust formatting rules
 - **clippy.toml** - Rust linting rules
-- **eslint.config.js** - TypeScript/Svelte linting rules
+- **eslint.config.js** - TypeScript/React linting rules
 - **tsconfig.json** - TypeScript strict mode config
 - **.prettierrc** - Prettier formatting rules
 
@@ -279,7 +281,9 @@ Reviews all changes compared to main branch.
 - **Pedantic Standards**: Rust uses pedantic Clippy, TypeScript uses strict mode
 - **Documentation**: All public items must be documented (Rust)
 - **Type Safety**: No `any` types in TypeScript, explicit return types required
-- **Runes Only**: Svelte 5 runes required - no legacy stores for state
+- **React 19**: Functional components with hooks only (no class components)
+- **Zustand**: Use for global state, useState for local state
+- **Motion 12**: Import from `motion/react`, not `framer-motion`
 
 ## Related Commands
 
