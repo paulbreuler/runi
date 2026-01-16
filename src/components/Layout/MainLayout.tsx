@@ -25,7 +25,6 @@ const MAX_SIDEBAR_WIDTH = 500; // Maximum width in pixels
 const DEFAULT_SIDEBAR_WIDTH = 256; // Default width in pixels
 
 // Animation variants following Motion best practices
-// Note: width is now dynamic, set via style prop
 const sidebarVariants = {
   hidden: { width: 0, opacity: 0 },
   visible: { opacity: 1 },
@@ -90,52 +89,17 @@ export const MainLayout = ({
     description: `${getModifierKeyName()}B - Toggle sidebar`,
   });
 
-  // Use MotionValues for immediate, synchronized updates during drag
-  // Current width as a MotionValue - updates immediately without state lag
-  const currentRequestWidth = useMotionValue(DEFAULT_SPLIT);
-  
-  // Track drag delta for pane resizer
-  const dragX = useMotionValue(0);
-
-  // Sidebar width MotionValue for immediate updates during drag
-  const currentSidebarWidth = useMotionValue(DEFAULT_SIDEBAR_WIDTH);
-  
-  // Track drag delta for sidebar resizer
-  const sidebarDragX = useMotionValue(0);
-
-  // Sync MotionValue with state when state changes (non-drag updates)
-  useEffect(() => {
-    if (!isDragging) {
-      currentRequestWidth.set(requestPaneSize);
-    }
-  }, [requestPaneSize, currentRequestWidth, isDragging]);
-
-  // Sync sidebar width MotionValue with state
-  useEffect(() => {
-    if (!isSidebarDragging) {
-      currentSidebarWidth.set(sidebarWidth);
-    }
-  }, [sidebarWidth, currentSidebarWidth, isSidebarDragging]);
-
-  // Store initial width at drag start
-  const dragStartWidth = useRef(DEFAULT_SPLIT);
-
-  // Handle drag start - capture current width and enable immediate updates
-  const handleDragStart = useCallback(() => {
-    setIsDragging(true);
-    dragStartWidth.current = currentRequestWidth.get();
-    // Reset drag position at start
-    dragX.set(0);
-  }, [currentRequestWidth, dragX]);
-
-  // Cache container width to avoid expensive getBoundingClientRect calls
+  // Container width tracking for drag constraints
   const containerWidthRef = useRef<number>(0);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  // Update container width ref when container is available
+  // Update container width when container is available
   useEffect(() => {
     const updateWidth = (): void => {
       if (containerRef.current) {
-        containerWidthRef.current = containerRef.current.getBoundingClientRect().width;
+        const width = containerRef.current.getBoundingClientRect().width;
+        containerWidthRef.current = width;
+        setContainerWidth(width);
       }
     };
     
@@ -151,71 +115,105 @@ export const MainLayout = ({
     };
   }, []);
 
-  // Handle drag - update MotionValue immediately (no state, no lag)
+  // Pane resizer: Official Motion.dev pattern - track percentage, not pixels
+  // This is simpler and more reliable than pixel-based tracking
+  const paneWidthPercent = useMotionValue(DEFAULT_SPLIT);
+  
+  // Sync MotionValue with state when state changes (non-drag updates)
+  useEffect((): void => {
+    if (!isDragging && containerWidth > 0) {
+      paneWidthPercent.set(requestPaneSize);
+    }
+  }, [requestPaneSize, paneWidthPercent, isDragging, containerWidth]);
+
+  // Transform percentage to width strings
+  const requestWidth = useTransform(paneWidthPercent, (percent) => {
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, percent));
+    return `${String(clamped)}%`;
+  });
+  const responseWidth = useTransform(paneWidthPercent, (percent) => {
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, percent));
+    return `${String(100 - clamped)}%`;
+  });
+
+  // Resizer position - calculated from percentage
+  const resizerLeft = useTransform(paneWidthPercent, (percent) => {
+    if (containerWidth === 0) return '50%';
+    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, percent));
+    return `${String(clamped)}%`;
+  });
+
+  // Store initial percentage at drag start
+  const dragStartPercent = useRef(DEFAULT_SPLIT);
+
+  // Handle drag start
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+    dragStartPercent.current = paneWidthPercent.get();
+  }, [paneWidthPercent]);
+
+  // Handle drag - update percentage based on drag offset
   const handleDrag = useCallback(
-    (_event: PointerEvent, info: { delta: { x: number }, offset: { x: number } }) => {
-      // Use cached width to avoid expensive getBoundingClientRect calls
-      const containerWidth = containerWidthRef.current || (containerRef.current?.getBoundingClientRect().width ?? 0);
-      if (containerWidth === 0) return;
-      
-      // Use offset instead of delta for cumulative movement
-      const deltaPercent = (info.offset.x / containerWidth) * 100;
-      const newSize = dragStartWidth.current + deltaPercent;
-      
-      // Clamp and update MotionValue immediately - this updates the width instantly
-      const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, newSize));
-      currentRequestWidth.set(clamped);
+    (_event: PointerEvent, info: { offset: { x: number } }) => {
+      if (containerWidth > 0) {
+        // Convert pixel offset to percentage change
+        const deltaPercent = (info.offset.x / containerWidth) * 100;
+        const newPercent = dragStartPercent.current + deltaPercent;
+        const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, newPercent));
+        paneWidthPercent.set(clamped);
+      }
     },
-    [currentRequestWidth]
+    [paneWidthPercent, containerWidth]
   );
 
-  // Handle drag end - commit to state and reset
+  // Handle drag end - commit to state
   const handleDragEnd = useCallback(() => {
-    // Use requestAnimationFrame to batch state updates and avoid race conditions
     requestAnimationFrame((): void => {
-      const finalWidth = currentRequestWidth.get();
-      const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalWidth));
+      const finalPercent = paneWidthPercent.get();
+      const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalPercent));
       setRequestPaneSize(clamped);
-      // Ensure MotionValue is in sync
-      currentRequestWidth.set(clamped);
-      // Reset drag position - resizer should stay in place visually
-      dragX.set(0);
+      paneWidthPercent.set(clamped);
       setIsDragging(false);
     });
-  }, [currentRequestWidth, dragX]);
+  }, [paneWidthPercent]);
+
+  // Sidebar resizing: Use MotionValue for sidebar width in pixels
+  const sidebarWidthMotion = useMotionValue(DEFAULT_SIDEBAR_WIDTH);
+  
+  // Sync sidebar MotionValue with state
+  useEffect(() => {
+    if (!isSidebarDragging) {
+      sidebarWidthMotion.set(sidebarWidth);
+    }
+  }, [sidebarWidth, sidebarWidthMotion, isSidebarDragging]);
+
+  // Sidebar width as style string
+  const sidebarWidthStyle = useTransform(sidebarWidthMotion, (width) => `${String(width)}px`);
 
   // Sidebar drag handlers
-  const sidebarDragStartWidth = useRef(DEFAULT_SIDEBAR_WIDTH);
-
   const handleSidebarDragStart = useCallback(() => {
     setIsSidebarDragging(true);
-    sidebarDragStartWidth.current = currentSidebarWidth.get();
-    // Reset drag position at start
-    sidebarDragX.set(0);
-  }, [currentSidebarWidth, sidebarDragX]);
+  }, []);
 
   const handleSidebarDrag = useCallback(
-    (_event: PointerEvent, info: { delta: { x: number }, offset: { x: number } }) => {
-      // Use offset for cumulative movement from drag start
-      const newWidth = sidebarDragStartWidth.current + info.offset.x;
+    (_event: PointerEvent, info: { point: { x: number } }) => {
+      // For sidebar, we drag from the right edge, so x is the new width
+      const newWidth = info.point.x;
       const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
-      currentSidebarWidth.set(clamped);
+      sidebarWidthMotion.set(clamped);
     },
-    [currentSidebarWidth]
+    [sidebarWidthMotion]
   );
 
   const handleSidebarDragEnd = useCallback(() => {
-    // Use requestAnimationFrame to batch state updates and avoid race conditions
     requestAnimationFrame((): void => {
-      const finalWidth = currentSidebarWidth.get();
+      const finalWidth = sidebarWidthMotion.get();
       const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
       setSidebarWidth(clamped);
-      // Ensure MotionValue is in sync
-      currentSidebarWidth.set(clamped);
-      sidebarDragX.set(0);
+      sidebarWidthMotion.set(clamped);
       setIsSidebarDragging(false);
     });
-  }, [currentSidebarWidth, sidebarDragX]);
+  }, [sidebarWidthMotion]);
 
   const shouldShowSidebar = sidebarVisible;
   const isSidebarOverlay = shouldShowSidebar && isCompact;
@@ -227,30 +225,10 @@ export const MainLayout = ({
       ? 'visible'
       : 'hidden';
 
-  // Calculate pane widths - use MotionValue template for immediate updates
-  // Memoize transforms to prevent recreation on every render
-  const requestWidth = useTransform(currentRequestWidth, (width) => {
-    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, width));
-    return `${String(clamped)}%`;
-  });
-  const responseWidth = useTransform(currentRequestWidth, (width) => {
-    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, width));
-    return `${String(100 - clamped)}%`;
-  });
-
-  // Resizer left position - positioned at the right edge of request pane
-  const resizerLeft = useTransform(currentRequestWidth, (width) => {
-    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, width));
-    return `${String(clamped)}%`;
-  });
-
-  // Sidebar width as MotionValue template
-  const sidebarWidthStyle = useTransform(currentSidebarWidth, (width) => `${String(width)}px`);
-
   return (
     <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
       <div className="flex flex-1 overflow-hidden gap-0">
-        {/* Sidebar with responsive behavior - using variants */}
+        {/* Sidebar with responsive behavior */}
         <AnimatePresence mode="wait">
           {shouldShowSidebar && (
             <motion.aside
@@ -265,7 +243,6 @@ export const MainLayout = ({
               transition={springTransition}
               style={{ 
                 width: isSidebarOverlay ? 256 : sidebarWidthStyle,
-                // Prevent scrollbar flashing during resize
                 scrollbarGutter: 'stable',
                 willChange: isSidebarDragging ? 'width' : 'auto',
               }}
@@ -282,6 +259,7 @@ export const MainLayout = ({
                   drag="x"
                   dragElastic={0}
                   dragMomentum={false}
+                  dragConstraints={{ left: MIN_SIDEBAR_WIDTH, right: MAX_SIDEBAR_WIDTH }}
                   onDragStart={handleSidebarDragStart}
                   onDrag={handleSidebarDrag}
                   onDragEnd={handleSidebarDragEnd}
@@ -304,7 +282,7 @@ export const MainLayout = ({
                   aria-valuemax={MAX_SIDEBAR_WIDTH}
                   transition={isSidebarDragging ? immediateTransition : layoutTransition}
                 >
-                  {/* Handle - small, subtle, Apple-style grip */}
+                  {/* Handle */}
                   <motion.div
                     className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center"
                     initial={{ opacity: 0 }}
@@ -313,16 +291,15 @@ export const MainLayout = ({
                     transition={{ duration: 0.15 }}
                   >
                     <div className="flex flex-col items-center gap-1 py-2">
-                      {/* Three dots - minimal handle indicator */}
                       {[0, 1, 2].map((i) => (
                         <motion.div
                           key={i}
                           className="w-1 h-1 rounded-full bg-accent-blue/40"
-                          whileHover={{ 
+                          whileHover={{
                             scale: 1.2,
                             backgroundColor: 'oklch(0.623 0.214 259.1 / 0.6)',
                           }}
-                          whileDrag={{ 
+                          whileDrag={{
                             scale: 1.3,
                             backgroundColor: 'oklch(0.623 0.214 259.1 / 0.8)',
                           }}
@@ -337,7 +314,7 @@ export const MainLayout = ({
           )}
         </AnimatePresence>
 
-        {/* Overlay backdrop for compact window sidebar - using variants */}
+        {/* Overlay backdrop for compact window sidebar */}
         <AnimatePresence>
           {isSidebarOverlay && (
             <motion.button
@@ -372,16 +349,14 @@ export const MainLayout = ({
             )}
           </div>
 
-          {/* Responsive split: Request/Response with Motion drag and layout animations */}
+          {/* Responsive split: Request/Response with Motion drag */}
           <LayoutGroup>
             <div
               ref={containerRef}
               className="flex-1 overflow-hidden flex relative"
               data-testid="pane-container"
               style={{
-                // Prevent scrollbar flashing during drag
                 scrollbarGutter: 'stable',
-                willChange: isDragging ? 'auto' : 'auto',
               }}
             >
               {/* Request Pane */}
@@ -391,7 +366,6 @@ export const MainLayout = ({
                 data-testid="request-pane"
                 style={{ 
                   width: requestWidth,
-                  // Prevent scrollbar flashing during drag
                   scrollbarGutter: 'stable',
                   willChange: isDragging ? 'width' : 'auto',
                 }}
@@ -404,7 +378,7 @@ export const MainLayout = ({
                 )}
               </motion.div>
 
-              {/* Resizer - using Motion's drag API with enhanced grabbing feel and handle */}
+              {/* Resizer - Official Motion.dev pattern: absolute positioned, no dragConstraints */}
               <motion.div
                 className="absolute top-0 bottom-0 w-1 bg-border-default cursor-col-resize group z-10 hover:w-2 transition-all border-l border-r border-border-subtle"
                 data-testid="pane-resizer"
@@ -416,18 +390,17 @@ export const MainLayout = ({
                 drag="x"
                 dragElastic={0}
                 dragMomentum={false}
-                dragConstraints={false}
                 onDragStart={handleDragStart}
                 onDrag={handleDrag}
                 onDragEnd={handleDragEnd}
                 whileHover={{
                   width: 8,
-                  backgroundColor: 'oklch(0.623 0.214 259.1 / 0.15)', // accent-blue/15 - subtle
+                  backgroundColor: 'oklch(0.623 0.214 259.1 / 0.15)',
                   boxShadow: '0 0 0 1px oklch(0.623 0.214 259.1 / 0.2)',
                 }}
                 whileDrag={{
                   width: 8,
-                  backgroundColor: 'oklch(0.623 0.214 259.1 / 0.25)', // accent-blue/25
+                  backgroundColor: 'oklch(0.623 0.214 259.1 / 0.25)',
                   boxShadow: '0 0 0 1px oklch(0.623 0.214 259.1 / 0.3), 0 2px 8px oklch(0 0 0 / 0.3)',
                   cursor: 'grabbing',
                 }}
@@ -437,12 +410,9 @@ export const MainLayout = ({
                 aria-valuenow={requestPaneSize}
                 aria-valuemin={MIN_PANE_SIZE}
                 aria-valuemax={MAX_PANE_SIZE}
-                transition={{
-                  ...layoutTransition,
-                  default: { duration: 0.2 },
-                }}
+                transition={isDragging ? immediateTransition : layoutTransition}
               >
-                {/* Handle - small, subtle, Apple-style grip */}
+                {/* Handle */}
                 <motion.div
                   className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center"
                   initial={{ opacity: 0 }}
@@ -451,7 +421,6 @@ export const MainLayout = ({
                   transition={{ duration: 0.15 }}
                 >
                   <div className="flex flex-col items-center gap-1 py-2">
-                    {/* Three dots - minimal handle indicator */}
                     {[0, 1, 2].map((i) => (
                       <motion.div
                         key={i}
@@ -478,7 +447,6 @@ export const MainLayout = ({
                 data-testid="response-pane"
                 style={{ 
                   width: responseWidth,
-                  // Prevent scrollbar flashing during drag
                   scrollbarGutter: 'stable',
                   willChange: isDragging ? 'width' : 'auto',
                 }}
