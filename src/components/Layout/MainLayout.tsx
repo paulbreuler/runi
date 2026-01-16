@@ -90,35 +90,27 @@ export const MainLayout = ({
     description: `${getModifierKeyName()}B - Toggle sidebar`,
   });
 
-  // Container width and position tracking - cached to avoid expensive reads during drag
+  // Container width tracking - cached to avoid expensive reads during drag
   const containerWidthRef = useRef<number>(0);
-  const containerLeftRef = useRef<number>(0);
 
-  // Update container width and position when container is available
+  // Update container width when container is available
   useEffect(() => {
-    const updateDimensions = (): void => {
+    const updateWidth = (): void => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         containerWidthRef.current = rect.width;
-        containerLeftRef.current = rect.left;
       }
     };
     
-    updateDimensions();
-    const resizeObserver = new ResizeObserver(updateDimensions);
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
     
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
     
-    // Also update on scroll/resize for accurate positioning
-    window.addEventListener('scroll', updateDimensions, true);
-    window.addEventListener('resize', updateDimensions);
-    
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('scroll', updateDimensions, true);
-      window.removeEventListener('resize', updateDimensions);
     };
   }, []);
 
@@ -146,35 +138,41 @@ export const MainLayout = ({
   // Handle drag start
   const handleDragStart = useCallback(() => {
     setIsDragging(true);
-    // Update container position at drag start for accurate calculations
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      containerLeftRef.current = rect.left;
-    }
   }, []);
 
-  // Handle drag - use absolute position (like sidebar) for perfect sync
-  // This matches the sidebar implementation which works perfectly
+  // Handle drag - use absolute position relative to container right edge (like sidebar)
+  // This matches the sidebar pattern: calculate from right edge for perfect sync
   const handleDrag = useCallback(
     (_event: PointerEvent, info: { point: { x: number } }) => {
-      const containerWidth = containerWidthRef.current;
-      const containerLeft = containerLeftRef.current;
-      
-      if (containerWidth > 0) {
-        // Calculate position relative to container (like sidebar uses point.x directly)
-        const relativeX = info.point.x - containerLeft;
+      // Get fresh container dimensions on each drag event
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const containerWidth = rect.width;
+        const containerRight = rect.right;
         
-        // Convert to ratio (0-1) based on container width
-        const newRatio = relativeX / containerWidth;
-        
-        // Clamp to min/max constraints
-        const minRatio = MIN_PANE_SIZE / 100;
-        const maxRatio = MAX_PANE_SIZE / 100;
-        const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
-        
-        // Use MotionValue.set() for immediate, synchronous update
-        // This ensures perfect sync like the sidebar
-        splitRatio.set(clamped);
+        if (containerWidth > 0) {
+          // Calculate response pane width from right edge (like sidebar from left edge)
+          // responseWidth = containerRight - point.x
+          const responseWidth = containerRight - info.point.x;
+          
+          // Convert to ratio: responseRatio = responseWidth / containerWidth
+          const responseRatio = responseWidth / containerWidth;
+          
+          // Request pane ratio is the complement
+          const requestRatio = 1 - responseRatio;
+          
+          // Clamp to min/max constraints
+          const minRatio = MIN_PANE_SIZE / 100;
+          const maxRatio = MAX_PANE_SIZE / 100;
+          const clamped = Math.max(minRatio, Math.min(maxRatio, requestRatio));
+          
+          // Use MotionValue.set() for immediate, synchronous update
+          // This ensures perfect sync like the sidebar
+          splitRatio.set(clamped);
+          
+          // Update cache for next frame
+          containerWidthRef.current = containerWidth;
+        }
       }
     },
     [splitRatio]

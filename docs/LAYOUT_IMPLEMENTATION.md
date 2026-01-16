@@ -108,16 +108,29 @@ const requestWidth = useTransform(splitRatio, (ratio) => {
 
 ### Drag Handling
 
+**Critical Implementation Detail**: We use `info.point.x` (absolute position) instead of `info.offset.x` (relative offset) to match the sidebar implementation, which provides perfect synchronization.
+
 ```tsx
 const handleDrag = useCallback(
-  (_event: PointerEvent, info: { offset: { x: number } }) => {
+  (_event: PointerEvent, info: { point: { x: number } }) => {
     const containerWidth = containerWidthRef.current;
+    const containerLeft = containerLeftRef.current;
+    
     if (containerWidth > 0) {
-      // Convert pixel offset to ratio change
-      const deltaRatio = info.offset.x / containerWidth;
-      const newRatio = dragStartRatio.current + deltaRatio;
+      // Calculate position relative to container (like sidebar uses point.x directly)
+      const relativeX = info.point.x - containerLeft;
+      
+      // Convert to ratio (0-1) based on container width
+      const newRatio = relativeX / containerWidth;
+      
+      // Clamp to min/max constraints
+      const minRatio = MIN_PANE_SIZE / 100;
+      const maxRatio = MAX_PANE_SIZE / 100;
       const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
-      splitRatio.set(clamped); // Immediate update via MotionValue
+      
+      // Use MotionValue.set() for immediate, synchronous update
+      // This ensures perfect sync like the sidebar
+      splitRatio.set(clamped);
     }
   },
   [splitRatio]
@@ -125,34 +138,58 @@ const handleDrag = useCallback(
 ```
 
 **Key points:**
+- Uses `info.point.x` (absolute position) for perfect synchronization - matches sidebar implementation
+- Tracks `containerLeftRef` for accurate position calculations relative to container
 - Uses cached `containerWidthRef` (no expensive DOM reads during drag)
 - Updates MotionValue directly (no React state during drag)
 - Clamps to min/max bounds
 - Commits to state only on `dragEnd`
 
-### Container Width Caching
+**Why `point.x` instead of `offset.x`?**
+- `offset.x` is relative to drag start, which can accumulate errors during rapid movements
+- `point.x` is the absolute pointer position, providing direct, accurate positioning
+- This matches the sidebar implementation which works perfectly
+- Ensures perfect synchronization even during rapid jittering movements
+
+### Container Width and Position Caching
 
 ```tsx
 const containerWidthRef = useRef<number>(0);
+const containerLeftRef = useRef<number>(0);
 
 useEffect(() => {
-  const updateWidth = (): void => {
+  const updateDimensions = (): void => {
     if (containerRef.current) {
-      containerWidthRef.current = containerRef.current.getBoundingClientRect().width;
+      const rect = containerRef.current.getBoundingClientRect();
+      containerWidthRef.current = rect.width;
+      containerLeftRef.current = rect.left;
     }
   };
   
-  updateWidth();
-  const resizeObserver = new ResizeObserver(updateWidth);
-  resizeObserver.observe(containerRef.current);
+  updateDimensions();
+  const resizeObserver = new ResizeObserver(updateDimensions);
   
-  return () => resizeObserver.disconnect();
+  if (containerRef.current) {
+    resizeObserver.observe(containerRef.current);
+  }
+  
+  // Also update on scroll/resize for accurate positioning
+  window.addEventListener('scroll', updateDimensions, true);
+  window.addEventListener('resize', updateDimensions);
+  
+  return () => {
+    resizeObserver.disconnect();
+    window.removeEventListener('scroll', updateDimensions, true);
+    window.removeEventListener('resize', updateDimensions);
+  };
 }, []);
 ```
 
 **Why this matters:**
 - Avoids expensive `getBoundingClientRect()` calls during drag
 - ResizeObserver updates cache when container resizes
+- Tracks container left position for accurate absolute position calculations
+- Updates on scroll/resize to maintain accuracy
 - Prevents layout thrashing during drag operations
 
 ## Testing Strategy
