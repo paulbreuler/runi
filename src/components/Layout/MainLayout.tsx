@@ -200,13 +200,13 @@ export const MainLayout = ({
 
   return (
     <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden gap-0">
         {/* Sidebar with responsive behavior - using variants */}
         <AnimatePresence mode="wait">
           {shouldShowSidebar && (
             <motion.aside
               className={cn(
-                'flex flex-col border-r bg-bg-surface overflow-hidden relative',
+                'flex flex-col border-r bg-bg-surface overflow-hidden relative shrink-0',
                 isSidebarOverlay && 'fixed inset-y-0 left-0 z-50 shadow-lg'
               )}
               variants={sidebarVariants}
@@ -313,7 +313,7 @@ export const MainLayout = ({
         </AnimatePresence>
 
         {/* Vertical layout: Fixed header bar + split content area */}
-        <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
           {/* Fixed header bar */}
           <div className="shrink-0" data-testid="header-bar">
             {headerContent || (
@@ -338,7 +338,7 @@ export const MainLayout = ({
               {/* Request Pane */}
               <motion.div
                 layout={!isDragging}
-                className="h-full overflow-hidden"
+                className="h-full overflow-hidden shrink-0"
                 data-testid="request-pane"
                 style={{ 
                   width: requestWidth,
@@ -358,7 +358,7 @@ export const MainLayout = ({
               {/* Resizer - using Motion's drag API with enhanced grabbing feel and handle */}
               <motion.div
                 layout="position"
-                className="w-1 bg-border-default cursor-col-resize group relative z-10 hover:w-2 transition-all border-l border-r border-border-subtle"
+                className="w-1 bg-border-default cursor-col-resize group relative z-10 hover:w-2 transition-all border-l border-r border-border-subtle shrink-0"
                 data-testid="pane-resizer"
                 drag="x"
                 dragElastic={0}
@@ -420,7 +420,7 @@ export const MainLayout = ({
               {/* Response Pane */}
               <motion.div
                 layout={!isDragging}
-                className="h-full overflow-hidden"
+                className="h-full overflow-hidden shrink-0"
                 data-testid="response-pane"
                 style={{ 
                   width: responseWidth,
