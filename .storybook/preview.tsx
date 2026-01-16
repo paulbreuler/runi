@@ -30,11 +30,11 @@ const preview: Preview = {
   decorators: [
     (Story) => (
       <div style={{ 
-        padding: '1.5rem', 
-        display: 'flex', 
-        alignItems: 'center', 
+        padding: '1rem',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100%',
+        width: '100%',
         backgroundColor: '#0a0a0a' 
       }}>
         <Story />
