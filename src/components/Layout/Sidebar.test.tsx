@@ -6,7 +6,7 @@ describe('Sidebar', () => {
   it('renders sidebar with proper structure', () => {
     render(<Sidebar />);
 
-    const sidebar = screen.getByTestId('sidebar');
+    const sidebar = screen.getByTestId('sidebar-content');
     expect(sidebar).toBeInTheDocument();
   });
 
@@ -56,14 +56,14 @@ describe('Sidebar', () => {
   it('fills its container width', () => {
     render(<Sidebar />);
 
-    const sidebar = screen.getByTestId('sidebar');
+    const sidebar = screen.getByTestId('sidebar-content');
     expect(sidebar).toHaveClass('w-full');
   });
 
   it('has proper background styling', () => {
     render(<Sidebar />);
 
-    const sidebar = screen.getByTestId('sidebar');
+    const sidebar = screen.getByTestId('sidebar-content');
     expect(sidebar).toHaveClass('bg-bg-surface');
   });
 

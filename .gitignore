@@ -16,6 +16,8 @@ node_modules
 coverage
 html
 *.lcov
+test-results/
+playwright-report/
 
 # Production
 build
