@@ -218,7 +218,12 @@ export const MainLayout = ({
     setIsSidebarDragging(false);
   }, [isSidebarDragging, sidebarWidthSpring]);
 
-  // Click on collapsed sidebar edge to expand
+  // Double-click on sash to toggle sidebar
+  const handleSashDoubleClick = useCallback(() => {
+    toggleSidebar();
+  }, [toggleSidebar]);
+
+  // Single click on collapsed edge to expand
   const handleCollapsedClick = useCallback(() => {
     if (!sidebarVisible) {
       toggleSidebar();
@@ -245,7 +250,7 @@ export const MainLayout = ({
               <Sidebar />
             </motion.div>
 
-            {/* Sash / collapsed indicator */}
+            {/* Sash / collapsed indicator - double-click to toggle */}
             <div
               className={cn(
                 getSashClasses('right', isSidebarDragging),
@@ -254,12 +259,13 @@ export const MainLayout = ({
               )}
               data-testid="sidebar-resizer"
               onClick={handleCollapsedClick}
+              onDoubleClick={handleSashDoubleClick}
               onPointerDown={sidebarVisible ? handleSidebarPointerDown : undefined}
               onPointerMove={sidebarVisible ? handleSidebarPointerMove : undefined}
               onPointerUp={sidebarVisible ? handleSidebarPointerUp : undefined}
               onPointerCancel={sidebarVisible ? handleSidebarPointerUp : undefined}
               role="separator"
-              aria-label={sidebarVisible ? 'Resize sidebar' : 'Expand sidebar'}
+              aria-label={sidebarVisible ? 'Resize sidebar (double-click to collapse)' : 'Expand sidebar'}
               aria-orientation="vertical"
               aria-valuenow={sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH}
               aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}

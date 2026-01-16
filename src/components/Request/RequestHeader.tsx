@@ -61,30 +61,44 @@ export const RequestHeader = ({
 
   return (
     <div className="flex gap-3 items-center px-6 py-4 border-b border-border-subtle bg-bg-surface">
-      <Select.Select value={method} onValueChange={handleMethodChange}>
-        <Select.SelectTrigger
-          className={`w-20 font-semibold bg-transparent border-0 hover:bg-bg-raised/50 rounded-lg transition-all duration-200 ${methodColor}`}
-          data-testid="method-select"
-          disabled={loading}
-          aria-label="HTTP Method"
-        >
-          <Select.SelectValue>{method}</Select.SelectValue>
-        </Select.SelectTrigger>
-        <Select.SelectContent>
-          {httpMethods.map((httpMethod) => {
-            const color = getMethodColor(httpMethod);
-            return (
-              <Select.SelectItem 
-                key={httpMethod} 
-                value={httpMethod} 
-                className={`${color} data-highlighted:bg-bg-raised/50`}
-              >
-                {httpMethod}
-              </Select.SelectItem>
-            );
-          })}
-        </Select.SelectContent>
-      </Select.Select>
+      <motion.div
+        layout={!prefersReducedMotion}
+        transition={
+          prefersReducedMotion
+            ? undefined
+            : {
+                type: 'spring',
+                stiffness: 320,
+                damping: 26,
+              }
+        }
+        className="inline-flex"
+      >
+        <Select.Select value={method} onValueChange={handleMethodChange}>
+          <Select.SelectTrigger
+            className={`min-w-28 w-auto font-semibold bg-transparent border-0 hover:bg-bg-raised/50 rounded-lg transition-all duration-200 whitespace-nowrap ${methodColor}`}
+            data-testid="method-select"
+            disabled={loading}
+            aria-label="HTTP Method"
+          >
+            <Select.SelectValue>{method}</Select.SelectValue>
+          </Select.SelectTrigger>
+          <Select.SelectContent>
+            {httpMethods.map((httpMethod) => {
+              const color = getMethodColor(httpMethod);
+              return (
+                <Select.SelectItem 
+                  key={httpMethod} 
+                  value={httpMethod} 
+                  className={`${color} data-highlighted:bg-bg-raised/50`}
+                >
+                  {httpMethod}
+                </Select.SelectItem>
+              );
+            })}
+          </Select.SelectContent>
+        </Select.Select>
+      </motion.div>
 
       <Input
         type="text"

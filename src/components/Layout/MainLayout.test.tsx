@@ -174,7 +174,7 @@ describe('MainLayout', () => {
 
       const resizer = screen.getByTestId('sidebar-resizer');
       expect(resizer).toHaveAttribute('role', 'separator');
-      expect(resizer).toHaveAttribute('aria-label', 'Resize sidebar');
+      expect(resizer).toHaveAttribute('aria-label', 'Resize sidebar (double-click to collapse)');
       expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
       expect(resizer).toHaveAttribute('aria-valuenow', '256');
       // aria-valuemin is COLLAPSED_SIDEBAR_WIDTH (8) since sidebar can collapse
