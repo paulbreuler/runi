@@ -56,6 +56,8 @@ Perform a comprehensive code review following runi's quality standards and best 
 4. **Provide structured feedback** organized by category:
    - **Critical Issues** (must fix before merge)
    - **Quality Issues** (should fix - style, documentation, test coverage)
+   - **Architectural Violations** (must fix - hardcoded layouts, tight coupling, missing event bus usage)
+   - **Architectural Improvements** (should fix - container/presentational separation, dependency injection, configuration-driven)
    - **Suggestions** (nice to have - optimizations, improvements)
    - **Security Concerns** (auth patterns, data handling, API security)
    - **Performance** (potential bottlenecks, inefficiencies)
@@ -109,11 +111,31 @@ Perform a comprehensive code review following runi's quality standards and best 
 
 ### Architecture & Patterns
 
+**Cross-Cutting Patterns** (see `.cursorrules` for details):
+
+- [ ] **Event-Driven**: Cross-component communication uses event bus, not direct calls
+- [ ] **Loose Coupling**: Components don't depend on specific layouts/positions
+- [ ] **Configuration-Driven**: Layout positions/configurable, not hardcoded (e.g., sidebar position in store)
+- [ ] **Unidirectional Flow**: State flows down, events flow up (no circular dependencies)
+- [ ] **MCP-Ready**: AI-driven changes use event bus (events emitted, components subscribe)
+- [ ] **Testable Contracts**: Components have clear, mockable interfaces (props, events)
+- [ ] **Ports & Adapters**: Core logic isolated from UI/infrastructure
+
+**Frontend Patterns** (React/TypeScript in `src/`):
+
 - [ ] **Component Organization**: Files in correct directories (Layout/, Request/, Response/, ui/)
-- [ ] **Tauri Commands**: Async, Result<T, String>, proper error handling
+- [ ] **Container/Presentational**: Clear separation of logic (containers) from rendering (presentational)
+- [ ] **Dependency Injection**: Dependencies injected, not imported directly
 - [ ] **React Patterns**: Functional components, hooks, proper state management
 - [ ] **Zustand**: Global state in stores, local state with useState
 - [ ] **Motion 12**: Animations import from `motion/react`
+- [ ] **Composition**: Components composed, not inherited or deeply nested
+
+**Backend Patterns** (Rust/Tauri in `src-tauri/`):
+
+- [ ] **Tauri Commands**: Async, Result<T, String>, proper error handling
+- [ ] **Dependency Injection**: Dependencies via traits, not concrete types
+- [ ] **Ports & Adapters**: Domain logic isolated from infrastructure
 
 ### Security & Privacy
 
@@ -150,10 +172,23 @@ Structure your review like this:
   \`\`\`
   **Fix:** [suggested fix]
 
+### Architectural Violations (Must Fix)
+
+- [Hardcoded layout positions, tight coupling, missing event bus usage]
+  \`\`\`startLine:endLine:filepath
+  // problematic code
+  \`\`\`
+  **Fix:** [suggested fix - see .cursorrules for patterns]
+
 ### Quality Issues (Should Fix)
 
 - [Issue description with code reference]
   **Fix:** [suggested fix]
+
+### Architectural Improvements (Should Fix)
+
+- [Container/presentational separation, dependency injection, configuration-driven]
+  **Fix:** [suggested improvement - see .cursorrules for patterns]
 
 ### Suggestions (Nice to Have)
 
@@ -266,6 +301,7 @@ Reviews all changes compared to main branch.
 ## Project Standards Reference
 
 - **CLAUDE.md** - Project conventions and standards
+- **.cursorrules** - Core architectural patterns (event-driven, loose coupling, MCP integration)
 - **justfile** - CI pipeline commands
 - **rustfmt.toml** - Rust formatting rules
 - **clippy.toml** - Rust linting rules
