@@ -109,7 +109,7 @@ export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX
     <div
       className={cn(
         // Height matches macOS title bar (~28px) with overlay style
-        'h-7 border-b border-border-subtle bg-bg-surface/80 backdrop-blur-sm flex items-center justify-between',
+        'h-7 border-b border-border-subtle bg-bg-surface/80 backdrop-blur-sm flex items-center relative',
         'text-xs text-text-secondary select-none',
         // Windows/Linux: Controls on right, so add left padding
         !isMac && 'pl-4'
@@ -118,13 +118,18 @@ export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX
       data-testid="titlebar"
       data-tauri-drag-region
     >
-      {/* Title/content area - draggable on all platforms */}
-      <div className="flex-1 flex items-center" data-tauri-drag-region>
+      {/* Title/content area - centered and draggable on all platforms */}
+      <div
+        className="absolute left-1/2 top-0 h-full flex items-center -translate-x-1/2"
+        data-tauri-drag-region
+      >
         {children ?? <span className="font-medium">{title}</span>}
       </div>
 
       {/* Custom controls - only on Windows/Linux (macOS uses native traffic lights) */}
-      <TitleBarControls />
+      <div className="ml-auto">
+        <TitleBarControls />
+      </div>
     </div>
   );
 };
