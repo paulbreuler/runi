@@ -4,6 +4,7 @@ use crate::domain::http::{HttpResponse, RequestParams};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use tracing;
 use uuid::Uuid;
 
 #[cfg(test)]
@@ -177,9 +178,10 @@ pub async fn load_history_entries(limit: Option<usize>) -> Result<Vec<HistoryEnt
             Ok(entry) => entries.push(entry),
             Err(e) => {
                 // Log error but continue loading other entries
-                eprintln!(
-                    "Warning: Failed to load history entry {}: {e}",
-                    path.display()
+                tracing::warn!(
+                    path = %path.display(),
+                    error = %e,
+                    "Failed to load history entry"
                 );
             }
         }
@@ -253,9 +255,10 @@ pub async fn clear_history() -> Result<(), String> {
     for path in paths {
         if let Err(e) = tokio::fs::remove_file(&path).await {
             // Log error but continue processing other files
-            eprintln!(
-                "Warning: Failed to delete history file {}: {e}",
-                path.display()
+            tracing::warn!(
+                path = %path.display(),
+                error = %e,
+                "Failed to delete history file"
             );
             failed_deletions += 1;
         }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { executeRequest } from '@/api/http';
+import { isAppError } from '@/types/errors';
+import { getConsoleService } from '@/services/console-service';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { RequestHeader } from '@/components/Request/RequestHeader';
@@ -99,8 +101,21 @@ export const HomePage = (): React.JSX.Element => {
         result
       );
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      setError(errorMessage);
+      // Handle AppError (includes correlation ID for tracing)
+      if (isAppError(e)) {
+        const errorMessage = `[${e.code}] ${e.message} (Correlation ID: ${e.correlationId})`;
+        setError(errorMessage);
+        // Log error to console service with correlation ID
+        getConsoleService().addLog({
+          level: 'error',
+          message: `[${e.code}] ${e.message}`,
+          args: [e],
+          correlationId: e.correlationId,
+        });
+      } else {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        setError(errorMessage);
+      }
       // Don't save to history on error
     } finally {
       setLoading(false);

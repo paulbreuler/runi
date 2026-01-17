@@ -199,7 +199,7 @@ describe('NetworkHistoryRow', () => {
       expect(downloadSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
     });
 
-    it('displays empty waterfall when timing data has null values', () => {
+    it('displays empty waterfall when timing data lacks first_byte_ms', () => {
       const entryWithNullTiming: NetworkHistoryEntry = {
         ...mockEntry,
         response: {
@@ -215,9 +215,9 @@ describe('NetworkHistoryRow', () => {
       };
       render(<NetworkHistoryRow {...defaultProps} entry={entryWithNullTiming} isExpanded={true} />);
 
-      // With all null values, segments should be 0
-      const dnsSegment = screen.getByTestId('timing-dns');
-      expect(dnsSegment).toHaveStyle({ width: '0%' });
+      // Without first_byte_ms, we can't calculate meaningful segments
+      // So the empty waterfall state should be shown
+      expect(screen.getByTestId('timing-waterfall-empty')).toBeInTheDocument();
     });
 
     it('shows timing legend with ms values when expanded', () => {

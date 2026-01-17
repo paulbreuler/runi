@@ -9,9 +9,10 @@ mod infrastructure;
 
 use infrastructure::commands::{
     clear_request_history, create_proxy_service, delete_history_entry, get_platform, hello_world,
-    load_request_history, save_request_history,
+    load_request_history, save_request_history, set_log_level,
 };
 use infrastructure::http::execute_request;
+use infrastructure::logging::init_logging;
 
 /// Initialize and run the Tauri application.
 ///
@@ -19,6 +20,9 @@ use infrastructure::http::execute_request;
 /// In debug mode, automatically opens developer tools.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Initialize structured logging before anything else
+    init_logging();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -41,7 +45,8 @@ pub fn run() {
             save_request_history,
             load_request_history,
             delete_history_entry,
-            clear_request_history
+            clear_request_history,
+            set_log_level
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

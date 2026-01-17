@@ -1,5 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { Download, Trash2 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import type { NetworkHistoryEntry, HistoryFilters } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { NetworkHistoryFilters } from './NetworkHistoryFilters';
@@ -42,6 +44,8 @@ export const NetworkHistoryPanel = ({
     toggleCompareSelection,
     setSelectedId,
     setExpandedId,
+    deleteEntry,
+    clearHistory,
     filteredEntries: getFilteredEntries,
   } = useHistoryStore();
 
@@ -155,6 +159,42 @@ export const NetworkHistoryPanel = ({
     void compareSelection;
   };
 
+  const downloadJson = (data: unknown, filename: string): void => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSaveAll = (): void => {
+    downloadJson(filteredEntries, `network-history-${String(Date.now())}.json`);
+  };
+
+  const handleSaveSelection = (): void => {
+    if (compareSelection.length === 0) {
+      return;
+    }
+    const selectedEntries = filteredEntries.filter((entry) => compareSelection.includes(entry.id));
+    downloadJson(selectedEntries, `network-history-selected-${String(Date.now())}.json`);
+  };
+
+  const handleClearAll = async (): Promise<void> => {
+    if (
+      window.confirm('Are you sure you want to clear all network history? This cannot be undone.')
+    ) {
+      await clearHistory();
+    }
+  };
+
+  const handleDelete = async (id: string): Promise<void> => {
+    await deleteEntry(id);
+  };
+
   // Virtualization
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -192,14 +232,51 @@ export const NetworkHistoryPanel = ({
       </div>
 
       {/* Filter bar */}
-      <NetworkHistoryFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        compareMode={compareMode}
-        onCompareModeToggle={handleCompareModeToggle}
-        compareSelectionCount={compareSelection.length}
-        onCompareResponses={handleCompareResponses}
-      />
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-subtle bg-bg-raised/30">
+        <NetworkHistoryFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          compareMode={compareMode}
+          onCompareModeToggle={handleCompareModeToggle}
+          compareSelectionCount={compareSelection.length}
+          onCompareResponses={handleCompareResponses}
+        />
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            className="px-2 py-1 text-xs rounded text-text-muted hover:text-text-primary hover:bg-bg-raised/50 transition-colors flex items-center gap-1"
+            title="Save all entries"
+          >
+            <Download size={12} />
+            Save All
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveSelection}
+            disabled={compareSelection.length === 0}
+            className={cn(
+              'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
+              compareSelection.length === 0
+                ? 'text-text-muted/50 cursor-not-allowed'
+                : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
+            )}
+            title="Save selected entries"
+          >
+            <Download size={12} />
+            Save Selection
+          </button>
+          <button
+            type="button"
+            onClick={handleClearAll}
+            className="px-2 py-1 text-xs rounded text-text-muted hover:text-signal-error hover:bg-bg-raised/50 transition-colors flex items-center gap-1"
+            title="Clear all history"
+          >
+            <Trash2 size={12} />
+            Clear All
+          </button>
+        </div>
+      </div>
 
       {/* Table header */}
       <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border-subtle bg-bg-raised/50 text-xs font-medium text-text-muted">
@@ -256,6 +333,7 @@ export const NetworkHistoryPanel = ({
                     compareMode={compareMode}
                     isCompareSelected={compareSelection.includes(entry.id)}
                     onToggleCompare={toggleCompareSelection}
+                    onDelete={handleDelete}
                   />
                 </div>
               );

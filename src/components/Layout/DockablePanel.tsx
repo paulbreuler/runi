@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';
 import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores/usePanelStore';
@@ -9,7 +9,9 @@ interface DockablePanelProps {
   /** Panel title */
   title: string;
   /** Panel content */
-  children: React.ReactNode;
+  children: ReactNode;
+  /** Optional header content (e.g., tabs) */
+  headerContent?: ReactNode;
   /** Additional class name */
   className?: string;
 }
@@ -110,6 +112,7 @@ const trayContentVariants = {
 export const DockablePanel = ({
   title,
   children,
+  headerContent,
   className,
 }: DockablePanelProps): React.JSX.Element | null => {
   const {
@@ -580,7 +583,9 @@ export const DockablePanel = ({
               className="flex items-center justify-between h-8 px-3 border-b border-border-default shrink-0 relative z-20"
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-sm font-medium text-text-primary truncate">{title}</span>
+                {headerContent ?? (
+                  <span className="text-sm font-medium text-text-primary truncate">{title}</span>
+                )}
               </div>
 
               <div className="flex items-center gap-1">

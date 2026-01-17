@@ -518,12 +518,14 @@ describe('MainLayout', () => {
       expect(screen.queryByTestId('dockable-panel')).not.toBeInTheDocument();
     });
 
-    it('panel shows Network History title', () => {
+    it('panel shows Network and Console tabs', () => {
       usePanelStore.setState({ isVisible: true });
 
       render(<MainLayout />);
 
-      expect(screen.getByText('Network History')).toBeInTheDocument();
+      // Panel shows tabs for Network and Console views
+      expect(screen.getByRole('tab', { name: /network/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /console/i })).toBeInTheDocument();
     });
 
     it('panel visibility can be toggled via store', () => {

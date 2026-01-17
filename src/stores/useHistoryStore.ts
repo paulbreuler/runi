@@ -76,6 +76,31 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         limit: undefined,
       });
 
+      // #region agent log
+      if (entries.length > 0 && entries[0] !== undefined) {
+        fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'useHistoryStore.ts:75',
+            message: 'History entry loaded after save',
+            data: {
+              entryId: entries[0].id,
+              timing: entries[0].response.timing,
+              first_byte_ms: entries[0].response.timing.first_byte_ms,
+              total_ms: entries[0].response.timing.total_ms,
+            },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'initial',
+            hypothesisId: 'B',
+          }),
+        }).catch(() => {
+          // Ignore debug log failures
+        });
+      }
+      // #endregion
+
       set({
         entries,
         error: null,

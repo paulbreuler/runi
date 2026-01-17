@@ -1,4 +1,4 @@
-import { ChevronRight, Copy, Play, Check } from 'lucide-react';
+import { ChevronRight, Copy, Play, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { type HttpMethod } from '@/utils/http-colors';
@@ -29,6 +29,8 @@ interface NetworkHistoryRowProps {
   isCompareSelected?: boolean;
   /** Toggle this row's compare selection */
   onToggleCompare?: (id: string) => void;
+  /** Delete this entry */
+  onDelete?: (id: string) => void;
 }
 
 const methodColors: Record<string, string> = {
@@ -92,6 +94,7 @@ export const NetworkHistoryRow = ({
   compareMode = false,
   isCompareSelected = false,
   onToggleCompare,
+  onDelete,
 }: NetworkHistoryRowProps): React.JSX.Element => {
   const shouldReduceMotion = useReducedMotion();
   const method = entry.request.method.toUpperCase() as HttpMethod;
@@ -135,6 +138,11 @@ export const NetworkHistoryRow = ({
   const handleCopyClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
     onCopyCurl(entry);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    onDelete?.(entry.id);
   };
 
   return (
@@ -249,6 +257,17 @@ export const NetworkHistoryRow = ({
           >
             <Copy size={14} className="text-text-muted hover:text-text-primary" />
           </button>
+          {onDelete !== undefined && (
+            <button
+              data-testid="delete-button"
+              onClick={handleDeleteClick}
+              className="p-1 hover:bg-bg-elevated rounded transition-colors"
+              aria-label="Delete entry"
+              title="Delete entry"
+            >
+              <Trash2 size={14} className="text-text-muted hover:text-signal-error" />
+            </button>
+          )}
         </div>
       </div>
 

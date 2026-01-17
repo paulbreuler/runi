@@ -104,6 +104,18 @@ export function calculateWaterfallSegments(
     return undefined;
   }
 
+  // Need at least first_byte_ms to calculate meaningful segments
+  // Without it, we can't determine wait time or download time
+  // Note: first_byte_ms === 0 is now valid (can happen with very fast responses or estimates)
+  // Only reject if it's null/undefined
+  if (first_byte_ms === null) {
+    return undefined;
+  }
+
+  // Ensure first_byte_ms is <= total_ms (sanity check)
+  // If first_byte_ms is 0 or > total_ms, adjust it
+  const adjusted_first_byte_ms = Math.min(Math.max(first_byte_ms, 0), total_ms);
+
   // Use actual values or 0 for null segments
   const dns = dns_ms ?? 0;
   const connect = connect_ms ?? 0;
@@ -111,10 +123,10 @@ export function calculateWaterfallSegments(
 
   // Wait time is from connection established to first byte
   const connectionTime = dns + connect + tls;
-  const wait = first_byte_ms !== null ? Math.max(0, first_byte_ms - connectionTime) : 0;
+  const wait = Math.max(0, adjusted_first_byte_ms - connectionTime);
 
   // Download time is from first byte to completion
-  const download = first_byte_ms !== null ? Math.max(0, total_ms - first_byte_ms) : 0;
+  const download = Math.max(0, total_ms - adjusted_first_byte_ms);
 
   return { dns, connect, tls, wait, download };
 }

@@ -46,7 +46,7 @@ describe('calculateWaterfallSegments', () => {
     expect(calculateWaterfallSegments(timing)).toBeUndefined();
   });
 
-  it('handles null timing values gracefully', () => {
+  it('returns undefined when first_byte_ms is null (no meaningful segments)', () => {
     const timing = {
       total_ms: 150,
       dns_ms: null,
@@ -55,15 +55,9 @@ describe('calculateWaterfallSegments', () => {
       first_byte_ms: null,
     };
 
-    const segments = calculateWaterfallSegments(timing);
-
-    expect(segments).toEqual({
-      dns: 0,
-      connect: 0,
-      tls: 0,
-      wait: 0,
-      download: 0,
-    });
+    // Without first_byte_ms, we can't calculate wait time or download time
+    // So we return undefined to show the empty state
+    expect(calculateWaterfallSegments(timing)).toBeUndefined();
   });
 
   it('handles partial null values', () => {

@@ -124,6 +124,37 @@ pub async fn clear_request_history() -> Result<(), String> {
     HISTORY_STORAGE.clear_all().await
 }
 
+/// Set the log level at runtime.
+///
+/// Allows changing log levels via UI or MCP commands for debugging.
+/// Valid levels: "error", "warn", "info", "debug", "trace"
+///
+/// # Errors
+///
+/// Returns an error if the log level string is invalid.
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri commands require owned types
+pub fn set_log_level(level: String) -> Result<(), String> {
+    use crate::infrastructure::logging::set_log_level as set_level;
+    use tracing::Level;
+
+    let log_level = match level.to_lowercase().as_str() {
+        "error" => Level::ERROR,
+        "warn" => Level::WARN,
+        "info" => Level::INFO,
+        "debug" => Level::DEBUG,
+        "trace" => Level::TRACE,
+        _ => {
+            return Err(format!(
+                "Invalid log level: {level}. Must be one of: error, warn, info, debug, trace"
+            ));
+        }
+    };
+
+    set_level(log_level);
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -225,6 +256,58 @@ mod tests {
         assert!(
             result.is_err(),
             "Should error when deleting non-existent entry"
+        );
+    }
+
+    #[test]
+    fn test_set_log_level_valid_levels() {
+        use crate::infrastructure::logging::{get_log_level, init_logging};
+        use tracing::Level;
+
+        // Initialize logging
+        init_logging();
+
+        // Test all valid log levels via the Tauri command (which takes String)
+        let test_cases = vec![
+            ("error", Level::ERROR),
+            ("warn", Level::WARN),
+            ("info", Level::INFO),
+            ("debug", Level::DEBUG),
+            ("trace", Level::TRACE),
+            ("ERROR", Level::ERROR), // Test case insensitivity
+            ("WARN", Level::WARN),
+            ("DEBUG", Level::DEBUG),
+        ];
+
+        for (input, expected) in test_cases {
+            let result = set_log_level(input.to_string());
+            assert!(result.is_ok(), "Should accept valid log level: {input}");
+
+            // Verify the level was actually set
+            assert_eq!(
+                get_log_level(),
+                expected,
+                "Level should be set to {expected:?} for input {input}"
+            );
+        }
+
+        // Reset to INFO
+        let _ = set_log_level("info".to_string());
+    }
+
+    #[test]
+    fn test_set_log_level_invalid_level() {
+        let result = set_log_level("invalid".to_string());
+        assert!(result.is_err(), "Should reject invalid log level");
+
+        let error = result.unwrap_err();
+        assert!(
+            error.contains("Invalid log level"),
+            "Error message should mention invalid log level"
+        );
+        assert!(
+            error.contains("invalid"),
+            "Error message should include the invalid input"
         );
     }
 

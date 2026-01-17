@@ -18,9 +18,12 @@ import { isMacSync, getModifierKeyName } from '@/utils/platform';
 import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/utils/cn';
 import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
+import { ConsolePanel } from '../Console/ConsolePanel';
+import { PanelTabs, type PanelTabType } from './PanelTabs';
 import { globalEventBus } from '@/events/bus';
 import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';
+import { useHistoryStore } from '@/stores/useHistoryStore';
 
 interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -96,6 +99,10 @@ export const MainLayout = ({
   const [requestPaneSize, setRequestPaneSize] = useState(DEFAULT_SPLIT);
   const [isPaneDragging, setIsPaneDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Panel tab state
+  const [activeTab, setActiveTab] = useState<PanelTabType>('network');
+  const { entries } = useHistoryStore();
 
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -461,8 +468,21 @@ export const MainLayout = ({
           >
             {/* Left dock panel */}
             {panelPosition === 'left' && (
-              <DockablePanel title="Network History">
-                <NetworkHistoryPanel {...historyPanelProps} />
+              <DockablePanel
+                title="DevTools"
+                headerContent={
+                  <PanelTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    networkCount={entries.length}
+                  />
+                }
+              >
+                {activeTab === 'network' ? (
+                  <NetworkHistoryPanel {...historyPanelProps} />
+                ) : (
+                  <ConsolePanel />
+                )}
               </DockablePanel>
             )}
 
@@ -541,8 +561,21 @@ export const MainLayout = ({
 
             {/* Right dock panel */}
             {panelPosition === 'right' && (
-              <DockablePanel title="Network History">
-                <NetworkHistoryPanel {...historyPanelProps} />
+              <DockablePanel
+                title="DevTools"
+                headerContent={
+                  <PanelTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    networkCount={entries.length}
+                  />
+                }
+              >
+                {activeTab === 'network' ? (
+                  <NetworkHistoryPanel {...historyPanelProps} />
+                ) : (
+                  <ConsolePanel />
+                )}
               </DockablePanel>
             )}
           </div>
@@ -551,8 +584,21 @@ export const MainLayout = ({
 
       {/* Bottom dock panel - full width, outside sidebar/content container */}
       {panelPosition === 'bottom' && (
-        <DockablePanel title="Network History">
-          <NetworkHistoryPanel {...historyPanelProps} />
+        <DockablePanel
+          title="DevTools"
+          headerContent={
+            <PanelTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              networkCount={entries.length}
+            />
+          }
+        >
+          {activeTab === 'network' ? (
+            <NetworkHistoryPanel {...historyPanelProps} />
+          ) : (
+            <ConsolePanel />
+          )}
         </DockablePanel>
       )}
 
