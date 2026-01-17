@@ -18,6 +18,10 @@ test.describe('MainLayout', () => {
     // Verify main layout is present
     await expect(page.getByTestId('main-layout')).toBeVisible();
 
+    // Verify title bar is visible
+    await expect(page.getByTestId('titlebar')).toBeVisible();
+    await expect(page.getByText('runi')).toBeVisible();
+
     // Verify sidebar is visible by default
     await expect(page.getByTestId('sidebar')).toBeVisible();
 

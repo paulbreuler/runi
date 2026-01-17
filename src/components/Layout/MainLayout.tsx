@@ -10,6 +10,7 @@ import {
 } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
+import { TitleBar } from './TitleBar';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { isMacSync, getModifierKeyName } from '@/utils/platform';
@@ -301,6 +302,7 @@ export const MainLayout = ({
 
   return (
     <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
+      <TitleBar />
       <div className="flex flex-1 overflow-hidden gap-0">
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
