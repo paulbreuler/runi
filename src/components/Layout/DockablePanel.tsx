@@ -277,13 +277,12 @@ export const DockablePanel = ({
       e.currentTarget.releasePointerCapture(e.pointerId);
 
       const finalSize = dragCurrentSize.current;
-      const startSize = dragStartSize.current;
       const minSize = isHorizontal ? MIN_PANEL_SIZES.left : MIN_PANEL_SIZES.bottom;
       const maxSize = isHorizontal ? window.innerWidth * 0.5 : window.innerHeight * 0.6;
 
-      // Direction-based behavior: dragging smaller = collapse intent, dragging larger = resize
-      if (finalSize < startSize) {
-        // User dragged smaller → collapse with bounce-back animation
+      // Collapse only when dragged below minimum size, otherwise resize
+      if (finalSize < minSize) {
+        // User dragged below minimum → collapse with bounce-back animation
         setCollapsed(true);
         // Spring will animate to collapsed size via useEffect
       } else {

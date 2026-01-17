@@ -407,4 +407,89 @@ describe('DockablePanel', () => {
       expect(screen.getByRole('button', { name: /minimize|collapse/i })).toBeInTheDocument();
     });
   });
+
+  describe('resize behavior', () => {
+    it('allows shrinking panel without collapsing when staying above minimum', () => {
+      // Start with an expanded panel at 400px
+      usePanelStore.setState({
+        position: 'bottom',
+        isCollapsed: false,
+        sizes: { bottom: 400, left: 300, right: 300 },
+      });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div data-testid="panel-content">Content</div>
+        </DockablePanel>
+      );
+
+      const resizer = screen.getByTestId('panel-resizer');
+
+      // Simulate drag from 400px to 300px (shrinking but still above minimum 180px)
+      fireEvent.pointerDown(resizer, { clientY: 0 });
+      fireEvent.pointerMove(resizer, { clientY: 100 }); // Move down = shrink (delta = -100)
+      fireEvent.pointerUp(resizer, { clientY: 100 });
+
+      // Panel should NOT collapse - it should resize to 300px
+      expect(usePanelStore.getState().isCollapsed).toBe(false);
+      // Content should still be visible
+      expect(screen.getByTestId('panel-content')).toBeInTheDocument();
+    });
+
+    it('collapses panel when dragged below minimum size', () => {
+      // Start with an expanded panel at 200px (just above minimum 180px)
+      usePanelStore.setState({
+        position: 'bottom',
+        isCollapsed: false,
+        sizes: { bottom: 200, left: 300, right: 300 },
+      });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div data-testid="panel-content">Content</div>
+        </DockablePanel>
+      );
+
+      const resizer = screen.getByTestId('panel-resizer');
+
+      // Simulate drag that would result in size below minimum (200 - delta = below 180)
+      // Since bottom dock: drag down decreases height
+      // startPos=0, currentPos=100 means delta = 0 - 100 = -100
+      // finalSize = 200 + (-100) = 100 (below min 180)
+      fireEvent.pointerDown(resizer, { clientY: 0 });
+      fireEvent.pointerMove(resizer, { clientY: 100 }); // results in ~100px
+      fireEvent.pointerUp(resizer, { clientY: 100 });
+
+      // Panel SHOULD collapse when below minimum
+      expect(usePanelStore.getState().isCollapsed).toBe(true);
+    });
+
+    it('allows growing panel from current size', () => {
+      // Start with an expanded panel at 300px
+      usePanelStore.setState({
+        position: 'bottom',
+        isCollapsed: false,
+        sizes: { bottom: 300, left: 300, right: 300 },
+      });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div data-testid="panel-content">Content</div>
+        </DockablePanel>
+      );
+
+      const resizer = screen.getByTestId('panel-resizer');
+
+      // Simulate drag upward to grow (for bottom dock: drag up = grow)
+      // startPos=0, currentPos=-100 means delta = 0 - (-100) = 100
+      // finalSize = 300 + 100 = 400
+      fireEvent.pointerDown(resizer, { clientY: 0 });
+      fireEvent.pointerMove(resizer, { clientY: -100 }); // drag up = grow
+      fireEvent.pointerUp(resizer, { clientY: -100 });
+
+      // Panel should remain expanded and size should increase
+      expect(usePanelStore.getState().isCollapsed).toBe(false);
+      expect(usePanelStore.getState().sizes.bottom).toBe(400);
+    });
+  });
 });
