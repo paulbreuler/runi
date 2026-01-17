@@ -275,7 +275,6 @@ export const DockablePanel = ({
         return;
       }
       e.currentTarget.releasePointerCapture(e.pointerId);
-      setIsDragging(false);
 
       const finalSize = dragCurrentSize.current;
       const startSize = dragStartSize.current;
@@ -292,7 +291,8 @@ export const DockablePanel = ({
         const clampedSize = Math.max(minSize, Math.min(maxSize, finalSize));
         sizeSpring.set(clampedSize);
 
-        // If was collapsed, expand it
+        // If was collapsed, expand it - must happen BEFORE setIsDragging(false)
+        // so the useEffect sees the correct isCollapsed state when computing targetSize
         if (isCollapsed) {
           setCollapsed(false);
         }
@@ -306,6 +306,12 @@ export const DockablePanel = ({
           setSize('right', clampedSize);
         }
       }
+
+      // IMPORTANT: setIsDragging must be LAST to avoid race condition
+      // The useEffect reacts to isDragging change and sets sizeSpring to targetSize.
+      // If we call setIsDragging(false) before setCollapsed(false), the useEffect
+      // will see isCollapsed=true and reset the spring to collapsed size.
+      setIsDragging(false);
     },
     [isDragging, sizeSpring, position, setSize, setCollapsed, isCollapsed, isHorizontal]
   );
@@ -330,8 +336,9 @@ export const DockablePanel = ({
   // Get resizer position classes
   const getResizerClasses = (): string => {
     // When collapsed, resizer is part of the unified tray - no independent hover
+    // z-30 ensures resizer is above header (z-20) so it can receive pointer events
     const base = cn(
-      'absolute z-10 bg-transparent',
+      'absolute z-30 bg-transparent',
       !isCollapsed && 'hover:bg-border-default/50',
       isDragging && 'bg-border-default'
     );
@@ -573,8 +580,8 @@ export const DockablePanel = ({
               data-testid="panel-header"
               className="flex items-center justify-between h-8 px-3 border-b border-border-default shrink-0 relative z-20"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-text-primary">{title}</span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-sm font-medium text-text-primary truncate">{title}</span>
               </div>
 
               <div className="flex items-center gap-1">
