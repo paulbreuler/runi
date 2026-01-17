@@ -10,11 +10,14 @@ import {
 } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
+import { DockablePanel } from './DockablePanel';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { usePanelStore } from '@/stores/usePanelStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { isMacSync, getModifierKeyName } from '@/utils/platform';
 import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/utils/cn';
+import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
 
 interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -78,6 +81,7 @@ export const MainLayout = ({
   initialSidebarVisible = true,
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useSettingsStore();
+  const { toggleVisibility: togglePanel } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
 
@@ -107,6 +111,14 @@ export const MainLayout = ({
     modifier: isMacSync() ? 'meta' : 'ctrl',
     handler: toggleSidebar,
     description: `${getModifierKeyName()}B - Toggle sidebar`,
+  });
+
+  // DevTools panel toggle: Cmd+Shift+I (Mac) or Ctrl+Shift+I (Windows/Linux)
+  useKeyboardShortcuts({
+    key: 'i',
+    modifier: isMacSync() ? ['meta', 'shift'] : ['ctrl', 'shift'],
+    handler: togglePanel,
+    description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
   });
 
   // Pane split ratio as MotionValue (0-1)
@@ -394,78 +406,93 @@ export const MainLayout = ({
             )}
           </div>
 
-          <LayoutGroup>
-            <motion.div
-              ref={containerRef}
-              className="flex-1 overflow-hidden flex relative"
-              data-testid="pane-container"
-              style={{ scrollbarGutter: 'stable' }}
-              layout
-              transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
-            >
+          {/* Content area with panes and dockable panel */}
+          <div className="flex flex-col flex-1 overflow-hidden" data-testid="content-area">
+            <LayoutGroup>
               <motion.div
-                layout={!isPaneDragging}
-                className="h-full overflow-hidden shrink-0 border-r border-border-default"
-                data-testid="request-pane"
-                style={{
-                  width: requestWidth,
-                  scrollbarGutter: 'stable',
-                }}
-                transition={
-                  isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
-                }
+                ref={containerRef}
+                className="flex-1 overflow-hidden flex relative"
+                data-testid="pane-container"
+                style={{ scrollbarGutter: 'stable' }}
+                layout
+                transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
               >
-                {requestContent !== undefined ? (
-                  requestContent
-                ) : (
-                  <div className="h-full p-4 text-text-secondary flex items-center justify-center">
-                    Request Builder (placeholder - will be built in Run 2B)
-                  </div>
-                )}
-              </motion.div>
+                <motion.div
+                  layout={!isPaneDragging}
+                  className="h-full overflow-hidden shrink-0 border-r border-border-default"
+                  data-testid="request-pane"
+                  style={{
+                    width: requestWidth,
+                    scrollbarGutter: 'stable',
+                  }}
+                  transition={
+                    isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+                  }
+                >
+                  {requestContent !== undefined ? (
+                    requestContent
+                  ) : (
+                    <div className="h-full p-4 text-text-secondary flex items-center justify-center">
+                      Request Builder (placeholder - will be built in Run 2B)
+                    </div>
+                  )}
+                </motion.div>
 
-              <motion.div
-                layout={!isPaneDragging}
-                className="h-full overflow-hidden flex-1"
-                data-testid="response-pane"
-                style={{
-                  width: responseWidth,
-                  scrollbarGutter: 'stable',
-                }}
-                transition={
-                  isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
-                }
-              >
-                {responseContent !== undefined ? (
-                  responseContent
-                ) : (
-                  <div className="h-full p-4 text-text-secondary flex items-center justify-center">
-                    Response Viewer (placeholder - will be built in Run 2C)
-                  </div>
-                )}
-              </motion.div>
+                <motion.div
+                  layout={!isPaneDragging}
+                  className="h-full overflow-hidden flex-1"
+                  data-testid="response-pane"
+                  style={{
+                    width: responseWidth,
+                    scrollbarGutter: 'stable',
+                  }}
+                  transition={
+                    isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+                  }
+                >
+                  {responseContent !== undefined ? (
+                    responseContent
+                  ) : (
+                    <div className="h-full p-4 text-text-secondary flex items-center justify-center">
+                      Response Viewer (placeholder - will be built in Run 2C)
+                    </div>
+                  )}
+                </motion.div>
 
-              {/* Pane sash */}
-              <motion.div
-                className={getSashClasses('left', isPaneDragging)}
-                data-testid="pane-resizer"
-                style={{
-                  left: resizerLeft,
-                  transform: 'translateX(-50%)',
+                {/* Pane sash */}
+                <motion.div
+                  className={getSashClasses('left', isPaneDragging)}
+                  data-testid="pane-resizer"
+                  style={{
+                    left: resizerLeft,
+                    transform: 'translateX(-50%)',
+                  }}
+                  onPointerDown={handlePanePointerDown}
+                  onPointerMove={handlePanePointerMove}
+                  onPointerUp={handlePanePointerUp}
+                  onPointerCancel={handlePanePointerUp}
+                  role="separator"
+                  aria-label="Resize panes"
+                  aria-orientation="vertical"
+                  aria-valuenow={requestPaneSize}
+                  aria-valuemin={MIN_PANE_SIZE}
+                  aria-valuemax={MAX_PANE_SIZE}
+                />
+              </motion.div>
+            </LayoutGroup>
+
+            {/* DevTools Panel (bottom dock) */}
+            <DockablePanel title="Network History">
+              <NetworkHistoryPanel
+                onReplay={() => {
+                  // TODO: Wire up replay functionality
                 }}
-                onPointerDown={handlePanePointerDown}
-                onPointerMove={handlePanePointerMove}
-                onPointerUp={handlePanePointerUp}
-                onPointerCancel={handlePanePointerUp}
-                role="separator"
-                aria-label="Resize panes"
-                aria-orientation="vertical"
-                aria-valuenow={requestPaneSize}
-                aria-valuemin={MIN_PANE_SIZE}
-                aria-valuemax={MAX_PANE_SIZE}
+                onCopyCurl={() => {
+                  // TODO: Wire up copy as cURL functionality
+                }}
               />
-            </motion.div>
-          </LayoutGroup>
+            </DockablePanel>
+          </div>
         </div>
       </div>
       <StatusBar />

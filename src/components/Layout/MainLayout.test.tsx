@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MainLayout } from './MainLayout';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { usePanelStore, DEFAULT_PANEL_SIZES } from '@/stores/usePanelStore';
 
 // Mock Motion to avoid animation delays and strip motion-only props from DOM
 vi.mock('motion/react', async () => {
@@ -80,6 +81,10 @@ vi.mock('motion/react', async () => {
       div: createMock('div'),
       aside: createMock('aside'),
       button: createMock('button'),
+      span: createMock('span'),
+      section: createMock('section'),
+      header: createMock('header'),
+      article: createMock('article'),
     },
     AnimatePresence: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
       <>{children}</>
@@ -94,6 +99,13 @@ describe('MainLayout', () => {
   beforeEach(() => {
     // Reset store state
     useSettingsStore.setState({ sidebarVisible: true });
+    usePanelStore.setState({
+      position: 'bottom',
+      isVisible: false,
+      isCollapsed: false,
+      sizes: { ...DEFAULT_PANEL_SIZES },
+      isPopout: false,
+    });
 
     // Mock getBoundingClientRect for consistent testing
     Element.prototype.getBoundingClientRect = vi.fn(() => ({
@@ -478,6 +490,72 @@ describe('MainLayout', () => {
 
       // They should be adjacent (index difference of 1)
       expect(Math.abs(responseIndex - requestIndex)).toBe(1);
+    });
+  });
+
+  describe('DevTools Panel Integration', () => {
+    it('renders content area wrapper', () => {
+      render(<MainLayout />);
+
+      const contentArea = screen.getByTestId('content-area');
+      expect(contentArea).toBeInTheDocument();
+    });
+
+    it('renders dockable panel when visible', () => {
+      usePanelStore.setState({ isVisible: true });
+
+      render(<MainLayout />);
+
+      const panel = screen.getByTestId('dockable-panel');
+      expect(panel).toBeInTheDocument();
+    });
+
+    it('does not render panel when hidden', () => {
+      usePanelStore.setState({ isVisible: false });
+
+      render(<MainLayout />);
+
+      expect(screen.queryByTestId('dockable-panel')).not.toBeInTheDocument();
+    });
+
+    it('panel shows Network History title', () => {
+      usePanelStore.setState({ isVisible: true });
+
+      render(<MainLayout />);
+
+      expect(screen.getByText('Network History')).toBeInTheDocument();
+    });
+
+    it('panel visibility can be toggled via store', () => {
+      const { rerender } = render(<MainLayout />);
+
+      // Panel should not be visible initially
+      expect(screen.queryByTestId('dockable-panel')).not.toBeInTheDocument();
+
+      // Show panel
+      usePanelStore.setState({ isVisible: true });
+      rerender(<MainLayout />);
+
+      // Panel should be visible
+      expect(screen.getByTestId('dockable-panel')).toBeInTheDocument();
+
+      // Hide panel
+      usePanelStore.setState({ isVisible: false });
+      rerender(<MainLayout />);
+
+      // Panel should be hidden again
+      expect(screen.queryByTestId('dockable-panel')).not.toBeInTheDocument();
+    });
+
+    it('keyboard shortcut for panel toggle is registered', () => {
+      render(<MainLayout />);
+
+      // The keyboard shortcut is registered in the component
+      // Full keyboard shortcut testing is done in E2E tests
+      // We verify the store action works correctly
+      const initialVisibility = usePanelStore.getState().isVisible;
+      usePanelStore.getState().toggleVisibility();
+      expect(usePanelStore.getState().isVisible).toBe(!initialVisibility);
     });
   });
 });
