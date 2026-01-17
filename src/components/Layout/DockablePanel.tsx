@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { motion, AnimatePresence, useReducedMotion, useSpring } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';
 import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores/usePanelStore';
 import { DockControls } from './DockControls';
@@ -21,8 +21,85 @@ const panelSpring = {
   mass: 0.8,
 };
 
+// Tray spring - snappy but not bouncy (100ms feel)
+const trayTransition = {
+  type: 'spring' as const,
+  stiffness: 400,
+  damping: 30,
+};
+
 // Collapsed size for horizontal docks (left/right) - 28px for "book page edge" feel
 const COLLAPSED_PANEL_WIDTH = 28;
+
+// ============================================================================
+// Tray Variants - Unified Material Feel
+// Per DESIGN_IDEOLOGY.md: "Components should feel like unified materials"
+// All state changes orchestrated through variants, not separate animations
+// ============================================================================
+
+// Bottom tray container variants - orchestrates background, shadow, position
+const trayVariantsBottom = {
+  rest: {
+    y: 0,
+    backgroundColor: 'var(--color-bg-surface)',
+    boxShadow: '0 0 0 0 rgba(0,0,0,0)',
+  },
+  hover: {
+    y: -2, // Slight lift suggests "pulling toward content"
+    backgroundColor: 'var(--color-bg-elevated)',
+    boxShadow: '0 -4px 12px -4px rgba(0,0,0,0.15)',
+  },
+  dragging: {
+    y: 0,
+    backgroundColor: 'var(--color-bg-elevated)',
+    boxShadow: '0 -4px 12px -4px rgba(0,0,0,0.2)',
+  },
+};
+
+// Left tray container variants - nudges right toward content
+const trayVariantsLeft = {
+  rest: {
+    x: 0,
+    backgroundColor: 'var(--color-bg-surface)',
+    boxShadow: '0 0 0 0 rgba(0,0,0,0)',
+  },
+  hover: {
+    x: 2, // Nudge toward content (right)
+    backgroundColor: 'var(--color-bg-elevated)',
+    boxShadow: '4px 0 12px -4px rgba(0,0,0,0.15)',
+  },
+  dragging: {
+    x: 0,
+    backgroundColor: 'var(--color-bg-elevated)',
+    boxShadow: '4px 0 12px -4px rgba(0,0,0,0.2)',
+  },
+};
+
+// Right tray container variants - nudges left toward content
+const trayVariantsRight = {
+  rest: {
+    x: 0,
+    backgroundColor: 'var(--color-bg-surface)',
+    boxShadow: '0 0 0 0 rgba(0,0,0,0)',
+  },
+  hover: {
+    x: -2, // Nudge toward content (left)
+    backgroundColor: 'var(--color-bg-elevated)',
+    boxShadow: '-4px 0 12px -4px rgba(0,0,0,0.15)',
+  },
+  dragging: {
+    x: 0,
+    backgroundColor: 'var(--color-bg-elevated)',
+    boxShadow: '-4px 0 12px -4px rgba(0,0,0,0.2)',
+  },
+};
+
+// Content variants - inherits state from parent via variant prop
+const trayContentVariants = {
+  rest: { opacity: 0.4 },
+  hover: { opacity: 0.7 },
+  dragging: { opacity: 0.7 }, // Will be overridden by useTransform during drag
+};
 
 /**
  * DockablePanel - A DevTools-style panel that can dock to different positions.
@@ -48,7 +125,19 @@ export const DockablePanel = ({
 
   const prefersReducedMotion = useReducedMotion() === true;
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false); // Unified hover for collapsed tray
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Compute current variant based on state - used for orchestrated animations
+  const getTrayVariant = (): 'rest' | 'hover' | 'dragging' => {
+    if (isDragging) {
+      return 'dragging';
+    }
+    if (isHovered) {
+      return 'hover';
+    }
+    return 'rest';
+  };
   const dragStartPos = useRef(0);
   const dragStartSize = useRef(0);
   const dragCurrentSize = useRef(0); // Track actual drag position (spring lags behind)
@@ -84,6 +173,12 @@ export const DockablePanel = ({
 
   // Size animation using spring
   const sizeSpring = useSpring(targetSize, prefersReducedMotion ? { duration: 0 } : panelSpring);
+
+  // Content opacity based on size - fades out as panel expands during drag
+  // When collapsed (28px bottom, 28px sides), content is visible
+  // As user drags to expand, content fades out smoothly
+  const collapsedSize = isHorizontal ? COLLAPSED_PANEL_WIDTH : COLLAPSED_PANEL_HEIGHT;
+  const contentOpacity = useTransform(sizeSpring, [collapsedSize, collapsedSize + 20], [0.4, 0]);
 
   // Update spring target when size changes
   useEffect(() => {
@@ -234,8 +329,10 @@ export const DockablePanel = ({
 
   // Get resizer position classes
   const getResizerClasses = (): string => {
+    // When collapsed, resizer is part of the unified tray - no independent hover
     const base = cn(
-      'absolute z-10 bg-transparent hover:bg-border-default/50',
+      'absolute z-10 bg-transparent',
+      !isCollapsed && 'hover:bg-border-default/50',
       isDragging && 'bg-border-default'
     );
 
@@ -283,6 +380,7 @@ export const DockablePanel = ({
         data-testid="dockable-panel"
         className={cn(
           getPanelClasses(),
+          isCollapsed && 'overflow-visible',
           isCollapsed && isHorizontal && 'cursor-pointer',
           className
         )}
@@ -309,52 +407,161 @@ export const DockablePanel = ({
           onPointerCancel={handlePointerUp}
           onClick={handleResizerClick}
           onDoubleClick={handleDoubleClick}
+          onMouseEnter={
+            isCollapsed
+              ? (): void => {
+                  setIsHovered(true);
+                }
+              : undefined
+          }
+          onMouseLeave={
+            isCollapsed
+              ? (): void => {
+                  setIsHovered(false);
+                }
+              : undefined
+          }
         />
 
-        {/* Collapsed state - "Tray" design with grip icon and label */}
+        {/* Collapsed state - Unified pull tab for bottom dock */}
         {isCollapsed && position === 'bottom' && (
           <motion.div
             data-testid="panel-collapsed-edge"
             className={cn(
-              'flex items-center justify-center gap-2 cursor-pointer transition-colors',
-              'text-text-muted hover:text-text-secondary hover:bg-bg-elevated/30',
-              'w-full h-full'
+              'absolute inset-x-0 top-0 h-full',
+              'border-t border-border-default',
+              'flex items-center justify-center',
+              isDragging ? 'cursor-row-resize' : 'cursor-pointer'
             )}
-            onClick={() => {
-              setCollapsed(false);
+            variants={trayVariantsBottom}
+            animate={getTrayVariant()}
+            transition={trayTransition}
+            onMouseEnter={(): void => {
+              setIsHovered(true);
             }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            aria-label="Expand Tray"
+            onMouseLeave={(): void => {
+              setIsHovered(false);
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onClick={(): void => {
+              if (!isDragging) {
+                setCollapsed(false);
+              }
+            }}
+            aria-label="Expand Tray (click or drag)"
           >
-            <GripHorizontal size={14} className="opacity-60" />
-            <span className="text-[10px] font-medium tracking-wide uppercase">Tray</span>
+            {/* Content - inherits variant from parent, fades during drag */}
+            <motion.div
+              className="flex items-center gap-1.5 select-none text-text-muted"
+              variants={trayContentVariants}
+              animate={getTrayVariant()}
+              transition={trayTransition}
+              style={isDragging ? { opacity: contentOpacity } : undefined}
+            >
+              <GripHorizontal size={14} />
+              <span className="text-[11px] font-medium tracking-wide uppercase">Tray</span>
+            </motion.div>
           </motion.div>
         )}
 
-        {/* Collapsed state for left/right docks */}
-        {isCollapsed && isHorizontal && (
+        {/* Collapsed state - Unified pull tab for left dock */}
+        {isCollapsed && position === 'left' && (
           <motion.div
             data-testid="panel-collapsed-edge"
             className={cn(
-              'flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors',
-              'text-text-muted hover:text-text-secondary hover:bg-bg-elevated/30',
-              'w-full h-full'
+              'absolute inset-y-0 left-0 w-full',
+              'border-r border-border-default',
+              'flex flex-col items-center justify-center',
+              isDragging ? 'cursor-col-resize' : 'cursor-pointer'
             )}
-            onClick={() => {
-              setCollapsed(false);
+            variants={trayVariantsLeft}
+            animate={getTrayVariant()}
+            transition={trayTransition}
+            onMouseEnter={(): void => {
+              setIsHovered(true);
             }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            aria-label="Expand Tray"
+            onMouseLeave={(): void => {
+              setIsHovered(false);
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onClick={(): void => {
+              if (!isDragging) {
+                setCollapsed(false);
+              }
+            }}
+            aria-label="Expand Tray (click or drag)"
           >
-            <GripVertical size={14} className="opacity-60" />
-            <span
-              className="text-[10px] font-medium tracking-wide uppercase"
-              style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+            {/* Content - inherits variant from parent, fades during drag */}
+            <motion.div
+              className="flex flex-col items-center gap-1.5 select-none text-text-muted"
+              variants={trayContentVariants}
+              animate={getTrayVariant()}
+              transition={trayTransition}
+              style={isDragging ? { opacity: contentOpacity } : undefined}
             >
-              Tray
-            </span>
+              <GripVertical size={14} />
+              <span
+                className="text-[11px] font-medium tracking-wide uppercase"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                Tray
+              </span>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Collapsed state - Unified pull tab for right dock */}
+        {isCollapsed && position === 'right' && (
+          <motion.div
+            data-testid="panel-collapsed-edge"
+            className={cn(
+              'absolute inset-y-0 right-0 w-full',
+              'border-l border-border-default',
+              'flex flex-col items-center justify-center',
+              isDragging ? 'cursor-col-resize' : 'cursor-pointer'
+            )}
+            variants={trayVariantsRight}
+            animate={getTrayVariant()}
+            transition={trayTransition}
+            onMouseEnter={(): void => {
+              setIsHovered(true);
+            }}
+            onMouseLeave={(): void => {
+              setIsHovered(false);
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onClick={(): void => {
+              if (!isDragging) {
+                setCollapsed(false);
+              }
+            }}
+            aria-label="Expand Tray (click or drag)"
+          >
+            {/* Content - inherits variant from parent, fades during drag */}
+            <motion.div
+              className="flex flex-col items-center gap-1.5 select-none text-text-muted"
+              variants={trayContentVariants}
+              animate={getTrayVariant()}
+              transition={trayTransition}
+              style={isDragging ? { opacity: contentOpacity } : undefined}
+            >
+              <GripVertical size={14} />
+              <span
+                className="text-[11px] font-medium tracking-wide uppercase"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                Tray
+              </span>
+            </motion.div>
           </motion.div>
         )}
 
