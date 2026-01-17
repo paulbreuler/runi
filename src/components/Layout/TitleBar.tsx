@@ -108,9 +108,9 @@ export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX
   return (
     <div
       className={cn(
-        // Height matches macOS title bar (~28px) with overlay style
-        'h-7 border-b border-border-subtle bg-bg-surface/80 backdrop-blur-sm flex items-center relative',
-        'text-xs text-text-secondary select-none',
+        // Height matches standard title bar height (~48px) with overlay style
+        'h-12 border-b border-border-subtle bg-bg-surface/80 backdrop-blur-sm flex items-center relative',
+        'text-sm text-text-secondary select-none',
         // Windows/Linux: Controls on right, so add left padding
         !isMac && 'pl-4'
       )}
