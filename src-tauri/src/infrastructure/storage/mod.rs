@@ -2,6 +2,7 @@
 
 pub mod file_storage;
 pub mod history;
+pub mod memory_storage;
 pub mod traits;
 
 use std::path::{Path, PathBuf};
@@ -13,6 +14,7 @@ use std::path::{Path, PathBuf};
 /// # Errors
 ///
 /// Returns an error if the user's home/data directory cannot be determined.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub fn get_data_dir() -> Result<PathBuf, String> {
     dirs::data_dir()
         .ok_or_else(|| "Unable to determine data directory".to_string())
@@ -29,6 +31,7 @@ pub fn get_data_dir() -> Result<PathBuf, String> {
 /// # Errors
 ///
 /// Returns an error if the data directory cannot be determined.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub fn get_history_dir() -> Result<PathBuf, String> {
     get_data_dir().map(|mut path| {
         path.push("history");
@@ -41,6 +44,7 @@ pub fn get_history_dir() -> Result<PathBuf, String> {
 /// # Errors
 ///
 /// Returns an error if the directory cannot be created.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub async fn ensure_dir_exists(path: &Path) -> Result<(), String> {
     if path.exists() {
         if !path.is_dir() {

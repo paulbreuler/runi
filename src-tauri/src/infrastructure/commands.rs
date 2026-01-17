@@ -3,19 +3,21 @@
 use crate::application::proxy_service::ProxyService;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::models::HelloWorldResponse;
-use crate::infrastructure::storage::file_storage::FileHistoryStorage;
 use crate::infrastructure::storage::history::HistoryEntry;
+use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use tokio::sync::Mutex;
 
-/// Global history storage instance (file-based by default).
+/// Global history storage instance (in-memory by default).
 ///
-/// This can be swapped for other implementations (e.g., Neo4j) via feature flags
-/// or configuration in the future.
-/// Uses `once_cell` instead of `std::sync::LazyLock` for cross-platform compatibility.
-static HISTORY_STORAGE: once_cell::sync::Lazy<Arc<FileHistoryStorage>> =
-    once_cell::sync::Lazy::new(|| Arc::new(FileHistoryStorage::new()));
+/// History lives only for the session duration (Burp Suite behavior). This is more
+/// secure as sensitive data (auth tokens, API keys) isn't persisted to disk.
+///
+/// This can be swapped for other implementations (e.g., `FileHistoryStorage`, Neo4j)
+/// via feature flags or configuration in the future.
+static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
+    LazyLock::new(|| Arc::new(MemoryHistoryStorage::new()));
 
 /// Initialize the proxy service
 pub fn create_proxy_service() -> Arc<Mutex<ProxyService>> {
@@ -253,8 +255,9 @@ mod tests {
         let result = clear_request_history().await;
         assert!(result.is_ok(), "Should clear history");
 
-        // Verify they're gone (note: this test might fail if other tests ran and created entries
-        // In a real scenario, we'd use a test-specific directory)
+        // Note: Test isolation is limited because we use the global HISTORY_STORAGE.
+        // Tests may see entries from other tests or real usage. A future refactor
+        // should introduce dependency injection or test-specific directories.
         let _entries = load_request_history(Some(10)).await.unwrap();
     }
 }

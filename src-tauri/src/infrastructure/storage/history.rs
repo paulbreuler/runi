@@ -69,6 +69,7 @@ impl HistoryEntry {
 /// # Errors
 ///
 /// Returns an error if the history directory cannot be created or the file cannot be written.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub async fn save_history_entry(entry: &HistoryEntry) -> Result<PathBuf, String> {
     use super::{ensure_dir_exists, get_history_dir};
 
@@ -93,6 +94,7 @@ pub async fn save_history_entry(entry: &HistoryEntry) -> Result<PathBuf, String>
 /// # Errors
 ///
 /// Returns an error if the file cannot be read or parsed.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub async fn load_history_entry(path: &Path) -> Result<HistoryEntry, String> {
     let content = tokio::fs::read_to_string(path)
         .await
@@ -109,6 +111,7 @@ pub async fn load_history_entry(path: &Path) -> Result<HistoryEntry, String> {
 /// # Errors
 ///
 /// Returns an error if the history directory cannot be accessed.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub async fn list_history_entries() -> Result<Vec<PathBuf>, String> {
     use super::get_history_dir;
 
@@ -160,6 +163,7 @@ pub async fn list_history_entries() -> Result<Vec<PathBuf>, String> {
 ///
 /// Returns an error if the history directory cannot be accessed or entries cannot be loaded.
 /// Individual entry errors are logged but do not stop the entire operation.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub async fn load_history_entries(limit: Option<usize>) -> Result<Vec<HistoryEntry>, String> {
     let paths = list_history_entries().await?;
 
@@ -192,6 +196,7 @@ pub async fn load_history_entries(limit: Option<usize>) -> Result<Vec<HistoryEnt
 /// # Errors
 ///
 /// Returns an error if the history entry cannot be found or deleted.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub async fn delete_history_entry_by_id(id: &str) -> Result<(), String> {
     let paths = list_history_entries().await?;
 
@@ -231,6 +236,7 @@ pub async fn delete_history_entry(path: &Path) -> Result<(), String> {
 /// # Errors
 ///
 /// Returns an error if the history directory cannot be accessed or cleared.
+#[allow(dead_code)] // Used by file storage, retained for future export feature
 pub async fn clear_history() -> Result<(), String> {
     use super::get_history_dir;
 
@@ -257,8 +263,7 @@ pub async fn clear_history() -> Result<(), String> {
 
     if failed_deletions > 0 {
         Err(format!(
-            "Failed to delete {} history file(s)",
-            failed_deletions
+            "Failed to delete {failed_deletions} history file(s)"
         ))
     } else {
         Ok(())

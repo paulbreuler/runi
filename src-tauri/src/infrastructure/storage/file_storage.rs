@@ -1,4 +1,8 @@
-// File-based storage implementation for history
+//! File-based storage implementation for history.
+//!
+//! This module is retained for future "export history" feature.
+//! Currently, the application uses in-memory storage by default.
+#![allow(dead_code)]
 
 use crate::infrastructure::storage::history::{
     HistoryEntry, clear_history, delete_history_entry_by_id, load_history_entries,
