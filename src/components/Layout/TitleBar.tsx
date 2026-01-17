@@ -1,22 +1,40 @@
-import React from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import React, { useMemo } from 'react';
+import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 import { Minimize2, Maximize2, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
+// Width of macOS traffic light controls: gap-2 (8px) + px-4 padding (32px) + 3 buttons @ w-3 (36px) = 76px
+// Using 72px to match visual balance with title bar content
+const MACOS_CONTROLS_WIDTH = 72;
+
 const TitleBarControls = (): React.JSX.Element => {
-  const handleMinimize = async (): Promise<void> => {
+  // Cache window instance to avoid repeated getCurrentWindow() calls
+  const appWindow = useMemo<Window | null>(() => {
     try {
-      const appWindow = getCurrentWindow();
+      return getCurrentWindow();
+    } catch {
+      // Not in Tauri context
+      return null;
+    }
+  }, []);
+
+  const handleMinimize = async (): Promise<void> => {
+    if (appWindow === null) {
+      return;
+    }
+    try {
       await appWindow.minimize();
     } catch {
-      // Ignore if not in Tauri context
+      // Ignore errors
     }
   };
 
   const handleMaximize = async (): Promise<void> => {
+    if (appWindow === null) {
+      return;
+    }
     try {
-      const appWindow = getCurrentWindow();
       const isMaximized = await appWindow.isMaximized();
       if (isMaximized) {
         await appWindow.unmaximize();
@@ -24,16 +42,18 @@ const TitleBarControls = (): React.JSX.Element => {
         await appWindow.maximize();
       }
     } catch {
-      // Ignore if not in Tauri context
+      // Ignore errors
     }
   };
 
   const handleClose = async (): Promise<void> => {
+    if (appWindow === null) {
+      return;
+    }
     try {
-      const appWindow = getCurrentWindow();
       await appWindow.close();
     } catch {
-      // Ignore if not in Tauri context
+      // Ignore errors
     }
   };
 
@@ -124,7 +144,8 @@ export const TitleBar = ({ title = 'Runi', children }: TitleBarProps): React.JSX
           <div className="flex-1 flex items-center justify-center" data-tauri-drag-region>
             {children ?? <span className="font-medium">{title}</span>}
           </div>
-          <div className="w-[72px]" /> {/* Spacer to balance macOS controls */}
+          <div style={{ width: `${MACOS_CONTROLS_WIDTH.toString()}px` }} />{' '}
+          {/* Spacer to balance macOS controls */}
         </>
       ) : (
         <>
