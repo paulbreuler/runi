@@ -3,6 +3,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { NetworkHistoryRow } from './NetworkHistoryRow';
 import type { NetworkHistoryEntry } from '@/types/history';
 
+// Mock useReducedMotion to disable animations in tests
+vi.mock('motion/react', async () => {
+  const actual = await vi.importActual('motion/react');
+  return {
+    ...actual,
+    useReducedMotion: (): boolean => true,
+  };
+});
+
 describe('NetworkHistoryRow', () => {
   const mockEntry: NetworkHistoryEntry = {
     id: 'hist_test123',
@@ -167,5 +176,60 @@ describe('NetworkHistoryRow', () => {
     };
     render(<NetworkHistoryRow {...defaultProps} entry={entryWithDrift} />);
     expect(screen.getByTestId('signal-dot-drift')).toBeInTheDocument();
+  });
+
+  describe('timing waterfall', () => {
+    it('displays timing segments when timing data is present', () => {
+      render(<NetworkHistoryRow {...defaultProps} isExpanded={true} />);
+
+      // Verify waterfall segments have non-zero widths
+      const dnsSegment = screen.getByTestId('timing-dns');
+      const connectSegment = screen.getByTestId('timing-connect');
+      const tlsSegment = screen.getByTestId('timing-tls');
+      const waitSegment = screen.getByTestId('timing-wait');
+      const downloadSegment = screen.getByTestId('timing-download');
+
+      // mockEntry has: dns=10, connect=20, tls=30, first_byte=100, total=150
+      // So segments should be: dns=10, connect=20, tls=30, wait=40 (100-60), download=50 (150-100)
+      // All should have non-zero width percentages
+      expect(dnsSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
+      expect(connectSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
+      expect(tlsSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
+      expect(waitSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
+      expect(downloadSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
+    });
+
+    it('displays empty waterfall when timing data has null values', () => {
+      const entryWithNullTiming: NetworkHistoryEntry = {
+        ...mockEntry,
+        response: {
+          ...mockEntry.response,
+          timing: {
+            total_ms: 150,
+            dns_ms: null,
+            connect_ms: null,
+            tls_ms: null,
+            first_byte_ms: null,
+          },
+        },
+      };
+      render(<NetworkHistoryRow {...defaultProps} entry={entryWithNullTiming} isExpanded={true} />);
+
+      // With all null values, segments should be 0
+      const dnsSegment = screen.getByTestId('timing-dns');
+      expect(dnsSegment).toHaveStyle({ width: '0%' });
+    });
+
+    it('shows timing legend with ms values when expanded', () => {
+      render(<NetworkHistoryRow {...defaultProps} isExpanded={true} />);
+
+      // Legend should show timing breakdown
+      expect(screen.getByText('DNS')).toBeInTheDocument();
+      expect(screen.getByText('10ms')).toBeInTheDocument();
+      expect(screen.getByText('Connect')).toBeInTheDocument();
+      expect(screen.getByText('20ms')).toBeInTheDocument();
+      expect(screen.getByText('TLS')).toBeInTheDocument();
+      expect(screen.getByText('30ms')).toBeInTheDocument();
+    });
   });
 });
