@@ -19,7 +19,7 @@
         "minimizable": true,
         "maximizable": true,
         "closable": true,
-        "decorations": true,
+        "decorations": false,
         "transparent": false,
         "alwaysOnTop": false,
         "skipTaskbar": false,

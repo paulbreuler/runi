@@ -24,6 +24,7 @@ export type EventType =
   | 'response.error'
   | 'sidebar.toggled'
   | 'sidebar.visible-changed'
+  | 'history.entry-selected'
   | 'ai.suggestion-requested'
   | 'ai.suggestion-available'
   | 'ai.error-analysis'

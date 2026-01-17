@@ -2,3 +2,4 @@
 
 pub mod commands;
 pub mod http;
+pub mod storage;
