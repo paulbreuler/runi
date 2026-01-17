@@ -1,4 +1,4 @@
-import { ChevronRight, Copy, Play } from 'lucide-react';
+import { ChevronRight, Copy, Play, Check } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { type HttpMethod } from '@/utils/http-colors';
@@ -23,6 +23,12 @@ interface NetworkHistoryRowProps {
   onReplay: (entry: NetworkHistoryEntry) => void;
   /** Copy as cURL command */
   onCopyCurl: (entry: NetworkHistoryEntry) => void;
+  /** Whether compare mode is active */
+  compareMode?: boolean;
+  /** Whether this row is selected for comparison */
+  isCompareSelected?: boolean;
+  /** Toggle this row's compare selection */
+  onToggleCompare?: (id: string) => void;
 }
 
 const methodColors: Record<string, string> = {
@@ -83,6 +89,9 @@ export const NetworkHistoryRow = ({
   onSelect,
   onReplay,
   onCopyCurl,
+  compareMode = false,
+  isCompareSelected = false,
+  onToggleCompare,
 }: NetworkHistoryRowProps): React.JSX.Element => {
   const shouldReduceMotion = useReducedMotion();
   const method = entry.request.method.toUpperCase() as HttpMethod;
@@ -98,11 +107,19 @@ export const NetworkHistoryRow = ({
     shouldReduceMotion === true ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' as const };
 
   const handleRowClick = (e: React.MouseEvent): void => {
-    // Don't select if clicking on buttons
+    // Don't select if clicking on buttons or checkboxes
     if ((e.target as HTMLElement).closest('button') !== null) {
       return;
     }
+    if ((e.target as HTMLElement).closest('[data-testid="compare-checkbox"]') !== null) {
+      return;
+    }
     onSelect(entry.id);
+  };
+
+  const handleCompareToggle = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    onToggleCompare?.(entry.id);
   };
 
   const handleExpandClick = (e: React.MouseEvent): void => {
@@ -131,6 +148,25 @@ export const NetworkHistoryRow = ({
           isSelected ? 'bg-bg-raised' : 'hover:bg-bg-raised/50'
         )}
       >
+        {/* Compare checkbox - only shown in compare mode */}
+        {compareMode && (
+          <div
+            data-testid="compare-checkbox"
+            onClick={handleCompareToggle}
+            className={cn(
+              'w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer shrink-0 transition-colors',
+              isCompareSelected
+                ? 'border-signal-ai bg-signal-ai'
+                : 'border-border-emphasis bg-transparent hover:border-signal-ai/50'
+            )}
+            role="checkbox"
+            aria-checked={isCompareSelected}
+            aria-label="Select for comparison"
+          >
+            {isCompareSelected && <Check size={10} className="text-white" />}
+          </div>
+        )}
+
         {/* Expand chevron */}
         <button
           data-testid="expand-button"

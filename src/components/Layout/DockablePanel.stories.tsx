@@ -101,7 +101,14 @@ export const WithNetworkHistory: Story = {
   ],
   render: () => (
     <DockablePanel title="Network History">
-      <NetworkHistoryPanel />
+      <NetworkHistoryPanel
+        onReplay={() => {
+          // Story placeholder
+        }}
+        onCopyCurl={() => {
+          // Story placeholder
+        }}
+      />
     </DockablePanel>
   ),
 };
@@ -127,6 +134,130 @@ export const Hidden: Story = {
   render: () => (
     <DockablePanel title="Hidden Panel">
       <div className="p-4">This should not be visible.</div>
+    </DockablePanel>
+  ),
+};
+
+/**
+ * Panel docked on the right side.
+ */
+export const RightDock: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'right',
+          isVisible: true,
+          isCollapsed: false,
+          sizes: { bottom: 250, left: 350, right: 350 },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex">
+          <div className="flex-1 p-4 text-text-secondary">Main content - Panel docks on right</div>
+          <Story />
+        </div>
+      );
+    },
+  ],
+  render: () => (
+    <DockablePanel title="Network History">
+      <div className="p-4 text-text-secondary">Panel content. Drag left edge to resize.</div>
+    </DockablePanel>
+  ),
+};
+
+/**
+ * Panel docked on the right side in collapsed state - click header to expand.
+ */
+export const RightDockCollapsed: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'right',
+          isVisible: true,
+          isCollapsed: true,
+          sizes: { bottom: 250, left: 350, right: 350 },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex">
+          <div className="flex-1 p-4 text-text-secondary">
+            Main content - Click the collapsed panel to expand
+          </div>
+          <Story />
+        </div>
+      );
+    },
+  ],
+  render: () => (
+    <DockablePanel title="Network History">
+      <div className="p-4 text-text-secondary">This content is hidden when collapsed.</div>
+    </DockablePanel>
+  ),
+};
+
+/**
+ * Panel docked on the left side.
+ */
+export const LeftDock: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'left',
+          isVisible: true,
+          isCollapsed: false,
+          sizes: { bottom: 250, left: 350, right: 350 },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex">
+          <Story />
+          <div className="flex-1 p-4 text-text-secondary">Main content - Panel docks on left</div>
+        </div>
+      );
+    },
+  ],
+  render: () => (
+    <DockablePanel title="Network History">
+      <div className="p-4 text-text-secondary">Panel content. Drag right edge to resize.</div>
+    </DockablePanel>
+  ),
+};
+
+/**
+ * Panel docked on the left side in collapsed state.
+ */
+export const LeftDockCollapsed: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'left',
+          isVisible: true,
+          isCollapsed: true,
+          sizes: { bottom: 250, left: 350, right: 350 },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex">
+          <Story />
+          <div className="flex-1 p-4 text-text-secondary">
+            Main content - Click the collapsed panel to expand
+          </div>
+        </div>
+      );
+    },
+  ],
+  render: () => (
+    <DockablePanel title="Network History">
+      <div className="p-4 text-text-secondary">This content is hidden when collapsed.</div>
     </DockablePanel>
   ),
 };

@@ -557,5 +557,101 @@ describe('MainLayout', () => {
       usePanelStore.getState().toggleVisibility();
       expect(usePanelStore.getState().isVisible).toBe(!initialVisibility);
     });
+
+    it('content area uses flex-row for left dock position', () => {
+      usePanelStore.setState({ isVisible: true, position: 'left' });
+
+      render(<MainLayout />);
+
+      const contentArea = screen.getByTestId('content-area');
+      expect(contentArea).toHaveClass('flex-row');
+    });
+
+    it('content area uses flex-row for right dock position', () => {
+      usePanelStore.setState({ isVisible: true, position: 'right' });
+
+      render(<MainLayout />);
+
+      const contentArea = screen.getByTestId('content-area');
+      expect(contentArea).toHaveClass('flex-row');
+    });
+
+    it('content area uses flex-col for bottom dock position', () => {
+      usePanelStore.setState({ isVisible: true, position: 'bottom' });
+
+      render(<MainLayout />);
+
+      const contentArea = screen.getByTestId('content-area');
+      expect(contentArea).toHaveClass('flex-col');
+    });
+
+    it('panel renders with left dock position', () => {
+      usePanelStore.setState({ isVisible: true, position: 'left' });
+
+      render(<MainLayout />);
+
+      // Panel should render and content area should have correct layout
+      expect(screen.getByTestId('dockable-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('content-area')).toHaveClass('flex-row');
+    });
+
+    it('panel renders with right dock position', () => {
+      usePanelStore.setState({ isVisible: true, position: 'right' });
+
+      render(<MainLayout />);
+
+      // Panel should render and content area should have correct layout
+      expect(screen.getByTestId('dockable-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('content-area')).toHaveClass('flex-row');
+    });
+  });
+
+  describe('Panel Position and Sidebar Interaction', () => {
+    it('auto-collapses sidebar when left dock is active', () => {
+      // Start with sidebar visible
+      useSettingsStore.setState({ sidebarVisible: true });
+      usePanelStore.setState({ isVisible: false, position: 'bottom' });
+
+      const { rerender } = render(<MainLayout />);
+
+      // Sidebar should be visible
+      expect(screen.getByTestId('sidebar')).toBeInTheDocument();
+
+      // Switch to left dock and make visible
+      usePanelStore.setState({ isVisible: true, position: 'left' });
+      rerender(<MainLayout />);
+
+      // Sidebar should be collapsed (hidden)
+      expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
+    });
+
+    it('restores sidebar when switching away from left dock', () => {
+      // Start with sidebar visible and left dock active
+      useSettingsStore.setState({ sidebarVisible: true });
+      usePanelStore.setState({ isVisible: true, position: 'left' });
+
+      const { rerender } = render(<MainLayout />);
+
+      // Sidebar should be collapsed due to left dock
+      expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
+
+      // Switch to bottom dock
+      usePanelStore.setState({ position: 'bottom' });
+      rerender(<MainLayout />);
+
+      // Sidebar should be restored
+      expect(screen.getByTestId('sidebar')).toBeInTheDocument();
+    });
+
+    it('sidebar remains hidden when switching from left to right dock if it was already hidden', () => {
+      // Start with sidebar hidden using the prop
+      useSettingsStore.setState({ sidebarVisible: false });
+      usePanelStore.setState({ isVisible: true, position: 'right' });
+
+      render(<MainLayout initialSidebarVisible={false} />);
+
+      // Sidebar should still be hidden
+      expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
+    });
   });
 });

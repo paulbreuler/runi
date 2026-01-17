@@ -34,10 +34,12 @@ export const NetworkHistoryPanel = ({
     entries: storeEntries,
     filters,
     compareMode,
+    compareSelection,
     selectedId,
     expandedId,
     setFilter,
     setCompareMode,
+    toggleCompareSelection,
     setSelectedId,
     setExpandedId,
     filteredEntries: getFilteredEntries,
@@ -146,6 +148,13 @@ export const NetworkHistoryPanel = ({
     setCompareMode(!compareMode);
   };
 
+  const handleCompareResponses = (): void => {
+    // Emit event for comparison - to be implemented in future
+    // For now, this is a placeholder that will be wired up when the comparison view is built
+    // The compareSelection array contains the IDs of the two entries to compare
+    void compareSelection;
+  };
+
   // Virtualization
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -188,10 +197,13 @@ export const NetworkHistoryPanel = ({
         onFilterChange={handleFilterChange}
         compareMode={compareMode}
         onCompareModeToggle={handleCompareModeToggle}
+        compareSelectionCount={compareSelection.length}
+        onCompareResponses={handleCompareResponses}
       />
 
       {/* Table header */}
       <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border-subtle bg-bg-raised/50 text-xs font-medium text-text-muted">
+        {compareMode && <span className="w-4" />} {/* Checkbox space */}
         <span className="w-5" /> {/* Chevron space */}
         <span className="w-14">Method</span>
         <span className="flex-1">URL</span>
@@ -241,6 +253,9 @@ export const NetworkHistoryPanel = ({
                     onSelect={handleSelect}
                     onReplay={onReplay}
                     onCopyCurl={onCopyCurl}
+                    compareMode={compareMode}
+                    isCompareSelected={compareSelection.includes(entry.id)}
+                    onToggleCompare={toggleCompareSelection}
                   />
                 </div>
               );
@@ -258,6 +273,9 @@ export const NetworkHistoryPanel = ({
               onSelect={handleSelect}
               onReplay={onReplay}
               onCopyCurl={onCopyCurl}
+              compareMode={compareMode}
+              isCompareSelected={compareSelection.includes(entry.id)}
+              onToggleCompare={toggleCompareSelection}
             />
           ))
         )}

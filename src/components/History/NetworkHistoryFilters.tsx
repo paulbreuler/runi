@@ -1,4 +1,4 @@
-import { Search, GitCompare } from 'lucide-react';
+import { Search, GitCompare, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { HistoryFilters } from '@/types/history';
 
@@ -11,6 +11,10 @@ interface NetworkHistoryFiltersProps {
   compareMode: boolean;
   /** Toggle compare mode */
   onCompareModeToggle: () => void;
+  /** Number of selected entries for comparison */
+  compareSelectionCount?: number;
+  /** Callback when user clicks Compare Responses button */
+  onCompareResponses?: () => void;
 }
 
 const selectClasses =
@@ -25,7 +29,11 @@ export const NetworkHistoryFilters = ({
   onFilterChange,
   compareMode,
   onCompareModeToggle,
+  compareSelectionCount = 0,
+  onCompareResponses,
 }: NetworkHistoryFiltersProps): React.JSX.Element => {
+  const canCompare = compareMode && compareSelectionCount === 2;
+
   return (
     <div className="flex items-center gap-3 px-3 py-2 border-b border-border-subtle">
       {/* Search input */}
@@ -108,6 +116,19 @@ export const NetworkHistoryFilters = ({
         <GitCompare size={14} />
         <span>Compare</span>
       </button>
+
+      {/* Compare Responses button - shown when 2 entries are selected */}
+      {canCompare && (
+        <button
+          data-testid="compare-responses-button"
+          onClick={onCompareResponses}
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-signal-ai text-white hover:bg-signal-ai/90 transition-colors"
+          title="Compare the selected responses"
+        >
+          <ArrowRightLeft size={14} />
+          <span>Compare Responses</span>
+        </button>
+      )}
     </div>
   );
 };

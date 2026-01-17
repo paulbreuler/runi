@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   motion,
   AnimatePresence,
@@ -18,6 +18,9 @@ import { isMacSync, getModifierKeyName } from '@/utils/platform';
 import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/utils/cn';
 import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
+import { globalEventBus } from '@/events/bus';
+import { generateCurlCommand } from '@/utils/curl';
+import type { NetworkHistoryEntry } from '@/types/history';
 
 interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -81,7 +84,11 @@ export const MainLayout = ({
   initialSidebarVisible = true,
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useSettingsStore();
-  const { toggleVisibility: togglePanel } = usePanelStore();
+  const {
+    position: panelPosition,
+    isVisible: panelVisible,
+    toggleVisibility: togglePanel,
+  } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
 
@@ -120,6 +127,24 @@ export const MainLayout = ({
     handler: togglePanel,
     description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
   });
+
+  // Auto-collapse sidebar when left dock is active
+  // Store the previous state to restore when switching away from left dock
+  const prevSidebarVisible = useRef(sidebarVisible);
+
+  useEffect(() => {
+    if (panelPosition === 'left' && panelVisible) {
+      // Save current sidebar state and collapse
+      if (sidebarVisible) {
+        prevSidebarVisible.current = true;
+        setSidebarVisible(false);
+      }
+    } else if (panelPosition !== 'left' && prevSidebarVisible.current) {
+      // Restore sidebar when switching away from left dock
+      setSidebarVisible(true);
+      prevSidebarVisible.current = false;
+    }
+  }, [panelPosition, panelVisible, sidebarVisible, setSidebarVisible]);
 
   // Pane split ratio as MotionValue (0-1)
   const splitRatio = useMotionValue(DEFAULT_SPLIT / 100);
@@ -309,6 +334,26 @@ export const MainLayout = ({
     }
   }, [sidebarVisible, toggleSidebar]);
 
+  // History panel callbacks
+  const handleReplay = useCallback((entry: NetworkHistoryEntry): void => {
+    // Emit event to load the history entry into the request builder
+    globalEventBus.emit('history.entry-selected', entry);
+  }, []);
+
+  const handleCopyCurl = useCallback(async (entry: NetworkHistoryEntry): Promise<void> => {
+    const curl = generateCurlCommand(entry);
+    await navigator.clipboard.writeText(curl);
+  }, []);
+
+  // Memoize the history panel callbacks to avoid unnecessary re-renders
+  const historyPanelProps = useMemo(
+    () => ({
+      onReplay: handleReplay,
+      onCopyCurl: handleCopyCurl,
+    }),
+    [handleReplay, handleCopyCurl]
+  );
+
   const isSidebarOverlay = sidebarVisible && isCompact;
 
   return (
@@ -407,11 +452,24 @@ export const MainLayout = ({
           </div>
 
           {/* Content area with panes and dockable panel */}
-          <div className="flex flex-col flex-1 overflow-hidden" data-testid="content-area">
+          <div
+            className={cn(
+              'flex flex-1 overflow-hidden',
+              panelPosition === 'left' || panelPosition === 'right' ? 'flex-row' : 'flex-col'
+            )}
+            data-testid="content-area"
+          >
+            {/* Left dock panel */}
+            {panelPosition === 'left' && (
+              <DockablePanel title="Network History">
+                <NetworkHistoryPanel {...historyPanelProps} />
+              </DockablePanel>
+            )}
+
             <LayoutGroup>
               <motion.div
                 ref={containerRef}
-                className="flex-1 overflow-hidden flex relative"
+                className="flex-1 overflow-hidden flex relative min-w-0"
                 data-testid="pane-container"
                 style={{ scrollbarGutter: 'stable' }}
                 layout
@@ -481,20 +539,23 @@ export const MainLayout = ({
               </motion.div>
             </LayoutGroup>
 
-            {/* DevTools Panel (bottom dock) */}
-            <DockablePanel title="Network History">
-              <NetworkHistoryPanel
-                onReplay={() => {
-                  // TODO: Wire up replay functionality
-                }}
-                onCopyCurl={() => {
-                  // TODO: Wire up copy as cURL functionality
-                }}
-              />
-            </DockablePanel>
+            {/* Right dock panel */}
+            {panelPosition === 'right' && (
+              <DockablePanel title="Network History">
+                <NetworkHistoryPanel {...historyPanelProps} />
+              </DockablePanel>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Bottom dock panel - full width, outside sidebar/content container */}
+      {panelPosition === 'bottom' && (
+        <DockablePanel title="Network History">
+          <NetworkHistoryPanel {...historyPanelProps} />
+        </DockablePanel>
+      )}
+
       <StatusBar />
     </div>
   );
