@@ -20,6 +20,11 @@
         "maximizable": true,
         "closable": true,
         "decorations": true,
+        "titleBarStyle": "Overlay",
+        "trafficLightPosition": {
+          "x": 20,
+          "y": 20
+        },
         "transparent": false,
         "alwaysOnTop": false,
         "skipTaskbar": false,

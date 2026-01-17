@@ -38,7 +38,7 @@ describe('TitleBar', () => {
   });
 
   describe('platform-specific rendering', () => {
-    it('renders macOS-style traffic light controls on macOS', () => {
+    it('does not render custom controls on macOS (uses native traffic lights)', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
 
       render(<TitleBar />);
@@ -46,19 +46,11 @@ describe('TitleBar', () => {
       const titlebar = screen.getByTestId('titlebar');
       expect(titlebar).toBeInTheDocument();
 
-      // macOS controls are circles (no icon children)
-      const closeButton = screen.getByTestId('titlebar-close');
-      const minimizeButton = screen.getByTestId('titlebar-minimize');
-      const maximizeButton = screen.getByTestId('titlebar-maximize');
-
-      expect(closeButton).toBeInTheDocument();
-      expect(minimizeButton).toBeInTheDocument();
-      expect(maximizeButton).toBeInTheDocument();
-
-      // macOS controls should not have icons (they're colored circles)
-      expect(closeButton.children.length).toBe(0);
-      expect(minimizeButton.children.length).toBe(0);
-      expect(maximizeButton.children.length).toBe(0);
+      // macOS uses native traffic lights from titleBarStyle: Overlay
+      // Custom controls should not be rendered
+      expect(screen.queryByTestId('titlebar-close')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('titlebar-minimize')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('titlebar-maximize')).not.toBeInTheDocument();
     });
 
     it('renders Windows/Linux-style window controls on non-macOS', () => {
@@ -110,15 +102,14 @@ describe('TitleBar', () => {
   });
 
   describe('window control actions', () => {
-    it('calls minimize when minimize button is clicked on macOS', () => {
+    it('does not render custom minimize button on macOS (native controls used)', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
 
       render(<TitleBar />);
 
-      const minimizeButton = screen.getByTestId('titlebar-minimize');
-      fireEvent.click(minimizeButton);
-
-      expect(mockMinimize).toHaveBeenCalledTimes(1);
+      // macOS uses native traffic lights, custom controls should not exist
+      const minimizeButton = screen.queryByTestId('titlebar-minimize');
+      expect(minimizeButton).not.toBeInTheDocument();
     });
 
     it('calls minimize when minimize button is clicked on Windows/Linux', () => {
@@ -132,8 +123,8 @@ describe('TitleBar', () => {
       expect(mockMinimize).toHaveBeenCalledTimes(1);
     });
 
-    it('calls maximize when maximize button is clicked and window is not maximized', () => {
-      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+    it('renders custom maximize button on Windows/Linux', () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       mockIsMaximized.mockResolvedValue(false);
 
       render(<TitleBar />);
@@ -146,8 +137,8 @@ describe('TitleBar', () => {
       expect(mockUnmaximize).not.toHaveBeenCalled();
     });
 
-    it('calls unmaximize when maximize button is clicked and window is maximized', () => {
-      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+    it('renders custom unmaximize button on Windows/Linux when maximized', () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       mockIsMaximized.mockResolvedValue(true);
 
       render(<TitleBar />);
@@ -160,8 +151,8 @@ describe('TitleBar', () => {
       expect(mockMaximize).not.toHaveBeenCalled();
     });
 
-    it('calls close when close button is clicked', () => {
-      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+    it('renders custom close button on Windows/Linux', () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
 
       render(<TitleBar />);
 
@@ -173,7 +164,9 @@ describe('TitleBar', () => {
   });
 
   describe('accessibility', () => {
-    it('has proper aria-labels for all window controls', () => {
+    it('has proper aria-labels for window controls on Windows/Linux', () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
+
       render(<TitleBar />);
 
       const closeButton = screen.getByLabelText('Close window');
@@ -186,9 +179,11 @@ describe('TitleBar', () => {
     });
 
     it('has data-testid attributes for testing', () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       render(<TitleBar />);
 
       expect(screen.getByTestId('titlebar')).toBeInTheDocument();
+      // On Windows/Linux, controls should have testids
       expect(screen.getByTestId('titlebar-close')).toBeInTheDocument();
       expect(screen.getByTestId('titlebar-minimize')).toBeInTheDocument();
       expect(screen.getByTestId('titlebar-maximize')).toBeInTheDocument();
@@ -218,7 +213,7 @@ describe('TitleBar', () => {
     });
 
     it('handles missing Tauri context gracefully - buttons are clickable when window is null', async () => {
-      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       vi.mocked(getCurrentWindow).mockImplementationOnce(() => {
         throw new Error('Not in Tauri context');
@@ -238,7 +233,7 @@ describe('TitleBar', () => {
     });
 
     it('handles window API errors gracefully', async () => {
-      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       mockMinimize.mockRejectedValueOnce(new Error('Window API error'));
 
       render(<TitleBar />);
@@ -254,7 +249,7 @@ describe('TitleBar', () => {
 
   describe('window instance caching', () => {
     it('caches window instance and does not call getCurrentWindow multiple times', async () => {
-      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       vi.mocked(getCurrentWindow).mockClear();
 
