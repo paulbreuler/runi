@@ -3,25 +3,24 @@
 /**
  * Parameters for an HTTP request.
  */
-export type RequestParams = {
-  /**
-   * The target URL.
-   */
-  url: string;
-  /**
-   * HTTP method (GET, POST, PUT, PATCH, DELETE, etc.).
-   */
-  method: string;
-  /**
-   * Request headers as key-value pairs.
-   */
-  headers: Record<string, string>;
-  /**
-   * Optional request body.
-   */
-  body: string | null;
-  /**
-   * Request timeout in milliseconds (default: 30000).
-   */
-  timeout_ms: number;
-};
+export type RequestParams = { 
+/**
+ * The target URL.
+ */
+url: string, 
+/**
+ * HTTP method (GET, POST, PUT, PATCH, DELETE, etc.).
+ */
+method: string, 
+/**
+ * Request headers as key-value pairs.
+ */
+headers: Record<string, string>, 
+/**
+ * Optional request body.
+ */
+body: string | null, 
+/**
+ * Request timeout in milliseconds (default: 30000).
+ */
+timeout_ms: number, };
