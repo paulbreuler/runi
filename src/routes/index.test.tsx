@@ -13,7 +13,6 @@ vi.mock('@/stores/useHistoryStore');
 vi.mock('@/api/http');
 
 // Mock event bus
-const mockEmit = vi.fn();
 type EventHandler = (event: {
   type: string;
   payload: unknown;
@@ -21,19 +20,20 @@ type EventHandler = (event: {
   source: string;
 }) => void;
 const mockHandlersMap = new Map<string, Set<EventHandler>>();
-const mockOn = vi.fn((_type: string, handler: EventHandler): (() => void) => {
-  // Store handler for later use in tests
-  if (!mockHandlersMap.has('history.entry-selected')) {
-    mockHandlersMap.set('history.entry-selected', new Set());
-  }
-  mockHandlersMap.get('history.entry-selected')?.add(handler);
-  return (): void => {
-    mockHandlersMap.get('history.entry-selected')?.delete(handler);
-  };
-});
 
 vi.mock('@/events/bus', async () => {
   const actual = await vi.importActual('@/events/bus');
+  const mockEmit = vi.fn();
+  const mockOn = vi.fn((_type: string, handler: EventHandler): (() => void) => {
+    // Store handler for later use in tests
+    if (!mockHandlersMap.has('history.entry-selected')) {
+      mockHandlersMap.set('history.entry-selected', new Set());
+    }
+    mockHandlersMap.get('history.entry-selected')?.add(handler);
+    return (): void => {
+      mockHandlersMap.get('history.entry-selected')?.delete(handler);
+    };
+  });
   return {
     ...actual,
     globalEventBus: {
@@ -44,6 +44,8 @@ vi.mock('@/events/bus', async () => {
       removeAllListeners: vi.fn(),
       listenerCount: vi.fn(),
     },
+    __mockEmit: mockEmit,
+    __mockOn: mockOn,
   };
 });
 
@@ -259,19 +261,26 @@ describe('HomePage - Auto-save to history', () => {
       },
     };
 
-    it('subscribes to history.entry-selected event on mount', () => {
+    it('subscribes to history.entry-selected event on mount', async () => {
       render(<HomePage />);
 
       // Verify subscription was set up
-      expect(mockOn).toHaveBeenCalledWith('history.entry-selected', expect.any(Function));
+      const { globalEventBus } = await import('@/events/bus');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(vi.mocked(globalEventBus.on)).toHaveBeenCalledWith(
+        'history.entry-selected',
+        expect.any(Function)
+      );
     });
 
     it('updates request store when history.entry-selected event is emitted', async () => {
       render(<HomePage />);
 
       // Wait for subscription to be set up
+      const { globalEventBus } = await import('@/events/bus');
       await waitFor(() => {
-        expect(mockOn).toHaveBeenCalled();
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(vi.mocked(globalEventBus.on)).toHaveBeenCalled();
       });
 
       // Get the handler that was registered
@@ -310,8 +319,10 @@ describe('HomePage - Auto-save to history', () => {
 
       render(<HomePage />);
 
+      const { globalEventBus } = await import('@/events/bus');
       await waitFor(() => {
-        expect(mockOn).toHaveBeenCalled();
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(vi.mocked(globalEventBus.on)).toHaveBeenCalled();
       });
 
       const handler = mockHandlersMap.get('history.entry-selected')?.values().next().value;
@@ -331,11 +342,13 @@ describe('HomePage - Auto-save to history', () => {
       });
     });
 
-    it('cleans up event subscription on unmount', () => {
+    it('cleans up event subscription on unmount', async () => {
       const { unmount } = render(<HomePage />);
 
       // Get the unsubscribe function that was returned
-      const unsubscribeCalls = mockOn.mock.results;
+      const { globalEventBus } = await import('@/events/bus');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const unsubscribeCalls = vi.mocked(globalEventBus.on).mock.results;
       const unsubscribe = unsubscribeCalls[0]?.value;
       if (unsubscribe === undefined) {
         throw new Error('Unsubscribe function not found');

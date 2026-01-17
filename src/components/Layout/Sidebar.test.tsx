@@ -8,10 +8,10 @@ import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 vi.mock('@/stores/useHistoryStore');
 
 // Mock event bus
-const mockEmit = vi.fn();
-const mockOn = vi.fn();
 vi.mock('@/events/bus', async () => {
   const actual = await vi.importActual('@/events/bus');
+  const mockEmit = vi.fn();
+  const mockOn = vi.fn();
   return {
     ...actual,
     globalEventBus: {
@@ -22,6 +22,8 @@ vi.mock('@/events/bus', async () => {
       removeAllListeners: vi.fn(),
       listenerCount: vi.fn(),
     },
+    __mockEmit: mockEmit,
+    __mockOn: mockOn,
   };
 });
 
@@ -139,7 +141,7 @@ describe('Sidebar', () => {
       },
     };
 
-    it('emits history.entry-selected event when history entry is clicked', () => {
+    it('emits history.entry-selected event when history entry is clicked', async () => {
       // Mock history store with entries
       vi.mocked(useHistoryStore).mockReturnValue({
         entries: [mockHistoryEntry],
@@ -166,7 +168,7 @@ describe('Sidebar', () => {
       );
     });
 
-    it('does not directly call store methods when history entry is selected', () => {
+    it('does not directly call store methods when history entry is selected', async () => {
       // Mock history store with entries
       vi.mocked(useHistoryStore).mockReturnValue({
         entries: [mockHistoryEntry],
@@ -185,7 +187,9 @@ describe('Sidebar', () => {
       fireEvent.click(historyEntry);
 
       // Verify event was emitted (event-driven approach)
-      expect(mockEmit).toHaveBeenCalledWith(
+      const { globalEventBus } = await import('@/events/bus');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(vi.mocked(globalEventBus.emit)).toHaveBeenCalledWith(
         'history.entry-selected',
         mockHistoryEntry,
         'HistoryDrawer'
