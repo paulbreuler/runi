@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useTauriCommand } from './useTauriCommand';
 import { invoke } from '@tauri-apps/api/core';
@@ -31,7 +31,11 @@ describe('useTauriCommand', () => {
 
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
-    const executePromise = result.current.execute();
+    // Start execute and wait for loading to be true
+    let executePromise: Promise<string | null>;
+    await act(async () => {
+      executePromise = result.current.execute();
+    });
 
     // Loading should be true while promise is pending
     await waitFor(() => {
@@ -39,8 +43,10 @@ describe('useTauriCommand', () => {
     });
 
     // Resolve the promise
-    resolvePromise!('test result');
-    await executePromise;
+    await act(async () => {
+      resolvePromise!('test result');
+      await executePromise!;
+    });
 
     // Loading should be false after promise resolves
     await waitFor(() => {
@@ -52,7 +58,9 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockResolvedValue('test result');
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
-    await result.current.execute();
+    await act(async () => {
+      await result.current.execute();
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -64,7 +72,9 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockResolvedValue(testData);
     const { result } = renderHook(() => useTauriCommand<typeof testData>('test_command'));
 
-    await result.current.execute();
+    await act(async () => {
+      await result.current.execute();
+    });
 
     await waitFor(() => {
       expect(result.current.data).toEqual(testData);
@@ -77,7 +87,10 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockResolvedValue(testData);
     const { result } = renderHook(() => useTauriCommand<typeof testData>('test_command'));
 
-    const returnedData = await result.current.execute();
+    let returnedData: typeof testData | null = null;
+    await act(async () => {
+      returnedData = await result.current.execute();
+    });
 
     expect(returnedData).toEqual(testData);
   });
@@ -87,7 +100,9 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockRejectedValue(testError);
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
-    await result.current.execute();
+    await act(async () => {
+      await result.current.execute();
+    });
 
     await waitFor(() => {
       expect(result.current.error).toBe('Command failed');
@@ -100,7 +115,10 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockRejectedValue(testError);
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
-    const returnedData = await result.current.execute();
+    let returnedData: string | null = null;
+    await act(async () => {
+      returnedData = await result.current.execute();
+    });
 
     expect(returnedData).toBeNull();
   });
@@ -109,7 +127,9 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockRejectedValue('String error');
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
-    await result.current.execute();
+    await act(async () => {
+      await result.current.execute();
+    });
 
     await waitFor(() => {
       expect(result.current.error).toBe('String error');
@@ -120,7 +140,9 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockResolvedValue('result');
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
-    await result.current.execute({ arg1: 'value1', arg2: 'value2' });
+    await act(async () => {
+      await result.current.execute({ arg1: 'value1', arg2: 'value2' });
+    });
 
     expect(invoke).toHaveBeenCalledWith('test_command', { arg1: 'value1', arg2: 'value2' });
   });
@@ -129,7 +151,9 @@ describe('useTauriCommand', () => {
     vi.mocked(invoke).mockResolvedValue('result');
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
-    await result.current.execute();
+    await act(async () => {
+      await result.current.execute();
+    });
 
     expect(invoke).toHaveBeenCalledWith('test_command', undefined);
   });
@@ -141,13 +165,17 @@ describe('useTauriCommand', () => {
     const { result } = renderHook(() => useTauriCommand<string>('test_command'));
 
     // First call fails
-    await result.current.execute();
+    await act(async () => {
+      await result.current.execute();
+    });
     await waitFor(() => {
       expect(result.current.error).toBe('First error');
     });
 
     // Second call succeeds
-    await result.current.execute();
+    await act(async () => {
+      await result.current.execute();
+    });
     await waitFor(() => {
       expect(result.current.error).toBeNull();
       expect(result.current.data).toBe('success');
