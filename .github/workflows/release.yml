@@ -70,8 +70,19 @@ jobs:
           fi
         shell: bash
 
+      - name: Check for artifacts
+        id: check-artifacts
+        run: |
+          if ls release-artifacts/*.dmg release-artifacts/*.AppImage release-artifacts/*.deb release-artifacts/*.rpm 2>/dev/null | grep -q .; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
+        if: steps.check-artifacts.outputs.found == 'true'
         with:
           name: release-artifacts-${{ matrix.os }}
           path: release-artifacts/*

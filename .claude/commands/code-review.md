@@ -115,7 +115,7 @@ Perform a comprehensive code review following runi's quality standards and best 
 
 - [ ] **Event-Driven**: Cross-component communication uses event bus, not direct calls
 - [ ] **Loose Coupling**: Components don't depend on specific layouts/positions
-- [ ] **Configuration-Driven**: Layout positions/configurable, not hardcoded (e.g., sidebar position in store)
+- [ ] **Configuration-Driven**: Layout positions are configurable, not hardcoded (e.g., sidebar position in store)
 - [ ] **Unidirectional Flow**: State flows down, events flow up (no circular dependencies)
 - [ ] **MCP-Ready**: AI-driven changes use event bus (events emitted, components subscribe)
 - [ ] **Testable Contracts**: Components have clear, mockable interfaces (props, events)

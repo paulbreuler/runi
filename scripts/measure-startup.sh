@@ -1,8 +1,16 @@
 #!/bin/bash
 # Measure startup time of the release bundle
 # Usage: just measure-startup
+# This script is macOS-only: uses 'open' and a .app bundle path
 
 set -e
+
+# Verify we are running on macOS (Darwin)
+if [ "$(uname)" != "Darwin" ]; then
+  echo "❌ Error: This script only supports macOS."
+  echo "   Detected OS: $(uname)"
+  exit 1
+fi
 
 APP_PATH="src-tauri/target/release/bundle/macos/Runi.app"
 LOG_FILE=".tmp/startup-timing.log"
@@ -34,7 +42,7 @@ MAX_WAIT=10
 WAITED=0
 while ! pgrep -f "Runi.app" > /dev/null && [ $WAITED -lt $MAX_WAIT ]; do
   sleep 0.1
-  WAITED=$(echo "$WAITED + 0.1" | bc)
+  WAITED=$(awk "BEGIN {print $WAITED + 0.1}")
 done
 
 if ! pgrep -f "Runi.app" > /dev/null; then
@@ -49,7 +57,7 @@ sleep 1.5
 PROCESS_START=$(ps -o lstart= -p $(pgrep -f "Runi.app" | head -1) 2>/dev/null || echo "")
 
 END_TIME=$(date +%s.%N)
-ELAPSED=$(echo "$END_TIME - $START_TIME" | bc)
+ELAPSED=$(awk "BEGIN {print $END_TIME - $START_TIME}")
 
 echo ""
 echo "📊 Startup Measurement Results:"

@@ -44,9 +44,9 @@ if (rootElement !== null) {
   // Track React mount (after first render)
   requestAnimationFrame(() => {
     startupTiming.reactMounted = performance.now() - startupStart;
-    startupTiming.total = startupTiming.reactMounted;
+    startupTiming.total = performance.now() - startupStart;
 
-    // Log startup timing (only in development or with --measure-startup flag)
+    // Log startup timing (only in development or when '?measure-startup' is present in the URL)
     const isDev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ?? false;
     if (isDev || window.location.search.includes('measure-startup')) {
       // eslint-disable-next-line no-console
