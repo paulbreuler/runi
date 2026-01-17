@@ -29,9 +29,9 @@ for size in 32 128 256 512; do
   echo "  Creating ${size}x${size}..."
   
   # Calculate scaled dimensions (maintain aspect ratio, fit to height)
-  scale=$(echo "scale=4; $size / $HEIGHT" | bc)
-  scaled_w=$(echo "scale=0; $WIDTH * $scale" | bc | cut -d. -f1)
-  x_offset=$(echo "scale=0; ($size - $scaled_w) / 2" | bc | cut -d. -f1)
+  # Integer math: scaled_w = WIDTH * size / HEIGHT (fit to height), centered horizontally
+  scaled_w=$(( WIDTH * size / HEIGHT ))
+  x_offset=$(( (size - scaled_w) / 2 ))
   
   # Create square canvas with dark background, then composite resized PNG on top
   # Force 8-bit RGBA format (required by Tauri) using -depth 8 and -type TrueColorMatte
