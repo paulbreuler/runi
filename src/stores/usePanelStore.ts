@@ -32,8 +32,8 @@ export const DEFAULT_PANEL_SIZES: PanelSizes = {
  */
 export const MIN_PANEL_SIZES: PanelSizes = {
   bottom: 100,
-  left: 200,
-  right: 200,
+  left: 280, // Fits "Network History" without text wrapping
+  right: 280, // Fits "Network History" without text wrapping
 };
 
 /**
