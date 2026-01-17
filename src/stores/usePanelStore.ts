@@ -31,7 +31,7 @@ export const DEFAULT_PANEL_SIZES: PanelSizes = {
  * Minimum sizes for panel positions.
  */
 export const MIN_PANEL_SIZES: PanelSizes = {
-  bottom: 100,
+  bottom: 180, // 32px header + ~148px content = 3-4 visible rows
   left: 280, // Fits "Network History" without text wrapping
   right: 280, // Fits "Network History" without text wrapping
 };
@@ -46,9 +46,9 @@ export const MAX_PANEL_PERCENTAGES: PanelSizes = {
 };
 
 /**
- * Collapsed panel height (thin bar).
+ * Collapsed panel height (thin bar) - 28px for "book page edge" feel.
  */
-export const COLLAPSED_PANEL_HEIGHT = 24;
+export const COLLAPSED_PANEL_HEIGHT = 28;
 
 interface PanelState {
   /** Current dock position */
