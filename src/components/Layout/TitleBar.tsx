@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 import { Minimize2, Maximize2, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -57,6 +57,59 @@ const TitleBarControls = (): React.JSX.Element | null => {
     }
   };
 
+  // Track window focus state (must be before early return to follow Rules of Hooks)
+  const [isFocused, setIsFocused] = useState(true);
+
+  useEffect(() => {
+    if (appWindow === null) {
+      return;
+    }
+
+    const handleFocus = (): void => {
+      setIsFocused(true);
+    };
+
+    const handleBlur = (): void => {
+      setIsFocused(false);
+    };
+
+    // Listen to window focus/blur events using Tauri v2 event system
+    let cleanupFocus: (() => void) | undefined;
+    let cleanupBlur: (() => void) | undefined;
+
+    void appWindow
+      .listen('tauri://focus', handleFocus)
+      .then((unsubscribe: () => void) => {
+        cleanupFocus = unsubscribe;
+      })
+      .catch(() => {
+        // Fallback to window focus event if Tauri event unavailable
+        window.addEventListener('focus', handleFocus);
+        cleanupFocus = (): void => {
+          window.removeEventListener('focus', handleFocus);
+        };
+      });
+
+    void appWindow
+      .listen('tauri://blur', handleBlur)
+      .then((unsubscribe: () => void) => {
+        cleanupBlur = unsubscribe;
+      })
+      .catch(() => {
+        // Fallback to window blur event if Tauri event unavailable
+        window.addEventListener('blur', handleBlur);
+        cleanupBlur = (): void => {
+          window.removeEventListener('blur', handleBlur);
+        };
+      });
+
+    return (): void => {
+      // Cleanup listeners
+      cleanupFocus?.();
+      cleanupBlur?.();
+    };
+  }, [appWindow]);
+
   // macOS uses native traffic light controls (from titleBarStyle: Overlay)
   // Only render custom controls for Windows/Linux
   if (isMacSync()) {
@@ -64,34 +117,35 @@ const TitleBarControls = (): React.JSX.Element | null => {
   }
 
   // Windows/Linux window controls (on the right)
+  // Button size: ~30px to match native Windows titlebar buttons
   return (
-    <div className="flex items-center h-full">
+    <div className={cn('flex items-center h-full gap-0', !isFocused && 'opacity-60')}>
       <button
         type="button"
         onClick={handleMinimize}
-        className="h-full px-4 hover:bg-bg-raised/50 transition-colors"
+        className="w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors"
         aria-label="Minimize window"
         data-testid="titlebar-minimize"
       >
-        <Minimize2 size={14} className="text-text-muted" />
+        <Minimize2 size={12} className="text-text-muted" />
       </button>
       <button
         type="button"
         onClick={handleMaximize}
-        className="h-full px-4 hover:bg-bg-raised/50 transition-colors"
+        className="w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors"
         aria-label="Maximize window"
         data-testid="titlebar-maximize"
       >
-        <Maximize2 size={14} className="text-text-muted" />
+        <Maximize2 size={12} className="text-text-muted" />
       </button>
       <button
         type="button"
         onClick={handleClose}
-        className="h-full px-4 hover:bg-signal-error/20 hover:text-signal-error transition-colors"
+        className="w-[30px] h-[30px] flex items-center justify-center hover:bg-signal-error/20 hover:text-signal-error transition-colors"
         aria-label="Close window"
         data-testid="titlebar-close"
       >
-        <X size={14} className="text-text-muted" />
+        <X size={12} className="text-text-muted" />
       </button>
     </div>
   );

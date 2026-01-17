@@ -9,6 +9,7 @@ const mockMaximize = vi.fn().mockResolvedValue(undefined);
 const mockUnmaximize = vi.fn().mockResolvedValue(undefined);
 const mockClose = vi.fn().mockResolvedValue(undefined);
 const mockIsMaximized = vi.fn().mockResolvedValue(false);
+const mockListen = vi.fn().mockResolvedValue(() => {});
 
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: vi.fn(() => ({
@@ -17,6 +18,7 @@ vi.mock('@tauri-apps/api/window', () => ({
     unmaximize: mockUnmaximize,
     close: mockClose,
     isMaximized: mockIsMaximized,
+    listen: mockListen,
   })),
 }));
 
