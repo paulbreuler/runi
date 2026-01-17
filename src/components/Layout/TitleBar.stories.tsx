@@ -23,7 +23,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Default TitleBar with default title "Runi".
+ * Default TitleBar with default title "runi".
  * On macOS, uses native traffic light controls (overlay style).
  * On Windows/Linux, shows custom window controls on the right.
  */

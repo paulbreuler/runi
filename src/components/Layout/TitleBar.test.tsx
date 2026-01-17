@@ -75,17 +75,17 @@ describe('TitleBar', () => {
       expect(maximizeButton.children.length).toBeGreaterThan(0);
     });
 
-    it('displays default title "Runi"', () => {
+    it('displays default title "runi"', () => {
       render(<TitleBar />);
 
-      expect(screen.getByText('Runi')).toBeInTheDocument();
+      expect(screen.getByText('runi')).toBeInTheDocument();
     });
 
     it('displays custom title when provided', () => {
       render(<TitleBar title="Custom Title" />);
 
       expect(screen.getByText('Custom Title')).toBeInTheDocument();
-      expect(screen.queryByText('Runi')).not.toBeInTheDocument();
+      expect(screen.queryByText('runi')).not.toBeInTheDocument();
     });
 
     it('renders children when provided', () => {

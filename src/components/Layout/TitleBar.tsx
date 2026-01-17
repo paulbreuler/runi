@@ -102,7 +102,7 @@ interface TitleBarProps {
   children?: React.ReactNode;
 }
 
-export const TitleBar = ({ title = 'Runi', children }: TitleBarProps): React.JSX.Element => {
+export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
 
   return (
