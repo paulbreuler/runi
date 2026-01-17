@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TitleBar } from './TitleBar';
 import * as platformUtils from '@/utils/platform';
@@ -123,7 +122,7 @@ describe('TitleBar', () => {
       expect(mockMinimize).toHaveBeenCalledTimes(1);
     });
 
-    it('renders custom maximize button on Windows/Linux', () => {
+    it('renders custom maximize button on Windows/Linux', async () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       mockIsMaximized.mockResolvedValue(false);
 
@@ -132,12 +131,16 @@ describe('TitleBar', () => {
       const maximizeButton = screen.getByTestId('titlebar-maximize');
       fireEvent.click(maximizeButton);
 
-      expect(mockIsMaximized).toHaveBeenCalledTimes(1);
+      // Wait for async handler to complete
+      await waitFor(() => {
+        expect(mockIsMaximized).toHaveBeenCalledTimes(1);
+      });
+
       expect(mockMaximize).toHaveBeenCalledTimes(1);
       expect(mockUnmaximize).not.toHaveBeenCalled();
     });
 
-    it('renders custom unmaximize button on Windows/Linux when maximized', () => {
+    it('renders custom unmaximize button on Windows/Linux when maximized', async () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       mockIsMaximized.mockResolvedValue(true);
 
@@ -146,7 +149,11 @@ describe('TitleBar', () => {
       const maximizeButton = screen.getByTestId('titlebar-maximize');
       fireEvent.click(maximizeButton);
 
-      expect(mockIsMaximized).toHaveBeenCalledTimes(1);
+      // Wait for async handler to complete
+      await waitFor(() => {
+        expect(mockIsMaximized).toHaveBeenCalledTimes(1);
+      });
+
       expect(mockUnmaximize).toHaveBeenCalledTimes(1);
       expect(mockMaximize).not.toHaveBeenCalled();
     });

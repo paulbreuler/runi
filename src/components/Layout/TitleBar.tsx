@@ -4,7 +4,11 @@ import { Minimize2, Maximize2, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
-const TitleBarControls = (): React.JSX.Element => {
+// macOS native traffic light controls are positioned at trafficLightPosition (x: 20, y: 20)
+// Add padding to prevent content from overlapping native controls
+const MACOS_TRAFFIC_LIGHT_OFFSET = 80; // Matches trafficLightPosition x:20 + native button width
+
+const TitleBarControls = (): React.JSX.Element | null => {
   // Cache window instance to avoid repeated getCurrentWindow() calls
   const appWindow = useMemo<Window | null>(() => {
     try {
@@ -107,10 +111,10 @@ export const TitleBar = ({ title = 'Runi', children }: TitleBarProps): React.JSX
         // Height matches macOS title bar (~28px) with overlay style
         'h-7 border-b border-border-subtle bg-bg-surface/80 backdrop-blur-sm flex items-center justify-between',
         'text-xs text-text-secondary select-none',
-        // macOS: Native traffic lights at x:20, so add left padding
         // Windows/Linux: Controls on right, so add left padding
-        isMac ? 'pl-[80px]' : 'pl-4'
+        !isMac && 'pl-4'
       )}
+      style={isMac ? { paddingLeft: `${MACOS_TRAFFIC_LIGHT_OFFSET.toString()}px` } : undefined}
       data-testid="titlebar"
       data-tauri-drag-region
     >
