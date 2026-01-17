@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useSpring } from 'motion/react';
-import { X, Minus, ChevronUp, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';
 import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores/usePanelStore';
 import { DockControls } from './DockControls';
 import { cn } from '@/utils/cn';
@@ -21,8 +21,8 @@ const panelSpring = {
   mass: 0.8,
 };
 
-// Collapsed size for horizontal docks (left/right)
-const COLLAPSED_PANEL_WIDTH = 24;
+// Collapsed size for horizontal docks (left/right) - 28px for "book page edge" feel
+const COLLAPSED_PANEL_WIDTH = 28;
 
 /**
  * DockablePanel - A DevTools-style panel that can dock to different positions.
@@ -116,13 +116,6 @@ export const DockablePanel = ({
   const handleMinimize = useCallback(() => {
     setCollapsed(true);
   }, [setCollapsed]);
-
-  // Handle header click (expands when collapsed)
-  const handleHeaderClick = useCallback(() => {
-    if (isCollapsed) {
-      setCollapsed(false);
-    }
-  }, [isCollapsed, setCollapsed]);
 
   // Handle panel click for horizontal collapsed state
   // When collapsed on left/right, clicking anywhere on the panel should expand it
@@ -234,20 +227,6 @@ export const DockablePanel = ({
     }
   }, [isCollapsed, setCollapsed]);
 
-  // Get collapse icon based on position and state
-  const getCollapseIcon = (): React.ReactNode => {
-    if (isCollapsed) {
-      if (position === 'left') {
-        return <ChevronRight size={14} />;
-      }
-      if (position === 'right') {
-        return <ChevronLeft size={14} />;
-      }
-      return <ChevronUp size={14} />;
-    }
-    return <Minus size={14} />;
-  };
-
   // Don't render if not visible
   if (!isVisible) {
     return null;
@@ -332,58 +311,96 @@ export const DockablePanel = ({
           onDoubleClick={handleDoubleClick}
         />
 
-        {/* Panel header */}
-        <div
-          data-testid="panel-header"
-          className={cn(
-            'flex items-center justify-between h-8 border-b border-border-default shrink-0 relative z-20',
-            // Reduce padding when collapsed horizontally to fit in narrow width
-            isCollapsed && isHorizontal ? 'px-1' : 'px-3',
-            isCollapsed && 'cursor-pointer hover:bg-bg-elevated/50'
-          )}
-          onClick={handleHeaderClick}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-text-primary">{title}</span>
-          </div>
+        {/* Collapsed state - "Tray" design with grip icon and label */}
+        {isCollapsed && position === 'bottom' && (
+          <motion.div
+            data-testid="panel-collapsed-edge"
+            className={cn(
+              'flex items-center justify-center gap-2 cursor-pointer transition-colors',
+              'text-text-muted hover:text-text-secondary hover:bg-bg-elevated/30',
+              'w-full h-full'
+            )}
+            onClick={() => {
+              setCollapsed(false);
+            }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            aria-label="Expand Tray"
+          >
+            <GripHorizontal size={14} className="opacity-60" />
+            <span className="text-[10px] font-medium tracking-wide uppercase">Tray</span>
+          </motion.div>
+        )}
 
-          <div className="flex items-center gap-1">
-            {/* Dock controls - only show when not collapsed */}
-            {!isCollapsed && <DockControls className="mr-2" />}
-
-            {/* Collapse/Minimize button */}
-            <button
-              type="button"
-              className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleMinimize();
-              }}
-              aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+        {/* Collapsed state for left/right docks */}
+        {isCollapsed && isHorizontal && (
+          <motion.div
+            data-testid="panel-collapsed-edge"
+            className={cn(
+              'flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors',
+              'text-text-muted hover:text-text-secondary hover:bg-bg-elevated/30',
+              'w-full h-full'
+            )}
+            onClick={() => {
+              setCollapsed(false);
+            }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            aria-label="Expand Tray"
+          >
+            <GripVertical size={14} className="opacity-60" />
+            <span
+              className="text-[10px] font-medium tracking-wide uppercase"
+              style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
             >
-              {getCollapseIcon()}
-            </button>
+              Tray
+            </span>
+          </motion.div>
+        )}
 
-            {/* Close button */}
-            <button
-              type="button"
-              className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClose();
-              }}
-              aria-label="Close panel"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* Panel content (hidden when collapsed) */}
+        {/* Expanded state - full header + content */}
         {!isCollapsed && (
-          <div className="flex-1 overflow-auto" data-testid="panel-content-area">
-            {children}
-          </div>
+          <>
+            {/* Panel header */}
+            <div
+              data-testid="panel-header"
+              className="flex items-center justify-between h-8 px-3 border-b border-border-default shrink-0 relative z-20"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-text-primary">{title}</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {/* Dock controls */}
+                <DockControls className="mr-2" />
+
+                {/* Collapse/Minimize button */}
+                <button
+                  type="button"
+                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 transition-colors"
+                  onClick={handleMinimize}
+                  aria-label="Collapse panel"
+                >
+                  <Minus size={14} />
+                </button>
+
+                {/* Close button */}
+                <button
+                  type="button"
+                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 transition-colors"
+                  onClick={handleClose}
+                  aria-label="Close panel"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Panel content */}
+            <div className="flex-1 overflow-auto" data-testid="panel-content-area">
+              {children}
+            </div>
+          </>
         )}
       </motion.div>
     </AnimatePresence>

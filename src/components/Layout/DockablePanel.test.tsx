@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DockablePanel } from './DockablePanel';
 import { usePanelStore, DEFAULT_PANEL_SIZES } from '@/stores/usePanelStore';
 
@@ -187,7 +188,7 @@ describe('DockablePanel', () => {
       expect(screen.queryByTestId('panel-content')).not.toBeInTheDocument();
     });
 
-    it('still shows title when collapsed', () => {
+    it('shows Tray label with grip icon when collapsed', () => {
       usePanelStore.setState({ isCollapsed: true });
 
       render(
@@ -196,10 +197,14 @@ describe('DockablePanel', () => {
         </DockablePanel>
       );
 
-      expect(screen.getByText('Test Panel')).toBeInTheDocument();
+      // Header should NOT be visible when collapsed (minimal design)
+      expect(screen.queryByTestId('panel-header')).not.toBeInTheDocument();
+      // Collapsed edge should be visible with "Tray" label
+      expect(screen.getByTestId('panel-collapsed-edge')).toBeInTheDocument();
+      expect(screen.getByText('Tray')).toBeInTheDocument();
     });
 
-    it('expands when clicking collapsed bar', () => {
+    it('expands when clicking collapsed edge', () => {
       usePanelStore.setState({ isCollapsed: true });
 
       render(
@@ -208,10 +213,42 @@ describe('DockablePanel', () => {
         </DockablePanel>
       );
 
-      const header = screen.getByTestId('panel-header');
-      fireEvent.click(header);
+      const collapsedEdge = screen.getByTestId('panel-collapsed-edge');
+      fireEvent.click(collapsedEdge);
 
       expect(usePanelStore.getState().isCollapsed).toBe(false);
+    });
+
+    it('toggles collapse on double-click of resizer', () => {
+      usePanelStore.setState({ isCollapsed: false });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const resizer = screen.getByTestId('panel-resizer');
+      fireEvent.doubleClick(resizer);
+
+      expect(usePanelStore.getState().isCollapsed).toBe(true);
+
+      // Double-click again to expand
+      fireEvent.doubleClick(resizer);
+      expect(usePanelStore.getState().isCollapsed).toBe(false);
+    });
+
+    it('collapsed edge has cursor-pointer', () => {
+      usePanelStore.setState({ isCollapsed: true });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const collapsedEdge = screen.getByTestId('panel-collapsed-edge');
+      expect(collapsedEdge).toHaveClass('cursor-pointer');
     });
   });
 
@@ -241,6 +278,108 @@ describe('DockablePanel', () => {
 
       const resizer = screen.getByTestId('panel-resizer');
       expect(resizer).toHaveAttribute('aria-orientation', 'horizontal');
+    });
+  });
+
+  describe('left dock position', () => {
+    it('applies left dock styles', () => {
+      usePanelStore.setState({ position: 'left' });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const panel = screen.getByTestId('dockable-panel');
+      // Left dock should have border-right
+      expect(panel).toHaveClass('border-r');
+    });
+
+    it('resize handle has vertical orientation for left dock', () => {
+      usePanelStore.setState({ position: 'left' });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const resizer = screen.getByTestId('panel-resizer');
+      expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
+    });
+  });
+
+  describe('right dock position', () => {
+    it('applies right dock styles', () => {
+      usePanelStore.setState({ position: 'right' });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const panel = screen.getByTestId('dockable-panel');
+      // Right dock should have border-left
+      expect(panel).toHaveClass('border-l');
+    });
+
+    it('resize handle has vertical orientation for right dock', () => {
+      usePanelStore.setState({ position: 'right' });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const resizer = screen.getByTestId('panel-resizer');
+      expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
+    });
+
+    it('expands when clicking collapsed panel on right dock', async () => {
+      const user = userEvent.setup();
+      usePanelStore.setState({ position: 'right', isCollapsed: true });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div data-testid="panel-content">Content</div>
+        </DockablePanel>
+      );
+
+      // Content should be hidden when collapsed
+      expect(screen.queryByTestId('panel-content')).not.toBeInTheDocument();
+
+      // Click the panel to expand
+      const panel = screen.getByTestId('dockable-panel');
+      await user.click(panel);
+
+      // Content should now be visible
+      expect(screen.getByTestId('panel-content')).toBeInTheDocument();
+      expect(usePanelStore.getState().isCollapsed).toBe(false);
+    });
+
+    it('expands when clicking resizer on collapsed right dock', async () => {
+      const user = userEvent.setup();
+      usePanelStore.setState({ position: 'right', isCollapsed: true });
+
+      render(
+        <DockablePanel title="Test Panel">
+          <div data-testid="panel-content">Content</div>
+        </DockablePanel>
+      );
+
+      // Content should be hidden when collapsed
+      expect(screen.queryByTestId('panel-content')).not.toBeInTheDocument();
+
+      // Click the resizer to expand
+      const resizer = screen.getByTestId('panel-resizer');
+      await user.click(resizer);
+
+      // Content should now be visible
+      expect(screen.getByTestId('panel-content')).toBeInTheDocument();
+      expect(usePanelStore.getState().isCollapsed).toBe(false);
     });
   });
 
