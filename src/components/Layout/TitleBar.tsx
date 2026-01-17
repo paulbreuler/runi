@@ -59,26 +59,27 @@ const TitleBarControls = (): React.JSX.Element => {
 
   if (isMacSync()) {
     // macOS window controls (colored circles on the left)
+    // Using design tokens: signal-error (red), signal-warning (yellow), signal-success (green)
     return (
       <div className="flex items-center gap-2 px-4 h-full">
         <button
           type="button"
           onClick={handleClose}
-          className="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff3f36] transition-colors border border-[#e0443e]/50"
+          className="w-3 h-3 rounded-full bg-signal-error hover:bg-signal-error/80 transition-colors border border-signal-error/50"
           aria-label="Close window"
           data-testid="titlebar-close"
         />
         <button
           type="button"
           onClick={handleMinimize}
-          className="w-3 h-3 rounded-full bg-[#ffbd2e] hover:bg-[#ffa502] transition-colors border border-[#dea123]/50"
+          className="w-3 h-3 rounded-full bg-signal-warning hover:bg-signal-warning/80 transition-colors border border-signal-warning/50"
           aria-label="Minimize window"
           data-testid="titlebar-minimize"
         />
         <button
           type="button"
           onClick={handleMaximize}
-          className="w-3 h-3 rounded-full bg-[#27c93f] hover:bg-[#1aad29] transition-colors border border-[#1aab29]/50"
+          className="w-3 h-3 rounded-full bg-signal-success hover:bg-signal-success/80 transition-colors border border-signal-success/50"
           aria-label="Maximize window"
           data-testid="titlebar-maximize"
         />
