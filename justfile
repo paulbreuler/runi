@@ -36,6 +36,10 @@ build:
 build-frontend:
     npm run build
 
+# Measure startup time of release bundle
+measure-startup:
+    @bash scripts/measure-startup.sh
+
 # Generate TypeScript types from Rust structs (ts-rs)
 generate-types:
     @echo "🔄 Generating TypeScript types from Rust..."
