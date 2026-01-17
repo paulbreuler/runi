@@ -39,15 +39,15 @@ impl HistoryEntry {
 
     /// Generate a filename for this history entry.
     ///
-    /// Format: `YYYY-MM-DD-HH-MM-SS-{METHOD}-{sanitized-url}.yaml`
+    /// Format: `YYYY-MM-DD-HH-MM-SS-{METHOD}-{sanitized-url}-{id}.yaml`
     ///
-    /// The URL is sanitized by replacing special characters with underscores.
+    /// The URL is sanitized by replacing special characters with hyphens.
     #[must_use]
     pub fn filename(&self) -> String {
         let datetime = self.timestamp.format("%Y-%m-%d-%H-%M-%S");
         let method = self.request.method.to_uppercase();
 
-        // Sanitize URL for filename: remove protocol, replace special chars with underscore
+        // Sanitize URL for filename: remove protocol, replace special chars with hyphen
         let sanitized = self
             .request
             .url
@@ -58,7 +58,9 @@ impl HistoryEntry {
             .take(50) // Limit length
             .collect::<String>();
 
-        format!("{datetime}-{method}-{sanitized}.yaml")
+        // Include entry ID in filename to ensure uniqueness
+        let short_id = self.id.chars().take(8).collect::<String>();
+        format!("{datetime}-{method}-{sanitized}-{short_id}.yaml")
     }
 }
 
@@ -240,16 +242,27 @@ pub async fn clear_history() -> Result<(), String> {
 
     let paths = list_history_entries().await?;
 
+    let mut failed_deletions: usize = 0;
+
     for path in paths {
         if let Err(e) = tokio::fs::remove_file(&path).await {
+            // Log error but continue processing other files
             eprintln!(
                 "Warning: Failed to delete history file {}: {e}",
                 path.display()
             );
+            failed_deletions += 1;
         }
     }
 
-    Ok(())
+    if failed_deletions > 0 {
+        Err(format!(
+            "Failed to delete {} history file(s)",
+            failed_deletions
+        ))
+    } else {
+        Ok(())
+    }
 }
 
 #[cfg(test)]

@@ -13,7 +13,7 @@ use tokio::sync::Mutex;
 ///
 /// This can be swapped for other implementations (e.g., Neo4j) via feature flags
 /// or configuration in the future.
-#[allow(clippy::non_std_lazy_statics)] // once_cell is acceptable for cross-platform compatibility
+/// Uses `once_cell` instead of `std::sync::LazyLock` for cross-platform compatibility.
 static HISTORY_STORAGE: once_cell::sync::Lazy<Arc<FileHistoryStorage>> =
     once_cell::sync::Lazy::new(|| Arc::new(FileHistoryStorage::new()));
 

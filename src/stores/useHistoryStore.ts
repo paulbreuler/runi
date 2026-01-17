@@ -21,11 +21,11 @@ export const useHistoryStore = create<HistoryState>((set) => ({
   isLoading: false,
   error: null,
 
-  loadHistory: async (limit = 100): Promise<void> => {
+  loadHistory: async (limit?: number): Promise<void> => {
     set({ isLoading: true, error: null });
     try {
       const entries = await invoke<HistoryEntry[]>('load_request_history', {
-        limit,
+        limit: limit ?? undefined,
       });
       set({ entries, isLoading: false, error: null });
     } catch (error) {
@@ -36,24 +36,21 @@ export const useHistoryStore = create<HistoryState>((set) => ({
 
   addEntry: async (request: RequestParams, response: HttpResponse): Promise<void> => {
     try {
-      const id = await invoke<string>('save_request_history', {
+      await invoke<string>('save_request_history', {
         request,
         response,
       });
 
-      // Create entry from request/response with the returned ID
-      const entry: HistoryEntry = {
-        id,
-        timestamp: new Date().toISOString(),
-        request,
-        response,
-      };
+      // Reload history from backend to ensure we use the canonical entry
+      // This ensures we have the exact timestamp and entry that was saved
+      const entries = await invoke<HistoryEntry[]>('load_request_history', {
+        limit: undefined,
+      });
 
-      // Prepend to entries (newest first)
-      set((state) => ({
-        entries: [entry, ...state.entries],
+      set({
+        entries,
         error: null,
-      }));
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       set({ error: errorMessage });
