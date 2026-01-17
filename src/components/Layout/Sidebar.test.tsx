@@ -160,8 +160,11 @@ describe('Sidebar', () => {
       fireEvent.click(historyEntry);
 
       // Verify event was emitted with correct payload and source
-      expect(mockEmit).toHaveBeenCalledTimes(1);
-      expect(mockEmit).toHaveBeenCalledWith(
+      const { globalEventBus } = await import('@/events/bus');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(vi.mocked(globalEventBus.emit)).toHaveBeenCalledTimes(1);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(vi.mocked(globalEventBus.emit)).toHaveBeenCalledWith(
         'history.entry-selected',
         mockHistoryEntry,
         'HistoryDrawer'
