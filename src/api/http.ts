@@ -41,26 +41,6 @@ export async function executeRequest(params: RequestParams): Promise<HttpRespons
   const isTauriEnv = isTauri();
   const consoleService = getConsoleService();
 
-  // #region agent log
-  // Debug log: Track when requests are made and whether Tauri is available
-  // This helps diagnose issues when timing data is missing
-  fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      location: 'http.ts:42',
-      message: 'executeRequest called',
-      data: { isTauri: isTauriEnv, url: params.url, correlationId },
-      timestamp: Date.now(),
-      sessionId: 'debug-session',
-      runId: 'production',
-      hypothesisId: 'A',
-    }),
-  }).catch(() => {
-    // Ignore debug log failures
-  });
-  // #endregion
-
   // This is a Tauri app - we must use the backend for accurate timing
   if (!isTauriEnv) {
     const error: AppError = {
@@ -91,33 +71,6 @@ export async function executeRequest(params: RequestParams): Promise<HttpRespons
         params,
         correlation_id: correlationId,
       });
-      // #region agent log
-      // Debug log: Track timing data from Tauri backend
-      // This is critical for diagnosing why timing waterfall segments are missing
-      fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'http.ts:88',
-          message: 'Tauri response received',
-          data: {
-            timing: result.timing,
-            first_byte_ms: result.timing.first_byte_ms,
-            total_ms: result.timing.total_ms,
-            dns_ms: result.timing.dns_ms,
-            connect_ms: result.timing.connect_ms,
-            tls_ms: result.timing.tls_ms,
-            correlationId,
-          },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'production',
-          hypothesisId: 'B',
-        }),
-      }).catch(() => {
-        // Ignore debug log failures
-      });
-      // #endregion
       return result;
     } catch (error) {
       // Convert Rust AppError to frontend AppError

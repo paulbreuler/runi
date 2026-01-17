@@ -8,6 +8,9 @@ describe('console-service', () => {
     service.clear();
     // Set minimum log level to debug to capture all logs in tests
     service.setMinLogLevel('debug');
+    // Reset size limits to defaults for test isolation
+    service.setMaxLogs(1000);
+    service.setMaxSizeBytes(4 * 1024 * 1024); // 4MB
   });
 
   describe('singleton behavior', () => {
@@ -198,6 +201,111 @@ describe('console-service', () => {
 
       service.clear();
       expect(service.getLogs().length).toBe(0);
+    });
+  });
+
+  describe('size-based limiting', () => {
+    it('tracks current size in bytes', () => {
+      const service = getConsoleService();
+      service.clear();
+      initializeConsoleService();
+
+      expect(service.getCurrentSizeBytes()).toBe(0);
+
+      console.log('Test message');
+      expect(service.getCurrentSizeBytes()).toBeGreaterThan(0);
+    });
+
+    it('trims logs when exceeding maxSizeBytes', () => {
+      const service = getConsoleService();
+      service.clear();
+      // Set a very small size limit (500 bytes)
+      service.setMaxSizeBytes(500);
+      initializeConsoleService();
+
+      // Add many logs to exceed the limit
+      for (let i = 0; i < 20; i++) {
+        console.log(`This is a relatively long message number ${String(i)} that takes up space`);
+      }
+
+      // Should have trimmed to stay under limit
+      expect(service.getCurrentSizeBytes()).toBeLessThanOrEqual(500);
+      expect(service.getLogs().length).toBeLessThan(20);
+    });
+
+    it('updates size when logs are deleted', () => {
+      const service = getConsoleService();
+      service.clear();
+      service.setMaxSizeBytes(1024 * 1024); // 1MB
+      initializeConsoleService();
+
+      console.log('Test message');
+      const logs = service.getLogs();
+      const initialSize = service.getCurrentSizeBytes();
+      expect(initialSize).toBeGreaterThan(0);
+
+      // Delete the log
+      if (logs.length > 0 && logs[0] !== undefined) {
+        service.deleteLog(logs[0].id);
+        expect(service.getCurrentSizeBytes()).toBeLessThan(initialSize);
+      }
+    });
+
+    it('resets size when cleared', () => {
+      const service = getConsoleService();
+      service.clear();
+      service.setMaxSizeBytes(1024 * 1024); // 1MB
+      initializeConsoleService();
+
+      console.log('Test message');
+      expect(service.getCurrentSizeBytes()).toBeGreaterThan(0);
+
+      service.clear();
+      expect(service.getCurrentSizeBytes()).toBe(0);
+    });
+
+    it('trims existing logs when setMaxSizeBytes is called with smaller limit', () => {
+      const service = getConsoleService();
+      service.clear();
+      service.setMaxSizeBytes(1024 * 1024); // 1MB initially
+      initializeConsoleService();
+
+      // Add several logs
+      for (let i = 0; i < 10; i++) {
+        console.log(`Message ${String(i)} with some content`);
+      }
+
+      const initialCount = service.getLogs().length;
+      const initialSize = service.getCurrentSizeBytes();
+
+      // Verify we have meaningful data before trimming
+      expect(initialSize).toBeGreaterThan(100);
+
+      // Set a smaller limit that should trim logs
+      service.setMaxSizeBytes(100);
+
+      expect(service.getCurrentSizeBytes()).toBeLessThanOrEqual(100);
+      expect(service.getLogs().length).toBeLessThan(initialCount);
+    });
+
+    it('stores sizeBytes on each log', () => {
+      const service = getConsoleService();
+      service.clear();
+      service.setMinLogLevel('debug');
+      service.setMaxSizeBytes(1024 * 1024); // 1MB to avoid trimming
+      initializeConsoleService();
+
+      console.log('Test message');
+      const logs = service.getLogs();
+      expect(logs.length).toBeGreaterThan(0);
+      const lastLog = logs[logs.length - 1];
+      expect(lastLog?.sizeBytes).toBeGreaterThan(0);
+    });
+
+    it('returns correct maxSizeBytes', () => {
+      const service = getConsoleService();
+      service.setMaxSizeBytes(2 * 1024 * 1024); // 2MB
+      expect(service.getMaxSizeBytes()).toBe(2 * 1024 * 1024);
     });
   });
 

@@ -44,6 +44,8 @@ type LogEventHandler = (log: ConsoleLog) => void;
 class ConsoleService {
   private logs: ConsoleLog[] = [];
   private maxLogs = 1000;
+  private maxSizeBytes = 4 * 1024 * 1024; // 4MB default
+  private currentSizeBytes = 0;
   private logIdCounter = 0;
   private subscribers = new Set<LogEventHandler>();
   private minLogLevel: LogLevel = 'info';
@@ -62,6 +64,21 @@ class ConsoleService {
   private generateLogId(): string {
     this.logIdCounter += 1;
     return `log_${String(Date.now())}_${String(this.logIdCounter)}`;
+  }
+
+  /**
+   * Estimate the size of a log entry in bytes.
+   *
+   * Uses a fast estimation:
+   * - message.length * 2 (UTF-16 characters)
+   * - args overhead ~100 bytes per arg (rough estimate)
+   * - fixed overhead ~50 bytes (id, level, timestamp, etc.)
+   */
+  private estimateLogSize(log: ConsoleLog): number {
+    const messageSize = log.message.length * 2;
+    const argsSize = log.args.length * 100;
+    const fixedOverhead = 50;
+    return messageSize + argsSize + fixedOverhead;
   }
 
   /**
@@ -175,6 +192,7 @@ class ConsoleService {
    * Add a log entry.
    *
    * Logs are filtered based on the minimum log level setting.
+   * Memory is limited by both count (maxLogs) and size (maxSizeBytes).
    */
   public addLog(log: Partial<ConsoleLog>): void {
     const fullLog: ConsoleLog = {
@@ -192,11 +210,27 @@ class ConsoleService {
       return;
     }
 
-    this.logs.push(fullLog);
+    // Estimate and store size for this log
+    const logSize = this.estimateLogSize(fullLog);
+    fullLog.sizeBytes = logSize;
 
-    // Limit log count
+    this.logs.push(fullLog);
+    this.currentSizeBytes += logSize;
+
+    // Trim by count limit
     if (this.logs.length > this.maxLogs) {
-      this.logs = this.logs.slice(-this.maxLogs);
+      const removed = this.logs.splice(0, this.logs.length - this.maxLogs);
+      for (const removedLog of removed) {
+        this.currentSizeBytes -= removedLog.sizeBytes ?? 0;
+      }
+    }
+
+    // Trim by size limit
+    while (this.currentSizeBytes > this.maxSizeBytes && this.logs.length > 0) {
+      const removed = this.logs.shift();
+      if (removed !== undefined) {
+        this.currentSizeBytes -= removed.sizeBytes ?? 0;
+      }
     }
 
     // Notify subscribers
@@ -238,13 +272,21 @@ class ConsoleService {
   public clear(): void {
     this.logs = [];
     this.logIdCounter = 0;
+    this.currentSizeBytes = 0;
   }
 
   /**
    * Delete a specific log by ID.
    */
   public deleteLog(id: string): void {
-    this.logs = this.logs.filter((log) => log.id !== id);
+    const logIndex = this.logs.findIndex((log) => log.id === id);
+    if (logIndex !== -1) {
+      const removed = this.logs[logIndex];
+      if (removed !== undefined) {
+        this.currentSizeBytes -= removed.sizeBytes ?? 0;
+      }
+      this.logs.splice(logIndex, 1);
+    }
   }
 
   /**
@@ -253,8 +295,39 @@ class ConsoleService {
   public setMaxLogs(max: number): void {
     this.maxLogs = max;
     if (this.logs.length > max) {
-      this.logs = this.logs.slice(-max);
+      const removed = this.logs.splice(0, this.logs.length - max);
+      for (const log of removed) {
+        this.currentSizeBytes -= log.sizeBytes ?? 0;
+      }
     }
+  }
+
+  /**
+   * Set maximum size in bytes for log storage.
+   */
+  public setMaxSizeBytes(maxBytes: number): void {
+    this.maxSizeBytes = maxBytes;
+    // Trim if current size exceeds new limit
+    while (this.currentSizeBytes > this.maxSizeBytes && this.logs.length > 0) {
+      const removed = this.logs.shift();
+      if (removed !== undefined) {
+        this.currentSizeBytes -= removed.sizeBytes ?? 0;
+      }
+    }
+  }
+
+  /**
+   * Get current total size of logs in bytes.
+   */
+  public getCurrentSizeBytes(): number {
+    return this.currentSizeBytes;
+  }
+
+  /**
+   * Get maximum size in bytes for log storage.
+   */
+  public getMaxSizeBytes(): number {
+    return this.maxSizeBytes;
   }
 
   /**

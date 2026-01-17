@@ -27,4 +27,6 @@ export interface ConsoleLog {
   source?: string;
   /** Optional correlation ID for tracing */
   correlationId?: string;
+  /** Approximate size in bytes (internal use for memory limiting) */
+  sizeBytes?: number;
 }

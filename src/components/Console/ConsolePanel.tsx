@@ -20,6 +20,8 @@ export type { LogLevel, ConsoleLog } from '@/types/console';
 interface ConsolePanelProps {
   /** Maximum number of logs to keep (default: 1000) */
   maxLogs?: number;
+  /** Maximum size in bytes for log storage (default: 4MB) */
+  maxSizeBytes?: number;
 }
 
 interface GroupedLog {
@@ -46,7 +48,12 @@ function isGroupedLog(log: DisplayLog): log is GroupedLog {
  * Displays logs from the global console service (logs are intercepted before React mounts).
  * Supports filtering by level and correlation ID for debugging across React and Rust boundaries.
  */
-export const ConsolePanel = ({ maxLogs = 1000 }: ConsolePanelProps): React.JSX.Element => {
+const DEFAULT_MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
+
+export const ConsolePanel = ({
+  maxLogs = 1000,
+  maxSizeBytes = DEFAULT_MAX_SIZE_BYTES,
+}: ConsolePanelProps): React.JSX.Element => {
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
   const [filter, setFilter] = useState<LogLevel | 'all'>('all');
   const [correlationIdFilter, setCorrelationIdFilter] = useState<string>('');
@@ -64,8 +71,9 @@ export const ConsolePanel = ({ maxLogs = 1000 }: ConsolePanelProps): React.JSX.E
   useEffect(() => {
     const service = serviceRef.current;
 
-    // Set max logs (default is 1000 from props)
+    // Configure limits (count-based and size-based)
     service.setMaxLogs(maxLogs);
+    service.setMaxSizeBytes(maxSizeBytes);
 
     // Load initial logs
     const initialLogs = service.getLogs();
@@ -76,7 +84,7 @@ export const ConsolePanel = ({ maxLogs = 1000 }: ConsolePanelProps): React.JSX.E
       // Use functional update to ensure we get latest state
       setLogs((prev) => {
         const updated = [...prev, log];
-        // Limit to maxLogs
+        // Limit to maxLogs (size limit is handled by service)
         if (updated.length > maxLogs) {
           return updated.slice(-maxLogs);
         }
@@ -104,7 +112,7 @@ export const ConsolePanel = ({ maxLogs = 1000 }: ConsolePanelProps): React.JSX.E
       unsubscribe();
       clearInterval(interval);
     };
-  }, [maxLogs]);
+  }, [maxLogs, maxSizeBytes]);
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
