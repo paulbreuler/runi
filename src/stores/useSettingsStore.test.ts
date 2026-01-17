@@ -47,4 +47,35 @@ describe('useSettingsStore', () => {
 
     expect(result.current.sidebarVisible).toBe(true);
   });
+
+  describe('viewMode', () => {
+    it('initializes with builder view mode', () => {
+      const { result } = renderHook(() => useSettingsStore());
+      expect(result.current.viewMode).toBe('builder');
+    });
+
+    it('sets view mode to history', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setViewMode('history');
+      });
+
+      expect(result.current.viewMode).toBe('history');
+    });
+
+    it('sets view mode back to builder', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setViewMode('history');
+      });
+
+      act(() => {
+        result.current.setViewMode('builder');
+      });
+
+      expect(result.current.viewMode).toBe('builder');
+    });
+  });
 });
