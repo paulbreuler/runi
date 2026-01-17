@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { executeRequest } from '@/api/http';
 import { useHistoryStore } from '@/stores/useHistoryStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { RequestHeader } from '@/components/Request/RequestHeader';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
@@ -10,8 +11,11 @@ import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
+import { ViewToggle } from '@/components/Layout/ViewToggle';
+import { NetworkHistoryPanel } from '@/components/History/NetworkHistoryPanel';
 import { globalEventBus } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
+import type { NetworkHistoryEntry } from '@/types/history';
 
 export const HomePage = (): React.JSX.Element => {
   const {
@@ -30,10 +34,16 @@ export const HomePage = (): React.JSX.Element => {
     setError,
   } = useRequestStore();
 
-  const { addEntry } = useHistoryStore();
+  const { addEntry, entries, loadHistory } = useHistoryStore();
+  const { viewMode, setViewMode } = useSettingsStore();
 
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
+
+  // Load history on mount
+  useEffect(() => {
+    void loadHistory();
+  }, [loadHistory]);
 
   const isValidUrl = localUrl.length > 0;
 
@@ -115,33 +125,86 @@ export const HomePage = (): React.JSX.Element => {
     void handleSend();
   };
 
+  // Handle replay from history - populate request builder and switch to builder view
+  const handleReplay = useCallback(
+    (entry: NetworkHistoryEntry): void => {
+      setMethod(entry.request.method);
+      setUrl(entry.request.url);
+      setHeaders(entry.request.headers);
+      setBody(entry.request.body ?? '');
+      setLocalUrl(entry.request.url);
+      setLocalMethod(entry.request.method as HttpMethod);
+      setResponse(null);
+      setError(null);
+      // Switch to builder view
+      setViewMode('builder');
+    },
+    [setMethod, setUrl, setHeaders, setBody, setResponse, setError, setViewMode]
+  );
+
+  // Handle copy as cURL - copy request to clipboard as cURL command
+  const handleCopyCurl = useCallback((entry: NetworkHistoryEntry): void => {
+    const { request } = entry;
+    let curl = `curl -X ${request.method} '${request.url}'`;
+
+    // Add headers
+    Object.entries(request.headers).forEach(([key, value]) => {
+      curl += ` -H '${key}: ${value}'`;
+    });
+
+    // Add body
+    if (request.body !== null && request.body !== '') {
+      curl += ` -d '${request.body}'`;
+    }
+
+    void navigator.clipboard.writeText(curl);
+  }, []);
+
   return (
     <MainLayout
       headerContent={
-        <RequestHeader
-          method={localMethod}
-          url={localUrl}
-          loading={isLoading}
-          onMethodChange={handleMethodChange}
-          onUrlChange={handleUrlChange}
-          onSend={handleSendClick}
-        />
+        <div className="flex items-center gap-4 w-full">
+          {/* Request header (method selector, URL, send button) */}
+          <div className="flex-1">
+            <RequestHeader
+              method={localMethod}
+              url={localUrl}
+              loading={isLoading}
+              onMethodChange={handleMethodChange}
+              onUrlChange={handleUrlChange}
+              onSend={handleSendClick}
+            />
+          </div>
+
+          {/* View toggle */}
+          <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+        </div>
       }
       requestContent={
-        <div className="h-full flex flex-col bg-bg-app">
-          {error !== null && (
-            <div
-              className="p-4 mx-4 mt-4 bg-signal-error/10 border border-signal-error/20 rounded-lg text-signal-error text-sm"
-              role="alert"
-              data-testid="error-panel"
-            >
-              {error}
+        viewMode === 'builder' ? (
+          <div className="h-full flex flex-col bg-bg-app">
+            {error !== null && (
+              <div
+                className="p-4 mx-4 mt-4 bg-signal-error/10 border border-signal-error/20 rounded-lg text-signal-error text-sm"
+                role="alert"
+                data-testid="error-panel"
+              >
+                {error}
+              </div>
+            )}
+            <div className="flex-1 overflow-hidden">
+              <RequestBuilder />
             </div>
-          )}
-          <div className="flex-1 overflow-hidden">
-            <RequestBuilder />
           </div>
-        </div>
+        ) : (
+          <div className="h-full bg-bg-app">
+            <NetworkHistoryPanel
+              entries={entries as NetworkHistoryEntry[]}
+              onReplay={handleReplay}
+              onCopyCurl={handleCopyCurl}
+            />
+          </div>
+        )
       }
       responseContent={
         <div className="h-full flex flex-col bg-bg-app">

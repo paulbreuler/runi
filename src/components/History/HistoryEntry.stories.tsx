@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { fn } from '@storybook/test';
 import { HistoryEntry } from './HistoryEntry';
 import type { HistoryEntry as HistoryEntryType } from '@/types/generated/HistoryEntry';
-import { vi } from 'vitest';
+
+const noop = fn();
 
 const meta = {
   title: 'Components/History/HistoryEntry',
@@ -46,8 +48,8 @@ const mockEntry: HistoryEntryType = {
 export const Default: Story = {
   args: {
     entry: mockEntry,
-    onSelect: vi.fn(),
-    onDelete: vi.fn(),
+    onSelect: noop,
+    onDelete: noop,
   },
   render: (args) => (
     <div className="w-80 bg-bg-surface p-4">
@@ -77,8 +79,8 @@ export const PostRequest: Story = {
         status_text: 'Created',
       },
     },
-    onSelect: vi.fn(),
-    onDelete: vi.fn(),
+    onSelect: noop,
+    onDelete: noop,
   },
   render: (args) => (
     <div className="w-80 bg-bg-surface p-4">
@@ -107,8 +109,8 @@ export const DeleteRequest: Story = {
         status_text: 'No Content',
       },
     },
-    onSelect: vi.fn(),
-    onDelete: vi.fn(),
+    onSelect: noop,
+    onDelete: noop,
   },
   render: (args) => (
     <div className="w-80 bg-bg-surface p-4">
@@ -130,8 +132,8 @@ export const LongUrl: Story = {
         url: 'https://api.example.com/very/long/path/with/many/segments/and/parameters?query1=value1&query2=value2&query3=value3',
       },
     },
-    onSelect: vi.fn(),
-    onDelete: vi.fn(),
+    onSelect: noop,
+    onDelete: noop,
   },
   render: (args) => (
     <div className="w-80 bg-bg-surface p-4">
@@ -150,8 +152,8 @@ export const Yesterday: Story = {
       id: 'hist_yesterday',
       timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     },
-    onSelect: vi.fn(),
-    onDelete: vi.fn(),
+    onSelect: noop,
+    onDelete: noop,
   },
   render: (args) => (
     <div className="w-80 bg-bg-surface p-4">
@@ -166,8 +168,8 @@ export const Yesterday: Story = {
 export const MultipleEntries: Story = {
   args: {
     entry: mockEntry,
-    onSelect: vi.fn(),
-    onDelete: vi.fn(),
+    onSelect: noop,
+    onDelete: noop,
   },
   render: () => (
     <div className="w-80 bg-bg-surface p-4 flex flex-col gap-1">
@@ -178,8 +180,8 @@ export const MultipleEntries: Story = {
           timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
           request: { ...mockEntry.request, method: 'GET', url: 'https://api.example.com/users' },
         }}
-        onSelect={vi.fn()}
-        onDelete={vi.fn()}
+        onSelect={noop}
+        onDelete={noop}
       />
       <HistoryEntry
         entry={{
@@ -188,8 +190,8 @@ export const MultipleEntries: Story = {
           timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
           request: { ...mockEntry.request, method: 'POST', url: 'https://api.example.com/users' },
         }}
-        onSelect={vi.fn()}
-        onDelete={vi.fn()}
+        onSelect={noop}
+        onDelete={noop}
       />
       <HistoryEntry
         entry={{
@@ -202,8 +204,8 @@ export const MultipleEntries: Story = {
             url: 'https://api.example.com/users/123',
           },
         }}
-        onSelect={vi.fn()}
-        onDelete={vi.fn()}
+        onSelect={noop}
+        onDelete={noop}
       />
     </div>
   ),
