@@ -348,6 +348,8 @@ test(auth): add bearer token validation tests
 5. **Progressive disclosure:** Features reveal based on user behavior, not menus
 6. **MCP-powered:** Support MCP 2025-11-25 spec (async ops, elicitation)
 
+**Core Architectural Patterns:** See `.cursorrules` for detailed patterns including event-driven architecture, loose coupling, MCP integration, and layer-specific patterns (React/TypeScript frontend, Rust/Tauri backend).
+
 ---
 
 ## The Adoption Ladder
