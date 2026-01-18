@@ -456,9 +456,30 @@ export const ConsoleLogFilter: Story = {
   },
 };
 
+// Saiyan tier colors for UI (mirrored from component)
+const TIER_COLORS = {
+  1: '#fbbf24', // amber-400 - Saiyan
+  2: '#facc15', // yellow-400 - Super Saiyan
+  3: '#fde047', // yellow-300 - Super Saiyan 2
+  4: '#fef08a', // yellow-200 - Super Saiyan 3
+  5: '#f87171', // red-400 - Super Saiyan God
+} as const;
+
+const TIER_NAMES = {
+  1: 'Saiyan',
+  2: 'Super Saiyan',
+  3: 'Super Saiyan 2',
+  4: 'Super Saiyan 3',
+  5: 'Super Saiyan God',
+} as const;
+
 /**
  * All display variants compared side-by-side with interactive badge counts.
  * Demonstrates how badges appear in full, compact, and icon modes.
+ * Includes the "Saiyan Evolution" Easter egg that triggers a tiered power-up animation.
+ *
+ * Use the tier buttons to jump directly to specific power levels.
+ * Toggle "Lock animation on" to keep the energy effect persistent for demo purposes.
  */
 export const AllVariantsComparison: Story = {
   args: {
@@ -470,6 +491,7 @@ export const AllVariantsComparison: Story = {
   render: function AllVariantsComparisonStory() {
     const [value, setValue] = useState('all');
     const [counts, setCounts] = useState({ error: 3, warn: 7, info: 24, debug: 156 });
+    const [isEvolving, setIsEvolving] = useState(false);
 
     const incrementError = (): void => {
       setCounts((c) => ({ ...c, error: c.error + 1 }));
@@ -498,11 +520,61 @@ export const AllVariantsComparison: Story = {
       }));
     };
 
+    // Set a specific tier directly
+    const setTierDirectly = (targetTier: number): void => {
+      const baseCount = 100;
+      const over9000 = 9001;
+
+      setCounts({
+        error: targetTier >= 1 ? over9000 : baseCount,
+        warn: targetTier >= 2 ? over9000 : baseCount,
+        info: targetTier >= 3 ? over9000 : baseCount,
+        debug: targetTier >= 4 ? over9000 : baseCount,
+      });
+    };
+
+    // Saiyan Evolution: staggered power-up sequence
+    const triggerEvolution = (): void => {
+      if (isEvolving) {
+        return;
+      }
+      setIsEvolving(true);
+
+      // Reset first
+      setCounts({ error: 3, warn: 7, info: 24, debug: 156 });
+
+      // Stagger each badge crossing 9000 by ~800ms
+      setTimeout(() => {
+        setCounts((c) => ({ ...c, error: 9001 }));
+      }, 400);
+      setTimeout(() => {
+        setCounts((c) => ({ ...c, warn: 9001 }));
+      }, 1200);
+      setTimeout(() => {
+        setCounts((c) => ({ ...c, info: 9001 }));
+      }, 2000);
+      setTimeout(() => {
+        setCounts((c) => ({ ...c, debug: 9001 }));
+      }, 2800);
+      // Allow re-triggering after sequence
+      setTimeout(() => {
+        setIsEvolving(false);
+      }, 5500);
+    };
+
     const resetCounts = (): void => {
       setCounts({ error: 3, warn: 7, info: 24, debug: 156 });
+      setIsEvolving(false);
     };
 
     const total = counts.error + counts.warn + counts.info + counts.debug;
+
+    // Calculate current tier based on badges over 9000
+    const badgesOver9000 = [counts.error, counts.warn, counts.info, counts.debug].filter(
+      (c) => c >= 9000
+    ).length;
+    const currentTier =
+      badgesOver9000 === 4 ? 5 : badgesOver9000 > 0 ? Math.min(badgesOver9000, 4) : 0;
 
     const options = [
       {
@@ -541,7 +613,45 @@ export const AllVariantsComparison: Story = {
 
     return (
       <div className="space-y-6">
-        <div className="flex gap-2">
+        {/* Tier status indicator */}
+        {currentTier > 0 && (
+          <div
+            className="text-xs font-semibold px-3 py-1.5 rounded border inline-block"
+            style={{
+              color: TIER_COLORS[currentTier as keyof typeof TIER_COLORS],
+              borderColor: `${TIER_COLORS[currentTier as keyof typeof TIER_COLORS]}50`,
+              backgroundColor: `${TIER_COLORS[currentTier as keyof typeof TIER_COLORS]}10`,
+            }}
+          >
+            Tier {currentTier}: {TIER_NAMES[currentTier as keyof typeof TIER_NAMES]}
+          </div>
+        )}
+
+        {/* Tier jump buttons */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-text-muted mr-1">Jump to tier:</span>
+          {([1, 2, 3, 4, 5] as const).map((tier) => (
+            <button
+              key={tier}
+              type="button"
+              onClick={() => {
+                setTierDirectly(tier);
+              }}
+              className="px-2 py-1 text-xs border rounded hover:opacity-80 transition-opacity"
+              style={{
+                borderColor: TIER_COLORS[tier],
+                color: TIER_COLORS[tier],
+                backgroundColor: currentTier === tier ? `${TIER_COLORS[tier]}20` : 'transparent',
+              }}
+              title={TIER_NAMES[tier]}
+            >
+              T{tier}
+            </button>
+          ))}
+        </div>
+
+        {/* Original controls */}
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={incrementError}
@@ -573,6 +683,15 @@ export const AllVariantsComparison: Story = {
           </button>
           <button
             type="button"
+            onClick={triggerEvolution}
+            disabled={isEvolving}
+            className="px-3 py-1.5 text-xs bg-gradient-to-r from-amber-500/10 via-red-500/10 to-gray-300/10 text-amber-400 border border-amber-500/30 rounded hover:border-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Watch the Saiyan evolution unfold!"
+          >
+            🔥 Saiyan Evolution
+          </button>
+          <button
+            type="button"
             onClick={resetCounts}
             className="px-3 py-1.5 text-xs bg-bg-raised border border-border-subtle rounded hover:bg-bg-elevated"
           >
@@ -586,7 +705,7 @@ export const AllVariantsComparison: Story = {
               <div className="w-20 text-xs font-medium text-text-muted uppercase tracking-wide shrink-0">
                 {variant}
               </div>
-              <div className="p-3 bg-bg-surface border border-border-subtle rounded-lg">
+              <div className="p-3 bg-bg-surface border border-border-subtle rounded-lg overflow-visible">
                 <SegmentedControl
                   value={value}
                   onValueChange={setValue}
