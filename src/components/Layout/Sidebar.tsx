@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface DrawerSectionProps {
   title: string;
@@ -64,15 +65,7 @@ export const Sidebar = (): React.JSX.Element => {
         defaultOpen={true}
         testId="collections-drawer"
       >
-        <div className="flex items-center gap-3 text-sm text-text-muted hover:text-text-secondary hover:bg-bg-raised/50 rounded-lg px-3 py-2 transition-all duration-200 cursor-pointer group">
-          <Folder
-            size={15}
-            className="text-text-muted/60 group-hover:text-accent-blue/70 transition-colors"
-          />
-          <span className="opacity-60 group-hover:opacity-100 transition-opacity">
-            No collections yet
-          </span>
-        </div>
+        <EmptyState variant="muted" size="sm" title="No collections yet" />
       </DrawerSection>
 
       {/* Spacer to push content up */}
