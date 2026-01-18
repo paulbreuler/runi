@@ -276,6 +276,8 @@ export default tseslint.config(
       'storybook-static/',
       'coverage/',
       'html/', // Vitest HTML test reports
+      'playwright-report/', // Playwright test reports
+      'test-results/', // Playwright test results
       'src/types/generated/',
       '.storybook/',
       'tests/',

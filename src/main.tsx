@@ -1,7 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { initializeConsoleService } from '@/services/console-service';
 import { App } from './App';
 import './app.css';
+
+// Initialize console service BEFORE React mounts
+// This ensures all logs are captured, including those before React initialization
+initializeConsoleService();
 
 // Ensure dark mode is applied
 document.documentElement.classList.add('dark');

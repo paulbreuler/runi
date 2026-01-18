@@ -37,6 +37,24 @@ This skill guides creation of UI components and pages that follow runi's design 
 - Use this skill when designing AI-native features that prioritize conversation over traditional UI patterns
 - Use this skill when you need guidance on when to use color vs. grayscale
 
+## Component Library Philosophy
+
+**Custom Components, Not External Libraries**
+
+If a component doesn't exist in a library that perfectly fits our design system, we design it ourselves as craftsmen and artists. We build our own custom component library that integrates seamlessly with runi's design system.
+
+**Key Principles:**
+
+- **Craftsmanship over convenience**: We craft components that fit perfectly, not compromise with generic solutions
+- **Design system integration**: Every component respects our zen, calm, book-like aesthetic
+- **Performance first**: React frontend on Rust backend—components must be performant
+- **Beauty and clarity**: Components work with absolute clarity, not ambiguity
+
+**The Unreal Engine Metaphor:**
+Think like game engine developers—craftsmanship, performance, clarity, not gamification. Game engines don't use generic UI libraries—they craft their own systems that fit perfectly within their architecture. We do the same.
+
+See `.planning-docs/DESIGN_IDEOLOGY.md` for the complete craftsmanship philosophy, custom component library approach, and unified material feel principles.
+
 ## Instructions
 
 ### Design Philosophy: The German Shepherd
@@ -589,6 +607,7 @@ export const AISuggestion = ({ suggestion, onAccept }: AISuggestionProps): JSX.E
 
 For detailed technical implementation:
 
+- **Design Ideology**: `.planning-docs/DESIGN_IDEOLOGY.md` - Craftsmanship philosophy, custom component library approach, Unreal Engine metaphor
 - **Design Vision**: `.planning-docs/runi-design-vision-v8.1.md`
 - **Component Library**: `src/components/ui/`
 - **Stores**: `src/stores/`

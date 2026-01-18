@@ -250,5 +250,123 @@ describe('keyboard utilities', () => {
       expect(mockHandler).not.toHaveBeenCalled();
       handler = null; // Already cleaned up
     });
+
+    it('works with compound modifiers (meta+shift)', () => {
+      const mockHandler = vi.fn();
+      const shortcut: KeyboardShortcut = {
+        key: 'i',
+        modifier: ['meta', 'shift'],
+        handler: mockHandler,
+      };
+
+      handler = createKeyboardHandler(shortcut);
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'i',
+        metaKey: true,
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+      });
+
+      window.dispatchEvent(event);
+
+      expect(mockHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call handler when only one modifier of compound is pressed', () => {
+      const mockHandler = vi.fn();
+      const shortcut: KeyboardShortcut = {
+        key: 'i',
+        modifier: ['meta', 'shift'],
+        handler: mockHandler,
+      };
+
+      handler = createKeyboardHandler(shortcut);
+
+      // Only meta pressed (missing shift)
+      const event = new KeyboardEvent('keydown', {
+        key: 'i',
+        metaKey: true,
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+      });
+
+      window.dispatchEvent(event);
+
+      expect(mockHandler).not.toHaveBeenCalled();
+    });
+
+    it('does not call handler when extra modifier is pressed with compound', () => {
+      const mockHandler = vi.fn();
+      const shortcut: KeyboardShortcut = {
+        key: 'i',
+        modifier: ['meta', 'shift'],
+        handler: mockHandler,
+      };
+
+      handler = createKeyboardHandler(shortcut);
+
+      // Extra alt key pressed
+      const event = new KeyboardEvent('keydown', {
+        key: 'i',
+        metaKey: true,
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: true,
+      });
+
+      window.dispatchEvent(event);
+
+      expect(mockHandler).not.toHaveBeenCalled();
+    });
+
+    it('works with ctrl+shift compound modifier', () => {
+      const mockHandler = vi.fn();
+      const shortcut: KeyboardShortcut = {
+        key: 'i',
+        modifier: ['ctrl', 'shift'],
+        handler: mockHandler,
+      };
+
+      handler = createKeyboardHandler(shortcut);
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'i',
+        metaKey: false,
+        ctrlKey: true,
+        shiftKey: true,
+        altKey: false,
+      });
+
+      window.dispatchEvent(event);
+
+      expect(mockHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('matches keys case-insensitively', () => {
+      const mockHandler = vi.fn();
+      const shortcut: KeyboardShortcut = {
+        key: 'i',
+        modifier: ['meta', 'shift'],
+        handler: mockHandler,
+      };
+
+      handler = createKeyboardHandler(shortcut);
+
+      // Shift+I produces uppercase 'I'
+      const event = new KeyboardEvent('keydown', {
+        key: 'I',
+        metaKey: true,
+        ctrlKey: false,
+        shiftKey: true,
+        altKey: false,
+      });
+
+      window.dispatchEvent(event);
+
+      expect(mockHandler).toHaveBeenCalledTimes(1);
+    });
   });
 });

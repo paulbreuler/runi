@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Folder, History, ChevronDown, ChevronRight } from 'lucide-react';
+import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface DrawerSectionProps {
@@ -71,24 +71,6 @@ export const Sidebar = (): React.JSX.Element => {
           />
           <span className="opacity-60 group-hover:opacity-100 transition-opacity">
             No collections yet
-          </span>
-        </div>
-      </DrawerSection>
-
-      {/* History Drawer */}
-      <DrawerSection
-        title="History"
-        icon={<History size={14} />}
-        defaultOpen={true}
-        testId="history-drawer"
-      >
-        <div className="flex items-center gap-3 text-sm text-text-muted hover:text-text-secondary hover:bg-bg-raised/50 rounded-lg px-3 py-2 transition-all duration-200 cursor-pointer group">
-          <History
-            size={15}
-            className="text-text-muted/60 group-hover:text-signal-warning/70 transition-colors"
-          />
-          <span className="opacity-60 group-hover:opacity-100 transition-opacity">
-            No history yet
           </span>
         </div>
       </DrawerSection>

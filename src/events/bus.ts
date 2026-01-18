@@ -24,10 +24,15 @@ export type EventType =
   | 'response.error'
   | 'sidebar.toggled'
   | 'sidebar.visible-changed'
+  | 'history.entry-selected'
   | 'ai.suggestion-requested'
   | 'ai.suggestion-available'
   | 'ai.error-analysis'
-  | 'command.executed';
+  | 'command.executed'
+  | 'console.debug-emitted'
+  | 'console.info-emitted'
+  | 'console.warn-emitted'
+  | 'console.error-emitted';
 
 /**
  * Event payload structure.
