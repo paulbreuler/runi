@@ -17,13 +17,6 @@ describe('Sidebar', () => {
     expect(screen.getByTestId('collections-drawer')).toBeInTheDocument();
   });
 
-  it('has History drawer section', () => {
-    render(<Sidebar />);
-
-    expect(screen.getByText('History')).toBeInTheDocument();
-    expect(screen.getByTestId('history-drawer')).toBeInTheDocument();
-  });
-
   it('drawer sections are collapsible', () => {
     render(<Sidebar />);
 
@@ -45,12 +38,6 @@ describe('Sidebar', () => {
     render(<Sidebar />);
 
     expect(screen.getByText('No collections yet')).toBeInTheDocument();
-  });
-
-  it('displays empty states for history', () => {
-    render(<Sidebar />);
-
-    expect(screen.getByText('No history yet')).toBeInTheDocument();
   });
 
   it('fills its container width', () => {

@@ -13,6 +13,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/**
+ * Sidebar with Collections drawer (default state).
+ */
 export const Default: Story = {
   render: () => (
     <div className="w-64 h-screen border border-border-default bg-bg-app">

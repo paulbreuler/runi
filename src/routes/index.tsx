@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { executeRequest } from '@/api/http';
+import { isAppError, type AppError } from '@/types/errors';
+import { getConsoleService } from '@/services/console-service';
+import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { RequestHeader } from '@/components/Request/RequestHeader';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
@@ -9,27 +12,63 @@ import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
+import { globalEventBus } from '@/events/bus';
+import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 
 export const HomePage = (): React.JSX.Element => {
   const {
     method,
+    headers,
+    body,
     response,
     isLoading,
     error,
     setMethod,
     setUrl,
+    setHeaders,
+    setBody,
     setResponse,
     setLoading,
     setError,
   } = useRequestStore();
 
+  const { addEntry, loadHistory } = useHistoryStore();
+
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
 
+  // Load history on mount
+  useEffect(() => {
+    void loadHistory();
+  }, [loadHistory]);
+
   const isValidUrl = localUrl.length > 0;
 
+  // Subscribe to history entry selection events
+  useEffect(() => {
+    const unsubscribe = globalEventBus.on<HistoryEntry>('history.entry-selected', (event) => {
+      const entry = event.payload;
+      // Update request store with history entry data
+      setMethod(entry.request.method);
+      setUrl(entry.request.url);
+      setHeaders(entry.request.headers);
+      setBody(entry.request.body ?? '');
+      // Update local state to match
+      setLocalUrl(entry.request.url);
+      setLocalMethod(entry.request.method as HttpMethod);
+      // Clear previous response when loading from history
+      setResponse(null);
+      setError(null);
+    });
+
+    return unsubscribe;
+    // Zustand store setters are stable and don't need to be in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSend = async (): Promise<void> => {
-    if (!isValidUrl) {
+    // Guard against invalid URL or double-click while loading
+    if (!isValidUrl || isLoading) {
       return;
     }
 
@@ -40,12 +79,59 @@ export const HomePage = (): React.JSX.Element => {
     setMethod(localMethod);
 
     try {
-      const params = createRequestParams(localUrl, localMethod);
+      // Get current request state (headers and body from RequestBuilder)
+      const currentHeaders = headers;
+      const currentBody = body === '' ? null : body;
+
+      const params = createRequestParams(localUrl, localMethod, {
+        headers: currentHeaders,
+        body: currentBody,
+      });
       const result = await executeRequest(params);
       setResponse(result);
+
+      // Auto-save to history after successful request
+      await addEntry(
+        {
+          url: localUrl,
+          method: localMethod,
+          headers: currentHeaders,
+          body: currentBody,
+          timeout_ms: params.timeout_ms,
+        },
+        result
+      );
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      setError(errorMessage);
+      // Handle AppError (includes correlation ID for tracing)
+      // Extract AppError - may be directly on error object or nested in appError property
+      let appError: AppError | undefined;
+
+      // Check if AppError is nested in appError property (when wrapped in Error object)
+      if (typeof e === 'object' && e !== null && 'appError' in e && e.appError !== undefined) {
+        const err = e as Record<string, unknown>;
+        if (isAppError(err.appError)) {
+          appError = err.appError;
+        }
+      } else if (isAppError(e)) {
+        // AppError properties are directly on the object (isAppError() type guard guarantees this)
+        appError = e;
+      }
+
+      if (appError !== undefined) {
+        const errorMessage = `[${appError.code}] ${appError.message} (Correlation ID: ${appError.correlationId})`;
+        setError(errorMessage);
+        // Log error to console service with correlation ID
+        getConsoleService().addLog({
+          level: 'error',
+          message: `[${appError.code}] ${appError.message}`,
+          args: [appError],
+          correlationId: appError.correlationId,
+        });
+      } else {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        setError(errorMessage);
+      }
+      // Don't save to history on error
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { RequestHeader } from './RequestHeader';
 import { useState } from 'react';
+import { RequestHeader } from './RequestHeader';
 import type { HttpMethod } from '@/utils/http-colors';
 
 const meta = {
@@ -15,69 +15,58 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const RequestHeaderWithState = ({
+  initialMethod = 'GET',
+  initialUrl = 'https://api.example.com/users',
+  loading = false,
+}: {
+  initialMethod?: HttpMethod;
+  initialUrl?: string;
+  loading?: boolean;
+}): React.JSX.Element => {
+  const [method, setMethod] = useState<HttpMethod>(initialMethod);
+  const [url, setUrl] = useState(initialUrl);
+
+  return (
+    <div className="w-full border border-border-default bg-bg-app">
+      <RequestHeader
+        method={method}
+        url={url}
+        onMethodChange={setMethod}
+        onUrlChange={setUrl}
+        onSend={() => {
+          alert(`Sending ${method} request to ${url}`);
+        }}
+        loading={loading}
+      />
+    </div>
+  );
+};
+
 export const Default: Story = {
   args: {
     method: 'GET',
   },
-  render: () => {
-    const [method, setMethod] = useState<HttpMethod>('GET');
-    const [url, setUrl] = useState('https://api.example.com/users');
-
-    return (
-      <div className="w-full border border-border-default bg-bg-app">
-        <RequestHeader
-          method={method}
-          url={url}
-          onMethodChange={setMethod}
-          onUrlChange={setUrl}
-          onSend={() => {
-            alert(`Sending ${method} request to ${url}`);
-          }}
-        />
-      </div>
-    );
-  },
+  render: () => <RequestHeaderWithState />,
 };
 
 export const Loading: Story = {
   args: {
     method: 'POST',
   },
-  render: () => (
-    <div className="w-full border border-border-default bg-bg-app">
-      <RequestHeader method="POST" url="https://api.example.com/users" loading={true} />
-    </div>
-  ),
+  render: () => <RequestHeaderWithState initialMethod="POST" loading={true} />,
 };
 
 export const EmptyUrl: Story = {
   args: {
     method: 'GET',
   },
-  render: () => {
-    const [method, setMethod] = useState<HttpMethod>('GET');
-    const [url, setUrl] = useState('');
-
-    return (
-      <div className="w-full border border-border-default bg-bg-app">
-        <RequestHeader method={method} url={url} onMethodChange={setMethod} onUrlChange={setUrl} />
-      </div>
-    );
-  },
+  render: () => <RequestHeaderWithState initialUrl="" />,
 };
 
 export const AllMethods: Story = {
   args: {
     method: 'GET',
   },
-  render: () => {
-    const [method, setMethod] = useState<HttpMethod>('GET');
-    const [url, setUrl] = useState('https://api.example.com/resource');
-
-    return (
-      <div className="w-full border border-border-default bg-bg-app">
-        <RequestHeader method={method} url={url} onMethodChange={setMethod} onUrlChange={setUrl} />
-      </div>
-    );
-  },
+  render: () => <RequestHeaderWithState initialUrl="https://api.example.com/resource" />,
 };

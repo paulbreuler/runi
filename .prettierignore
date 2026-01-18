@@ -9,6 +9,7 @@ node_modules/
 # Rust
 src-tauri/target/
 src-tauri/gen/
+src-tauri/bindings/
 
 # Package manager
 package-lock.json
@@ -33,3 +34,6 @@ test-results/
 playwright-report/
 coverage/
 html/
+
+# Generated TypeScript types (from Rust via ts-rs)
+src/types/generated/
