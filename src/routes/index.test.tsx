@@ -56,7 +56,6 @@ describe('HomePage - Auto-save to history', () => {
   const mockSetBody = vi.fn();
   const mockSetResponse = vi.fn();
   const mockSetLoading = vi.fn();
-  const mockSetError = vi.fn();
   const mockAddEntry = vi.fn();
 
   beforeEach(() => {
@@ -72,14 +71,12 @@ describe('HomePage - Auto-save to history', () => {
       body: '',
       response: null,
       isLoading: false,
-      error: null,
       setMethod: mockSetMethod,
       setUrl: mockSetUrl,
       setHeaders: mockSetHeaders,
       setBody: mockSetBody,
       setResponse: mockSetResponse,
       setLoading: mockSetLoading,
-      setError: mockSetError,
       reset: vi.fn(),
     });
 
@@ -148,6 +145,8 @@ describe('HomePage - Auto-save to history', () => {
 
   it('should NOT save to history if request fails', async () => {
     const user = userEvent.setup();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { globalEventBus } = require('@/events/bus');
 
     const errorMessage = 'Network error';
     vi.mocked(executeRequest).mockRejectedValue(new Error(errorMessage));
@@ -161,9 +160,15 @@ describe('HomePage - Auto-save to history', () => {
     await user.type(urlInput, 'https://httpbin.org/get');
     await user.click(sendButton);
 
-    // Wait for error to be set
+    // Wait for toast event to be emitted
     await waitFor(() => {
-      expect(mockSetError).toHaveBeenCalledWith(errorMessage);
+      expect(globalEventBus.emit).toHaveBeenCalledWith(
+        'toast.show',
+        expect.objectContaining({
+          type: 'error',
+          message: errorMessage,
+        })
+      );
     });
 
     // Verify that addEntry was NOT called
@@ -181,14 +186,12 @@ describe('HomePage - Auto-save to history', () => {
       body: '{"test": true}',
       response: null,
       isLoading: false,
-      error: null,
       setMethod: mockSetMethod,
       setUrl: mockSetUrl,
       setHeaders: vi.fn(),
       setBody: vi.fn(),
       setResponse: mockSetResponse,
       setLoading: mockSetLoading,
-      setError: mockSetError,
       reset: vi.fn(),
     });
 

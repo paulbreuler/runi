@@ -12,7 +12,7 @@ import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
-import { globalEventBus } from '@/events/bus';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 
 export const HomePage = (): React.JSX.Element => {
@@ -22,14 +22,12 @@ export const HomePage = (): React.JSX.Element => {
     body,
     response,
     isLoading,
-    error,
     setMethod,
     setUrl,
     setHeaders,
     setBody,
     setResponse,
     setLoading,
-    setError,
   } = useRequestStore();
 
   const { addEntry, loadHistory } = useHistoryStore();
@@ -58,7 +56,6 @@ export const HomePage = (): React.JSX.Element => {
       setLocalMethod(entry.request.method as HttpMethod);
       // Clear previous response when loading from history
       setResponse(null);
-      setError(null);
     });
 
     return unsubscribe;
@@ -73,7 +70,6 @@ export const HomePage = (): React.JSX.Element => {
     }
 
     setLoading(true);
-    setError(null);
     setResponse(null);
     setUrl(localUrl);
     setMethod(localMethod);
@@ -118,8 +114,14 @@ export const HomePage = (): React.JSX.Element => {
       }
 
       if (appError !== undefined) {
-        const errorMessage = `[${appError.code}] ${appError.message} (Correlation ID: ${appError.correlationId})`;
-        setError(errorMessage);
+        const errorMessage = `[${appError.code}] ${appError.message}`;
+        // Show toast notification via event bus (loose coupling)
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'error',
+          message: errorMessage,
+          details: `Correlation ID: ${appError.correlationId}`,
+          correlationId: appError.correlationId,
+        });
         // Log error to console service with correlation ID
         getConsoleService().addLog({
           level: 'error',
@@ -129,7 +131,11 @@ export const HomePage = (): React.JSX.Element => {
         });
       } else {
         const errorMessage = e instanceof Error ? e.message : String(e);
-        setError(errorMessage);
+        // Show toast notification via event bus (loose coupling)
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'error',
+          message: errorMessage,
+        });
       }
       // Don't save to history on error
     } finally {
@@ -164,15 +170,6 @@ export const HomePage = (): React.JSX.Element => {
       }
       requestContent={
         <div className="h-full flex flex-col bg-bg-app">
-          {error !== null && (
-            <div
-              className="p-4 mx-4 mt-4 bg-signal-error/10 border border-signal-error/20 rounded-lg text-signal-error text-sm"
-              role="alert"
-              data-testid="error-panel"
-            >
-              {error}
-            </div>
-          )}
           <div className="flex-1 overflow-hidden">
             <RequestBuilder />
           </div>
