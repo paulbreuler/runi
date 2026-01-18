@@ -492,4 +492,113 @@ describe('DockablePanel', () => {
       expect(usePanelStore.getState().sizes.bottom).toBe(400);
     });
   });
+
+  describe('horizontal scroll in header', () => {
+    it('renders header with scrollable container when headerContent is provided', () => {
+      render(
+        <DockablePanel title="Test Panel" headerContent={<div>Header Content</div>}>
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const header = screen.getByTestId('panel-header');
+      expect(header).toBeInTheDocument();
+      // Header content should be scrollable
+      const scrollContainer = header.querySelector('[aria-label*="header"]');
+      expect(scrollContainer).toBeInTheDocument();
+    });
+
+    it('shows overflow gradient cue on right when content overflows and can scroll right', () => {
+      render(
+        <DockablePanel
+          title="Test Panel"
+          headerContent={
+            <div style={{ width: '500px', minWidth: '500px' }}>Very Long Header Content</div>
+          }
+        >
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const header = screen.getByTestId('panel-header');
+      const scrollContainer = header.querySelector('[aria-label*="header"]')!;
+      // Simulate overflow
+      Object.defineProperty(scrollContainer, 'scrollWidth', { value: 500, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientWidth', { value: 200, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollLeft', {
+        value: 0,
+        configurable: true,
+        writable: true,
+      });
+
+      fireEvent.scroll(scrollContainer);
+
+      // Should show right overflow cue
+      expect(screen.getByTestId('panel-header-overflow-right')).toBeInTheDocument();
+    });
+
+    it('shows overflow gradient cue on left after scrolling', () => {
+      render(
+        <DockablePanel
+          title="Test Panel"
+          headerContent={
+            <div style={{ width: '500px', minWidth: '500px' }}>Very Long Header Content</div>
+          }
+        >
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const header = screen.getByTestId('panel-header');
+      const scrollContainer = header.querySelector('[aria-label*="header"]')!;
+      Object.defineProperty(scrollContainer, 'scrollWidth', { value: 500, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientWidth', { value: 200, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollLeft', {
+        value: 150,
+        configurable: true,
+        writable: true,
+      });
+
+      fireEvent.scroll(scrollContainer);
+
+      // Should show left overflow cue after scrolling
+      expect(screen.getByTestId('panel-header-overflow-left')).toBeInTheDocument();
+    });
+
+    it('hides overflow cues when content does not overflow', () => {
+      render(
+        <DockablePanel title="Test Panel" headerContent={<div>Short Content</div>}>
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      const header = screen.getByTestId('panel-header');
+      const scrollContainer = header.querySelector('[aria-label*="header"]')!;
+      Object.defineProperty(scrollContainer, 'scrollWidth', { value: 100, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientWidth', { value: 200, configurable: true });
+
+      fireEvent.scroll(scrollContainer);
+
+      // Should not show overflow cues
+      expect(screen.queryByTestId('panel-header-overflow-left')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('panel-header-overflow-right')).not.toBeInTheDocument();
+    });
+
+    it('keeps control buttons visible when header content scrolls', () => {
+      render(
+        <DockablePanel
+          title="Test Panel"
+          headerContent={
+            <div style={{ width: '500px', minWidth: '500px' }}>Very Long Header Content</div>
+          }
+        >
+          <div>Content</div>
+        </DockablePanel>
+      );
+
+      // Control buttons should always be visible (not in scroll container)
+      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /minimize|collapse/i })).toBeInTheDocument();
+    });
+  });
 });

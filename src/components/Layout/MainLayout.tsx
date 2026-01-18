@@ -19,7 +19,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/utils/cn';
 import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
 import { ConsolePanel } from '../Console/ConsolePanel';
-import { PanelTabs, type PanelTabType } from './PanelTabs';
+import { PanelTabs, type PanelTabType } from '@/components/PanelTabs';
 import { globalEventBus } from '@/events/bus';
 import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';

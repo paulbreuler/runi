@@ -15,7 +15,7 @@ describe('useSettingsStore', () => {
     act(() => {
       result.current.setSidebarVisible(true);
     });
-    useSettingsStore.setState({ viewMode: 'builder', logLevel: 'info' });
+    useSettingsStore.setState({ logLevel: 'info' });
   });
 
   it('initializes with sidebar visible', () => {
@@ -53,37 +53,6 @@ describe('useSettingsStore', () => {
     });
 
     expect(result.current.sidebarVisible).toBe(true);
-  });
-
-  describe('viewMode', () => {
-    it('initializes with builder view mode', () => {
-      const { result } = renderHook(() => useSettingsStore());
-      expect(result.current.viewMode).toBe('builder');
-    });
-
-    it('sets view mode to history', () => {
-      const { result } = renderHook(() => useSettingsStore());
-
-      act(() => {
-        result.current.setViewMode('history');
-      });
-
-      expect(result.current.viewMode).toBe('history');
-    });
-
-    it('sets view mode back to builder', () => {
-      const { result } = renderHook(() => useSettingsStore());
-
-      act(() => {
-        result.current.setViewMode('history');
-      });
-
-      act(() => {
-        result.current.setViewMode('builder');
-      });
-
-      expect(result.current.viewMode).toBe('builder');
-    });
   });
 
   describe('logLevel', () => {
@@ -161,30 +130,17 @@ describe('useSettingsStore', () => {
       expect(result.current.sidebarVisible).toBe(true);
     });
 
-    it('setViewMode is idempotent', () => {
-      const { result } = renderHook(() => useSettingsStore());
-
-      act(() => {
-        result.current.setViewMode('history');
-        result.current.setViewMode('history');
-      });
-
-      expect(result.current.viewMode).toBe('history');
-    });
-
     it('maintains state across multiple hook instances', () => {
       const { result: result1 } = renderHook(() => useSettingsStore());
 
       act(() => {
         result1.current.setSidebarVisible(false);
-        result1.current.setViewMode('history');
       });
 
       // New hook instance should see same state (Zustand singleton)
       const { result: result2 } = renderHook(() => useSettingsStore());
 
       expect(result2.current.sidebarVisible).toBe(false);
-      expect(result2.current.viewMode).toBe('history');
     });
   });
 });
