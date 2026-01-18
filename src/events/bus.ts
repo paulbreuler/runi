@@ -32,7 +32,26 @@ export type EventType =
   | 'console.debug-emitted'
   | 'console.info-emitted'
   | 'console.warn-emitted'
-  | 'console.error-emitted';
+  | 'console.error-emitted'
+  | 'panel.console-requested'
+  | 'toast.show';
+
+/**
+ * Toast event payload for loose coupling.
+ * Components emit this event instead of calling the store directly.
+ */
+export interface ToastEventPayload {
+  /** Type of toast (determines styling) */
+  type: 'error' | 'warning' | 'info' | 'success';
+  /** Toast message */
+  message: string;
+  /** Optional detailed description */
+  details?: string;
+  /** Optional correlation ID for error tracing */
+  correlationId?: string;
+  /** Auto-dismiss duration in milliseconds (default: 5000ms, errors: never) */
+  duration?: number;
+}
 
 /**
  * Event payload structure.
