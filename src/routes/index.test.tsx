@@ -24,14 +24,14 @@ const mockHandlersMap = new Map<string, Set<EventHandler>>();
 vi.mock('@/events/bus', async () => {
   const actual = await vi.importActual('@/events/bus');
   const mockEmit = vi.fn();
-  const mockOn = vi.fn((_type: string, handler: EventHandler): (() => void) => {
-    // Store handler for later use in tests
-    if (!mockHandlersMap.has('history.entry-selected')) {
-      mockHandlersMap.set('history.entry-selected', new Set());
+  const mockOn = vi.fn((eventType: string, handler: EventHandler): (() => void) => {
+    // Store handler for later use in tests by event type
+    if (!mockHandlersMap.has(eventType)) {
+      mockHandlersMap.set(eventType, new Set());
     }
-    mockHandlersMap.get('history.entry-selected')?.add(handler);
+    mockHandlersMap.get(eventType)?.add(handler);
     return (): void => {
-      mockHandlersMap.get('history.entry-selected')?.delete(handler);
+      mockHandlersMap.get(eventType)?.delete(handler);
     };
   });
   return {
@@ -85,10 +85,22 @@ describe('HomePage - Auto-save to history', () => {
       entries: [],
       isLoading: false,
       error: null,
+      filters: { search: '', method: 'ALL', status: 'All', intelligence: 'All' },
+      selectedId: null,
+      expandedId: null,
+      compareMode: false,
+      compareSelection: [],
       loadHistory: vi.fn(),
       addEntry: mockAddEntry,
       deleteEntry: vi.fn(),
       clearHistory: vi.fn(),
+      setFilter: vi.fn(),
+      resetFilters: vi.fn(),
+      setSelectedId: vi.fn(),
+      setExpandedId: vi.fn(),
+      setCompareMode: vi.fn(),
+      toggleCompareSelection: vi.fn(),
+      filteredEntries: vi.fn(() => []),
     });
   });
 
@@ -286,18 +298,21 @@ describe('HomePage - Auto-save to history', () => {
         expect(vi.mocked(globalEventBus.on)).toHaveBeenCalled();
       });
 
-      // Get the handler that was registered
-      const handler = mockHandlersMap.get('history.entry-selected')?.values().next().value;
-      if (handler === undefined) {
-        throw new Error('Handler not found');
+      // Get all handlers that were registered and call them directly
+      // This simulates what globalEventBus.emit would do
+      const handlers = mockHandlersMap.get('history.entry-selected');
+      if (handlers === undefined || handlers.size === 0) {
+        throw new Error('No handlers found');
       }
 
-      // Simulate event emission
-      handler({
-        type: 'history.entry-selected',
-        payload: mockHistoryEntry,
-        timestamp: Date.now(),
-        source: 'HistoryDrawer',
+      // Call all registered handlers (simulating event emission)
+      handlers.forEach((handler) => {
+        handler({
+          type: 'history.entry-selected',
+          payload: mockHistoryEntry,
+          timestamp: Date.now(),
+          source: 'HistoryDrawer',
+        });
       });
 
       // Verify store was updated with history entry data
@@ -327,16 +342,19 @@ describe('HomePage - Auto-save to history', () => {
         expect(vi.mocked(globalEventBus.on)).toHaveBeenCalled();
       });
 
-      const handler = mockHandlersMap.get('history.entry-selected')?.values().next().value;
-      if (handler === undefined) {
-        throw new Error('Handler not found');
+      const handlers = mockHandlersMap.get('history.entry-selected');
+      if (handlers === undefined || handlers.size === 0) {
+        throw new Error('No handlers found');
       }
 
-      handler({
-        type: 'history.entry-selected',
-        payload: entryWithoutBody,
-        timestamp: Date.now(),
-        source: 'HistoryDrawer',
+      // Call all registered handlers (simulating event emission)
+      handlers.forEach((handler) => {
+        handler({
+          type: 'history.entry-selected',
+          payload: entryWithoutBody,
+          timestamp: Date.now(),
+          source: 'HistoryDrawer',
+        });
       });
 
       await waitFor(() => {
