@@ -101,12 +101,12 @@ export const SAIYAN_TIERS: Record<number, TierConfig> = {
   },
   7: {
     name: 'Ultra Instinct Sign',
-    color: '#1f2937', // gray-800 (dark)
-    glow: 'rgba(229, 231, 235, 0.4)',
+    color: '#a78bfa', // violet-400 (ethereal blue-violet aura)
+    glow: 'rgba(167, 139, 250, 0.5)',
     path: ENERGY_PATHS.chaos,
     duration: 0.35,
     glowSize: 20,
-    sparkColor: '#e5e7eb', // Silver sparks
+    sparkColor: '#c4b5fd', // violet-300 (lighter violet sparks)
   },
   8: {
     name: 'Mastered Ultra Instinct',
