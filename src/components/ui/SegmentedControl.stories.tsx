@@ -576,12 +576,14 @@ export const AllVariantsComparison: Story = {
     const currentTier =
       badgesOver9000 === 4 ? 5 : badgesOver9000 > 0 ? Math.min(badgesOver9000, 4) : 0;
 
+    // Note: "All" has no badge so it doesn't affect tier calculation
+    // The 4 individual options (error, warn, info, debug) determine the Saiyan tier
     const options = [
       {
         value: 'all',
         label: 'All',
         icon: <CheckCircle size={12} />,
-        badge: total,
+        // No badge - this is a filter state, not a power-level indicator
       },
       {
         value: 'error',

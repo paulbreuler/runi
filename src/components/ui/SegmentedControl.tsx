@@ -499,8 +499,23 @@ export const SegmentedControl = <T extends string>({
           const isLast = index === options.length - 1;
           const isDisabled = disabled || option.disabled;
 
+          // At high tiers, text color shifts toward tier color
+          const tierTextColor =
+            saiyanTier >= 4 && currentTierStyle !== null && prefersReducedMotion !== true
+              ? currentTierStyle.color
+              : undefined;
+
+          // Selected button background tints with tier color at tier 3+
+          const tierSelectedBg =
+            isSelected &&
+            saiyanTier >= 3 &&
+            currentTierStyle !== null &&
+            prefersReducedMotion !== true
+              ? `${currentTierStyle.color}15`
+              : undefined;
+
           return (
-            <button
+            <motion.button
               key={option.value}
               type="button"
               onClick={() => {
@@ -514,16 +529,32 @@ export const SegmentedControl = <T extends string>({
                 isFirst && 'rounded-l',
                 isLast && 'rounded-r',
                 !isFirst && '-ml-px',
-                // Selected state
+                // Selected state (base styling, may be overridden by tier styling)
                 isSelected
-                  ? 'bg-bg-raised text-text-primary border-border-default z-10 relative'
-                  : 'text-text-muted border-border-subtle hover:text-text-primary hover:bg-bg-raised/50',
+                  ? 'bg-bg-raised border-border-default z-10 relative'
+                  : 'border-border-subtle hover:bg-bg-raised/50',
+                // Text color when NOT tier-styled
+                tierTextColor === undefined &&
+                  (isSelected ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'),
                 // Disabled state
                 isDisabled === true &&
                   'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-text-muted',
                 // Icon mode specific sizing
                 isIconMode && 'min-w-[28px]'
               )}
+              style={{
+                color: tierTextColor,
+                backgroundColor: tierSelectedBg,
+              }}
+              animate={
+                tierTextColor !== undefined
+                  ? {
+                      color: tierTextColor,
+                      backgroundColor: tierSelectedBg ?? 'transparent',
+                    }
+                  : {}
+              }
+              transition={{ duration: 0.3 }}
               aria-pressed={isSelected}
               title={getTooltip(option)}
             >
@@ -538,7 +569,7 @@ export const SegmentedControl = <T extends string>({
                   isSelected={isSelected}
                 />
               )}
-            </button>
+            </motion.button>
           );
         })}
       </motion.div>
