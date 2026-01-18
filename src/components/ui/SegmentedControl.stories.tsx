@@ -483,8 +483,15 @@ export const AllVariantsComparison: Story = {
       setCounts({ error: 3, warn: 7 });
     };
 
+    const total = counts.error + counts.warn + 24; // 24 = info count
+
     const options = [
-      { value: 'all', label: 'All', icon: <CheckCircle size={12} /> },
+      {
+        value: 'all',
+        label: 'All',
+        icon: <CheckCircle size={12} />,
+        badge: total,
+      },
       {
         value: 'error',
         label: 'Errors',
@@ -501,6 +508,7 @@ export const AllVariantsComparison: Story = {
         value: 'info',
         label: 'Info',
         icon: <Info size={12} className="text-accent-blue" />,
+        badge: 24,
       },
     ];
 
@@ -554,7 +562,8 @@ export const AllVariantsComparison: Story = {
         </div>
 
         <p className="text-xs text-text-muted">
-          Errors: {counts.error} | Warnings: {counts.warn} | Selected: {value}
+          All: {total} | Errors: {counts.error} | Warnings: {counts.warn} | Info: 24 | Selected:{' '}
+          {value}
         </p>
       </div>
     );
