@@ -469,7 +469,7 @@ export const AllVariantsComparison: Story = {
   },
   render: function AllVariantsComparisonStory() {
     const [value, setValue] = useState('all');
-    const [counts, setCounts] = useState({ error: 3, warn: 7 });
+    const [counts, setCounts] = useState({ error: 3, warn: 7, info: 24, debug: 156 });
 
     const incrementError = (): void => {
       setCounts((c) => ({ ...c, error: c.error + 1 }));
@@ -480,14 +480,19 @@ export const AllVariantsComparison: Story = {
     };
 
     const addHundred = (): void => {
-      setCounts((c) => ({ error: c.error + 100, warn: c.warn + 100 }));
+      setCounts((c) => ({
+        error: c.error + 100,
+        warn: c.warn + 100,
+        info: c.info + 100,
+        debug: c.debug + 100,
+      }));
     };
 
     const resetCounts = (): void => {
-      setCounts({ error: 3, warn: 7 });
+      setCounts({ error: 3, warn: 7, info: 24, debug: 156 });
     };
 
-    const total = counts.error + counts.warn + 24; // 24 = info count
+    const total = counts.error + counts.warn + counts.info + counts.debug;
 
     const options = [
       {
@@ -512,7 +517,13 @@ export const AllVariantsComparison: Story = {
         value: 'info',
         label: 'Info',
         icon: <Info size={12} className="text-accent-blue" />,
-        badge: 24,
+        badge: counts.info,
+      },
+      {
+        value: 'debug',
+        label: 'Debug',
+        icon: <Terminal size={12} className="text-text-muted" />,
+        badge: counts.debug,
       },
     ];
 
@@ -573,8 +584,8 @@ export const AllVariantsComparison: Story = {
         </div>
 
         <p className="text-xs text-text-muted">
-          All: {total} | Errors: {counts.error} | Warnings: {counts.warn} | Info: 24 | Selected:{' '}
-          {value}
+          All: {total} | Errors: {counts.error} | Warnings: {counts.warn} | Info: {counts.info} |
+          Debug: {counts.debug} | Selected: {value}
         </p>
       </div>
     );
