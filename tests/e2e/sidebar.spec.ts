@@ -25,7 +25,7 @@ test.describe('Sidebar', () => {
     await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 10000 });
   });
 
-  test('renders Collections and History sections', async ({ page }) => {
+  test('renders Collections section', async ({ page }) => {
     const sidebar = page.getByTestId('sidebar');
 
     // Verify sidebar is visible
@@ -35,9 +35,7 @@ test.describe('Sidebar', () => {
     await expect(page.getByText('Collections', { exact: true })).toBeVisible();
     await expect(page.getByText('No collections yet')).toBeVisible();
 
-    // Verify History section
-    await expect(page.getByText('History', { exact: true })).toBeVisible();
-    await expect(page.getByText('No history yet')).toBeVisible();
+    // History section was removed - it's now in Network History Panel instead
   });
 
   test('sidebar has correct width when visible', async ({ page }) => {

@@ -14,7 +14,7 @@ use tokio::sync::Mutex;
 /// History lives only for the session duration (Burp Suite behavior). This is more
 /// secure as sensitive data (auth tokens, API keys) isn't persisted to disk.
 ///
-/// This can be swapped for other implementations (e.g., `FileHistoryStorage`, Neo4j)
+/// This can be swapped for `FileHistoryStorage` (for export/import features)
 /// via feature flags or configuration in the future.
 static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
     LazyLock::new(|| Arc::new(MemoryHistoryStorage::new()));
@@ -160,6 +160,30 @@ mod tests {
     use super::*;
     use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
     use std::collections::HashMap;
+    use uuid::Uuid;
+
+    /// Create a test request with a unique URL to ensure test isolation.
+    fn create_test_request(suffix: &str) -> RequestParams {
+        let unique_id = Uuid::new_v4().to_string().replace('-', "")[..8].to_string();
+        RequestParams {
+            url: format!("https://api.example.com/test-{suffix}-{unique_id}"),
+            method: "GET".to_string(),
+            headers: HashMap::new(),
+            body: None,
+            timeout_ms: 30000,
+        }
+    }
+
+    /// Create a test response.
+    fn create_test_response() -> HttpResponse {
+        HttpResponse {
+            status: 200,
+            status_text: "OK".to_string(),
+            headers: HashMap::new(),
+            body: r#"{"test": true}"#.to_string(),
+            timing: RequestTiming::default(),
+        }
+    }
 
     #[tokio::test]
     async fn test_hello_world_command() {
@@ -170,21 +194,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_save_request_history() {
-        let request = RequestParams {
-            url: "https://api.example.com/test".to_string(),
-            method: "GET".to_string(),
-            headers: HashMap::new(),
-            body: None,
-            timeout_ms: 30000,
-        };
-
-        let response = HttpResponse {
-            status: 200,
-            status_text: "OK".to_string(),
-            headers: HashMap::new(),
-            body: r#"{"test": true}"#.to_string(),
-            timing: RequestTiming::default(),
-        };
+        let request = create_test_request("save");
+        let response = create_test_response();
 
         let result = save_request_history(request, response).await;
         assert!(result.is_ok(), "Should save history entry");
@@ -194,24 +205,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_load_request_history() {
-        // First save an entry
-        let request = RequestParams {
-            url: "https://api.example.com/test".to_string(),
-            method: "GET".to_string(),
-            headers: HashMap::new(),
-            body: None,
-            timeout_ms: 30000,
-        };
+        // Clear history first for isolation
+        let _ = clear_request_history().await;
 
-        let response = HttpResponse {
-            status: 200,
-            status_text: "OK".to_string(),
-            headers: HashMap::new(),
-            body: r#"{"test": true}"#.to_string(),
-            timing: RequestTiming::default(),
-        };
+        let request = create_test_request("load");
+        let response = create_test_response();
+        let url = request.url.clone();
 
-        let _ = save_request_history(request.clone(), response.clone()).await;
+        let _ = save_request_history(request, response).await;
 
         // Now load it
         let result = load_request_history(Some(10)).await;
@@ -219,33 +220,17 @@ mod tests {
         let entries = result.unwrap();
         assert!(!entries.is_empty(), "Should have at least one entry");
 
-        // Find our entry
-        let found = entries.iter().find(|e| e.request.url == request.url);
+        // Find our entry by unique URL
+        let found = entries.iter().find(|e| e.request.url == url);
         assert!(found.is_some(), "Should find the saved entry");
     }
 
     #[tokio::test]
     async fn test_delete_history_entry() {
-        // Save an entry
-        let request = RequestParams {
-            url: "https://api.example.com/delete-test".to_string(),
-            method: "GET".to_string(),
-            headers: HashMap::new(),
-            body: None,
-            timeout_ms: 30000,
-        };
+        let request = create_test_request("delete");
+        let response = create_test_response();
 
-        let response = HttpResponse {
-            status: 200,
-            status_text: "OK".to_string(),
-            headers: HashMap::new(),
-            body: r#"{"test": true}"#.to_string(),
-            timing: RequestTiming::default(),
-        };
-
-        let id = save_request_history(request.clone(), response)
-            .await
-            .unwrap();
+        let id = save_request_history(request, response).await.unwrap();
 
         // Delete it
         let result = delete_history_entry(id.clone()).await;
@@ -313,34 +298,32 @@ mod tests {
 
     #[tokio::test]
     async fn test_clear_request_history() {
+        // Clear first for isolation
+        let _ = clear_request_history().await;
+
         // Save a few entries
         for i in 0..3 {
-            let request = RequestParams {
-                url: format!("https://api.example.com/test-{i}"),
-                method: "GET".to_string(),
-                headers: HashMap::new(),
-                body: None,
-                timeout_ms: 30000,
-            };
-
-            let response = HttpResponse {
-                status: 200,
-                status_text: "OK".to_string(),
-                headers: HashMap::new(),
-                body: r#"{"test": true}"#.to_string(),
-                timing: RequestTiming::default(),
-            };
-
+            let request = create_test_request(&format!("clear-{i}"));
+            let response = create_test_response();
             let _ = save_request_history(request, response).await;
         }
+
+        // Verify entries were saved
+        let entries_before = load_request_history(Some(10)).await.unwrap();
+        assert!(
+            entries_before.len() >= 3,
+            "Should have at least 3 entries before clear"
+        );
 
         // Clear all
         let result = clear_request_history().await;
         assert!(result.is_ok(), "Should clear history");
 
-        // Note: Test isolation is limited because we use the global HISTORY_STORAGE.
-        // Tests may see entries from other tests or real usage. A future refactor
-        // should introduce dependency injection or test-specific directories.
-        let _entries = load_request_history(Some(10)).await.unwrap();
+        // Verify history is empty
+        let entries_after = load_request_history(Some(10)).await.unwrap();
+        assert!(
+            entries_after.is_empty(),
+            "History should be empty after clear"
+        );
     }
 }

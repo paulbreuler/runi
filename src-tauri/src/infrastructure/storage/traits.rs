@@ -6,11 +6,9 @@ use async_trait::async_trait;
 /// Trait for history storage backends.
 ///
 /// This abstraction allows switching between different storage implementations:
-/// - File-based storage (YAML files) - Default, git-friendly
-/// - Database storage (`SQLite`, `PostgreSQL`) - For larger datasets
-/// - Graph database storage (`Neo4j`) - For semantic linking between requests,
-///   tracking request chains, and API relationship mapping
-/// - Cloud storage (future)
+/// - Memory storage (default) - Session-only, no persistence, secure
+/// - File-based storage (YAML files) - Git-friendly, for export/import
+/// - Database storage (`SQLite`, `PostgreSQL`) - For larger datasets (future)
 ///
 /// # Design
 ///
