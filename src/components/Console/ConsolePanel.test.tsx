@@ -116,12 +116,49 @@ describe('ConsolePanel', () => {
       expect(screen.getByText(/message 1/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
-    // Filter by correlation ID
+    // Filter by correlation ID (exact match)
     const filterInput = screen.getByPlaceholderText(/filter by correlation id/i);
     fireEvent.change(filterInput, { target: { value: correlationId } });
 
     expect(screen.getByText(/message 1/i)).toBeInTheDocument();
     expect(screen.queryByText(/message 2/i)).not.toBeInTheDocument();
+  });
+
+  it('filters logs by correlation ID with partial match', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+    const correlationId = '7c7c06ef-cdc1-4534-8561-ac740fbe6fee';
+
+    // Add logs with correlation ID - wrap in act() to ensure React state updates are flushed
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'Error with correlation ID',
+        args: [],
+        timestamp: Date.now(),
+        correlationId,
+      });
+      service.addLog({
+        level: 'error',
+        message: 'Different error',
+        args: [],
+        timestamp: Date.now(),
+        correlationId: '8d8d17fg-edd2-5645-9672-bd851cgh7ggh',
+      });
+    });
+
+    // Wait for logs to appear
+    await waitFor(() => {
+      expect(screen.getByText(/error with correlation id/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Filter by partial correlation ID (first 8 chars should match)
+    const filterInput = screen.getByPlaceholderText(/filter by correlation id/i);
+    fireEvent.change(filterInput, { target: { value: '7c7c06ef' } });
+
+    // Should match the log with full correlation ID
+    expect(screen.getByText(/error with correlation id/i)).toBeInTheDocument();
+    expect(screen.queryByText(/different error/i)).not.toBeInTheDocument();
   });
 
   it('clears logs when clear button is clicked', async () => {

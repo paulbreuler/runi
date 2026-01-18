@@ -130,7 +130,13 @@ export const ConsolePanel = ({
     }
 
     if (correlationIdFilter.trim() !== '') {
-      filtered = filtered.filter((log) => log.correlationId === correlationIdFilter.trim());
+      const filterValue = correlationIdFilter.trim().toLowerCase();
+      filtered = filtered.filter(
+        (log) =>
+          log.correlationId !== undefined &&
+          log.correlationId !== '' &&
+          log.correlationId.toLowerCase().includes(filterValue)
+      );
     }
 
     // Group identical logs (same level + message + correlationId)
