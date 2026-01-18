@@ -53,7 +53,7 @@ If a component doesn't exist in a library that perfectly fits our design system,
 **The Unreal Engine Metaphor:**
 Think like game engine developers—craftsmanship, performance, clarity, not gamification. Game engines don't use generic UI libraries—they craft their own systems that fit perfectly within their architecture. We do the same.
 
-See `.planning-docs/DESIGN_IDEOLOGY.md` for the complete craftsmanship philosophy, custom component library approach, and unified material feel principles.
+See `../runi-planning-docs/DESIGN_IDEOLOGY.md` for the complete craftsmanship philosophy, custom component library approach, and unified material feel principles.
 
 ## Instructions
 
@@ -607,8 +607,8 @@ export const AISuggestion = ({ suggestion, onAccept }: AISuggestionProps): JSX.E
 
 For detailed technical implementation:
 
-- **Design Ideology**: `.planning-docs/DESIGN_IDEOLOGY.md` - Craftsmanship philosophy, custom component library approach, Unreal Engine metaphor
-- **Design Vision**: `.planning-docs/runi-design-vision-v8.1.md`
+- **Design Ideology**: `../runi-planning-docs/DESIGN_IDEOLOGY.md` - Craftsmanship philosophy, custom component library approach, Unreal Engine metaphor
+- **Design Vision**: `../runi-planning-docs/runi-design-vision-v8.1.md`
 - **Component Library**: `src/components/ui/`
 - **Stores**: `src/stores/`
 - **CSS Variables**: `src/index.css`

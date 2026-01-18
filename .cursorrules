@@ -30,6 +30,8 @@ Ralph files are discovered dynamically:
 - All `prompts/*.md` files (automatically found)
 - No hardcoded file lists - adapts to project structure
 
+**Planning Documents:** Strategic planning documents are in a separate repository at `../runi-planning-docs/`. See `CLAUDE.md` for references to planning docs.
+
 ---
 
 ## Core Architectural Patterns

@@ -171,7 +171,7 @@ just dev
 #    Change your spec. See the yellow badge appear.
 ```
 
-> **The Adoption Ladder:** runi reveals features progressively as you use it. Start with the HTTP client, discover drift detection, then AI verification, semantic links, and temporal awareness. See [the adoption strategy](./.planning-docs/addendums/002-adoption-positioning.md) for details.
+> **The Adoption Ladder:** runi reveals features progressively as you use it. Start with the HTTP client, discover drift detection, then AI verification, semantic links, and temporal awareness. See [the adoption strategy](../runi-planning-docs/addendums/002-adoption-positioning.md) for details.
 
 ---
 
@@ -259,7 +259,7 @@ While everyone builds tools to write more code, we're building the tool that let
 
 **The brand philosophy:** _"Collapse uncertainty into truth"_
 
-Read the full [vision](./.planning-docs/VISION.md) and [design specification](./.planning-docs/runi-design-vision-v8.1.md).
+Read the full [vision](../runi-planning-docs/VISION.md) and [design specification](../runi-planning-docs/runi-design-vision-v8.1.md).
 
 ---
 
