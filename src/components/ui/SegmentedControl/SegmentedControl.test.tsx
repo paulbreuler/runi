@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
-import { SegmentedControl } from './SegmentedControl';
+import { SegmentedControl } from '.';
 
 const defaultOptions = [
   { value: 'all', label: 'All' },
@@ -446,6 +446,156 @@ describe('SegmentedControl', () => {
       await user.keyboard(' ');
 
       expect(handleChange).toHaveBeenCalledWith('error');
+    });
+  });
+
+  describe('tier animation state resets', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('resets badge display after animation settles when going from high tier to low tier', async () => {
+      const handleChange = vi.fn();
+
+      // Start with badges over 9000 (tier 1+)
+      const highTierOptions = [
+        { value: 'all', label: 'All' },
+        { value: 'error', label: 'Errors', badge: 9001 },
+        { value: 'warn', label: 'Warnings', badge: 100 },
+      ];
+
+      const { rerender } = render(
+        <SegmentedControl
+          value="all"
+          onValueChange={handleChange}
+          options={highTierOptions}
+          aria-label="Filter by level"
+        />
+      );
+
+      // Badge should show "9K+" for over 9000
+      expect(screen.getByText('9K+')).toBeInTheDocument();
+
+      // Change to low tier (no badges over 9000)
+      const lowTierOptions = [
+        { value: 'all', label: 'All' },
+        { value: 'error', label: 'Errors', badge: 5 },
+        { value: 'warn', label: 'Warnings', badge: 3 },
+      ];
+
+      rerender(
+        <SegmentedControl
+          value="all"
+          onValueChange={handleChange}
+          options={lowTierOptions}
+          aria-label="Filter by level"
+        />
+      );
+
+      // Badge should now show normal count
+      expect(screen.queryByText('9K+')).not.toBeInTheDocument();
+      expect(screen.getByText('5')).toBeInTheDocument();
+    });
+
+    it('animates when tier decreases (not just increases)', async () => {
+      const handleChange = vi.fn();
+
+      // Start with multiple badges over 9000 (tier 2+)
+      const tier2Options = [
+        { value: 'all', label: 'All' },
+        { value: 'error', label: 'Errors', badge: 9001 },
+        { value: 'warn', label: 'Warnings', badge: 9002 },
+        { value: 'info', label: 'Info', badge: 100 }, // Prevents god tier
+      ];
+
+      const { rerender } = render(
+        <SegmentedControl
+          value="all"
+          onValueChange={handleChange}
+          options={tier2Options}
+          aria-label="Filter by level"
+        />
+      );
+
+      // Wait for initial animation to settle
+      vi.advanceTimersByTime(2500);
+
+      // Reduce to tier 1 (only one badge over 9000)
+      const tier1Options = [
+        { value: 'all', label: 'All' },
+        { value: 'error', label: 'Errors', badge: 9001 },
+        { value: 'warn', label: 'Warnings', badge: 100 },
+        { value: 'info', label: 'Info', badge: 50 },
+      ];
+
+      rerender(
+        <SegmentedControl
+          value="all"
+          onValueChange={handleChange}
+          options={tier1Options}
+          aria-label="Filter by level"
+        />
+      );
+
+      // Animation should still trigger (not instant reset)
+      // After full animation cycle, should be back to idle
+      vi.advanceTimersByTime(2500);
+
+      // Component should render without errors and show correct badges
+      expect(screen.getByText('9K+')).toBeInTheDocument();
+      expect(screen.getByText('99+')).toBeInTheDocument(); // 100 capped at 99
+    });
+
+    it('properly resets colors after god tier animation completes', async () => {
+      const handleChange = vi.fn();
+
+      // Start at god tier (all badges over 9000, total > 36000)
+      const godTierOptions = [
+        { value: 'error', label: 'Errors', badge: 10000 },
+        { value: 'warn', label: 'Warnings', badge: 10000 },
+        { value: 'info', label: 'Info', badge: 10000 },
+        { value: 'debug', label: 'Debug', badge: 10000 },
+      ];
+
+      const { rerender } = render(
+        <SegmentedControl
+          value="error"
+          onValueChange={handleChange}
+          options={godTierOptions}
+          aria-label="Filter by level"
+        />
+      );
+
+      // Wait for god tier animation to complete (includes finale)
+      vi.advanceTimersByTime(3500);
+
+      // Reduce to tier 0 (no badges over 9000)
+      const tier0Options = [
+        { value: 'error', label: 'Errors', badge: 5 },
+        { value: 'warn', label: 'Warnings', badge: 3 },
+        { value: 'info', label: 'Info', badge: 2 },
+        { value: 'debug', label: 'Debug', badge: 1 },
+      ];
+
+      rerender(
+        <SegmentedControl
+          value="error"
+          onValueChange={handleChange}
+          options={tier0Options}
+          aria-label="Filter by level"
+        />
+      );
+
+      // Should immediately reset to idle (tier 0 = instant reset)
+      // All badges should show their actual counts
+      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
+      expect(screen.getByText('2')).toBeInTheDocument();
+      expect(screen.getByText('1')).toBeInTheDocument();
     });
   });
 });
