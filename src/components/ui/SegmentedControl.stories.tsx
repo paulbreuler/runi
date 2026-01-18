@@ -488,6 +488,16 @@ export const AllVariantsComparison: Story = {
       }));
     };
 
+    // "It's Over 9000!" Easter egg trigger
+    const addNineThousand = (): void => {
+      setCounts((c) => ({
+        error: c.error + 9000,
+        warn: c.warn + 9000,
+        info: c.info + 9000,
+        debug: c.debug + 9000,
+      }));
+    };
+
     const resetCounts = (): void => {
       setCounts({ error: 3, warn: 7, info: 24, debug: 156 });
     };
@@ -552,6 +562,14 @@ export const AllVariantsComparison: Story = {
             className="px-3 py-1.5 text-xs bg-accent-blue/10 text-accent-blue border border-accent-blue/30 rounded hover:bg-accent-blue/20"
           >
             +100 All
+          </button>
+          <button
+            type="button"
+            onClick={addNineThousand}
+            className="px-3 py-1.5 text-xs bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border border-amber-500/30 rounded hover:from-amber-500/20 hover:to-orange-500/20"
+            title="IT'S OVER 9000!"
+          >
+            +9000 ⚡
           </button>
           <button
             type="button"
