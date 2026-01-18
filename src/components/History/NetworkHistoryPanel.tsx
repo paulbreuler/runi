@@ -7,7 +7,6 @@ import { useHistoryStore } from '@/stores/useHistoryStore';
 import { NetworkHistoryFilters } from './NetworkHistoryFilters';
 import { NetworkHistoryRow } from './NetworkHistoryRow';
 import { NetworkStatusBar } from './NetworkStatusBar';
-import { SignalDot } from './SignalDot';
 
 /** Estimated row height for virtualization */
 const ESTIMATED_ROW_HEIGHT = 48;
@@ -206,31 +205,6 @@ export const NetworkHistoryPanel = ({
 
   return (
     <div className="flex flex-col h-full bg-bg-surface">
-      {/* Header with title and signal legend */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
-        <h2 className="text-sm font-semibold text-text-primary">Network</h2>
-
-        {/* Signal legend */}
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5">
-            <SignalDot type="verified" size="sm" />
-            <span className="text-text-muted">Verified</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SignalDot type="drift" size="sm" />
-            <span className="text-text-muted">Drift</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SignalDot type="ai" size="sm" />
-            <span className="text-text-muted">AI</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SignalDot type="bound" size="sm" />
-            <span className="text-text-muted">Bound</span>
-          </div>
-        </div>
-      </div>
-
       {/* Filter bar */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-subtle bg-bg-raised/30">
         <NetworkHistoryFilters
