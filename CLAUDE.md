@@ -30,15 +30,18 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 **The visual tone:** Zen, calm, and book-like. Muted surfaces, soft contrast, and selective emphasis. Use color as a signal, not decoration.
 
-> **Planning Documents:** See `.planning-docs/` for detailed vision and architecture:
+> **Planning Documents:** See `../runi-planning-docs/` (separate repository) for detailed vision and architecture:
 >
-> - `VISION.md` — North star document
-> - `runi-design-vision-v8.1.md` — Complete design specification
-> - `addendums/001-ai-architecture.md` — AI provider abstraction and verification
-> - `addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
-> - `addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
+> - `../runi-planning-docs/VISION.md` — North star document
+> - `../runi-planning-docs/runi-design-vision-v8.1.md` — Complete design specification
+> - `../runi-planning-docs/DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification)
+> - `../runi-planning-docs/addendums/001-ai-architecture.md` — AI provider abstraction and verification
+> - `../runi-planning-docs/addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
+> - `../runi-planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
+> - `../runi-planning-docs/next-frontier-in-api.md` — Research on API landscape, knowledge graphs, visualization, security, and AI-native patterns
+> - `../runi-planning-docs/research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
 >
-> **Design Ideology:** See `.planning-docs/DESIGN_IDEOLOGY.md` for component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification).
+> See `../runi-planning-docs/MANIFEST.md` for complete document hierarchy.
 
 ---
 
@@ -121,7 +124,7 @@ runi/
 │   │   └── intelligence/         # AI/drift/semantic features
 │   ├── bindings/                 # ts-rs generated TypeScript types
 │   └── Cargo.toml
-├── .planning-docs/               # Design vision and strategy documents
+├── ../runi-planning-docs/        # Design vision and strategy documents (separate repository)
 ├── .tmp/                         # Ephemeral files (git-ignored, auto-cleanup)
 ├── specs/                        # Technical specifications
 ├── prompts/                      # Ralph prompt files
@@ -406,9 +409,14 @@ Intelligence communicates through consistent visual signals:
 
 **Internal Docs:**
 
-- `.planning-docs/VISION.md` — North star
-- `.planning-docs/runi-design-vision-v8.1.md` — Full design spec
-- `.planning-docs/addendums/001-ai-architecture.md` — AI verification architecture
-- `.planning-docs/addendums/002-adoption-positioning.md` — Adoption strategy
-- `.planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
+Planning documents are in a separate repository: `../runi-planning-docs/`
+
+- `../runi-planning-docs/VISION.md` — North star
+- `../runi-planning-docs/runi-design-vision-v8.1.md` — Full design spec
+- `../runi-planning-docs/DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy
+- `../runi-planning-docs/addendums/001-ai-architecture.md` — AI verification architecture
+- `../runi-planning-docs/addendums/002-adoption-positioning.md` — Adoption strategy
+- `../runi-planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
+- `../runi-planning-docs/next-frontier-in-api.md` — API landscape research
+- `../runi-planning-docs/research/competitor-analysis.md` — Competitor feature analysis
 - `docs/DECISIONS.md` — Historical architectural decisions

@@ -91,6 +91,7 @@ export const MainLayout = ({
     position: panelPosition,
     isVisible: panelVisible,
     toggleVisibility: togglePanel,
+    setVisible,
   } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
@@ -134,6 +135,19 @@ export const MainLayout = ({
     handler: togglePanel,
     description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
   });
+
+  // Listen for console panel requests (e.g., from error toasts)
+  useEffect(() => {
+    const unsubscribe = globalEventBus.on<{ correlationId?: string }>(
+      'panel.console-requested',
+      () => {
+        setVisible(true);
+        setActiveTab('console');
+      }
+    );
+
+    return unsubscribe;
+  }, [setVisible, setActiveTab]);
 
   // Auto-collapse sidebar when left dock is active
   // Store the previous state to restore when switching away from left dock

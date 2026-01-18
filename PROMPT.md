@@ -1,6 +1,6 @@
 # runi Master Prompt
 
-**Version:** 8.0 (aligned with .planning-docs/runi-design-vision-v8.1.md)
+**Version:** 8.0 (aligned with ../runi-planning-docs/runi-design-vision-v8.1.md)
 
 ---
 
@@ -213,7 +213,7 @@ runi/
 |   +-- utils/              # Helpers
 |   +-- routes/             # React Router routes
 |
-+-- .planning-docs/         # Vision and strategy documents
++-- ../runi-planning-docs/   # Vision and strategy documents (separate repository)
 +-- prompts/                # Modular implementation prompts
 +-- specs/                  # Technical specifications
 +-- tests/                  # E2E tests
@@ -235,10 +235,10 @@ Before marking any phase complete:
 
 ## Reference Documents
 
-- **Design Vision:** `.planning-docs/runi-design-vision-v8.1.md`
-- **North Star:** `.planning-docs/VISION.md`
-- **AI Architecture:** `.planning-docs/001-ai-architecture.md`
-- **Adoption Strategy:** `.planning-docs/002-adoption-positioning.md`
+- **Design Vision:** `../runi-planning-docs/runi-design-vision-v8.1.md`
+- **North Star:** `../runi-planning-docs/VISION.md`
+- **AI Architecture:** `../runi-planning-docs/addendums/001-ai-architecture.md`
+- **Adoption Strategy:** `../runi-planning-docs/addendums/002-adoption-positioning.md`
 - **Implementation Prompts:** `prompts/PROMPT-*.md`
 - **Fix Plan:** `@fix_plan.md`
 - **Technical Specs:** `specs/requirements.md`

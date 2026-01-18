@@ -10,6 +10,10 @@
   },
   "app": {
     "withGlobalTauri": true,
+    "security": {
+      "csp": null,
+      "capabilities": ["default"]
+    },
     "windows": [
       {
         "title": "Runi",
@@ -28,9 +32,6 @@
         "center": true
       }
     ],
-    "security": {
-      "csp": null
-    },
     "macOSPrivateApi": true
   },
   "bundle": {

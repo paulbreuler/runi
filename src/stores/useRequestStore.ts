@@ -9,7 +9,6 @@ interface RequestState {
   body: string;
   response: HttpResponse | null;
   isLoading: boolean;
-  error: string | null;
 
   // Actions
   setMethod: (method: string) => void;
@@ -18,7 +17,6 @@ interface RequestState {
   setBody: (body: string) => void;
   setResponse: (response: HttpResponse | null) => void;
   setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
   reset: () => void;
 }
 
@@ -29,7 +27,6 @@ export const useRequestStore = create<RequestState>((set) => ({
   body: '',
   response: null,
   isLoading: false,
-  error: null,
 
   setMethod: (method): void => {
     set({ method });
@@ -49,9 +46,6 @@ export const useRequestStore = create<RequestState>((set) => ({
   setLoading: (isLoading): void => {
     set({ isLoading });
   },
-  setError: (error): void => {
-    set({ error });
-  },
   reset: (): void => {
     set({
       method: 'GET',
@@ -60,7 +54,6 @@ export const useRequestStore = create<RequestState>((set) => ({
       body: '',
       response: null,
       isLoading: false,
-      error: null,
     });
   },
 }));

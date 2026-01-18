@@ -20,7 +20,6 @@ describe('useRequestStore', () => {
     expect(result.current.body).toBe('');
     expect(result.current.response).toBeNull();
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
   });
 
   it('sets method', () => {
@@ -103,16 +102,6 @@ describe('useRequestStore', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('sets error', () => {
-    const { result } = renderHook(() => useRequestStore());
-
-    act(() => {
-      result.current.setError('Network error');
-    });
-
-    expect(result.current.error).toBe('Network error');
-  });
-
   it('resets to initial state', () => {
     const { result } = renderHook(() => useRequestStore());
 
@@ -123,7 +112,6 @@ describe('useRequestStore', () => {
       result.current.setHeaders({ 'X-Custom': 'value' });
       result.current.setBody('{"test": true}');
       result.current.setLoading(true);
-      result.current.setError('Error');
     });
 
     // Reset
@@ -137,67 +125,6 @@ describe('useRequestStore', () => {
     expect(result.current.body).toBe('');
     expect(result.current.response).toBeNull();
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
-  });
-
-  describe('error handling', () => {
-    it('clears error when setting null', () => {
-      const { result } = renderHook(() => useRequestStore());
-
-      act(() => {
-        result.current.setError('Some error');
-      });
-      expect(result.current.error).toBe('Some error');
-
-      act(() => {
-        result.current.setError(null);
-      });
-      expect(result.current.error).toBeNull();
-    });
-
-    it('preserves error when setting other state', () => {
-      const { result } = renderHook(() => useRequestStore());
-
-      act(() => {
-        result.current.setError('Connection failed');
-        result.current.setMethod('POST');
-        result.current.setUrl('https://new-url.com');
-      });
-
-      expect(result.current.error).toBe('Connection failed');
-      expect(result.current.method).toBe('POST');
-      expect(result.current.url).toBe('https://new-url.com');
-    });
-
-    it('clears response when reset but preserves nothing else', () => {
-      const { result } = renderHook(() => useRequestStore());
-
-      const mockResponse: HttpResponse = {
-        status: 500,
-        status_text: 'Internal Server Error',
-        headers: {},
-        body: 'Error',
-        timing: {
-          total_ms: 100,
-          dns_ms: null,
-          connect_ms: null,
-          tls_ms: null,
-          first_byte_ms: null,
-        },
-      };
-
-      act(() => {
-        result.current.setResponse(mockResponse);
-        result.current.setError('Server error');
-      });
-
-      act(() => {
-        result.current.reset();
-      });
-
-      expect(result.current.response).toBeNull();
-      expect(result.current.error).toBeNull();
-    });
   });
 
   describe('edge cases', () => {
