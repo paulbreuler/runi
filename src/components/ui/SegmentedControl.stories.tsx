@@ -532,10 +532,10 @@ export const AllVariantsComparison: Story = {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="space-y-4">
           {variants.map((variant) => (
-            <div key={variant} className="space-y-2">
-              <div className="text-xs font-medium text-text-muted uppercase tracking-wide">
+            <div key={variant} className="flex items-center gap-4">
+              <div className="w-20 text-xs font-medium text-text-muted uppercase tracking-wide shrink-0">
                 {variant}
               </div>
               <div className="p-3 bg-bg-surface border border-border-subtle rounded-lg">
