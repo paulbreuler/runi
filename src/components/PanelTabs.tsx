@@ -18,6 +18,38 @@ interface PanelTabsProps {
  *
  * Uses Radix Tabs primitives with Motion animations for smooth tab indicator transitions.
  * Allows switching between Network History and Console views.
+ *
+ * ## Features
+ *
+ * - **Accessible**: Built on Radix UI Tabs with full keyboard navigation (Tab, Arrow keys, Enter/Space)
+ * - **Animated**: Tab indicator uses Motion's `layoutId` for shared element transitions
+ * - **Spring Physics**: Indicator animates with spring physics (stiffness: 300, damping: 30)
+ * - **Reduced Motion**: Respects `prefers-reduced-motion` setting
+ * - **Interactive**: Hover (scale: 1.02) and tap (scale: 0.98) animations on buttons
+ *
+ * ## Animation Details
+ *
+ * The tab indicator uses Motion's `layoutId="panel-tab-indicator"` to create a shared element
+ * transition. When switching tabs, the indicator smoothly animates from one tab to another
+ * using spring physics. This pattern is inspired by Motion.dev's Radix Tabs example.
+ *
+ * ## Accessibility
+ *
+ * - Full keyboard navigation provided by Radix UI
+ * - ARIA attributes handled automatically
+ * - Focus management on tab activation
+ *
+ * @example
+ * ```tsx
+ * const [activeTab, setActiveTab] = useState<PanelTabType>('network');
+ *
+ * <PanelTabs
+ *   activeTab={activeTab}
+ *   onTabChange={setActiveTab}
+ *   networkCount={5}
+ *   consoleCount={3}
+ * />
+ * ```
  */
 export const PanelTabs = ({
   activeTab,
