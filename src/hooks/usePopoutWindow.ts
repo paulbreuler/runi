@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { usePanelStore } from '@/stores/usePanelStore';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 /**
  * Hook for managing pop-out DevTools window.
@@ -53,7 +54,12 @@ export const usePopoutWindow = (): UsePopoutWindowReturn => {
 
       // Listen for window creation error
       void webview.once('tauri://error', (error) => {
-        console.error('Failed to open DevTools popout window:', error);
+        const errorMessage = 'payload' in error ? String(error.payload) : JSON.stringify(error);
+
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'error',
+          message: `Failed to open DevTools window: ${errorMessage}`,
+        });
       });
     } catch {
       // Fallback for non-Tauri environment (e.g., browser during dev)
