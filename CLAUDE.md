@@ -80,6 +80,7 @@ just generate-types  # Generate TypeScript types from Rust (ts-rs)
 | Build      | Vite 7.x                        |
 | Styling    | Tailwind CSS 4.x                |
 | Animation  | Motion 12.x                     |
+| Animation+ | Motion+ (premium components)    |
 | Routing    | React Router 7.x                |
 | State      | Zustand                         |
 | Icons      | Lucide                          |
@@ -274,6 +275,95 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 
 ---
 
+## Accessibility Requirements
+
+### WCAG 2.1 AA Compliance
+
+All components must meet WCAG 2.1 Level AA standards:
+
+- **Color Contrast**: Minimum 4.5:1 for normal text, 3:1 for large text
+- **Keyboard Navigation**: All interactive elements must be keyboard accessible
+- **Screen Readers**: Proper ARIA attributes and semantic HTML
+- **Focus Management**: Visible focus indicators, logical tab order
+- **Reduced Motion**: Respect `prefers-reduced-motion` setting
+
+### Component Accessibility Checklist
+
+When creating or updating components:
+
+- [ ] All interactive elements have keyboard support
+- [ ] Form inputs have associated labels (`htmlFor`/`id` or `aria-label`)
+- [ ] Icon-only buttons have `aria-label`
+- [ ] Custom components use appropriate ARIA roles
+- [ ] Focus indicators are visible (minimum 2px outline)
+- [ ] Color is not the only means of conveying information
+- [ ] Animations respect `prefers-reduced-motion`
+- [ ] Error states use `aria-invalid` and `aria-describedby`
+- [ ] Loading states use `aria-busy` and `aria-live`
+
+### Storybook Accessibility
+
+- Use `@storybook/addon-a11y` to check accessibility in stories (automatic checking)
+- Document accessibility features in the documentation panel (`parameters.docs.description.component`)
+- The a11y addon panel shows violations automatically - no need for separate demo stories
+- Test with screen readers during development
+- Follow Storybook best practices: accessibility info belongs in docs panel, not separate stories
+
+### React Accessibility Best Practices
+
+1. **Semantic HTML**: Use native HTML elements when possible (`<button>`, `<input>`, etc.)
+2. **ARIA Attributes**: Use ARIA only when semantic HTML isn't sufficient
+3. **Form Labels**: Always associate labels with inputs using `htmlFor`/`id`
+4. **Focus Management**: Use `useRef` and `focus()` for programmatic focus
+5. **Keyboard Events**: Handle `onKeyDown` for custom keyboard interactions
+6. **Radix UI**: Prefer Radix UI primitives for complex components (they handle accessibility)
+
+### Testing Accessibility
+
+- Run Storybook a11y addon checks
+- Test with keyboard only (Tab, Enter, Space, Arrow keys)
+- Test with screen reader (NVDA, JAWS, VoiceOver)
+- Use browser DevTools Accessibility panel
+- Run automated tools: axe DevTools, WAVE
+
+### Common Patterns
+
+**Form Input with Label:**
+
+```tsx
+<label htmlFor="email-input">Email</label>
+<Input id="email-input" type="email" />
+```
+
+**Icon Button:**
+
+```tsx
+<Button aria-label="Close dialog">
+  <X />
+</Button>
+```
+
+**Error State:**
+
+```tsx
+<Input
+  id="email-input"
+  aria-invalid="true"
+  aria-describedby="email-error"
+/>
+<span id="email-error" role="alert">Invalid email address</span>
+```
+
+**Loading State:**
+
+```tsx
+<div aria-busy="true" aria-live="polite">
+  Loading...
+</div>
+```
+
+---
+
 ## Storybook Best Practices
 
 Stories are **visual documentation**, not automated test suites.
@@ -398,12 +488,40 @@ Intelligence communicates through consistent visual signals:
 
 ---
 
+## Motion+ Integration
+
+**Motion+ Access**: The project has access to Motion+ premium components and patterns.
+
+**Location**: Motion+ repository at `/Users/paul/Documents/GitHub/plus`
+
+**Available Components**:
+
+- `Carousel` - Horizontal scrolling with touch/swipe gestures
+- `Ticker` - Continuous scrolling animations
+- `Cursor` - Custom cursor interactions
+- `AnimateNumber` - Number animations
+- `AnimateText` - Text animations
+- `Typewriter` - Typewriter effect
+
+**Usage**:
+
+- Import from `motion-plus/react` for React components
+- Follow patterns from `/Users/paul/Documents/GitHub/plus/dev/react-env/src/app/tests/[slug]/components`
+- See Motion+ documentation at https://plus.motion.dev/
+
+**Current Implementation**:
+
+- Filter bar uses native CSS scroll with Motion animations for gradient cues
+- Can be upgraded to Motion+ Carousel for smoother scrolling if needed
+- Motion+ patterns available for future enhancements
+
 ## References
 
 - [Tauri v2 Docs](https://v2.tauri.app/)
 - [React 19](https://react.dev/)
 - [Zustand](https://zustand.docs.pmnd.rs/)
 - [Motion](https://motion.dev/)
+- [Motion+](https://plus.motion.dev/)
 - [MCP Spec](https://modelcontextprotocol.io/)
 - [ts-rs](https://github.com/Aleph-Alpha/ts-rs)
 

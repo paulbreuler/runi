@@ -6,6 +6,9 @@ import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
 import { PanelTabs, type PanelTabType } from '@/components/PanelTabs';
 import { ConsolePanel } from '../Console/ConsolePanel';
 import { PanelContent } from '@/components/PanelContent';
+import { useHistoryStore } from '@/stores/useHistoryStore';
+import { getConsoleService } from '@/services/console-service';
+import type { NetworkHistoryEntry } from '@/types/history';
 
 const meta: Meta<typeof DockablePanel> = {
   title: 'Layout/DockablePanel',
@@ -66,8 +69,12 @@ const meta: Meta<typeof DockablePanel> = {
   decorators: [
     (Story) => (
       <div className="h-screen bg-bg-app flex flex-col">
-        <div className="flex-1 p-4 text-text-secondary">Main content area - Panel docks below</div>
-        <Story />
+        <div className="p-2 text-xs text-text-muted shrink-0">
+          Main content area - Panel docks below
+        </div>
+        <div className="flex-1 min-h-0">
+          <Story />
+        </div>
       </div>
     ),
   ],
@@ -177,6 +184,76 @@ export const WithRealContent: Story = {
           isCollapsed: false,
           sizes: { bottom: 350, left: 350, right: 350 },
           isPopout: false,
+        });
+
+        // Populate history store with mock entries
+        const mockEntries: NetworkHistoryEntry[] = Array.from({ length: 12 }, (_, i) => {
+          const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+          const statuses = [200, 201, 404, 500];
+          const method = methods[i % methods.length] as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+          const status = statuses[i % statuses.length];
+          return {
+            id: `hist_${String(i + 1)}`,
+            timestamp: new Date(Date.now() - (i + 1) * 60 * 1000).toISOString(),
+            request: {
+              url: `https://api.example.com/${i === 0 ? 'users' : `resource/${String(i)}`}`,
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: method === 'POST' || method === 'PUT' ? '{"data":"test"}' : null,
+              timeout_ms: 30000,
+            },
+            response: {
+              status,
+              status_text:
+                status === 200
+                  ? 'OK'
+                  : status === 201
+                    ? 'Created'
+                    : status === 404
+                      ? 'Not Found'
+                      : 'Server Error',
+              headers: { 'Content-Type': 'application/json' },
+              body: status === 204 ? '' : '{"id":' + String(i + 1) + '}',
+              timing: {
+                total_ms: 100 + i * 10,
+                dns_ms: 5 + i,
+                connect_ms: 10 + i,
+                tls_ms: 15 + i,
+                first_byte_ms: 50 + i * 5,
+              },
+            },
+            intelligence: {
+              boundToSpec: i % 2 === 0,
+              specOperation: i % 2 === 0 ? `operation${String(i)}` : null,
+              drift:
+                i === 2
+                  ? { type: 'response' as const, fields: ['status'], message: 'Unexpected field' }
+                  : null,
+              aiGenerated: i === 1,
+              verified: i % 3 === 0,
+            },
+          };
+        });
+
+        useHistoryStore.setState({ entries: mockEntries });
+
+        // Populate console service with mock logs
+        const consoleService = getConsoleService();
+        consoleService.clear();
+        // Set min log level to debug so all logs are visible
+        consoleService.setMinLogLevel('debug');
+        const mockLogs = [
+          { level: 'info' as const, message: 'Application started', args: [] },
+          { level: 'info' as const, message: 'Loading user data...', args: [] },
+          { level: 'warn' as const, message: 'Deprecated API endpoint used', args: [] },
+          { level: 'error' as const, message: 'Failed to fetch resource', args: [] },
+          { level: 'debug' as const, message: 'Cache updated', args: [] },
+        ];
+        mockLogs.forEach((log, index) => {
+          consoleService.addLog({
+            ...log,
+            timestamp: Date.now() - (mockLogs.length - index) * 1000,
+          });
         });
       }, []);
       return <Story />;

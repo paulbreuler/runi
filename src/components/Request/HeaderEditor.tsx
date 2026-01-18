@@ -4,6 +4,7 @@ import { Plus, X } from 'lucide-react';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /**
  * HeaderEditor component for managing HTTP request headers.
@@ -73,17 +74,11 @@ export const HeaderEditor = (): React.JSX.Element => {
     <div className="h-full flex flex-col" data-testid="headers-editor">
       <div className="flex-1 overflow-auto p-4" style={{ scrollbarGutter: 'stable' }}>
         {headerEntries.length === 0 && editingKey === null && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-text-muted/50 mb-4"
-            >
-              <p className="text-sm">No headers configured</p>
-              <p className="text-xs mt-1">Add headers to customize your request</p>
-            </motion.div>
-          </div>
+          <EmptyState
+            variant="muted"
+            title="No headers configured"
+            description="Add headers to customize your request"
+          />
         )}
 
         <div className="space-y-2">

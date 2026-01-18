@@ -7,6 +7,50 @@ const meta = {
   component: Button,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: `Button component with multiple variants, sizes, and Motion animations.
+
+## Features
+
+- **Variants**: Default, destructive, outline, secondary, ghost, link
+- **Sizes**: Small, default, large, and icon sizes (icon, icon-sm, icon-lg)
+- **Motion Animations**: Smooth spring-based hover and tap animations
+- **Accessible**: Supports all standard HTML button attributes including \`aria-label\`
+
+## Accessibility
+
+- **Icon-Only Buttons**: Always provide \`aria-label\` for icon-only buttons
+- **Keyboard Navigation**: Full keyboard support (Tab, Enter, Space)
+- **Focus Indicators**: Visible focus rings (2px) with accent colors
+- **Disabled State**: Properly disabled with \`disabled\` attribute
+
+## Usage
+
+**Text Button:**
+\`\`\`tsx
+<Button variant="default">Click me</Button>
+\`\`\`
+
+**Icon-Only Button:**
+\`\`\`tsx
+<Button size="icon" aria-label="Close dialog">
+  <X />
+</Button>
+\`\`\`
+
+**Button with Icon:**
+\`\`\`tsx
+<Button>
+  <Mail className="mr-2" />
+  Send Email
+</Button>
+\`\`\`
+
+See the Accessibility panel below for automated checks.
+        `,
+      },
+    },
   },
   tags: ['autodocs'],
   argTypes: {
@@ -74,13 +118,13 @@ export const WithIcons: Story = {
         </Button>
       </div>
       <div className="flex items-center gap-3">
-        <Button size="icon">
+        <Button size="icon" aria-label="Send email">
           <Mail />
         </Button>
-        <Button size="icon-sm">
+        <Button size="icon-sm" aria-label="Download">
           <Download />
         </Button>
-        <Button size="icon-lg">
+        <Button size="icon-lg" aria-label="Delete">
           <Trash2 />
         </Button>
       </div>

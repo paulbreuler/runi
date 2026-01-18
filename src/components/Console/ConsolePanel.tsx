@@ -14,6 +14,7 @@ import { cn } from '@/utils/cn';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
 import { ConsoleContextMenu } from './ConsoleContextMenu';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export type { LogLevel, ConsoleLog } from '@/types/console';
 
@@ -529,13 +530,16 @@ export const ConsolePanel = ({
       {/* Log list */}
       <div
         ref={logContainerRef}
-        className="flex-1 overflow-auto font-mono text-xs"
+        className="flex-1 overflow-auto min-h-0 font-mono text-xs"
+        style={{ scrollbarGutter: 'stable' }}
         data-testid="console-logs"
       >
         {filteredLogs.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-text-muted">
-            No logs {filter !== 'all' && `(${filter} only)`}
-          </div>
+          <EmptyState
+            variant="muted"
+            size="sm"
+            title={`No logs${filter !== 'all' ? ` (${filter} only)` : ''}`}
+          />
         ) : (
           <div className="p-2 space-y-0.5">
             {filteredLogs.map((displayLog) => {

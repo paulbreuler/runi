@@ -32,7 +32,7 @@ export const PanelContent = ({
   consoleContent,
 }: PanelContentProps): React.JSX.Element => {
   return (
-    <div className="flex-1 overflow-hidden">
+    <div className="h-full overflow-hidden">
       <AnimatePresence mode="wait">
         {activeTab === 'network' ? (
           <motion.div
@@ -41,8 +41,7 @@ export const PanelContent = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="h-full overflow-auto"
-            style={{ scrollbarGutter: 'stable' }}
+            className="h-full overflow-hidden"
           >
             {networkContent}
           </motion.div>
@@ -53,8 +52,7 @@ export const PanelContent = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="h-full overflow-auto"
-            style={{ scrollbarGutter: 'stable' }}
+            className="h-full overflow-hidden"
           >
             {consoleContent}
           </motion.div>

@@ -6,6 +6,47 @@ const meta = {
   component: Input,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: `Text input component with glass-morphism support and smooth animations.
+
+## Features
+
+- **Glass-morphism**: Optional Apple 2025 aesthetic with backdrop blur
+- **Motion Animations**: Smooth spring-based focus animations
+- **Accessible**: Supports all standard HTML input attributes including \`id\`, \`aria-invalid\`, \`aria-describedby\`
+
+## Accessibility
+
+- **Label Association**: Always associate labels with inputs using \`htmlFor\`/\`id\`
+- **Error States**: Use \`aria-invalid="true"\` and \`aria-describedby\` for error messages
+- **Keyboard Navigation**: Full keyboard support (native HTML input)
+- **Focus Indicators**: Visible focus rings (2px) with accent colors
+
+## Usage
+
+\`\`\`tsx
+<label htmlFor="email-input">Email</label>
+<Input id="email-input" type="email" placeholder="Enter your email" />
+\`\`\`
+
+## Error State
+
+\`\`\`tsx
+<label htmlFor="email-input">Email</label>
+<Input
+  id="email-input"
+  type="email"
+  aria-invalid="true"
+  aria-describedby="email-error"
+/>
+<span id="email-error" role="alert">Invalid email address</span>
+\`\`\`
+
+See the Accessibility panel below for automated checks.
+        `,
+      },
+    },
   },
   tags: ['autodocs'],
   argTypes: {
@@ -69,10 +110,14 @@ export const States: Story = {
 export const WithLabels: Story = {
   render: () => (
     <div className="flex flex-col gap-2 w-64">
-      <label className="text-sm text-text-secondary">Name</label>
-      <Input placeholder="Enter your name" />
-      <label className="text-sm text-text-secondary mt-4">Email</label>
-      <Input type="email" placeholder="Enter your email" />
+      <label htmlFor="name-input" className="text-sm text-text-secondary">
+        Name
+      </label>
+      <Input id="name-input" placeholder="Enter your name" />
+      <label htmlFor="email-input" className="text-sm text-text-secondary mt-4">
+        Email
+      </label>
+      <Input id="email-input" type="email" placeholder="Enter your email" />
     </div>
   ),
 };
