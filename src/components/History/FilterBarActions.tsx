@@ -54,6 +54,7 @@ export const FilterBarActions = ({
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
+    return undefined;
   }, [isDropdownOpen]);
 
   const handleSaveSelected = (): void => {
