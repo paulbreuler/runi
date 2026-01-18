@@ -76,6 +76,7 @@ export const NetworkHistoryFilters = ({
             onFilterChange('search', e.target.value);
           }}
           placeholder={isIconMode ? 'Search...' : 'Filter by URL...'}
+          aria-label="Filter history by URL"
           className={cn(
             'pl-7 pr-2 py-1 text-sm bg-bg-surface border border-border-subtle rounded focus:outline-none focus:border-border-emphasis text-text-secondary placeholder:text-text-muted',
             isIconMode ? 'w-full' : 'w-full'
@@ -152,14 +153,25 @@ export const NetworkHistoryFilters = ({
             onClick={onCompareModeToggle}
             variant={compareMode ? 'default' : 'outline'}
             size="icon-xs"
-            title="Compare two responses"
-            aria-label="Compare two responses"
+            title={
+              compareSelectionCount > 0
+                ? `Compare two responses (${String(compareSelectionCount)} selected)`
+                : 'Compare two responses'
+            }
+            aria-label={
+              compareSelectionCount > 0
+                ? `Compare two responses, ${String(compareSelectionCount)} of 2 selected`
+                : 'Compare two responses'
+            }
             aria-pressed={compareMode}
           >
             <GitCompare size={14} />
           </Button>
           {compareSelectionCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-signal-error text-white text-[10px] rounded-full flex items-center justify-center pointer-events-none">
+            <span
+              className="absolute -top-1 -right-1 w-4 h-4 bg-signal-error text-white text-[10px] rounded-full flex items-center justify-center pointer-events-none"
+              aria-hidden="true"
+            >
               {compareSelectionCount}
             </span>
           )}

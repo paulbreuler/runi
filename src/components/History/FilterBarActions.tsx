@@ -129,6 +129,7 @@ export const FilterBarActions = ({
           }}
           className="px-1 py-1 text-xs rounded-r rounded-l-none text-text-muted hover:text-text-primary hover:bg-bg-raised/50 transition-colors bg-bg-surface border border-border-subtle border-l-0 flex items-center"
           aria-label="Save options"
+          aria-haspopup="menu"
           aria-expanded={isDropdownOpen}
         >
           <ChevronDown
@@ -139,9 +140,14 @@ export const FilterBarActions = ({
 
         {/* Dropdown menu */}
         {isDropdownOpen && (
-          <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-bg-surface border border-border-default rounded shadow-lg overflow-hidden">
+          <div
+            role="menu"
+            aria-label="Save options"
+            className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-bg-surface border border-border-default rounded shadow-lg overflow-hidden"
+          >
             <button
               type="button"
+              role="menuitem"
               onClick={handleSaveSelected}
               disabled={isSaveSelectionDisabled}
               className={cn(
@@ -156,6 +162,7 @@ export const FilterBarActions = ({
             </button>
             <button
               type="button"
+              role="menuitem"
               onClick={handleSaveAll}
               className="w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 text-text-secondary hover:bg-bg-raised hover:text-text-primary transition-colors"
             >
