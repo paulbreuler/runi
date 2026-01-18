@@ -40,6 +40,15 @@ describe('Sidebar', () => {
     expect(screen.getByText('No collections yet')).toBeInTheDocument();
   });
 
+  it('uses EmptyState component with muted variant for collections', () => {
+    const { container } = render(<Sidebar />);
+
+    // Verify EmptyState is used (muted variant renders with text-text-muted/50 class)
+    const emptyStateContent = container.querySelector('.text-text-muted\\/50');
+    expect(emptyStateContent).toBeInTheDocument();
+    expect(emptyStateContent?.textContent).toContain('No collections yet');
+  });
+
   it('fills its container width', () => {
     render(<Sidebar />);
 
