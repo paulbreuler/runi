@@ -87,6 +87,9 @@ describe('ActionBarCompositeButton', () => {
   });
 
   it('closes dropdown when clicking outside', async () => {
+    // Skip pointer events check due to Radix UI portal overlay
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+
     render(
       <div>
         <span data-testid="outside">Outside</span>
@@ -94,10 +97,10 @@ describe('ActionBarCompositeButton', () => {
       </div>
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'More options' }));
+    await user.click(screen.getByRole('button', { name: 'More options' }));
     expect(screen.getByRole('menu')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByTestId('outside'));
+    await user.click(screen.getByTestId('outside'));
 
     // Menu should close
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
@@ -151,7 +154,8 @@ describe('ActionBarCompositeButton', () => {
     );
 
     primaryButton = screen.getByRole('button', { name: 'Save Selected' });
-    expect(primaryButton).toHaveClass('bg-bg-surface');
+    expect(primaryButton).toHaveClass('bg-transparent');
+    expect(primaryButton).toHaveClass('border-border-subtle');
   });
 
   it('disables individual options when specified', async () => {

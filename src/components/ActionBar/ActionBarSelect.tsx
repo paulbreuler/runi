@@ -2,20 +2,20 @@ import { cn } from '@/utils/cn';
 import * as Select from '@/components/ui/select';
 import { useOptionalActionBarContext, type ActionBarVariant } from './ActionBarContext';
 
-interface SelectOption {
+interface BaseSelectOption {
   /** Unique value for this option */
   value: string;
   /** Display label for this option */
   label: string;
 }
 
-interface ActionBarSelectProps {
+interface ActionBarSelectProps<T extends BaseSelectOption = BaseSelectOption> {
   /** Currently selected value */
   value: string;
   /** Callback when selection changes */
   onValueChange: (value: string) => void;
   /** Available options */
-  options: SelectOption[];
+  options: T[];
   /** Icon to show in icon mode */
   icon: React.ReactNode;
   /** ARIA label for the select (required for accessibility) */
@@ -26,6 +26,8 @@ interface ActionBarSelectProps {
   variant?: ActionBarVariant;
   /** Data testid for testing */
   'data-testid'?: string;
+  /** Custom renderer for dropdown items */
+  renderItem?: (option: T) => React.ReactNode;
 }
 
 /**
@@ -34,6 +36,8 @@ interface ActionBarSelectProps {
  * Automatically responds to ActionBar's responsive variant context.
  * In icon mode, displays only the icon. In full/compact modes,
  * shows the selected value label.
+ *
+ * Supports custom rendering of dropdown items via the `renderItem` prop.
  *
  * @example
  * ```tsx
@@ -47,10 +51,11 @@ interface ActionBarSelectProps {
  *   ]}
  *   icon={<Code size={14} />}
  *   aria-label="Filter by HTTP method"
+ *   renderItem={(option) => <MethodBadge method={option.value} />}
  * />
  * ```
  */
-export const ActionBarSelect = ({
+export const ActionBarSelect = <T extends BaseSelectOption>({
   value,
   onValueChange,
   options,
@@ -59,7 +64,8 @@ export const ActionBarSelect = ({
   className,
   variant: variantOverride,
   'data-testid': testId,
-}: ActionBarSelectProps): React.JSX.Element => {
+  renderItem,
+}: ActionBarSelectProps<T>): React.JSX.Element => {
   const context = useOptionalActionBarContext();
   const variant = variantOverride ?? context?.variant ?? 'full';
   const isIconMode = variant === 'icon';
@@ -82,7 +88,7 @@ export const ActionBarSelect = ({
       <Select.SelectContent>
         {options.map((option) => (
           <Select.SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {renderItem !== undefined ? renderItem(option) : option.label}
           </Select.SelectItem>
         ))}
       </Select.SelectContent>

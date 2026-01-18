@@ -7,6 +7,14 @@ import {
   ActionBarSelect,
   useOptionalActionBarContext,
 } from '@/components/ActionBar';
+import {
+  renderMethodOption,
+  renderStatusOption,
+  renderIntelligenceOption,
+  type MethodSelectOption,
+  type StatusSelectOption,
+  type IntelligenceSelectOption,
+} from '@/components/ActionBar/selectRenderers';
 
 interface NetworkHistoryFiltersProps {
   /** Current filter state */
@@ -23,7 +31,7 @@ interface NetworkHistoryFiltersProps {
   onCompareResponses?: () => void;
 }
 
-const METHOD_OPTIONS = [
+const METHOD_OPTIONS: MethodSelectOption[] = [
   { value: 'ALL', label: 'All Methods' },
   { value: 'GET', label: 'GET' },
   { value: 'POST', label: 'POST' },
@@ -34,20 +42,20 @@ const METHOD_OPTIONS = [
   { value: 'OPTIONS', label: 'OPTIONS' },
 ];
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS: StatusSelectOption[] = [
   { value: 'All', label: 'All Status' },
-  { value: '2xx', label: '2xx Success' },
-  { value: '3xx', label: '3xx Redirect' },
-  { value: '4xx', label: '4xx Client Error' },
-  { value: '5xx', label: '5xx Server Error' },
+  { value: '2xx', label: '2xx Success', range: '2xx' },
+  { value: '3xx', label: '3xx Redirect', range: '3xx' },
+  { value: '4xx', label: '4xx Client Error', range: '4xx' },
+  { value: '5xx', label: '5xx Server Error', range: '5xx' },
 ];
 
-const INTELLIGENCE_OPTIONS = [
+const INTELLIGENCE_OPTIONS: IntelligenceSelectOption[] = [
   { value: 'All', label: 'All' },
-  { value: 'Has Drift', label: 'Has Drift' },
-  { value: 'AI Generated', label: 'AI Generated' },
-  { value: 'Bound to Spec', label: 'Bound to Spec' },
-  { value: 'Verified', label: 'Verified' },
+  { value: 'Has Drift', label: 'Has Drift', signal: 'drift' },
+  { value: 'AI Generated', label: 'AI Generated', signal: 'ai' },
+  { value: 'Bound to Spec', label: 'Bound to Spec', signal: 'bound' },
+  { value: 'Verified', label: 'Verified', signal: 'verified' },
 ];
 
 /**
@@ -89,6 +97,7 @@ export const NetworkHistoryFilters = ({
           icon={<Code size={14} />}
           aria-label="Filter by HTTP method"
           data-testid="method-filter"
+          renderItem={renderMethodOption}
         />
         <ActionBarSelect
           value={filters.status}
@@ -99,6 +108,7 @@ export const NetworkHistoryFilters = ({
           icon={<CheckCircle size={14} />}
           aria-label="Filter by status code"
           data-testid="status-filter"
+          renderItem={renderStatusOption}
         />
         <ActionBarSelect
           value={filters.intelligence}
@@ -109,6 +119,7 @@ export const NetworkHistoryFilters = ({
           icon={<Brain size={14} />}
           aria-label="Filter by intelligence"
           data-testid="intelligence-filter"
+          renderItem={renderIntelligenceOption}
         />
       </ActionBarGroup>
 

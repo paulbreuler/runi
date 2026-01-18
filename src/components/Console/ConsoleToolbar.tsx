@@ -27,9 +27,23 @@ interface ConsoleToolbarProps {
   correlationIdFilter: string;
   /** Callback when correlation ID filter changes */
   onCorrelationIdFilterChange: (value: string) => void;
-  /** Whether auto-scroll is enabled */
+  /**
+   * Whether auto-scroll is enabled.
+   *
+   * When enabled (default), the console automatically scrolls to show
+   * the latest log entries as they arrive. When disabled, users can
+   * freely scroll through history without being jumped to the bottom.
+   */
   autoScroll: boolean;
-  /** Toggle auto-scroll */
+  /**
+   * Toggle auto-scroll behavior.
+   *
+   * The Auto button provides visual feedback:
+   * - Filled (default variant): Auto-scroll is ON
+   * - Outlined: Auto-scroll is OFF
+   *
+   * Uses `aria-pressed` to communicate toggle state to screen readers.
+   */
   onAutoScrollToggle: () => void;
   /** Clear all logs */
   onClear: () => void;
@@ -95,13 +109,14 @@ const ConsoleToolbarActions = ({
         >
           <CopyIcon size={14} />
         </Button>
+        {/* Auto-scroll toggle: filled = ON, outline = OFF */}
         <Button
           type="button"
           onClick={onAutoScrollToggle}
           variant={autoScroll ? 'default' : 'outline'}
           size="icon-xs"
-          title="Auto-scroll"
-          aria-label="Auto-scroll"
+          title={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
+          aria-label={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
           aria-pressed={autoScroll}
         >
           <ArrowDownToLine size={14} />
@@ -149,12 +164,13 @@ const ConsoleToolbarActions = ({
         <CopyIcon size={12} />
         <span>Copy</span>
       </Button>
+      {/* Auto-scroll toggle: filled = ON, outline = OFF */}
       <Button
         type="button"
         onClick={onAutoScrollToggle}
         variant={autoScroll ? 'default' : 'outline'}
         size="xs"
-        title="Auto-scroll"
+        title={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
         aria-pressed={autoScroll}
       >
         <ArrowDownToLine size={12} />
