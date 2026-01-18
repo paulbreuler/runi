@@ -360,8 +360,9 @@ describe('SegmentedControl', () => {
         />
       );
 
+      // className is applied to the outer wrapper (parent of the group element)
       const group = screen.getByRole('group');
-      expect(group).toHaveClass('custom-class');
+      expect(group.parentElement).toHaveClass('custom-class');
     });
 
     it('visually distinguishes selected button', () => {
