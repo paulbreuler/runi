@@ -231,7 +231,7 @@ export const SegmentedControl = <T extends string>({
           role="group"
           aria-label={ariaLabel}
           animate={{
-            boxShadow: auraBoxShadow ?? '0 0 0 0 transparent',
+            boxShadow: auraBoxShadow ?? '0 0 0 0 rgba(0, 0, 0, 0)',
             borderColor: tierBorderColor,
             backgroundColor: tierBackgroundTint,
           }}

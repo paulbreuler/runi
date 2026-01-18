@@ -34,15 +34,11 @@ const shakeTransition = {
   ease: 'easeInOut' as const,
 };
 
-// Motion animation for glow burst effect - uses dynamic color
-const createGlowAnimation = (color: string): { boxShadow: string[] } => ({
-  boxShadow: [`0 0 0 0 ${color}00`, `0 0 12px 4px ${color}b3`, `0 0 4px 1px ${color}4d`],
-});
+// Glow shadow value for "It's Over 9000!" burst effect
+const createGlowShadow = (color: string): string => `0 0 12px 4px ${color}`;
 
-const glowTransition = {
-  duration: 0.6,
-  ease: 'easeOut' as const,
-};
+// No shadow - consistent format for Motion interpolation
+const NO_SHADOW = '0 0 0 0 rgba(0, 0, 0, 0)';
 
 /**
  * Badge component that optionally animates count changes using Motion+.
@@ -78,25 +74,27 @@ export const BadgeCount = ({
   // This ensures badge colors are correct during sustained phase
   const shouldUseTierColor = powerLevel?.visualFlags.shouldShowTierColors ?? false;
 
-  // Show lightning bolt:
-  // - Always for tiers 1-4
-  // - For tier 5+: show during active animation (shouldShowTierColors), fade out after
-  const showLightningBolt = isOver9000 && (!isGodTier || shouldUseTierColor);
+  // Show lightning bolt only during active animation (when tier colors are shown)
+  // Fades out when animation completes (idle/settling states)
+  const showLightningBolt = isOver9000 && shouldUseTierColor;
 
   // Determine badge color based on tier and animation state
-  // FIX Bug 3: Badge glow color matches badge text color consistently
   const getBadgeColor = (): string => {
-    if (isOver9000) {
-      // At god tier during tier color display, use tier color; otherwise amber
-      if (isGodTier && shouldUseTierColor) {
-        return powerLevel.config.color;
-      }
-      return '#fbbf24'; // amber-400
+    // When NOT showing tier colors (idle/settling), use default muted styling
+    if (!shouldUseTierColor) {
+      return ''; // Use class-based coloring
     }
-    // Non-9K badges evolve at tier 4+ during tier color display
-    if (powerLevel !== null && shouldUseTierColor && powerLevel.tier >= 4) {
+
+    // During animation, show special colors
+    if (isOver9000) {
+      return isGodTier ? powerLevel.config.color : '#fbbf24'; // amber-400
+    }
+
+    // Non-9K badges at tier 4+ during animation: evolve to tier color
+    if (powerLevel !== null && powerLevel.tier >= 4) {
       return powerLevel.config.color;
     }
+
     return ''; // Use class-based coloring
   };
 
@@ -111,9 +109,10 @@ export const BadgeCount = ({
       // Just crossed the threshold - trigger animation!
       animationKey.current += 1;
       setJustCrossed(true);
+      // Timer slightly longer than glowTransition (0.6s) to ensure animation completes
       const timer = setTimeout((): void => {
         setJustCrossed(false);
-      }, 600);
+      }, 650);
       return (): void => {
         clearTimeout(timer);
       };
@@ -140,7 +139,8 @@ export const BadgeCount = ({
 
   // Determine badge background class based on state
   const getBadgeBackgroundClass = (): string => {
-    if (isOver9000) {
+    // Only show special 9K+ gradient during animation
+    if (isOver9000 && shouldUseTierColor) {
       return 'bg-gradient-to-r from-amber-500/20 to-orange-500/20';
     }
     if (isSelected) {
@@ -157,13 +157,15 @@ export const BadgeCount = ({
 
   // "Over 9000" powered-up display with Motion animation
   if (isOver9000) {
-    // Use tier color for glow animation when tier colors should be shown
+    // Use tier color for glow when showing tier colors, otherwise amber
     const glowColor = isGodTier && shouldUseTierColor ? powerLevel.config.color : '#fbbf24';
-    const glowAnimation = createGlowAnimation(glowColor);
 
-    // Default amber color for Over 9000 badges
-    const defaultOver9000Color = '#fbbf24';
-    const animatedColor = badgeColor !== '' ? badgeColor : defaultOver9000Color;
+    // Use 'inherit' when idle (no tier colors) to pick up class-based muted styling
+    const animatedColor = badgeColor !== '' ? badgeColor : 'inherit';
+
+    // Determine boxShadow: show glow during justCrossed burst, otherwise no shadow
+    // Using consistent NO_SHADOW format ensures Motion can interpolate properly
+    const boxShadowValue = justCrossed ? createGlowShadow(glowColor) : NO_SHADOW;
 
     return (
       <AnimatePresence mode="wait">
@@ -171,13 +173,15 @@ export const BadgeCount = ({
           key={animationKey.current}
           className={badgeClasses}
           title="IT'S OVER 9000!"
+          initial={{ boxShadow: NO_SHADOW }}
           animate={{
             color: animatedColor,
-            ...(justCrossed ? { ...shakeAnimation, ...glowAnimation } : {}),
+            boxShadow: boxShadowValue,
+            ...(justCrossed ? shakeAnimation : {}),
           }}
           transition={{
             duration: 0.3,
-            ...(justCrossed ? { ...shakeTransition, ...glowTransition } : {}),
+            ...(justCrossed ? shakeTransition : {}),
           }}
         >
           <span className="flex items-center gap-0.5">
