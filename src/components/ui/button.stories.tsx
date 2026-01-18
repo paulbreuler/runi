@@ -14,7 +14,7 @@ const meta = {
 ## Features
 
 - **Variants**: Default, destructive, destructive-outline, outline, secondary, ghost, link
-- **Sizes**: Small, default, large, and icon sizes (icon, icon-sm, icon-lg)
+- **Sizes**: Extra small, small, default, large, and icon sizes (icon-xs, icon-sm, icon, icon-lg)
 - **Motion Animations**: Smooth spring-based hover and tap animations
 - **Accessible**: Supports all standard HTML button attributes including \`aria-label\`
 
@@ -68,7 +68,7 @@ See the Accessibility panel below for automated checks.
     },
     size: {
       control: 'select',
-      options: ['default', 'sm', 'lg', 'icon', 'icon-sm', 'icon-lg'],
+      options: ['default', 'sm', 'xs', 'lg', 'icon', 'icon-sm', 'icon-xs', 'icon-lg'],
     },
     disabled: {
       control: 'boolean',
@@ -105,6 +105,7 @@ export const Variants: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-3">
+      <Button size="xs">Extra Small</Button>
       <Button size="sm">Small</Button>
       <Button size="default">Default</Button>
       <Button size="lg">Large</Button>
@@ -130,13 +131,16 @@ export const WithIcons: Story = {
         </Button>
       </div>
       <div className="flex items-center gap-3">
-        <Button size="icon" aria-label="Send email">
+        <Button size="icon-xs" aria-label="Extra small icon">
           <Mail />
         </Button>
-        <Button size="icon-sm" aria-label="Download">
+        <Button size="icon-sm" aria-label="Small icon">
           <Download />
         </Button>
-        <Button size="icon-lg" aria-label="Delete">
+        <Button size="icon" aria-label="Default icon">
+          <Mail />
+        </Button>
+        <Button size="icon-lg" aria-label="Large icon">
           <Trash2 />
         </Button>
       </div>

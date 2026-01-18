@@ -1,6 +1,7 @@
 import { Search, GitCompare, ArrowRightLeft, Code, CheckCircle, Brain } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import * as Select from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import type { HistoryFilters } from '@/types/history';
 import type { FilterBarVariant } from './FilterBar';
 
@@ -145,56 +146,51 @@ export const NetworkHistoryFilters = ({
 
       {/* Compare mode toggle */}
       {isIconMode ? (
-        <button
-          data-testid="compare-toggle"
-          onClick={onCompareModeToggle}
-          className={cn(
-            'w-7 h-7 flex items-center justify-center rounded transition-colors relative',
-            compareMode
-              ? 'bg-accent-blue text-white'
-              : 'bg-bg-surface border border-border-subtle text-text-secondary hover:bg-bg-raised'
-          )}
-          title="Compare two responses"
-          aria-label="Compare two responses"
-        >
-          <GitCompare size={14} />
+        <div className="relative">
+          <Button
+            data-testid="compare-toggle"
+            onClick={onCompareModeToggle}
+            variant={compareMode ? 'default' : 'outline'}
+            size="icon-xs"
+            title="Compare two responses"
+            aria-label="Compare two responses"
+            aria-pressed={compareMode}
+          >
+            <GitCompare size={14} />
+          </Button>
           {compareSelectionCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-signal-error text-white text-[10px] rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-signal-error text-white text-[10px] rounded-full flex items-center justify-center pointer-events-none">
               {compareSelectionCount}
             </span>
           )}
-        </button>
+        </div>
       ) : (
-        <button
+        <Button
           data-testid="compare-toggle"
           onClick={onCompareModeToggle}
-          className={cn(
-            'flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors',
-            compareMode
-              ? 'bg-accent-blue text-white'
-              : 'bg-bg-surface border border-border-subtle text-text-secondary hover:bg-bg-raised'
-          )}
+          variant={compareMode ? 'default' : 'outline'}
+          size="xs"
           title="Compare two responses"
+          aria-pressed={compareMode}
         >
           <GitCompare size={14} />
           <span>Compare</span>
-        </button>
+        </Button>
       )}
 
       {/* Compare Responses button - shown when 2 entries are selected */}
       {canCompare && (
-        <button
+        <Button
           data-testid="compare-responses-button"
           onClick={onCompareResponses}
-          className={cn(
-            'flex items-center gap-1.5 rounded text-xs bg-signal-ai text-white hover:bg-signal-ai/90 transition-colors',
-            isIconMode ? 'w-7 h-7 justify-center' : 'px-2 py-1'
-          )}
+          size={isIconMode ? 'icon-xs' : 'xs'}
+          className="bg-signal-ai text-white hover:bg-signal-ai/90"
           title="Compare the selected responses"
+          aria-label={isIconMode ? 'Compare the selected responses' : undefined}
         >
           <ArrowRightLeft size={14} />
           {!isIconMode && <span>Compare Responses</span>}
-        </button>
+        </Button>
       )}
     </div>
   );
