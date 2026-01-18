@@ -613,7 +613,13 @@ mod tests {
 
         let response = result.unwrap();
         assert_eq!(response.status, 404);
-        assert_eq!(response.status_text, "Not Found");
+        // Status text varies by environment (e.g., "Not Found" vs "NOT FOUND")
+        // Check case-insensitively to handle both
+        assert_eq!(
+            response.status_text.to_lowercase(),
+            "not found",
+            "Status text should be 'Not Found' (case-insensitive)"
+        );
     }
 
     #[tokio::test]

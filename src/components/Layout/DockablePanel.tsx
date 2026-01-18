@@ -35,7 +35,7 @@ const COLLAPSED_PANEL_WIDTH = 28;
 
 // ============================================================================
 // Tray Variants - Unified Material Feel
-// Per DESIGN_IDEOLOGY.md: "Components should feel like unified materials"
+// Per .planning-docs/DESIGN_IDEOLOGY.md: "Components should feel like unified materials"
 // All state changes orchestrated through variants, not separate animations
 // ============================================================================
 

@@ -81,3 +81,4 @@ prompts/
 # Temporary/ephemeral files (Claude analysis, planning, scratch work)
 .tmp/
 .cursor/code-review-report.md
+.cursor/plans/

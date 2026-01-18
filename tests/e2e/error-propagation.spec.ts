@@ -24,7 +24,12 @@ test.describe('Error Propagation with Correlation IDs', () => {
 
     // Trigger error in Rust by making invalid request
     // Find URL input and send button (adjust selectors based on actual UI)
-    const urlInput = page.getByLabel(/url/i).or(page.getByPlaceholderText(/url/i)).first();
+    // Try getByLabel first, fallback to getByPlaceholder if not found
+    let urlInput = page.getByLabel(/url/i).first();
+    const isLabelVisible = await urlInput.isVisible().catch(() => false);
+    if (!isLabelVisible) {
+      urlInput = page.getByPlaceholder(/url/i).first();
+    }
     const sendButton = page.getByRole('button', { name: /send/i }).first();
 
     // Enter invalid URL
@@ -62,7 +67,12 @@ test.describe('Error Propagation with Correlation IDs', () => {
     await consoleTab.click();
 
     // Trigger multiple requests with different correlation IDs
-    const urlInput = page.getByLabel(/url/i).or(page.getByPlaceholderText(/url/i)).first();
+    // Try getByLabel first, fallback to getByPlaceholder if not found
+    let urlInput = page.getByLabel(/url/i).first();
+    const isLabelVisible = await urlInput.isVisible().catch(() => false);
+    if (!isLabelVisible) {
+      urlInput = page.getByPlaceholder(/url/i).first();
+    }
     const sendButton = page.getByRole('button', { name: /send/i }).first();
 
     // Make a request
@@ -83,7 +93,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
       const correlationId = correlationIdMatch[1];
 
       // Filter by correlation ID
-      const filterInput = page.getByPlaceholderText(/filter by correlation id/i);
+      const filterInput = page.getByPlaceholder(/filter by correlation id/i);
       await filterInput.fill(correlationId);
 
       // Verify only logs with that correlation ID are shown

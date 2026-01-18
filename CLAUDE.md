@@ -38,7 +38,7 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 > - `addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
 > - `addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
 >
-> **Design Ideology:** See `docs/DESIGN_IDEOLOGY.md` for component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification).
+> **Design Ideology:** See `.planning-docs/DESIGN_IDEOLOGY.md` for component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification).
 
 ---
 
