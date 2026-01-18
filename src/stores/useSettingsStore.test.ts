@@ -1,14 +1,21 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useSettingsStore } from './useSettingsStore';
+import { invoke } from '@tauri-apps/api/core';
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn(),
+}));
 
 describe('useSettingsStore', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     // Reset store to initial state
     const { result } = renderHook(() => useSettingsStore());
     act(() => {
       result.current.setSidebarVisible(true);
     });
+    useSettingsStore.setState({ viewMode: 'builder', logLevel: 'info' });
   });
 
   it('initializes with sidebar visible', () => {
@@ -76,6 +83,108 @@ describe('useSettingsStore', () => {
       });
 
       expect(result.current.viewMode).toBe('builder');
+    });
+  });
+
+  describe('logLevel', () => {
+    it('initializes with info log level', () => {
+      const { result } = renderHook(() => useSettingsStore());
+      expect(result.current.logLevel).toBe('info');
+    });
+
+    it('sets log level successfully when invoke succeeds', async () => {
+      vi.mocked(invoke).mockResolvedValueOnce(undefined);
+      const { result } = renderHook(() => useSettingsStore());
+
+      await act(async () => {
+        await result.current.setLogLevel('debug');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('set_log_level', { level: 'debug' });
+      expect(result.current.logLevel).toBe('debug');
+    });
+
+    it('throws error and does not update state when invoke fails', async () => {
+      const error = new Error('Backend error');
+      vi.mocked(invoke).mockRejectedValueOnce(error);
+      const { result } = renderHook(() => useSettingsStore());
+
+      await expect(
+        act(async () => {
+          await result.current.setLogLevel('trace');
+        })
+      ).rejects.toThrow('Backend error');
+
+      expect(result.current.logLevel).toBe('info'); // unchanged
+    });
+
+    it('supports all valid log levels', async () => {
+      const logLevels = ['error', 'warn', 'info', 'debug', 'trace'] as const;
+      vi.mocked(invoke).mockResolvedValue(undefined);
+
+      for (const level of logLevels) {
+        const { result } = renderHook(() => useSettingsStore());
+
+        await act(async () => {
+          await result.current.setLogLevel(level);
+        });
+
+        expect(result.current.logLevel).toBe(level);
+      }
+    });
+  });
+
+  describe('edge cases', () => {
+    it('handles rapid sidebar toggles', () => {
+      const { result } = renderHook(() => useSettingsStore());
+      const initialState = result.current.sidebarVisible;
+
+      act(() => {
+        result.current.toggleSidebar();
+        result.current.toggleSidebar();
+        result.current.toggleSidebar();
+      });
+
+      // After 3 toggles, should be opposite of initial
+      expect(result.current.sidebarVisible).toBe(!initialState);
+    });
+
+    it('setSidebarVisible is idempotent', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setSidebarVisible(true);
+        result.current.setSidebarVisible(true);
+        result.current.setSidebarVisible(true);
+      });
+
+      expect(result.current.sidebarVisible).toBe(true);
+    });
+
+    it('setViewMode is idempotent', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setViewMode('history');
+        result.current.setViewMode('history');
+      });
+
+      expect(result.current.viewMode).toBe('history');
+    });
+
+    it('maintains state across multiple hook instances', () => {
+      const { result: result1 } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result1.current.setSidebarVisible(false);
+        result1.current.setViewMode('history');
+      });
+
+      // New hook instance should see same state (Zustand singleton)
+      const { result: result2 } = renderHook(() => useSettingsStore());
+
+      expect(result2.current.sidebarVisible).toBe(false);
+      expect(result2.current.viewMode).toBe('history');
     });
   });
 });

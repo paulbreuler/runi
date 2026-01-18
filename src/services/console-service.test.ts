@@ -241,14 +241,19 @@ describe('console-service', () => {
 
       console.log('Test message');
       const logs = service.getLogs();
+      expect(logs.length).toBeGreaterThan(0);
+      const logToDelete = logs[0];
+      expect(logToDelete).toBeDefined();
+      // TypeScript doesn't understand expect().toBeDefined() is a type guard, so use non-null assertion
+      // after we've verified it's defined
+      const log = logToDelete!;
+
       const initialSize = service.getCurrentSizeBytes();
       expect(initialSize).toBeGreaterThan(0);
 
       // Delete the log
-      if (logs.length > 0 && logs[0] !== undefined) {
-        service.deleteLog(logs[0].id);
-        expect(service.getCurrentSizeBytes()).toBeLessThan(initialSize);
-      }
+      service.deleteLog(log.id);
+      expect(service.getCurrentSizeBytes()).toBeLessThan(initialSize);
     });
 
     it('resets size when cleared', () => {

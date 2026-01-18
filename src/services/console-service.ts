@@ -69,10 +69,14 @@ class ConsoleService {
   /**
    * Estimate the size of a log entry in bytes.
    *
-   * Uses a fast estimation:
+   * Uses a fast estimation (may underestimate large objects in args):
    * - message.length * 2 (UTF-16 characters)
    * - args overhead ~100 bytes per arg (rough estimate)
    * - fixed overhead ~50 bytes (id, level, timestamp, etc.)
+   *
+   * @internal This is an approximation for memory limiting purposes.
+   *           For very large objects in args, actual memory usage may be
+   *           higher due to JSON serialization overhead.
    */
   private estimateLogSize(log: ConsoleLog): number {
     const messageSize = log.message.length * 2;

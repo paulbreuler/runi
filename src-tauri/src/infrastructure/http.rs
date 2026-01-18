@@ -351,14 +351,17 @@ fn execute_request_sync(
                 format!("Failed to set timeout: {e}"),
             )
         })?;
-    easy.http_version(curl::easy::HttpVersion::V2TLS)
-        .map_err(|e| {
-            AppError::new(
-                corr_id.clone(),
-                "HTTP_VERSION_ERROR",
-                format!("Failed to set HTTP version: {e}"),
-            )
-        })?;
+    // Try HTTP/2 over TLS first, fall back to HTTP/1.1 if not supported (e.g., curl compiled without HTTP/2 support)
+    if easy.http_version(curl::easy::HttpVersion::V2TLS).is_err() {
+        easy.http_version(curl::easy::HttpVersion::V11)
+            .map_err(|e| {
+                AppError::new(
+                    corr_id.clone(),
+                    "HTTP_VERSION_ERROR",
+                    format!("Failed to set HTTP version (fallback to HTTP/1.1): {e}"),
+                )
+            })?;
+    }
     easy.follow_location(true).map_err(|e| {
         AppError::new(
             corr_id.clone(),
