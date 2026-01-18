@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { AlertCircle, AlertTriangle, Info, Terminal, CheckCircle, XCircle } from 'lucide-react';
-import { SegmentedControl } from './SegmentedControl';
+import { SegmentedControl, SAIYAN_TIERS } from '.';
 
 const meta = {
   title: 'Components/UI/SegmentedControl',
@@ -456,30 +456,18 @@ export const ConsoleLogFilter: Story = {
   },
 };
 
-// Saiyan tier colors for UI (mirrored from component)
-const TIER_COLORS = {
-  1: '#fbbf24', // amber-400 - Saiyan
-  2: '#facc15', // yellow-400 - Super Saiyan
-  3: '#fde047', // yellow-300 - Super Saiyan 2
-  4: '#fef08a', // yellow-200 - Super Saiyan 3
-  5: '#f87171', // red-400 - Super Saiyan God
-} as const;
-
-const TIER_NAMES = {
-  1: 'Saiyan',
-  2: 'Super Saiyan',
-  3: 'Super Saiyan 2',
-  4: 'Super Saiyan 3',
-  5: 'Super Saiyan God',
-} as const;
+// Use SAIYAN_TIERS directly from the component - single source of truth
 
 /**
  * All display variants compared side-by-side with interactive badge counts.
  * Demonstrates how badges appear in full, compact, and icon modes.
  * Includes the "Saiyan Evolution" Easter egg that triggers a tiered power-up animation.
  *
+ * **Tier System:**
+ * - Tiers 1-4: Based on COUNT of badges over 9000
+ * - Tiers 5-8: Based on TOTAL POWER LEVEL once all badges are over 9000
+ *
  * Use the tier buttons to jump directly to specific power levels.
- * Toggle "Lock animation on" to keep the energy effect persistent for demo purposes.
  */
 export const AllVariantsComparison: Story = {
   args: {
@@ -520,20 +508,53 @@ export const AllVariantsComparison: Story = {
       }));
     };
 
-    // Set a specific tier directly
-    const setTierDirectly = (targetTier: number): void => {
-      const baseCount = 100;
-      const over9000 = 9001;
+    // Ref to track pending tier change timeout
+    const tierChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-      setCounts({
-        error: targetTier >= 1 ? over9000 : baseCount,
-        warn: targetTier >= 2 ? over9000 : baseCount,
-        info: targetTier >= 3 ? over9000 : baseCount,
-        debug: targetTier >= 4 ? over9000 : baseCount,
-      });
+    /**
+     * Set a specific tier directly with reset-then-play pattern.
+     * Always resets to tier 0 first, then applies the target tier.
+     * This ensures clicking any tier button (even the same one) triggers animation.
+     */
+    const setTierDirectly = (targetTier: number): void => {
+      // Clear any pending tier change
+      if (tierChangeTimeoutRef.current !== null) {
+        clearTimeout(tierChangeTimeoutRef.current);
+        tierChangeTimeoutRef.current = null;
+      }
+
+      // Power levels for each tier (per badge to hit total thresholds)
+      const tierToPower: Record<number, number> = {
+        0: 100, // Base (under 9000)
+        1: 9001, // 1 badge over 9000
+        2: 9001, // 2 badges over 9000
+        3: 9001, // 3 badges over 9000
+        4: 9001, // 4 badges over 9000
+        5: 9000, // SSJ God: 4 × 9000 = 36000
+        6: 12500, // SSJ Blue: 4 × 12500 = 50000
+        7: 20000, // UI Sign: 4 × 20000 = 80000
+        8: 25000, // MUI: 4 × 25000 = 100000
+      };
+
+      // Step 1: Reset to tier 0 immediately (all badges under 9000)
+      setCounts({ error: 100, warn: 100, info: 100, debug: 100 });
+
+      // Step 2: After brief delay, set target tier (allows state machine to see the change)
+      tierChangeTimeoutRef.current = setTimeout(() => {
+        const power = tierToPower[targetTier] ?? 100;
+        const activeCount = targetTier >= 5 ? 4 : targetTier; // God tiers need all 4
+
+        setCounts({
+          error: activeCount >= 1 ? power : 100,
+          warn: activeCount >= 2 ? power : 100,
+          info: activeCount >= 3 ? power : 100,
+          debug: activeCount >= 4 ? power : 100,
+        });
+        tierChangeTimeoutRef.current = null;
+      }, 50);
     };
 
-    // Saiyan Evolution: staggered power-up sequence
+    // Saiyan Evolution: staggered power-up sequence ending in MUI
     const triggerEvolution = (): void => {
       if (isEvolving) {
         return;
@@ -556,10 +577,14 @@ export const AllVariantsComparison: Story = {
       setTimeout(() => {
         setCounts((c) => ({ ...c, debug: 9001 }));
       }, 2800);
+      // After finale, boost to MUI levels
+      setTimeout(() => {
+        setCounts({ error: 25000, warn: 25000, info: 25000, debug: 25000 });
+      }, 5000);
       // Allow re-triggering after sequence
       setTimeout(() => {
         setIsEvolving(false);
-      }, 5500);
+      }, 6500);
     };
 
     const resetCounts = (): void => {
@@ -569,12 +594,27 @@ export const AllVariantsComparison: Story = {
 
     const total = counts.error + counts.warn + counts.info + counts.debug;
 
-    // Calculate current tier based on badges over 9000
-    const badgesOver9000 = [counts.error, counts.warn, counts.info, counts.debug].filter(
-      (c) => c >= 9000
-    ).length;
-    const currentTier =
-      badgesOver9000 === 4 ? 5 : badgesOver9000 > 0 ? Math.min(badgesOver9000, 4) : 0;
+    // Calculate current tier based on the power level system
+    const badgesWithCounts = [counts.error, counts.warn, counts.info, counts.debug];
+    const badgesOver9000 = badgesWithCounts.filter((c) => c >= 9000).length;
+    const totalBadges = badgesWithCounts.filter((c) => c > 0).length;
+    const totalPower = badgesWithCounts.reduce((sum, c) => sum + c, 0);
+    const allOver9000 = badgesOver9000 > 0 && badgesOver9000 === totalBadges;
+
+    let currentTier: number;
+    if (allOver9000) {
+      if (totalPower >= 100000) {
+        currentTier = 8;
+      } else if (totalPower >= 80000) {
+        currentTier = 7;
+      } else if (totalPower >= 50000) {
+        currentTier = 6;
+      } else {
+        currentTier = 5;
+      }
+    } else {
+      currentTier = Math.min(badgesOver9000, 4);
+    }
 
     // Note: "All" has no badge so it doesn't affect tier calculation
     // The 4 individual options (error, warn, info, debug) determine the Saiyan tier
@@ -613,43 +653,73 @@ export const AllVariantsComparison: Story = {
 
     const variants: Array<'full' | 'compact' | 'icon'> = ['full', 'compact', 'icon'];
 
+    // Get tier config from SAIYAN_TIERS (with guaranteed fallback)
+    const baseTierConfig = SAIYAN_TIERS[0] ?? {
+      name: 'Base',
+      color: 'transparent',
+      glow: 'transparent',
+      path: '',
+      duration: 2.0,
+      glowSize: 0,
+    };
+    const tierConfig = SAIYAN_TIERS[currentTier] ?? baseTierConfig;
+
     return (
       <div className="space-y-6">
-        {/* Tier status indicator */}
-        {currentTier > 0 && (
-          <div
-            className="text-xs font-semibold px-3 py-1.5 rounded border inline-block"
-            style={{
-              color: TIER_COLORS[currentTier as keyof typeof TIER_COLORS],
-              borderColor: `${TIER_COLORS[currentTier as keyof typeof TIER_COLORS]}50`,
-              backgroundColor: `${TIER_COLORS[currentTier as keyof typeof TIER_COLORS]}10`,
-            }}
-          >
-            Tier {currentTier}: {TIER_NAMES[currentTier as keyof typeof TIER_NAMES]}
-          </div>
-        )}
+        {/* Tier status indicator - always visible to prevent layout shift */}
+        <div
+          className="text-xs font-semibold px-3 py-1.5 rounded border inline-block"
+          style={
+            currentTier > 0
+              ? {
+                  color: tierConfig.color,
+                  borderColor: `${tierConfig.color}50`,
+                  backgroundColor: `${tierConfig.color}10`,
+                }
+              : {
+                  color: 'var(--color-text-muted)',
+                  borderColor: 'var(--color-border-subtle)',
+                  backgroundColor: 'transparent',
+                }
+          }
+        >
+          {currentTier > 0 ? (
+            <>
+              Tier {currentTier}: {tierConfig.name}
+              {currentTier >= 5 && (
+                <span className="ml-2 opacity-70">(Power: {total.toLocaleString()})</span>
+              )}
+            </>
+          ) : (
+            <span className="opacity-50">Tier 0: Base</span>
+          )}
+        </div>
 
-        {/* Tier jump buttons */}
+        {/* Tier jump buttons - all 8 tiers */}
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs text-text-muted mr-1">Jump to tier:</span>
-          {([1, 2, 3, 4, 5] as const).map((tier) => (
-            <button
-              key={tier}
-              type="button"
-              onClick={() => {
-                setTierDirectly(tier);
-              }}
-              className="px-2 py-1 text-xs border rounded hover:opacity-80 transition-opacity"
-              style={{
-                borderColor: TIER_COLORS[tier],
-                color: TIER_COLORS[tier],
-                backgroundColor: currentTier === tier ? `${TIER_COLORS[tier]}20` : 'transparent',
-              }}
-              title={TIER_NAMES[tier]}
-            >
-              T{tier}
-            </button>
-          ))}
+          {([1, 2, 3, 4, 5, 6, 7, 8] as const).map((tier) => {
+            // Get tier config with fallback
+            const config = SAIYAN_TIERS[tier] ?? baseTierConfig;
+            return (
+              <button
+                key={tier}
+                type="button"
+                onClick={() => {
+                  setTierDirectly(tier);
+                }}
+                className="px-2 py-1 text-xs border rounded hover:opacity-80 transition-opacity"
+                style={{
+                  borderColor: config.color,
+                  color: config.color,
+                  backgroundColor: currentTier === tier ? `${config.color}20` : 'transparent',
+                }}
+                title={config.name}
+              >
+                T{tier}
+              </button>
+            );
+          })}
         </div>
 
         {/* Original controls */}
@@ -723,8 +793,9 @@ export const AllVariantsComparison: Story = {
         </div>
 
         <p className="text-xs text-text-muted">
-          All: {total} | Errors: {counts.error} | Warnings: {counts.warn} | Info: {counts.info} |
-          Debug: {counts.debug} | Selected: {value}
+          Total Power: {total.toLocaleString()} | Errors: {counts.error.toLocaleString()} |
+          Warnings: {counts.warn.toLocaleString()} | Info: {counts.info.toLocaleString()} | Debug:{' '}
+          {counts.debug.toLocaleString()} | Selected: {value}
         </p>
       </div>
     );
