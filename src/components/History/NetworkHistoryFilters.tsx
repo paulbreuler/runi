@@ -1,5 +1,6 @@
 import { Search, GitCompare, ArrowRightLeft, Code, CheckCircle, Brain } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import * as Select from '@/components/ui/select';
 import type { HistoryFilters } from '@/types/history';
 import type { FilterBarVariant } from './FilterBar';
 
@@ -19,9 +20,6 @@ interface NetworkHistoryFiltersProps {
   /** Callback when user clicks Compare Responses button */
   onCompareResponses?: () => void;
 }
-
-const selectClasses =
-  'bg-bg-surface border border-border-subtle rounded px-2 py-1 text-xs text-text-secondary focus:outline-none focus:border-border-emphasis';
 
 /**
  * Filter controls for the Network History Panel.
@@ -43,40 +41,27 @@ export const NetworkHistoryFilters = ({
 }: NetworkHistoryFiltersProps): React.JSX.Element => {
   const canCompare = compareMode && compareSelectionCount === 2;
   const isIconMode = variant === 'icon';
-  const isCompactMode = variant === 'compact';
 
-  // Get method filter label
-  const getMethodLabel = (): string => {
-    if (isIconMode) {
-      return filters.method === 'ALL' ? 'All Methods' : filters.method;
-    }
-    if (isCompactMode) {
-      return filters.method === 'ALL' ? 'Methods' : filters.method;
-    }
-    return filters.method === 'ALL' ? 'All Methods' : filters.method;
+  // Handle method filter change
+  const handleMethodChange = (value: string): void => {
+    onFilterChange('method', value);
   };
 
-  // Get status filter label
-  const getStatusLabel = (): string => {
-    if (isIconMode) {
-      return filters.status === 'All' ? 'All Status' : filters.status;
-    }
-    if (isCompactMode) {
-      return filters.status === 'All' ? 'Status' : filters.status;
-    }
-    return filters.status === 'All' ? 'All Status' : filters.status;
+  // Handle status filter change
+  const handleStatusChange = (value: string): void => {
+    onFilterChange('status', value);
   };
 
-  // Get intelligence filter label
-  const getIntelligenceLabel = (): string => {
-    if (isIconMode) {
-      return filters.intelligence === 'All' ? 'All' : filters.intelligence;
-    }
-    if (isCompactMode) {
-      return filters.intelligence === 'All' ? 'Intel' : filters.intelligence;
-    }
-    return filters.intelligence === 'All' ? 'All' : filters.intelligence;
+  // Handle intelligence filter change
+  const handleIntelligenceChange = (value: string): void => {
+    onFilterChange('intelligence', value);
   };
+
+  // Trigger classes for icon mode
+  const iconTriggerClasses = 'size-7 p-0 min-w-0 justify-center [&>svg:last-child]:hidden';
+
+  // Trigger classes for full/compact mode
+  const normalTriggerClasses = 'h-7 px-2 py-1 text-xs';
 
   return (
     <div className="flex items-center gap-3">
@@ -98,136 +83,65 @@ export const NetworkHistoryFilters = ({
       </div>
 
       {/* Method filter */}
-      {isIconMode ? (
-        <div className="relative">
-          <select
-            data-testid="method-filter"
-            value={filters.method}
-            onChange={(e) => {
-              onFilterChange('method', e.target.value);
-            }}
-            className="w-7 h-7 bg-bg-surface border border-border-subtle rounded focus:outline-none focus:border-border-emphasis text-transparent appearance-none cursor-pointer"
-            style={{ color: 'transparent' }}
-            title={getMethodLabel()}
-            aria-label="Filter by HTTP method"
-          >
-            <option value="ALL">All Methods</option>
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
-            <option value="PATCH">PATCH</option>
-            <option value="DELETE">DELETE</option>
-            <option value="HEAD">HEAD</option>
-            <option value="OPTIONS">OPTIONS</option>
-          </select>
-          <Code
-            size={14}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none text-text-muted"
-          />
-        </div>
-      ) : (
-        <select
+      <Select.Select value={filters.method} onValueChange={handleMethodChange}>
+        <Select.SelectTrigger
           data-testid="method-filter"
-          value={filters.method}
-          onChange={(e) => {
-            onFilterChange('method', e.target.value);
-          }}
-          className={selectClasses}
+          className={isIconMode ? iconTriggerClasses : normalTriggerClasses}
+          aria-label="Filter by HTTP method"
         >
-          <option value="ALL">All Methods</option>
-          <option value="GET">GET</option>
-          <option value="POST">POST</option>
-          <option value="PUT">PUT</option>
-          <option value="PATCH">PATCH</option>
-          <option value="DELETE">DELETE</option>
-          <option value="HEAD">HEAD</option>
-          <option value="OPTIONS">OPTIONS</option>
-        </select>
-      )}
+          {isIconMode ? <Code size={14} className="text-text-muted" /> : <Select.SelectValue />}
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem value="ALL">All Methods</Select.SelectItem>
+          <Select.SelectItem value="GET">GET</Select.SelectItem>
+          <Select.SelectItem value="POST">POST</Select.SelectItem>
+          <Select.SelectItem value="PUT">PUT</Select.SelectItem>
+          <Select.SelectItem value="PATCH">PATCH</Select.SelectItem>
+          <Select.SelectItem value="DELETE">DELETE</Select.SelectItem>
+          <Select.SelectItem value="HEAD">HEAD</Select.SelectItem>
+          <Select.SelectItem value="OPTIONS">OPTIONS</Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
 
       {/* Status filter */}
-      {isIconMode ? (
-        <div className="relative">
-          <select
-            data-testid="status-filter"
-            value={filters.status}
-            onChange={(e) => {
-              onFilterChange('status', e.target.value);
-            }}
-            className="w-7 h-7 bg-bg-surface border border-border-subtle rounded focus:outline-none focus:border-border-emphasis text-transparent appearance-none cursor-pointer"
-            style={{ color: 'transparent' }}
-            title={getStatusLabel()}
-            aria-label="Filter by status code"
-          >
-            <option value="All">All Status</option>
-            <option value="2xx">2xx Success</option>
-            <option value="3xx">3xx Redirect</option>
-            <option value="4xx">4xx Client Error</option>
-            <option value="5xx">5xx Server Error</option>
-          </select>
-          <CheckCircle
-            size={14}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none text-text-muted"
-          />
-        </div>
-      ) : (
-        <select
+      <Select.Select value={filters.status} onValueChange={handleStatusChange}>
+        <Select.SelectTrigger
           data-testid="status-filter"
-          value={filters.status}
-          onChange={(e) => {
-            onFilterChange('status', e.target.value);
-          }}
-          className={selectClasses}
+          className={isIconMode ? iconTriggerClasses : normalTriggerClasses}
+          aria-label="Filter by status code"
         >
-          <option value="All">All Status</option>
-          <option value="2xx">2xx Success</option>
-          <option value="3xx">3xx Redirect</option>
-          <option value="4xx">4xx Client Error</option>
-          <option value="5xx">5xx Server Error</option>
-        </select>
-      )}
+          {isIconMode ? (
+            <CheckCircle size={14} className="text-text-muted" />
+          ) : (
+            <Select.SelectValue />
+          )}
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem value="All">All Status</Select.SelectItem>
+          <Select.SelectItem value="2xx">2xx Success</Select.SelectItem>
+          <Select.SelectItem value="3xx">3xx Redirect</Select.SelectItem>
+          <Select.SelectItem value="4xx">4xx Client Error</Select.SelectItem>
+          <Select.SelectItem value="5xx">5xx Server Error</Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
 
       {/* Intelligence filter */}
-      {isIconMode ? (
-        <div className="relative">
-          <select
-            data-testid="intelligence-filter"
-            value={filters.intelligence}
-            onChange={(e) => {
-              onFilterChange('intelligence', e.target.value);
-            }}
-            className="w-7 h-7 bg-bg-surface border border-border-subtle rounded focus:outline-none focus:border-border-emphasis text-transparent appearance-none cursor-pointer"
-            style={{ color: 'transparent' }}
-            title={getIntelligenceLabel()}
-            aria-label="Filter by intelligence"
-          >
-            <option value="All">All</option>
-            <option value="Has Drift">Has Drift</option>
-            <option value="AI Generated">AI Generated</option>
-            <option value="Bound to Spec">Bound to Spec</option>
-            <option value="Verified">Verified</option>
-          </select>
-          <Brain
-            size={14}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none text-text-muted"
-          />
-        </div>
-      ) : (
-        <select
+      <Select.Select value={filters.intelligence} onValueChange={handleIntelligenceChange}>
+        <Select.SelectTrigger
           data-testid="intelligence-filter"
-          value={filters.intelligence}
-          onChange={(e) => {
-            onFilterChange('intelligence', e.target.value);
-          }}
-          className={selectClasses}
+          className={isIconMode ? iconTriggerClasses : normalTriggerClasses}
+          aria-label="Filter by intelligence"
         >
-          <option value="All">All</option>
-          <option value="Has Drift">Has Drift</option>
-          <option value="AI Generated">AI Generated</option>
-          <option value="Bound to Spec">Bound to Spec</option>
-          <option value="Verified">Verified</option>
-        </select>
-      )}
+          {isIconMode ? <Brain size={14} className="text-text-muted" /> : <Select.SelectValue />}
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          <Select.SelectItem value="All">All</Select.SelectItem>
+          <Select.SelectItem value="Has Drift">Has Drift</Select.SelectItem>
+          <Select.SelectItem value="AI Generated">AI Generated</Select.SelectItem>
+          <Select.SelectItem value="Bound to Spec">Bound to Spec</Select.SelectItem>
+          <Select.SelectItem value="Verified">Verified</Select.SelectItem>
+        </Select.SelectContent>
+      </Select.Select>
 
       {/* Compare mode toggle */}
       {isIconMode ? (

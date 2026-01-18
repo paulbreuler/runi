@@ -13,7 +13,7 @@ const meta = {
 
 ## Features
 
-- **Variants**: Default, destructive, outline, secondary, ghost, link
+- **Variants**: Default, destructive, destructive-outline, outline, secondary, ghost, link
 - **Sizes**: Small, default, large, and icon sizes (icon, icon-sm, icon-lg)
 - **Motion Animations**: Smooth spring-based hover and tap animations
 - **Accessible**: Supports all standard HTML button attributes including \`aria-label\`
@@ -56,7 +56,15 @@ See the Accessibility panel below for automated checks.
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
+      options: [
+        'default',
+        'destructive',
+        'destructive-outline',
+        'outline',
+        'secondary',
+        'ghost',
+        'link',
+      ],
     },
     size: {
       control: 'select',
@@ -82,6 +90,10 @@ export const Variants: Story = {
     <div className="flex items-center gap-3 flex-wrap">
       <Button variant="default">Default</Button>
       <Button variant="destructive">Destructive</Button>
+      <Button variant="destructive-outline">
+        <Trash2 className="mr-2" />
+        Delete
+      </Button>
       <Button variant="outline">Outline</Button>
       <Button variant="secondary">Secondary</Button>
       <Button variant="ghost">Ghost</Button>

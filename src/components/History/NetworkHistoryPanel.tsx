@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '@/utils/cn';
-import type { NetworkHistoryEntry } from '@/types/history';
+import type { NetworkHistoryEntry, HistoryFilters } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { FilterBar } from './FilterBar';
 import { NetworkHistoryRow } from './NetworkHistoryRow';

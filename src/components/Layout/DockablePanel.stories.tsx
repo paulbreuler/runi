@@ -68,11 +68,11 @@ const meta: Meta<typeof DockablePanel> = {
   },
   decorators: [
     (Story) => (
-      <div className="h-screen bg-bg-app flex flex-col">
+      <div className="h-screen bg-bg-app flex flex-col overflow-hidden">
         <div className="p-2 text-xs text-text-muted shrink-0">
           Main content area - Panel docks below
         </div>
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <Story />
         </div>
       </div>
@@ -191,7 +191,7 @@ export const WithRealContent: Story = {
           const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
           const statuses = [200, 201, 404, 500];
           const method = methods[i % methods.length] as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-          const status = statuses[i % statuses.length];
+          const status = statuses[i % statuses.length] ?? 200;
           return {
             id: `hist_${String(i + 1)}`,
             timestamp: new Date(Date.now() - (i + 1) * 60 * 1000).toISOString(),

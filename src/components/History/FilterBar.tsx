@@ -68,7 +68,11 @@ export const FilterBar = ({
     }
 
     const observer = new ResizeObserver((entries) => {
-      const { width } = entries[0].contentRect;
+      const entry = entries[0];
+      if (entry === undefined) {
+        return;
+      }
+      const { width } = entry.contentRect;
       if (width > 800) {
         setVariant('full');
       } else if (width > 600) {
