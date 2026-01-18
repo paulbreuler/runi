@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   motion,
   AnimatePresence,
@@ -10,11 +10,20 @@ import {
 } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
+import { DockablePanel } from './DockablePanel';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { usePanelStore } from '@/stores/usePanelStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { isMacSync, getModifierKeyName } from '@/utils/platform';
 import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/utils/cn';
+import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
+import { ConsolePanel } from '../Console/ConsolePanel';
+import { PanelTabs, type PanelTabType } from './PanelTabs';
+import { globalEventBus } from '@/events/bus';
+import { generateCurlCommand } from '@/utils/curl';
+import type { NetworkHistoryEntry } from '@/types/history';
+import { useHistoryStore } from '@/stores/useHistoryStore';
 
 interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -78,6 +87,11 @@ export const MainLayout = ({
   initialSidebarVisible = true,
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useSettingsStore();
+  const {
+    position: panelPosition,
+    isVisible: panelVisible,
+    toggleVisibility: togglePanel,
+  } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
 
@@ -85,6 +99,10 @@ export const MainLayout = ({
   const [requestPaneSize, setRequestPaneSize] = useState(DEFAULT_SPLIT);
   const [isPaneDragging, setIsPaneDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Panel tab state
+  const [activeTab, setActiveTab] = useState<PanelTabType>('network');
+  const { entries } = useHistoryStore();
 
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -108,6 +126,32 @@ export const MainLayout = ({
     handler: toggleSidebar,
     description: `${getModifierKeyName()}B - Toggle sidebar`,
   });
+
+  // DevTools panel toggle: Cmd+Shift+I (Mac) or Ctrl+Shift+I (Windows/Linux)
+  useKeyboardShortcuts({
+    key: 'i',
+    modifier: isMacSync() ? ['meta', 'shift'] : ['ctrl', 'shift'],
+    handler: togglePanel,
+    description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
+  });
+
+  // Auto-collapse sidebar when left dock is active
+  // Store the previous state to restore when switching away from left dock
+  const prevSidebarVisible = useRef(sidebarVisible);
+
+  useEffect(() => {
+    if (panelPosition === 'left' && panelVisible) {
+      // Save current sidebar state and collapse
+      if (sidebarVisible) {
+        prevSidebarVisible.current = true;
+        setSidebarVisible(false);
+      }
+    } else if (panelPosition !== 'left' && prevSidebarVisible.current) {
+      // Restore sidebar when switching away from left dock
+      setSidebarVisible(true);
+      prevSidebarVisible.current = false;
+    }
+  }, [panelPosition, panelVisible, sidebarVisible, setSidebarVisible]);
 
   // Pane split ratio as MotionValue (0-1)
   const splitRatio = useMotionValue(DEFAULT_SPLIT / 100);
@@ -297,6 +341,26 @@ export const MainLayout = ({
     }
   }, [sidebarVisible, toggleSidebar]);
 
+  // History panel callbacks
+  const handleReplay = useCallback((entry: NetworkHistoryEntry): void => {
+    // Emit event to load the history entry into the request builder
+    globalEventBus.emit('history.entry-selected', entry);
+  }, []);
+
+  const handleCopyCurl = useCallback(async (entry: NetworkHistoryEntry): Promise<void> => {
+    const curl = generateCurlCommand(entry);
+    await navigator.clipboard.writeText(curl);
+  }, []);
+
+  // Memoize the history panel callbacks to avoid unnecessary re-renders
+  const historyPanelProps = useMemo(
+    () => ({
+      onReplay: handleReplay,
+      onCopyCurl: handleCopyCurl,
+    }),
+    [handleReplay, handleCopyCurl]
+  );
+
   const isSidebarOverlay = sidebarVisible && isCompact;
 
   return (
@@ -394,80 +458,150 @@ export const MainLayout = ({
             )}
           </div>
 
-          <LayoutGroup>
-            <motion.div
-              ref={containerRef}
-              className="flex-1 overflow-hidden flex relative"
-              data-testid="pane-container"
-              style={{ scrollbarGutter: 'stable' }}
-              layout
-              transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
-            >
-              <motion.div
-                layout={!isPaneDragging}
-                className="h-full overflow-hidden shrink-0 border-r border-border-default"
-                data-testid="request-pane"
-                style={{
-                  width: requestWidth,
-                  scrollbarGutter: 'stable',
-                }}
-                transition={
-                  isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+          {/* Content area with panes and dockable panel */}
+          <div
+            className={cn(
+              'flex flex-1 overflow-hidden',
+              panelPosition === 'left' || panelPosition === 'right' ? 'flex-row' : 'flex-col'
+            )}
+            data-testid="content-area"
+          >
+            {/* Left dock panel */}
+            {panelPosition === 'left' && (
+              <DockablePanel
+                title="DevTools"
+                headerContent={
+                  <PanelTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    networkCount={entries.length}
+                  />
                 }
               >
-                {requestContent !== undefined ? (
-                  requestContent
+                {activeTab === 'network' ? (
+                  <NetworkHistoryPanel {...historyPanelProps} />
                 ) : (
-                  <div className="h-full p-4 text-text-secondary flex items-center justify-center">
-                    Request Builder (placeholder - will be built in Run 2B)
-                  </div>
+                  <ConsolePanel />
                 )}
-              </motion.div>
+              </DockablePanel>
+            )}
 
+            <LayoutGroup>
               <motion.div
-                layout={!isPaneDragging}
-                className="h-full overflow-hidden flex-1"
-                data-testid="response-pane"
-                style={{
-                  width: responseWidth,
-                  scrollbarGutter: 'stable',
-                }}
-                transition={
-                  isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+                ref={containerRef}
+                className="flex-1 overflow-hidden flex relative min-w-0"
+                data-testid="pane-container"
+                style={{ scrollbarGutter: 'stable' }}
+                layout
+                transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
+              >
+                <motion.div
+                  layout={!isPaneDragging}
+                  className="h-full overflow-hidden shrink-0 border-r border-border-default"
+                  data-testid="request-pane"
+                  style={{
+                    width: requestWidth,
+                    scrollbarGutter: 'stable',
+                  }}
+                  transition={
+                    isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+                  }
+                >
+                  {requestContent !== undefined ? (
+                    requestContent
+                  ) : (
+                    <div className="h-full p-4 text-text-secondary flex items-center justify-center">
+                      Request Builder (placeholder - will be built in Run 2B)
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  layout={!isPaneDragging}
+                  className="h-full overflow-hidden flex-1"
+                  data-testid="response-pane"
+                  style={{
+                    width: responseWidth,
+                    scrollbarGutter: 'stable',
+                  }}
+                  transition={
+                    isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
+                  }
+                >
+                  {responseContent !== undefined ? (
+                    responseContent
+                  ) : (
+                    <div className="h-full p-4 text-text-secondary flex items-center justify-center">
+                      Response Viewer (placeholder - will be built in Run 2C)
+                    </div>
+                  )}
+                </motion.div>
+
+                {/* Pane sash */}
+                <motion.div
+                  className={getSashClasses('left', isPaneDragging)}
+                  data-testid="pane-resizer"
+                  style={{
+                    left: resizerLeft,
+                    transform: 'translateX(-50%)',
+                  }}
+                  onPointerDown={handlePanePointerDown}
+                  onPointerMove={handlePanePointerMove}
+                  onPointerUp={handlePanePointerUp}
+                  onPointerCancel={handlePanePointerUp}
+                  role="separator"
+                  aria-label="Resize panes"
+                  aria-orientation="vertical"
+                  aria-valuenow={requestPaneSize}
+                  aria-valuemin={MIN_PANE_SIZE}
+                  aria-valuemax={MAX_PANE_SIZE}
+                />
+              </motion.div>
+            </LayoutGroup>
+
+            {/* Right dock panel */}
+            {panelPosition === 'right' && (
+              <DockablePanel
+                title="DevTools"
+                headerContent={
+                  <PanelTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    networkCount={entries.length}
+                  />
                 }
               >
-                {responseContent !== undefined ? (
-                  responseContent
+                {activeTab === 'network' ? (
+                  <NetworkHistoryPanel {...historyPanelProps} />
                 ) : (
-                  <div className="h-full p-4 text-text-secondary flex items-center justify-center">
-                    Response Viewer (placeholder - will be built in Run 2C)
-                  </div>
+                  <ConsolePanel />
                 )}
-              </motion.div>
-
-              {/* Pane sash */}
-              <motion.div
-                className={getSashClasses('left', isPaneDragging)}
-                data-testid="pane-resizer"
-                style={{
-                  left: resizerLeft,
-                  transform: 'translateX(-50%)',
-                }}
-                onPointerDown={handlePanePointerDown}
-                onPointerMove={handlePanePointerMove}
-                onPointerUp={handlePanePointerUp}
-                onPointerCancel={handlePanePointerUp}
-                role="separator"
-                aria-label="Resize panes"
-                aria-orientation="vertical"
-                aria-valuenow={requestPaneSize}
-                aria-valuemin={MIN_PANE_SIZE}
-                aria-valuemax={MAX_PANE_SIZE}
-              />
-            </motion.div>
-          </LayoutGroup>
+              </DockablePanel>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Bottom dock panel - full width, outside sidebar/content container */}
+      {panelPosition === 'bottom' && (
+        <DockablePanel
+          title="DevTools"
+          headerContent={
+            <PanelTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              networkCount={entries.length}
+            />
+          }
+        >
+          {activeTab === 'network' ? (
+            <NetworkHistoryPanel {...historyPanelProps} />
+          ) : (
+            <ConsolePanel />
+          )}
+        </DockablePanel>
+      )}
+
       <StatusBar />
     </div>
   );

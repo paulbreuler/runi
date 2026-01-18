@@ -205,4 +205,35 @@ describe('RequestBuilder', () => {
 
     expect(screen.getByTestId('request-tabs-overflow-left')).toBeInTheDocument();
   });
+
+  describe('mock verification', () => {
+    it('calls setBody when body content changes', async () => {
+      const user = userEvent.setup();
+      render(<RequestBuilder />);
+
+      const bodyTab = screen.getByText('Body');
+      await user.click(bodyTab);
+
+      const bodyTextarea = await screen.findByTestId('body-textarea');
+      act(() => {
+        fireEvent.change(bodyTextarea, { target: { value: '{"newKey": "newValue"}' } });
+      });
+
+      expect(mockSetBody).toHaveBeenCalledWith('{"newKey": "newValue"}');
+    });
+
+    it('calls setHeaders with correct payload when removing a header', async () => {
+      const user = userEvent.setup();
+      (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+        createMockStore({ headers: { 'Content-Type': 'application/json', 'X-Custom': 'value' } })
+      );
+
+      render(<RequestBuilder />);
+
+      const removeButton = screen.getByTestId('remove-header-X-Custom');
+      await user.click(removeButton);
+
+      expect(mockSetHeaders).toHaveBeenCalledWith({ 'Content-Type': 'application/json' });
+    });
+  });
 });

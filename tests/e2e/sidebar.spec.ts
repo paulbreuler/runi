@@ -2,15 +2,27 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Sidebar', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-
-    // Mock Tauri IPC
-    await page.evaluate(() => {
+    // Mock Tauri IPC - handle different command names
+    // Use addInitScript to ensure mock is available before React loads
+    await page.addInitScript(() => {
       (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
-        invoke: (): Promise<{ status: number; body: string; headers: Record<string, string> }> =>
-          Promise.resolve({ status: 200, body: '{}', headers: {} }),
+        invoke: (cmd: string): Promise<unknown> => {
+          // Handle load_request_history - return empty array for empty history
+          if (cmd === 'load_request_history') {
+            return Promise.resolve([]);
+          }
+          // Default mock for other commands (like execute_http_request)
+          return Promise.resolve({ status: 200, body: '{}', headers: {} });
+        },
       };
     });
+
+    await page.goto('/');
+
+    // Wait for React app to render and history to load
+    await page.waitForLoadState('networkidle');
+    // Wait for sidebar to be visible
+    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 10000 });
   });
 
   test('renders Collections and History sections', async ({ page }) => {

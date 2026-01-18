@@ -39,6 +39,7 @@ describe('Button', () => {
   it('forwards ref correctly', () => {
     const ref = vi.fn();
     render(<Button ref={ref}>Button</Button>);
-    expect(ref).toHaveBeenCalled();
+    expect(ref).toHaveBeenCalledTimes(1);
+    expect(ref).toHaveBeenCalledWith(expect.any(HTMLButtonElement));
   });
 });

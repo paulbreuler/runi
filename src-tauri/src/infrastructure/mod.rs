@@ -2,3 +2,5 @@
 
 pub mod commands;
 pub mod http;
+pub mod logging;
+pub mod storage;

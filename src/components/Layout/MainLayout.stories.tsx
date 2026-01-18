@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, within } from '@storybook/test';
+import { useEffect } from 'react';
 import { MainLayout } from './MainLayout';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
+import { usePanelStore } from '@/stores/usePanelStore';
 import type { HttpResponse } from '@/types/http';
 
 const meta = {
@@ -15,13 +17,17 @@ const meta = {
     docs: {
       description: {
         component: `
-The MainLayout provides a resizable three-column layout with sidebar, request pane, and response pane.
+The MainLayout provides a resizable layout with sidebar, request pane, response pane, and a dockable DevTools panel.
+
+## Keyboard Shortcuts
+- **Sidebar toggle**: \`Cmd+B\` (Mac) / \`Ctrl+B\` (Windows)
+- **DevTools panel**: \`Cmd+Shift+I\` (Mac) / \`Ctrl+Shift+I\` (Windows)
 
 ## Interactions
 - **Sidebar resize**: Drag the sidebar edge to resize (256-500px range)
 - **Sidebar collapse**: Drag LEFT to collapse, drag RIGHT to expand/resize
-- **Sidebar toggle**: ⌘B (Mac) / Ctrl+B (Windows) or double-click the sash
 - **Pane resize**: Drag the center divider to adjust request/response split (20-80%)
+- **DevTools panel**: Can dock to bottom, left, or right; supports collapse and pop-out
 
 ## Design Principles
 - Zen, calm aesthetic with minimal visual noise
@@ -154,13 +160,154 @@ const sampleResponse: HttpResponse = {
 };
 
 /**
- * Full integration with actual RequestBuilder and ResponseViewer components.
+ * Full integration with RequestBuilder, ResponseViewer, and DevTools panel.
+ * Press Cmd+Shift+I (Mac) or Ctrl+Shift+I (Windows) to toggle the DevTools panel.
  */
 export const FullIntegration: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        // Show DevTools panel for this story
+        usePanelStore.setState({
+          isVisible: true,
+          position: 'bottom',
+          isCollapsed: false,
+        });
+        return () => {
+          usePanelStore.getState().reset();
+        };
+      }, []);
+      return <Story />;
+    },
+  ],
   render: () => (
     <MainLayout
       requestContent={<RequestBuilder />}
       responseContent={<ResponseViewer response={sampleResponse} />}
+    />
+  ),
+};
+
+/**
+ * DevTools panel docked to the bottom (default position).
+ */
+export const DevToolsBottom: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          isVisible: true,
+          position: 'bottom',
+          isCollapsed: false,
+        });
+        return () => {
+          usePanelStore.getState().reset();
+        };
+      }, []);
+      return <Story />;
+    },
+  ],
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex items-center justify-center">
+          <p className="text-text-secondary">DevTools panel docked at bottom</p>
+        </div>
+      }
+    />
+  ),
+};
+
+/**
+ * DevTools panel docked to the left. Sidebar auto-collapses.
+ */
+export const DevToolsLeft: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          isVisible: true,
+          position: 'left',
+          isCollapsed: false,
+        });
+        return () => {
+          usePanelStore.getState().reset();
+        };
+      }, []);
+      return <Story />;
+    },
+  ],
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex items-center justify-center">
+          <p className="text-text-secondary">
+            DevTools panel docked at left (sidebar auto-collapsed)
+          </p>
+        </div>
+      }
+    />
+  ),
+};
+
+/**
+ * DevTools panel docked to the right.
+ */
+export const DevToolsRight: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          isVisible: true,
+          position: 'right',
+          isCollapsed: false,
+        });
+        return () => {
+          usePanelStore.getState().reset();
+        };
+      }, []);
+      return <Story />;
+    },
+  ],
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex items-center justify-center">
+          <p className="text-text-secondary">DevTools panel docked at right</p>
+        </div>
+      }
+    />
+  ),
+};
+
+/**
+ * DevTools panel collapsed to thin bar. Click header or double-click resizer to expand.
+ */
+export const DevToolsCollapsed: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          isVisible: true,
+          position: 'bottom',
+          isCollapsed: true,
+        });
+        return () => {
+          usePanelStore.getState().reset();
+        };
+      }, []);
+      return <Story />;
+    },
+  ],
+  render: () => (
+    <MainLayout
+      requestContent={
+        <div className="h-full p-4 flex items-center justify-center">
+          <p className="text-text-secondary">
+            DevTools collapsed. Click the thin bar or double-click to expand.
+          </p>
+        </div>
+      }
     />
   ),
 };
