@@ -147,7 +147,7 @@ export const MainLayout = ({
     );
 
     return unsubscribe;
-  }, [setVisible]);
+  }, [setVisible, setActiveTab]);
 
   // Auto-collapse sidebar when left dock is active
   // Store the previous state to restore when switching away from left dock

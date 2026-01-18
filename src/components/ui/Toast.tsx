@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import * as ToastPrimitive from '@radix-ui/react-toast';
 import { X, Copy } from 'lucide-react';
@@ -241,27 +241,36 @@ const ToastItem = ({ toast }: { toast: ToastItem }): React.JSX.Element => {
  */
 export const Toast = (): React.JSX.Element => {
   const { toasts, dismiss } = useToastStore();
+  const timersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   // Auto-dismiss toasts based on their duration
+  // Uses ref to track timers and avoid creating duplicates
   useEffect(() => {
-    const timers: NodeJS.Timeout[] = [];
+    const timersMap = timersRef.current;
 
+    // Create timers for new eligible toasts
     toasts.forEach((toast) => {
-      // Only auto-dismiss non-error toasts with a duration
-      if (toast.type !== 'error' && toast.duration !== undefined) {
+      const hasTimer = timersMap.has(toast.id);
+      const shouldAutoDismiss = toast.type !== 'error' && toast.duration !== undefined;
+
+      if (!hasTimer && shouldAutoDismiss) {
         const timer = setTimeout(() => {
           dismiss(toast.id);
+          timersMap.delete(toast.id);
         }, toast.duration);
 
-        timers.push(timer);
+        timersMap.set(toast.id, timer);
       }
     });
 
-    return (): void => {
-      timers.forEach((timer): void => {
+    // Clean up timers for toasts that no longer exist
+    const currentIds = new Set(toasts.map((t) => t.id));
+    timersMap.forEach((timer, id) => {
+      if (!currentIds.has(id)) {
         clearTimeout(timer);
-      });
-    };
+        timersMap.delete(id);
+      }
+    });
   }, [toasts, dismiss]);
 
   return (

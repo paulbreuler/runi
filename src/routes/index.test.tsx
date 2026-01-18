@@ -5,6 +5,8 @@ import { HomePage } from './index';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { executeRequest } from '@/api/http';
+// Import __mockEmit from the mock for test assertions
+import { __mockEmit } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 
 // Mock the stores
@@ -145,8 +147,6 @@ describe('HomePage - Auto-save to history', () => {
 
   it('should NOT save to history if request fails', async () => {
     const user = userEvent.setup();
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { globalEventBus } = require('@/events/bus');
 
     const errorMessage = 'Network error';
     vi.mocked(executeRequest).mockRejectedValue(new Error(errorMessage));
@@ -162,7 +162,7 @@ describe('HomePage - Auto-save to history', () => {
 
     // Wait for toast event to be emitted
     await waitFor(() => {
-      expect(globalEventBus.emit).toHaveBeenCalledWith(
+      expect(__mockEmit).toHaveBeenCalledWith(
         'toast.show',
         expect.objectContaining({
           type: 'error',

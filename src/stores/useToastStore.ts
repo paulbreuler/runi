@@ -165,6 +165,8 @@ export const useToastStore = create<ToastState>((set) => ({
   },
 
   clear: (): void => {
+    // Clear dedup cache to avoid stale entries referencing non-existent toasts
+    clearDedupCache();
     set({ toasts: [] });
   },
 }));
