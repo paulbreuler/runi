@@ -89,17 +89,17 @@ describe('formatRelativeTime', () => {
     expect(result2).toMatch(/Dec \d+/);
   });
 
-  it('should handle future dates (edge case)', () => {
+  it('should handle future dates by returning "just now"', () => {
     const now = new Date('2026-01-17T10:00:00Z');
     vi.setSystemTime(now);
 
+    // Future dates result in negative diffMs, which after Math.floor gives negative seconds
+    // Negative seconds are < 60, so the function returns "just now"
     const futureDate = new Date(now.getTime() + 60 * 1000).toISOString();
-    // Should return "just now" or handle gracefully
-    // The function will return negative time, which results in "just now" due to Math.floor
-    const result = formatRelativeTime(futureDate);
-    // Depending on implementation, this might be "just now" or show negative
-    // Let's check the actual behavior
-    expect(result).toBeDefined();
+    expect(formatRelativeTime(futureDate)).toBe('just now');
+
+    const farFutureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    expect(formatRelativeTime(farFutureDate)).toBe('just now');
   });
 
   it('should handle boundary between 59 seconds and 1 minute', () => {

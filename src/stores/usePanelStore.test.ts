@@ -333,4 +333,152 @@ describe('usePanelStore', () => {
       });
     });
   });
+
+  describe('edge cases', () => {
+    it('handles zero size gracefully', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      act(() => {
+        result.current.setSize('bottom', 0);
+      });
+
+      expect(result.current.sizes.bottom).toBe(0);
+    });
+
+    it('handles negative size values', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      act(() => {
+        result.current.setSize('left', -100);
+      });
+
+      // Store accepts any number - validation would be UI layer
+      expect(result.current.sizes.left).toBe(-100);
+    });
+
+    it('handles very large size values', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      act(() => {
+        result.current.setSize('right', 99999);
+      });
+
+      expect(result.current.sizes.right).toBe(99999);
+    });
+
+    it('getCurrentSize returns bottom size when position is floating', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      act(() => {
+        result.current.setSize('bottom', 500);
+        result.current.setPosition('floating');
+      });
+
+      expect(result.current.getCurrentSize()).toBe(500);
+    });
+
+    it('handles rapid position changes', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      act(() => {
+        result.current.setPosition('left');
+        result.current.setPosition('right');
+        result.current.setPosition('bottom');
+        result.current.setPosition('floating');
+      });
+
+      expect(result.current.position).toBe('floating');
+    });
+
+    it('preserves size for each position independently during rapid changes', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      act(() => {
+        result.current.setSize('bottom', 100);
+        result.current.setSize('left', 200);
+        result.current.setSize('right', 300);
+      });
+
+      expect(result.current.sizes.bottom).toBe(100);
+      expect(result.current.sizes.left).toBe(200);
+      expect(result.current.sizes.right).toBe(300);
+    });
+
+    it('handles toggle visibility when already in target state', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      // Start hidden
+      expect(result.current.isVisible).toBe(false);
+
+      // Set visible explicitly
+      act(() => {
+        result.current.setVisible(true);
+      });
+      expect(result.current.isVisible).toBe(true);
+
+      // Set visible again (should be idempotent)
+      act(() => {
+        result.current.setVisible(true);
+      });
+      expect(result.current.isVisible).toBe(true);
+    });
+
+    it('handles toggle collapsed in various states', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      // Toggle from uncollapsed
+      act(() => {
+        result.current.toggleCollapsed();
+      });
+      expect(result.current.isCollapsed).toBe(true);
+
+      // Toggle back
+      act(() => {
+        result.current.toggleCollapsed();
+      });
+      expect(result.current.isCollapsed).toBe(false);
+
+      // Set explicitly then toggle
+      act(() => {
+        result.current.setCollapsed(true);
+        result.current.toggleCollapsed();
+      });
+      expect(result.current.isCollapsed).toBe(false);
+    });
+
+    it('reset does not affect other stores', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      act(() => {
+        result.current.setPosition('right');
+        result.current.setSize('right', 600);
+        result.current.setVisible(true);
+        result.current.setPopout(true);
+      });
+
+      act(() => {
+        result.current.reset();
+      });
+
+      // All should be at defaults
+      expect(result.current.position).toBe('bottom');
+      expect(result.current.sizes).toEqual(DEFAULT_PANEL_SIZES);
+      expect(result.current.isVisible).toBe(false);
+      expect(result.current.isPopout).toBe(false);
+    });
+
+    it('setSize updates only the specified position', () => {
+      const { result } = renderHook(() => usePanelStore());
+
+      const initialSizes = { ...result.current.sizes };
+
+      act(() => {
+        result.current.setSize('left', 999);
+      });
+
+      expect(result.current.sizes.left).toBe(999);
+      expect(result.current.sizes.bottom).toBe(initialSizes.bottom);
+      expect(result.current.sizes.right).toBe(initialSizes.right);
+    });
+  });
 });

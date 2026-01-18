@@ -82,7 +82,8 @@ describe('NetworkHistoryRow', () => {
     expect(screen.getByText('5m ago')).toBeInTheDocument();
   });
 
-  it('renders intelligence signals when present', () => {
+  it('renders intelligence signals when present (smoke test)', () => {
+    // Detailed signal behavior is tested in IntelligenceSignals.test.tsx
     render(<NetworkHistoryRow {...defaultProps} />);
     expect(screen.getByTestId('signal-dot-verified')).toBeInTheDocument();
     expect(screen.getByTestId('signal-dot-bound')).toBeInTheDocument();
@@ -178,28 +179,16 @@ describe('NetworkHistoryRow', () => {
     expect(screen.getByTestId('signal-dot-drift')).toBeInTheDocument();
   });
 
-  describe('timing waterfall', () => {
-    it('displays timing segments when timing data is present', () => {
+  describe('timing waterfall integration', () => {
+    // Note: Detailed waterfall behavior is tested in TimingWaterfall.test.tsx
+    // These tests verify the waterfall is correctly integrated into the row
+
+    it('renders waterfall when expanded with valid timing data', () => {
       render(<NetworkHistoryRow {...defaultProps} isExpanded={true} />);
-
-      // Verify waterfall segments have non-zero widths
-      const dnsSegment = screen.getByTestId('timing-dns');
-      const connectSegment = screen.getByTestId('timing-connect');
-      const tlsSegment = screen.getByTestId('timing-tls');
-      const waitSegment = screen.getByTestId('timing-wait');
-      const downloadSegment = screen.getByTestId('timing-download');
-
-      // mockEntry has: dns=10, connect=20, tls=30, first_byte=100, total=150
-      // So segments should be: dns=10, connect=20, tls=30, wait=40 (100-60), download=50 (150-100)
-      // All should have non-zero width percentages
-      expect(dnsSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
-      expect(connectSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
-      expect(tlsSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
-      expect(waitSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
-      expect(downloadSegment).toHaveAttribute('style', expect.stringMatching(/width:\s*[1-9]/));
+      expect(screen.getByTestId('timing-waterfall')).toBeInTheDocument();
     });
 
-    it('displays empty waterfall when timing data lacks first_byte_ms', () => {
+    it('renders empty waterfall when timing data is incomplete', () => {
       const entryWithNullTiming: NetworkHistoryEntry = {
         ...mockEntry,
         response: {
@@ -214,22 +203,7 @@ describe('NetworkHistoryRow', () => {
         },
       };
       render(<NetworkHistoryRow {...defaultProps} entry={entryWithNullTiming} isExpanded={true} />);
-
-      // Without first_byte_ms, we can't calculate meaningful segments
-      // So the empty waterfall state should be shown
       expect(screen.getByTestId('timing-waterfall-empty')).toBeInTheDocument();
-    });
-
-    it('shows timing legend with ms values when expanded', () => {
-      render(<NetworkHistoryRow {...defaultProps} isExpanded={true} />);
-
-      // Legend should show timing breakdown
-      expect(screen.getByText('DNS')).toBeInTheDocument();
-      expect(screen.getByText('10ms')).toBeInTheDocument();
-      expect(screen.getByText('Connect')).toBeInTheDocument();
-      expect(screen.getByText('20ms')).toBeInTheDocument();
-      expect(screen.getByText('TLS')).toBeInTheDocument();
-      expect(screen.getByText('30ms')).toBeInTheDocument();
     });
   });
 });

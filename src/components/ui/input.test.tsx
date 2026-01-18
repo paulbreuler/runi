@@ -26,7 +26,8 @@ describe('Input', () => {
   it('forwards ref correctly', () => {
     const ref = vi.fn();
     render(<Input ref={ref} placeholder="Test" />);
-    expect(ref).toHaveBeenCalled();
+    expect(ref).toHaveBeenCalledTimes(1);
+    expect(ref).toHaveBeenCalledWith(expect.any(HTMLInputElement));
   });
 
   it('applies custom className', () => {

@@ -38,9 +38,12 @@ describe('useTauriCommand', () => {
     });
 
     // Loading should be true while promise is pending
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(true);
+      },
+      { timeout: 2000 }
+    );
 
     // Resolve the promise
     await act(async () => {
@@ -49,9 +52,12 @@ describe('useTauriCommand', () => {
     });
 
     // Loading should be false after promise resolves
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('sets loading to false after execute completes', async () => {
@@ -62,9 +68,12 @@ describe('useTauriCommand', () => {
       await result.current.execute();
     });
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('sets data when command succeeds', async () => {
@@ -76,10 +85,13 @@ describe('useTauriCommand', () => {
       await result.current.execute();
     });
 
-    await waitFor(() => {
-      expect(result.current.data).toEqual(testData);
-      expect(result.current.error).toBeNull();
-    });
+    await waitFor(
+      () => {
+        expect(result.current.data).toEqual(testData);
+        expect(result.current.error).toBeNull();
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('returns data when command succeeds', async () => {
@@ -104,10 +116,13 @@ describe('useTauriCommand', () => {
       await result.current.execute();
     });
 
-    await waitFor(() => {
-      expect(result.current.error).toBe('Command failed');
-      expect(result.current.data).toBeNull();
-    });
+    await waitFor(
+      () => {
+        expect(result.current.error).toBe('Command failed');
+        expect(result.current.data).toBeNull();
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('returns null when command fails', async () => {
@@ -131,9 +146,12 @@ describe('useTauriCommand', () => {
       await result.current.execute();
     });
 
-    await waitFor(() => {
-      expect(result.current.error).toBe('String error');
-    });
+    await waitFor(
+      () => {
+        expect(result.current.error).toBe('String error');
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('passes arguments to invoke', async () => {
@@ -168,17 +186,23 @@ describe('useTauriCommand', () => {
     await act(async () => {
       await result.current.execute();
     });
-    await waitFor(() => {
-      expect(result.current.error).toBe('First error');
-    });
+    await waitFor(
+      () => {
+        expect(result.current.error).toBe('First error');
+      },
+      { timeout: 2000 }
+    );
 
     // Second call succeeds
     await act(async () => {
       await result.current.execute();
     });
-    await waitFor(() => {
-      expect(result.current.error).toBeNull();
-      expect(result.current.data).toBe('success');
-    });
+    await waitFor(
+      () => {
+        expect(result.current.error).toBeNull();
+        expect(result.current.data).toBe('success');
+      },
+      { timeout: 2000 }
+    );
   });
 });

@@ -99,4 +99,107 @@ describe('TimingWaterfall', () => {
     const container = screen.getByTestId('timing-waterfall');
     expect(container).toHaveClass('h-3');
   });
+
+  describe('edge cases', () => {
+    it('handles very large timing values', () => {
+      const largeSegments: TimingWaterfallSegments = {
+        dns: 10000,
+        connect: 20000,
+        tls: 30000,
+        wait: 50000,
+        download: 40000,
+      };
+      render(<TimingWaterfall segments={largeSegments} totalMs={150000} />);
+
+      // All segments should render
+      expect(screen.getByTestId('timing-dns')).toBeInTheDocument();
+      expect(screen.getByTestId('timing-download')).toBeInTheDocument();
+    });
+
+    it('handles all segments being zero', () => {
+      const zeroSegments: TimingWaterfallSegments = {
+        dns: 0,
+        connect: 0,
+        tls: 0,
+        wait: 0,
+        download: 0,
+      };
+      render(<TimingWaterfall segments={zeroSegments} totalMs={0} />);
+
+      // Should render segments with zero width
+      const dns = screen.getByTestId('timing-dns');
+      expect(dns).toHaveStyle({ width: '0%' });
+    });
+
+    it('handles totalMs of zero with non-zero segments', () => {
+      // Edge case: totalMs=0 but segments have values (would cause division by zero)
+      const segments: TimingWaterfallSegments = {
+        dns: 10,
+        connect: 20,
+        tls: 30,
+        wait: 50,
+        download: 40,
+      };
+      render(<TimingWaterfall segments={segments} totalMs={0} />);
+
+      // Should not crash, segments should render
+      expect(screen.getByTestId('timing-dns')).toBeInTheDocument();
+    });
+
+    it('handles negative segment values gracefully', () => {
+      const negativeSegments: TimingWaterfallSegments = {
+        dns: -10,
+        connect: 20,
+        tls: 30,
+        wait: 50,
+        download: 40,
+      };
+      render(<TimingWaterfall segments={negativeSegments} totalMs={150} />);
+
+      // Component should still render without crashing
+      expect(screen.getByTestId('timing-waterfall')).toBeInTheDocument();
+    });
+
+    it('handles single segment with all duration', () => {
+      const singleSegment: TimingWaterfallSegments = {
+        dns: 0,
+        connect: 0,
+        tls: 0,
+        wait: 0,
+        download: 100,
+      };
+      render(<TimingWaterfall segments={singleSegment} totalMs={100} />);
+
+      const download = screen.getByTestId('timing-download');
+      expect(download).toHaveStyle({ width: '100%' });
+    });
+
+    it('handles segments that exceed totalMs', () => {
+      // Segments sum to 200ms but totalMs is only 100ms
+      const exceededSegments: TimingWaterfallSegments = {
+        dns: 40,
+        connect: 40,
+        tls: 40,
+        wait: 40,
+        download: 40,
+      };
+      render(<TimingWaterfall segments={exceededSegments} totalMs={100} />);
+
+      // Should not crash, widths will exceed 100% but component handles it
+      expect(screen.getByTestId('timing-waterfall')).toBeInTheDocument();
+    });
+
+    it('handles very small fractional values', () => {
+      const tinySegments: TimingWaterfallSegments = {
+        dns: 0.001,
+        connect: 0.002,
+        tls: 0.003,
+        wait: 0.004,
+        download: 0.005,
+      };
+      render(<TimingWaterfall segments={tinySegments} totalMs={0.015} />);
+
+      expect(screen.getByTestId('timing-waterfall')).toBeInTheDocument();
+    });
+  });
 });

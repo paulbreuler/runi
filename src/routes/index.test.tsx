@@ -131,11 +131,9 @@ describe('HomePage - Auto-save to history', () => {
     });
 
     // Verify that addEntry was called with the request params and response
-    // Note: React strict mode may cause double renders in tests
     await waitFor(() => {
       expect(mockAddEntry).toHaveBeenCalled();
       const calls = mockAddEntry.mock.calls;
-      // Get the last call (after any potential double renders)
       const lastCall = calls[calls.length - 1];
       if (lastCall === undefined) {
         throw new Error('lastCall is undefined');

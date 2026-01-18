@@ -30,9 +30,6 @@ export const HistoryEntry = ({
   };
   const badgeBgColor = methodColors[method] ?? 'bg-signal-info/20 text-signal-info';
 
-  const truncatedUrl =
-    entry.request.url.length > 50 ? `${entry.request.url.substring(0, 50)}...` : entry.request.url;
-
   const handleDelete = (e: React.MouseEvent): void => {
     e.stopPropagation();
     onDelete(entry.id);
@@ -65,7 +62,7 @@ export const HistoryEntry = ({
       {/* URL and Timestamp */}
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
         <span className="text-sm text-text-secondary truncate" title={entry.request.url}>
-          {truncatedUrl}
+          {entry.request.url}
         </span>
         <span className="text-xs text-text-muted">{formatRelativeTime(entry.timestamp)}</span>
       </div>

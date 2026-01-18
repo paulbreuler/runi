@@ -67,7 +67,8 @@ export const HomePage = (): React.JSX.Element => {
   }, []);
 
   const handleSend = async (): Promise<void> => {
-    if (!isValidUrl) {
+    // Guard against invalid URL or double-click while loading
+    if (!isValidUrl || isLoading) {
       return;
     }
 
