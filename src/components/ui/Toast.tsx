@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import * as ToastPrimitive from '@radix-ui/react-toast';
 import { X, Copy } from 'lucide-react';
 import { useToastStore, type ToastItem, type ToastType } from '@/stores/useToastStore';
@@ -60,14 +60,31 @@ const getBaseToastStyles = (type: ToastType): string => {
 };
 
 /**
- * Spring animation configuration for toast transitions.
- * Stiffer spring (400) for snappier, more intentional motion per design ideology.
+ * Tween configuration for toast entry animation.
+ * Matches Motion.dev notification pattern: 0.3s ease-out.
  */
-const toastSpring = {
-  type: 'spring' as const,
-  stiffness: 400,
-  damping: 30,
-  mass: 1,
+const entryTransition = {
+  duration: 0.3,
+  ease: 'easeOut' as const,
+};
+
+/**
+ * Tween configuration for toast exit animation.
+ * Matches Motion.dev notification pattern: 0.2s ease-in.
+ */
+const exitTransition = {
+  duration: 0.2,
+  ease: 'easeIn' as const,
+};
+
+/**
+ * Tween configuration for FLIP layout reflow animations.
+ * Used when toasts are dismissed and remaining toasts slide into position.
+ * Matches Motion.dev notification pattern: 0.3s ease-out.
+ */
+const layoutTransition = {
+  duration: 0.3,
+  ease: 'easeOut' as const,
 };
 
 /**
@@ -103,8 +120,6 @@ const ToastItem = ({ toast }: { toast: ToastItem }): React.JSX.Element => {
   const { dismiss } = useToastStore();
   const { setVisible } = usePanelStore();
   const prefersReducedMotion = useReducedMotion();
-
-  const transition = prefersReducedMotion === true ? { duration: 0 } : toastSpring;
 
   // Build full error message for copying (includes details/correlation ID)
   const fullErrorMessage =
@@ -143,6 +158,8 @@ const ToastItem = ({ toast }: { toast: ToastItem }): React.JSX.Element => {
       forceMount
     >
       <motion.div
+        layout
+        layoutId={toast.id}
         role="status"
         aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
         className={cn(
@@ -151,10 +168,14 @@ const ToastItem = ({ toast }: { toast: ToastItem }): React.JSX.Element => {
           getBaseToastStyles(toast.type),
           getSignalColor(toast.type)
         )}
-        initial={prefersReducedMotion === true ? false : { opacity: 0, x: 20, scale: 0.96 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        exit={prefersReducedMotion === true ? {} : { opacity: 0, scale: 0.96 }}
-        transition={transition}
+        initial={prefersReducedMotion === true ? false : { opacity: 0, y: 20, scale: 0.3 }}
+        animate={{ opacity: 1, y: 0, scale: 1, transition: entryTransition }}
+        exit={
+          prefersReducedMotion === true
+            ? {}
+            : { opacity: 0, scale: 0.5, transition: exitTransition }
+        }
+        transition={{ layout: layoutTransition }}
         drag="x"
         dragElastic={0.1}
         dragConstraints={{ left: 0 }}
@@ -245,11 +266,13 @@ export const Toast = (): React.JSX.Element => {
 
   return (
     <>
-      <AnimatePresence>
-        {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} />
-        ))}
-      </AnimatePresence>
+      <LayoutGroup>
+        <AnimatePresence mode="popLayout">
+          {toasts.map((toast) => (
+            <ToastItem key={toast.id} toast={toast} />
+          ))}
+        </AnimatePresence>
+      </LayoutGroup>
       <ToastPrimitive.Viewport
         className="fixed bottom-[56px] right-0 z-9999 flex flex-col gap-[10px] p-[25px] w-[390px] max-w-[100vw] m-0 list-none outline-none"
         style={{
