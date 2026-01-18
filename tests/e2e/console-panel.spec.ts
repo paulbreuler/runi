@@ -27,8 +27,10 @@ test.describe('Console Panel', () => {
     await consoleTab.click();
 
     // Execute code that logs to console
+    // Note: console.log is treated as debug and filtered by default (minLogLevel is 'info')
+    // Use console.info for logs that should appear at the default level
     await page.evaluate(() => {
-      console.log('Test debug message');
+      console.info('Test info message');
       console.error('Test error message');
     });
 
@@ -37,7 +39,7 @@ test.describe('Console Panel', () => {
 
     // Verify logs appear in console panel
     const consoleLogs = page.locator('[data-testid="console-logs"]');
-    await expect(consoleLogs).toContainText('Test debug message');
+    await expect(consoleLogs).toContainText('Test info message');
     await expect(consoleLogs).toContainText('Test error message');
   });
 
@@ -92,13 +94,13 @@ test.describe('Console Panel', () => {
     const consoleTab = page.getByRole('tab', { name: /console/i });
     await consoleTab.click();
 
-    // Add logs
+    // Add logs (use console.info instead of console.log since log is filtered as debug)
     await page.evaluate(() => {
-      console.log('Message 1');
-      console.log('Message 2');
+      console.info('Message 1');
+      console.info('Message 2');
     });
 
-    // Wait for logs
+    // Wait for logs to appear
     await page.waitForSelector('[data-testid="console-logs"]');
     await expect(page.locator('[data-testid="console-logs"]')).toContainText('Message 1');
 
