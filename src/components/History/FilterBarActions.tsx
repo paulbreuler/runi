@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Download, Trash2, ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { Button } from '@/components/ui/button';
 import type { FilterBarVariant } from './FilterBar';
 
 interface FilterBarActionsProps {
@@ -73,30 +74,27 @@ export const FilterBarActions = ({
     // Icon-only mode - use simple button with tooltip (Save Selected only)
     return (
       <div className="flex items-center gap-1">
-        <button
+        <Button
           type="button"
           onClick={onSaveSelection}
           disabled={isSaveSelectionDisabled}
-          className={cn(
-            'w-7 h-7 flex items-center justify-center rounded transition-colors',
-            isSaveSelectionDisabled
-              ? 'text-text-muted/50 cursor-not-allowed'
-              : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-          )}
+          variant="ghost"
+          size="icon-xs"
           title="Save selected entries"
           aria-label="Save selected entries"
         >
           <Download size={14} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={onClearAll}
-          className="w-7 h-7 flex items-center justify-center rounded text-text-muted hover:text-signal-error hover:bg-signal-error/10 transition-colors border border-transparent hover:border-signal-error/20"
+          variant="destructive-outline"
+          size="icon-xs"
           title="Delete all network history entries (cannot be undone)"
           aria-label="Delete all network history entries"
         >
           <Trash2 size={14} />
-        </button>
+        </Button>
       </div>
     );
   }
@@ -169,16 +167,17 @@ export const FilterBarActions = ({
       </div>
 
       {/* Clear button */}
-      <button
+      <Button
         type="button"
         onClick={onClearAll}
-        className="px-2 py-1 text-xs rounded text-text-muted hover:text-signal-error hover:bg-signal-error/10 transition-colors flex items-center gap-1 border border-transparent hover:border-signal-error/20"
+        variant="destructive-outline"
+        size="xs"
         title="Delete all network history entries (cannot be undone)"
         aria-label="Delete all network history entries"
       >
         <Trash2 size={12} />
         <span>Delete All</span>
-      </button>
+      </Button>
     </div>
   );
 };
