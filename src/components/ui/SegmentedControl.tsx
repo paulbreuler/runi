@@ -1,5 +1,9 @@
 import * as React from 'react';
+import { Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/utils/cn';
+
+const OVER_9000_THRESHOLD = 9000;
 
 interface SegmentOption<T extends string> {
   /** Unique value for this option */
@@ -167,8 +171,33 @@ interface BadgeCountProps {
   isSelected: boolean;
 }
 
+// Motion animation for "It's Over 9000!" shake effect
+const shakeAnimation = {
+  x: [0, -2, 2, -2, 2, -2, 2, -2, 2, 0],
+};
+
+const shakeTransition = {
+  duration: 0.5,
+  ease: 'easeInOut' as const,
+};
+
+// Motion animation for glow burst effect
+const glowAnimation = {
+  boxShadow: [
+    '0 0 0 0 rgba(251, 191, 36, 0)',
+    '0 0 12px 4px rgba(251, 191, 36, 0.7)',
+    '0 0 4px 1px rgba(251, 191, 36, 0.3)',
+  ],
+};
+
+const glowTransition = {
+  duration: 0.6,
+  ease: 'easeOut' as const,
+};
+
 /**
  * Badge component that optionally animates count changes using Motion+
+ * Includes "It's Over 9000!" Easter egg when count crosses 9000 threshold
  */
 const BadgeCount = ({
   count,
@@ -183,6 +212,32 @@ const BadgeCount = ({
     suffix?: string;
     style?: React.CSSProperties;
   }> | null>(null);
+
+  // "It's Over 9000!" Easter egg state
+  const isOver9000 = count >= OVER_9000_THRESHOLD;
+  const prevCountRef = React.useRef(count);
+  const [justCrossed, setJustCrossed] = React.useState(false);
+  const animationKey = React.useRef(0);
+
+  // Detect when we cross the 9000 threshold
+  React.useEffect(() => {
+    const wasUnder = prevCountRef.current < OVER_9000_THRESHOLD;
+    const isNowOver = count >= OVER_9000_THRESHOLD;
+
+    if (wasUnder && isNowOver) {
+      // Just crossed the threshold - trigger animation!
+      animationKey.current += 1;
+      setJustCrossed(true);
+      const timer = setTimeout((): void => {
+        setJustCrossed(false);
+      }, 600);
+      return (): void => {
+        clearTimeout(timer);
+      };
+    }
+
+    prevCountRef.current = count;
+  }, [count]);
 
   React.useEffect(() => {
     if (animate && AnimateNumber === null) {
@@ -199,10 +254,35 @@ const BadgeCount = ({
   const displayCount = Math.min(count, maxCount);
   const showPlus = count > maxCount;
 
+  // Base badge classes (without animation)
   const badgeClasses = cn(
     'shrink-0 px-1 py-0.5 rounded text-[10px] font-semibold min-w-[16px] text-center',
-    isSelected ? 'bg-text-muted/20 text-text-secondary' : 'bg-text-muted/10 text-text-muted'
+    isOver9000
+      ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400'
+      : isSelected
+        ? 'bg-text-muted/20 text-text-secondary'
+        : 'bg-text-muted/10 text-text-muted'
   );
+
+  // "Over 9000" powered-up display with Motion animation
+  if (isOver9000) {
+    return (
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={animationKey.current}
+          className={badgeClasses}
+          title="IT'S OVER 9000!"
+          animate={justCrossed ? { ...shakeAnimation, ...glowAnimation } : {}}
+          transition={justCrossed ? { ...shakeTransition, ...glowTransition } : {}}
+        >
+          <span className="flex items-center gap-0.5">
+            <span>9K+</span>
+            <Zap size={10} className="text-amber-400" />
+          </span>
+        </motion.span>
+      </AnimatePresence>
+    );
+  }
 
   if (animate && AnimateNumber !== null) {
     return (
