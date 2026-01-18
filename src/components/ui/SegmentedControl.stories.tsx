@@ -479,6 +479,10 @@ export const AllVariantsComparison: Story = {
       setCounts((c) => ({ ...c, warn: c.warn + 1 }));
     };
 
+    const addHundred = (): void => {
+      setCounts((c) => ({ error: c.error + 100, warn: c.warn + 100 }));
+    };
+
     const resetCounts = (): void => {
       setCounts({ error: 3, warn: 7 });
     };
@@ -530,6 +534,13 @@ export const AllVariantsComparison: Story = {
             className="px-3 py-1.5 text-xs bg-signal-warning/10 text-signal-warning border border-signal-warning/30 rounded hover:bg-signal-warning/20"
           >
             Add Warning (+1)
+          </button>
+          <button
+            type="button"
+            onClick={addHundred}
+            className="px-3 py-1.5 text-xs bg-accent-blue/10 text-accent-blue border border-accent-blue/30 rounded hover:bg-accent-blue/20"
+          >
+            +100 All
           </button>
           <button
             type="button"
