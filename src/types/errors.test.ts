@@ -125,5 +125,23 @@ describe('errors', () => {
       };
       expect(isAppError(error)).toBe(false);
     });
+
+    it('returns true for Error object with nested appError property', () => {
+      const appError: AppError = {
+        correlationId: 'id',
+        code: 'CODE',
+        message: 'Message',
+        source: 'frontend',
+        timestamp: Date.now(),
+      };
+      const errorObj = new Error('Test error');
+      (errorObj as Error & { appError: AppError }).appError = appError;
+      expect(isAppError(errorObj)).toBe(true);
+    });
+
+    it('returns false for Error object without appError property', () => {
+      const error = new Error('Test error');
+      expect(isAppError(error)).toBe(false);
+    });
   });
 });

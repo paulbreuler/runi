@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { executeRequest } from '@/api/http';
-import { isAppError } from '@/types/errors';
+import { isAppError, type AppError } from '@/types/errors';
 import { getConsoleService } from '@/services/console-service';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
@@ -103,15 +103,29 @@ export const HomePage = (): React.JSX.Element => {
       );
     } catch (e) {
       // Handle AppError (includes correlation ID for tracing)
-      if (isAppError(e)) {
-        const errorMessage = `[${e.code}] ${e.message} (Correlation ID: ${e.correlationId})`;
+      // Extract AppError - may be directly on error object or nested in appError property
+      let appError: AppError | undefined;
+
+      // Check if AppError is nested in appError property (when wrapped in Error object)
+      if (typeof e === 'object' && e !== null && 'appError' in e && e.appError !== undefined) {
+        const err = e as Record<string, unknown>;
+        if (isAppError(err.appError)) {
+          appError = err.appError;
+        }
+      } else if (isAppError(e)) {
+        // AppError properties are directly on the object (isAppError() type guard guarantees this)
+        appError = e;
+      }
+
+      if (appError !== undefined) {
+        const errorMessage = `[${appError.code}] ${appError.message} (Correlation ID: ${appError.correlationId})`;
         setError(errorMessage);
         // Log error to console service with correlation ID
         getConsoleService().addLog({
           level: 'error',
-          message: `[${e.code}] ${e.message}`,
-          args: [e],
-          correlationId: e.correlationId,
+          message: `[${appError.code}] ${appError.message}`,
+          args: [appError],
+          correlationId: appError.correlationId,
         });
       } else {
         const errorMessage = e instanceof Error ? e.message : String(e);

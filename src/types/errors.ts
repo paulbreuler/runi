@@ -76,6 +76,9 @@ export function fromBackendError(backendError: {
 /**
  * Check if an error is an AppError.
  *
+ * Handles both direct AppError objects and Error objects with nested `appError` property.
+ * This allows error handling to work correctly when AppError is wrapped in an Error object.
+ *
  * @param error - Error to check
  * @returns True if error is an AppError
  */
@@ -84,12 +87,29 @@ export function isAppError(error: unknown): error is AppError {
     return false;
   }
   const err = error as Record<string, unknown>;
-  return (
+
+  // Check if AppError properties are directly on the object
+  if (
     typeof err.correlationId === 'string' &&
     typeof err.code === 'string' &&
     typeof err.message === 'string' &&
     (err.source === 'frontend' || err.source === 'backend')
-  );
+  ) {
+    return true;
+  }
+
+  // Check if AppError is nested in `appError` property (when wrapped in Error object)
+  if (err.appError !== undefined && typeof err.appError === 'object' && err.appError !== null) {
+    const nested = err.appError as Record<string, unknown>;
+    return (
+      typeof nested.correlationId === 'string' &&
+      typeof nested.code === 'string' &&
+      typeof nested.message === 'string' &&
+      (nested.source === 'frontend' || nested.source === 'backend')
+    );
+  }
+
+  return false;
 }
 
 // Import generateCorrelationId for createFrontendError

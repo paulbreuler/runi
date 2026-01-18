@@ -3,6 +3,7 @@
 use crate::domain::errors::{AppError, ToAppError};
 use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
 use curl::easy::{Easy2, Handler, List, WriteError};
+use serde_json;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{debug, error, instrument};
@@ -427,14 +428,15 @@ fn duration_to_ms(d: Duration) -> u64 {
 ///
 /// # Errors
 ///
-/// Returns an error string if the request fails due to network issues,
-/// invalid URL, timeout, or other HTTP client errors.
+/// Returns an error string (JSON-serialized `AppError`) if the request fails.
+/// Tauri v2 requires `Result<T, String>` for commands - `AppError` is serialized
+/// to JSON string to preserve correlation IDs and error details.
 #[tauri::command]
 #[instrument(skip(params), fields(correlation_id = %correlation_id.as_deref().unwrap_or("unknown"), url = %params.url, method = %params.method))]
 pub async fn execute_request(
     params: RequestParams,
     correlation_id: Option<String>,
-) -> Result<HttpResponse, AppError> {
+) -> Result<HttpResponse, String> {
     let corr_id = correlation_id
         .clone()
         .unwrap_or_else(|| "unknown".to_string());
@@ -450,14 +452,20 @@ pub async fn execute_request(
     let result = tokio::task::spawn_blocking(move || execute_request_sync(&params, correlation_id))
         .await
         .map_err(|e| {
-            AppError::new(
+            // Convert spawn_blocking error to AppError, then serialize to String
+            let app_error = AppError::new(
                 corr_id.clone(),
                 "TASK_EXECUTION_ERROR",
                 format!("Task execution failed: {e}"),
-            )
+            );
+            serde_json::to_string(&app_error).unwrap_or_else(|_| {
+                format!(
+                    "{{\"correlation_id\":\"{corr_id}\",\"code\":\"TASK_EXECUTION_ERROR\",\"message\":\"Task execution failed\"}}"
+                )
+            })
         })?;
 
-    match &result {
+    match result {
         Ok(response) => {
             debug!(
                 correlation_id = %corr_id,
@@ -465,6 +473,7 @@ pub async fn execute_request(
                 total_ms = response.timing.total_ms,
                 "HTTP request completed successfully"
             );
+            Ok(response)
         }
         Err(e) => {
             error!(
@@ -473,10 +482,16 @@ pub async fn execute_request(
                 error_message = %e.message,
                 "HTTP request failed"
             );
+            // Convert AppError to JSON string for Tauri v2 compatibility
+            // Frontend will deserialize this back to AppError
+            let error_json = serde_json::to_string(&e).unwrap_or_else(|_| {
+                format!(
+                    "{{\"correlation_id\":\"{corr_id}\",\"code\":\"SERIALIZATION_ERROR\",\"message\":\"Failed to serialize error\"}}"
+                )
+            });
+            Err(error_json)
         }
     }
-
-    result
 }
 
 #[cfg(test)]
@@ -572,7 +587,11 @@ mod tests {
 
         let result = execute_request(params, None).await;
         assert!(result.is_err(), "Request should fail for method with space");
-        let err = result.unwrap_err();
+        let err_json = result.unwrap_err();
+        // Error is now JSON string - parse it to check message
+        let err: AppError = serde_json::from_str(&err_json).unwrap_or_else(|_| {
+            panic!("Failed to parse error JSON: {err_json}");
+        });
         assert!(
             err.message.contains("Invalid HTTP method"),
             "Error message should mention invalid method"
