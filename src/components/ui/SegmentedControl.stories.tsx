@@ -455,3 +455,108 @@ export const ConsoleLogFilter: Story = {
     );
   },
 };
+
+/**
+ * All display variants compared side-by-side with interactive badge counts.
+ * Demonstrates how badges appear in full, compact, and icon modes.
+ */
+export const AllVariantsComparison: Story = {
+  args: {
+    value: 'all',
+    onValueChange: (): void => undefined,
+    options: [],
+    'aria-label': 'Variant comparison',
+  },
+  render: function AllVariantsComparisonStory() {
+    const [value, setValue] = useState('all');
+    const [counts, setCounts] = useState({ error: 3, warn: 7 });
+
+    const incrementError = (): void => {
+      setCounts((c) => ({ ...c, error: c.error + 1 }));
+    };
+
+    const incrementWarn = (): void => {
+      setCounts((c) => ({ ...c, warn: c.warn + 1 }));
+    };
+
+    const resetCounts = (): void => {
+      setCounts({ error: 3, warn: 7 });
+    };
+
+    const options = [
+      { value: 'all', label: 'All', icon: <CheckCircle size={12} /> },
+      {
+        value: 'error',
+        label: 'Errors',
+        icon: <AlertCircle size={12} className="text-signal-error" />,
+        badge: counts.error,
+      },
+      {
+        value: 'warn',
+        label: 'Warnings',
+        icon: <AlertTriangle size={12} className="text-signal-warning" />,
+        badge: counts.warn,
+      },
+      {
+        value: 'info',
+        label: 'Info',
+        icon: <Info size={12} className="text-accent-blue" />,
+      },
+    ];
+
+    const variants: Array<'full' | 'compact' | 'icon'> = ['full', 'compact', 'icon'];
+
+    return (
+      <div className="space-y-6">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={incrementError}
+            className="px-3 py-1.5 text-xs bg-signal-error/10 text-signal-error border border-signal-error/30 rounded hover:bg-signal-error/20"
+          >
+            Add Error (+1)
+          </button>
+          <button
+            type="button"
+            onClick={incrementWarn}
+            className="px-3 py-1.5 text-xs bg-signal-warning/10 text-signal-warning border border-signal-warning/30 rounded hover:bg-signal-warning/20"
+          >
+            Add Warning (+1)
+          </button>
+          <button
+            type="button"
+            onClick={resetCounts}
+            className="px-3 py-1.5 text-xs bg-bg-raised border border-border-subtle rounded hover:bg-bg-elevated"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-6">
+          {variants.map((variant) => (
+            <div key={variant} className="space-y-2">
+              <div className="text-xs font-medium text-text-muted uppercase tracking-wide">
+                {variant}
+              </div>
+              <div className="p-3 bg-bg-surface border border-border-subtle rounded-lg">
+                <SegmentedControl
+                  value={value}
+                  onValueChange={setValue}
+                  options={options}
+                  displayVariant={variant}
+                  animateBadge={true}
+                  size="sm"
+                  aria-label={`${variant} variant`}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-text-muted">
+          Errors: {counts.error} | Warnings: {counts.warn} | Selected: {value}
+        </p>
+      </div>
+    );
+  },
+};

@@ -144,8 +144,8 @@ export const SegmentedControl = <T extends string>({
           >
             {option.icon !== undefined && <span className="shrink-0">{option.icon}</span>}
             {!isIconMode && <span>{option.label}</span>}
-            {/* Badge - only show in full/compact mode when count > 0 */}
-            {!isIconMode && option.badge !== undefined && option.badge > 0 && (
+            {/* Badge - show in all modes when count > 0 */}
+            {option.badge !== undefined && option.badge > 0 && (
               <BadgeCount
                 count={option.badge}
                 maxCount={maxBadgeCount}
