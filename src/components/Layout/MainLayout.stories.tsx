@@ -10,7 +10,7 @@ import { usePanelStore } from '@/stores/usePanelStore';
 import type { HttpResponse } from '@/types/http';
 
 const meta = {
-  title: 'Components/Layout/MainLayout',
+  title: 'Layout/MainLayout',
   component: MainLayout,
   parameters: {
     layout: 'fullscreen',

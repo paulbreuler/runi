@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { TitleBar } from './TitleBar';
 
 const meta = {
-  title: 'Components/Layout/TitleBar',
+  title: 'Layout/TitleBar',
   component: TitleBar,
   parameters: {
     layout: 'fullscreen',
