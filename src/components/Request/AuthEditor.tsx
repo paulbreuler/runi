@@ -5,6 +5,7 @@ import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type AuthType = 'none' | 'bearer' | 'basic' | 'custom';
 
@@ -234,18 +235,12 @@ export const AuthEditor = (): React.JSX.Element => {
 
           {/* Empty state */}
           {authType === 'none' && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="flex flex-col items-center justify-center py-12 text-center"
-            >
-              <Key className="size-12 text-text-muted/25 mb-4" strokeWidth={1} />
-              <p className="text-sm text-text-muted">No authentication configured</p>
-              <p className="text-xs text-text-muted/70 mt-1">
-                Select an authentication type above to get started
-              </p>
-            </motion.div>
+            <EmptyState
+              variant="prominent"
+              icon={<Key className="text-text-muted/25" strokeWidth={1} />}
+              title="No authentication configured"
+              description="Select an authentication type above to get started"
+            />
           )}
         </div>
       </div>

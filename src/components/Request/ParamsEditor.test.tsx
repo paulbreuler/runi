@@ -38,6 +38,10 @@ describe('ParamsEditor', () => {
     render(<ParamsEditor />);
     expect(screen.getByText('No query parameters')).toBeInTheDocument();
     expect(screen.getByText('Add parameters to append to the URL')).toBeInTheDocument();
+    // Verify EmptyState component is used (check for variant="muted" styling)
+    const { container } = render(<ParamsEditor />);
+    const emptyState = container.querySelector('.text-text-muted\\/50');
+    expect(emptyState).toBeInTheDocument();
   });
 
   it('renders existing parameters from URL', async () => {

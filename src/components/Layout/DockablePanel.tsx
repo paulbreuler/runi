@@ -765,7 +765,7 @@ export const DockablePanel = ({
             </div>
 
             {/* Panel content */}
-            <div className="flex-1 overflow-auto" data-testid="panel-content-area">
+            <div className="flex-1 overflow-hidden min-h-0" data-testid="panel-content-area">
               {children}
             </div>
           </>
