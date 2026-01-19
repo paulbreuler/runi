@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tracing;
-use uuid::Uuid;
+use uuid::{NoContext, Timestamp, Uuid};
 
 #[cfg(test)]
 use ts_rs::TS;
@@ -28,10 +28,19 @@ pub struct HistoryEntry {
 
 impl HistoryEntry {
     /// Create a new history entry from a request and response.
+    ///
+    /// Uses UUID v7 for the ID, which is time-ordered and provides:
+    /// - Natural sorting by creation time
+    /// - Better database index performance (less fragmentation)
+    /// - Embedded timestamp information
     #[must_use]
     pub fn new(request: RequestParams, response: HttpResponse) -> Self {
+        // Generate UUID v7 with current timestamp
+        let ts = Timestamp::now(NoContext);
+        let uuid = Uuid::new_v7(ts);
+
         Self {
-            id: format!("hist_{}", Uuid::new_v4().to_string().replace('-', "")),
+            id: format!("hist_{}", uuid.simple()),
             timestamp: Utc::now(),
             request,
             response,
