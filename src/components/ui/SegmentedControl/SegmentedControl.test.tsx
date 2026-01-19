@@ -447,7 +447,7 @@ describe('SegmentedControl', () => {
     it('resets badge display after animation settles when going from high tier to low tier', async () => {
       const handleChange = vi.fn();
 
-      // Start with badges over 9000 (tier 1+)
+      // Start with high tier badges
       const highTierOptions = [
         { value: 'all', label: 'All' },
         { value: 'error', label: 'Errors', badge: 9001 },
@@ -463,10 +463,10 @@ describe('SegmentedControl', () => {
         />
       );
 
-      // Badge should show "9K+" for over 9000
+      // Badge should show "9K+" for high counts
       expect(screen.getByText('9K+')).toBeInTheDocument();
 
-      // Change to low tier (no badges over 9000)
+      // Change to low tier
       const lowTierOptions = [
         { value: 'all', label: 'All' },
         { value: 'error', label: 'Errors', badge: 5 },
@@ -490,12 +490,12 @@ describe('SegmentedControl', () => {
     it('animates when tier decreases (not just increases)', async () => {
       const handleChange = vi.fn();
 
-      // Start with multiple badges over 9000 (tier 2+)
+      // Start with tier 2 (multiple high badges)
       const tier2Options = [
         { value: 'all', label: 'All' },
         { value: 'error', label: 'Errors', badge: 9001 },
         { value: 'warn', label: 'Warnings', badge: 9002 },
-        { value: 'info', label: 'Info', badge: 100 }, // Prevents god tier
+        { value: 'info', label: 'Info', badge: 100 },
       ];
 
       const { rerender } = render(
@@ -510,7 +510,7 @@ describe('SegmentedControl', () => {
       // Wait for initial animation to settle
       vi.advanceTimersByTime(2500);
 
-      // Reduce to tier 1 (only one badge over 9000)
+      // Reduce to tier 1
       const tier1Options = [
         { value: 'all', label: 'All' },
         { value: 'error', label: 'Errors', badge: 9001 },
@@ -536,11 +536,11 @@ describe('SegmentedControl', () => {
       expect(screen.getByText('99+')).toBeInTheDocument(); // 100 capped at 99
     });
 
-    it('properly resets colors after god tier animation completes', async () => {
+    it('properly resets colors after tier 5+ animation completes', async () => {
       const handleChange = vi.fn();
 
-      // Start at god tier (all badges over 9000, total > 36000)
-      const godTierOptions = [
+      // Start at tier 5+
+      const advancedTierOptions = [
         { value: 'error', label: 'Errors', badge: 10000 },
         { value: 'warn', label: 'Warnings', badge: 10000 },
         { value: 'info', label: 'Info', badge: 10000 },
@@ -551,15 +551,15 @@ describe('SegmentedControl', () => {
         <SegmentedControl
           value="error"
           onValueChange={handleChange}
-          options={godTierOptions}
+          options={advancedTierOptions}
           aria-label="Filter by level"
         />
       );
 
-      // Wait for god tier animation to complete (includes finale)
+      // Wait for tier 5+ animation to complete (includes finale)
       vi.advanceTimersByTime(3500);
 
-      // Reduce to tier 0 (no badges over 9000)
+      // Reduce to tier 0
       const tier0Options = [
         { value: 'error', label: 'Errors', badge: 5 },
         { value: 'warn', label: 'Warnings', badge: 3 },

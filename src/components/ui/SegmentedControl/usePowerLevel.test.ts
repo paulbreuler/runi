@@ -4,62 +4,60 @@ import { usePowerLevel, calculateTier } from './usePowerLevel';
 import { deriveVisualFlags } from './config';
 
 describe('calculateTier', () => {
-  it('returns tier 0 when no badges are over 9000', () => {
+  it('returns tier 0 when no badges exceed threshold', () => {
     const options = [{ badge: 100 }, { badge: 500 }, { badge: 8999 }];
     expect(calculateTier(options)).toBe(0);
   });
 
-  it('returns tier 1 when one badge is over 9000', () => {
+  it('returns tier 1 when one badge exceeds threshold', () => {
     const options = [{ badge: 9001 }, { badge: 100 }, { badge: 200 }];
     expect(calculateTier(options)).toBe(1);
   });
 
-  it('returns tier 2 when two badges are over 9000', () => {
+  it('returns tier 2 when two badges exceed threshold', () => {
     const options = [{ badge: 9001 }, { badge: 9002 }, { badge: 100 }];
     expect(calculateTier(options)).toBe(2);
   });
 
-  it('returns tier 3 when three badges are over 9000', () => {
+  it('returns tier 3 when three badges exceed threshold', () => {
     const options = [{ badge: 9001 }, { badge: 9002 }, { badge: 9003 }, { badge: 100 }];
     expect(calculateTier(options)).toBe(3);
   });
 
-  it('returns tier 4 when four badges are over 9000', () => {
+  it('returns tier 5 when all four badges exceed threshold', () => {
     const options = [{ badge: 9001 }, { badge: 9002 }, { badge: 9003 }, { badge: 9004 }];
-    // Not tier 5 yet because total is 36010, need all over 9000
-    // Actually 36010 >= 36000 but we need to check the logic
-    // Tier 5 requires ALL badges over 9000 AND total >= 36000
-    expect(calculateTier(options)).toBe(5); // All over 9000, total 36010 >= 36000
+    // All badges exceed threshold and total >= 36000, so tier 5
+    expect(calculateTier(options)).toBe(5);
   });
 
-  it('caps at tier 4 when not all badges are over 9000', () => {
+  it('caps at tier 4 when not all badges exceed threshold', () => {
     const options = [
       { badge: 9001 },
       { badge: 9002 },
       { badge: 9003 },
       { badge: 9004 },
-      { badge: 100 }, // This prevents god tier
+      { badge: 100 }, // Prevents advanced tier
     ];
     expect(calculateTier(options)).toBe(4);
   });
 
-  describe('god-tier calculations', () => {
-    it('returns tier 5 when all badges over 9000 and total >= 36000', () => {
+  describe('advanced tier calculations', () => {
+    it('returns tier 5 when all badges exceed threshold and total >= 36000', () => {
       const options = [{ badge: 9000 }, { badge: 9000 }, { badge: 9000 }, { badge: 9000 }];
       expect(calculateTier(options)).toBe(5);
     });
 
-    it('returns tier 6 when all badges over 9000 and total >= 50000', () => {
+    it('returns tier 6 when all badges exceed threshold and total >= 50000', () => {
       const options = [{ badge: 12500 }, { badge: 12500 }, { badge: 12500 }, { badge: 12500 }];
       expect(calculateTier(options)).toBe(6);
     });
 
-    it('returns tier 7 when all badges over 9000 and total >= 80000', () => {
+    it('returns tier 7 when all badges exceed threshold and total >= 80000', () => {
       const options = [{ badge: 20000 }, { badge: 20000 }, { badge: 20000 }, { badge: 20000 }];
       expect(calculateTier(options)).toBe(7);
     });
 
-    it('returns tier 8 when all badges over 9000 and total >= 100000', () => {
+    it('returns tier 8 when all badges exceed threshold and total >= 100000', () => {
       const options = [{ badge: 25000 }, { badge: 25000 }, { badge: 25000 }, { badge: 25000 }];
       expect(calculateTier(options)).toBe(8);
     });
@@ -75,12 +73,11 @@ describe('calculateTier', () => {
   });
 
   it('ignores options with badge value of 0', () => {
-    // Badge 0 is filtered out, leaving 2 badges: one over 9000, one under
-    // This should be tier 1 (one badge over 9000, not all over)
+    // Badge 0 is filtered out, leaving 2 badges: one exceeds threshold, one under
     const options = [
       { badge: 0 },
       { badge: 9001 },
-      { badge: 100 }, // This prevents god tier since not all are over 9000
+      { badge: 100 }, // Prevents advanced tier since not all exceed threshold
     ];
     expect(calculateTier(options)).toBe(1);
   });
@@ -185,7 +182,7 @@ describe('usePowerLevel', () => {
 
     expect(result.current.animationState).toBe('idle');
 
-    // Increase tier - one badge over 9000, one under (tier 1, not god tier)
+    // Increase tier
     rerender({ options: [{ badge: 9001 }, { badge: 200 }] });
 
     expect(result.current.tier).toBe(1);
@@ -230,12 +227,12 @@ describe('usePowerLevel', () => {
     expect(result.current.animationState).toBe('idle');
   });
 
-  it('goes through finale when ascending to god tier', () => {
+  it('goes through finale when ascending to tier 5+', () => {
     const { result, rerender } = renderHook(({ options }) => usePowerLevel(options, false), {
       initialProps: { options: [{ badge: 100 }] },
     });
 
-    // Jump to god tier (all badges over 9000)
+    // Jump to tier 5+
     rerender({
       options: [{ badge: 9001 }, { badge: 9002 }, { badge: 9003 }, { badge: 9004 }],
     });
@@ -251,19 +248,19 @@ describe('usePowerLevel', () => {
     expect(result.current.isFinale).toBe(true);
   });
 
-  it('does not trigger finale when descending from god tier', () => {
+  it('does not trigger finale when descending from tier 5+', () => {
     const { result, rerender } = renderHook(({ options }) => usePowerLevel(options, false), {
       initialProps: {
         options: [{ badge: 9001 }, { badge: 9002 }, { badge: 9003 }, { badge: 9004 }],
       },
     });
 
-    // Wait for god tier animation to complete
+    // Wait for tier 5+ animation to complete
     act(() => {
       vi.advanceTimersByTime(3500);
     });
 
-    // Descend from god tier to tier 3
+    // Descend to tier 3
     rerender({
       options: [{ badge: 9001 }, { badge: 9002 }, { badge: 9003 }, { badge: 100 }],
     });
@@ -285,7 +282,7 @@ describe('usePowerLevel', () => {
       initialProps: { options: [{ badge: 100 }, { badge: 200 }] },
     });
 
-    // Trigger tier increase (tier 1, not god tier)
+    // Trigger tier increase to tier 1
     rerender({ options: [{ badge: 9001 }, { badge: 200 }] });
     expect(result.current.animationState).toBe('powering_up');
 
@@ -315,7 +312,7 @@ describe('usePowerLevel', () => {
         initialProps: { options: [{ badge: 100 }, { badge: 200 }] },
       });
 
-      // Tier 1, not god tier
+      // Tier 1
       rerender({ options: [{ badge: 9001 }, { badge: 200 }] });
 
       // During powering_up
@@ -334,7 +331,7 @@ describe('usePowerLevel', () => {
         initialProps: { options: [{ badge: 100 }, { badge: 200 }] },
       });
 
-      // Tier 1, not god tier
+      // Tier 1
       rerender({ options: [{ badge: 9001 }, { badge: 200 }] });
 
       // Advance to settling
@@ -357,7 +354,7 @@ describe('usePowerLevel', () => {
         initialProps: { options: [{ badge: 100 }, { badge: 200 }, { badge: 300 }] },
       });
 
-      // Tier 2 for glow (2 badges over 9000, 1 under - not god tier)
+      // Tier 2 for glow
       rerender({ options: [{ badge: 9001 }, { badge: 9002 }, { badge: 300 }] });
 
       // Advance to settling
@@ -373,7 +370,7 @@ describe('usePowerLevel', () => {
         initialProps: { options: [{ badge: 100 }, { badge: 200 }] },
       });
 
-      // Tier 1, not god tier
+      // Tier 1
       rerender({ options: [{ badge: 9001 }, { badge: 200 }] });
 
       // During powering_up
@@ -405,7 +402,7 @@ describe('usePowerLevel', () => {
         initialProps: { options: [{ badge: 100 }, { badge: 200 }] },
       });
 
-      // Tier 1, not god tier
+      // Tier 1
       rerender({ options: [{ badge: 9001 }, { badge: 200 }] });
 
       // Should show tier 1 color (amber)
@@ -417,7 +414,7 @@ describe('usePowerLevel', () => {
         initialProps: { options: [{ badge: 100 }, { badge: 200 }] },
       });
 
-      // Tier 1, not god tier
+      // Tier 1
       rerender({ options: [{ badge: 9001 }, { badge: 200 }] });
 
       // Complete full animation cycle (powering_up 1500ms + sustained 300ms + settling 300ms = 2100ms)

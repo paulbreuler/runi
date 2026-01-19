@@ -520,7 +520,7 @@ interface FlareConfig {
 }
 
 /**
- * Edge flares component - energy flares shooting outward at god tiers.
+ * Edge flares component - energy flares shooting outward at advanced tiers.
  * Flares elongate as they travel, then shrink and fade.
  */
 export const EdgeFlares = ({

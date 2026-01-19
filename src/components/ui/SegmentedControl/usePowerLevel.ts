@@ -18,11 +18,7 @@ export interface SegmentOptionForPower {
 }
 
 /**
- * Calculates the power tier based on badge counts.
- *
- * Tier progression:
- * - Tiers 1-4: Based on COUNT of badges over 9000
- * - Tiers 5-8: Based on TOTAL POWER LEVEL once all badges are over 9000
+ * Calculates the power tier based on badge counts and thresholds.
  *
  * @param options - Array of options with optional badge counts
  * @returns The calculated tier (0-8)
@@ -34,21 +30,21 @@ export function calculateTier(options: SegmentOptionForPower[]): number {
   const totalPower = badges.reduce((sum, o) => sum + (o.badge ?? 0), 0);
   const allOver9000 = badgesOver9000 > 0 && badgesOver9000 === totalBadges;
 
-  // God-tier forms: all badges over 9000 + total power thresholds
+  // Advanced tiers: all badges exceed threshold + total power thresholds
   if (allOver9000) {
     if (totalPower >= 100000) {
-      return 8; // Mastered Ultra Instinct
+      return 8;
     }
     if (totalPower >= 80000) {
-      return 7; // Ultra Instinct Sign
+      return 7;
     }
     if (totalPower >= 50000) {
-      return 6; // Super Saiyan Blue
+      return 6;
     }
-    return 5; // Super Saiyan God (base god tier)
+    return 5;
   }
 
-  // Standard tiers: based on count of badges over 9000
+  // Standard tiers: based on count of badges exceeding threshold
   return Math.min(badgesOver9000, 4);
 }
 
@@ -58,7 +54,7 @@ export function calculateTier(options: SegmentOptionForPower[]): number {
  * This hook manages the complete animation lifecycle:
  * - idle: No transformation - normal UI
  * - powering_up: Transitioning to tier (1.5s celebratory animation)
- * - finale: Ultra Instinct burst (for god tier ascension)
+ * - finale: Burst effect for tier 5+ ascension
  * - sustained: Brief "powered" state (0.5s)
  * - settling: Fading back to idle (0.3s)
  *
@@ -93,14 +89,14 @@ export function usePowerLevel(
         // Animate for any tier > 0 (works for both increasing and decreasing)
         setAnimationState('powering_up');
 
-        // Check if we're INCREASING to a god tier (5+) from a non-god tier
-        // Only trigger grand finale when ascending to god tier, not descending
-        const wasNotGodTier = prevTierRef.current < 5;
-        const isNowGodTier = tier >= 5;
+        // Check if we're INCREASING to tier 5+ from a lower tier
+        // Only trigger grand finale when ascending, not descending
+        const wasLowerTier = prevTierRef.current < 5;
+        const isNowAdvancedTier = tier >= 5;
         const isAscending = tier > prevTierRef.current;
 
-        if (wasNotGodTier && isNowGodTier && isAscending) {
-          // Grand finale for reaching god tier (ascending only)
+        if (wasLowerTier && isNowAdvancedTier && isAscending) {
+          // Grand finale for reaching tier 5+ (ascending only)
           timersRef.current.push(
             setTimeout(() => {
               setAnimationState('finale');
