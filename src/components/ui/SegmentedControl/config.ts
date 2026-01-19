@@ -254,3 +254,155 @@ export const GOD_TIER_THRESHOLDS = {
   TIER_7: 80000,
   TIER_8: 100000,
 } as const;
+
+// ============================================================================
+// SETTLING CONFIGURATION - Tier-scaled explosive dispel effects
+// ============================================================================
+
+/**
+ * Settling configuration for tier-specific dispel effects.
+ * Higher tiers have more dramatic "explosion" when powering down.
+ */
+export interface SettlingConfig {
+  /** Number of particles (24 at T1 → 64 at T8) */
+  particleCount: number;
+  /** Distance multiplier for particle travel (1.0x at T1 → 2.2x at T8) */
+  particleDistance: number;
+  /** Shockwave ring scale (1.3 at T1 → 2.2 at T8) */
+  shockwaveScale: number;
+  /** Flash opacity at settling start (0.3 at T1 → 0.6 at T8) */
+  flashOpacity: number;
+  /** Whether to show secondary ring (T3+) */
+  hasSecondaryRing: boolean;
+  /** Whether to show edge flares (T5+) */
+  hasEdgeFlares: boolean;
+  /** Number of edge flares (0 at T1-4, 4-8 at T5+) */
+  flareCount: number;
+  /** Burst flash duration in ms */
+  flashDuration: number;
+  /** Shockwave duration in ms */
+  shockwaveDuration: number;
+}
+
+/**
+ * Tier-specific settling configurations.
+ * Each tier has progressively more intense dispel effects.
+ */
+export const SETTLING_CONFIG: Record<number, SettlingConfig> = {
+  0: {
+    particleCount: 0,
+    particleDistance: 0,
+    shockwaveScale: 1.0,
+    flashOpacity: 0,
+    hasSecondaryRing: false,
+    hasEdgeFlares: false,
+    flareCount: 0,
+    flashDuration: 0,
+    shockwaveDuration: 0,
+  },
+  1: {
+    particleCount: 24,
+    particleDistance: 1.0,
+    shockwaveScale: 1.3,
+    flashOpacity: 0.3,
+    hasSecondaryRing: false,
+    hasEdgeFlares: false,
+    flareCount: 0,
+    flashDuration: 120,
+    shockwaveDuration: 400,
+  },
+  2: {
+    particleCount: 32,
+    particleDistance: 1.2,
+    shockwaveScale: 1.4,
+    flashOpacity: 0.35,
+    hasSecondaryRing: false,
+    hasEdgeFlares: false,
+    flareCount: 0,
+    flashDuration: 140,
+    shockwaveDuration: 450,
+  },
+  3: {
+    particleCount: 40,
+    particleDistance: 1.4,
+    shockwaveScale: 1.5,
+    flashOpacity: 0.4,
+    hasSecondaryRing: true,
+    hasEdgeFlares: false,
+    flareCount: 0,
+    flashDuration: 160,
+    shockwaveDuration: 500,
+  },
+  4: {
+    particleCount: 48,
+    particleDistance: 1.6,
+    shockwaveScale: 1.7,
+    flashOpacity: 0.45,
+    hasSecondaryRing: true,
+    hasEdgeFlares: false,
+    flareCount: 0,
+    flashDuration: 180,
+    shockwaveDuration: 550,
+  },
+  5: {
+    particleCount: 52,
+    particleDistance: 1.8,
+    shockwaveScale: 1.9,
+    flashOpacity: 0.5,
+    hasSecondaryRing: true,
+    hasEdgeFlares: true,
+    flareCount: 4,
+    flashDuration: 200,
+    shockwaveDuration: 600,
+  },
+  6: {
+    particleCount: 56,
+    particleDistance: 1.9,
+    shockwaveScale: 2.0,
+    flashOpacity: 0.52,
+    hasSecondaryRing: true,
+    hasEdgeFlares: true,
+    flareCount: 5,
+    flashDuration: 220,
+    shockwaveDuration: 650,
+  },
+  7: {
+    particleCount: 60,
+    particleDistance: 2.0,
+    shockwaveScale: 2.1,
+    flashOpacity: 0.55,
+    hasSecondaryRing: true,
+    hasEdgeFlares: true,
+    flareCount: 6,
+    flashDuration: 240,
+    shockwaveDuration: 700,
+  },
+  8: {
+    particleCount: 64,
+    particleDistance: 2.2,
+    shockwaveScale: 2.2,
+    flashOpacity: 0.6,
+    hasSecondaryRing: true,
+    hasEdgeFlares: true,
+    flareCount: 8,
+    flashDuration: 260,
+    shockwaveDuration: 750,
+  },
+};
+
+// Base settling config - guaranteed to exist (used as fallback)
+export const BASE_SETTLING_CONFIG: SettlingConfig = {
+  particleCount: 0,
+  particleDistance: 0,
+  shockwaveScale: 1.0,
+  flashOpacity: 0,
+  hasSecondaryRing: false,
+  hasEdgeFlares: false,
+  flareCount: 0,
+  flashDuration: 0,
+  shockwaveDuration: 0,
+};
+
+// Helper function to safely get settling config with guaranteed return type
+export const getSettlingConfig = (tier: number): SettlingConfig =>
+  SETTLING_CONFIG[tier] ?? BASE_SETTLING_CONFIG;
