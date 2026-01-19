@@ -227,7 +227,12 @@ export function createConsoleColumns(
       id: 'message',
       accessorKey: 'message',
       header: 'Message',
-      cell: ({ row }) => <MessageCell message={row.original.message} />,
+      cell: ({ row }) => (
+        <MessageCell
+          message={row.original.message}
+          count={(row.original as { _groupCount?: number })._groupCount}
+        />
+      ),
       size: 500,
       enableSorting: true,
     },
