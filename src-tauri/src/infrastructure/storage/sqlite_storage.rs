@@ -4,6 +4,10 @@
 //! for history entries. It's designed for handling large datasets (1M+ entries)
 //! with efficient windowed queries.
 
+// Allow significant_drop_tightening because the lock guards in this module
+// are being used correctly. The clippy lint's suggested fix has syntax errors.
+#![allow(clippy::significant_drop_tightening)]
+
 use super::history::HistoryEntry;
 use super::traits::HistoryStorage;
 use async_trait::async_trait;
@@ -42,7 +46,7 @@ impl SqliteHistoryStorage {
         })
     }
 
-    /// Create an in-memory SQLite database (for testing).
+    /// Create an in-memory `SQLite` database (for testing).
     ///
     /// # Errors
     ///
@@ -427,14 +431,15 @@ mod tests {
         let storage = SqliteHistoryStorage::in_memory().unwrap();
 
         // Save 10 entries
-        let mut saved_ids = Vec::new();
         for i in 0..10 {
             let entry = create_test_entry(&format!("{i}"));
             storage.save_entry(&entry).await.unwrap();
-            saved_ids.push(entry.id);
             // Small delay to ensure different timestamps
             tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
         }
+
+        // Verify count
+        assert_eq!(storage.count().unwrap(), 10);
 
         // Get first page
         let page1 = storage.get_ids(5, 0, true).unwrap();

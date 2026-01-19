@@ -218,10 +218,10 @@ describe('useWindowedHistory', () => {
       const { result } = renderHook(() => useWindowedHistory({ pageSize: 50 }));
 
       await waitFor(() => {
-        expect(result.current.error).toBeDefined();
+        expect(result.current.error).not.toBeNull();
       });
 
-      expect(result.current.error).toContain('Network error');
+      expect(result.current.error).toMatch(/Network error/);
     });
   });
 
