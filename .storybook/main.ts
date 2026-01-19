@@ -17,6 +17,9 @@ const config: StorybookConfig = {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '../src'),
+          '@tauri-apps/plugin-dialog': path.resolve(__dirname, './mocks/tauri-plugin-dialog.ts'),
+          '@tauri-apps/plugin-fs': path.resolve(__dirname, './mocks/tauri-plugin-fs.ts'),
+          '@tauri-apps/api/window': path.resolve(__dirname, './mocks/tauri-api-window.ts'),
         },
       },
     });

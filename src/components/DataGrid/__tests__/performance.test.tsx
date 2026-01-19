@@ -13,6 +13,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
+import * as React from 'react';
 import { VirtualDataGrid } from '../VirtualDataGrid';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -90,7 +91,7 @@ describe('DataGrid Performance', () => {
 
       const startTime = performance.now();
       render(
-        <VirtualDataGrid
+        <VirtualDataGrid<TestRow>
           data={testData}
           columns={testColumns}
           getRowId={(row) => row.id}
@@ -112,7 +113,7 @@ describe('DataGrid Performance', () => {
 
       const startTime = performance.now();
       render(
-        <VirtualDataGrid
+        <VirtualDataGrid<TestRow>
           data={testData}
           columns={testColumns}
           getRowId={(row) => row.id}
@@ -134,7 +135,7 @@ describe('DataGrid Performance', () => {
 
       const startTime = performance.now();
       render(
-        <VirtualDataGrid
+        <VirtualDataGrid<TestRow>
           data={testData}
           columns={testColumns}
           getRowId={(row) => row.id}
@@ -369,7 +370,7 @@ describe('DataGrid Performance', () => {
 
       const startTime = performance.now();
       render(
-        <VirtualDataGrid
+        <VirtualDataGrid<TestRow>
           data={testData}
           columns={testColumns}
           getRowId={(row) => row.id}
@@ -395,7 +396,7 @@ describe('DataGrid Performance', () => {
 
       const startTime = performance.now();
       render(
-        <VirtualDataGrid
+        <VirtualDataGrid<TestRow>
           data={testData}
           columns={testColumns}
           getRowId={(row) => row.id}
@@ -420,7 +421,7 @@ describe('DataGrid Performance', () => {
 
       const startTime = performance.now();
       render(
-        <VirtualDataGrid
+        <VirtualDataGrid<TestRow>
           data={testData}
           columns={testColumns}
           getRowId={(row) => row.id}
@@ -445,7 +446,7 @@ describe('DataGrid Performance', () => {
 
       const startTime = performance.now();
       render(
-        <VirtualDataGrid
+        <VirtualDataGrid<TestRow>
           data={testData}
           columns={testColumns}
           getRowId={(row) => row.id}

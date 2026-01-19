@@ -137,6 +137,12 @@ export function VirtualDataGrid<TData>({
   // Get rows from table
   const { rows } = table.getRowModel();
 
+  // Calculate total table width from column sizes to prevent browser stretching with table-layout: fixed
+  const totalTableWidth = React.useMemo(() => {
+    const visibleColumns = table.getVisibleLeafColumns();
+    return visibleColumns.reduce((sum, col) => sum + col.getSize(), 0);
+  }, [table]);
+
   // Set up virtualizer
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -191,39 +197,43 @@ export function VirtualDataGrid<TData>({
     virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0) : 0;
 
   // Default cell renderer
-  const renderDefaultCells = (row: Row<TData>): React.ReactNode => (
-    <>
-      {row.getVisibleCells().map((cell) => {
-        const columnSize = cell.column.getSize();
-        const maxSize = cell.column.columnDef.maxSize;
-        const minSize = cell.column.columnDef.minSize;
+  const renderDefaultCells = (row: Row<TData>): React.ReactNode => {
+    return (
+      <>
+        {row.getVisibleCells().map((cell) => {
+          const columnSize = cell.column.getSize();
+          const maxSize = cell.column.columnDef.maxSize;
+          const minSize = cell.column.columnDef.minSize;
+          const columnId = cell.column.id;
 
-        // For fixed-size columns (minSize === maxSize), use fixed width
-        // For flexible columns, use width as initial size but allow growth
-        const isFixedColumn = maxSize !== undefined && minSize !== undefined && maxSize === minSize;
-        let cellStyle: React.CSSProperties;
-        if (isFixedColumn) {
-          cellStyle = { width: columnSize, minWidth: columnSize, maxWidth: columnSize };
-        } else if (minSize !== undefined) {
-          cellStyle = { minWidth: minSize, width: columnSize };
-        } else {
-          cellStyle = { width: columnSize };
-        }
+          // For fixed-size columns (minSize === maxSize), use fixed width
+          // For flexible columns, use width as initial size but allow growth
+          const isFixedColumn =
+            maxSize !== undefined && minSize !== undefined && maxSize === minSize;
+          let cellStyle: React.CSSProperties;
+          if (isFixedColumn) {
+            cellStyle = { width: columnSize, minWidth: columnSize, maxWidth: columnSize };
+          } else if (minSize !== undefined) {
+            cellStyle = { minWidth: minSize, width: columnSize };
+          } else {
+            cellStyle = { width: columnSize };
+          }
 
-        const paddingClass = getCellPaddingClass(cell.column.id);
+          const paddingClass = getCellPaddingClass(columnId);
 
-        return (
-          <td
-            key={cell.id}
-            className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden')}
-            style={cellStyle}
-          >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </td>
-        );
-      })}
-    </>
-  );
+          return (
+            <td
+              key={cell.id}
+              className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden')}
+              style={cellStyle}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </td>
+          );
+        })}
+      </>
+    );
+  };
 
   // Default row renderer
   const renderDefaultRow = (row: Row<TData>, cells: React.ReactNode): React.ReactNode => (
@@ -295,52 +305,58 @@ export function VirtualDataGrid<TData>({
         style={{ height }}
         data-testid="virtual-scroll-container"
       >
-        <table className="w-full border-collapse" role="table">
+        <table
+          className="border-collapse"
+          role="table"
+          style={{ tableLayout: 'fixed', width: totalTableWidth }}
+        >
           <thead className="sticky top-0 bg-bg-app z-10">
             {renderHeader !== undefined
               ? renderHeader()
-              : table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      const paddingClass = getCellPaddingClass(header.column.id);
-                      const headerSize = header.getSize();
-                      const maxSize = header.column.columnDef.maxSize;
-                      const minSize = header.column.columnDef.minSize;
-                      const isFixedColumn =
-                        maxSize !== undefined && minSize !== undefined && maxSize === minSize;
+              : table.getHeaderGroups().map((headerGroup) => {
+                  return (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        const paddingClass = getCellPaddingClass(header.column.id);
+                        const headerSize = header.getSize();
+                        const maxSize = header.column.columnDef.maxSize;
+                        const minSize = header.column.columnDef.minSize;
+                        const isFixedColumn =
+                          maxSize !== undefined && minSize !== undefined && maxSize === minSize;
 
-                      // Apply same width constraints as cells for consistency
-                      let headerStyle: React.CSSProperties;
-                      if (isFixedColumn) {
-                        headerStyle = {
-                          width: headerSize,
-                          minWidth: headerSize,
-                          maxWidth: headerSize,
-                        };
-                      } else if (minSize !== undefined) {
-                        headerStyle = { minWidth: minSize, width: headerSize };
-                      } else {
-                        headerStyle = { width: headerSize };
-                      }
+                        // Apply same width constraints as cells for consistency
+                        let headerStyle: React.CSSProperties;
+                        if (isFixedColumn) {
+                          headerStyle = {
+                            width: headerSize,
+                            minWidth: headerSize,
+                            maxWidth: headerSize,
+                          };
+                        } else if (minSize !== undefined) {
+                          headerStyle = { minWidth: minSize, width: headerSize };
+                        } else {
+                          headerStyle = { width: headerSize };
+                        }
 
-                      return (
-                        <th
-                          key={header.id}
-                          className={cn(
-                            paddingClass,
-                            'text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default overflow-hidden'
-                          )}
-                          style={headerStyle}
-                          role="columnheader"
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </th>
-                      );
-                    })}
-                  </tr>
-                ))}
+                        return (
+                          <th
+                            key={header.id}
+                            className={cn(
+                              paddingClass,
+                              'text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default overflow-hidden'
+                            )}
+                            style={headerStyle}
+                            role="columnheader"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
           </thead>
           <tbody>{renderTableBody()}</tbody>
         </table>

@@ -300,6 +300,8 @@ export function createNetworkColumns(
       header: 'Method',
       cell: ({ getValue }) => <MethodCell method={getValue() as string} />,
       size: 100,
+      minSize: 100,
+      maxSize: 100,
       enableSorting: true,
     },
 

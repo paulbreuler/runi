@@ -65,7 +65,8 @@ const ExpanderCell = <TData,>({
       aria-expanded={isExpanded}
     >
       <motion.span
-        className="flex items-center justify-center text-text-secondary"
+        className="flex items-center justify-center text-text-secondary shrink-0"
+        style={{ width: iconSize, height: iconSize }}
         animate={{
           rotate: isExpanded ? 90 : 0,
         }}
@@ -79,7 +80,7 @@ const ExpanderCell = <TData,>({
               }
         }
       >
-        <ChevronRight size={iconSize} />
+        <ChevronRight size={iconSize} className="shrink-0" />
       </motion.span>
     </button>
   );
