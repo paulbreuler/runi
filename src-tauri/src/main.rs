@@ -8,8 +8,9 @@ mod domain;
 mod infrastructure;
 
 use infrastructure::commands::{
-    clear_request_history, create_proxy_service, delete_history_entry, get_platform, hello_world,
-    load_request_history, save_request_history, set_log_level,
+    clear_request_history, create_proxy_service, delete_history_entry, get_history_batch,
+    get_history_count, get_history_ids, get_platform, hello_world, load_request_history,
+    save_request_history, set_log_level,
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
@@ -49,6 +50,9 @@ pub fn run() {
             load_request_history,
             delete_history_entry,
             clear_request_history,
+            get_history_count,
+            get_history_ids,
+            get_history_batch,
             set_log_level
         ])
         .run(tauri::generate_context!())
