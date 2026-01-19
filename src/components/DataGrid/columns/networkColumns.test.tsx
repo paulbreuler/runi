@@ -182,7 +182,7 @@ describe('createNetworkColumns', () => {
     expect(actionsColumn?.maxSize).toBe(actionsColumn?.minSize); // Fixed size
   });
 
-  it('selection column has compact size (32px)', () => {
+  it('selection column has compact size (uses COLUMN_WIDTHS.SELECTION)', () => {
     const columns = createNetworkColumns({
       onReplay: vi.fn(),
       onCopy: vi.fn(),
@@ -191,9 +191,10 @@ describe('createNetworkColumns', () => {
 
     const selectColumn = columns.find((c) => c.id === 'select');
     expect(selectColumn).toBeDefined();
-    expect(selectColumn?.size).toBe(32);
-    expect(selectColumn?.minSize).toBe(32);
-    expect(selectColumn?.maxSize).toBe(32);
+    // Should use COLUMN_WIDTHS.SELECTION constant (currently 24px)
+    expect(selectColumn?.size).toBe(24);
+    expect(selectColumn?.minSize).toBe(24);
+    expect(selectColumn?.maxSize).toBe(24);
   });
 
   it('method column has fixed width based on longest method (OPTIONS)', () => {
@@ -205,11 +206,10 @@ describe('createNetworkColumns', () => {
 
     const methodColumn = columns.find((c) => c.id === 'method');
     expect(methodColumn).toBeDefined();
-    // Method column should be fixed width to fit longest method (OPTIONS = 7 chars)
-    // With text-xs monospace (~7.5px/char) + px-1.5 padding (12px) = ~64px, rounded to 70px
-    expect(methodColumn?.size).toBe(70);
-    expect(methodColumn?.minSize).toBe(70);
-    expect(methodColumn?.maxSize).toBe(70);
+    // Method column should be fixed width with improved spacing to match Console Level column
+    expect(methodColumn?.size).toBe(90);
+    expect(methodColumn?.minSize).toBe(90);
+    expect(methodColumn?.maxSize).toBe(90);
   });
 
   it('does not accept compareMode prop (compare mode removed)', () => {

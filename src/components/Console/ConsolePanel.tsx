@@ -8,6 +8,7 @@ import { ConsoleContextMenu } from './ConsoleContextMenu';
 import { ConsoleToolbar } from './ConsoleToolbar';
 import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
 import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColumns';
+import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from '@/components/DataGrid/constants';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Row } from '@tanstack/react-table';
@@ -778,7 +779,10 @@ export const ConsolePanel = ({
                     transition={{ duration: 0.2, ease: 'easeInOut' }}
                     className="overflow-hidden"
                   >
-                    <div className="ml-8 mt-0.5 space-y-0.5 border-l border-border-default pl-2">
+                    <div
+                      className="mt-0.5 space-y-0.5 border-l border-border-default pl-2"
+                      style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
+                    >
                       {isGrouped ? (
                         <>
                           {/* Args content (grouped logs show args once) */}
@@ -787,7 +791,7 @@ export const ConsolePanel = ({
                               <div className="pl-2 border-l border-border-default">
                                 {originalLog.sampleLog.args.map((arg: unknown, index: number) => (
                                   <div
-                                    key={index}
+                                    key={`${originalLog.id}-arg-${String(index)}`}
                                     className="mb-1 text-xs font-mono text-text-secondary"
                                   >
                                     <pre className="whitespace-pre-wrap break-words overflow-x-auto">
@@ -863,7 +867,7 @@ export const ConsolePanel = ({
                           <div className="pl-2 border-l border-border-default">
                             {entry.args.map((arg: unknown, index: number) => (
                               <div
-                                key={index}
+                                key={`${entry.id}-arg-${String(index)}`}
                                 className="mb-1 text-xs font-mono text-text-secondary"
                               >
                                 <pre className="whitespace-pre-wrap break-words overflow-x-auto">

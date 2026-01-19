@@ -111,4 +111,75 @@ test.describe('Console Panel', () => {
     // Verify logs are cleared
     await expect(page.locator('[data-testid="console-logs"]')).toContainText(/no logs/i);
   });
+
+  test('displays badge counts for all log levels', async ({ page }) => {
+    // Open console panel using reliable helper
+    const panelOpened = await openPanel(page);
+    if (!panelOpened && isCI()) {
+      test.skip(true, 'Keyboard shortcut not reliable in CI environment');
+      return;
+    }
+    if (!panelOpened) {
+      throw new Error('Panel could not be opened via keyboard shortcut');
+    }
+
+    // Switch to Console tab
+    const consoleTab = page.getByRole('tab', { name: /console/i });
+    await consoleTab.click();
+
+    // Generate logs of all levels (note: debug logs may be filtered by default minLogLevel)
+    await page.evaluate(() => {
+      console.error('Error message 1');
+      console.error('Error message 2');
+      console.warn('Warning message 1');
+      console.warn('Warning message 2');
+      console.info('Info message 1');
+      console.info('Info message 2');
+      console.info('Info message 3');
+    });
+
+    // Wait for logs to appear
+    await page.waitForSelector('[data-testid="console-logs"]', { timeout: 5000 });
+
+    // Wait a bit for badge counts to update
+    await page.waitForTimeout(200);
+
+    // Verify badge counts are visible for all levels
+    // Error button should show badge with count 2
+    const errorButton = page.getByRole('button', { name: /errors/i });
+    await expect(errorButton).toBeVisible();
+    const errorButtonText = await errorButton.textContent();
+    expect(errorButtonText).toContain('2');
+
+    // Warn button should show badge with count 2
+    const warnButton = page.getByRole('button', { name: /warnings/i });
+    await expect(warnButton).toBeVisible();
+    const warnButtonText = await warnButton.textContent();
+    expect(warnButtonText).toContain('2');
+
+    // Info button should show badge with count 3
+    // Find button containing "Info" text
+    const allButtons = await page.locator('button').all();
+    const infoButton = allButtons.find(async (btn) => {
+      const text = await btn.textContent();
+      return text?.includes('Info') && !text?.includes('All');
+    });
+    expect(infoButton).toBeDefined();
+    if (infoButton) {
+      const infoButtonText = await infoButton.textContent();
+      expect(infoButtonText).toContain('3');
+    }
+
+    // All button should show total count in label (at least 7: 2 errors + 2 warnings + 3 info)
+    const allButton = page.getByRole('button', { name: /all/i });
+    await expect(allButton).toBeVisible();
+    const allButtonText = await allButton.textContent();
+    expect(allButtonText).toMatch(/all \(\d+\)/i);
+    // Extract number and verify it's at least 7
+    const match = allButtonText?.match(/all \((\d+)\)/i);
+    if (match) {
+      const totalCount = Number.parseInt(match[1] ?? '0', 10);
+      expect(totalCount).toBeGreaterThanOrEqual(7);
+    }
+  });
 });

@@ -8,6 +8,7 @@ import { FilterBar } from './FilterBar';
 import { NetworkStatusBar } from './NetworkStatusBar';
 import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
 import { createNetworkColumns } from '@/components/DataGrid/columns/networkColumns';
+import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from '@/components/DataGrid/constants';
 import { TimingWaterfall } from './TimingWaterfall';
 import { calculateWaterfallSegments } from '@/types/history';
 import { motion, AnimatePresence } from 'motion/react';
@@ -28,6 +29,12 @@ interface NetworkHistoryPanelProps {
 
 /**
  * Network History Panel - shows all HTTP request history with filtering and intelligence.
+ *
+ * Rebuilt from scratch to match ConsolePanel structure exactly, ensuring:
+ * - Identical wrapper div structure (overflow-hidden -> overflow-x-auto)
+ * - Matching VirtualDataGrid props and className patterns
+ * - Expanded content spans all columns (full width) using colSpan
+ * - Consistent column width patterns (32px for selection/expander, fixed widths for others)
  */
 export const NetworkHistoryPanel = ({
   entries: entriesProp,
@@ -249,10 +256,6 @@ export const NetworkHistoryPanel = ({
     [selectedIds, toggleSelection]
   );
 
-  // Handle select all from header checkbox
-  // This is triggered by TanStack Table's header checkbox, which calls handleRowSelectionChange
-  // with all rows selected/deselected
-
   // Sync store selection to TanStack Table (when store changes externally)
   useEffect(() => {
     // This effect ensures that when selection changes in the store (e.g., from selectAll),
@@ -387,7 +390,7 @@ export const NetworkHistoryPanel = ({
           >
             {cells}
           </tr>
-          {/* Expanded content row */}
+          {/* Expanded content row - CRITICAL: spans ALL columns for full width */}
           <AnimatePresence>
             {isExpanded && (
               <tr key={`${row.id}-expanded`}>
@@ -400,7 +403,10 @@ export const NetworkHistoryPanel = ({
                     transition={{ duration: 0.2, ease: 'easeInOut' }}
                     className="overflow-hidden"
                   >
-                    <div className="px-10 py-3 bg-bg-elevated border-t border-border-subtle">
+                    <div
+                      className="py-3 bg-bg-elevated border-t border-border-subtle"
+                      style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
+                    >
                       {/* Timing waterfall */}
                       <div className="mb-4">
                         <p className="text-xs text-text-muted mb-2">Timing</p>
@@ -497,27 +503,29 @@ export const NetworkHistoryPanel = ({
         isSaveSelectionDisabled={selectedIds.size === 0}
       />
 
-      {/* VirtualDataGrid - replaces custom virtualization */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-x-auto" ref={parentRef}>
-        <VirtualDataGrid
-          data={filteredEntries}
-          columns={columns}
-          getRowId={(row) => row.id}
-          enableRowSelection={true}
-          enableExpanding={true}
-          getRowCanExpand={() => true}
-          initialRowSelection={initialRowSelection}
-          initialExpanded={initialExpanded}
-          onRowSelectionChange={handleRowSelectionChange}
-          onExpandedChange={handleExpandedChange}
-          onSetRowSelectionReady={handleSetRowSelectionReady}
-          onSetExpandedReady={handleSetExpandedReady}
-          estimateRowHeight={ESTIMATED_ROW_HEIGHT}
-          emptyMessage={entries.length === 0 ? 'No requests yet' : 'No matching requests'}
-          renderRow={renderRow}
-          height={600}
-          className="flex-1"
-        />
+      {/* VirtualDataGrid container - matches ConsolePanel structure exactly */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-x-auto" ref={parentRef}>
+          <VirtualDataGrid
+            data={filteredEntries}
+            columns={columns}
+            getRowId={(row) => row.id}
+            enableRowSelection={true}
+            enableExpanding={true}
+            getRowCanExpand={() => true}
+            initialRowSelection={initialRowSelection}
+            initialExpanded={initialExpanded}
+            onRowSelectionChange={handleRowSelectionChange}
+            onExpandedChange={handleExpandedChange}
+            onSetRowSelectionReady={handleSetRowSelectionReady}
+            onSetExpandedReady={handleSetExpandedReady}
+            estimateRowHeight={ESTIMATED_ROW_HEIGHT}
+            emptyMessage={entries.length === 0 ? 'No requests yet' : 'No matching requests'}
+            renderRow={renderRow}
+            height={600}
+            className="flex-1"
+          />
+        </div>
       </div>
 
       {/* Status bar - fixed, no scroll */}

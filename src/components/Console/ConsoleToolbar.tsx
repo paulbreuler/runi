@@ -257,11 +257,13 @@ export const ConsoleToolbar = ({
               value: 'info',
               label: 'Info',
               icon: <Info size={12} className="text-accent-blue" />,
+              badge: counts.info,
             },
             {
               value: 'debug',
               label: 'Debug',
               icon: <Terminal size={12} className="text-text-muted" />,
+              badge: counts.debug,
             },
           ]}
           aria-label="Filter by log level"

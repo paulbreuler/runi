@@ -172,10 +172,14 @@ describe('MessageCell', () => {
     expect(screen.getByText('Hello, world!')).toBeInTheDocument();
   });
 
-  it('truncates long messages', () => {
-    render(<MessageCell message="This is a very long message that should be truncated..." />);
-    const messageText = screen.getByText(/This is a very long message/);
-    expect(messageText).toHaveClass('truncate');
+  it('truncates long messages to 250 characters', () => {
+    const longMessage = 'a'.repeat(300);
+    render(<MessageCell message={longMessage} />);
+    const messageText = screen.getByText(/^a{250}\.\.\.$/);
+    expect(messageText).toBeInTheDocument();
+    expect(messageText.textContent).toHaveLength(253); // 250 chars + "..."
+    // Verify tooltip contains full message
+    expect(messageText).toHaveAttribute('title', longMessage);
   });
 
   it('shows count badge when count > 1', () => {

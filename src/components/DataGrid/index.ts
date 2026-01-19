@@ -57,3 +57,6 @@ export {
   TimestampCell,
   ConsoleActionsCell,
 } from './columns/consoleColumns';
+
+// Layout constants
+export { COLUMN_WIDTHS, CELL_PADDING, EXPANDED_CONTENT_LEFT_MARGIN_PX } from './constants';

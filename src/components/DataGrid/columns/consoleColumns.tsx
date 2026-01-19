@@ -231,13 +231,15 @@ export function createConsoleColumns(
       iconSize: 14,
     }),
 
-    // Level column
+    // Level column (fixed width to match network method column)
     {
       id: 'level',
       accessorKey: 'level',
       header: 'Level',
       cell: ({ getValue }) => <LevelCell level={getValue() as LogLevel} />,
       size: 100,
+      minSize: 100,
+      maxSize: 100,
       enableSorting: true,
     },
 
