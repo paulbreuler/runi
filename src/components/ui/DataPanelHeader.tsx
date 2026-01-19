@@ -3,8 +3,8 @@ import { Checkbox } from './checkbox';
 import { cn } from '@/utils/cn';
 
 export interface DataPanelColumn {
-  /** Column label text */
-  label: string;
+  /** Column label (text or React node) */
+  label: React.ReactNode;
   /** Optional className for the column */
   className?: string;
   /** Optional width class (e.g., 'w-24', 'w-32') */

@@ -63,12 +63,11 @@ function createMockEntry(id: string): HistoryEntry {
       headers: {},
       body: '{}',
       timing: {
-        total_time_ms: 100,
-        dns_lookup_ms: 10,
-        connect_time_ms: 20,
-        tls_time_ms: 30,
+        total_ms: 100,
+        dns_ms: 10,
+        connect_ms: 20,
+        tls_ms: 30,
         first_byte_ms: 25,
-        download_time_ms: 15,
       },
     },
   };

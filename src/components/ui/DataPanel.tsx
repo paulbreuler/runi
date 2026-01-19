@@ -29,7 +29,7 @@ export interface DataPanelProps<T> {
   /** Container class name */
   className?: string;
   /** Scroll container ref (for auto-scroll, etc.) */
-  scrollRef?: React.RefObject<HTMLDivElement>;
+  scrollRef?: React.RefObject<HTMLDivElement | null>;
   /** Whether to show header only when items exist (default: false) */
   showHeaderOnlyWhenItemsExist?: boolean;
 }

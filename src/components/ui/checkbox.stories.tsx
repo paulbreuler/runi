@@ -143,9 +143,14 @@ export const States: Story = {
 export const Interactive: Story = {
   render: function InteractiveCheckbox() {
     const [checked, setChecked] = useState(false);
+    const handleChange = (value: boolean | 'indeterminate'): void => {
+      if (value !== 'indeterminate') {
+        setChecked(value);
+      }
+    };
     return (
       <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-        <Checkbox checked={checked} onCheckedChange={setChecked} />
+        <Checkbox checked={checked} onCheckedChange={handleChange} />
         Click to toggle (currently: {checked ? 'checked' : 'unchecked'})
       </label>
     );

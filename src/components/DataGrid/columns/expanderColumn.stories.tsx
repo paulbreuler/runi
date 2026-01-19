@@ -10,6 +10,7 @@ import {
   getCoreRowModel,
   getExpandedRowModel,
   type ColumnDef,
+  type ExpandedState,
   flexRender,
 } from '@tanstack/react-table';
 import { createExpanderColumn } from './expanderColumn';
@@ -110,11 +111,11 @@ const getStatusColor = (status: number): string => {
 
 // Demo table component
 interface DemoTableProps {
-  initialExpanded?: Record<string, boolean>;
+  initialExpanded?: ExpandedState;
 }
 
 const DemoTable = ({ initialExpanded = {} }: DemoTableProps): React.ReactElement => {
-  const [expanded, setExpanded] = React.useState(initialExpanded);
+  const [expanded, setExpanded] = React.useState<ExpandedState>(initialExpanded);
 
   const columns: Array<ColumnDef<DemoRow>> = [
     createExpanderColumn<DemoRow>({

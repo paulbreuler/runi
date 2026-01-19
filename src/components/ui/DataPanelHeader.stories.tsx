@@ -80,7 +80,8 @@ const meta = {
 } satisfies Meta<typeof DataPanelHeader>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+// Use a more permissive Story type that allows render without args
+type Story = StoryObj<typeof DataPanelHeader>;
 
 const consoleColumns = [
   { label: 'Level', className: 'text-xs text-text-muted' },

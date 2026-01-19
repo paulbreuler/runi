@@ -92,7 +92,8 @@ const meta = {
 } satisfies Meta<typeof DataPanel>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+// Use a more permissive Story type that allows render without args
+type Story = StoryObj<typeof DataPanel>;
 
 const LogRow = ({
   log,
@@ -168,7 +169,7 @@ export const WithEmptyState: Story = {
       <DataPanel
         items={[]}
         renderRow={(log: LogItem) => <LogRow key={log.id} log={log} />}
-        emptyState={<EmptyState message="No logs to display" className="h-full" />}
+        emptyState={<EmptyState title="No logs to display" className="h-full" />}
       />
     </div>
   ),
