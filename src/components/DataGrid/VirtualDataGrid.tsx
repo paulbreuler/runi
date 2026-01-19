@@ -49,6 +49,12 @@ export interface VirtualDataGridProps<TData> extends Omit<UseDataGridOptions<TDa
 
   /** Custom header renderer */
   renderHeader?: () => React.ReactNode;
+
+  /** Expose setRowSelection for external control (e.g., row clicks) */
+  onSetRowSelectionReady?: (setRowSelection: (selection: Record<string, boolean>) => void) => void;
+
+  /** Expose setExpanded for external control (e.g., double-click) */
+  onSetExpandedReady?: (setExpanded: (expanded: Record<string, boolean>) => void) => void;
 }
 
 /**
@@ -77,6 +83,8 @@ export function VirtualDataGrid<TData>({
   onRowSelectionChange,
   onSortingChange,
   onExpandedChange,
+  onSetRowSelectionReady,
+  onSetExpandedReady,
   renderRow,
   renderHeader,
   ...hookOptions
@@ -85,11 +93,29 @@ export function VirtualDataGrid<TData>({
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Use the base data grid hook
-  const { table, rowSelection, sorting, expanded } = useDataGrid({
+  const { table, rowSelection, sorting, expanded, setRowSelection, setExpanded } = useDataGrid({
     data,
     columns,
     ...hookOptions,
   });
+
+  // Expose setRowSelection to parent if requested
+  React.useEffect(() => {
+    if (onSetRowSelectionReady !== undefined) {
+      onSetRowSelectionReady((selection: Record<string, boolean>) => {
+        setRowSelection(selection);
+      });
+    }
+  }, [onSetRowSelectionReady, setRowSelection]);
+
+  // Expose setExpanded to parent if requested
+  React.useEffect(() => {
+    if (onSetExpandedReady !== undefined) {
+      onSetExpandedReady((expandedState: Record<string, boolean>) => {
+        setExpanded(expandedState);
+      });
+    }
+  }, [onSetExpandedReady, setExpanded]);
 
   // Get rows from table
   const { rows } = table.getRowModel();

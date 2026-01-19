@@ -52,6 +52,7 @@ const ExpanderCell = <TData,>({
 
   return (
     <button
+      data-testid="expand-button"
       type="button"
       onClick={handleClick}
       className={cn(

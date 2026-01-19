@@ -214,6 +214,7 @@ export const ActionsCell = ({
   return (
     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <Button
+        data-testid="replay-button"
         variant="ghost"
         size="icon-xs"
         onClick={handleReplayClick}
@@ -223,6 +224,7 @@ export const ActionsCell = ({
         <Play size={14} />
       </Button>
       <Button
+        data-testid="copy-curl-button"
         variant="ghost"
         size="icon-xs"
         onClick={handleCopyClick}
@@ -233,6 +235,7 @@ export const ActionsCell = ({
       </Button>
       {onDelete !== undefined && (
         <Button
+          data-testid="delete-button"
           variant="destructive-outline"
           size="icon-xs"
           onClick={handleDeleteClick}

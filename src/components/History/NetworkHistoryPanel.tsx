@@ -1,20 +1,20 @@
-import { useMemo, useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useMemo, useEffect, useCallback, useRef } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { cn } from '@/utils/cn';
 import type { NetworkHistoryEntry, HistoryFilters } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { FilterBar } from './FilterBar';
-import { NetworkHistoryRow } from './NetworkHistoryRow';
 import { NetworkStatusBar } from './NetworkStatusBar';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { DataPanelHeader } from '@/components/ui/DataPanelHeader';
+import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
+import { createNetworkColumns } from '@/components/DataGrid/columns/networkColumns';
+import { TimingWaterfall } from './TimingWaterfall';
+import { calculateWaterfallSegments } from '@/types/history';
+import { motion, AnimatePresence } from 'motion/react';
+import type { Row } from '@tanstack/react-table';
 
 /** Estimated row height for virtualization */
 const ESTIMATED_ROW_HEIGHT = 48;
-/** Threshold for enabling virtualization (only virtualize large lists) */
-const VIRTUALIZATION_THRESHOLD = 50;
 
 interface NetworkHistoryPanelProps {
   /** History entries to display (optional - uses store by default) */
@@ -43,10 +43,10 @@ export const NetworkHistoryPanel = ({
     expandedId,
     setFilter,
     setCompareMode,
-    toggleCompareSelection,
+    toggleCompareSelection: _toggleCompareSelection, // For future compare mode column
     toggleSelection, // Multi-select support
-    selectAll, // Bulk select support
-    deselectAll, // Bulk deselect support
+    selectAll: _selectAll, // Used via handleRowSelectionChange for select all
+    deselectAll: _deselectAll, // Used via handleRowSelectionChange for deselect all
     setExpandedId,
     deleteEntry,
     clearHistory,
@@ -144,14 +144,20 @@ export const NetworkHistoryPanel = ({
     setFilter(key, value);
   };
 
-  const handleToggleExpand = (id: string): void => {
-    setExpandedId(expandedId === id ? null : id);
-  };
+  const handleToggleExpand = useCallback(
+    (id: string): void => {
+      setExpandedId(expandedId === id ? null : id);
+    },
+    [expandedId, setExpandedId]
+  );
 
-  const handleSelect = (id: string): void => {
-    // Use toggleSelection for multi-select support (maintains backward compatibility)
-    toggleSelection(id);
-  };
+  const handleSelect = useCallback(
+    (id: string): void => {
+      // Use toggleSelection for multi-select support (maintains backward compatibility)
+      toggleSelection(id);
+    },
+    [toggleSelection]
+  );
 
   const handleCompareModeToggle = (): void => {
     setCompareMode(!compareMode);
@@ -195,95 +201,287 @@ export const NetworkHistoryPanel = ({
     }
   };
 
-  const handleDelete = async (id: string): Promise<void> => {
-    await deleteEntry(id);
-  };
+  const handleDelete = useCallback(
+    (id: string): void => {
+      // Fire and forget - errors are handled by the store
+      void deleteEntry(id);
+    },
+    [deleteEntry]
+  );
 
-  // Virtualization
+  // Container ref for height calculation (future: measure dynamically)
   const parentRef = useRef<HTMLDivElement>(null);
-  const virtualizer = useVirtualizer({
-    count: filteredEntries.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ESTIMATED_ROW_HEIGHT,
-    overscan: 5,
-  });
 
-  // Render entry list based on count and virtualization threshold
-  const renderEntryList = (): React.ReactNode => {
-    // Empty state
-    if (filteredEntries.length === 0) {
-      return (
-        <EmptyState
-          variant="muted"
-          size="sm"
-          title={entries.length === 0 ? 'No requests yet' : 'No matching requests'}
-        />
-      );
+  // Create columns with callbacks
+  const columns = useMemo(
+    () =>
+      createNetworkColumns({
+        onReplay,
+        onCopy: onCopyCurl,
+        onDelete: handleDelete,
+      }),
+    [onReplay, onCopyCurl, handleDelete]
+  );
+
+  // Sync TanStack Table selection with store
+  const handleRowSelectionChange = useCallback(
+    (selection: Record<string, boolean>): void => {
+      const selectedSet = new Set(Object.keys(selection).filter((id) => selection[id] === true));
+      const currentSet = selectedIds;
+
+      // Batch update: only toggle IDs that changed
+      // Add new selections
+      for (const id of selectedSet) {
+        if (!currentSet.has(id)) {
+          toggleSelection(id);
+        }
+      }
+      // Remove deselections
+      for (const id of currentSet) {
+        if (!selectedSet.has(id)) {
+          toggleSelection(id);
+        }
+      }
+    },
+    [selectedIds, toggleSelection]
+  );
+
+  // Handle select all from header checkbox
+  // This is triggered by TanStack Table's header checkbox, which calls handleRowSelectionChange
+  // with all rows selected/deselected
+
+  // Sync store selection to TanStack Table (when store changes externally)
+  useEffect(() => {
+    // This effect ensures that when selection changes in the store (e.g., from selectAll),
+    // the TanStack Table selection state is updated
+    // Note: This creates a controlled component pattern
+    const newSelection: Record<string, boolean> = {};
+    for (const id of selectedIds) {
+      newSelection[id] = true;
     }
+    // The VirtualDataGrid will handle this via initialRowSelection prop updates
+  }, [selectedIds]);
 
-    // Virtualized rendering for large lists
-    if (filteredEntries.length >= VIRTUALIZATION_THRESHOLD) {
-      return (
-        <div
-          style={{
-            height: `${String(virtualizer.getTotalSize())}px`,
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const entry = filteredEntries[virtualRow.index];
-            if (entry === undefined) {
-              return null;
-            }
-            return (
-              <div
-                key={entry.id}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${String(virtualRow.start)}px)`,
-                }}
-              >
-                <NetworkHistoryRow
-                  entry={entry}
-                  isExpanded={expandedId === entry.id}
-                  isSelected={selectedIds.has(entry.id)}
-                  onToggleExpand={handleToggleExpand}
-                  onSelect={handleSelect}
-                  onReplay={onReplay}
-                  onCopyCurl={onCopyCurl}
-                  compareMode={compareMode}
-                  isCompareSelected={compareSelection.includes(entry.id)}
-                  onToggleCompare={toggleCompareSelection}
-                  onDelete={handleDelete}
-                />
-              </div>
-            );
-          })}
-        </div>
-      );
+  // Sync TanStack Table expansion with store
+  const handleExpandedChange = useCallback(
+    (expanded: Record<string, boolean>): void => {
+      // Find the expanded row (should be only one)
+      const expandedIds = Object.keys(expanded).filter((id) => expanded[id] === true);
+      const newExpandedId = expandedIds.length > 0 ? (expandedIds[0] ?? null) : null;
+
+      if (newExpandedId !== expandedId) {
+        setExpandedId(newExpandedId);
+      }
+    },
+    [expandedId, setExpandedId]
+  );
+
+  // Convert store selection to TanStack Table format
+  const initialRowSelection = useMemo(() => {
+    const selection: Record<string, boolean> = {};
+    for (const id of selectedIds) {
+      selection[id] = true;
     }
+    return selection;
+  }, [selectedIds]);
 
-    // Standard rendering for small lists
-    return filteredEntries.map((entry) => (
-      <NetworkHistoryRow
-        key={entry.id}
-        entry={entry}
-        isExpanded={expandedId === entry.id}
-        isSelected={selectedIds.has(entry.id)}
-        onToggleExpand={handleToggleExpand}
-        onSelect={handleSelect}
-        onReplay={onReplay}
-        onCopyCurl={onCopyCurl}
-        compareMode={compareMode}
-        isCompareSelected={compareSelection.includes(entry.id)}
-        onToggleCompare={toggleCompareSelection}
-      />
-    ));
-  };
+  // Convert store expansion to TanStack Table format
+  const initialExpanded = useMemo(() => {
+    if (expandedId === null) {
+      return {};
+    }
+    return { [expandedId]: true };
+  }, [expandedId]);
+
+  // Refs to store setRowSelection and setExpanded functions from VirtualDataGrid
+  const setRowSelectionRef = useRef<((selection: Record<string, boolean>) => void) | null>(null);
+  const setExpandedRef = useRef<((expanded: Record<string, boolean>) => void) | null>(null);
+
+  // Handle when VirtualDataGrid is ready with setRowSelection
+  const handleSetRowSelectionReady = useCallback(
+    (setRowSelectionFn: (selection: Record<string, boolean>) => void): void => {
+      setRowSelectionRef.current = setRowSelectionFn;
+    },
+    []
+  );
+
+  // Handle when VirtualDataGrid is ready with setExpanded
+  const handleSetExpandedReady = useCallback(
+    (setExpandedFn: (expanded: Record<string, boolean>) => void): void => {
+      setExpandedRef.current = setExpandedFn;
+    },
+    []
+  );
+
+  // Custom row renderer that includes expanded content
+  const renderRow = useCallback(
+    (row: Row<NetworkHistoryEntry>, cells: React.ReactNode): React.ReactNode => {
+      const entry = row.original;
+      const isExpanded = expandedId === entry.id;
+      const isSelected = selectedIds.has(entry.id);
+      const segments = calculateWaterfallSegments(entry.response.timing);
+      const totalMs = entry.response.timing.total_ms;
+      // Compare mode not yet implemented in columns - will be added in follow-up
+      void compareSelection;
+
+      // Handle row click for selection
+      const handleRowClick = (e: React.MouseEvent): void => {
+        // Don't toggle if clicking on buttons or checkboxes
+        const target = e.target as HTMLElement;
+        if (
+          target.closest('button') !== null ||
+          target.closest('[role="checkbox"]') !== null ||
+          target.closest('input') !== null
+        ) {
+          return;
+        }
+        // Update both store and TanStack Table
+        handleSelect(entry.id);
+        if (setRowSelectionRef.current !== null) {
+          const newSelection = { ...initialRowSelection };
+          if (isSelected) {
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- ID is from row data, safe
+            delete newSelection[entry.id];
+          } else {
+            newSelection[entry.id] = true;
+          }
+          setRowSelectionRef.current(newSelection);
+        }
+      };
+
+      // Handle double-click for expansion
+      const handleRowDoubleClick = (e: React.MouseEvent): void => {
+        // Don't toggle if clicking on buttons or checkboxes
+        const target = e.target as HTMLElement;
+        if (
+          target.closest('button') !== null ||
+          target.closest('[role="checkbox"]') !== null ||
+          target.closest('input') !== null
+        ) {
+          return;
+        }
+        // Update both store and TanStack Table
+        handleToggleExpand(entry.id);
+        if (setExpandedRef.current !== null) {
+          const newExpanded: Record<string, boolean> = {};
+          if (!isExpanded) {
+            newExpanded[entry.id] = true;
+          }
+          setExpandedRef.current(newExpanded);
+        }
+      };
+
+      return (
+        <>
+          <tr
+            key={row.id}
+            className={cn(
+              'group border-b border-border-default hover:bg-bg-raised/50 transition-colors cursor-pointer',
+              isSelected && 'bg-bg-raised'
+            )}
+            data-row-id={row.id}
+            data-testid="history-row"
+            onClick={handleRowClick}
+            onDoubleClick={handleRowDoubleClick}
+          >
+            {cells}
+          </tr>
+          {/* Expanded content row */}
+          <AnimatePresence>
+            {isExpanded && (
+              <tr key={`${row.id}-expanded`}>
+                <td colSpan={columns.length} className="p-0">
+                  <motion.div
+                    data-testid="expanded-section"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-10 py-3 bg-bg-elevated border-t border-border-subtle">
+                      {/* Timing waterfall */}
+                      <div className="mb-4">
+                        <p className="text-xs text-text-muted mb-2">Timing</p>
+                        <TimingWaterfall
+                          segments={segments}
+                          totalMs={totalMs}
+                          showLegend
+                          height="h-2"
+                        />
+                      </div>
+
+                      {/* Intelligence details */}
+                      {entry.intelligence !== undefined && (
+                        <div className="mb-4">
+                          <p className="text-xs text-text-muted mb-2">Intelligence</p>
+                          <div className="flex flex-wrap gap-3 text-xs">
+                            {entry.intelligence.verified && (
+                              <span className="text-signal-success">Verified</span>
+                            )}
+                            {entry.intelligence.boundToSpec && (
+                              <span className="text-accent-blue">
+                                Bound to {entry.intelligence.specOperation ?? 'spec'}
+                              </span>
+                            )}
+                            {entry.intelligence.drift !== null && (
+                              <span className="text-signal-warning">
+                                Drift: {entry.intelligence.drift.message}
+                              </span>
+                            )}
+                            {entry.intelligence.aiGenerated && (
+                              <span className="text-signal-ai">AI Generated</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded transition-colors"
+                          onClick={(): void => {
+                            onReplay(entry);
+                          }}
+                        >
+                          Edit & Replay
+                        </button>
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded transition-colors"
+                          onClick={(): void => {
+                            onCopyCurl(entry);
+                          }}
+                        >
+                          Copy as cURL
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </td>
+              </tr>
+            )}
+          </AnimatePresence>
+        </>
+      );
+    },
+    [
+      expandedId,
+      selectedIds,
+      compareSelection,
+      columns.length,
+      handleSelect,
+      handleToggleExpand,
+      onReplay,
+      onCopyCurl,
+      initialRowSelection,
+      // setRowSelectionRef is a ref, doesn't need to be in deps
+    ]
+  );
+
+  // Note: Select all is handled via TanStack Table's header checkbox in selection column
+  // The store's selectAll/deselectAll will be called via handleRowSelectionChange
 
   return (
     <div className="flex flex-col h-full bg-bg-surface">
@@ -301,51 +499,27 @@ export const NetworkHistoryPanel = ({
         isSaveSelectionDisabled={selectedIds.size === 0}
       />
 
-      {/* Table container - handles horizontal overflow */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-x-auto">
-        {/* Table header with select all - using DataPanelHeader */}
-        <DataPanelHeader
-          columns={[
-            { label: '', width: 'w-5' }, // Chevron space
-            { label: 'Method', width: 'w-14', className: 'text-xs text-text-muted' },
-            { label: 'URL', className: 'flex-1 text-xs text-text-muted' },
-            { label: 'Status', width: 'w-12', className: 'text-right text-xs text-text-muted' },
-            { label: 'Time', width: 'w-14', className: 'text-right text-xs text-text-muted' },
-            { label: 'Size', width: 'w-16', className: 'text-right text-xs text-text-muted' },
-            { label: 'When', width: 'w-16', className: 'text-right text-xs text-text-muted' },
-            { label: '', width: 'w-14' }, // Actions space
-          ]}
-          showSelectAll={true}
-          allSelected={
-            filteredEntries.length > 0 &&
-            filteredEntries.every((entry) => selectedIds.has(entry.id))
-          }
-          someSelected={
-            filteredEntries.some((entry) => selectedIds.has(entry.id)) &&
-            !filteredEntries.every((entry) => selectedIds.has(entry.id))
-          }
-          onSelectAllChange={(checked): void => {
-            if (checked) {
-              selectAll(filteredEntries.map((entry) => entry.id));
-            } else {
-              deselectAll();
-            }
-          }}
-          enabled={filteredEntries.length > 0}
-          className="px-3 min-w-max"
+      {/* VirtualDataGrid - replaces custom virtualization */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-x-auto" ref={parentRef}>
+        <VirtualDataGrid
+          data={filteredEntries}
+          columns={columns}
+          getRowId={(row) => row.id}
+          enableRowSelection={true}
+          enableExpanding={true}
+          getRowCanExpand={() => true}
+          initialRowSelection={initialRowSelection}
+          initialExpanded={initialExpanded}
+          onRowSelectionChange={handleRowSelectionChange}
+          onExpandedChange={handleExpandedChange}
+          onSetRowSelectionReady={handleSetRowSelectionReady}
+          onSetExpandedReady={handleSetExpandedReady}
+          estimateRowHeight={ESTIMATED_ROW_HEIGHT}
+          emptyMessage={entries.length === 0 ? 'No requests yet' : 'No matching requests'}
+          renderRow={renderRow}
+          height={600}
+          className="flex-1"
         />
-
-        {/* Entry list - vertical scroll only */}
-        <div
-          ref={parentRef}
-          className={cn(
-            'flex-1 min-h-0',
-            filteredEntries.length === 0 ? 'flex flex-col' : 'overflow-y-auto'
-          )}
-          style={{ scrollbarGutter: 'stable' }}
-        >
-          {renderEntryList()}
-        </div>
       </div>
 
       {/* Status bar - fixed, no scroll */}

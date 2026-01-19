@@ -20,6 +20,7 @@ import {
   type RowSelectionState,
   type ExpandedState,
   type OnChangeFn,
+  type Row,
 } from '@tanstack/react-table';
 
 /**
@@ -55,6 +56,9 @@ export interface UseDataGridOptions<TData> {
 
   /** Custom function to get unique row ID */
   getRowId?: (originalRow: TData, index: number, parent?: unknown) => string;
+
+  /** Custom function to determine if a row can be expanded (defaults to true if enableExpanding) */
+  getRowCanExpand?: (row: Row<TData>) => boolean;
 }
 
 /**
@@ -120,6 +124,7 @@ export function useDataGrid<TData>({
   enableExpanding = false,
   initialExpanded = {},
   getRowId,
+  getRowCanExpand,
 }: UseDataGridOptions<TData>): UseDataGridReturn<TData> {
   // Sorting state
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
@@ -160,6 +165,7 @@ export function useDataGrid<TData>({
       enableRowSelection,
       enableExpanding,
       getRowId,
+      getRowCanExpand,
     }),
     [
       data,
@@ -174,6 +180,7 @@ export function useDataGrid<TData>({
       enableRowSelection,
       enableExpanding,
       getRowId,
+      getRowCanExpand,
     ]
   );
 
