@@ -1,10 +1,7 @@
 import { Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  ActionBarGroup,
-  ActionBarCompositeButton,
-  useOptionalActionBarContext,
-} from '@/components/ActionBar';
+import { SplitButton } from '@/components/ui/SplitButton';
+import { ActionBarGroup, useOptionalActionBarContext } from '@/components/ActionBar';
 
 interface FilterBarActionsProps {
   /** Callback to save all entries */
@@ -13,7 +10,7 @@ interface FilterBarActionsProps {
   onSaveSelection: () => void;
   /** Callback to clear all history */
   onClearAll: () => Promise<void>;
-  /** Whether save selection is disabled */
+  /** Whether save selection is disabled (no items selected) */
   isSaveSelectionDisabled: boolean;
 }
 
@@ -22,9 +19,10 @@ interface FilterBarActionsProps {
  *
  * Now built on ActionBar primitives for consistent responsive behavior.
  *
- * Uses ActionBarCompositeButton for Save actions:
- * - Primary button: "Save Selected" (most common action)
- * - Dropdown arrow: Shows "Save All" option
+ * Uses SplitButton for Save actions:
+ * - When items selected: Primary button is "Save" (saves selection)
+ * - When no selection: Primary button is "Save" (saves all)
+ * - Dropdown: "Save Selection" and "Save All" options
  */
 export const FilterBarActions = ({
   onSaveAll,
@@ -35,21 +33,36 @@ export const FilterBarActions = ({
   const context = useOptionalActionBarContext();
   const isIconMode = context?.variant === 'icon';
 
+  // Determine primary action based on selection state
+  const hasSelection = !isSaveSelectionDisabled;
+
   if (isIconMode) {
-    // Icon-only mode - use simple buttons
+    // Icon-only mode - use SplitButton
     return (
       <ActionBarGroup align="end" aria-label="Actions">
-        <Button
-          type="button"
-          onClick={onSaveSelection}
-          disabled={isSaveSelectionDisabled}
+        <SplitButton
+          label="Save"
+          icon={<Download size={12} />}
+          onClick={hasSelection ? onSaveSelection : onSaveAll}
           variant="ghost"
-          size="icon-xs"
-          title="Save selected entries"
-          aria-label="Save selected entries"
-        >
-          <Download size={14} />
-        </Button>
+          size="xs"
+          dropdownAriaLabel="More save options"
+          items={[
+            {
+              id: 'save-selection',
+              label: 'Save Selection',
+              icon: <Download size={12} />,
+              onClick: onSaveSelection,
+              disabled: isSaveSelectionDisabled,
+            },
+            {
+              id: 'save-all',
+              label: 'Save All',
+              icon: <Download size={12} />,
+              onClick: onSaveAll,
+            },
+          ]}
+        />
         <Button
           type="button"
           onClick={onClearAll}
@@ -64,24 +77,26 @@ export const FilterBarActions = ({
     );
   }
 
-  // Full/compact mode - use composite button for Save actions
+  // Full/compact mode - use SplitButton for Save actions
   return (
     <ActionBarGroup align="end" aria-label="Actions">
-      <ActionBarCompositeButton
-        primary={{
-          label: 'Save Selected',
-          icon: <Download size={12} />,
-          onClick: onSaveSelection,
-          disabled: isSaveSelectionDisabled,
-        }}
-        options={[
+      <SplitButton
+        label="Save"
+        icon={<Download size={12} />}
+        onClick={hasSelection ? onSaveSelection : onSaveAll}
+        variant="ghost"
+        size="xs"
+        dropdownAriaLabel="More save options"
+        items={[
           {
-            label: 'Save Selected',
+            id: 'save-selection',
+            label: 'Save Selection',
             icon: <Download size={12} />,
             onClick: onSaveSelection,
             disabled: isSaveSelectionDisabled,
           },
           {
+            id: 'save-all',
             label: 'Save All',
             icon: <Download size={12} />,
             onClick: onSaveAll,

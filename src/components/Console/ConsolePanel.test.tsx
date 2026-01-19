@@ -934,10 +934,12 @@ describe('ConsolePanel', () => {
     if (logEntry === null) {
       throw new Error('Log entry not found');
     }
-    // Find button with title or any button with chevron icon
+    // Find button with title or any button with chevron icon (skip checkbox)
     const chevronButton =
       logEntry.querySelector('button[title="Expand/collapse args"]') ??
-      Array.from(logEntry.querySelectorAll('button')).find((btn) => btn.querySelector('svg'));
+      Array.from(logEntry.querySelectorAll('button')).find(
+        (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
+      );
     expect(chevronButton).toBeInTheDocument();
 
     // Click to expand
@@ -980,7 +982,9 @@ describe('ConsolePanel', () => {
     // Find button with title or any button with chevron icon
     const chevronButton =
       logEntry.querySelector('button[title="Expand/collapse args"]') ??
-      Array.from(logEntry.querySelectorAll('button')).find((btn) => btn.querySelector('svg'));
+      Array.from(logEntry.querySelectorAll('button')).find(
+        (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
+      );
     expect(chevronButton).toBeInTheDocument();
     fireEvent.click(chevronButton!);
 
@@ -1031,9 +1035,11 @@ describe('ConsolePanel', () => {
       throw new Error('Log entry not found');
     }
 
-    // Find chevron button (grouped logs have chevron but no title)
+    // Find chevron button (grouped logs have chevron but no title, skip checkbox)
     const chevronButtons = logEntry.querySelectorAll('button');
-    const expandButton = Array.from(chevronButtons).find((btn) => btn.querySelector('svg'));
+    const expandButton = Array.from(chevronButtons).find(
+      (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
+    );
     expect(expandButton).toBeInTheDocument();
 
     // Click to expand
@@ -1079,7 +1085,9 @@ describe('ConsolePanel', () => {
     }
 
     const chevronButtons = logEntry.querySelectorAll('button');
-    const expandButton = Array.from(chevronButtons).find((btn) => btn.querySelector('svg'));
+    const expandButton = Array.from(chevronButtons).find(
+      (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
+    );
     fireEvent.click(expandButton!);
 
     // Wait for grouped log to expand
@@ -1134,7 +1142,9 @@ describe('ConsolePanel', () => {
     }
 
     const chevronButtons = logEntry.querySelectorAll('button');
-    const expandButton = Array.from(chevronButtons).find((btn) => btn.querySelector('svg'));
+    const expandButton = Array.from(chevronButtons).find(
+      (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
+    );
     fireEvent.click(expandButton!);
 
     // Wait for grouped log to expand
@@ -1180,7 +1190,7 @@ describe('ConsolePanel', () => {
   });
 
   describe('Save functionality', () => {
-    it('saves all logs when Save All button is clicked', async () => {
+    it('saves all logs when Save button is clicked with no selection', async () => {
       // Mock save dialog to return a file path
       mockSave.mockResolvedValue('/test/path/console-logs.json');
       mockWriteTextFile.mockResolvedValue(undefined);
@@ -1209,9 +1219,9 @@ describe('ConsolePanel', () => {
         expect(screen.getByText(/test info message/i)).toBeInTheDocument();
       }, WAIT_TIMEOUT);
 
-      // Click Save All button
-      const saveAllButton = screen.getByRole('button', { name: /save all/i });
-      fireEvent.click(saveAllButton);
+      // Click the Save button (SplitButton primary action - saves all when no selection)
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      fireEvent.click(saveButton);
 
       // Wait for save dialog to be called
       await waitFor(() => {
@@ -1259,9 +1269,9 @@ describe('ConsolePanel', () => {
         expect(screen.getByText(/test message/i)).toBeInTheDocument();
       }, WAIT_TIMEOUT);
 
-      // Click Save All button
-      const saveAllButton = screen.getByRole('button', { name: /save all/i });
-      fireEvent.click(saveAllButton);
+      // Click Save button
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      fireEvent.click(saveButton);
 
       // Wait for save dialog to be called
       await waitFor(() => {
@@ -1272,7 +1282,7 @@ describe('ConsolePanel', () => {
       expect(mockWriteTextFile).not.toHaveBeenCalled();
     });
 
-    it('saves only selected logs when Save Selection button is clicked', async () => {
+    it('saves only selected logs when Save button is clicked with selection', async () => {
       // Mock save dialog to return a file path
       mockSave.mockResolvedValue('/test/path/console-logs-selected.json');
       mockWriteTextFile.mockResolvedValue(undefined);
@@ -1313,19 +1323,19 @@ describe('ConsolePanel', () => {
       const logEntries = screen.getAllByTestId(/console-log-/);
       expect(logEntries.length).toBe(3);
 
-      // Click checkbox on first log
-      const firstLogCheckbox = logEntries[0]?.querySelector('button[title="Select"]');
+      // Click checkbox on first log (using role="checkbox" selector for Radix Checkbox)
+      const firstLogCheckbox = logEntries[0]?.querySelector('[role="checkbox"]');
       expect(firstLogCheckbox).toBeInTheDocument();
       fireEvent.click(firstLogCheckbox!);
 
       // Click checkbox on third log
-      const thirdLogCheckbox = logEntries[2]?.querySelector('button[title="Select"]');
+      const thirdLogCheckbox = logEntries[2]?.querySelector('[role="checkbox"]');
       expect(thirdLogCheckbox).toBeInTheDocument();
       fireEvent.click(thirdLogCheckbox!);
 
-      // Click Save Selection button
-      const saveSelectionButton = screen.getByRole('button', { name: /save selection/i });
-      fireEvent.click(saveSelectionButton);
+      // Click Save button (SplitButton primary action - saves selection when items are selected)
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      fireEvent.click(saveButton);
 
       // Wait for save dialog to be called
       await waitFor(() => {
@@ -1348,7 +1358,11 @@ describe('ConsolePanel', () => {
       expect(parsedContent.length).toBe(2);
     });
 
-    it('does nothing when Save Selection is clicked with no selection', async () => {
+    it('Save button saves all logs when no selection exists', async () => {
+      // This test verifies that the Save button behavior changes based on selection state
+      mockSave.mockResolvedValue('/test/path/console-logs.json');
+      mockWriteTextFile.mockResolvedValue(undefined);
+
       render(<ConsolePanel />);
       const service = getConsoleService();
 
@@ -1367,18 +1381,277 @@ describe('ConsolePanel', () => {
         expect(screen.getByText(/test message/i)).toBeInTheDocument();
       }, WAIT_TIMEOUT);
 
-      // Click Save Selection button without selecting any logs
-      const saveSelectionButton = screen.getByRole('button', { name: /save selection/i });
-      fireEvent.click(saveSelectionButton);
+      // Click Save button without selecting any logs - should save all
+      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      fireEvent.click(saveButton);
 
-      // Wait a bit to ensure nothing happens
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100);
+      // Wait for save dialog to be called with the "all" filename pattern
+      await waitFor(() => {
+        expect(mockSave).toHaveBeenCalledWith({
+          defaultPath: expect.stringMatching(/^console-logs-\d+\.json$/),
+          filters: [{ name: 'JSON', extensions: ['json'] }],
+        });
+      }, WAIT_TIMEOUT);
+    });
+  });
+
+  describe('row click selection', () => {
+    it('toggles selection when row is clicked (single click)', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test message',
+          args: [],
+          timestamp: Date.now(),
+        });
       });
 
-      // Verify save dialog was NOT called
-      expect(mockSave).not.toHaveBeenCalled();
-      expect(mockWriteTextFile).not.toHaveBeenCalled();
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Find the row container (not the checkbox)
+      const logEntry = screen.getByTestId(/console-log-info/i);
+      expect(logEntry).toBeInTheDocument();
+
+      // Initially not selected - use role="checkbox" for Radix Checkbox
+      const checkbox = logEntry.querySelector('[role="checkbox"]');
+      expect(checkbox).toBeInTheDocument();
+      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+
+      // Click the row (not the checkbox)
+      fireEvent.click(logEntry);
+
+      // Should now be selected
+      await waitFor(() => {
+        const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
+        expect(updatedCheckbox).toBeInTheDocument();
+        expect(updatedCheckbox).toHaveAttribute('data-state', 'checked');
+      }, WAIT_TIMEOUT);
+
+      // Click the row again to deselect
+      fireEvent.click(logEntry);
+
+      // Should be deselected again
+      await waitFor(() => {
+        const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
+        expect(updatedCheckbox).toBeInTheDocument();
+        expect(updatedCheckbox).toHaveAttribute('data-state', 'unchecked');
+      }, WAIT_TIMEOUT);
+    });
+
+    it('does not toggle selection when clicking on checkbox (checkbox handles its own click)', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test message',
+          args: [],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      const logEntry = screen.getByTestId(/console-log-info/i);
+      const checkbox = logEntry.querySelector('[role="checkbox"]');
+      expect(checkbox).toBeInTheDocument();
+      if (checkbox === null) {
+        throw new Error('Checkbox not found');
+      }
+
+      // Click the checkbox directly
+      fireEvent.click(checkbox);
+
+      // Should be selected (Radix Checkbox uses data-state attribute)
+      await waitFor(() => {
+        expect(checkbox).toHaveAttribute('data-state', 'checked');
+      }, WAIT_TIMEOUT);
+
+      // Click checkbox again
+      fireEvent.click(checkbox);
+
+      // Should be deselected
+      await waitFor(() => {
+        expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      }, WAIT_TIMEOUT);
+    });
+
+    it('does not toggle selection when clicking on expand/collapse button', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log with args (so it has an expand button)
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test message',
+          args: [{ key: 'value' }],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      const logEntry = screen.getByTestId(/console-log-info/i);
+
+      // Find the expand button (chevron button - not the checkbox)
+      const expandButton = Array.from(logEntry.querySelectorAll('button')).find(
+        (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
+      );
+      expect(expandButton).toBeInTheDocument();
+
+      // Initially not selected (use role="checkbox" for Radix Checkbox)
+      const checkbox = logEntry.querySelector('[role="checkbox"]');
+      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+
+      // Click the expand button
+      if (expandButton !== undefined) {
+        fireEvent.click(expandButton);
+      }
+
+      // Should still not be selected (expand button doesn't trigger selection)
+      const stillUnselectedCheckbox = logEntry.querySelector('[role="checkbox"]');
+      expect(stillUnselectedCheckbox).toBeInTheDocument();
+      expect(stillUnselectedCheckbox).toHaveAttribute('data-state', 'unchecked');
+    });
+  });
+
+  describe('double-click expand/contract', () => {
+    it('expands row on double-click', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log with args (so it can be expanded)
+      // Use object arg since string args display without quotes
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test message with args',
+          args: [{ testKey: 'testValue' }],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test message with args/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      const row = screen.getByTestId('console-log-info');
+
+      // Double-click to expand
+      fireEvent.doubleClick(row);
+
+      // Verify expanded args are visible (object args get JSON.stringify'd with quotes)
+      await waitFor(() => {
+        expect(screen.getByText(/"testKey"/)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+    });
+
+    it('contracts expanded row on double-click', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log with object args
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test message for contract',
+          args: [{ contractKey: 'contractValue' }],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test message for contract/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      const row = screen.getByTestId('console-log-info');
+
+      // Double-click to expand
+      fireEvent.doubleClick(row);
+      await waitFor(() => {
+        expect(screen.getByText(/"contractKey"/)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Double-click to contract
+      fireEvent.doubleClick(row);
+      await waitFor(() => {
+        expect(screen.queryByText(/"contractKey"/)).not.toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+    });
+
+    it('does not expand when double-clicking buttons (delete button)', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log with args
+      await act(async () => {
+        service.addLog({
+          level: 'warn',
+          message: 'Test warning for button test',
+          args: [{ warning: 'test warning data' }],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test warning for button test/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      const logEntry = screen.getByTestId('console-log-warn');
+      const deleteButton = logEntry.querySelector('button[title="Delete log"]')!;
+      expect(deleteButton).toBeInTheDocument();
+
+      // Verify not expanded initially
+      let rowGroup = logEntry.closest('.group');
+      let expandedContent = rowGroup?.querySelector('.ml-8');
+      expect(expandedContent).toBeNull();
+
+      // Double-click on the delete button - should NOT trigger the row's onDoubleClick
+      // (delete button will delete the log via onClick, but expansion shouldn't happen via onDoubleClick)
+      // Note: In testing-library, doubleClick fires: mousedown, mouseup, click, mousedown, mouseup, click, dblclick
+      // The delete button's onClick will fire and delete the log
+
+      // Instead of clicking delete (which removes the log), let's verify the behavior by
+      // checking that the row is NOT expanded after double-clicking a button area
+      // We'll use the checkbox area instead
+
+      const checkbox = logEntry.querySelector('[role="checkbox"]')!;
+      expect(checkbox).toBeInTheDocument();
+
+      // Double-click on checkbox - the row's onDoubleClick should be blocked
+      fireEvent.doubleClick(checkbox);
+
+      // Wait a moment
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      // Re-get the row group (it might have re-rendered)
+      const updatedLogEntry = screen.getByTestId('console-log-warn');
+      rowGroup = updatedLogEntry.closest('.group');
+      expandedContent = rowGroup?.querySelector('.ml-8');
+
+      // Should NOT be expanded because we double-clicked on a button/interactive element
+      expect(expandedContent).toBeNull();
     });
   });
 });

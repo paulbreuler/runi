@@ -14,6 +14,8 @@ interface HistoryState {
   // UI State
   filters: HistoryFilters;
   selectedId: string | null;
+  selectedIds: Set<string>; // Multi-select support
+  lastSelectedIndex: number | null; // For range selection
   expandedId: string | null;
   compareMode: boolean;
   compareSelection: string[];
@@ -28,6 +30,10 @@ interface HistoryState {
   setFilter: (key: keyof HistoryFilters, value: string) => void;
   resetFilters: () => void;
   setSelectedId: (id: string | null) => void;
+  toggleSelection: (id: string) => void;
+  selectRange: (fromIndex: number, toIndex: number) => void;
+  selectAll: (ids: string[]) => void;
+  deselectAll: () => void;
   setExpandedId: (id: string | null) => void;
   setCompareMode: (enabled: boolean) => void;
   toggleCompareSelection: (id: string) => void;
@@ -45,6 +51,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   // UI State
   filters: { ...DEFAULT_HISTORY_FILTERS },
   selectedId: null,
+  selectedIds: new Set<string>(),
+  lastSelectedIndex: null,
   expandedId: null,
   compareMode: false,
   compareSelection: [],
@@ -123,7 +131,88 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   setSelectedId: (id: string | null): void => {
-    set({ selectedId: id });
+    if (id === null) {
+      set({ selectedId: null, selectedIds: new Set<string>() });
+    } else {
+      set({ selectedId: id, selectedIds: new Set([id]) });
+    }
+  },
+
+  toggleSelection: (id: string): void => {
+    set((state) => {
+      const newSelectedIds = new Set(state.selectedIds);
+      if (newSelectedIds.has(id)) {
+        newSelectedIds.delete(id);
+      } else {
+        newSelectedIds.add(id);
+      }
+
+      // Update selectedId for backward compatibility (first item in Set, sorted for determinism)
+      const selectedId =
+        newSelectedIds.size > 0 ? (Array.from(newSelectedIds).sort()[0] ?? null) : null;
+
+      // Update lastSelectedIndex to current entry index
+      const currentIndex = state.entries.findIndex((entry) => entry.id === id);
+      const lastSelectedIndex = currentIndex >= 0 ? currentIndex : state.lastSelectedIndex;
+
+      return {
+        selectedIds: newSelectedIds,
+        selectedId,
+        lastSelectedIndex,
+      };
+    });
+  },
+
+  selectRange: (fromIndex: number, toIndex: number): void => {
+    set((state) => {
+      const { entries, selectedIds } = state;
+      const newSelectedIds = new Set(selectedIds);
+
+      const start = Math.min(fromIndex, toIndex);
+      const end = Math.max(fromIndex, toIndex);
+
+      // Add all entries in range (only if they exist)
+      for (let i = start; i <= end && i < entries.length; i++) {
+        const entry = entries[i];
+        if (entry !== undefined) {
+          newSelectedIds.add(entry.id);
+        }
+      }
+
+      // Update selectedId for backward compatibility (first item, sorted for determinism)
+      const selectedId =
+        newSelectedIds.size > 0 ? (Array.from(newSelectedIds).sort()[0] ?? null) : null;
+
+      return {
+        selectedIds: newSelectedIds,
+        selectedId,
+        lastSelectedIndex: toIndex,
+      };
+    });
+  },
+
+  selectAll: (ids: string[]): void => {
+    set((state) => {
+      const newSelectedIds = new Set(ids);
+      // Update selectedId for backward compatibility
+      const selectedId =
+        newSelectedIds.size > 0 ? (Array.from(newSelectedIds).sort()[0] ?? null) : null;
+      const lastSelectedIndex =
+        ids.length > 0 ? state.entries.findIndex((e) => e.id === ids[ids.length - 1]) : null;
+      return {
+        selectedIds: newSelectedIds,
+        selectedId,
+        lastSelectedIndex,
+      };
+    });
+  },
+
+  deselectAll: (): void => {
+    set({
+      selectedIds: new Set<string>(),
+      selectedId: null,
+      lastSelectedIndex: null,
+    });
   },
 
   setExpandedId: (id: string | null): void => {

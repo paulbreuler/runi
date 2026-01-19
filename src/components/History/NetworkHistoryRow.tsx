@@ -122,6 +122,17 @@ export const NetworkHistoryRow = ({
     onSelect(entry.id);
   };
 
+  const handleRowDoubleClick = (e: React.MouseEvent): void => {
+    // Don't expand if clicking on buttons or checkboxes
+    if ((e.target as HTMLElement).closest('button') !== null) {
+      return;
+    }
+    if ((e.target as HTMLElement).closest('[data-testid="compare-checkbox"]') !== null) {
+      return;
+    }
+    onToggleExpand(entry.id);
+  };
+
   const handleCompareToggle = (e: React.MouseEvent): void => {
     e.stopPropagation();
     onToggleCompare?.(entry.id);
@@ -153,6 +164,7 @@ export const NetworkHistoryRow = ({
       <div
         data-testid="history-row"
         onClick={handleRowClick}
+        onDoubleClick={handleRowDoubleClick}
         className={cn(
           'flex items-center gap-3 px-3 py-2 cursor-pointer group transition-colors',
           isSelected ? 'bg-bg-raised' : 'hover:bg-bg-raised/50'
