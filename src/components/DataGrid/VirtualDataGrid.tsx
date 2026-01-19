@@ -137,12 +137,6 @@ export function VirtualDataGrid<TData>({
   // Get rows from table
   const { rows } = table.getRowModel();
 
-  // Calculate total table width from column sizes to prevent browser stretching with table-layout: fixed
-  const totalTableWidth = React.useMemo(() => {
-    const visibleColumns = table.getVisibleLeafColumns();
-    return visibleColumns.reduce((sum, col) => sum + col.getSize(), 0);
-  }, [table]);
-
   // Set up virtualizer
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -305,11 +299,7 @@ export function VirtualDataGrid<TData>({
         style={{ height }}
         data-testid="virtual-scroll-container"
       >
-        <table
-          className="border-collapse"
-          role="table"
-          style={{ tableLayout: 'fixed', width: totalTableWidth }}
-        >
+        <table className="border-collapse w-full" role="table" style={{ tableLayout: 'fixed' }}>
           <thead className="sticky top-0 bg-bg-app z-10">
             {renderHeader !== undefined
               ? renderHeader()
