@@ -283,10 +283,20 @@ export function VirtualDataGrid<TData>({
 
       const paddingClass = getCellPaddingClass(columnId);
       // Pinned cells need background to cover scrolled content
-      // Use row's selected state if selected, otherwise use raised background (shade darker than rows)
+      // Left-pinned columns use raised background
+      // Right-pinned (actions) match row exactly - transparent when not selected
       let bgClass = '';
-      if (isPinned && (pinSide === 'left' || pinSide === 'right')) {
+      if (isPinned && pinSide === 'left') {
         bgClass = row.getIsSelected() ? 'bg-accent-blue/10' : 'bg-bg-raised';
+      } else if (isPinned && pinSide === 'right') {
+        // Right-pinned (actions) only get background when row is selected to match row
+        if (row.getIsSelected()) {
+          bgClass = 'bg-accent-blue/10';
+        }
+        // When not selected, explicitly set transparent background to match row
+        else {
+          cellStyle.backgroundColor = 'transparent';
+        }
       }
 
       return (
