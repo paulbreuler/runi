@@ -155,7 +155,9 @@ describe('Checkbox', () => {
       const ref = vi.fn();
       render(<Checkbox ref={ref} />);
       expect(ref).toHaveBeenCalled();
-      expect(ref.mock.calls[0][0]).toBeInstanceOf(HTMLButtonElement);
+      const firstCall = ref.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      expect(firstCall?.[0]).toBeInstanceOf(HTMLButtonElement);
     });
   });
 });

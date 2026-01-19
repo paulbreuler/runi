@@ -14,6 +14,7 @@ import {
   getExpandedRowModel,
   flexRender,
   type ColumnDef,
+  type ExpandedState,
 } from '@tanstack/react-table';
 import { createExpanderColumn } from './expanderColumn';
 
@@ -34,8 +35,8 @@ const testData: TestRow[] = [
 // Test wrapper component that renders a table with the expander column
 interface TestTableProps {
   data?: TestRow[];
-  initialExpanded?: Record<string, boolean>;
-  onExpandedChange?: (expanded: Record<string, boolean>) => void;
+  initialExpanded?: ExpandedState;
+  onExpandedChange?: (expanded: ExpandedState) => void;
   canExpandFn?: (row: TestRow) => boolean;
 }
 
@@ -45,12 +46,10 @@ const TestTable = ({
   onExpandedChange,
   canExpandFn,
 }: TestTableProps): React.ReactElement => {
-  const [expanded, setExpanded] = React.useState(initialExpanded);
+  const [expanded, setExpanded] = React.useState<ExpandedState>(initialExpanded);
 
   const handleExpandedChange = (
-    updaterOrValue:
-      | Record<string, boolean>
-      | ((old: Record<string, boolean>) => Record<string, boolean>)
+    updaterOrValue: ExpandedState | ((old: ExpandedState) => ExpandedState)
   ): void => {
     const newValue =
       typeof updaterOrValue === 'function' ? updaterOrValue(expanded) : updaterOrValue;
