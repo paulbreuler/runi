@@ -62,9 +62,9 @@ const DemoTable = ({
           <span
             className={cn(
               'px-2 py-0.5 rounded text-xs font-medium',
-              status === 'active' && 'bg-green-100 text-green-800',
-              status === 'inactive' && 'bg-gray-100 text-gray-800',
-              status === 'pending' && 'bg-yellow-100 text-yellow-800'
+              status === 'active' && 'bg-signal-success/10 text-signal-success',
+              status === 'inactive' && 'bg-text-muted/10 text-text-muted',
+              status === 'pending' && 'bg-signal-warning/10 text-signal-warning'
             )}
           >
             {status}

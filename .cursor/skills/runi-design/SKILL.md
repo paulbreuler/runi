@@ -136,17 +136,17 @@ Color should be used **sparingly and purposefully**. These are your "blue eyes" 
 
 HTTP methods get color because they're **functional and semantic**—they communicate meaning:
 
-| Method  | Color Class                                            |
-| ------- | ------------------------------------------------------ |
-| GET     | `bg-green-600 hover:bg-green-700 dark:bg-green-700`    |
-| POST    | `bg-blue-600 hover:bg-blue-700 dark:bg-blue-700`       |
-| PUT     | `bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700` |
-| PATCH   | `bg-purple-600 hover:bg-purple-700 dark:bg-purple-700` |
-| DELETE  | `bg-red-600 hover:bg-red-700 dark:bg-red-700`          |
-| HEAD    | `bg-gray-600 hover:bg-gray-700 dark:bg-gray-700`       |
-| OPTIONS | `bg-teal-600 hover:bg-teal-700 dark:bg-teal-700`       |
+| Method  | Text Color            | Background (for badges) | Meaning          |
+| ------- | --------------------- | ----------------------- | ---------------- |
+| GET     | `text-accent-blue`    | `bg-accent-blue/10`     | Read, safe       |
+| POST    | `text-signal-success` | `bg-signal-success/10`  | Create, positive |
+| PUT     | `text-signal-warning` | `bg-signal-warning/10`  | Update, caution  |
+| PATCH   | `text-signal-warning` | `bg-signal-warning/10`  | Update, caution  |
+| DELETE  | `text-signal-error`   | `bg-signal-error/10`    | Destructive      |
+| HEAD    | `text-text-muted`     | `bg-text-muted/10`      | Meta/secondary   |
+| OPTIONS | `text-text-muted`     | `bg-text-muted/10`      | Meta/secondary   |
 
-**Always include `text-white`** for method badges/buttons.
+**2026 Zen Aesthetic:** Color the text, use subtle background tints. No solid colored backgrounds—muted surfaces with selective emphasis.
 
 **Signal Colors (from Design Vision v8.1):**
 
@@ -162,13 +162,13 @@ HTTP methods get color because they're **functional and semantic**—they commun
 
 Status codes get color because they're **functional and semantic**—they communicate response state:
 
-| Range | Color                      | Usage         |
-| ----- | -------------------------- | ------------- |
-| 2xx   | `bg-green-600 text-white`  | Success       |
-| 3xx   | `bg-blue-600 text-white`   | Redirects     |
-| 4xx   | `bg-yellow-600 text-white` | Client errors |
-| 5xx   | `bg-red-600 text-white`    | Server errors |
-| Other | `bg-gray-600 text-white`   | Unknown       |
+| Range | Text Color            | Background (for badges) | Meaning       |
+| ----- | --------------------- | ----------------------- | ------------- |
+| 2xx   | `text-signal-success` | `bg-signal-success/10`  | Success       |
+| 3xx   | `text-accent-blue`    | `bg-accent-blue/10`     | Redirects     |
+| 4xx   | `text-signal-warning` | `bg-signal-warning/10`  | Client errors |
+| 5xx   | `text-signal-error`   | `bg-signal-error/10`    | Server errors |
+| Other | `text-text-muted`     | `bg-text-muted/10`      | Unknown       |
 
 **Strategic Color Guidelines:**
 
@@ -185,10 +185,10 @@ Status codes get color because they're **functional and semantic**—they commun
 <div className="bg-card border border-border"> {/* Semantic grays */}
 <button className="bg-muted hover:bg-muted/80"> {/* Grayscale interaction */}
 
-// GOOD - strategic color for meaning
-<span className="bg-green-600 text-white">GET</span> {/* HTTP method (functional) */}
-<span className="bg-red-600 text-white">500</span> {/* Status code (functional) */}
-<div className="bg-destructive/10 border-destructive/20 text-destructive">Error</div> {/* Critical feedback */}
+// GOOD - strategic color for meaning (using design system tokens)
+<span className="text-accent-blue bg-accent-blue/10 px-1.5 py-0.5 rounded">GET</span> {/* HTTP method */}
+<span className="text-signal-error">500</span> {/* Status code */}
+<div className="bg-signal-error/10 border-signal-error/20 text-signal-error">Error</div> {/* Critical feedback */}
 ```
 
 **Key Rule:** When in doubt, use grayscale. Color is reserved for signals that demand attention—drift warnings, verification status, HTTP methods.
@@ -435,14 +435,23 @@ export const RequestCard = ({
   onSend,
 }: RequestCardProps): JSX.Element => {
   // Strategic color: HTTP method gets color (functional/semantic)
-  const methodColors: Record<string, string> = {
-    GET: 'bg-green-600',
-    POST: 'bg-blue-600',
-    PUT: 'bg-yellow-600',
-    PATCH: 'bg-purple-600',
-    DELETE: 'bg-red-600',
+  // Using design system tokens for consistency
+  const methodTextColors: Record<string, string> = {
+    GET: 'text-accent-blue',
+    POST: 'text-signal-success',
+    PUT: 'text-signal-warning',
+    PATCH: 'text-signal-warning',
+    DELETE: 'text-signal-error',
   };
-  const methodColor = methodColors[method] || 'bg-gray-600';
+  const methodBgColors: Record<string, string> = {
+    GET: 'bg-accent-blue/10',
+    POST: 'bg-signal-success/10',
+    PUT: 'bg-signal-warning/10',
+    PATCH: 'bg-signal-warning/10',
+    DELETE: 'bg-signal-error/10',
+  };
+  const textColor = methodTextColors[method] || 'text-text-muted';
+  const bgColor = methodBgColors[method] || 'bg-text-muted/10';
 
   return (
     <motion.div
@@ -451,8 +460,14 @@ export const RequestCard = ({
     >
       <h3 className="text-base font-medium text-card-foreground">{title}</h3>
       <div className="flex items-center gap-2 mt-2">
-        {/* Strategic splash: method color */}
-        <span className={cn('px-2 py-1 rounded text-xs font-semibold text-white', methodColor)}>
+        {/* Strategic splash: method color (zen aesthetic - text color with subtle bg) */}
+        <span
+          className={cn(
+            'px-1.5 py-0.5 rounded text-xs font-semibold font-mono',
+            textColor,
+            bgColor
+          )}
+        >
           {method}
         </span>
         {/* Grayscale: URL (monochrome) */}
@@ -519,22 +534,39 @@ interface MethodBadgeProps {
   className?: string;
 }
 
-const methodColors: Record<string, string> = {
-  GET: 'bg-green-600',
-  POST: 'bg-blue-600',
-  PUT: 'bg-yellow-600',
-  PATCH: 'bg-purple-600',
-  DELETE: 'bg-red-600',
-  HEAD: 'bg-gray-600',
-  OPTIONS: 'bg-teal-600',
+// Design system colors - text with subtle background (zen aesthetic)
+const methodTextColors: Record<string, string> = {
+  GET: 'text-accent-blue',
+  POST: 'text-signal-success',
+  PUT: 'text-signal-warning',
+  PATCH: 'text-signal-warning',
+  DELETE: 'text-signal-error',
+  HEAD: 'text-text-muted',
+  OPTIONS: 'text-text-muted',
+};
+
+const methodBgColors: Record<string, string> = {
+  GET: 'bg-accent-blue/10',
+  POST: 'bg-signal-success/10',
+  PUT: 'bg-signal-warning/10',
+  PATCH: 'bg-signal-warning/10',
+  DELETE: 'bg-signal-error/10',
+  HEAD: 'bg-text-muted/10',
+  OPTIONS: 'bg-text-muted/10',
 };
 
 export const MethodBadge = ({ method, className }: MethodBadgeProps): JSX.Element => {
-  const colorClass = methodColors[method] || methodColors.GET;
+  const textColor = methodTextColors[method] ?? 'text-text-muted';
+  const bgColor = methodBgColors[method] ?? 'bg-text-muted/10';
 
   return (
     <span
-      className={cn('px-2 py-1 rounded-md text-xs font-semibold text-white', colorClass, className)}
+      className={cn(
+        'px-1.5 py-0.5 rounded text-xs font-semibold font-mono',
+        textColor,
+        bgColor,
+        className
+      )}
     >
       {method}
     </span>
@@ -552,23 +584,20 @@ interface StatusBadgeProps {
   className?: string;
 }
 
+// Design system colors - text only for zen aesthetic
 const getStatusColor = (status: number): string => {
-  if (status >= 200 && status < 300) return 'bg-green-600';
-  if (status >= 300 && status < 400) return 'bg-blue-600';
-  if (status >= 400 && status < 500) return 'bg-yellow-600';
-  if (status >= 500) return 'bg-red-600';
-  return 'bg-gray-600';
+  if (status >= 200 && status < 300) return 'text-signal-success';
+  if (status >= 300 && status < 400) return 'text-accent-blue';
+  if (status >= 400 && status < 500) return 'text-signal-warning';
+  if (status >= 500) return 'text-signal-error';
+  return 'text-text-muted';
 };
 
 export const StatusBadge = ({ status, className }: StatusBadgeProps): JSX.Element => {
   const colorClass = getStatusColor(status);
 
   return (
-    <span
-      className={cn('px-2 py-1 rounded-md text-xs font-semibold text-white', colorClass, className)}
-    >
-      {status}
-    </span>
+    <span className={cn('text-sm font-mono font-semibold', colorClass, className)}>{status}</span>
   );
 };
 ```
