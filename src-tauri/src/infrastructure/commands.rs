@@ -428,13 +428,15 @@ mod tests {
         HISTORY_STORAGE.clear_all().await.unwrap();
 
         // Save 5 entries
-        let mut saved_ids = Vec::new();
         for i in 0..5 {
             let request = create_test_request(&format!("ids-{i}"));
             let response = create_test_response();
-            let id = save_test_entry(request, response).await;
-            saved_ids.push(id);
+            save_test_entry(request, response).await;
         }
+
+        // Verify count
+        let count = get_history_count().await.unwrap();
+        assert_eq!(count, 5);
 
         // Get first page (2 items)
         let page1 = get_history_ids(2, 0, true).await.unwrap();
