@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { type ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, Table, Row, HeaderContext, CellContext } from '@tanstack/react-table';
 import { Play, Copy, Trash2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { formatRelativeTime } from '@/utils/relative-time';
@@ -12,7 +12,6 @@ import type { NetworkHistoryEntry, IntelligenceInfo } from '@/types/history';
 import { IntelligenceSignals } from '@/components/History/IntelligenceSignals';
 import { Button } from '@/components/ui/button';
 import { createExpanderColumn } from './expanderColumn';
-import type { ColumnDef, Table, Row, HeaderContext, CellContext } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
 
