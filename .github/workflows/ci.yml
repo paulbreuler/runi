@@ -25,6 +25,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
+
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
@@ -63,6 +68,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
 
       - name: Install npm dependencies
         run: npm ci --legacy-peer-deps
@@ -112,6 +122,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
