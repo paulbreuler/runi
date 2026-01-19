@@ -190,7 +190,7 @@ const ToastItem = ({ toast }: { toast: ToastItem }): React.JSX.Element => {
 
         {/* Header: Title + Close button */}
         <div className="relative flex items-start justify-between gap-3 mb-2">
-          <ToastPrimitive.Title className="text-[15px] font-medium leading-normal text-text-primary flex-1 pr-8 line-clamp-3">
+          <ToastPrimitive.Title className="text-sm font-medium leading-normal text-text-primary flex-1 pr-8 line-clamp-3">
             {toast.message}
             {toast.count > 1 && (
               <span className="ml-2 text-xs text-text-muted">(×{toast.count})</span>
@@ -283,6 +283,8 @@ export const Toast = (): React.JSX.Element => {
         </AnimatePresence>
       </LayoutGroup>
       <ToastPrimitive.Viewport
+        role="region"
+        aria-label="Notifications"
         className="fixed bottom-[56px] right-0 z-9999 flex flex-col gap-[10px] p-[25px] w-[390px] max-w-[100vw] m-0 list-none outline-none"
         style={{
           zIndex: 2147483647,
