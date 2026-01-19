@@ -254,7 +254,7 @@ export function createConsoleColumns(
           count={(row.original as { _groupCount?: number })._groupCount}
         />
       ),
-      size: 400, // Initial size, but will grow to fill space
+      size: 200, // Starting width, will grow to fill available space
       minSize: 150,
       enableSorting: true,
     },

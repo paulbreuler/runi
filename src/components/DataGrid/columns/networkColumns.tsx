@@ -313,8 +313,8 @@ export function createNetworkColumns(
       cell: ({ row }) => (
         <UrlCell url={row.original.request.url} intelligence={row.original.intelligence} />
       ),
-      size: 400, // Initial size, but will grow to fill space
-      minSize: 200,
+      size: 200, // Starting width, will grow to fill available space
+      minSize: 150,
       enableSorting: true,
     },
 
