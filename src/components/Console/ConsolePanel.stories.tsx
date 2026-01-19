@@ -180,7 +180,11 @@ export const Default: Story = {
           service.clear();
         };
       }, []);
-      return <Story />;
+      return (
+        <div className="h-screen">
+          <Story />
+        </div>
+      );
     },
   ],
 };
@@ -407,7 +411,11 @@ export const Interactive: Story = {
           service.clear();
         };
       }, []);
-      return <Story />;
+      return (
+        <div className="h-screen">
+          <Story />
+        </div>
+      );
     },
   ],
 };
