@@ -27,6 +27,7 @@ chrono = { version = "0.4", features = ["serde"] }
 async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "ansi"] }
+rusqlite = { version = "0.33", features = ["bundled"] }
 
 [dev-dependencies]
 ts-rs = "10"
