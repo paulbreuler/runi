@@ -9,6 +9,7 @@ import {
   ArrowDownToLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SplitButton } from '@/components/ui/SplitButton';
 import {
   ActionBar,
   ActionBarGroup,
@@ -88,16 +89,29 @@ const ConsoleToolbarActions = ({
   if (isIconMode) {
     return (
       <ActionBarGroup align="end" aria-label="Actions">
-        <Button
-          type="button"
-          onClick={onSaveAll}
+        <SplitButton
+          label="Save"
+          icon={<Download size={12} />}
+          onClick={selectedCount > 0 ? onSaveSelection : onSaveAll}
           variant="ghost"
-          size="icon-xs"
-          title="Save all logs"
-          aria-label="Save all logs"
-        >
-          <Download size={14} />
-        </Button>
+          size="xs"
+          dropdownAriaLabel="More save options"
+          items={[
+            {
+              id: 'save-selection',
+              label: 'Save Selection',
+              icon: <Download size={12} />,
+              onClick: onSaveSelection,
+              disabled: selectedCount === 0,
+            },
+            {
+              id: 'save-all',
+              label: 'Save All',
+              icon: <Download size={12} />,
+              onClick: onSaveAll,
+            },
+          ]}
+        />
         <Button
           type="button"
           onClick={onCopySelection}
@@ -138,21 +152,29 @@ const ConsoleToolbarActions = ({
   // Full/compact mode with labels
   return (
     <ActionBarGroup align="end" aria-label="Actions">
-      <Button type="button" onClick={onSaveAll} variant="ghost" size="xs" title="Save all logs">
-        <Download size={12} />
-        <span>Save All</span>
-      </Button>
-      <Button
-        type="button"
-        onClick={onSaveSelection}
-        disabled={selectedCount === 0}
+      <SplitButton
+        label="Save"
+        icon={<Download size={12} />}
+        onClick={selectedCount > 0 ? onSaveSelection : onSaveAll}
         variant="ghost"
         size="xs"
-        title="Save selected logs"
-      >
-        <Download size={12} />
-        <span>Save Selection</span>
-      </Button>
+        dropdownAriaLabel="More save options"
+        items={[
+          {
+            id: 'save-selection',
+            label: 'Save Selection',
+            icon: <Download size={12} />,
+            onClick: onSaveSelection,
+            disabled: selectedCount === 0,
+          },
+          {
+            id: 'save-all',
+            label: 'Save All',
+            icon: <Download size={12} />,
+            onClick: onSaveAll,
+          },
+        ]}
+      />
       <Button
         type="button"
         onClick={onCopySelection}

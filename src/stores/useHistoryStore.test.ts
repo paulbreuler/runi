@@ -24,6 +24,8 @@ describe('useHistoryStore', () => {
         intelligence: 'All',
       },
       selectedId: null,
+      selectedIds: new Set<string>(),
+      lastSelectedIndex: null,
       expandedId: null,
       compareMode: false,
       compareSelection: [],
@@ -501,6 +503,161 @@ describe('useHistoryStore', () => {
         });
 
         expect(result.current.expandedId).toBe(null);
+      });
+
+      it('should initialize with empty selectedIds Set', () => {
+        const { result } = renderHook(() => useHistoryStore());
+        expect(result.current.selectedIds).toEqual(new Set());
+      });
+
+      it('should toggle selection with toggleSelection', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1']));
+      });
+
+      it('should remove from selection when toggling again', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set());
+      });
+
+      it('should support multiple selections', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+          result.current.toggleSelection('hist_3');
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2', 'hist_3']));
+      });
+
+      it('should select range with selectRange', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        // Set up entries
+        act(() => {
+          useHistoryStore.setState({
+            entries: [
+              { id: 'hist_1' } as HistoryEntry,
+              { id: 'hist_2' } as HistoryEntry,
+              { id: 'hist_3' } as HistoryEntry,
+              { id: 'hist_4' } as HistoryEntry,
+            ],
+          });
+        });
+
+        act(() => {
+          result.current.selectRange(1, 3); // Select from index 1 to 3
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_2', 'hist_3', 'hist_4']));
+      });
+
+      it('should handle selectRange with reversed indices', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          useHistoryStore.setState({
+            entries: [
+              { id: 'hist_1' } as HistoryEntry,
+              { id: 'hist_2' } as HistoryEntry,
+              { id: 'hist_3' } as HistoryEntry,
+            ],
+          });
+        });
+
+        act(() => {
+          result.current.selectRange(2, 0); // Reversed: from index 2 to 0
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2', 'hist_3']));
+      });
+
+      it('should maintain backward compatibility with selectedId', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        // When selectedIds has one item, selectedId should match
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedId).toBe('hist_1');
+
+        // When selectedIds is empty, selectedId should be null
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedId).toBe(null);
+      });
+
+      it('should select all with selectAll', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          useHistoryStore.setState({
+            entries: [
+              { id: 'hist_1' } as HistoryEntry,
+              { id: 'hist_2' } as HistoryEntry,
+              { id: 'hist_3' } as HistoryEntry,
+            ],
+          });
+        });
+
+        act(() => {
+          result.current.selectAll(['hist_1', 'hist_2', 'hist_3']);
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2', 'hist_3']));
+        // selectedId should be the first sorted ID
+        expect(result.current.selectedId).toBe('hist_1');
+      });
+
+      it('should deselect all with deselectAll', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        // First select some entries
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+        });
+
+        expect(result.current.selectedIds.size).toBe(2);
+
+        // Then deselect all
+        act(() => {
+          result.current.deselectAll();
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set());
+        expect(result.current.selectedId).toBe(null);
+        expect(result.current.lastSelectedIndex).toBe(null);
+      });
+
+      it('should handle selectAll with empty array', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.selectAll([]);
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set());
+        expect(result.current.selectedId).toBe(null);
       });
     });
 

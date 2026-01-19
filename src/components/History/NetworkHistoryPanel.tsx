@@ -9,6 +9,7 @@ import { FilterBar } from './FilterBar';
 import { NetworkHistoryRow } from './NetworkHistoryRow';
 import { NetworkStatusBar } from './NetworkStatusBar';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DataPanelHeader } from '@/components/ui/DataPanelHeader';
 
 /** Estimated row height for virtualization */
 const ESTIMATED_ROW_HEIGHT = 48;
@@ -38,12 +39,14 @@ export const NetworkHistoryPanel = ({
     filters,
     compareMode,
     compareSelection,
-    selectedId,
+    selectedIds, // Multi-select support
     expandedId,
     setFilter,
     setCompareMode,
     toggleCompareSelection,
-    setSelectedId,
+    toggleSelection, // Multi-select support
+    selectAll, // Bulk select support
+    deselectAll, // Bulk deselect support
     setExpandedId,
     deleteEntry,
     clearHistory,
@@ -146,7 +149,8 @@ export const NetworkHistoryPanel = ({
   };
 
   const handleSelect = (id: string): void => {
-    setSelectedId(id);
+    // Use toggleSelection for multi-select support (maintains backward compatibility)
+    toggleSelection(id);
   };
 
   const handleCompareModeToggle = (): void => {
@@ -176,10 +180,10 @@ export const NetworkHistoryPanel = ({
   };
 
   const handleSaveSelection = async (): Promise<void> => {
-    if (compareSelection.length === 0) {
+    if (selectedIds.size === 0) {
       return;
     }
-    const selectedEntries = filteredEntries.filter((entry) => compareSelection.includes(entry.id));
+    const selectedEntries = filteredEntries.filter((entry) => selectedIds.has(entry.id));
     await downloadJson(selectedEntries, `network-history-selected-${String(Date.now())}.json`);
   };
 
@@ -246,7 +250,7 @@ export const NetworkHistoryPanel = ({
                 <NetworkHistoryRow
                   entry={entry}
                   isExpanded={expandedId === entry.id}
-                  isSelected={selectedId === entry.id}
+                  isSelected={selectedIds.has(entry.id)}
                   onToggleExpand={handleToggleExpand}
                   onSelect={handleSelect}
                   onReplay={onReplay}
@@ -269,7 +273,7 @@ export const NetworkHistoryPanel = ({
         key={entry.id}
         entry={entry}
         isExpanded={expandedId === entry.id}
-        isSelected={selectedId === entry.id}
+        isSelected={selectedIds.has(entry.id)}
         onToggleExpand={handleToggleExpand}
         onSelect={handleSelect}
         onReplay={onReplay}
@@ -294,23 +298,42 @@ export const NetworkHistoryPanel = ({
         onSaveAll={handleSaveAll}
         onSaveSelection={handleSaveSelection}
         onClearAll={handleClearAll}
-        isSaveSelectionDisabled={compareSelection.length === 0}
+        isSaveSelectionDisabled={selectedIds.size === 0}
       />
 
       {/* Table container - handles horizontal overflow */}
       <div className="flex-1 flex flex-col min-h-0 overflow-x-auto">
-        {/* Table header - fixed widths, can overflow horizontally */}
-        <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border-subtle bg-bg-raised/50 text-xs font-medium text-text-muted shrink-0 min-w-max">
-          {compareMode && <span className="w-4" />} {/* Checkbox space */}
-          <span className="w-5" /> {/* Chevron space */}
-          <span className="w-14">Method</span>
-          <span className="flex-1">URL</span>
-          <span className="w-12 text-right">Status</span>
-          <span className="w-14 text-right">Time</span>
-          <span className="w-16 text-right">Size</span>
-          <span className="w-16 text-right">When</span>
-          <span className="w-14" /> {/* Actions space */}
-        </div>
+        {/* Table header with select all - using DataPanelHeader */}
+        <DataPanelHeader
+          columns={[
+            { label: '', width: 'w-5' }, // Chevron space
+            { label: 'Method', width: 'w-14', className: 'text-xs text-text-muted' },
+            { label: 'URL', className: 'flex-1 text-xs text-text-muted' },
+            { label: 'Status', width: 'w-12', className: 'text-right text-xs text-text-muted' },
+            { label: 'Time', width: 'w-14', className: 'text-right text-xs text-text-muted' },
+            { label: 'Size', width: 'w-16', className: 'text-right text-xs text-text-muted' },
+            { label: 'When', width: 'w-16', className: 'text-right text-xs text-text-muted' },
+            { label: '', width: 'w-14' }, // Actions space
+          ]}
+          showSelectAll={true}
+          allSelected={
+            filteredEntries.length > 0 &&
+            filteredEntries.every((entry) => selectedIds.has(entry.id))
+          }
+          someSelected={
+            filteredEntries.some((entry) => selectedIds.has(entry.id)) &&
+            !filteredEntries.every((entry) => selectedIds.has(entry.id))
+          }
+          onSelectAllChange={(checked): void => {
+            if (checked) {
+              selectAll(filteredEntries.map((entry) => entry.id));
+            } else {
+              deselectAll();
+            }
+          }}
+          enabled={filteredEntries.length > 0}
+          className="px-3 min-w-max"
+        />
 
         {/* Entry list - vertical scroll only */}
         <div
