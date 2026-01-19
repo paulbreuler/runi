@@ -1,12 +1,13 @@
 # Motion+ Token Configuration
 # Copy this file to .npmrc and add your token
 #
-# Add your Motion+ token here:
+# Add your Motion+ token below (keep it commented to avoid npm warnings):
 # MOTION_PLUS_TOKEN=your_token_here
 #
 # Or set MOTION_PLUS_TOKEN as an environment variable
 #
 # The setup-motion-plus.js script will automatically read the token from
-# .npmrc or environment variable and inject it into package.json during npm install
+# .npmrc (even from comments) or environment variable and inject it into
+# package.json during setup.
 
 legacy-peer-deps=true

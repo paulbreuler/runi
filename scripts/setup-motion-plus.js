@@ -21,8 +21,9 @@ let token = process.env.MOTION_PLUS_TOKEN;
 if (!token && existsSync(npmrcPath)) {
   try {
     const npmrcContent = readFileSync(npmrcPath, 'utf-8');
-    // Look for MOTION_PLUS_TOKEN=token or motion-plus-token=token
-    const tokenMatch = npmrcContent.match(/MOTION_PLUS_TOKEN\s*=\s*([^\s\n]+)/);
+    // Look for MOTION_PLUS_TOKEN=token (commented or not)
+    // Supports: MOTION_PLUS_TOKEN=xxx or # MOTION_PLUS_TOKEN=xxx
+    const tokenMatch = npmrcContent.match(/#?\s*MOTION_PLUS_TOKEN\s*=\s*([^\s\n]+)/);
     if (tokenMatch) {
       token = tokenMatch[1];
     }
@@ -56,8 +57,8 @@ try {
 
   if (packageJson.dependencies && packageJson.dependencies['motion-plus']) {
     const currentValue = packageJson.dependencies['motion-plus'];
-    if (currentValue !== motionPlusUrl && currentValue !== 'PLACEHOLDER_MOTION_PLUS_TOKEN') {
-      // Only update if it's the placeholder or different
+    if (currentValue !== motionPlusUrl) {
+      // Update if the URL doesn't match (placeholder or outdated token)
       packageJson.dependencies['motion-plus'] = motionPlusUrl;
       writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
       console.log('✅ Updated package.json with motion-plus token');
@@ -75,7 +76,7 @@ try {
     // Update in dependencies section
     if (packageLock.dependencies && packageLock.dependencies['motion-plus']) {
       const current = packageLock.dependencies['motion-plus'].resolved;
-      if (current && (current === 'PLACEHOLDER_MOTION_PLUS_TOKEN' || !current.includes('token='))) {
+      if (current !== motionPlusUrl) {
         packageLock.dependencies['motion-plus'].resolved = motionPlusUrl;
         updated = true;
       }
@@ -84,7 +85,7 @@ try {
     // Update in node_modules section
     if (packageLock.packages && packageLock.packages['node_modules/motion-plus']) {
       const current = packageLock.packages['node_modules/motion-plus'].resolved;
-      if (current && (current === 'PLACEHOLDER_MOTION_PLUS_TOKEN' || !current.includes('token='))) {
+      if (current !== motionPlusUrl) {
         packageLock.packages['node_modules/motion-plus'].resolved = motionPlusUrl;
         updated = true;
       }
