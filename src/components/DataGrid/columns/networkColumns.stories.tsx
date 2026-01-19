@@ -432,7 +432,9 @@ export const WithSelection: Story = {
       enableRowSelection: true,
     });
 
-    const selectedCount = Object.keys(rowSelection).filter((id) => rowSelection[id]).length;
+    const selectedCount = Object.keys(rowSelection).filter(
+      (id) => rowSelection[id] === true
+    ).length;
 
     return (
       <div className="bg-bg-surface p-4 rounded-lg space-y-4">

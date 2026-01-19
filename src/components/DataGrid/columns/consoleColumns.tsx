@@ -165,7 +165,7 @@ export const ConsoleActionsCell = ({
   };
 
   return (
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <Button
         variant="ghost"
         size="icon-xs"
@@ -240,6 +240,7 @@ export function createConsoleColumns(
       size: 100,
       minSize: 100,
       maxSize: 100,
+      enableResizing: false,
       enableSorting: true,
     },
 
@@ -269,17 +270,20 @@ export function createConsoleColumns(
       enableSorting: true,
     },
 
-    // Actions column (fixed on right)
+    // Actions column (pinned to right, frozen during horizontal scroll)
+    // Width: 2 buttons (28px each) + 1 gap (4px) + left padding (12px) + right padding (12px) + extra space for header (8px) = 80px
     {
       id: 'actions',
-      header: undefined,
+      header: 'Actions',
       cell: ({ row }) => (
         <ConsoleActionsCell log={row.original} onCopy={onCopy} onDelete={onDelete} />
       ),
       size: 80,
       minSize: 80,
       maxSize: 80,
+      enableResizing: false,
       enableSorting: false,
+      enablePinning: true,
     },
   ];
 }

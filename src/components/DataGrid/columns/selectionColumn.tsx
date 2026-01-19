@@ -118,7 +118,9 @@ export function createSelectionColumn<TData>(
     enableSorting: false,
     // Disable filtering for selection column
     enableColumnFilter: false,
-    // Fixed width for selection column (matches expander column)
+    // Disable resizing for selection column (fixed width)
+    enableResizing: false,
+    // Fixed width for selection column (32px)
     size: COLUMN_WIDTHS.SELECTION,
     minSize: COLUMN_WIDTHS.SELECTION,
     maxSize: COLUMN_WIDTHS.SELECTION,

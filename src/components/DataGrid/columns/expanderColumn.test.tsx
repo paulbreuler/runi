@@ -235,9 +235,11 @@ describe('expanderColumn', () => {
       const chevronButton = row1Cell.querySelector('button');
       expect(chevronButton).not.toBeNull();
 
-      // Check for expected styling classes
-      expect(chevronButton).toHaveClass('p-0.5');
+      // Check for expected styling classes (w-full h-full flex layout, rounded corners)
       expect(chevronButton).toHaveClass('rounded');
+      expect(chevronButton).toHaveClass('flex');
+      expect(chevronButton).toHaveClass('items-center');
+      expect(chevronButton).toHaveClass('justify-center');
     });
 
     it('has hover state styling', () => {

@@ -110,9 +110,8 @@ export const AllVariants: Story = {
   args: {
     filters: { ...DEFAULT_HISTORY_FILTERS, method: 'GET', status: '2xx' },
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
-    compareSelectionCount: 1,
+    selectedCount: 2,
+    onCompareResponses: noop,
     onSaveAll: noop,
     onSaveSelection: noop,
     onClearAll: noopAsync,

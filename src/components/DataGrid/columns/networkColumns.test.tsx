@@ -191,10 +191,10 @@ describe('createNetworkColumns', () => {
 
     const selectColumn = columns.find((c) => c.id === 'select');
     expect(selectColumn).toBeDefined();
-    // Should use COLUMN_WIDTHS.SELECTION constant (currently 24px)
-    expect(selectColumn?.size).toBe(24);
-    expect(selectColumn?.minSize).toBe(24);
-    expect(selectColumn?.maxSize).toBe(24);
+    // Should use COLUMN_WIDTHS.SELECTION constant (32px for square checkbox)
+    expect(selectColumn?.size).toBe(32);
+    expect(selectColumn?.minSize).toBe(32);
+    expect(selectColumn?.maxSize).toBe(32);
   });
 
   it('method column has fixed width based on longest method (OPTIONS)', () => {
@@ -206,10 +206,10 @@ describe('createNetworkColumns', () => {
 
     const methodColumn = columns.find((c) => c.id === 'method');
     expect(methodColumn).toBeDefined();
-    // Method column should be fixed width with improved spacing to match Console Level column
-    expect(methodColumn?.size).toBe(90);
-    expect(methodColumn?.minSize).toBe(90);
-    expect(methodColumn?.maxSize).toBe(90);
+    // Method column should be fixed width (100px for OPTIONS + padding)
+    expect(methodColumn?.size).toBe(100);
+    expect(methodColumn?.minSize).toBe(100);
+    expect(methodColumn?.maxSize).toBe(100);
   });
 
   it('does not accept compareMode prop (compare mode removed)', () => {

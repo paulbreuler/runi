@@ -12,6 +12,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { flexRender, type Row, type ColumnDef } from '@tanstack/react-table';
 import { useDataGrid, type UseDataGridOptions } from './useDataGrid';
 import { cn } from '@/utils/cn';
+import { useAnchorColumnWidths, type AnchorColumnDef } from './useAnchorColumnWidths';
 
 /**
  * Gets the appropriate padding class for a column based on its ID.
@@ -26,6 +27,9 @@ function getCellPaddingClass(columnId: string): string {
   }
   if (columnId === 'method') {
     return 'px-3 py-2';
+  }
+  if (columnId === 'actions') {
+    return 'px-3 py-2'; // Match other columns for consistent spacing
   }
   return 'px-3 py-2';
 }
@@ -190,40 +194,128 @@ export function VirtualDataGrid<TData>({
   const paddingBottom =
     virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0) : 0;
 
+  // ============================================================================
+  // Anchor-based column width calculation
+  // ============================================================================
+
+  // Convert TanStack columns to anchor column definitions
+  const anchorColumns = React.useMemo<AnchorColumnDef[]>(() => {
+    const allColumns = table.getAllLeafColumns();
+    return allColumns.map((col) => {
+      const maxSize = col.columnDef.maxSize;
+      const minSize = col.columnDef.minSize;
+      const columnDefSize = col.columnDef.size;
+      const isFixedColumn = maxSize !== undefined && minSize !== undefined && maxSize === minSize;
+
+      if (isFixedColumn && columnDefSize !== undefined) {
+        // Fixed column: use exact size
+        return {
+          id: col.id,
+          sizing: 'fixed',
+          width: columnDefSize,
+        };
+      } else {
+        // Flexible column: use size as weight, minSize as minimum
+        return {
+          id: col.id,
+          sizing: 'flex',
+          width: columnDefSize ?? 1, // Default weight of 1
+          minWidth: minSize,
+        };
+      }
+    });
+  }, [table]);
+
+  // Use anchor-based width calculation
+  const { getColumnStyle, containerWidth, ready, getWidth } = useAnchorColumnWidths(
+    scrollContainerRef,
+    anchorColumns
+  );
+
   // Default cell renderer
   const renderDefaultCells = (row: Row<TData>): React.ReactNode => {
+    const leftColumns = table.getLeftLeafColumns();
+    const rightColumns = table.getRightLeafColumns();
+    const centerColumns = table.getCenterLeafColumns();
+
+    // Calculate cumulative widths for sticky positioning
+    // For fixed columns, use column definition size directly to avoid column sizing state issues
+    const leftOffsets = new Map<string, number>();
+    const rightOffsets = new Map<string, number>();
+    let leftOffset = 0;
+    let rightOffset = 0;
+
+    // Pre-calculate offsets for left columns using anchor-based widths
+    leftColumns.forEach((column) => {
+      leftOffsets.set(column.id, leftOffset);
+      leftOffset += getWidth(column.id);
+    });
+
+    // Pre-calculate offsets for right columns (in reverse order) using anchor-based widths
+    [...rightColumns].reverse().forEach((column) => {
+      rightOffsets.set(column.id, rightOffset);
+      rightOffset += getWidth(column.id);
+    });
+
+    const renderCell = (
+      cell: ReturnType<Row<TData>['getVisibleCells']>[0],
+      isPinned: boolean,
+      pinSide: 'left' | 'right' | null
+    ): React.ReactNode => {
+      const columnId = cell.column.id;
+
+      // Use anchor-based calculated width
+      const columnStyle = getColumnStyle(columnId);
+      const cellStyle: React.CSSProperties = {
+        ...columnStyle,
+      };
+
+      // Add sticky positioning for pinned columns
+      if (isPinned && pinSide === 'left') {
+        cellStyle.position = 'sticky';
+        cellStyle.left = leftOffsets.get(columnId) ?? 0;
+        cellStyle.zIndex = 5;
+      } else if (isPinned && pinSide === 'right') {
+        cellStyle.position = 'sticky';
+        cellStyle.right = rightOffsets.get(columnId) ?? 0;
+        cellStyle.zIndex = 5;
+      }
+
+      const paddingClass = getCellPaddingClass(columnId);
+      // Pinned cells need background to cover scrolled content
+      // Use row's selected state if selected, otherwise use raised background (shade darker than rows)
+      let bgClass = '';
+      if (isPinned && (pinSide === 'left' || pinSide === 'right')) {
+        bgClass = row.getIsSelected() ? 'bg-accent-blue/10' : 'bg-bg-raised';
+      }
+
+      return (
+        <td
+          key={cell.id}
+          className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden', bgClass)}
+          style={cellStyle}
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </td>
+      );
+    };
+
     return (
       <>
-        {row.getVisibleCells().map((cell) => {
-          const columnSize = cell.column.getSize();
-          const maxSize = cell.column.columnDef.maxSize;
-          const minSize = cell.column.columnDef.minSize;
-          const columnId = cell.column.id;
-
-          // For fixed-size columns (minSize === maxSize), use fixed width
-          // For flexible columns, use width as initial size but allow growth
-          const isFixedColumn =
-            maxSize !== undefined && minSize !== undefined && maxSize === minSize;
-          let cellStyle: React.CSSProperties;
-          if (isFixedColumn) {
-            cellStyle = { width: columnSize, minWidth: columnSize, maxWidth: columnSize };
-          } else if (minSize !== undefined) {
-            cellStyle = { minWidth: minSize, width: columnSize };
-          } else {
-            cellStyle = { width: columnSize };
-          }
-
-          const paddingClass = getCellPaddingClass(columnId);
-
-          return (
-            <td
-              key={cell.id}
-              className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden')}
-              style={cellStyle}
-            >
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </td>
-          );
+        {/* Left pinned columns */}
+        {leftColumns.map((column) => {
+          const cell = row.getVisibleCells().find((c) => c.column.id === column.id);
+          return cell !== undefined ? renderCell(cell, true, 'left') : null;
+        })}
+        {/* Center (unpinned) columns */}
+        {centerColumns.map((column) => {
+          const cell = row.getVisibleCells().find((c) => c.column.id === column.id);
+          return cell !== undefined ? renderCell(cell, false, null) : null;
+        })}
+        {/* Right pinned columns */}
+        {rightColumns.map((column) => {
+          const cell = row.getVisibleCells().find((c) => c.column.id === column.id);
+          return cell !== undefined ? renderCell(cell, true, 'right') : null;
         })}
       </>
     );
@@ -299,50 +391,112 @@ export function VirtualDataGrid<TData>({
         style={{ height }}
         data-testid="virtual-scroll-container"
       >
-        <table className="border-collapse w-full" role="table" style={{ tableLayout: 'fixed' }}>
+        <table
+          className="border-collapse"
+          role="table"
+          style={{
+            width: ready && containerWidth > 0 ? containerWidth : '100%',
+            tableLayout: 'fixed',
+          }}
+        >
+          {ready && (
+            <colgroup>
+              {table.getAllLeafColumns().map((column) => {
+                const style = getColumnStyle(column.id);
+                return <col key={column.id} style={style} />;
+              })}
+            </colgroup>
+          )}
           <thead className="sticky top-0 bg-bg-app z-10">
             {renderHeader !== undefined
               ? renderHeader()
               : table.getHeaderGroups().map((headerGroup) => {
+                  const leftColumns = table.getLeftLeafColumns();
+                  const rightColumns = table.getRightLeafColumns();
+                  const centerColumns = table.getCenterLeafColumns();
+
+                  // Calculate cumulative widths for sticky positioning
+                  // For fixed columns, use column definition size directly to avoid column sizing state issues
+                  const leftOffsets = new Map<string, number>();
+                  const rightOffsets = new Map<string, number>();
+                  let leftOffset = 0;
+                  let rightOffset = 0;
+
+                  // Pre-calculate offsets for left columns using anchor-based widths
+                  leftColumns.forEach((column) => {
+                    leftOffsets.set(column.id, leftOffset);
+                    leftOffset += getWidth(column.id);
+                  });
+
+                  // Pre-calculate offsets for right columns (in reverse order) using anchor-based widths
+                  [...rightColumns].reverse().forEach((column) => {
+                    rightOffsets.set(column.id, rightOffset);
+                    rightOffset += getWidth(column.id);
+                  });
+
+                  const renderHeaderCell = (
+                    header: ReturnType<typeof table.getHeaderGroups>[0]['headers'][0],
+                    isPinned: boolean,
+                    pinSide: 'left' | 'right' | null
+                  ): React.ReactNode => {
+                    const paddingClass = getCellPaddingClass(header.column.id);
+
+                    // Use anchor-based calculated width
+                    const columnStyle = getColumnStyle(header.column.id);
+                    const headerStyle: React.CSSProperties = {
+                      ...columnStyle,
+                    };
+
+                    // Add sticky positioning for pinned columns
+                    if (isPinned && pinSide === 'left') {
+                      headerStyle.position = 'sticky';
+                      headerStyle.left = leftOffsets.get(header.column.id) ?? 0;
+                      headerStyle.zIndex = 15; // Higher than body cells
+                    } else if (isPinned && pinSide === 'right') {
+                      headerStyle.position = 'sticky';
+                      headerStyle.right = rightOffsets.get(header.column.id) ?? 0;
+                      headerStyle.zIndex = 15; // Higher than body cells
+                    }
+
+                    // Headers all use the same background color (bg-bg-app)
+                    const headerBgClass = 'bg-bg-app';
+
+                    return (
+                      <th
+                        key={header.id}
+                        className={cn(
+                          paddingClass,
+                          'text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default overflow-hidden',
+                          headerBgClass
+                        )}
+                        style={headerStyle}
+                        role="columnheader"
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    );
+                  };
+
                   return (
                     <tr key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        const paddingClass = getCellPaddingClass(header.column.id);
-                        const headerSize = header.getSize();
-                        const maxSize = header.column.columnDef.maxSize;
-                        const minSize = header.column.columnDef.minSize;
-                        const isFixedColumn =
-                          maxSize !== undefined && minSize !== undefined && maxSize === minSize;
-
-                        // Apply same width constraints as cells for consistency
-                        let headerStyle: React.CSSProperties;
-                        if (isFixedColumn) {
-                          headerStyle = {
-                            width: headerSize,
-                            minWidth: headerSize,
-                            maxWidth: headerSize,
-                          };
-                        } else if (minSize !== undefined) {
-                          headerStyle = { minWidth: minSize, width: headerSize };
-                        } else {
-                          headerStyle = { width: headerSize };
-                        }
-
-                        return (
-                          <th
-                            key={header.id}
-                            className={cn(
-                              paddingClass,
-                              'text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default overflow-hidden'
-                            )}
-                            style={headerStyle}
-                            role="columnheader"
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(header.column.columnDef.header, header.getContext())}
-                          </th>
-                        );
+                      {/* Left pinned headers */}
+                      {leftColumns.map((column) => {
+                        const header = headerGroup.headers.find((h) => h.column.id === column.id);
+                        return header !== undefined ? renderHeaderCell(header, true, 'left') : null;
+                      })}
+                      {/* Center (unpinned) headers */}
+                      {centerColumns.map((column) => {
+                        const header = headerGroup.headers.find((h) => h.column.id === column.id);
+                        return header !== undefined ? renderHeaderCell(header, false, null) : null;
+                      })}
+                      {/* Right pinned headers */}
+                      {rightColumns.map((column) => {
+                        const header = headerGroup.headers.find((h) => h.column.id === column.id);
+                        return header !== undefined
+                          ? renderHeaderCell(header, true, 'right')
+                          : null;
                       })}
                     </tr>
                   );
