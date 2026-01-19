@@ -525,4 +525,210 @@ mod tests {
         // All entries should be saved
         assert_eq!(storage.count().unwrap(), 10);
     }
+
+    // =========================================================================
+    // Performance Benchmarks
+    // =========================================================================
+
+    /// Helper to create N test entries quickly (without async overhead)
+    fn create_n_entries(count: usize) -> Vec<HistoryEntry> {
+        (0..count)
+            .map(|i| create_test_entry(&format!("perf-{i}")))
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn perf_save_1000_entries() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(1000);
+
+        let start = std::time::Instant::now();
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+        }
+        let elapsed = start.elapsed();
+
+        println!("Save 1,000 entries: {elapsed:?}");
+        // Should complete in under 5 seconds
+        assert!(elapsed.as_secs() < 5, "Save 1,000 entries took too long");
+        assert_eq!(storage.count().unwrap(), 1000);
+    }
+
+    #[tokio::test]
+    async fn perf_get_ids_from_10000_entries() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(10000);
+
+        // Save all entries first
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+        }
+        assert_eq!(storage.count().unwrap(), 10000);
+
+        // Benchmark get_ids
+        let start = std::time::Instant::now();
+        let ids = storage.get_ids(100, 0, true).unwrap();
+        let elapsed = start.elapsed();
+
+        println!("Get 100 IDs from 10,000 entries: {elapsed:?}");
+        // Should complete in under 50ms (actually much faster)
+        assert!(
+            elapsed.as_millis() < 50,
+            "Get IDs took too long: {elapsed:?}"
+        );
+        assert_eq!(ids.len(), 100);
+    }
+
+    #[tokio::test]
+    async fn perf_get_ids_pagination_10000_entries() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(10000);
+
+        // Save all entries first
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+        }
+
+        // Benchmark paginated get_ids (simulating scrolling)
+        let start = std::time::Instant::now();
+        for page in 0..10 {
+            let _ids = storage.get_ids(100, page * 100, true).unwrap();
+        }
+        let elapsed = start.elapsed();
+
+        println!("Get 10 pages of 100 IDs each from 10,000 entries: {elapsed:?}");
+        // Should complete in under 100ms total
+        assert!(
+            elapsed.as_millis() < 100,
+            "Paginated get_ids took too long: {elapsed:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn perf_get_batch_100_entries() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(10000);
+        let mut saved_ids = Vec::new();
+
+        // Save all entries first
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+            saved_ids.push(entry.id.clone());
+        }
+
+        // Get 100 random IDs to fetch
+        let batch_ids: Vec<String> = saved_ids.iter().take(100).cloned().collect();
+
+        // Benchmark get_batch
+        let start = std::time::Instant::now();
+        let batch = storage.get_batch(&batch_ids).unwrap();
+        let elapsed = start.elapsed();
+
+        println!("Get batch of 100 entries from 10,000: {elapsed:?}");
+        // Should complete in under 50ms
+        assert!(
+            elapsed.as_millis() < 50,
+            "Get batch took too long: {elapsed:?}"
+        );
+        assert_eq!(batch.len(), 100);
+    }
+
+    #[tokio::test]
+    async fn perf_load_entries_with_limit() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(10000);
+
+        // Save all entries first
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+        }
+
+        // Benchmark load_entries with limit
+        let start = std::time::Instant::now();
+        let loaded = storage.load_entries(Some(100)).await.unwrap();
+        let elapsed = start.elapsed();
+
+        println!("Load 100 entries from 10,000: {elapsed:?}");
+        // Should complete in under 50ms
+        assert!(
+            elapsed.as_millis() < 50,
+            "Load entries took too long: {elapsed:?}"
+        );
+        assert_eq!(loaded.len(), 100);
+    }
+
+    #[tokio::test]
+    async fn perf_count_10000_entries() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(10000);
+
+        // Save all entries first
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+        }
+
+        // Benchmark count
+        let start = std::time::Instant::now();
+        let count = storage.count().unwrap();
+        let elapsed = start.elapsed();
+
+        println!("Count 10,000 entries: {elapsed:?}");
+        // Should be extremely fast (< 10ms)
+        assert!(elapsed.as_millis() < 10, "Count took too long: {elapsed:?}");
+        assert_eq!(count, 10000);
+    }
+
+    #[tokio::test]
+    async fn perf_delete_entry_from_10000() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(10000);
+        let mut saved_ids = Vec::new();
+
+        // Save all entries first
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+            saved_ids.push(entry.id.clone());
+        }
+
+        // Benchmark delete (delete 10 entries)
+        let start = std::time::Instant::now();
+        for id in saved_ids.iter().take(10) {
+            storage.delete_entry(id).await.unwrap();
+        }
+        let elapsed = start.elapsed();
+
+        println!("Delete 10 entries from 10,000: {elapsed:?}");
+        // Should complete in under 50ms
+        assert!(
+            elapsed.as_millis() < 50,
+            "Delete took too long: {elapsed:?}"
+        );
+        assert_eq!(storage.count().unwrap(), 9990);
+    }
+
+    #[tokio::test]
+    async fn perf_index_usage_for_sorting() {
+        let storage = SqliteHistoryStorage::in_memory().unwrap();
+        let entries = create_n_entries(10000);
+
+        // Save all entries first
+        for entry in &entries {
+            storage.save_entry(entry).await.unwrap();
+        }
+
+        // Test that sorting (ASC vs DESC) is equally fast (index used)
+        let start_desc = std::time::Instant::now();
+        let _ids_desc = storage.get_ids(100, 0, true).unwrap();
+        let elapsed_desc = start_desc.elapsed();
+
+        let start_asc = std::time::Instant::now();
+        let _ids_asc = storage.get_ids(100, 0, false).unwrap();
+        let elapsed_asc = start_asc.elapsed();
+
+        println!("Get IDs DESC: {elapsed_desc:?}, ASC: {elapsed_asc:?}");
+
+        // Both should be fast
+        assert!(elapsed_desc.as_millis() < 50);
+        assert!(elapsed_asc.as_millis() < 50);
+    }
 }

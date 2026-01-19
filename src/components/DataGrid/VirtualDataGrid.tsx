@@ -195,7 +195,7 @@ export function VirtualDataGrid<TData>({
     // Empty state
     if (rows.length === 0) {
       return (
-        <tr>
+        <tr key="empty-state">
           <td colSpan={columns.length} className="px-3 py-8 text-center text-text-secondary">
             {emptyMessage}
           </td>
@@ -212,7 +212,7 @@ export function VirtualDataGrid<TData>({
     return (
       <>
         {paddingTop > 0 && (
-          <tr>
+          <tr key="padding-top">
             <td style={{ height: paddingTop }} />
           </tr>
         )}
@@ -224,7 +224,7 @@ export function VirtualDataGrid<TData>({
           return renderSingleRow(row);
         })}
         {paddingBottom > 0 && (
-          <tr>
+          <tr key="padding-bottom">
             <td style={{ height: paddingBottom }} />
           </tr>
         )}

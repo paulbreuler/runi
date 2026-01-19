@@ -390,3 +390,101 @@ export const ActionButtons: Story = {
     );
   },
 };
+
+/**
+ * Table with compare mode enabled. The selection checkboxes are used for comparison.
+ * Only one set of checkboxes appears - the same checkboxes handle both regular selection and compare selection.
+ */
+export const CompareMode: Story = {
+  render: () => {
+    const [expanded, setExpanded] = React.useState<ExpandedState>({});
+    const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+    const [compareSelection, setCompareSelection] = React.useState<string[]>([]);
+
+    const toggleCompare = React.useCallback((id: string): void => {
+      setCompareSelection((prev) => {
+        if (prev.includes(id)) {
+          return prev.filter((i) => i !== id);
+        }
+        if (prev.length >= 2) {
+          return prev;
+        }
+        return [...prev, id];
+      });
+    }, []);
+
+    const isCompareSelected = React.useCallback(
+      (id: string): boolean => compareSelection.includes(id),
+      [compareSelection]
+    );
+
+    const columns = React.useMemo(
+      () =>
+        createNetworkColumns({
+          onReplay: (): void => {
+            /* Storybook action */
+          },
+          onCopy: (): void => {
+            /* Storybook action */
+          },
+          onDelete: (): void => {
+            /* Storybook action */
+          },
+          compareMode: true,
+          onToggleCompare: toggleCompare,
+          isCompareSelected,
+        }),
+      [isCompareSelected, toggleCompare]
+    );
+
+    const table = useReactTable({
+      data: sampleEntries,
+      columns,
+      state: { expanded, rowSelection },
+      onExpandedChange: setExpanded,
+      onRowSelectionChange: setRowSelection,
+      getCoreRowModel: getCoreRowModel(),
+      getExpandedRowModel: getExpandedRowModel(),
+      getRowId: (row) => row.id,
+      getRowCanExpand: () => true,
+      enableRowSelection: true,
+    });
+
+    return (
+      <div className="bg-bg-surface p-4 rounded-lg space-y-4">
+        <div className="text-sm text-text-muted">
+          Compare mode: {compareSelection.length} of 2 selected
+        </div>
+        <table className="w-full">
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="border-b border-border-subtle">
+                {headerGroup.headers.map((header) => (
+                  <th key={header.id} className="text-left px-2 py-2 text-xs text-text-muted">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.id}
+                className="border-b border-border-subtle hover:bg-bg-raised/50 group"
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-2 py-2">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  },
+};
