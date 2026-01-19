@@ -247,20 +247,6 @@ describe('SegmentedControl', () => {
       expect(screen.getByText('Errors')).toBeInTheDocument();
     });
 
-    it('shows labels in compact variant', () => {
-      render(
-        <SegmentedControl
-          value="all"
-          onValueChange={() => {}}
-          options={[{ value: 'error', label: 'Errors', icon: <AlertCircle data-testid="icon" /> }]}
-          displayVariant="compact"
-          aria-label="Filter by level"
-        />
-      );
-
-      expect(screen.getByText('Errors')).toBeInTheDocument();
-    });
-
     it('hides labels in icon variant but shows tooltip', () => {
       render(
         <SegmentedControl

@@ -14,7 +14,7 @@ const meta = {
 
 ## Features
 
-- **Three display variants**: full (label + icon), compact (smaller), icon-only
+- **Two display variants**: full (label + icon), icon-only
 - **Badge counts**: Show counts with optional Motion+ animation
 - **Sizes**: sm, md (default), lg
 - **Keyboard navigation**: Tab, Enter, Space
@@ -460,7 +460,7 @@ export const ConsoleLogFilter: Story = {
 
 /**
  * All display variants compared side-by-side with interactive badge counts.
- * Demonstrates how badges appear in full, compact, and icon modes.
+ * Demonstrates how badges appear in full and icon modes.
  * Includes the "Saiyan Evolution" Easter egg that triggers a tiered power-up animation.
  *
  * **Tier System:**
@@ -651,7 +651,7 @@ export const AllVariantsComparison: Story = {
       },
     ];
 
-    const variants: Array<'full' | 'compact' | 'icon'> = ['full', 'compact', 'icon'];
+    const variants: Array<'full' | 'icon'> = ['full', 'icon'];
 
     // Get tier config from SAIYAN_TIERS (with guaranteed fallback)
     const baseTierConfig = SAIYAN_TIERS[0] ?? {
