@@ -56,7 +56,7 @@ const ExpanderCell = <TData,>({
       type="button"
       onClick={handleClick}
       className={cn(
-        'p-0.5 rounded transition-colors',
+        'p-0 rounded transition-colors',
         'hover:bg-bg-raised',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-1'
       )}
@@ -111,8 +111,8 @@ export function createExpanderColumn<TData>(
     // Disable filtering for expander column
     enableColumnFilter: false,
     // Fixed width for expander column
-    size: 32,
-    minSize: 32,
-    maxSize: 32,
+    size: 24,
+    minSize: 24,
+    maxSize: 24,
   };
 }
