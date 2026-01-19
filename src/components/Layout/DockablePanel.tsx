@@ -104,42 +104,9 @@ const trayContentVariants = {
 };
 
 /**
- * DockablePanel - A DevTools-style panel that can dock to different positions.
+ * DevTools-style panel that can dock to bottom, left, or right positions.
  *
- * Supports bottom, left, and right docking with resize capability.
- * Panel can be collapsed to a thin bar (28px) showing only a grip indicator.
- *
- * ## Features
- *
- * - **Resizable**: Drag panel edges to resize (bottom: vertical, left/right: horizontal)
- * - **Collapsible**: Click minimize button or double-click resizer to collapse to 28px
- * - **Dockable**: Supports three positions - bottom (full width), left, and right
- * - **Horizontal Scroll**: Header content scrolls horizontally when space is constrained
- * - **Motion Animations**: Spring-based animations for size changes (stiffness: 300, damping: 30, mass: 0.8)
- * - **Scroll Cues**: Animated gradient overlays indicate scrollable header content
- * - **Reduced Motion**: Respects `prefers-reduced-motion` setting
- *
- * ## Animation Details
- *
- * - **Size Changes**: Uses `useSpring` with spring physics for natural resizing animations
- * - **Content Opacity**: Content fades during drag using `useTransform` on size spring
- * - **Scroll Cues**: Gradient overlays animate with subtle pulse when scroll is idle
- * - **Tray Variants**: Collapsed tray uses Motion variants for hover/drag states
- *
- * ## Resize Behavior
- *
- * - **Bottom dock**: Drag top edge vertically
- * - **Left dock**: Drag right edge horizontally
- * - **Right dock**: Drag left edge horizontally
- * - **Double-click resizer**: Toggle collapse/expand
- * - **Minimum sizes**: Enforced via `MIN_PANEL_SIZES` to prevent unusable panels
- *
- * ## Accessibility
- *
- * - Keyboard navigation for controls (minimize, close, dock controls)
- * - ARIA labels for screen readers
- * - Focus management during resize operations
- * - Resizer has proper ARIA attributes (role="separator", aria-label, aria-orientation)
+ * Supports resizing, collapsing, and horizontal scrolling of header content.
  *
  * @example
  * ```tsx

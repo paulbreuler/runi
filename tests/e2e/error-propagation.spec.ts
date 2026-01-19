@@ -142,7 +142,8 @@ test.describe('Error Propagation with Correlation IDs', () => {
       const correlationId = uuidMatch ? uuidMatch[1] : first8Match![1];
 
       // Filter by correlation ID (use first 8 chars - partial match should work)
-      const filterInput = page.getByPlaceholder(/filter by correlation id/i);
+      // Use aria-label since placeholder is just "Correlation ID..."
+      const filterInput = page.getByLabel(/filter by correlation id/i);
       await filterInput.fill(correlationId.substring(0, 8));
 
       // Wait for filter to apply
