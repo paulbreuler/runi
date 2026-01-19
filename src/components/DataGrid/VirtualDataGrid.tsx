@@ -191,9 +191,14 @@ export function VirtualDataGrid<TData>({
             ? { minWidth: minSize, width: columnSize }
             : { width: columnSize };
 
-        // Reduce padding for selection and expander columns
+        // Reduce padding for compact columns
         const isCompactColumn = columnId === 'select' || columnId === 'expand';
-        const paddingClass = isCompactColumn ? 'px-1.5 py-2' : 'px-3 py-2';
+        const isMethodColumn = columnId === 'method';
+        const paddingClass = isCompactColumn
+          ? 'px-1 py-2' // Even tighter for checkbox/chevron
+          : isMethodColumn
+            ? 'px-2 py-2' // Reduced padding for method to reduce gap to URL
+            : 'px-3 py-2';
 
         return (
           <td
@@ -287,7 +292,12 @@ export function VirtualDataGrid<TData>({
                     {headerGroup.headers.map((header) => {
                       const isCompactColumn =
                         header.column.id === 'select' || header.column.id === 'expand';
-                      const paddingClass = isCompactColumn ? 'px-1.5 py-2' : 'px-3 py-2';
+                      const isMethodColumn = header.column.id === 'method';
+                      const paddingClass = isCompactColumn
+                        ? 'px-1 py-2' // Even tighter for checkbox/chevron
+                        : isMethodColumn
+                          ? 'px-2 py-2' // Reduced padding for method to reduce gap to URL
+                          : 'px-3 py-2';
                       return (
                         <th
                           key={header.id}
