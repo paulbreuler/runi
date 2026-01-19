@@ -551,16 +551,103 @@ describe('ConsolePanel', () => {
       service.addLog({ level: 'debug', message: 'Debug 1', args: [], timestamp: Date.now() });
       service.addLog({ level: 'debug', message: 'Debug 2', args: [], timestamp: Date.now() });
       service.addLog({ level: 'error', message: 'Error 1', args: [], timestamp: Date.now() });
+      service.addLog({ level: 'warn', message: 'Warn 1', args: [], timestamp: Date.now() });
+      service.addLog({ level: 'info', message: 'Info 1', args: [], timestamp: Date.now() });
+      service.addLog({ level: 'info', message: 'Info 2', args: [], timestamp: Date.now() });
     });
 
     // Wait for logs to appear and counts to update
     await waitFor(() => {
       // All button shows total count in label
-      const allButton = screen.getByRole('button', { name: /all \(3\)/i });
+      const allButton = screen.getByRole('button', { name: /all \(6\)/i });
       expect(allButton).toBeInTheDocument();
       // Error button has badge with count
       const errorButton = screen.getByRole('button', { name: /errors/i });
       expect(errorButton.textContent).toContain('1');
+      // Warn button has badge with count
+      const warnButton = screen.getByRole('button', { name: /warnings/i });
+      expect(warnButton.textContent).toContain('1');
+      // Info button has badge with count (button contains "Info" text)
+      const infoButtons = screen.getAllByRole('button');
+      const infoButton = infoButtons.find((btn) => btn.textContent.includes('Info'));
+      expect(infoButton).toBeDefined();
+      if (infoButton !== undefined) {
+        expect(infoButton.textContent).toContain('2');
+      }
+      // Debug button has badge with count (button contains "Debug" text)
+      const debugButton = infoButtons.find((btn) => btn.textContent.includes('Debug'));
+      expect(debugButton).toBeDefined();
+      if (debugButton !== undefined) {
+        expect(debugButton.textContent).toContain('2');
+      }
+    }, WAIT_TIMEOUT);
+  });
+
+  it('only displays badges when count is greater than 0', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add only error logs - other levels should have no badges
+    await act(async () => {
+      service.addLog({ level: 'error', message: 'Error 1', args: [], timestamp: Date.now() });
+      service.addLog({ level: 'error', message: 'Error 2', args: [], timestamp: Date.now() });
+    });
+
+    // Wait for logs to appear
+    await waitFor(() => {
+      const errorButton = screen.getByRole('button', { name: /errors/i });
+      expect(errorButton.textContent).toContain('2');
+    }, WAIT_TIMEOUT);
+
+    // Verify badges only appear for error (count > 0)
+    const errorButton = screen.getByRole('button', { name: /errors/i });
+    expect(errorButton.textContent).toContain('2');
+
+    // Warn, info, and debug should not have badges (count = 0)
+    const warnButton = screen.getByRole('button', { name: /warnings/i });
+    expect(warnButton.textContent).not.toMatch(/\d/); // No digits in badge
+
+    const allButtons = screen.getAllByRole('button');
+    const infoButton = allButtons.find(
+      (btn) => btn.textContent.includes('Info') && !btn.textContent.includes('All')
+    );
+    expect(infoButton).toBeDefined();
+    if (infoButton !== undefined) {
+      expect(infoButton.textContent).not.toMatch(/\d/); // No digits in badge
+    }
+
+    const debugButton = allButtons.find((btn) => btn.textContent.includes('Debug'));
+    expect(debugButton).toBeDefined();
+    if (debugButton !== undefined) {
+      expect(debugButton.textContent).not.toMatch(/\d/); // No digits in badge
+    }
+  });
+
+  it('updates badge counts when logs are added', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Start with one error log
+    await act(async () => {
+      service.addLog({ level: 'error', message: 'Error 1', args: [], timestamp: Date.now() });
+    });
+
+    // Wait for initial log
+    await waitFor(() => {
+      const errorButton = screen.getByRole('button', { name: /errors/i });
+      expect(errorButton.textContent).toContain('1');
+    }, WAIT_TIMEOUT);
+
+    // Add more error logs
+    await act(async () => {
+      service.addLog({ level: 'error', message: 'Error 2', args: [], timestamp: Date.now() });
+      service.addLog({ level: 'error', message: 'Error 3', args: [], timestamp: Date.now() });
+    });
+
+    // Verify badge count updated
+    await waitFor(() => {
+      const errorButton = screen.getByRole('button', { name: /errors/i });
+      expect(errorButton.textContent).toContain('3');
     }, WAIT_TIMEOUT);
   });
 

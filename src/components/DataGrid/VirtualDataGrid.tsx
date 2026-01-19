@@ -14,6 +14,23 @@ import { useDataGrid, type UseDataGridOptions } from './useDataGrid';
 import { cn } from '@/utils/cn';
 
 /**
+ * Gets the appropriate padding class for a column based on its ID.
+ * Returns padding classes without any flex/alignment utilities.
+ */
+function getCellPaddingClass(columnId: string): string {
+  if (columnId === 'select') {
+    return 'px-2 py-2'; // Match expander column padding for consistent width
+  }
+  if (columnId === 'expand') {
+    return 'px-2 py-2';
+  }
+  if (columnId === 'method') {
+    return 'px-3 py-2';
+  }
+  return 'px-3 py-2';
+}
+
+/**
  * Props for the VirtualDataGrid component
  */
 export interface VirtualDataGridProps<TData> extends Omit<UseDataGridOptions<TData>, 'columns'> {
@@ -180,25 +197,20 @@ export function VirtualDataGrid<TData>({
         const columnSize = cell.column.getSize();
         const maxSize = cell.column.columnDef.maxSize;
         const minSize = cell.column.columnDef.minSize;
-        const columnId = cell.column.id;
 
         // For fixed-size columns (minSize === maxSize), use fixed width
         // For flexible columns, use width as initial size but allow growth
         const isFixedColumn = maxSize !== undefined && minSize !== undefined && maxSize === minSize;
-        const cellStyle: React.CSSProperties = isFixedColumn
-          ? { width: columnSize, minWidth: columnSize, maxWidth: columnSize }
-          : minSize !== undefined
-            ? { minWidth: minSize, width: columnSize }
-            : { width: columnSize };
+        let cellStyle: React.CSSProperties;
+        if (isFixedColumn) {
+          cellStyle = { width: columnSize, minWidth: columnSize, maxWidth: columnSize };
+        } else if (minSize !== undefined) {
+          cellStyle = { minWidth: minSize, width: columnSize };
+        } else {
+          cellStyle = { width: columnSize };
+        }
 
-        // Reduce padding for compact columns
-        const isCompactColumn = columnId === 'select' || columnId === 'expand';
-        const isMethodColumn = columnId === 'method';
-        const paddingClass = isCompactColumn
-          ? 'px-1 py-2' // Even tighter for checkbox/chevron
-          : isMethodColumn
-            ? 'px-2 py-2' // Reduced padding for method to reduce gap to URL
-            : 'px-3 py-2';
+        const paddingClass = getCellPaddingClass(cell.column.id);
 
         return (
           <td
@@ -290,14 +302,27 @@ export function VirtualDataGrid<TData>({
               : table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
-                      const isCompactColumn =
-                        header.column.id === 'select' || header.column.id === 'expand';
-                      const isMethodColumn = header.column.id === 'method';
-                      const paddingClass = isCompactColumn
-                        ? 'px-1 py-2' // Even tighter for checkbox/chevron
-                        : isMethodColumn
-                          ? 'px-2 py-2' // Reduced padding for method to reduce gap to URL
-                          : 'px-3 py-2';
+                      const paddingClass = getCellPaddingClass(header.column.id);
+                      const headerSize = header.getSize();
+                      const maxSize = header.column.columnDef.maxSize;
+                      const minSize = header.column.columnDef.minSize;
+                      const isFixedColumn =
+                        maxSize !== undefined && minSize !== undefined && maxSize === minSize;
+
+                      // Apply same width constraints as cells for consistency
+                      let headerStyle: React.CSSProperties;
+                      if (isFixedColumn) {
+                        headerStyle = {
+                          width: headerSize,
+                          minWidth: headerSize,
+                          maxWidth: headerSize,
+                        };
+                      } else if (minSize !== undefined) {
+                        headerStyle = { minWidth: minSize, width: headerSize };
+                      } else {
+                        headerStyle = { width: headerSize };
+                      }
+
                       return (
                         <th
                           key={header.id}
@@ -305,7 +330,7 @@ export function VirtualDataGrid<TData>({
                             paddingClass,
                             'text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default overflow-hidden'
                           )}
-                          style={{ width: header.getSize() }}
+                          style={headerStyle}
                           role="columnheader"
                         >
                           {header.isPlaceholder

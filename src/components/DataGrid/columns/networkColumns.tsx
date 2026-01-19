@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import type { ColumnDef, Table, Row, HeaderContext, CellContext } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Play, Copy, Trash2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { formatRelativeTime } from '@/utils/relative-time';
@@ -12,8 +12,7 @@ import type { NetworkHistoryEntry, IntelligenceInfo } from '@/types/history';
 import { IntelligenceSignals } from '@/components/History/IntelligenceSignals';
 import { Button } from '@/components/ui/button';
 import { createExpanderColumn } from './expanderColumn';
-import { Checkbox } from '@/components/ui/checkbox';
-import type { CheckedState } from '@radix-ui/react-checkbox';
+import { createSelectionColumn } from './selectionColumn';
 
 // ============================================================================
 // Method Cell
@@ -251,108 +250,6 @@ export const ActionsCell = ({
 };
 
 // ============================================================================
-// Network Selection Column (Regular selection only - compare mode removed)
-// ============================================================================
-
-interface NetworkSelectionColumnOptions {
-  /** Size of the checkbox (sm, default, lg) */
-  size?: 'sm' | 'default' | 'lg';
-}
-
-/**
- * Header component for network selection column
- */
-interface NetworkSelectionHeaderProps {
-  table: Table<NetworkHistoryEntry>;
-  size?: 'sm' | 'default' | 'lg';
-}
-
-const NetworkSelectionHeader = ({
-  table,
-  size,
-}: NetworkSelectionHeaderProps): React.ReactElement => {
-  // Always use TanStack Table selection
-  const isAllSelected = table.getIsAllRowsSelected();
-  const isSomeSelected = table.getIsSomeRowsSelected();
-
-  const getCheckedState = (): CheckedState => {
-    if (isAllSelected) {
-      return true;
-    }
-    if (isSomeSelected) {
-      return 'indeterminate';
-    }
-    return false;
-  };
-
-  const handleCheckedChange = (): void => {
-    table.toggleAllRowsSelected(!isAllSelected);
-  };
-
-  return (
-    <Checkbox
-      checked={getCheckedState()}
-      onCheckedChange={handleCheckedChange}
-      aria-label={isAllSelected ? 'Deselect all rows' : 'Select all rows'}
-      size={size}
-    />
-  );
-};
-
-/**
- * Cell component for network selection column
- */
-interface NetworkSelectionCellProps {
-  row: Row<NetworkHistoryEntry>;
-  size?: 'sm' | 'default' | 'lg';
-}
-
-const NetworkSelectionCell = ({ row, size }: NetworkSelectionCellProps): React.ReactElement => {
-  // Always use TanStack Table selection
-  const isSelected = row.getIsSelected();
-
-  const handleCheckedChange = (): void => {
-    row.toggleSelected(!isSelected);
-  };
-
-  return (
-    <Checkbox
-      checked={isSelected}
-      onCheckedChange={handleCheckedChange}
-      aria-label={isSelected ? 'Deselect row' : 'Select row'}
-      size={size}
-    />
-  );
-};
-
-/**
- * Creates a selection column for Network History using TanStack Table selection.
- */
-function createNetworkSelectionColumn(
-  options: NetworkSelectionColumnOptions = {}
-): ColumnDef<NetworkHistoryEntry> {
-  const { size } = options;
-
-  return {
-    id: 'select',
-    header: ({ table }: HeaderContext<NetworkHistoryEntry, unknown>): React.ReactElement => (
-      <NetworkSelectionHeader table={table} size={size} />
-    ),
-    cell: ({ row }: CellContext<NetworkHistoryEntry, unknown>) => (
-      <NetworkSelectionCell row={row} size={size} />
-    ),
-    // Disable sorting for selection column
-    enableSorting: false,
-    // Disable filtering for selection column
-    enableColumnFilter: false,
-    // Fixed width for selection column
-    size: 32,
-    minSize: 32,
-    maxSize: 32,
-  };
-}
-
-// ============================================================================
 // Column Factory
 // ============================================================================
 
@@ -386,8 +283,8 @@ export function createNetworkColumns(
   const { onReplay, onCopy, onDelete } = options;
 
   const columns: Array<ColumnDef<NetworkHistoryEntry>> = [
-    // Selection column (regular selection only)
-    createNetworkSelectionColumn({
+    // Selection column
+    createSelectionColumn<NetworkHistoryEntry>({
       size: 'sm',
     }),
 
@@ -396,15 +293,13 @@ export function createNetworkColumns(
       iconSize: 14,
     }),
 
-    // Method column (fixed width based on longest method: OPTIONS = 7 chars)
+    // Method column (fixed width with improved spacing to match Console Tab)
     {
       id: 'method',
       accessorFn: (row) => row.request.method,
       header: 'Method',
       cell: ({ getValue }) => <MethodCell method={getValue() as string} />,
-      size: 70, // Fits longest method (OPTIONS) with text-xs monospace + padding
-      minSize: 70,
-      maxSize: 70,
+      size: 100,
       enableSorting: true,
     },
 
@@ -421,56 +316,56 @@ export function createNetworkColumns(
       enableSorting: true,
     },
 
-    // Status column
+    // Status column (reduced width for tighter spacing)
     {
       id: 'status',
       accessorFn: (row) => row.response.status,
       header: 'Status',
       cell: ({ getValue }) => <StatusCell status={getValue() as number} />,
-      size: 60,
+      size: 55,
       enableSorting: true,
     },
 
-    // Timing column
+    // Timing column (reduced width for tighter spacing)
     {
       id: 'timing',
       accessorFn: (row) => row.response.timing.total_ms,
       header: 'Time',
       cell: ({ getValue }) => <TimingCell totalMs={getValue() as number} />,
-      size: 80,
+      size: 70,
       enableSorting: true,
     },
 
-    // Size column
+    // Size column (reduced width for tighter spacing)
     {
       id: 'size',
       accessorFn: (row) => row.response.body.length,
       header: 'Size',
       cell: ({ getValue }) => <SizeCell bytes={getValue() as number} />,
-      size: 80,
+      size: 70,
       enableSorting: true,
     },
 
-    // Time ago column
+    // Time ago column (reduced width for tighter spacing)
     {
       id: 'timeAgo',
       accessorFn: (row) => row.timestamp,
       header: 'When',
       cell: ({ getValue }) => <TimeAgoCell timestamp={getValue() as string} />,
-      size: 80,
+      size: 70,
       enableSorting: true,
     },
 
-    // Actions column (fixed on right)
+    // Actions column (fixed on right, reduced width for tighter spacing)
     {
       id: 'actions',
       header: undefined,
       cell: ({ row }) => (
         <ActionsCell entry={row.original} onReplay={onReplay} onCopy={onCopy} onDelete={onDelete} />
       ),
-      size: 100,
-      minSize: 100,
-      maxSize: 100,
+      size: 80,
+      minSize: 80,
+      maxSize: 80,
       enableSorting: false,
     },
   ];

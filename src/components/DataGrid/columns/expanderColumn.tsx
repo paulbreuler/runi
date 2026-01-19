@@ -10,6 +10,7 @@ import type { ColumnDef, Row, CellContext } from '@tanstack/react-table';
 import { motion, useReducedMotion } from 'motion/react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { COLUMN_WIDTHS } from '@/components/DataGrid/constants';
 
 /**
  * Options for customizing the expander column
@@ -56,7 +57,7 @@ const ExpanderCell = <TData,>({
       type="button"
       onClick={handleClick}
       className={cn(
-        'p-0 rounded transition-colors',
+        'w-full h-full flex items-center justify-center rounded transition-colors',
         'hover:bg-bg-raised',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-1'
       )}
@@ -111,8 +112,8 @@ export function createExpanderColumn<TData>(
     // Disable filtering for expander column
     enableColumnFilter: false,
     // Fixed width for expander column
-    size: 24,
-    minSize: 24,
-    maxSize: 24,
+    size: COLUMN_WIDTHS.EXPANDER,
+    minSize: COLUMN_WIDTHS.EXPANDER,
+    maxSize: COLUMN_WIDTHS.EXPANDER,
   };
 }
