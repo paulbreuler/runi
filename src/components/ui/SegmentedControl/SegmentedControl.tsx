@@ -92,6 +92,19 @@ const sizeClasses = {
 };
 
 // ============================================================================
+// TRANSITION DURATIONS (seconds)
+// ============================================================================
+
+/** Duration for power level tier effect animations */
+const TIER_EFFECT_TRANSITION_DURATION = 0.3;
+
+/** Duration for container aura/glow animations */
+const CONTAINER_AURA_TRANSITION_DURATION = 0.5;
+
+/** Duration for normal selection changes (instant) */
+const SELECTION_TRANSITION_DURATION = 0;
+
+// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -287,7 +300,7 @@ export const SegmentedControl = <T extends string>({
             borderColor: tierBorderColor,
             backgroundColor: tierBackgroundTint,
           }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: CONTAINER_AURA_TRANSITION_DURATION }}
         >
           {options.map((option, index) => {
             const isSelected = value === option.value;
@@ -321,6 +334,14 @@ export const SegmentedControl = <T extends string>({
             const targetColor = tierTextColor ?? defaultTextColor;
             const targetBackground = tierSelectedBg ?? 'transparent';
 
+            // Decouple normal operation from power level animation:
+            // - Normal selection changes: instant
+            // - Power level tier effects: animated
+            const hasTierEffects = tierTextColor !== undefined || tierSelectedBg !== undefined;
+            const transitionDuration = hasTierEffects
+              ? TIER_EFFECT_TRANSITION_DURATION
+              : SELECTION_TRANSITION_DURATION;
+
             return (
               <motion.button
                 key={option.value}
@@ -330,7 +351,7 @@ export const SegmentedControl = <T extends string>({
                 }}
                 disabled={isDisabled}
                 className={cn(
-                  'transition-colors flex items-center justify-center gap-1 border',
+                  'flex items-center justify-center gap-1 border',
                   sizeClasses[size],
                   // Connected button group styling
                   isFirst && 'rounded-l',
@@ -346,8 +367,7 @@ export const SegmentedControl = <T extends string>({
                   // Icon mode specific sizing
                   isIconMode && 'min-w-[28px]'
                 )}
-                // FIX: Set initial to match animate to prevent mount animation flash
-                // Without this, Motion animates from CSS defaults (bright) to animate target (muted)
+                // Set initial to match animate to prevent mount animation flash
                 initial={{
                   color: targetColor,
                   backgroundColor: targetBackground,
@@ -356,7 +376,7 @@ export const SegmentedControl = <T extends string>({
                   color: targetColor,
                   backgroundColor: targetBackground,
                 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: transitionDuration }}
                 aria-pressed={isSelected}
                 title={getTooltip(option)}
               >
