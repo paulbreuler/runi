@@ -85,7 +85,16 @@ export const ConsoleContextMenu = ({
           firstTimestamp: log.firstTimestamp,
           lastTimestamp: log.lastTimestamp,
           correlationId: log.correlationId,
-          allLogs: log.allLogs,
+          // Only include a single representative log entry, not allLogs array
+          log: {
+            id: log.sampleLog.id,
+            level: log.sampleLog.level,
+            message: log.sampleLog.message,
+            args: log.sampleLog.args,
+            timestamp: log.sampleLog.timestamp,
+            source: log.sampleLog.source,
+            correlationId: log.sampleLog.correlationId,
+          },
         }
       : {
           id: log.id,

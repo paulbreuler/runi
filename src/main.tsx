@@ -1,12 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { initializeConsoleService } from '@/services/console-service';
+import { initializeConsoleService, getConsoleService } from '@/services/console-service';
 import { App } from './App';
 import './app.css';
 
 // Initialize console service BEFORE React mounts
 // This ensures all logs are captured, including those before React initialization
 initializeConsoleService();
+
+// In development, set minimum log level to 'debug' to see all logs
+// In production, default is 'info' (only shows info, warn, error)
+const isDev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ?? false;
+if (isDev) {
+  getConsoleService().setMinLogLevel('debug');
+}
 
 // Ensure dark mode is applied
 document.documentElement.classList.add('dark');
