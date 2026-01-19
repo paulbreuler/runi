@@ -3,12 +3,18 @@
 //! This module provides a persistent SQLite-based storage implementation
 //! for history entries. It's designed for handling large datasets (1M+ entries)
 //! with efficient windowed queries.
+//!
+//! ## Migrations
+//!
+//! Database schema is managed via migrations. See [`super::migrations`] for details.
+//! Migrations are applied automatically when the storage is opened.
 
 // Allow significant_drop_tightening because the lock guards in this module
 // are being used correctly. The clippy lint's suggested fix has syntax errors.
 #![allow(clippy::significant_drop_tightening)]
 
 use super::history::HistoryEntry;
+use super::migrations;
 use super::traits::HistoryStorage;
 use async_trait::async_trait;
 use rusqlite::{Connection, params};
@@ -18,6 +24,8 @@ use std::sync::Mutex;
 ///
 /// This implementation stores history entries in a `SQLite` database file,
 /// providing persistence across sessions and efficient queries for large datasets.
+///
+/// Database schema is managed via migrations - see [`super::migrations`].
 pub struct SqliteHistoryStorage {
     /// Database connection wrapped in a mutex for thread safety.
     conn: Mutex<Connection>,
@@ -26,9 +34,13 @@ pub struct SqliteHistoryStorage {
 impl SqliteHistoryStorage {
     /// Create a new `SQLite` storage at the given path.
     ///
+    /// This will:
+    /// 1. Open or create the database file
+    /// 2. Apply any pending migrations
+    ///
     /// # Errors
     ///
-    /// Returns an error if the database cannot be created or initialized.
+    /// Returns an error if the database cannot be created or migrations fail.
     #[allow(dead_code)] // Will be used when SQLite becomes the default storage
     pub fn new(db_path: &std::path::Path) -> Result<Self, String> {
         let conn = Connection::open(db_path).map_err(|e| {
@@ -38,8 +50,8 @@ impl SqliteHistoryStorage {
             )
         })?;
 
-        // Initialize the database schema
-        Self::init_schema(&conn)?;
+        // Apply migrations (creates schema if needed)
+        migrations::apply_migrations(&conn)?;
 
         Ok(Self {
             conn: Mutex::new(conn),
@@ -50,36 +62,33 @@ impl SqliteHistoryStorage {
     ///
     /// # Errors
     ///
-    /// Returns an error if the database cannot be created.
+    /// Returns an error if the database cannot be created or migrations fail.
     #[cfg(test)]
     pub fn in_memory() -> Result<Self, String> {
         let conn = Connection::open_in_memory()
             .map_err(|e| format!("Failed to open in-memory SQLite: {e}"))?;
 
-        Self::init_schema(&conn)?;
+        // Apply migrations
+        migrations::apply_migrations(&conn)?;
 
         Ok(Self {
             conn: Mutex::new(conn),
         })
     }
 
-    /// Initialize the database schema.
-    fn init_schema(conn: &Connection) -> Result<(), String> {
-        conn.execute_batch(
-            r"
-            CREATE TABLE IF NOT EXISTS history (
-                id TEXT PRIMARY KEY,
-                timestamp TEXT NOT NULL,
-                request_json TEXT NOT NULL,
-                response_json TEXT NOT NULL
-            );
+    /// Get the current database schema version.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the version cannot be determined.
+    #[allow(dead_code)]
+    pub fn schema_version(&self) -> Result<u32, String> {
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| format!("Lock poisoned: {e}"))?;
 
-            CREATE INDEX IF NOT EXISTS idx_history_timestamp ON history(timestamp DESC);
-            ",
-        )
-        .map_err(|e| format!("Failed to initialize database schema: {e}"))?;
-
-        Ok(())
+        migrations::get_current_version(&conn)
     }
 
     /// Get the total count of history entries.
@@ -238,9 +247,24 @@ impl HistoryStorage for SqliteHistoryStorage {
         let response_json = serde_json::to_string(&entry.response)
             .map_err(|e| format!("Failed to serialize response: {e}"))?;
 
+        // Extract denormalized values for efficient filtering
+        let method = &entry.request.method;
+        let status = entry.response.status;
+        let url = &entry.request.url;
+
         conn.execute(
-            "INSERT OR REPLACE INTO history (id, timestamp, request_json, response_json) VALUES (?1, ?2, ?3, ?4)",
-            params![entry.id, timestamp, request_json, response_json],
+            r"INSERT OR REPLACE INTO history 
+              (id, timestamp, request_json, response_json, method, status, url) 
+              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![
+                entry.id,
+                timestamp,
+                request_json,
+                response_json,
+                method,
+                status,
+                url
+            ],
         )
         .map_err(|e| format!("Failed to save entry: {e}"))?;
 
