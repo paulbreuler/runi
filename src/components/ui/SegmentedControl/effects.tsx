@@ -258,11 +258,6 @@ export const EnergyRing = ({
 // DISSIPATING PARTICLES - Sparks flying off during settling
 // ============================================================================
 
-interface DissipatingParticlesProps {
-  color: string;
-  isActive: boolean; // true when animationState === 'settling'
-}
-
 type EdgePosition = 'top' | 'bottom' | 'left' | 'right';
 
 interface ParticleConfig {
@@ -275,6 +270,85 @@ interface ParticleConfig {
   size: number;
 }
 
+interface ParticleGenerationOptions {
+  particlesPerEdge: number;
+  angleSpread: number; // +/- degrees from base angle
+  distanceRange: { min: number; max: number };
+  delayRange: { min: number; max: number };
+  sizeRange: { min: number; max: number };
+  distanceMultiplier?: number;
+}
+
+// Shared utility: Get starting CSS position based on edge
+const getParticleStartPosition = (
+  p: ParticleConfig
+): { left?: string; right?: string; top?: string; bottom?: string } => {
+  switch (p.edge) {
+    case 'top':
+      return { left: `${String(p.edgePosition)}%`, top: '0' };
+    case 'bottom':
+      return { left: `${String(p.edgePosition)}%`, bottom: '0' };
+    case 'left':
+      return { left: '0', top: `${String(p.edgePosition)}%` };
+    case 'right':
+      return { right: '0', top: `${String(p.edgePosition)}%` };
+  }
+};
+
+// Shared utility: Get base angle for edge
+const getBaseAngleForEdge = (edge: EdgePosition): number => {
+  switch (edge) {
+    case 'top':
+      return -90; // Up
+    case 'bottom':
+      return 90; // Down
+    case 'left':
+      return 180; // Left
+    case 'right':
+      return 0; // Right
+  }
+};
+
+// Shared utility: Generate particles with configurable options
+const generateParticles = (options: ParticleGenerationOptions): ParticleConfig[] => {
+  const edges: EdgePosition[] = ['top', 'bottom', 'left', 'right'];
+  const allParticles: ParticleConfig[] = [];
+
+  edges.forEach((edge, edgeIndex) => {
+    for (let i = 0; i < options.particlesPerEdge; i++) {
+      const basePosition = ((i + 0.5) / options.particlesPerEdge) * 100;
+      const edgePosition = basePosition + (Math.random() * 10 - 5);
+      const baseAngle = getBaseAngleForEdge(edge);
+      const angle = baseAngle + (Math.random() * options.angleSpread * 2 - options.angleSpread);
+
+      const baseDistance =
+        options.distanceRange.min +
+        Math.random() * (options.distanceRange.max - options.distanceRange.min);
+      const distance = baseDistance * (options.distanceMultiplier ?? 1);
+
+      allParticles.push({
+        id: edgeIndex * options.particlesPerEdge + i,
+        edge,
+        edgePosition,
+        angle,
+        distance,
+        delay:
+          options.delayRange.min +
+          Math.random() * (options.delayRange.max - options.delayRange.min),
+        size:
+          options.sizeRange.min + Math.random() * (options.sizeRange.max - options.sizeRange.min),
+      });
+    }
+  });
+
+  return allParticles;
+};
+
+interface DissipatingParticlesProps {
+  color: string;
+  isActive: boolean; // true when animationState === 'settling'
+}
+
 /**
  * Dissipating particles component - sparks flying off from edges during settle phase.
  * Creates the effect of energy dissipating "into the ether".
@@ -283,66 +357,17 @@ export const DissipatingParticles = ({
   color,
   isActive,
 }: DissipatingParticlesProps): React.JSX.Element | null => {
-  // Generate particles distributed around all edges
-  const particles = React.useMemo((): ParticleConfig[] => {
-    const edges: EdgePosition[] = ['top', 'bottom', 'left', 'right'];
-    const particlesPerEdge = 8;
-    const allParticles: ParticleConfig[] = [];
-
-    edges.forEach((edge, edgeIndex) => {
-      for (let i = 0; i < particlesPerEdge; i++) {
-        // Distribute along edge with some randomness
-        const basePosition = ((i + 0.5) / particlesPerEdge) * 100;
-        const edgePosition = basePosition + (Math.random() * 10 - 5);
-
-        // Angle points outward from the edge
-        let baseAngle: number;
-        switch (edge) {
-          case 'top':
-            baseAngle = -90;
-            break; // Up
-          case 'bottom':
-            baseAngle = 90;
-            break; // Down
-          case 'left':
-            baseAngle = 180;
-            break; // Left
-          case 'right':
-            baseAngle = 0;
-            break; // Right
-        }
-        const angle = baseAngle + (Math.random() * 40 - 20); // +/-20 degree spread
-
-        allParticles.push({
-          id: edgeIndex * particlesPerEdge + i,
-          edge,
-          edgePosition,
-          angle,
-          distance: 8 + Math.random() * 10, // 8-18px from edge
-          delay: Math.random() * 0.15,
-          size: 1 + Math.random() * 1.5, // Slightly smaller
-        });
-      }
-    });
-
-    return allParticles;
-  }, []);
-
-  // Get starting CSS position based on edge
-  const getStartPosition = (
-    p: ParticleConfig
-  ): { left?: string; right?: string; top?: string; bottom?: string } => {
-    switch (p.edge) {
-      case 'top':
-        return { left: `${String(p.edgePosition)}%`, top: '0' };
-      case 'bottom':
-        return { left: `${String(p.edgePosition)}%`, bottom: '0' };
-      case 'left':
-        return { left: '0', top: `${String(p.edgePosition)}%` };
-      case 'right':
-        return { right: '0', top: `${String(p.edgePosition)}%` };
-    }
-  };
+  const particles = React.useMemo(
+    () =>
+      generateParticles({
+        particlesPerEdge: 8,
+        angleSpread: 20, // +/-20 degree spread
+        distanceRange: { min: 8, max: 18 },
+        delayRange: { min: 0, max: 0.15 },
+        sizeRange: { min: 1, max: 2.5 },
+      }),
+    []
+  );
 
   return (
     <AnimatePresence>
@@ -356,7 +381,7 @@ export const DissipatingParticles = ({
                 backgroundColor: color,
                 width: p.size,
                 height: p.size,
-                ...getStartPosition(p),
+                ...getParticleStartPosition(p),
                 boxShadow: `0 0 4px ${color}, 0 0 8px ${color}80`,
               }}
               initial={{
@@ -631,75 +656,20 @@ export const EnhancedDissipatingParticles = ({
 }: EnhancedDissipatingParticlesProps): React.JSX.Element | null => {
   const { particleCount, particleDistance } = settlingConfig;
 
-  // Generate particles distributed around all edges
   const particles = React.useMemo((): ParticleConfig[] => {
     if (particleCount === 0) {
       return [];
     }
 
-    const edges: EdgePosition[] = ['top', 'bottom', 'left', 'right'];
-    const particlesPerEdge = Math.floor(particleCount / 4);
-    const allParticles: ParticleConfig[] = [];
-
-    edges.forEach((edge, edgeIndex) => {
-      for (let i = 0; i < particlesPerEdge; i++) {
-        // Distribute along edge with some randomness
-        const basePosition = ((i + 0.5) / particlesPerEdge) * 100;
-        const edgePosition = basePosition + (Math.random() * 10 - 5);
-
-        // Angle points outward from the edge
-        let baseAngle: number;
-        switch (edge) {
-          case 'top':
-            baseAngle = -90;
-            break;
-          case 'bottom':
-            baseAngle = 90;
-            break;
-          case 'left':
-            baseAngle = 180;
-            break;
-          case 'right':
-            baseAngle = 0;
-            break;
-        }
-        // Wider spread for more explosive feel
-        const angle = baseAngle + (Math.random() * 50 - 25);
-
-        // Scale distance with tier multiplier
-        const baseDistance = 10 + Math.random() * 12; // 10-22px base
-        const scaledDistance = baseDistance * particleDistance;
-
-        allParticles.push({
-          id: edgeIndex * particlesPerEdge + i,
-          edge,
-          edgePosition,
-          angle,
-          distance: scaledDistance,
-          delay: Math.random() * 0.08, // Tighter burst timing
-          size: 1.5 + Math.random() * 2, // 1.5-3.5px
-        });
-      }
+    return generateParticles({
+      particlesPerEdge: Math.floor(particleCount / 4),
+      angleSpread: 25, // Wider spread for more explosive feel
+      distanceRange: { min: 10, max: 22 },
+      delayRange: { min: 0, max: 0.08 }, // Tighter burst timing
+      sizeRange: { min: 1.5, max: 3.5 },
+      distanceMultiplier: particleDistance,
     });
-
-    return allParticles;
   }, [particleCount, particleDistance]);
-
-  // Get starting CSS position based on edge
-  const getStartPosition = (
-    p: ParticleConfig
-  ): { left?: string; right?: string; top?: string; bottom?: string } => {
-    switch (p.edge) {
-      case 'top':
-        return { left: `${String(p.edgePosition)}%`, top: '0' };
-      case 'bottom':
-        return { left: `${String(p.edgePosition)}%`, bottom: '0' };
-      case 'left':
-        return { left: '0', top: `${String(p.edgePosition)}%` };
-      case 'right':
-        return { right: '0', top: `${String(p.edgePosition)}%` };
-    }
-  };
 
   if (particleCount === 0) {
     return null;
@@ -717,7 +687,7 @@ export const EnhancedDissipatingParticles = ({
                 backgroundColor: color,
                 width: p.size,
                 height: p.size,
-                ...getStartPosition(p),
+                ...getParticleStartPosition(p),
                 boxShadow: `0 0 6px ${color}, 0 0 12px ${color}60`,
               }}
               initial={{
