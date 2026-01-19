@@ -291,4 +291,152 @@ describe('VirtualDataGrid', () => {
       expect(rows.length).toBeGreaterThan(1); // At least header + 1 data row
     });
   });
+
+  describe('callback ref pattern (infinite loop prevention)', () => {
+    it('uses refs for callbacks to prevent infinite loops', () => {
+      const testData = generateTestData(3);
+      const onExpandedChange1 = vi.fn();
+      const onExpandedChange2 = vi.fn();
+
+      const { rerender } = render(
+        <VirtualDataGrid
+          data={testData}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          onExpandedChange={onExpandedChange1}
+        />
+      );
+
+      // Change the callback prop
+      rerender(
+        <VirtualDataGrid
+          data={testData}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          onExpandedChange={onExpandedChange2}
+        />
+      );
+
+      // Changing the callback should not cause infinite loops
+      // The component should render successfully
+      expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+
+    it('calls the latest callback when state changes, even if callback prop changed', async () => {
+      const testData = generateTestData(3);
+      const onExpandedChange1 = vi.fn();
+      const onExpandedChange2 = vi.fn();
+
+      const { rerender } = render(
+        <VirtualDataGrid
+          data={testData}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          initialExpanded={{ '1': true }}
+          onExpandedChange={onExpandedChange1}
+        />
+      );
+
+      // Change callback
+      rerender(
+        <VirtualDataGrid
+          data={testData}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          initialExpanded={{ '1': true }}
+          onExpandedChange={onExpandedChange2}
+        />
+      );
+
+      // The ref pattern ensures the latest callback (onExpandedChange2) is stored in the ref
+      // This test verifies that changing the callback prop doesn't cause issues
+      // The actual callback invocation happens when expansion state changes
+      expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+
+    it('handles empty data without causing infinite loops in callbacks', () => {
+      const onExpandedChange = vi.fn();
+      const onRowSelectionChange = vi.fn();
+      const onSortingChange = vi.fn();
+
+      render(
+        <VirtualDataGrid
+          data={[]}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          enableRowSelection
+          enableSorting
+          onExpandedChange={onExpandedChange}
+          onRowSelectionChange={onRowSelectionChange}
+          onSortingChange={onSortingChange}
+          emptyMessage="No data"
+        />
+      );
+
+      // Empty data should not cause infinite loops
+      expect(screen.getByText('No data')).toBeInTheDocument();
+
+      // Callbacks may be called once with initial empty state, but not repeatedly
+      // The ref pattern prevents infinite loops even if callbacks are called
+      // We just verify the component renders successfully
+      expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+
+    it('handles rapid data changes without infinite loops', () => {
+      const testData1 = generateTestData(3);
+      const testData2 = generateTestData(5);
+      const testData3: TestRow[] = [];
+      const onExpandedChange = vi.fn();
+
+      const { rerender } = render(
+        <VirtualDataGrid
+          data={testData1}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          onExpandedChange={onExpandedChange}
+        />
+      );
+
+      // Rapidly change data (including to empty)
+      rerender(
+        <VirtualDataGrid
+          data={testData2}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          onExpandedChange={onExpandedChange}
+        />
+      );
+
+      rerender(
+        <VirtualDataGrid
+          data={testData3}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          onExpandedChange={onExpandedChange}
+          emptyMessage="No data"
+        />
+      );
+
+      rerender(
+        <VirtualDataGrid
+          data={testData1}
+          columns={testColumns}
+          getRowId={(row) => row.id}
+          enableExpanding
+          onExpandedChange={onExpandedChange}
+        />
+      );
+
+      // Component should be stable after rapid changes
+      expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+  });
 });

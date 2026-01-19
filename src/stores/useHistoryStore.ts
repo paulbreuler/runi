@@ -4,6 +4,7 @@ import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 import type { RequestParams, HttpResponse } from '@/types/http';
 import type { HistoryFilters, NetworkHistoryEntry } from '@/types/history';
 import { DEFAULT_HISTORY_FILTERS } from '@/types/history';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 interface HistoryState {
   // Data State
@@ -142,8 +143,20 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set((state) => {
       const newSelectedIds = new Set(state.selectedIds);
       if (newSelectedIds.has(id)) {
+        // Removing from selection - always allowed
         newSelectedIds.delete(id);
       } else {
+        // Adding to selection - check limit
+        if (newSelectedIds.size >= 2) {
+          // Already at max, show warning toast
+          globalEventBus.emit<ToastEventPayload>('toast.show', {
+            type: 'warning',
+            message: 'You can select a maximum of 2 items for comparison.',
+            duration: 3000,
+          });
+          // Don't add the item
+          return state;
+        }
         newSelectedIds.add(id);
       }
 
@@ -171,12 +184,22 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       const start = Math.min(fromIndex, toIndex);
       const end = Math.max(fromIndex, toIndex);
 
-      // Add all entries in range (only if they exist)
-      for (let i = start; i <= end && i < entries.length; i++) {
+      // Add all entries in range (only if they exist), but limit to 2 items total
+      for (let i = start; i <= end && i < entries.length && newSelectedIds.size < 2; i++) {
         const entry = entries[i];
         if (entry !== undefined) {
           newSelectedIds.add(entry.id);
         }
+      }
+
+      // Show warning if range would exceed limit
+      const rangeSize = end - start + 1;
+      if (rangeSize > 2 || (selectedIds.size > 0 && rangeSize + selectedIds.size > 2)) {
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'warning',
+          message: 'You can select a maximum of 2 items for comparison.',
+          duration: 3000,
+        });
       }
 
       // Update selectedId for backward compatibility (first item, sorted for determinism)
@@ -193,12 +216,26 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   selectAll: (ids: string[]): void => {
     set((state) => {
-      const newSelectedIds = new Set(ids);
+      // Limit to first 2 items
+      const limitedIds = ids.slice(0, 2);
+      const newSelectedIds = new Set(limitedIds);
+
+      // Show warning if more than 2 items were provided
+      if (ids.length > 2) {
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'warning',
+          message: 'You can select a maximum of 2 items for comparison.',
+          duration: 3000,
+        });
+      }
+
       // Update selectedId for backward compatibility
       const selectedId =
         newSelectedIds.size > 0 ? (Array.from(newSelectedIds).sort()[0] ?? null) : null;
       const lastSelectedIndex =
-        ids.length > 0 ? state.entries.findIndex((e) => e.id === ids[ids.length - 1]) : null;
+        limitedIds.length > 0
+          ? state.entries.findIndex((e) => e.id === limitedIds[limitedIds.length - 1])
+          : null;
       return {
         selectedIds: newSelectedIds,
         selectedId,

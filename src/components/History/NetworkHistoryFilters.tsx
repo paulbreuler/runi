@@ -1,4 +1,4 @@
-import { GitCompare, ArrowRightLeft, Code, CheckCircle, Brain } from 'lucide-react';
+import { ArrowRightLeft, Code, CheckCircle, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { HistoryFilters } from '@/types/history';
 import {
@@ -21,13 +21,9 @@ interface NetworkHistoryFiltersProps {
   filters: HistoryFilters;
   /** Update a filter value */
   onFilterChange: (key: keyof HistoryFilters, value: string) => void;
-  /** Whether compare mode is active */
-  compareMode: boolean;
-  /** Toggle compare mode */
-  onCompareModeToggle: () => void;
-  /** Number of selected entries for comparison */
-  compareSelectionCount?: number;
-  /** Callback when user clicks Compare Responses button */
+  /** Number of selected entries */
+  selectedCount: number;
+  /** Callback when user clicks Compare Selected button */
   onCompareResponses?: () => void;
 }
 
@@ -67,14 +63,12 @@ const INTELLIGENCE_OPTIONS: IntelligenceSelectOption[] = [
 export const NetworkHistoryFilters = ({
   filters,
   onFilterChange,
-  compareMode,
-  onCompareModeToggle,
-  compareSelectionCount = 0,
+  selectedCount,
   onCompareResponses,
 }: NetworkHistoryFiltersProps): React.JSX.Element => {
   const context = useOptionalActionBarContext();
   const isIconMode = context?.variant === 'icon';
-  const canCompare = compareMode && compareSelectionCount === 2;
+  const canCompare = selectedCount === 2;
 
   return (
     <>
@@ -124,55 +118,11 @@ export const NetworkHistoryFilters = ({
       </ActionBarGroup>
 
       {/* Compare controls group */}
-      <ActionBarGroup separator aria-label="Compare controls">
-        {isIconMode ? (
-          <div className="relative">
-            <Button
-              data-testid="compare-toggle"
-              onClick={onCompareModeToggle}
-              variant={compareMode ? 'default' : 'outline'}
-              size="icon-xs"
-              title={
-                compareSelectionCount > 0
-                  ? `Compare two responses (${String(compareSelectionCount)} selected)`
-                  : 'Compare two responses'
-              }
-              aria-label={
-                compareSelectionCount > 0
-                  ? `Compare two responses, ${String(compareSelectionCount)} of 2 selected`
-                  : 'Compare two responses'
-              }
-              aria-pressed={compareMode}
-            >
-              <GitCompare size={14} />
-            </Button>
-            {compareSelectionCount > 0 && (
-              <span
-                className="absolute -top-1 -right-1 w-4 h-4 bg-signal-error text-white text-[10px] rounded-full flex items-center justify-center pointer-events-none"
-                aria-hidden="true"
-              >
-                {compareSelectionCount}
-              </span>
-            )}
-          </div>
-        ) : (
+      {canCompare && (
+        <ActionBarGroup separator aria-label="Compare controls">
+          {/* Compare Selected button - shown when exactly 2 entries are selected */}
           <Button
-            data-testid="compare-toggle"
-            onClick={onCompareModeToggle}
-            variant={compareMode ? 'default' : 'outline'}
-            size="xs"
-            title="Compare two responses"
-            aria-pressed={compareMode}
-          >
-            <GitCompare size={14} />
-            <span>Compare</span>
-          </Button>
-        )}
-
-        {/* Compare Responses button - shown when 2 entries are selected */}
-        {canCompare && (
-          <Button
-            data-testid="compare-responses-button"
+            data-testid="compare-selected-button"
             onClick={onCompareResponses}
             size={isIconMode ? 'icon-xs' : 'xs'}
             className="bg-signal-ai text-white hover:bg-signal-ai/90"
@@ -180,10 +130,10 @@ export const NetworkHistoryFilters = ({
             aria-label={isIconMode ? 'Compare the selected responses' : undefined}
           >
             <ArrowRightLeft size={14} />
-            {!isIconMode && <span>Compare Responses</span>}
+            {!isIconMode && <span>Compare Selected</span>}
           </Button>
-        )}
-      </ActionBarGroup>
+        </ActionBarGroup>
+      )}
     </>
   );
 };

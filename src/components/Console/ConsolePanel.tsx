@@ -539,6 +539,42 @@ export const ConsolePanel = ({
 
     // Update expanded state using functional update to avoid dependency on expandedLogIds
     setExpandedLogIds((prev) => {
+      // Filter prev to only non-occurrence IDs for comparison (TanStack Table doesn't track occurrences)
+      const prevMainIds = new Set(Array.from(prev).filter((id) => !id.includes('_occurrences')));
+
+      // If both are empty, no update needed (prevents unnecessary re-renders)
+      if (expandedSet.size === 0 && prevMainIds.size === 0) {
+        return prev;
+      }
+
+      // Check if the sets are actually different before updating
+      let hasChanges = false;
+      if (expandedSet.size !== prevMainIds.size) {
+        hasChanges = true;
+      } else {
+        // Check if any IDs differ
+        for (const id of expandedSet) {
+          if (!prevMainIds.has(id)) {
+            hasChanges = true;
+            break;
+          }
+        }
+        if (!hasChanges) {
+          // Check if prevMainIds has IDs not in expandedSet
+          for (const id of prevMainIds) {
+            if (!expandedSet.has(id)) {
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+      }
+
+      // If no changes, return prev to prevent unnecessary re-render
+      if (!hasChanges) {
+        return prev;
+      }
+
       const next = new Set(prev);
       // Add new expansions
       for (const id of expandedSet) {
@@ -546,7 +582,7 @@ export const ConsolePanel = ({
       }
       // Remove deselections (only for main log IDs, not occurrences)
       for (const id of prev) {
-        if (!expandedSet.has(id) && !id.includes('_occurrences')) {
+        if (!id.includes('_occurrences') && !expandedSet.has(id)) {
           next.delete(id);
         }
       }

@@ -155,49 +155,28 @@ describe('createNetworkColumns', () => {
     expect(columns.find((c) => c.id === 'expand')).toBeDefined();
   });
 
-  it('does not include compare column when compareMode is false', () => {
+  it('does not accept compareMode prop (compare mode removed)', () => {
+    // TypeScript should warn if compareMode is passed, but for runtime test:
     const columns = createNetworkColumns({
       onReplay: vi.fn(),
       onCopy: vi.fn(),
-      compareMode: false,
-    });
+      // compareMode prop should be ignored if passed
+    } as Parameters<typeof createNetworkColumns>[0] & { compareMode?: boolean });
 
     expect(columns.find((c) => c.id === 'compare')).toBeUndefined();
-  });
-
-  it('does not include compare column when compareMode is true (unified checkbox)', () => {
-    const columns = createNetworkColumns({
-      onReplay: vi.fn(),
-      onCopy: vi.fn(),
-      compareMode: true,
-      onToggleCompare: vi.fn(),
-      isCompareSelected: () => false,
-    });
-
-    // Compare column should not exist - selection column handles both modes
-    expect(columns.find((c) => c.id === 'compare')).toBeUndefined();
-    // Selection column should still exist
     expect(columns.find((c) => c.id === 'select')).toBeDefined();
   });
 
-  it('uses unified selection column for both regular and compare mode', () => {
-    const onToggleCompare = vi.fn();
-    const isCompareSelected = vi.fn((id: string) => id === 'test-1');
-
+  it('selection column always uses regular selection (not compare mode)', () => {
     const columns = createNetworkColumns({
       onReplay: vi.fn(),
       onCopy: vi.fn(),
-      compareMode: true,
-      onToggleCompare,
-      isCompareSelected,
     });
 
-    // Should have only one selection column, not two
-    const selectionColumns = columns.filter((c) => c.id === 'select');
-    expect(selectionColumns).toHaveLength(1);
-
-    // Should not have a separate compare column
-    expect(columns.find((c) => c.id === 'compare')).toBeUndefined();
+    const selectionColumn = columns.find((c) => c.id === 'select');
+    expect(selectionColumn).toBeDefined();
+    // Selection column should not use compare mode logic
+    expect(selectionColumn?.id).toBe('select');
   });
 });
 
@@ -431,62 +410,13 @@ describe('Network columns integration', () => {
   });
 });
 
-describe('Unified selection column (compare mode)', () => {
-  it('selection checkbox uses compare selection when compareMode is true', () => {
-    const entry1 = createMockEntry({ id: 'entry-1' });
-    const entry2 = createMockEntry({ id: 'entry-2' });
-    const onToggleCompare = vi.fn();
-    const isCompareSelected = vi.fn((id: string) => id === 'entry-1');
-
-    const columns = createNetworkColumns({
-      onReplay: vi.fn(),
-      onCopy: vi.fn(),
-      compareMode: true,
-      onToggleCompare,
-      isCompareSelected,
-    });
-
-    const TestTableWithCompare = (): React.ReactElement => {
-      const [expanded] = React.useState<ExpandedState>({});
-      const table = useReactTable({
-        data: [entry1, entry2],
-        columns,
-        state: { expanded },
-        getCoreRowModel: getCoreRowModel(),
-        getExpandedRowModel: getExpandedRowModel(),
-        getRowId: (row) => row.id,
-        enableRowSelection: true,
-      });
-
-      return (
-        <table>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      );
-    };
-
-    render(<TestTableWithCompare />);
-
-    // Check that isCompareSelected was called for each row
-    expect(isCompareSelected).toHaveBeenCalledWith('entry-1');
-    expect(isCompareSelected).toHaveBeenCalledWith('entry-2');
-  });
-
-  it('selection checkbox uses regular selection when compareMode is false', () => {
+describe('Selection column (compare mode removed)', () => {
+  it('selection checkbox always uses regular selection (TanStack Table)', () => {
     const entry = createMockEntry({ id: 'entry-1' });
 
     const columns = createNetworkColumns({
       onReplay: vi.fn(),
       onCopy: vi.fn(),
-      compareMode: false,
     });
 
     const TestTableRegular = (): React.ReactElement => {

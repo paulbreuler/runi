@@ -9,9 +9,29 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
+// Mock event bus
+vi.mock('@/events/bus', async () => {
+  const actual = await vi.importActual<typeof import('@/events/bus')>('@/events/bus');
+  const mockEmit = vi.fn();
+  return {
+    ...actual,
+    globalEventBus: {
+      ...actual.globalEventBus,
+      emit: mockEmit,
+    },
+    __mockEmit: mockEmit,
+  };
+});
+
 describe('useHistoryStore', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Clear event bus mock
+    const busModule = await import('@/events/bus');
+    const mockEmit = (busModule as { __mockEmit?: ReturnType<typeof vi.fn> }).__mockEmit;
+    if (mockEmit !== undefined) {
+      mockEmit.mockClear();
+    }
     // Reset store to initial state
     useHistoryStore.setState({
       entries: [],
@@ -534,16 +554,53 @@ describe('useHistoryStore', () => {
         expect(result.current.selectedIds).toEqual(new Set());
       });
 
-      it('should support multiple selections', () => {
+      it('should support multiple selections up to 2 items', () => {
         const { result } = renderHook(() => useHistoryStore());
 
         act(() => {
           result.current.toggleSelection('hist_1');
           result.current.toggleSelection('hist_2');
-          result.current.toggleSelection('hist_3');
         });
 
-        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2', 'hist_3']));
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
+      });
+
+      it('should prevent selecting more than 2 items', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+          result.current.toggleSelection('hist_3'); // Should not add
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
+        expect(result.current.selectedIds.has('hist_3')).toBe(false);
+      });
+
+      it('should show toast warning when trying to select 3rd item', async () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+        });
+
+        act(() => {
+          result.current.toggleSelection('hist_3'); // Should trigger toast
+        });
+
+        // Get mock emit function
+        const busModule = await import('@/events/bus');
+        const mockEmit = (busModule as { __mockEmit?: ReturnType<typeof vi.fn> }).__mockEmit;
+
+        expect(mockEmit).toHaveBeenCalledWith(
+          'toast.show',
+          expect.objectContaining({
+            type: 'warning',
+            message: expect.stringContaining('maximum of 2 items'),
+          })
+        );
       });
 
       it('should select range with selectRange', () => {

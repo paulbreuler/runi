@@ -1654,4 +1654,206 @@ describe('ConsolePanel', () => {
       expect(expandedContent).toBeNull();
     });
   });
+
+  describe('infinite loop prevention', () => {
+    it('does not cause infinite loops when navigating to empty filter (warnings)', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add only error logs (no warnings)
+      await act(async () => {
+        service.addLog({
+          level: 'error',
+          message: 'Error message',
+          args: [],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for logs to appear
+      await waitFor(() => {
+        expect(screen.getByText(/error message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Track errors to detect infinite loops
+      const originalConsoleError = console.error;
+      const errorSpy = vi.fn();
+      console.error = (...args: unknown[]): void => {
+        if (String(args[0]).includes('Maximum update depth exceeded')) {
+          errorSpy(...args);
+        }
+        originalConsoleError(...args);
+      };
+
+      // Navigate to warnings filter (should be empty)
+      const warningsButton = screen.getByRole('button', { name: /warnings/i });
+
+      // This should not cause infinite loops or "Maximum update depth exceeded" errors
+      await act(async () => {
+        fireEvent.click(warningsButton);
+      });
+
+      // Wait a bit to ensure no infinite loop occurs
+      await waitFor(() => {
+        expect(screen.getByText(/no logs.*warn only/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Verify no infinite loop error occurred
+      expect(errorSpy).not.toHaveBeenCalled();
+
+      // Restore console.error
+      console.error = originalConsoleError;
+    });
+
+    it('does not cause infinite loops when navigating to empty filter (info)', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add only error logs (no info)
+      await act(async () => {
+        service.addLog({
+          level: 'error',
+          message: 'Error message',
+          args: [],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for logs to appear
+      await waitFor(() => {
+        expect(screen.getByText(/error message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Track errors to detect infinite loops
+      const originalConsoleError = console.error;
+      const errorSpy = vi.fn();
+      console.error = (...args: unknown[]): void => {
+        if (String(args[0]).includes('Maximum update depth exceeded')) {
+          errorSpy(...args);
+        }
+        originalConsoleError(...args);
+      };
+
+      // Navigate to info filter (should be empty)
+      const infoButton = screen.getByRole('button', { name: /info/i });
+
+      // This should not cause infinite loops
+      await act(async () => {
+        fireEvent.click(infoButton);
+      });
+
+      // Wait a bit to ensure no infinite loop occurs
+      await waitFor(() => {
+        expect(screen.getByText(/no logs.*info only/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Verify no infinite loop error occurred
+      expect(errorSpy).not.toHaveBeenCalled();
+
+      // Restore console.error
+      console.error = originalConsoleError;
+    });
+
+    it('does not update expanded state unnecessarily when handleExpandedChange receives empty object', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log that can be expanded
+      await act(async () => {
+        service.addLog({
+          level: 'error',
+          message: 'Error with args',
+          args: [{ key: 'value' }],
+          timestamp: Date.now(),
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/error with args/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Get the component instance to access handleExpandedChange
+      // We'll test by simulating the VirtualDataGrid calling it with empty object
+      // when filter changes to empty
+      const errorButton = screen.getByRole('button', { name: /errors/i });
+      fireEvent.click(errorButton);
+
+      // Now switch to a filter that will be empty (warnings)
+      const warningsButton = screen.getByRole('button', { name: /warnings/i });
+
+      // This should not cause state updates that trigger re-renders
+      await act(async () => {
+        fireEvent.click(warningsButton);
+      });
+
+      // Wait for empty state
+      await waitFor(() => {
+        expect(screen.getByText(/no logs.*warn only/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Verify component is stable (no infinite loop)
+      // If we get here without timeout, the fix is working
+      expect(screen.getByText(/no logs.*warn only/i)).toBeInTheDocument();
+    });
+
+    it('handles rapid filter changes without infinite loops', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add logs of different levels
+      await act(async () => {
+        service.addLog({
+          level: 'error',
+          message: 'Error message',
+          args: [],
+          timestamp: Date.now(),
+        });
+        service.addLog({
+          level: 'warn',
+          message: 'Warning message',
+          args: [],
+          timestamp: Date.now(),
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/error message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Rapidly switch between filters
+      const allButton = screen.getByRole('button', { name: /all/i });
+      const warningsButton = screen.getByRole('button', { name: /warnings/i });
+      const errorsButton = screen.getByRole('button', { name: /errors/i });
+
+      // Track errors
+      const originalConsoleError = console.error;
+      const errorSpy = vi.fn();
+      console.error = (...args: unknown[]): void => {
+        if (String(args[0]).includes('Maximum update depth exceeded')) {
+          errorSpy(...args);
+        }
+        originalConsoleError(...args);
+      };
+
+      // Rapid filter changes
+      await act(async () => {
+        fireEvent.click(warningsButton);
+        fireEvent.click(errorsButton);
+        fireEvent.click(allButton);
+        fireEvent.click(warningsButton);
+        fireEvent.click(errorsButton);
+      });
+
+      // Wait for stable state
+      await waitFor(() => {
+        expect(screen.getByText(/error message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Verify no infinite loop error occurred
+      expect(errorSpy).not.toHaveBeenCalled();
+
+      // Restore console.error
+      console.error = originalConsoleError;
+    });
+  });
 });

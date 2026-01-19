@@ -12,6 +12,7 @@ import { TimingWaterfall } from './TimingWaterfall';
 import { calculateWaterfallSegments } from '@/types/history';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Row } from '@tanstack/react-table';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 /** Estimated row height for virtualization */
 const ESTIMATED_ROW_HEIGHT = 48;
@@ -37,13 +38,9 @@ export const NetworkHistoryPanel = ({
   const {
     entries: storeEntries,
     filters,
-    compareMode,
-    compareSelection,
     selectedIds, // Multi-select support
     expandedId,
     setFilter,
-    setCompareMode,
-    toggleCompareSelection,
     toggleSelection, // Multi-select support
     selectAll: _selectAll, // Used via handleRowSelectionChange for select all
     deselectAll: _deselectAll, // Used via handleRowSelectionChange for deselect all
@@ -159,15 +156,21 @@ export const NetworkHistoryPanel = ({
     [toggleSelection]
   );
 
-  const handleCompareModeToggle = (): void => {
-    setCompareMode(!compareMode);
-  };
-
   const handleCompareResponses = (): void => {
-    // Emit event for comparison - to be implemented in future
-    // For now, this is a placeholder that will be wired up when the comparison view is built
-    // The compareSelection array contains the IDs of the two entries to compare
-    void compareSelection;
+    // Get the 2 selected entries from selectedIds
+    const selectedArray = Array.from(selectedIds);
+    if (selectedArray.length !== 2) {
+      // This shouldn't happen if button is only shown when 2 are selected, but guard anyway
+      return;
+    }
+
+    // Show toast message indicating comparison is not yet implemented
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'info',
+      message: 'Comparison feature is coming soon.',
+      details: `Selected entries: ${selectedArray.join(', ')}`,
+      duration: 3000,
+    });
   };
 
   const downloadJson = async (data: unknown, filename: string): Promise<void> => {
@@ -219,11 +222,8 @@ export const NetworkHistoryPanel = ({
         onReplay,
         onCopy: onCopyCurl,
         onDelete: handleDelete,
-        compareMode,
-        onToggleCompare: toggleCompareSelection,
-        isCompareSelected: (id: string): boolean => compareSelection.includes(id),
       }),
-    [onReplay, onCopyCurl, handleDelete, compareMode, toggleCompareSelection, compareSelection]
+    [onReplay, onCopyCurl, handleDelete]
   );
 
   // Sync TanStack Table selection with store
@@ -489,9 +489,7 @@ export const NetworkHistoryPanel = ({
       <FilterBar
         filters={filters}
         onFilterChange={handleFilterChange}
-        compareMode={compareMode}
-        onCompareModeToggle={handleCompareModeToggle}
-        compareSelectionCount={compareSelection.length}
+        selectedCount={selectedIds.size}
         onCompareResponses={handleCompareResponses}
         onSaveAll={handleSaveAll}
         onSaveSelection={handleSaveSelection}

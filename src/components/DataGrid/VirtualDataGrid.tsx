@@ -135,20 +135,38 @@ export function VirtualDataGrid<TData>({
   // (jsdom doesn't have real scroll dimensions)
   const shouldRenderAllRows = virtualRows.length === 0 && rows.length > 0;
 
+  // Store callbacks in refs to avoid dependency issues that can cause infinite loops
+  const onRowSelectionChangeRef = React.useRef(onRowSelectionChange);
+  const onSortingChangeRef = React.useRef(onSortingChange);
+  const onExpandedChangeRef = React.useRef(onExpandedChange);
+
+  // Update refs when callbacks change
+  React.useEffect(() => {
+    onRowSelectionChangeRef.current = onRowSelectionChange;
+  }, [onRowSelectionChange]);
+
+  React.useEffect(() => {
+    onSortingChangeRef.current = onSortingChange;
+  }, [onSortingChange]);
+
+  React.useEffect(() => {
+    onExpandedChangeRef.current = onExpandedChange;
+  }, [onExpandedChange]);
+
   // Notify parent of selection changes
   React.useEffect(() => {
-    onRowSelectionChange?.(rowSelection);
-  }, [rowSelection, onRowSelectionChange]);
+    onRowSelectionChangeRef.current?.(rowSelection);
+  }, [rowSelection]);
 
   // Notify parent of sorting changes
   React.useEffect(() => {
-    onSortingChange?.(sorting);
-  }, [sorting, onSortingChange]);
+    onSortingChangeRef.current?.(sorting);
+  }, [sorting]);
 
   // Notify parent of expanded changes
   React.useEffect(() => {
-    onExpandedChange?.(expanded as Record<string, boolean>);
-  }, [expanded, onExpandedChange]);
+    onExpandedChangeRef.current?.(expanded as Record<string, boolean>);
+  }, [expanded]);
 
   // Calculate padding for virtual rows
   const paddingTop = virtualRows.length > 0 ? (virtualRows[0]?.start ?? 0) : 0;

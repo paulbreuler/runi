@@ -251,16 +251,10 @@ export const ActionsCell = ({
 };
 
 // ============================================================================
-// Network Selection Column (Unified for regular and compare mode)
+// Network Selection Column (Regular selection only - compare mode removed)
 // ============================================================================
 
 interface NetworkSelectionColumnOptions {
-  /** Whether compare mode is active */
-  compareMode?: boolean;
-  /** Callback when compare selection is toggled */
-  onToggleCompare?: (id: string) => void;
-  /** Function to check if entry is selected for comparison */
-  isCompareSelected?: (id: string) => boolean;
   /** Size of the checkbox (sm, default, lg) */
   size?: 'sm' | 'default' | 'lg';
 }
@@ -270,64 +264,14 @@ interface NetworkSelectionColumnOptions {
  */
 interface NetworkSelectionHeaderProps {
   table: Table<NetworkHistoryEntry>;
-  compareMode: boolean;
-  onToggleCompare?: (id: string) => void;
-  isCompareSelected?: (id: string) => boolean;
   size?: 'sm' | 'default' | 'lg';
 }
 
 const NetworkSelectionHeader = ({
   table,
-  compareMode,
-  onToggleCompare,
-  isCompareSelected,
   size,
 }: NetworkSelectionHeaderProps): React.ReactElement => {
-  if (compareMode && onToggleCompare !== undefined && isCompareSelected !== undefined) {
-    // Compare mode: show state based on compare selection
-    const rows = table.getRowModel().rows;
-    const selectedCount = rows.filter((row) => isCompareSelected(row.original.id)).length;
-    const totalCount = rows.length;
-
-    const getCheckedState = (): CheckedState => {
-      if (selectedCount === 0) {
-        return false;
-      }
-      if (selectedCount === totalCount && totalCount <= 2) {
-        return true;
-      }
-      return 'indeterminate';
-    };
-
-    const handleCheckedChange = (): void => {
-      const allSelected = selectedCount === totalCount;
-      // Toggle all rows for comparison (up to 2 max)
-      for (const row of rows) {
-        const id = row.original.id;
-        const isSelected = isCompareSelected(id);
-        if (!allSelected && !isSelected && selectedCount < 2) {
-          onToggleCompare(id);
-        } else if (allSelected && isSelected) {
-          onToggleCompare(id);
-        }
-      }
-    };
-
-    return (
-      <Checkbox
-        checked={getCheckedState()}
-        onCheckedChange={handleCheckedChange}
-        aria-label={
-          selectedCount === totalCount
-            ? 'Deselect all rows for comparison'
-            : 'Select all rows for comparison'
-        }
-        size={size}
-      />
-    );
-  }
-
-  // Regular mode: use TanStack Table selection
+  // Always use TanStack Table selection
   const isAllSelected = table.getIsAllRowsSelected();
   const isSomeSelected = table.getIsSomeRowsSelected();
 
@@ -360,40 +304,14 @@ const NetworkSelectionHeader = ({
  */
 interface NetworkSelectionCellProps {
   row: Row<NetworkHistoryEntry>;
-  compareMode: boolean;
-  onToggleCompare?: (id: string) => void;
-  isCompareSelected?: (id: string) => boolean;
   size?: 'sm' | 'default' | 'lg';
 }
 
 const NetworkSelectionCell = ({
   row,
-  compareMode,
-  onToggleCompare,
-  isCompareSelected,
   size,
 }: NetworkSelectionCellProps): React.ReactElement => {
-  if (compareMode && onToggleCompare !== undefined && isCompareSelected !== undefined) {
-    // Compare mode: use compare selection
-    const entryId = row.original.id;
-    const isSelected = isCompareSelected(entryId);
-
-    const handleCheckedChange = (): void => {
-      onToggleCompare(entryId);
-    };
-
-    return (
-      <Checkbox
-        checked={isSelected}
-        onCheckedChange={handleCheckedChange}
-        aria-label={isSelected ? 'Deselect for comparison' : 'Select for comparison'}
-        aria-checked={isSelected}
-        size={size}
-      />
-    );
-  }
-
-  // Regular mode: use TanStack Table selection
+  // Always use TanStack Table selection
   const isSelected = row.getIsSelected();
 
   const handleCheckedChange = (): void => {
@@ -411,33 +329,20 @@ const NetworkSelectionCell = ({
 };
 
 /**
- * Creates a unified selection column for Network History that handles both
- * regular selection and compare mode selection.
+ * Creates a selection column for Network History using TanStack Table selection.
  */
 function createNetworkSelectionColumn(
   options: NetworkSelectionColumnOptions = {}
 ): ColumnDef<NetworkHistoryEntry> {
-  const { compareMode = false, onToggleCompare, isCompareSelected, size } = options;
+  const { size } = options;
 
   return {
     id: 'select',
     header: ({ table }: HeaderContext<NetworkHistoryEntry, unknown>): React.ReactElement => (
-      <NetworkSelectionHeader
-        table={table}
-        compareMode={compareMode}
-        onToggleCompare={onToggleCompare}
-        isCompareSelected={isCompareSelected}
-        size={size}
-      />
+      <NetworkSelectionHeader table={table} size={size} />
     ),
     cell: ({ row }: CellContext<NetworkHistoryEntry, unknown>) => (
-      <NetworkSelectionCell
-        row={row}
-        compareMode={compareMode}
-        onToggleCompare={onToggleCompare}
-        isCompareSelected={isCompareSelected}
-        size={size}
-      />
+      <NetworkSelectionCell row={row} size={size} />
     ),
     // Disable sorting for selection column
     enableSorting: false,
@@ -461,12 +366,6 @@ interface CreateNetworkColumnsOptions {
   onCopy: (entry: NetworkHistoryEntry) => void;
   /** Callback when delete button is clicked (optional) */
   onDelete?: (id: string) => void;
-  /** Whether compare mode is active */
-  compareMode?: boolean;
-  /** Callback when compare selection is toggled */
-  onToggleCompare?: (id: string) => void;
-  /** Function to check if entry is selected for comparison */
-  isCompareSelected?: (id: string) => boolean;
 }
 
 /**
@@ -487,21 +386,11 @@ interface CreateNetworkColumnsOptions {
 export function createNetworkColumns(
   options: CreateNetworkColumnsOptions
 ): Array<ColumnDef<NetworkHistoryEntry>> {
-  const {
-    onReplay,
-    onCopy,
-    onDelete,
-    compareMode = false,
-    onToggleCompare,
-    isCompareSelected,
-  } = options;
+  const { onReplay, onCopy, onDelete } = options;
 
   const columns: Array<ColumnDef<NetworkHistoryEntry>> = [
-    // Unified selection column (handles both regular and compare mode)
+    // Selection column (regular selection only)
     createNetworkSelectionColumn({
-      compareMode,
-      onToggleCompare,
-      isCompareSelected,
       size: 'sm',
     }),
 
