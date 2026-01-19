@@ -3,7 +3,7 @@
  *
  * Features:
  * - Keyboard navigation (Tab, Enter, Space)
- * - Three display variants: full, compact, icon-only
+ * - Two display variants: full (label + icon), icon-only
  * - Badge counts with optional animation via Motion+
  * - Icon support
  * - Accessible with ARIA attributes
@@ -27,9 +27,16 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
-import { MUI_TIER_CONFIG } from './config';
+import { MUI_TIER_CONFIG, getSettlingConfig } from './config';
 import { usePowerLevel, PowerLevelContext, type PowerLevelContextValue } from './usePowerLevel';
-import { EnergyEdge, EnergyRing, DissipatingParticles } from './effects';
+import {
+  EnergyEdge,
+  EnergyRing,
+  BurstFlash,
+  ShockwaveRing,
+  EdgeFlares,
+  EnhancedDissipatingParticles,
+} from './effects';
 import { BadgeCount } from './BadgeCount';
 
 // ============================================================================
@@ -60,8 +67,8 @@ interface SegmentedControlProps<T extends string> {
   allowEmpty?: boolean;
   /** Size variant */
   size?: 'sm' | 'md' | 'lg';
-  /** Display variant: full shows label+icon, compact shows smaller, icon shows icon only */
-  displayVariant?: 'full' | 'compact' | 'icon';
+  /** Display variant: full shows label+icon, icon shows icon only */
+  displayVariant?: 'full' | 'icon';
   /** ARIA label for the segment group (required for accessibility) */
   'aria-label': string;
   /** Additional CSS classes */
@@ -108,6 +115,9 @@ export const SegmentedControl = <T extends string>({
   const powerLevel = usePowerLevel(options, prefersReducedMotion);
   const { tier, animationState, config, effectColor, visualFlags, isFinale, isSettling } =
     powerLevel;
+
+  // Get tier-specific settling configuration for explosive dispel effects
+  const settlingConfig = getSettlingConfig(tier);
 
   // Handle click on segment button
   const handleClick = (optionValue: T, optionDisabled?: boolean): void => {
@@ -176,9 +186,42 @@ export const SegmentedControl = <T extends string>({
   return (
     <PowerLevelContext.Provider value={powerLevelContextValue}>
       <div className={cn('relative', className)}>
-        {/* Dissipating particles - sparks flying off during settling */}
+        {/* Burst flash - initial "release" sensation at settling start */}
         {tier > 0 && prefersReducedMotion !== true && (
-          <DissipatingParticles color={effectColor} isActive={isSettling} />
+          <BurstFlash color={effectColor} isActive={isSettling} settlingConfig={settlingConfig} />
+        )}
+
+        {/* Enhanced dissipating particles - tier-scaled particle burst */}
+        {tier > 0 && prefersReducedMotion !== true && (
+          <EnhancedDissipatingParticles
+            color={effectColor}
+            isActive={isSettling}
+            settlingConfig={settlingConfig}
+          />
+        )}
+
+        {/* Shockwave ring - expanding ring shockwave */}
+        {tier > 0 && prefersReducedMotion !== true && (
+          <ShockwaveRing
+            color={effectColor}
+            isActive={isSettling}
+            settlingConfig={settlingConfig}
+          />
+        )}
+
+        {/* Secondary shockwave ring at tier 3+ */}
+        {tier >= 3 && prefersReducedMotion !== true && settlingConfig.hasSecondaryRing && (
+          <ShockwaveRing
+            color={effectColor}
+            isActive={isSettling}
+            settlingConfig={settlingConfig}
+            delay={0.05}
+          />
+        )}
+
+        {/* Edge flares - energy flares shooting outward at tier 5+ */}
+        {tier >= 5 && prefersReducedMotion !== true && settlingConfig.hasEdgeFlares && (
+          <EdgeFlares color={effectColor} isActive={isSettling} settlingConfig={settlingConfig} />
         )}
 
         {/* Energy edge effects - tightly bound to container edges */}
@@ -212,6 +255,7 @@ export const SegmentedControl = <T extends string>({
               delay={0}
               isAnimating={visualFlags.shouldAnimateEffects}
               isSettling={isSettling}
+              settlingConfig={settlingConfig}
             />
             {tier >= 4 && (
               <EnergyRing
@@ -220,6 +264,8 @@ export const SegmentedControl = <T extends string>({
                 delay={0.4}
                 isAnimating={visualFlags.shouldAnimateEffects}
                 isSettling={isSettling}
+                settlingConfig={settlingConfig}
+                isSecondary
               />
             )}
           </>

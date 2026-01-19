@@ -4,7 +4,7 @@ import { useOptionalActionBarContext, type ActionBarVariant } from './ActionBarC
 interface SegmentOption<T extends string> {
   /** Unique value for this option */
   value: T;
-  /** Display label (used in full/compact modes) */
+  /** Display label (used in full mode) */
   label: string;
   /** Icon to display (used in all modes when present) */
   icon?: React.ReactNode;
@@ -70,16 +70,8 @@ export const ActionBarSegment = <T extends string>({
   const variant = variantOverride ?? context?.variant ?? 'full';
 
   // Map ActionBar variant to SegmentedControl displayVariant
-  const getDisplayVariant = (): 'full' | 'compact' | 'icon' => {
-    if (variant === 'icon') {
-      return 'icon';
-    }
-    if (variant === 'compact') {
-      return 'compact';
-    }
-    return 'full';
-  };
-  const displayVariant = getDisplayVariant();
+  // Note: ActionBar 'compact' maps to 'full' as SegmentedControl only supports 'full' | 'icon'
+  const displayVariant: 'full' | 'icon' = variant === 'icon' ? 'icon' : 'full';
 
   return (
     <SegmentedControl
