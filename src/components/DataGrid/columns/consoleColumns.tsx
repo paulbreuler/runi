@@ -222,7 +222,7 @@ export function createConsoleColumns(
       enableSorting: true,
     },
 
-    // Message column
+    // Message column (flexible - fills available space)
     {
       id: 'message',
       accessorKey: 'message',
@@ -233,7 +233,8 @@ export function createConsoleColumns(
           count={(row.original as { _groupCount?: number })._groupCount}
         />
       ),
-      size: 500,
+      size: 400, // Initial size, but will grow to fill space
+      minSize: 150,
       enableSorting: true,
     },
 
@@ -247,7 +248,7 @@ export function createConsoleColumns(
       enableSorting: true,
     },
 
-    // Actions column
+    // Actions column (fixed on right)
     {
       id: 'actions',
       header: undefined,
@@ -255,6 +256,8 @@ export function createConsoleColumns(
         <ConsoleActionsCell log={row.original} onCopy={onCopy} onDelete={onDelete} />
       ),
       size: 80,
+      minSize: 80,
+      maxSize: 80,
       enableSorting: false,
     },
   ];

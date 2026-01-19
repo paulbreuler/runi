@@ -176,15 +176,35 @@ export function VirtualDataGrid<TData>({
   // Default cell renderer
   const renderDefaultCells = (row: Row<TData>): React.ReactNode => (
     <>
-      {row.getVisibleCells().map((cell) => (
-        <td
-          key={cell.id}
-          className="px-3 py-2 text-sm text-text-primary"
-          style={{ width: cell.column.getSize() }}
-        >
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </td>
-      ))}
+      {row.getVisibleCells().map((cell) => {
+        const columnSize = cell.column.getSize();
+        const maxSize = cell.column.columnDef.maxSize;
+        const minSize = cell.column.columnDef.minSize;
+        const columnId = cell.column.id;
+
+        // For fixed-size columns (minSize === maxSize), use fixed width
+        // For flexible columns, use width as initial size but allow growth
+        const isFixedColumn = maxSize !== undefined && minSize !== undefined && maxSize === minSize;
+        const cellStyle: React.CSSProperties = isFixedColumn
+          ? { width: columnSize, minWidth: columnSize, maxWidth: columnSize }
+          : minSize !== undefined
+            ? { minWidth: minSize, width: columnSize }
+            : { width: columnSize };
+
+        // Reduce padding for selection and expander columns
+        const isCompactColumn = columnId === 'select' || columnId === 'expand';
+        const paddingClass = isCompactColumn ? 'px-1.5 py-2' : 'px-3 py-2';
+
+        return (
+          <td
+            key={cell.id}
+            className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden')}
+            style={cellStyle}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </td>
+        );
+      })}
     </>
   );
 
@@ -258,24 +278,32 @@ export function VirtualDataGrid<TData>({
         style={{ height }}
         data-testid="virtual-scroll-container"
       >
-        <table className="min-w-full border-collapse" role="table">
+        <table className="w-full border-collapse" role="table">
           <thead className="sticky top-0 bg-bg-app z-10">
             {renderHeader !== undefined
               ? renderHeader()
               : table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className="px-3 py-2 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default"
-                        style={{ width: header.getSize() }}
-                        role="columnheader"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
+                    {headerGroup.headers.map((header) => {
+                      const isCompactColumn =
+                        header.column.id === 'select' || header.column.id === 'expand';
+                      const paddingClass = isCompactColumn ? 'px-1.5 py-2' : 'px-3 py-2';
+                      return (
+                        <th
+                          key={header.id}
+                          className={cn(
+                            paddingClass,
+                            'text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default overflow-hidden'
+                          )}
+                          style={{ width: header.getSize() }}
+                          role="columnheader"
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </th>
+                      );
+                    })}
                   </tr>
                 ))}
           </thead>

@@ -118,8 +118,8 @@ export function createSelectionColumn<TData>(
     // Disable filtering for selection column
     enableColumnFilter: false,
     // Fixed width for selection column
-    size: 40,
-    minSize: 40,
-    maxSize: 40,
+    size: 32,
+    minSize: 32,
+    maxSize: 32,
   };
 }
