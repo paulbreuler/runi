@@ -36,8 +36,6 @@ describe('NetworkHistoryPanel', () => {
       selectedId: null,
       selectedIds: new Set<string>(),
       expandedId: null,
-      compareMode: false,
-      compareSelection: [],
     });
 
     // Reset Tauri plugin mocks
@@ -247,18 +245,14 @@ describe('NetworkHistoryPanel', () => {
       expect(screen.queryByTestId('expanded-section')).not.toBeInTheDocument();
     });
 
-    it('does not toggle expand when double-clicking selection checkbox in compare mode', () => {
-      // Enable compare mode
-      useHistoryStore.setState({ compareMode: true });
+    it('does not toggle expand when double-clicking selection checkbox', () => {
       render(<NetworkHistoryPanel {...defaultProps} />);
 
-      // In compare mode, the selection checkbox is used for comparison
       // Find the selection checkbox (first checkbox in the row)
       const checkboxes = screen.getAllByRole('checkbox');
       const rowCheckbox = checkboxes.find((cb) => {
         const label = cb.getAttribute('aria-label');
-
-        return (label?.includes('comparison') ?? false) || (label?.includes('Select') ?? false);
+        return label?.includes('Select') ?? false;
       });
 
       if (rowCheckbox) {

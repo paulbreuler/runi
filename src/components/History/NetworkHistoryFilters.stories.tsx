@@ -19,7 +19,7 @@ const meta = {
 - **Method Filter**: Filter by HTTP method (GET, POST, etc.)
 - **Status Filter**: Filter by response status code range
 - **Intelligence Filter**: Filter by AI/drift status
-- **Compare Mode**: Toggle to select entries for comparison
+- **Compare Selected**: Button appears when exactly 2 entries are selected
 - **Responsive**: Inherits variant from ActionBar context
 
 ## Usage
@@ -31,8 +31,7 @@ NetworkHistoryFilters should be used inside an ActionBar to get automatic respon
   <NetworkHistoryFilters
     filters={filters}
     onFilterChange={handleFilterChange}
-    compareMode={false}
-    onCompareModeToggle={handleToggle}
+    selectedCount={0}
   />
 </ActionBar>
 \`\`\`
@@ -55,8 +54,7 @@ export const Default: Story = {
   args: {
     filters: DEFAULT_HISTORY_FILTERS,
     onFilterChange: noop,
-    compareMode: false,
-    onCompareModeToggle: noop,
+    selectedCount: 0,
   },
   render: (args) => (
     <ActionBar aria-label="Network history filters">
@@ -72,8 +70,7 @@ export const WithSearch: Story = {
   args: {
     filters: { ...DEFAULT_HISTORY_FILTERS, search: 'api.example.com' },
     onFilterChange: noop,
-    compareMode: false,
-    onCompareModeToggle: noop,
+    selectedCount: 0,
   },
   render: (args) => (
     <ActionBar aria-label="Network history filters">
@@ -94,8 +91,7 @@ export const WithActiveFilters: Story = {
       intelligence: 'Has Drift',
     },
     onFilterChange: noop,
-    compareMode: false,
-    onCompareModeToggle: noop,
+    selectedCount: 0,
   },
   render: (args) => (
     <ActionBar aria-label="Network history filters">
@@ -105,14 +101,13 @@ export const WithActiveFilters: Story = {
 };
 
 /**
- * Compare mode active.
+ * With 1 entry selected (Compare Selected button hidden).
  */
-export const CompareModeActive: Story = {
+export const OneSelected: Story = {
   args: {
     filters: DEFAULT_HISTORY_FILTERS,
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
+    selectedCount: 1,
   },
   render: (args) => (
     <ActionBar aria-label="Network history filters">
@@ -122,15 +117,13 @@ export const CompareModeActive: Story = {
 };
 
 /**
- * Compare mode with 2 entries selected (shows Compare Responses button).
+ * With 2 entries selected (shows Compare Selected button).
  */
 export const ReadyToCompare: Story = {
   args: {
     filters: DEFAULT_HISTORY_FILTERS,
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
-    compareSelectionCount: 2,
+    selectedCount: 2,
     onCompareResponses: noop,
   },
   render: (args) => (
@@ -148,9 +141,8 @@ export const AllVariants: Story = {
   args: {
     filters: { ...DEFAULT_HISTORY_FILTERS, method: 'GET', status: '2xx' },
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
-    compareSelectionCount: 1,
+    selectedCount: 2,
+    onCompareResponses: noop,
   },
   render: (args) => (
     <div className="flex flex-col gap-4">

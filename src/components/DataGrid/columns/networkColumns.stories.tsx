@@ -392,31 +392,16 @@ export const ActionButtons: Story = {
 };
 
 /**
- * Table with compare mode enabled. The selection checkboxes are used for comparison.
- * Only one set of checkboxes appears - the same checkboxes handle both regular selection and compare selection.
+ * Table with 2 rows selected (ready for comparison).
+ * Selection is limited to 2 items maximum.
  */
-export const CompareMode: Story = {
+export const WithSelection: Story = {
   render: () => {
     const [expanded, setExpanded] = React.useState<ExpandedState>({});
-    const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
-    const [compareSelection, setCompareSelection] = React.useState<string[]>([]);
-
-    const toggleCompare = React.useCallback((id: string): void => {
-      setCompareSelection((prev) => {
-        if (prev.includes(id)) {
-          return prev.filter((i) => i !== id);
-        }
-        if (prev.length >= 2) {
-          return prev;
-        }
-        return [...prev, id];
-      });
-    }, []);
-
-    const isCompareSelected = React.useCallback(
-      (id: string): boolean => compareSelection.includes(id),
-      [compareSelection]
-    );
+    const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({
+      [sampleEntries[0]?.id ?? '']: true,
+      [sampleEntries[1]?.id ?? '']: true,
+    });
 
     const columns = React.useMemo(
       () =>
@@ -430,11 +415,8 @@ export const CompareMode: Story = {
           onDelete: (): void => {
             /* Storybook action */
           },
-          compareMode: true,
-          onToggleCompare: toggleCompare,
-          isCompareSelected,
         }),
-      [isCompareSelected, toggleCompare]
+      []
     );
 
     const table = useReactTable({
@@ -450,10 +432,12 @@ export const CompareMode: Story = {
       enableRowSelection: true,
     });
 
+    const selectedCount = Object.keys(rowSelection).filter((id) => rowSelection[id]).length;
+
     return (
       <div className="bg-bg-surface p-4 rounded-lg space-y-4">
         <div className="text-sm text-text-muted">
-          Compare mode: {compareSelection.length} of 2 selected
+          {selectedCount} of {sampleEntries.length} rows selected (max 2 for comparison)
         </div>
         <table className="w-full">
           <thead>
