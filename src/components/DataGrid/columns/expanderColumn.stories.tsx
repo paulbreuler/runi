@@ -90,23 +90,29 @@ const demoData: DemoRow[] = [
   },
 ];
 
-// Method color mapping
+// Method color mapping - using design system colors
 const methodColors: Record<string, string> = {
-  GET: 'text-blue-500',
-  POST: 'text-green-500',
-  PUT: 'text-amber-500',
-  DELETE: 'text-red-500',
+  GET: 'text-accent-blue',
+  POST: 'text-signal-success',
+  PUT: 'text-signal-warning',
+  DELETE: 'text-signal-error',
 };
 
-// Status color mapping
+// Status color mapping - using design system colors
 const getStatusColor = (status: number): string => {
   if (status >= 200 && status < 300) {
-    return 'text-green-500';
+    return 'text-signal-success';
   }
-  if (status >= 400) {
-    return 'text-red-500';
+  if (status >= 300 && status < 400) {
+    return 'text-accent-blue';
   }
-  return 'text-text-secondary';
+  if (status >= 400 && status < 500) {
+    return 'text-signal-warning';
+  }
+  if (status >= 500) {
+    return 'text-signal-error';
+  }
+  return 'text-text-muted';
 };
 
 // Demo table component
