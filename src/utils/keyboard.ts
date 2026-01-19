@@ -11,6 +11,20 @@
 export type ModifierKey = 'meta' | 'ctrl' | 'shift' | 'alt';
 
 /**
+ * Normalize modifier to an array.
+ * Handles undefined, single modifier, or array of modifiers.
+ */
+function normalizeModifiers(modifier: ModifierKey | ModifierKey[] | undefined): ModifierKey[] {
+  if (modifier === undefined) {
+    return [];
+  }
+  if (Array.isArray(modifier)) {
+    return modifier;
+  }
+  return [modifier];
+}
+
+/**
  * Keyboard shortcut configuration.
  */
 export interface KeyboardShortcut {
@@ -106,8 +120,7 @@ export function createKeyboardHandler(shortcut: KeyboardShortcut): () => void {
     const { modifier, key } = shortcut;
 
     // Normalize modifier to array
-    const requiredModifiers: ModifierKey[] =
-      modifier === undefined ? [] : Array.isArray(modifier) ? modifier : [modifier];
+    const requiredModifiers: ModifierKey[] = normalizeModifiers(modifier);
 
     // All modifier keys
     const allModifiers: ModifierKey[] = ['meta', 'ctrl', 'shift', 'alt'];

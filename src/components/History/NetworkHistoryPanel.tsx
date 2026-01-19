@@ -203,6 +203,83 @@ export const NetworkHistoryPanel = ({
     overscan: 5,
   });
 
+  // Render entry list based on count and virtualization threshold
+  const renderEntryList = (): React.ReactNode => {
+    // Empty state
+    if (filteredEntries.length === 0) {
+      return (
+        <EmptyState
+          variant="muted"
+          size="sm"
+          title={entries.length === 0 ? 'No requests yet' : 'No matching requests'}
+        />
+      );
+    }
+
+    // Virtualized rendering for large lists
+    if (filteredEntries.length >= VIRTUALIZATION_THRESHOLD) {
+      return (
+        <div
+          style={{
+            height: `${String(virtualizer.getTotalSize())}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const entry = filteredEntries[virtualRow.index];
+            if (entry === undefined) {
+              return null;
+            }
+            return (
+              <div
+                key={entry.id}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${String(virtualRow.start)}px)`,
+                }}
+              >
+                <NetworkHistoryRow
+                  entry={entry}
+                  isExpanded={expandedId === entry.id}
+                  isSelected={selectedId === entry.id}
+                  onToggleExpand={handleToggleExpand}
+                  onSelect={handleSelect}
+                  onReplay={onReplay}
+                  onCopyCurl={onCopyCurl}
+                  compareMode={compareMode}
+                  isCompareSelected={compareSelection.includes(entry.id)}
+                  onToggleCompare={toggleCompareSelection}
+                  onDelete={handleDelete}
+                />
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Standard rendering for small lists
+    return filteredEntries.map((entry) => (
+      <NetworkHistoryRow
+        key={entry.id}
+        entry={entry}
+        isExpanded={expandedId === entry.id}
+        isSelected={selectedId === entry.id}
+        onToggleExpand={handleToggleExpand}
+        onSelect={handleSelect}
+        onReplay={onReplay}
+        onCopyCurl={onCopyCurl}
+        compareMode={compareMode}
+        isCompareSelected={compareSelection.includes(entry.id)}
+        onToggleCompare={toggleCompareSelection}
+      />
+    ));
+  };
+
   return (
     <div className="flex flex-col h-full bg-bg-surface">
       {/* Filter bar - responsive with horizontal scroll */}
@@ -243,72 +320,7 @@ export const NetworkHistoryPanel = ({
           )}
           style={{ scrollbarGutter: 'stable' }}
         >
-          {filteredEntries.length === 0 ? (
-            <EmptyState
-              variant="muted"
-              size="sm"
-              title={entries.length === 0 ? 'No requests yet' : 'No matching requests'}
-            />
-          ) : filteredEntries.length >= VIRTUALIZATION_THRESHOLD ? (
-            // Virtualized rendering for large lists
-            <div
-              style={{
-                height: `${String(virtualizer.getTotalSize())}px`,
-                width: '100%',
-                position: 'relative',
-              }}
-            >
-              {virtualizer.getVirtualItems().map((virtualRow) => {
-                const entry = filteredEntries[virtualRow.index];
-                if (entry === undefined) {
-                  return null;
-                }
-                return (
-                  <div
-                    key={entry.id}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${String(virtualRow.start)}px)`,
-                    }}
-                  >
-                    <NetworkHistoryRow
-                      entry={entry}
-                      isExpanded={expandedId === entry.id}
-                      isSelected={selectedId === entry.id}
-                      onToggleExpand={handleToggleExpand}
-                      onSelect={handleSelect}
-                      onReplay={onReplay}
-                      onCopyCurl={onCopyCurl}
-                      compareMode={compareMode}
-                      isCompareSelected={compareSelection.includes(entry.id)}
-                      onToggleCompare={toggleCompareSelection}
-                      onDelete={handleDelete}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            // Standard rendering for small lists
-            filteredEntries.map((entry) => (
-              <NetworkHistoryRow
-                key={entry.id}
-                entry={entry}
-                isExpanded={expandedId === entry.id}
-                isSelected={selectedId === entry.id}
-                onToggleExpand={handleToggleExpand}
-                onSelect={handleSelect}
-                onReplay={onReplay}
-                onCopyCurl={onCopyCurl}
-                compareMode={compareMode}
-                isCompareSelected={compareSelection.includes(entry.id)}
-                onToggleCompare={toggleCompareSelection}
-              />
-            ))
-          )}
+          {renderEntryList()}
         </div>
       </div>
 

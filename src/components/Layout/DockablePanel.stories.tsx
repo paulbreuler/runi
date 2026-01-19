@@ -187,6 +187,12 @@ export const WithRealContent: Story = {
         });
 
         // Populate history store with mock entries
+        const statusTextMap: Record<number, string> = {
+          200: 'OK',
+          201: 'Created',
+          404: 'Not Found',
+          500: 'Server Error',
+        };
         const mockEntries: NetworkHistoryEntry[] = Array.from({ length: 12 }, (_, i) => {
           const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
           const statuses = [200, 201, 404, 500];
@@ -204,14 +210,7 @@ export const WithRealContent: Story = {
             },
             response: {
               status,
-              status_text:
-                status === 200
-                  ? 'OK'
-                  : status === 201
-                    ? 'Created'
-                    : status === 404
-                      ? 'Not Found'
-                      : 'Server Error',
+              status_text: statusTextMap[status] ?? 'Unknown',
               headers: { 'Content-Type': 'application/json' },
               body: status === 204 ? '' : '{"id":' + String(i + 1) + '}',
               timing: {

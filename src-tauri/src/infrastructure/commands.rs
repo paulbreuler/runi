@@ -159,6 +159,7 @@ pub fn set_log_level(level: String) -> Result<(), String> {
 mod tests {
     use super::*;
     use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
+    use serial_test::serial;
     use std::collections::HashMap;
     use uuid::Uuid;
 
@@ -193,6 +194,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_save_request_history() {
         let request = create_test_request("save");
         let response = create_test_response();
@@ -204,6 +206,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_load_request_history() {
         // Clear history first for isolation
         let _ = clear_request_history().await;
@@ -226,6 +229,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_delete_history_entry() {
         let request = create_test_request("delete");
         let response = create_test_response();
@@ -297,6 +301,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_clear_request_history() {
         // Clear first for isolation
         let _ = clear_request_history().await;

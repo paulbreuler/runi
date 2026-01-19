@@ -276,6 +276,12 @@ export const SegmentedControl = <T extends string>({
           className="flex items-center"
           role="group"
           aria-label={ariaLabel}
+          // FIX: Set initial to match animate to prevent mount animation flash
+          initial={{
+            boxShadow: auraBoxShadow ?? '0 0 0 0 rgba(0, 0, 0, 0)',
+            borderColor: tierBorderColor,
+            backgroundColor: tierBackgroundTint,
+          }}
           animate={{
             boxShadow: auraBoxShadow ?? '0 0 0 0 rgba(0, 0, 0, 0)',
             borderColor: tierBorderColor,
@@ -311,6 +317,10 @@ export const SegmentedControl = <T extends string>({
               ? 'var(--color-text-primary)'
               : 'var(--color-text-muted)';
 
+            // Compute the target color and background for this button
+            const targetColor = tierTextColor ?? defaultTextColor;
+            const targetBackground = tierSelectedBg ?? 'transparent';
+
             return (
               <motion.button
                 key={option.value}
@@ -336,10 +346,15 @@ export const SegmentedControl = <T extends string>({
                   // Icon mode specific sizing
                   isIconMode && 'min-w-[28px]'
                 )}
-                // FIX Bug 2 & 4: Always animate to explicit values, never undefined
+                // FIX: Set initial to match animate to prevent mount animation flash
+                // Without this, Motion animates from CSS defaults (bright) to animate target (muted)
+                initial={{
+                  color: targetColor,
+                  backgroundColor: targetBackground,
+                }}
                 animate={{
-                  color: tierTextColor ?? defaultTextColor,
-                  backgroundColor: tierSelectedBg ?? 'transparent',
+                  color: targetColor,
+                  backgroundColor: targetBackground,
                 }}
                 transition={{ duration: 0.3 }}
                 aria-pressed={isSelected}
