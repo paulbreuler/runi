@@ -48,3 +48,12 @@ export {
   TimeAgoCell,
   ActionsCell,
 } from './columns/networkColumns';
+
+// Console panel columns
+export {
+  createConsoleColumns,
+  LevelCell,
+  MessageCell,
+  TimestampCell,
+  ConsoleActionsCell,
+} from './columns/consoleColumns';
