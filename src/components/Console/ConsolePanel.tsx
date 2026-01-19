@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Terminal, AlertCircle, Info, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { cn } from '@/utils/cn';
@@ -7,9 +6,11 @@ import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
 import { ConsoleContextMenu } from './ConsoleContextMenu';
 import { ConsoleToolbar } from './ConsoleToolbar';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { DataPanelHeader } from '@/components/ui/DataPanelHeader';
-import { Checkbox } from '@/components/ui/checkbox';
+import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
+import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColumns';
+import { motion, AnimatePresence } from 'motion/react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import type { Row } from '@tanstack/react-table';
 
 export type { LogLevel, ConsoleLog } from '@/types/console';
 
@@ -36,6 +37,18 @@ type DisplayLog = ConsoleLog | GroupedLog;
 
 function isGroupedLog(log: DisplayLog): log is GroupedLog {
   return 'count' in log && 'allLogs' in log;
+}
+
+/**
+ * Extended ConsoleLog for table display with grouping metadata.
+ * This allows us to use consoleColumns (which expect ConsoleLog) while
+ * preserving grouping information for expanded content.
+ */
+interface DisplayLogEntry extends ConsoleLog {
+  /** Group count (if this is a grouped log) */
+  _groupCount?: number;
+  /** Original DisplayLog for expanded content */
+  _originalLog?: DisplayLog;
 }
 
 /**
@@ -255,23 +268,47 @@ export const ConsolePanel = ({
     });
   }, [logs, filter, searchFilter]);
 
-  const handleSelectRange = (fromIndex: number, toIndex: number): void => {
-    setSelectedLogIds((prev) => {
-      const next = new Set(prev);
-      const start = Math.min(fromIndex, toIndex);
-      const end = Math.max(fromIndex, toIndex);
-
-      // Add all logs in range
-      for (let i = start; i <= end && i < filteredLogs.length; i++) {
-        const log = filteredLogs[i];
-        if (log !== undefined) {
-          next.add(log.id);
-        }
+  // Convert DisplayLog[] to DisplayLogEntry[] for TanStack Table
+  const tableData = useMemo((): DisplayLogEntry[] => {
+    return filteredLogs.map((displayLog): DisplayLogEntry => {
+      if (isGroupedLog(displayLog)) {
+        // Convert GroupedLog to DisplayLogEntry using sampleLog as base
+        return {
+          ...displayLog.sampleLog,
+          id: displayLog.id,
+          timestamp: displayLog.firstTimestamp, // Use first timestamp for display
+          _groupCount: displayLog.count,
+          _originalLog: displayLog,
+        };
       }
-
-      return next;
+      // ConsoleLog - just add metadata
+      return {
+        ...displayLog,
+        _originalLog: displayLog,
+      };
     });
-  };
+  }, [filteredLogs]);
+
+  const handleSelectRange = useCallback(
+    (fromIndex: number, toIndex: number): void => {
+      setSelectedLogIds((prev) => {
+        const next = new Set(prev);
+        const start = Math.min(fromIndex, toIndex);
+        const end = Math.max(fromIndex, toIndex);
+
+        // Add all logs in range
+        for (let i = start; i <= end && i < filteredLogs.length; i++) {
+          const log = filteredLogs[i];
+          if (log !== undefined) {
+            next.add(log.id);
+          }
+        }
+
+        return next;
+      });
+    },
+    [filteredLogs]
+  );
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
@@ -304,20 +341,23 @@ export const ConsolePanel = ({
     setContextMenu(null);
   };
 
-  const handleSelectAll = (): void => {
-    const allLogIds = new Set(filteredLogs.map((log) => log.id));
-    setSelectedLogIds(allLogIds);
-    if (filteredLogs.length > 0) {
-      setLastSelectedIndex(filteredLogs.length - 1);
-    }
-  };
+  // Select all/deselect all handled via TanStack Table's header checkbox
+  // The handleRowSelectionChange callback will be called with all rows selected/deselected
 
-  const handleDeselectAll = (): void => {
-    setSelectedLogIds(new Set());
-    setLastSelectedIndex(null);
-  };
+  const formatTimestamp = useCallback((timestamp: number): string => {
+    const date = new Date(timestamp);
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    // Add milliseconds manually (toLocaleTimeString doesn't support fractionalSecondDigits in all browsers)
+    const ms = String(date.getMilliseconds()).padStart(3, '0');
+    return `${timeStr}.${ms}`;
+  }, []);
 
-  const handleToggleSelect = (logId: string): void => {
+  const handleToggleSelect = useCallback((logId: string): void => {
     setSelectedLogIds((prev) => {
       const next = new Set(prev);
       if (next.has(logId)) {
@@ -327,7 +367,7 @@ export const ConsolePanel = ({
       }
       return next;
     });
-  };
+  }, []);
 
   const downloadJson = async (data: unknown, filename: string): Promise<void> => {
     const filePath = await save({
@@ -366,47 +406,41 @@ export const ConsolePanel = ({
     await handleCopy(text);
   };
 
-  const handleDeleteLog = (logId: string): void => {
-    const service = getConsoleService();
-    const logToDelete = filteredLogs.find((log) => log.id === logId);
-    if (logToDelete !== undefined) {
-      if (isGroupedLog(logToDelete)) {
-        // Delete all logs in the group
-        for (const individualLog of logToDelete.allLogs) {
-          service.deleteLog(individualLog.id);
+  const handleDeleteLog = useCallback(
+    (logId: string): void => {
+      const service = getConsoleService();
+      const logToDelete = filteredLogs.find((log) => log.id === logId);
+      if (logToDelete !== undefined) {
+        if (isGroupedLog(logToDelete)) {
+          // Delete all logs in the group
+          for (const individualLog of logToDelete.allLogs) {
+            service.deleteLog(individualLog.id);
+          }
+        } else {
+          // Delete single log
+          service.deleteLog(logId);
         }
-      } else {
-        // Delete single log
-        service.deleteLog(logId);
+        // Refresh logs from service
+        setLogs(() => [...service.getLogs()]);
+        // Remove from selection
+        setSelectedLogIds((prev) => {
+          const next = new Set(prev);
+          next.delete(logId);
+          return next;
+        });
+        // Remove from expanded logs (including occurrences key for grouped logs)
+        setExpandedLogIds((prev) => {
+          const next = new Set(prev);
+          next.delete(logId);
+          next.delete(`${logId}_occurrences`);
+          return next;
+        });
       }
-      // Refresh logs from service using functional update with spread to ensure React sees a new reference
-      setLogs(() => [...service.getLogs()]);
-      // Remove from selection
-      setSelectedLogIds((prev) => {
-        const next = new Set(prev);
-        next.delete(logId);
-        return next;
-      });
-      // Remove from expanded logs (including occurrences key for grouped logs)
-      setExpandedLogIds((prev) => {
-        const next = new Set(prev);
-        next.delete(logId);
-        next.delete(`${logId}_occurrences`);
-        return next;
-      });
-    }
-  };
+    },
+    [filteredLogs]
+  );
 
-  const handleContextMenu = (event: React.MouseEvent, log: DisplayLog): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    setContextMenu({
-      log,
-      position: { x: event.clientX, y: event.clientY },
-    });
-  };
-
-  const handleCopy = async (text: string): Promise<void> => {
+  const handleCopy = useCallback(async (text: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -425,50 +459,407 @@ export const ConsolePanel = ({
       }
       document.body.removeChild(textArea);
     }
-  };
+  }, []);
 
-  const formatTimestamp = (timestamp: number): string => {
-    const date = new Date(timestamp);
-    const timeStr = date.toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+  const handleCopyLog = useCallback(
+    (log: ConsoleLog): void => {
+      const timestamp = formatTimestamp(log.timestamp);
+      const text = `[${timestamp}] ${log.level.toUpperCase()}] ${log.message}`;
+      void handleCopy(text);
+    },
+    [handleCopy, formatTimestamp]
+  );
+
+  // Create columns with callbacks
+  const columns = useMemo(
+    () =>
+      createConsoleColumns({
+        onCopy: handleCopyLog,
+        onDelete: handleDeleteLog,
+      }),
+    [handleCopyLog, handleDeleteLog]
+  );
+
+  // Sync TanStack Table selection with local state
+  const handleRowSelectionChange = useCallback(
+    (selection: Record<string, boolean>): void => {
+      const selectedSet = new Set(Object.keys(selection).filter((id) => selection[id] === true));
+      const currentSet = selectedLogIds;
+
+      // Handle select all / deselect all
+      if (selectedSet.size === filteredLogs.length && currentSet.size === 0) {
+        // Select all
+        const allLogIds = new Set(filteredLogs.map((log) => log.id));
+        setSelectedLogIds(allLogIds);
+        if (filteredLogs.length > 0) {
+          setLastSelectedIndex(filteredLogs.length - 1);
+        }
+        return;
+      }
+      if (selectedSet.size === 0 && currentSet.size > 0) {
+        // Deselect all
+        setSelectedLogIds(new Set());
+        setLastSelectedIndex(null);
+        return;
+      }
+
+      // Batch update: only toggle IDs that changed
+      for (const id of selectedSet) {
+        if (!currentSet.has(id)) {
+          handleToggleSelect(id);
+        }
+      }
+      for (const id of currentSet) {
+        if (!selectedSet.has(id)) {
+          handleToggleSelect(id);
+        }
+      }
+    },
+    [selectedLogIds, handleToggleSelect, filteredLogs]
+  );
+
+  // Convert local selection to TanStack Table format
+  const initialRowSelection = useMemo(() => {
+    const selection: Record<string, boolean> = {};
+    for (const id of selectedLogIds) {
+      selection[id] = true;
+    }
+    return selection;
+  }, [selectedLogIds]);
+
+  // Sync TanStack Table expansion with local state
+  // Use functional updates to avoid dependency on expandedLogIds (prevents infinite loops)
+  const handleExpandedChange = useCallback((expanded: Record<string, boolean>): void => {
+    // Prevent circular updates - if we're already updating from user action, skip
+    if (isUpdatingExpansionRef.current) {
+      return;
+    }
+
+    const expandedSet = new Set(Object.keys(expanded).filter((id) => expanded[id] === true));
+
+    // Update expanded state using functional update to avoid dependency on expandedLogIds
+    setExpandedLogIds((prev) => {
+      const next = new Set(prev);
+      // Add new expansions
+      for (const id of expandedSet) {
+        next.add(id);
+      }
+      // Remove deselections (only for main log IDs, not occurrences)
+      for (const id of prev) {
+        if (!expandedSet.has(id) && !id.includes('_occurrences')) {
+          next.delete(id);
+        }
+      }
+      return next;
     });
-    // Add milliseconds manually (toLocaleTimeString doesn't support fractionalSecondDigits in all browsers)
-    const ms = String(date.getMilliseconds()).padStart(3, '0');
-    return `${timeStr}.${ms}`;
-  };
+  }, []); // Empty deps - uses functional updates
 
-  const getLogIcon = (level: LogLevel): React.ReactNode => {
-    switch (level) {
-      case 'error':
-        return <AlertCircle size={12} className="text-signal-error" />;
-      case 'warn':
-        return <AlertCircle size={12} className="text-signal-warning" />;
-      case 'info':
-        return <Info size={12} className="text-accent-blue" />;
-      case 'debug':
-        return <Terminal size={12} className="text-text-muted" />;
-      default:
+  // Convert local expansion to TanStack Table format (only for initial mount)
+  // After mount, expansion state is controlled via handleExpandedChange callback
+  const initialExpanded = useMemo(() => {
+    return {};
+  }, []); // Always start with no expansions - handleExpandedChange will sync from TanStack Table
+
+  // Refs for external control
+  const setRowSelectionRef = useRef<((selection: Record<string, boolean>) => void) | null>(null);
+  const setExpandedRef = useRef<((expanded: Record<string, boolean>) => void) | null>(null);
+  // Ref to prevent circular updates when syncing expansion state
+  const isUpdatingExpansionRef = useRef(false);
+
+  const handleSetRowSelectionReady = useCallback(
+    (setRowSelectionFn: (selection: Record<string, boolean>) => void): void => {
+      setRowSelectionRef.current = setRowSelectionFn;
+    },
+    []
+  );
+
+  const handleSetExpandedReady = useCallback(
+    (setExpandedFn: (expanded: Record<string, boolean>) => void): void => {
+      setExpandedRef.current = setExpandedFn;
+    },
+    []
+  );
+
+  const handleContextMenu = useCallback((event: React.MouseEvent, log: DisplayLog): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu({
+      log,
+      position: { x: event.clientX, y: event.clientY },
+    });
+  }, []);
+
+  // Custom row renderer that includes expanded content
+  const renderRow = useCallback(
+    (row: Row<DisplayLogEntry>, cells: React.ReactNode): React.ReactNode => {
+      const entry = row.original;
+      const originalLog = entry._originalLog;
+      if (originalLog === undefined) {
         return null;
-    }
-  };
+      }
 
-  const getLogLevelClass = (level: LogLevel): string => {
-    switch (level) {
-      case 'error':
-        return 'text-signal-error';
-      case 'warn':
-        return 'text-signal-warning';
-      case 'info':
-        return 'text-accent-blue';
-      case 'debug':
-        return 'text-text-secondary';
-      default:
-        return 'text-text-muted';
-    }
-  };
+      const isGrouped = isGroupedLog(originalLog);
+      const isExpanded = expandedLogIds.has(entry.id);
+      const isSelected = selectedLogIds.has(entry.id);
+      const logLevel = entry.level;
+
+      // Handle row click for selection (with Shift/Ctrl support)
+      const handleRowClick = (e: React.MouseEvent): void => {
+        // Don't toggle if clicking on buttons or checkboxes
+        const target = e.target as HTMLElement;
+        if (
+          target.closest('button') !== null ||
+          target.closest('[role="checkbox"]') !== null ||
+          target.closest('input') !== null
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+
+        // Find current log index in filtered logs
+        const currentIndex = filteredLogs.findIndex((log) => log.id === entry.id);
+        if (currentIndex < 0) {
+          return;
+        }
+
+        // Handle Shift-click for range selection
+        if (e.shiftKey && lastSelectedIndex !== null) {
+          handleSelectRange(lastSelectedIndex, currentIndex);
+          setLastSelectedIndex(currentIndex);
+          return;
+        }
+
+        // Handle Ctrl/Cmd-click for multi-select
+        if (e.ctrlKey || e.metaKey) {
+          handleToggleSelect(entry.id);
+          setLastSelectedIndex(currentIndex);
+          return;
+        }
+
+        // Single click: toggle selection
+        handleToggleSelect(entry.id);
+        setLastSelectedIndex(currentIndex);
+      };
+
+      // Handle double-click for expansion
+      const handleRowDoubleClick = (e: React.MouseEvent): void => {
+        const target = e.target as HTMLElement;
+        if (
+          target.closest('button') !== null ||
+          target.closest('[role="checkbox"]') !== null ||
+          target.closest('input') !== null
+        ) {
+          return;
+        }
+
+        // For non-grouped logs, only expand if there are args
+        if (!isGrouped && entry.args.length === 0) {
+          return;
+        }
+
+        // Toggle expansion
+        // Set flag FIRST to prevent handleExpandedChange from running
+        isUpdatingExpansionRef.current = true;
+
+        // Update local state
+        setExpandedLogIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(entry.id)) {
+            next.delete(entry.id);
+          } else {
+            next.add(entry.id);
+          }
+          return next;
+        });
+
+        // Sync to TanStack Table
+        if (setExpandedRef.current !== null) {
+          const newExpanded: Record<string, boolean> = {};
+          const currentlyExpanded = expandedLogIds.has(entry.id);
+          if (!currentlyExpanded) {
+            newExpanded[entry.id] = true;
+          }
+          setExpandedRef.current(newExpanded);
+        }
+
+        // Clear flag after state updates complete
+        setTimeout(() => {
+          isUpdatingExpansionRef.current = false;
+        }, 0);
+      };
+
+      const getLogLevelClass = (level: LogLevel): string => {
+        switch (level) {
+          case 'error':
+            return 'text-signal-error';
+          case 'warn':
+            return 'text-signal-warning';
+          case 'info':
+            return 'text-accent-blue';
+          case 'debug':
+            return 'text-text-secondary';
+          default:
+            return 'text-text-muted';
+        }
+      };
+
+      return (
+        <>
+          <tr
+            key={row.id}
+            className={cn(
+              'group border-b border-border-default hover:bg-bg-raised/50 transition-colors cursor-pointer select-none',
+              isSelected && 'bg-bg-raised/30',
+              getLogLevelClass(logLevel)
+            )}
+            data-row-id={row.id}
+            data-testid={`console-log-${logLevel}`}
+            onClick={handleRowClick}
+            onDoubleClick={handleRowDoubleClick}
+            onMouseDown={(e): void => {
+              // Prevent text selection on Shift-click
+              if (e.shiftKey) {
+                e.preventDefault();
+              }
+            }}
+            onContextMenu={(e): void => {
+              handleContextMenu(e, originalLog);
+            }}
+          >
+            {cells}
+          </tr>
+          {/* Expanded content row */}
+          <AnimatePresence>
+            {isExpanded && (
+              <tr key={`${row.id}-expanded`}>
+                <td colSpan={columns.length} className="p-0">
+                  <motion.div
+                    data-testid="expanded-section"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="ml-8 mt-0.5 space-y-0.5 border-l border-border-default pl-2">
+                      {isGrouped ? (
+                        <>
+                          {/* Args content (grouped logs show args once) */}
+                          {originalLog.sampleLog.args.length > 0 && (
+                            <div className="mb-2">
+                              <div className="pl-2 border-l border-border-default">
+                                {originalLog.sampleLog.args.map((arg: unknown, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="mb-1 text-xs font-mono text-text-secondary"
+                                  >
+                                    <pre className="whitespace-pre-wrap break-words overflow-x-auto">
+                                      {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
+                                    </pre>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Occurrences list */}
+                          {originalLog.count > 1 && (
+                            <div>
+                              <button
+                                type="button"
+                                onClick={(): void => {
+                                  const occurrencesKey = `${originalLog.id}_occurrences`;
+                                  setExpandedLogIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(occurrencesKey)) {
+                                      next.delete(occurrencesKey);
+                                    } else {
+                                      next.add(occurrencesKey);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                                className="flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full"
+                              >
+                                {expandedLogIds.has(`${originalLog.id}_occurrences`) ? (
+                                  <ChevronDown size={12} />
+                                ) : (
+                                  <ChevronRight size={12} />
+                                )}
+                                <span>
+                                  {originalLog.count} occurrence{originalLog.count !== 1 ? 's' : ''}{' '}
+                                  at:
+                                </span>
+                              </button>
+                              {expandedLogIds.has(`${originalLog.id}_occurrences`) && (
+                                <div className="ml-6 mt-0.5 space-y-0.5">
+                                  {originalLog.allLogs.map((individualLog) => (
+                                    <div
+                                      key={individualLog.id}
+                                      className="flex items-center gap-2 px-2 py-0.5 text-xs text-text-muted font-mono"
+                                      onContextMenu={(e): void => {
+                                        handleContextMenu(e, individualLog);
+                                      }}
+                                    >
+                                      <span className="shrink-0 w-24">
+                                        {formatTimestamp(individualLog.timestamp)}
+                                      </span>
+                                      {individualLog.correlationId !== undefined &&
+                                        individualLog.correlationId !== '' && (
+                                          <span
+                                            className="shrink-0 text-text-muted text-xs font-mono w-40 truncate"
+                                            title={individualLog.correlationId}
+                                          >
+                                            {individualLog.correlationId}
+                                          </span>
+                                        )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        /* Individual log args */
+                        entry.args.length > 0 && (
+                          <div className="pl-2 border-l border-border-default">
+                            {entry.args.map((arg: unknown, index: number) => (
+                              <div
+                                key={index}
+                                className="mb-1 text-xs font-mono text-text-secondary"
+                              >
+                                <pre className="whitespace-pre-wrap break-words overflow-x-auto">
+                                  {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
+                                </pre>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </motion.div>
+                </td>
+              </tr>
+            )}
+          </AnimatePresence>
+        </>
+      );
+    },
+    [
+      expandedLogIds, // Needed to check isExpanded
+      selectedLogIds,
+      lastSelectedIndex,
+      filteredLogs,
+      columns.length,
+      handleSelectRange,
+      handleToggleSelect,
+      handleContextMenu,
+      formatTimestamp,
+      // setExpandedRef is a ref, doesn't need to be in deps
+    ]
+  );
 
   const countByLevel = useMemo(() => {
     return logs.reduce<Record<LogLevel, number>>(
@@ -503,341 +894,29 @@ export const ConsolePanel = ({
 
       {/* Log list container */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {/* Header row with select all checkbox - using DataPanelHeader */}
-        <DataPanelHeader
-          columns={[
-            { label: 'Level', className: 'text-xs text-text-muted' },
-            { label: 'Message', className: 'flex-1 text-xs text-text-muted' },
-            { label: 'Time', className: 'w-24 text-right text-xs text-text-muted' },
-          ]}
-          showSelectAll={true}
-          allSelected={
-            filteredLogs.length > 0 && filteredLogs.every((log) => selectedLogIds.has(log.id))
-          }
-          someSelected={
-            filteredLogs.some((log) => selectedLogIds.has(log.id)) &&
-            !filteredLogs.every((log) => selectedLogIds.has(log.id))
-          }
-          onSelectAllChange={(checked): void => {
-            if (checked) {
-              handleSelectAll();
-            } else {
-              handleDeselectAll();
-            }
-          }}
-          enabled={filteredLogs.length > 0}
-          className="px-3"
-        />
+        {/* Note: Select all is handled via TanStack Table's header checkbox in selection column */}
 
-        {/* Log list */}
-        <div
-          ref={logContainerRef}
-          className="flex-1 overflow-auto min-h-0 font-mono text-xs"
-          style={{ scrollbarGutter: 'stable' }}
-          data-testid="console-logs"
-        >
-          {filteredLogs.length === 0 ? (
-            <EmptyState
-              variant="muted"
-              size="sm"
-              title={`No logs${filter !== 'all' ? ` (${filter} only)` : ''}`}
-            />
-          ) : (
-            <div className="space-y-0.5">
-              {filteredLogs.map((displayLog) => {
-                const isGrouped = isGroupedLog(displayLog);
-                const isExpanded = expandedLogIds.has(displayLog.id);
-                const logLevel = isGrouped ? displayLog.level : displayLog.level;
-                const logMessage = isGrouped ? displayLog.message : displayLog.message;
-                const logTimestamp = isGrouped ? displayLog.firstTimestamp : displayLog.timestamp;
-                const logCorrelationId = isGrouped
-                  ? displayLog.correlationId
-                  : displayLog.correlationId;
-                const logId = isGrouped ? displayLog.id : displayLog.id;
-
-                const isSelected = selectedLogIds.has(logId);
-
-                const handleRowClick = (e: React.MouseEvent): void => {
-                  // Don't toggle selection if clicking on buttons or checkboxes
-                  if ((e.target as HTMLElement).closest('button') !== null) {
-                    return;
-                  }
-
-                  // Prevent default text selection behavior
-                  e.preventDefault();
-
-                  // Find current log index in filtered logs
-                  const currentIndex = filteredLogs.findIndex((log) => log.id === logId);
-                  if (currentIndex < 0) {
-                    return;
-                  }
-
-                  // Handle Shift-click for range selection
-                  if (e.shiftKey && lastSelectedIndex !== null) {
-                    handleSelectRange(lastSelectedIndex, currentIndex);
-                    setLastSelectedIndex(currentIndex);
-                    return;
-                  }
-
-                  // Handle Ctrl/Cmd-click for multi-select
-                  if (e.ctrlKey || e.metaKey) {
-                    handleToggleSelect(logId);
-                    setLastSelectedIndex(currentIndex);
-                    return;
-                  }
-
-                  // Single click: toggle selection
-                  handleToggleSelect(logId);
-                  setLastSelectedIndex(currentIndex);
-                };
-
-                return (
-                  <div key={logId} className="group">
-                    <div
-                      className={cn(
-                        'flex items-start gap-3 px-3 py-1.5 rounded hover:bg-bg-raised/50 transition-colors cursor-pointer select-none',
-                        isSelected && 'bg-bg-raised/30',
-                        getLogLevelClass(logLevel)
-                      )}
-                      data-testid={`console-log-${logLevel}`}
-                      onClick={handleRowClick}
-                      onDoubleClick={(e): void => {
-                        // Don't expand if clicking on buttons
-                        if ((e.target as HTMLElement).closest('button') !== null) {
-                          return;
-                        }
-                        // For non-grouped logs, only expand if there are args
-                        if (!isGrouped && displayLog.args.length === 0) {
-                          return;
-                        }
-                        // Toggle expansion
-                        setExpandedLogIds((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(logId)) {
-                            next.delete(logId);
-                          } else {
-                            next.add(logId);
-                          }
-                          return next;
-                        });
-                      }}
-                      onMouseDown={(e): void => {
-                        // Prevent text selection on Shift-click
-                        if (e.shiftKey) {
-                          e.preventDefault();
-                        }
-                      }}
-                      onContextMenu={(e): void => {
-                        handleContextMenu(e, displayLog);
-                      }}
-                    >
-                      {/* Checkbox for selection */}
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(): void => {
-                          handleToggleSelect(logId);
-                        }}
-                        onClick={(e): void => {
-                          e.stopPropagation();
-                        }}
-                        aria-label={isSelected ? 'Deselect' : 'Select'}
-                        className="shrink-0 mt-0.5"
-                      />
-                      {/* Expand/collapse icon for grouped logs */}
-                      {isGrouped && (
-                        <button
-                          type="button"
-                          onClick={(): void => {
-                            setExpandedLogIds((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(logId)) {
-                                next.delete(logId);
-                              } else {
-                                next.add(logId);
-                              }
-                              return next;
-                            });
-                          }}
-                          className="shrink-0 mt-0.5 text-text-muted hover:text-text-primary"
-                        >
-                          {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                        </button>
-                      )}
-                      {!isGrouped && (
-                        <button
-                          type="button"
-                          onClick={(): void => {
-                            setExpandedLogIds((prev) => {
-                              const next = new Set(prev);
-                              if (displayLog.args.length > 0) {
-                                if (next.has(logId)) {
-                                  next.delete(logId);
-                                } else {
-                                  next.add(logId);
-                                }
-                              }
-                              return next;
-                            });
-                          }}
-                          className={cn(
-                            'shrink-0 mt-0.5 text-text-muted hover:text-text-primary transition-colors',
-                            displayLog.args.length === 0 ? 'invisible' : ''
-                          )}
-                          title={displayLog.args.length > 0 ? 'Expand/collapse args' : ''}
-                        >
-                          {expandedLogIds.has(logId) ? (
-                            <ChevronDown size={12} />
-                          ) : (
-                            <ChevronRight size={12} />
-                          )}
-                        </button>
-                      )}
-                      {!isGrouped && displayLog.args.length === 0 && (
-                        <span className="shrink-0 w-3" />
-                      )}
-                      <span className="shrink-0 mt-0.5">{getLogIcon(logLevel)}</span>
-                      <span className="shrink-0 text-text-muted w-24">
-                        {formatTimestamp(logTimestamp)}
-                      </span>
-                      <span className="flex-1 min-w-0 break-words">{logMessage}</span>
-                      {logCorrelationId !== undefined && logCorrelationId !== '' && (
-                        <span
-                          className="shrink-0 text-text-muted text-xs font-mono w-40 truncate"
-                          title={logCorrelationId}
-                        >
-                          {logCorrelationId}
-                        </span>
-                      )}
-                      {/* Count badge for grouped logs */}
-                      {isGrouped && displayLog.count > 1 && (
-                        <span
-                          className={cn(
-                            'shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold min-w-[20px] text-center',
-                            ((): string => {
-                              if (logLevel === 'error') {
-                                return 'bg-signal-error/20 text-signal-error';
-                              }
-                              if (logLevel === 'warn') {
-                                return 'bg-signal-warning/20 text-signal-warning';
-                              }
-                              return 'bg-text-muted/20 text-text-muted';
-                            })()
-                          )}
-                          title={`${String(displayLog.count)} occurrences`}
-                        >
-                          {displayLog.count}
-                        </span>
-                      )}
-                      {/* Delete button */}
-                      <button
-                        type="button"
-                        onClick={(e): void => {
-                          e.stopPropagation();
-                          handleDeleteLog(logId);
-                        }}
-                        className="shrink-0 p-0.5 text-text-muted hover:text-signal-error opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Delete log"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                    {/* Expanded view for grouped logs */}
-                    {isGrouped && isExpanded && (
-                      <div className="ml-8 mt-0.5 space-y-0.5 border-l border-border-default pl-2">
-                        {/* Since logs are grouped by identical message + args, show args once */}
-                        {displayLog.sampleLog.args.length > 0 && (
-                          <div className="mb-2">
-                            {/* Args content - same format as individual log expansion */}
-                            <div className="pl-2 border-l border-border-default">
-                              {displayLog.sampleLog.args.map((arg: unknown, index: number) => (
-                                <div
-                                  key={index}
-                                  className="mb-1 text-xs font-mono text-text-secondary"
-                                >
-                                  <pre className="whitespace-pre-wrap break-words overflow-x-auto">
-                                    {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
-                                  </pre>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Occurrences list - collapsible sublist of all timestamps */}
-                        {displayLog.count > 1 && (
-                          <div>
-                            <button
-                              type="button"
-                              onClick={(): void => {
-                                const occurrencesKey = `${displayLog.id}_occurrences`;
-                                setExpandedLogIds((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(occurrencesKey)) {
-                                    next.delete(occurrencesKey);
-                                  } else {
-                                    next.add(occurrencesKey);
-                                  }
-                                  return next;
-                                });
-                              }}
-                              className="flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full"
-                            >
-                              {expandedLogIds.has(`${displayLog.id}_occurrences`) ? (
-                                <ChevronDown size={12} />
-                              ) : (
-                                <ChevronRight size={12} />
-                              )}
-                              <span>
-                                {displayLog.count} occurrence{displayLog.count !== 1 ? 's' : ''} at:
-                              </span>
-                            </button>
-                            {expandedLogIds.has(`${displayLog.id}_occurrences`) && (
-                              <div className="ml-6 mt-0.5 space-y-0.5">
-                                {displayLog.allLogs.map((individualLog) => (
-                                  <div
-                                    key={individualLog.id}
-                                    className="flex items-center gap-2 px-2 py-0.5 text-xs text-text-muted font-mono"
-                                    onContextMenu={(e): void => {
-                                      handleContextMenu(e, individualLog);
-                                    }}
-                                  >
-                                    <span className="shrink-0 w-24">
-                                      {formatTimestamp(individualLog.timestamp)}
-                                    </span>
-                                    {individualLog.correlationId !== undefined &&
-                                      individualLog.correlationId !== '' && (
-                                        <span
-                                          className="shrink-0 text-text-muted text-xs font-mono w-40 truncate"
-                                          title={individualLog.correlationId}
-                                        >
-                                          {individualLog.correlationId}
-                                        </span>
-                                      )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {/* Expandable args view for individual (non-grouped) logs */}
-                    {!isGrouped && isExpanded && displayLog.args.length > 0 && (
-                      <div className="ml-8 mt-0.5 pl-2 border-l border-border-default">
-                        {displayLog.args.map((arg: unknown, index: number) => (
-                          <div key={index} className="mb-1 text-xs font-mono text-text-secondary">
-                            <pre className="whitespace-pre-wrap break-words overflow-x-auto">
-                              {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
-                            </pre>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+        {/* VirtualDataGrid - replaces custom rendering */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-x-auto" ref={logContainerRef}>
+          <VirtualDataGrid
+            data={tableData}
+            columns={columns}
+            getRowId={(row) => row.id}
+            enableRowSelection={true}
+            enableExpanding={true}
+            getRowCanExpand={() => true}
+            initialRowSelection={initialRowSelection}
+            initialExpanded={initialExpanded}
+            onRowSelectionChange={handleRowSelectionChange}
+            onExpandedChange={handleExpandedChange}
+            onSetRowSelectionReady={handleSetRowSelectionReady}
+            onSetExpandedReady={handleSetExpandedReady}
+            estimateRowHeight={32}
+            emptyMessage={`No logs${filter !== 'all' ? ` (${filter} only)` : ''}`}
+            renderRow={renderRow}
+            height={600}
+            className="flex-1 font-mono text-xs"
+          />
         </div>
       </div>
 
