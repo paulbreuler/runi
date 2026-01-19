@@ -228,11 +228,14 @@ mod tests {
     use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
     use serial_test::serial;
     use std::collections::HashMap;
-    use uuid::Uuid;
+    use uuid::{NoContext, Timestamp, Uuid};
 
     /// Create a test request with a unique URL to ensure test isolation.
     fn create_test_request(suffix: &str) -> RequestParams {
-        let unique_id = Uuid::new_v4().to_string().replace('-', "")[..8].to_string();
+        let unique_id = Uuid::new_v7(Timestamp::now(NoContext))
+            .to_string()
+            .replace('-', "")[..8]
+            .to_string();
         RequestParams {
             url: format!("https://api.example.com/test-{suffix}-{unique_id}"),
             method: "GET".to_string(),
