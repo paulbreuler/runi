@@ -43,7 +43,7 @@ export const NetworkHistoryPanel = ({
     expandedId,
     setFilter,
     setCompareMode,
-    toggleCompareSelection: _toggleCompareSelection, // For future compare mode column
+    toggleCompareSelection,
     toggleSelection, // Multi-select support
     selectAll: _selectAll, // Used via handleRowSelectionChange for select all
     deselectAll: _deselectAll, // Used via handleRowSelectionChange for deselect all
@@ -219,8 +219,11 @@ export const NetworkHistoryPanel = ({
         onReplay,
         onCopy: onCopyCurl,
         onDelete: handleDelete,
+        compareMode,
+        onToggleCompare: toggleCompareSelection,
+        isCompareSelected: (id: string): boolean => compareSelection.includes(id),
       }),
-    [onReplay, onCopyCurl, handleDelete]
+    [onReplay, onCopyCurl, handleDelete, compareMode, toggleCompareSelection, compareSelection]
   );
 
   // Sync TanStack Table selection with store
@@ -321,8 +324,6 @@ export const NetworkHistoryPanel = ({
       const isSelected = selectedIds.has(entry.id);
       const segments = calculateWaterfallSegments(entry.response.timing);
       const totalMs = entry.response.timing.total_ms;
-      // Compare mode not yet implemented in columns - will be added in follow-up
-      void compareSelection;
 
       // Handle row click for selection
       const handleRowClick = (e: React.MouseEvent): void => {
@@ -469,14 +470,13 @@ export const NetworkHistoryPanel = ({
     [
       expandedId,
       selectedIds,
-      compareSelection,
       columns.length,
       handleSelect,
       handleToggleExpand,
       onReplay,
       onCopyCurl,
       initialRowSelection,
-      // setRowSelectionRef is a ref, doesn't need to be in deps
+      // setRowSelectionRef and setExpandedRef are refs, don't need to be in deps
     ]
   );
 

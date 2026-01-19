@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { Play, Copy, Trash2 } from 'lucide-react';
+import { Play, Copy, Trash2, Check } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { formatRelativeTime } from '@/utils/relative-time';
 import type { NetworkHistoryEntry, IntelligenceInfo } from '@/types/history';
@@ -250,6 +250,58 @@ export const ActionsCell = ({
 };
 
 // ============================================================================
+// Compare Cell
+// ============================================================================
+
+interface CompareCellProps {
+  /** Whether compare mode is active */
+  compareMode: boolean;
+  /** Whether this row is selected for comparison */
+  isCompareSelected: boolean;
+  /** Callback when compare checkbox is toggled */
+  onToggleCompare: (id: string) => void;
+  /** Entry ID */
+  entryId: string;
+}
+
+/**
+ * Renders a compare checkbox that appears only in compare mode.
+ */
+const CompareCell = ({
+  compareMode,
+  isCompareSelected,
+  onToggleCompare,
+  entryId,
+}: CompareCellProps): React.ReactElement | null => {
+  if (!compareMode) {
+    return null;
+  }
+
+  const handleClick = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    onToggleCompare(entryId);
+  };
+
+  return (
+    <div
+      data-testid="compare-checkbox"
+      onClick={handleClick}
+      className={cn(
+        'w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer shrink-0 transition-colors',
+        isCompareSelected
+          ? 'border-signal-ai bg-signal-ai'
+          : 'border-border-emphasis bg-transparent hover:border-signal-ai/50'
+      )}
+      role="checkbox"
+      aria-checked={isCompareSelected}
+      aria-label="Select for comparison"
+    >
+      {isCompareSelected && <Check size={10} className="text-white" />}
+    </div>
+  );
+};
+
+// ============================================================================
 // Column Factory
 // ============================================================================
 
@@ -260,6 +312,12 @@ interface CreateNetworkColumnsOptions {
   onCopy: (entry: NetworkHistoryEntry) => void;
   /** Callback when delete button is clicked (optional) */
   onDelete?: (id: string) => void;
+  /** Whether compare mode is active */
+  compareMode?: boolean;
+  /** Callback when compare selection is toggled */
+  onToggleCompare?: (id: string) => void;
+  /** Function to check if entry is selected for comparison */
+  isCompareSelected?: (id: string) => boolean;
 }
 
 /**
@@ -280,13 +338,40 @@ interface CreateNetworkColumnsOptions {
 export function createNetworkColumns(
   options: CreateNetworkColumnsOptions
 ): Array<ColumnDef<NetworkHistoryEntry>> {
-  const { onReplay, onCopy, onDelete } = options;
+  const {
+    onReplay,
+    onCopy,
+    onDelete,
+    compareMode = false,
+    onToggleCompare,
+    isCompareSelected,
+  } = options;
 
-  return [
+  const columns: Array<ColumnDef<NetworkHistoryEntry>> = [
     // Selection column
     createSelectionColumn<NetworkHistoryEntry>({
       size: 'sm',
     }),
+
+    // Compare column (only when compare mode is active)
+    ...(compareMode && onToggleCompare !== undefined && isCompareSelected !== undefined
+      ? [
+          {
+            id: 'compare',
+            header: undefined,
+            cell: ({ row }) => (
+              <CompareCell
+                compareMode={compareMode}
+                isCompareSelected={isCompareSelected(row.original.id)}
+                onToggleCompare={onToggleCompare}
+                entryId={row.original.id}
+              />
+            ),
+            size: 32,
+            enableSorting: false,
+          } as ColumnDef<NetworkHistoryEntry>,
+        ]
+      : []),
 
     // Expander column
     createExpanderColumn<NetworkHistoryEntry>({
@@ -366,4 +451,6 @@ export function createNetworkColumns(
       enableSorting: false,
     },
   ];
+
+  return columns;
 }
