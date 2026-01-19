@@ -8,6 +8,8 @@ import {
   ChevronDown,
   Check,
 } from 'lucide-react';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { cn } from '@/utils/cn';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
@@ -300,28 +302,27 @@ export const ConsolePanel = ({
     });
   };
 
-  const downloadJson = (data: unknown, filename: string): void => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const downloadJson = async (data: unknown, filename: string): Promise<void> => {
+    const filePath = await save({
+      defaultPath: filename,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+
+    if (filePath !== null) {
+      await writeTextFile(filePath, JSON.stringify(data, null, 2));
+    }
   };
 
-  const handleSaveAll = (): void => {
-    downloadJson(filteredLogs, `console-logs-${String(Date.now())}.json`);
+  const handleSaveAll = async (): Promise<void> => {
+    await downloadJson(filteredLogs, `console-logs-${String(Date.now())}.json`);
   };
 
-  const handleSaveSelection = (): void => {
+  const handleSaveSelection = async (): Promise<void> => {
     if (selectedLogIds.size === 0) {
       return;
     }
     const selectedLogs = filteredLogs.filter((log) => selectedLogIds.has(log.id));
-    downloadJson(selectedLogs, `console-logs-selected-${String(Date.now())}.json`);
+    await downloadJson(selectedLogs, `console-logs-selected-${String(Date.now())}.json`);
   };
 
   const handleCopySelection = async (): Promise<void> => {

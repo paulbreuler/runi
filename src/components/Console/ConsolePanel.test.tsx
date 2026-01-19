@@ -12,6 +12,22 @@ vi.mock('motion/react', async () => {
   };
 });
 
+// Use vi.hoisted to define mocks that can be referenced in vi.mock calls
+const { mockSave, mockWriteTextFile } = vi.hoisted(() => ({
+  mockSave: vi.fn(),
+  mockWriteTextFile: vi.fn(),
+}));
+
+// Mock Tauri dialog plugin
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+  save: mockSave,
+}));
+
+// Mock Tauri fs plugin
+vi.mock('@tauri-apps/plugin-fs', () => ({
+  writeTextFile: mockWriteTextFile,
+}));
+
 // Default timeout for waitFor (polling interval is 100ms)
 const WAIT_TIMEOUT = { timeout: 2000 };
 
@@ -25,6 +41,10 @@ describe('ConsolePanel', () => {
     // Note: We don't call initializeConsoleService() here because:
     // 1. Tests use service.addLog() directly, which doesn't need interception
     // 2. Calling it would capture console output from the test runner and other tests
+
+    // Reset Tauri plugin mocks
+    mockSave.mockReset();
+    mockWriteTextFile.mockReset();
   });
 
   it('renders empty state when no logs', () => {
@@ -888,5 +908,477 @@ describe('ConsolePanel', () => {
     expect(copiedData.log.message).toBe('Failed to open DevTools popout window');
     expect(copiedData.log.args).toEqual(identicalArgs);
     expect(copiedData.log.correlationId).toBe(correlationId);
+  });
+
+  it('expands individual log args when chevron is clicked', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add a log with args
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'Test error',
+        args: [{ error: 'Connection timeout', code: 500 }],
+        timestamp: Date.now(),
+      });
+    });
+
+    // Wait for log to appear
+    await waitFor(() => {
+      expect(screen.getByText(/test error/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Find the chevron button (should be ChevronRight when collapsed)
+    const logEntry = screen.getByText(/test error/i).closest('.group');
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+    // Find button with title or any button with chevron icon
+    const chevronButton =
+      logEntry.querySelector('button[title="Expand/collapse args"]') ??
+      Array.from(logEntry.querySelectorAll('button')).find((btn) => btn.querySelector('svg'));
+    expect(chevronButton).toBeInTheDocument();
+
+    // Click to expand
+    fireEvent.click(chevronButton!);
+
+    // Wait for args to appear
+    await waitFor(() => {
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Verify args are displayed
+    expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+    expect(screen.getByText(/"code":\s*500/i)).toBeInTheDocument();
+  });
+
+  it('collapses expanded args when chevron is clicked again', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add a log with args
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'Test error',
+        args: [{ error: 'Connection timeout', code: 500 }],
+        timestamp: Date.now(),
+      });
+    });
+
+    // Wait for log to appear
+    await waitFor(() => {
+      expect(screen.getByText(/test error/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Find and click chevron to expand
+    const logEntry = screen.getByText(/test error/i).closest('.group');
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+    // Find button with title or any button with chevron icon
+    const chevronButton =
+      logEntry.querySelector('button[title="Expand/collapse args"]') ??
+      Array.from(logEntry.querySelectorAll('button')).find((btn) => btn.querySelector('svg'));
+    expect(chevronButton).toBeInTheDocument();
+    fireEvent.click(chevronButton!);
+
+    // Wait for args to appear
+    await waitFor(() => {
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Click again to collapse
+    fireEvent.click(chevronButton!);
+
+    // Wait for args to disappear
+    await waitFor(() => {
+      expect(screen.queryByText(/connection timeout/i)).not.toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+  });
+
+  it('expands grouped log to show args', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add 2 identical logs to create a group
+    const identicalArgs = [{ error: 'Connection timeout', code: 500 }];
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'Request failed',
+        args: identicalArgs,
+        timestamp: Date.now(),
+      });
+      service.addLog({
+        level: 'error',
+        message: 'Request failed',
+        args: identicalArgs,
+        timestamp: Date.now() + 1,
+      });
+    });
+
+    // Wait for grouped log to appear
+    await waitFor(() => {
+      expect(screen.getByText(/request failed/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/2 occurrences/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Find the chevron button for grouped log
+    const logEntry = screen.getByText(/request failed/i).closest('.group');
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+
+    // Find chevron button (grouped logs have chevron but no title)
+    const chevronButtons = logEntry.querySelectorAll('button');
+    const expandButton = Array.from(chevronButtons).find((btn) => btn.querySelector('svg'));
+    expect(expandButton).toBeInTheDocument();
+
+    // Click to expand
+    fireEvent.click(expandButton!);
+
+    // Wait for args to appear
+    await waitFor(() => {
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Verify args are displayed
+    expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+  });
+
+  it('expands occurrences sublist when button is clicked', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add 3 identical logs to create a group
+    const identicalArgs = [{ error: 'Connection timeout', code: 500 }];
+    const timestamps = [Date.now(), Date.now() + 100, Date.now() + 200];
+    await act(async () => {
+      for (const ts of timestamps) {
+        service.addLog({
+          level: 'error',
+          message: 'Request failed',
+          args: identicalArgs,
+          timestamp: ts,
+        });
+      }
+    });
+
+    // Wait for grouped log to appear
+    await waitFor(() => {
+      expect(screen.getByText(/request failed/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/3 occurrences/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Expand the grouped log first
+    const logEntry = screen.getByText(/request failed/i).closest('.group');
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+
+    const chevronButtons = logEntry.querySelectorAll('button');
+    const expandButton = Array.from(chevronButtons).find((btn) => btn.querySelector('svg'));
+    fireEvent.click(expandButton!);
+
+    // Wait for grouped log to expand
+    await waitFor(() => {
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Find the occurrences button
+    const occurrencesButton = screen.getByText(/3 occurrences at:/i);
+    expect(occurrencesButton).toBeInTheDocument();
+
+    // Click to expand occurrences
+    fireEvent.click(occurrencesButton);
+
+    // Wait for occurrences list to appear - check for timestamp format
+    await waitFor(() => {
+      // Should show timestamps for all 3 logs
+      const timestampElements = screen.getAllByText(/\d{2}:\d{2}:\d{2}/);
+      expect(timestampElements.length).toBeGreaterThanOrEqual(3);
+    }, WAIT_TIMEOUT);
+  });
+
+  it('collapses occurrences sublist when button is clicked again', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add 2 identical logs to create a group
+    const identicalArgs = [{ error: 'Connection timeout', code: 500 }];
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'Request failed',
+        args: identicalArgs,
+        timestamp: Date.now(),
+      });
+      service.addLog({
+        level: 'error',
+        message: 'Request failed',
+        args: identicalArgs,
+        timestamp: Date.now() + 1,
+      });
+    });
+
+    // Wait for grouped log and expand it
+    await waitFor(() => {
+      expect(screen.getByText(/request failed/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    const logEntry = screen.getByText(/request failed/i).closest('.group');
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+
+    const chevronButtons = logEntry.querySelectorAll('button');
+    const expandButton = Array.from(chevronButtons).find((btn) => btn.querySelector('svg'));
+    fireEvent.click(expandButton!);
+
+    // Wait for grouped log to expand
+    await waitFor(() => {
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Find occurrences button by searching within the expanded grouped log area
+    const expandedArea = logEntry.querySelector('.ml-8');
+    expect(expandedArea).toBeInTheDocument();
+    if (expandedArea === null) {
+      throw new Error('Expanded area not found');
+    }
+
+    // Find the occurrences button within the expanded area
+    const occurrencesButton = Array.from(expandedArea.querySelectorAll('button')).find((btn) =>
+      btn.textContent.includes('occurrences')
+    );
+    expect(occurrencesButton).toBeInTheDocument();
+    if (occurrencesButton === undefined) {
+      throw new Error('Occurrences button not found');
+    }
+
+    // Click to expand occurrences
+    fireEvent.click(occurrencesButton);
+
+    // Wait for occurrences to appear
+    await waitFor(() => {
+      const occurrenceItems = expandedArea.querySelectorAll('.ml-6 .text-xs.font-mono');
+      expect(occurrenceItems.length).toBeGreaterThanOrEqual(2);
+    }, WAIT_TIMEOUT);
+
+    // Click again to collapse
+    fireEvent.click(occurrencesButton);
+
+    // Wait for occurrences list to be hidden
+    await waitFor(() => {
+      // After collapsing, the occurrences list items should not be visible
+      const occurrenceItemsAfter = expandedArea.querySelectorAll('.ml-6 .text-xs.font-mono');
+      // When collapsed, there should be no occurrence items
+      expect(occurrenceItemsAfter.length).toBe(0);
+    }, WAIT_TIMEOUT);
+  });
+
+  describe('Save functionality', () => {
+    it('saves all logs when Save All button is clicked', async () => {
+      // Mock save dialog to return a file path
+      mockSave.mockResolvedValue('/test/path/console-logs.json');
+      mockWriteTextFile.mockResolvedValue(undefined);
+
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add some logs
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test info message',
+          args: [],
+          timestamp: Date.now(),
+        });
+        service.addLog({
+          level: 'error',
+          message: 'Test error message',
+          args: [{ error: 'some error' }],
+          timestamp: Date.now() + 1,
+        });
+      });
+
+      // Wait for logs to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test info message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Click Save All button
+      const saveAllButton = screen.getByRole('button', { name: /save all/i });
+      fireEvent.click(saveAllButton);
+
+      // Wait for save dialog to be called
+      await waitFor(() => {
+        expect(mockSave).toHaveBeenCalledWith({
+          defaultPath: expect.stringMatching(/^console-logs-\d+\.json$/),
+          filters: [{ name: 'JSON', extensions: ['json'] }],
+        });
+      }, WAIT_TIMEOUT);
+
+      // Verify writeTextFile was called with correct path and JSON content
+      await waitFor(() => {
+        expect(mockWriteTextFile).toHaveBeenCalledWith(
+          '/test/path/console-logs.json',
+          expect.any(String)
+        );
+      }, WAIT_TIMEOUT);
+
+      // Verify the written content is valid JSON and contains our logs
+      const writtenContent = mockWriteTextFile.mock.calls[0]?.[1];
+      expect(writtenContent).toBeDefined();
+      const parsedContent = JSON.parse(writtenContent as string);
+      expect(Array.isArray(parsedContent)).toBe(true);
+      expect(parsedContent.length).toBe(2);
+    });
+
+    it('does not write file when save dialog is cancelled', async () => {
+      // Mock save dialog to return null (user cancelled)
+      mockSave.mockResolvedValue(null);
+
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test message',
+          args: [],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Click Save All button
+      const saveAllButton = screen.getByRole('button', { name: /save all/i });
+      fireEvent.click(saveAllButton);
+
+      // Wait for save dialog to be called
+      await waitFor(() => {
+        expect(mockSave).toHaveBeenCalled();
+      }, WAIT_TIMEOUT);
+
+      // Verify writeTextFile was NOT called
+      expect(mockWriteTextFile).not.toHaveBeenCalled();
+    });
+
+    it('saves only selected logs when Save Selection button is clicked', async () => {
+      // Mock save dialog to return a file path
+      mockSave.mockResolvedValue('/test/path/console-logs-selected.json');
+      mockWriteTextFile.mockResolvedValue(undefined);
+
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add some logs
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'First message',
+          args: [],
+          timestamp: Date.now(),
+        });
+        service.addLog({
+          level: 'error',
+          message: 'Second message',
+          args: [],
+          timestamp: Date.now() + 1,
+        });
+        service.addLog({
+          level: 'warn',
+          message: 'Third message',
+          args: [],
+          timestamp: Date.now() + 2,
+        });
+      });
+
+      // Wait for logs to appear
+      await waitFor(() => {
+        expect(screen.getByText(/first message/i)).toBeInTheDocument();
+        expect(screen.getByText(/second message/i)).toBeInTheDocument();
+        expect(screen.getByText(/third message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Select only the first and third logs by clicking their checkboxes
+      const logEntries = screen.getAllByTestId(/console-log-/);
+      expect(logEntries.length).toBe(3);
+
+      // Click checkbox on first log
+      const firstLogCheckbox = logEntries[0]?.querySelector('button[title="Select"]');
+      expect(firstLogCheckbox).toBeInTheDocument();
+      fireEvent.click(firstLogCheckbox!);
+
+      // Click checkbox on third log
+      const thirdLogCheckbox = logEntries[2]?.querySelector('button[title="Select"]');
+      expect(thirdLogCheckbox).toBeInTheDocument();
+      fireEvent.click(thirdLogCheckbox!);
+
+      // Click Save Selection button
+      const saveSelectionButton = screen.getByRole('button', { name: /save selection/i });
+      fireEvent.click(saveSelectionButton);
+
+      // Wait for save dialog to be called
+      await waitFor(() => {
+        expect(mockSave).toHaveBeenCalledWith({
+          defaultPath: expect.stringMatching(/^console-logs-selected-\d+\.json$/),
+          filters: [{ name: 'JSON', extensions: ['json'] }],
+        });
+      }, WAIT_TIMEOUT);
+
+      // Verify writeTextFile was called
+      await waitFor(() => {
+        expect(mockWriteTextFile).toHaveBeenCalled();
+      }, WAIT_TIMEOUT);
+
+      // Verify only 2 logs were saved (first and third)
+      const writtenContent = mockWriteTextFile.mock.calls[0]?.[1];
+      expect(writtenContent).toBeDefined();
+      const parsedContent = JSON.parse(writtenContent as string);
+      expect(Array.isArray(parsedContent)).toBe(true);
+      expect(parsedContent.length).toBe(2);
+    });
+
+    it('does nothing when Save Selection is clicked with no selection', async () => {
+      render(<ConsolePanel />);
+      const service = getConsoleService();
+
+      // Add a log
+      await act(async () => {
+        service.addLog({
+          level: 'info',
+          message: 'Test message',
+          args: [],
+          timestamp: Date.now(),
+        });
+      });
+
+      // Wait for log to appear
+      await waitFor(() => {
+        expect(screen.getByText(/test message/i)).toBeInTheDocument();
+      }, WAIT_TIMEOUT);
+
+      // Click Save Selection button without selecting any logs
+      const saveSelectionButton = screen.getByRole('button', { name: /save selection/i });
+      fireEvent.click(saveSelectionButton);
+
+      // Wait a bit to ensure nothing happens
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+
+      // Verify save dialog was NOT called
+      expect(mockSave).not.toHaveBeenCalled();
+      expect(mockWriteTextFile).not.toHaveBeenCalled();
+    });
   });
 });
