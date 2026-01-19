@@ -396,13 +396,15 @@ export function createNetworkColumns(
       iconSize: 14,
     }),
 
-    // Method column
+    // Method column (fixed width based on longest method: OPTIONS = 7 chars)
     {
       id: 'method',
       accessorFn: (row) => row.request.method,
       header: 'Method',
       cell: ({ getValue }) => <MethodCell method={getValue() as string} />,
-      size: 80,
+      size: 70, // Fits longest method (OPTIONS) with text-xs monospace + padding
+      minSize: 70,
+      maxSize: 70,
       enableSorting: true,
     },
 

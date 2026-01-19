@@ -196,6 +196,22 @@ describe('createNetworkColumns', () => {
     expect(selectColumn?.maxSize).toBe(32);
   });
 
+  it('method column has fixed width based on longest method (OPTIONS)', () => {
+    const columns = createNetworkColumns({
+      onReplay: vi.fn(),
+      onCopy: vi.fn(),
+      onDelete: vi.fn(),
+    });
+
+    const methodColumn = columns.find((c) => c.id === 'method');
+    expect(methodColumn).toBeDefined();
+    // Method column should be fixed width to fit longest method (OPTIONS = 7 chars)
+    // With text-xs monospace (~7.5px/char) + px-1.5 padding (12px) = ~64px, rounded to 70px
+    expect(methodColumn?.size).toBe(70);
+    expect(methodColumn?.minSize).toBe(70);
+    expect(methodColumn?.maxSize).toBe(70);
+  });
+
   it('does not accept compareMode prop (compare mode removed)', () => {
     // TypeScript should warn if compareMode is passed, but for runtime test:
     const columns = createNetworkColumns({
