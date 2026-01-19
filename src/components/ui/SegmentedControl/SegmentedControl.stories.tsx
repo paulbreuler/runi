@@ -456,18 +456,13 @@ export const ConsoleLogFilter: Story = {
   },
 };
 
-// Use SAIYAN_TIERS directly from the component - single source of truth
+// Use tier config directly from the component - single source of truth
 
 /**
  * All display variants compared side-by-side with interactive badge counts.
- * Demonstrates how badges appear in full and icon modes.
- * Includes the "Saiyan Evolution" Easter egg that triggers a tiered power-up animation.
+ * Demonstrates how badges appear in full and icon modes with tiered visual effects.
  *
- * **Tier System:**
- * - Tiers 1-4: Based on COUNT of badges over 9000
- * - Tiers 5-8: Based on TOTAL POWER LEVEL once all badges are over 9000
- *
- * Use the tier buttons to jump directly to specific power levels.
+ * Use the tier buttons to explore different visual states.
  */
 export const AllVariantsComparison: Story = {
   args: {
@@ -498,7 +493,7 @@ export const AllVariantsComparison: Story = {
       }));
     };
 
-    // "It's Over 9000!" Easter egg trigger
+    // Add large count increment
     const addNineThousand = (): void => {
       setCounts((c) => ({
         error: c.error + 9000,
@@ -523,26 +518,26 @@ export const AllVariantsComparison: Story = {
         tierChangeTimeoutRef.current = null;
       }
 
-      // Power levels for each tier (per badge to hit total thresholds)
+      // Badge values for each tier
       const tierToPower: Record<number, number> = {
-        0: 100, // Base (under 9000)
-        1: 9001, // 1 badge over 9000
-        2: 9001, // 2 badges over 9000
-        3: 9001, // 3 badges over 9000
-        4: 9001, // 4 badges over 9000
-        5: 9000, // SSJ God: 4 × 9000 = 36000
-        6: 12500, // SSJ Blue: 4 × 12500 = 50000
-        7: 20000, // UI Sign: 4 × 20000 = 80000
-        8: 25000, // MUI: 4 × 25000 = 100000
+        0: 100,
+        1: 9001,
+        2: 9001,
+        3: 9001,
+        4: 9001,
+        5: 9000,
+        6: 12500,
+        7: 20000,
+        8: 25000,
       };
 
-      // Step 1: Reset to tier 0 immediately (all badges under 9000)
+      // Step 1: Reset to tier 0 immediately
       setCounts({ error: 100, warn: 100, info: 100, debug: 100 });
 
       // Step 2: After brief delay, set target tier (allows state machine to see the change)
       tierChangeTimeoutRef.current = setTimeout(() => {
         const power = tierToPower[targetTier] ?? 100;
-        const activeCount = targetTier >= 5 ? 4 : targetTier; // God tiers need all 4
+        const activeCount = targetTier >= 5 ? 4 : targetTier;
 
         setCounts({
           error: activeCount >= 1 ? power : 100,
@@ -554,7 +549,7 @@ export const AllVariantsComparison: Story = {
       }, 50);
     };
 
-    // Saiyan Evolution: staggered power-up sequence ending in MUI
+    // Tier evolution: staggered power-up sequence
     const triggerEvolution = (): void => {
       if (isEvolving) {
         return;
@@ -564,7 +559,7 @@ export const AllVariantsComparison: Story = {
       // Reset first
       setCounts({ error: 3, warn: 7, info: 24, debug: 156 });
 
-      // Stagger each badge crossing 9000 by ~800ms
+      // Stagger each badge crossing threshold
       setTimeout(() => {
         setCounts((c) => ({ ...c, error: 9001 }));
       }, 400);
@@ -617,13 +612,11 @@ export const AllVariantsComparison: Story = {
     }
 
     // Note: "All" has no badge so it doesn't affect tier calculation
-    // The 4 individual options (error, warn, info, debug) determine the Saiyan tier
     const options = [
       {
         value: 'all',
         label: 'All',
         icon: <CheckCircle size={12} />,
-        // No badge - this is a filter state, not a power-level indicator
       },
       {
         value: 'error',
@@ -653,7 +646,7 @@ export const AllVariantsComparison: Story = {
 
     const variants: Array<'full' | 'icon'> = ['full', 'icon'];
 
-    // Get tier config from SAIYAN_TIERS (with guaranteed fallback)
+    // Get tier config (with guaranteed fallback)
     const baseTierConfig = SAIYAN_TIERS[0] ?? {
       name: 'Base',
       color: 'transparent',
@@ -749,18 +742,18 @@ export const AllVariantsComparison: Story = {
             type="button"
             onClick={addNineThousand}
             className="px-3 py-1.5 text-xs bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border border-amber-500/30 rounded hover:from-amber-500/20 hover:to-orange-500/20"
-            title="IT'S OVER 9000!"
+            title="Add 9000 to all counts"
           >
-            +9000 ⚡
+            +9K ⚡
           </button>
           <button
             type="button"
             onClick={triggerEvolution}
             disabled={isEvolving}
             className="px-3 py-1.5 text-xs bg-gradient-to-r from-amber-500/10 via-red-500/10 to-gray-300/10 text-amber-400 border border-amber-500/30 rounded hover:border-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Watch the Saiyan evolution unfold!"
+            title="Watch the tier evolution unfold"
           >
-            🔥 Saiyan Evolution
+            🔥 Tier Evolution
           </button>
           <button
             type="button"

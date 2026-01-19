@@ -37,9 +37,7 @@ export interface TierConfig {
 /**
  * Tier configurations - single source of truth for all tier properties
  *
- * Tier progression:
- * - Tiers 1-4: Based on COUNT of badges over 9000
- * - Tiers 5-8: Based on TOTAL POWER LEVEL once all badges are over 9000
+ * Tier progression is based on badge count thresholds and totals.
  */
 export const SAIYAN_TIERS: Record<number, TierConfig> = {
   0: {

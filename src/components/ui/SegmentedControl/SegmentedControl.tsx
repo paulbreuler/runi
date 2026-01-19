@@ -7,7 +7,7 @@
  * - Badge counts with optional animation via Motion+
  * - Icon support
  * - Accessible with ARIA attributes
- * - Power-level animation Easter egg when badge counts exceed 9000
+ * - Tiered visual effects for high badge counts
  *
  * @example
  * ```tsx

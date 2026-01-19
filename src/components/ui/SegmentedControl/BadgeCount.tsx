@@ -1,13 +1,7 @@
 /**
  * BadgeCount component for SegmentedControl.
  *
- * Displays badge counts with tier-aware styling and the "It's Over 9000!" Easter egg.
- *
- * Badge visual states (via PowerLevelContext):
- * - Count < 9000: Normal badge styling
- * - Count >= 9000, tier 1-4: "9K+ lightning" with amber styling
- * - Count >= 9000, tier 5+: "9K+" in tier color (lightning fades out, whole bar shows effects)
- * - Non-9K badges at tier 4+ during animation: Evolve to tier color
+ * Displays badge counts with tier-aware styling based on count thresholds.
  */
 
 import * as React from 'react';
@@ -24,7 +18,7 @@ interface BadgeCountProps {
   isSelected: boolean;
 }
 
-// Motion animation for "It's Over 9000!" shake effect
+// Motion animation for threshold-crossing shake effect
 const shakeAnimation = {
   x: [0, -2, 2, -2, 2, -2, 2, -2, 2, 0],
 };
@@ -34,7 +28,7 @@ const shakeTransition = {
   ease: 'easeInOut' as const,
 };
 
-// Glow shadow value for "It's Over 9000!" burst effect
+// Glow shadow value for threshold burst effect
 const createGlowShadow = (color: string): string => `0 0 12px 4px ${color}`;
 
 // No shadow - consistent format for Motion interpolation
@@ -42,7 +36,6 @@ const NO_SHADOW = '0 0 0 0 rgba(0, 0, 0, 0)';
 
 /**
  * Badge component that optionally animates count changes using Motion+.
- * Includes "It's Over 9000!" Easter egg when count crosses 9000 threshold.
  */
 export const BadgeCount = ({
   count,
@@ -61,13 +54,13 @@ export const BadgeCount = ({
     style?: React.CSSProperties;
   }> | null>(null);
 
-  // "It's Over 9000!" Easter egg state
+  // High count threshold state
   const isOver9000 = count >= OVER_9000_THRESHOLD;
   const prevCountRef = React.useRef(count);
   const [justCrossed, setJustCrossed] = React.useState(false);
   const animationKey = React.useRef(0);
 
-  // God tier check: tier 5+ means all badges are over 9000
+  // God tier check: tier 5+ means all badges exceed threshold
   const isGodTier = powerLevel !== null && powerLevel.tier >= 5;
 
   // FIX Bug 1: Use visualFlags.shouldShowTierColors instead of checking isAnimating
@@ -155,7 +148,7 @@ export const BadgeCount = ({
     getBadgeBackgroundClass()
   );
 
-  // "Over 9000" powered-up display with Motion animation
+  // High-count powered-up display with Motion animation
   if (isOver9000) {
     // Use tier color for glow when showing tier colors, otherwise amber
     const glowColor = isGodTier && shouldUseTierColor ? powerLevel.config.color : '#fbbf24';
@@ -172,7 +165,7 @@ export const BadgeCount = ({
         <motion.span
           key={animationKey.current}
           className={badgeClasses}
-          title="IT'S OVER 9000!"
+          title={`Count: ${String(count)}`}
           initial={{ boxShadow: NO_SHADOW }}
           animate={{
             color: animatedColor,
