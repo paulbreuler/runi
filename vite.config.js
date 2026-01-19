@@ -11,6 +11,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    exclude: ['storybook-static'],
+  },
   server: {
     port: 5173,
     strictPort: true,
@@ -20,7 +23,7 @@ export default defineConfig({
       port: 5173,
     },
     watch: {
-      ignored: ['**/src-tauri/**'],
+      ignored: ['**/src-tauri/**', '**/storybook-static/**'],
       usePolling: false,
     },
   },

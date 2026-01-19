@@ -19,12 +19,15 @@ use infrastructure::logging::init_logging;
 /// Sets up the Tauri builder with plugins, command handlers, and managed state.
 /// In debug mode, automatically opens developer tools.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+#[allow(clippy::large_stack_frames)] // Tauri's generate_context! macro creates large stack frames
 pub fn run() {
     // Initialize structured logging before anything else
     init_logging();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             #[cfg(debug_assertions)]
             {

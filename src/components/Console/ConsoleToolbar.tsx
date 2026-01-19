@@ -23,10 +23,10 @@ interface ConsoleToolbarProps {
   filter: LogLevel | 'all';
   /** Callback when filter changes */
   onFilterChange: (level: LogLevel | 'all') => void;
-  /** Current correlation ID filter */
-  correlationIdFilter: string;
-  /** Callback when correlation ID filter changes */
-  onCorrelationIdFilterChange: (value: string) => void;
+  /** Current full-text search filter */
+  searchFilter: string;
+  /** Callback when search filter changes */
+  onSearchFilterChange: (value: string) => void;
   /**
    * Whether auto-scroll is enabled.
    *
@@ -194,13 +194,13 @@ const ConsoleToolbarActions = ({
  * ConsoleToolbar - Toolbar for the Console Panel.
  *
  * Built on the ActionBar component system for consistency across panels.
- * Includes log level filters, correlation ID search, and action buttons.
+ * Includes log level filters, full-text search, and action buttons.
  */
 export const ConsoleToolbar = ({
   filter,
   onFilterChange,
-  correlationIdFilter,
-  onCorrelationIdFilterChange,
+  searchFilter,
+  onSearchFilterChange,
   autoScroll,
   onAutoScrollToggle,
   onClear,
@@ -245,10 +245,10 @@ export const ConsoleToolbar = ({
           aria-label="Filter by log level"
         />
         <ActionBarSearch
-          value={correlationIdFilter}
-          onChange={onCorrelationIdFilterChange}
-          placeholder="Correlation ID..."
-          aria-label="Filter by correlation ID"
+          value={searchFilter}
+          onChange={onSearchFilterChange}
+          placeholder="Search logs..."
+          aria-label="Search logs"
         />
       </ActionBarGroup>
 

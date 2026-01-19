@@ -14,7 +14,7 @@ const meta = {
 ## Features
 
 - **Log Level Filtering**: Segmented control with animated badge counts
-- **Correlation ID Search**: Filter logs by correlation ID
+- **Full-Text Search**: Search logs across message, args, and correlation ID
 - **Auto-scroll Toggle**: Lock/unlock auto-scroll to latest logs
 - **Bulk Actions**: Save, copy, and clear console logs
 
@@ -54,8 +54,8 @@ export const Default: Story = {
   args: {
     filter: 'all',
     onFilterChange: (): void => undefined,
-    correlationIdFilter: '',
-    onCorrelationIdFilterChange: (): void => undefined,
+    searchFilter: '',
+    onSearchFilterChange: (): void => undefined,
     autoScroll: true,
     onAutoScrollToggle: (): void => undefined,
     onClear: (): void => undefined,
@@ -75,7 +75,7 @@ export const Interactive: Story = {
   args: Default.args,
   render: function InteractiveStory() {
     const [filter, setFilter] = useState<'all' | 'error' | 'warn' | 'info' | 'debug'>('all');
-    const [correlationId, setCorrelationId] = useState('');
+    const [searchText, setSearchText] = useState('');
     const [autoScroll, setAutoScroll] = useState(true);
     const [selectedCount, setSelectedCount] = useState(0);
 
@@ -84,8 +84,8 @@ export const Interactive: Story = {
         <ConsoleToolbar
           filter={filter}
           onFilterChange={setFilter}
-          correlationIdFilter={correlationId}
-          onCorrelationIdFilterChange={setCorrelationId}
+          searchFilter={searchText}
+          onSearchFilterChange={setSearchText}
           autoScroll={autoScroll}
           onAutoScrollToggle={() => {
             setAutoScroll(!autoScroll);
@@ -197,12 +197,13 @@ export const FilteredByErrors: Story = {
 };
 
 /**
- * Filtering with a correlation ID.
+ * Filtering with full-text search.
+ * Searches across message, args, and correlation ID.
  */
-export const WithCorrelationFilter: Story = {
+export const WithSearchFilter: Story = {
   args: {
     ...Default.args,
-    correlationIdFilter: 'req-abc-123',
+    searchFilter: 'timeout',
   },
 };
 

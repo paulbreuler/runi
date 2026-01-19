@@ -8,6 +8,8 @@ import {
   ChevronDown,
   Check,
 } from 'lucide-react';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { cn } from '@/utils/cn';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
@@ -43,10 +45,34 @@ function isGroupedLog(log: DisplayLog): log is GroupedLog {
 }
 
 /**
+ * Serialize args deterministically for grouping.
+ * Sorts object keys to ensure consistent serialization regardless of key order.
+ */
+function serializeArgs(args: unknown[]): string {
+  try {
+    return JSON.stringify(args, (_key: string, value: unknown): unknown => {
+      // Sort object keys for deterministic serialization
+      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+        const obj = value as Record<string, unknown>;
+        const sorted: Record<string, unknown> = {};
+        for (const k of Object.keys(obj).sort()) {
+          sorted[k] = obj[k];
+        }
+        return sorted;
+      }
+      return value;
+    });
+  } catch {
+    // Fallback if serialization fails
+    return String(args);
+  }
+}
+
+/**
  * ConsolePanel - DevTools-style console for viewing application and debug logs.
  *
  * Displays logs from the global console service (logs are intercepted before React mounts).
- * Supports filtering by level and correlation ID for debugging across React and Rust boundaries.
+ * Supports filtering by level and full-text search across message, args, and correlation ID.
  */
 const DEFAULT_MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
 
@@ -56,7 +82,7 @@ export const ConsolePanel = ({
 }: ConsolePanelProps): React.JSX.Element => {
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
   const [filter, setFilter] = useState<LogLevel | 'all'>('all');
-  const [correlationIdFilter, setCorrelationIdFilter] = useState<string>('');
+  const [searchFilter, setSearchFilter] = useState<string>('');
   const [autoScroll, setAutoScroll] = useState(true);
   const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
   const [selectedLogIds, setSelectedLogIds] = useState<Set<string>>(new Set());
@@ -94,34 +120,75 @@ export const ConsolePanel = ({
     const unsubscribe = service.subscribe(handler);
 
     // Also poll for logs periodically (fallback for tests)
-    const interval = setInterval(() => {
-      const currentLogs = service.getLogs();
-      setLogs((prev) => {
-        // Only update if logs changed
-        if (currentLogs.length !== prev.length) {
-          if (currentLogs.length > maxLogs) {
-            return currentLogs.slice(-maxLogs);
-          }
-          return currentLogs;
-        }
-        return prev;
-      });
-    }, 100); // Poll every 100ms for tests
+    // NOTE: Disable polling in Storybook to prevent cross-story contamination
+    // In Storybook, stories share the same console service singleton, and polling
+    // causes all stories to see each other's logs. The subscription mechanism is
+    // sufficient for Storybook.
+    const isStorybook =
+      typeof window !== 'undefined' &&
+      (window.location.href.includes('storybook') ||
+        (window.parent !== window && window.parent.location.href.includes('storybook')));
+
+    const interval = isStorybook
+      ? null
+      : setInterval(() => {
+          const currentLogs = service.getLogs();
+          setLogs((prev) => {
+            // Only update if logs changed
+            if (currentLogs.length !== prev.length) {
+              if (currentLogs.length > maxLogs) {
+                return currentLogs.slice(-maxLogs);
+              }
+              return currentLogs;
+            }
+            return prev;
+          });
+        }, 100); // Poll every 100ms for tests
 
     return (): void => {
       unsubscribe();
-      clearInterval(interval);
+      if (interval !== null) {
+        clearInterval(interval);
+      }
     };
   }, [maxLogs, maxSizeBytes]);
 
-  // Auto-scroll to bottom when new logs arrive
-  useEffect(() => {
-    if (autoScroll && logContainerRef.current !== null) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-    }
-  }, [logs, autoScroll]);
+  // Helper function to check if log matches search text
+  const matchesSearch = (log: ConsoleLog, searchText: string): boolean => {
+    const searchLower = searchText.toLowerCase();
 
-  // Filter and group logs based on selected level and correlation ID
+    // Search in message
+    if (log.message.toLowerCase().includes(searchLower)) {
+      return true;
+    }
+
+    // Search in correlation ID
+    if (
+      log.correlationId !== undefined &&
+      log.correlationId !== '' &&
+      log.correlationId.toLowerCase().includes(searchLower)
+    ) {
+      return true;
+    }
+
+    // Search in args (serialize to string for searching)
+    try {
+      const argsString = JSON.stringify(log.args).toLowerCase();
+      if (argsString.includes(searchLower)) {
+        return true;
+      }
+    } catch {
+      // If serialization fails, fallback to string conversion
+      const argsString = String(log.args).toLowerCase();
+      if (argsString.includes(searchLower)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Filter and group logs based on selected level and full-text search
   const filteredLogs = useMemo(() => {
     let filtered = logs;
 
@@ -129,21 +196,17 @@ export const ConsolePanel = ({
       filtered = filtered.filter((log) => log.level === filter);
     }
 
-    if (correlationIdFilter.trim() !== '') {
-      const filterValue = correlationIdFilter.trim().toLowerCase();
-      filtered = filtered.filter(
-        (log) =>
-          log.correlationId !== undefined &&
-          log.correlationId !== '' &&
-          log.correlationId.toLowerCase().includes(filterValue)
-      );
+    if (searchFilter.trim() !== '') {
+      const searchValue = searchFilter.trim();
+      filtered = filtered.filter((log) => matchesSearch(log, searchValue));
     }
 
-    // Group identical logs (same level + message + correlationId)
+    // Group identical logs (same level + message + correlationId + args)
     const grouped = new Map<string, ConsoleLog[]>();
     for (const log of filtered) {
       const correlationId = log.correlationId ?? '';
-      const groupKey = `${log.level}|${log.message}|${correlationId}`;
+      const argsKey = serializeArgs(log.args);
+      const groupKey = `${log.level}|${log.message}|${correlationId}|${argsKey}`;
       if (!grouped.has(groupKey)) {
         grouped.set(groupKey, []);
       }
@@ -195,7 +258,28 @@ export const ConsolePanel = ({
       const timeB = isGroupedLog(b) ? b.firstTimestamp : b.timestamp;
       return timeA - timeB;
     });
-  }, [logs, filter, correlationIdFilter]);
+  }, [logs, filter, searchFilter]);
+
+  // Auto-scroll to bottom when new logs arrive
+  useEffect(() => {
+    if (!autoScroll || logContainerRef.current === null) {
+      return;
+    }
+
+    // Defer scroll until DOM has updated
+    requestAnimationFrame(() => {
+      if (logContainerRef.current === null) {
+        return;
+      }
+
+      const container = logContainerRef.current;
+      const targetScroll = container.scrollHeight - container.clientHeight;
+
+      // Scroll to bottom (respects reduced motion preference)
+      // Note: Both paths do the same thing - reduced motion is handled by CSS
+      container.scrollTop = targetScroll;
+    });
+  }, [filteredLogs.length, autoScroll]); // Depend on filteredLogs.length, not logs
 
   const handleClear = (): void => {
     const service = getConsoleService();
@@ -218,28 +302,27 @@ export const ConsolePanel = ({
     });
   };
 
-  const downloadJson = (data: unknown, filename: string): void => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const downloadJson = async (data: unknown, filename: string): Promise<void> => {
+    const filePath = await save({
+      defaultPath: filename,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+
+    if (filePath !== null) {
+      await writeTextFile(filePath, JSON.stringify(data, null, 2));
+    }
   };
 
-  const handleSaveAll = (): void => {
-    downloadJson(filteredLogs, `console-logs-${String(Date.now())}.json`);
+  const handleSaveAll = async (): Promise<void> => {
+    await downloadJson(filteredLogs, `console-logs-${String(Date.now())}.json`);
   };
 
-  const handleSaveSelection = (): void => {
+  const handleSaveSelection = async (): Promise<void> => {
     if (selectedLogIds.size === 0) {
       return;
     }
     const selectedLogs = filteredLogs.filter((log) => selectedLogIds.has(log.id));
-    downloadJson(selectedLogs, `console-logs-selected-${String(Date.now())}.json`);
+    await downloadJson(selectedLogs, `console-logs-selected-${String(Date.now())}.json`);
   };
 
   const handleCopySelection = async (): Promise<void> => {
@@ -269,12 +352,19 @@ export const ConsolePanel = ({
         // Delete single log
         service.deleteLog(logId);
       }
-      // Refresh logs from service
-      setLogs(service.getLogs());
+      // Refresh logs from service using functional update with spread to ensure React sees a new reference
+      setLogs(() => [...service.getLogs()]);
       // Remove from selection
       setSelectedLogIds((prev) => {
         const next = new Set(prev);
         next.delete(logId);
+        return next;
+      });
+      // Remove from expanded logs (including occurrences key for grouped logs)
+      setExpandedLogIds((prev) => {
+        const next = new Set(prev);
+        next.delete(logId);
+        next.delete(`${logId}_occurrences`);
         return next;
       });
     }
@@ -369,8 +459,8 @@ export const ConsolePanel = ({
       <ConsoleToolbar
         filter={filter}
         onFilterChange={setFilter}
-        correlationIdFilter={correlationIdFilter}
-        onCorrelationIdFilterChange={setCorrelationIdFilter}
+        searchFilter={searchFilter}
+        onSearchFilterChange={setSearchFilter}
         autoScroll={autoScroll}
         onAutoScrollToggle={() => {
           setAutoScroll(!autoScroll);
@@ -543,83 +633,81 @@ export const ConsolePanel = ({
                   {/* Expanded view for grouped logs */}
                   {isGrouped && isExpanded && (
                     <div className="ml-8 mt-0.5 space-y-0.5 border-l border-border-default pl-2">
-                      {displayLog.allLogs.map((individualLog) => {
-                        const isLogExpanded = expandedLogIds.has(individualLog.id);
-                        return (
-                          <div key={individualLog.id}>
-                            <div
-                              className={cn(
-                                'flex items-start gap-3 px-2 py-1 rounded hover:bg-bg-raised/30 transition-colors text-xs',
-                                getLogLevelClass(individualLog.level)
-                              )}
-                              onContextMenu={(e): void => {
-                                handleContextMenu(e, individualLog);
-                              }}
-                            >
-                              {/* Expand button for args (only if args exist) */}
-                              {individualLog.args.length > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={(): void => {
-                                    setExpandedLogIds((prev) => {
-                                      const next = new Set(prev);
-                                      if (next.has(individualLog.id)) {
-                                        next.delete(individualLog.id);
-                                      } else {
-                                        next.add(individualLog.id);
-                                      }
-                                      return next;
-                                    });
-                                  }}
-                                  className="shrink-0 mt-0.5 text-text-muted hover:text-text-primary"
-                                >
-                                  {isLogExpanded ? (
-                                    <ChevronDown size={10} />
-                                  ) : (
-                                    <ChevronRight size={10} />
-                                  )}
-                                </button>
-                              )}
-                              {individualLog.args.length === 0 && (
-                                <span className="shrink-0 w-2.5" />
-                              )}
-                              <span className="shrink-0 mt-0.5">
-                                {getLogIcon(individualLog.level)}
-                              </span>
-                              <span className="shrink-0 text-text-muted w-24">
-                                {formatTimestamp(individualLog.timestamp)}
-                              </span>
-                              <span className="flex-1 min-w-0 break-words">
-                                {individualLog.message}
-                              </span>
-                              {individualLog.correlationId !== undefined &&
-                                individualLog.correlationId !== '' && (
-                                  <span
-                                    className="shrink-0 text-text-muted text-xs font-mono w-40 truncate"
-                                    title={individualLog.correlationId}
-                                  >
-                                    {individualLog.correlationId}
-                                  </span>
-                                )}
-                            </div>
-                            {/* Expandable args view for individual logs in group */}
-                            {individualLog.args.length > 0 && isLogExpanded && (
-                              <div className="ml-6 mt-0.5 pl-2 border-l border-border-default">
-                                {individualLog.args.map((arg: unknown, index: number) => (
-                                  <div
-                                    key={index}
-                                    className="mb-1 text-xs font-mono text-text-secondary"
-                                  >
-                                    <pre className="whitespace-pre-wrap break-words overflow-x-auto">
-                                      {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
-                                    </pre>
-                                  </div>
-                                ))}
+                      {/* Since logs are grouped by identical message + args, show args once */}
+                      {displayLog.sampleLog.args.length > 0 && (
+                        <div className="mb-2">
+                          {/* Args content - same format as individual log expansion */}
+                          <div className="pl-2 border-l border-border-default">
+                            {displayLog.sampleLog.args.map((arg: unknown, index: number) => (
+                              <div
+                                key={index}
+                                className="mb-1 text-xs font-mono text-text-secondary"
+                              >
+                                <pre className="whitespace-pre-wrap break-words overflow-x-auto">
+                                  {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
+                                </pre>
                               </div>
-                            )}
+                            ))}
                           </div>
-                        );
-                      })}
+                        </div>
+                      )}
+
+                      {/* Occurrences list - collapsible sublist of all timestamps */}
+                      {displayLog.count > 1 && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={(): void => {
+                              const occurrencesKey = `${displayLog.id}_occurrences`;
+                              setExpandedLogIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(occurrencesKey)) {
+                                  next.delete(occurrencesKey);
+                                } else {
+                                  next.add(occurrencesKey);
+                                }
+                                return next;
+                              });
+                            }}
+                            className="flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full"
+                          >
+                            {expandedLogIds.has(`${displayLog.id}_occurrences`) ? (
+                              <ChevronDown size={12} />
+                            ) : (
+                              <ChevronRight size={12} />
+                            )}
+                            <span>
+                              {displayLog.count} occurrence{displayLog.count !== 1 ? 's' : ''} at:
+                            </span>
+                          </button>
+                          {expandedLogIds.has(`${displayLog.id}_occurrences`) && (
+                            <div className="ml-6 mt-0.5 space-y-0.5">
+                              {displayLog.allLogs.map((individualLog) => (
+                                <div
+                                  key={individualLog.id}
+                                  className="flex items-center gap-2 px-2 py-0.5 text-xs text-text-muted font-mono"
+                                  onContextMenu={(e): void => {
+                                    handleContextMenu(e, individualLog);
+                                  }}
+                                >
+                                  <span className="shrink-0 w-24">
+                                    {formatTimestamp(individualLog.timestamp)}
+                                  </span>
+                                  {individualLog.correlationId !== undefined &&
+                                    individualLog.correlationId !== '' && (
+                                      <span
+                                        className="shrink-0 text-text-muted text-xs font-mono w-40 truncate"
+                                        title={individualLog.correlationId}
+                                      >
+                                        {individualLog.correlationId}
+                                      </span>
+                                    )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                   {/* Expandable args view for individual (non-grouped) logs */}

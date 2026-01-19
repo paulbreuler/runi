@@ -1,5 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { cn } from '@/utils/cn';
 import type { NetworkHistoryEntry, HistoryFilters } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
@@ -158,28 +160,27 @@ export const NetworkHistoryPanel = ({
     void compareSelection;
   };
 
-  const downloadJson = (data: unknown, filename: string): void => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const downloadJson = async (data: unknown, filename: string): Promise<void> => {
+    const filePath = await save({
+      defaultPath: filename,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+
+    if (filePath !== null) {
+      await writeTextFile(filePath, JSON.stringify(data, null, 2));
+    }
   };
 
-  const handleSaveAll = (): void => {
-    downloadJson(filteredEntries, `network-history-${String(Date.now())}.json`);
+  const handleSaveAll = async (): Promise<void> => {
+    await downloadJson(filteredEntries, `network-history-${String(Date.now())}.json`);
   };
 
-  const handleSaveSelection = (): void => {
+  const handleSaveSelection = async (): Promise<void> => {
     if (compareSelection.length === 0) {
       return;
     }
     const selectedEntries = filteredEntries.filter((entry) => compareSelection.includes(entry.id));
-    downloadJson(selectedEntries, `network-history-selected-${String(Date.now())}.json`);
+    await downloadJson(selectedEntries, `network-history-selected-${String(Date.now())}.json`);
   };
 
   const handleClearAll = async (): Promise<void> => {

@@ -206,4 +206,36 @@ describe('NetworkHistoryRow', () => {
       expect(screen.getByTestId('timing-waterfall-empty')).toBeInTheDocument();
     });
   });
+
+  describe('selection checkbox', () => {
+    it('shows selection checkbox always visible (not just in compare mode)', () => {
+      render(<NetworkHistoryRow {...defaultProps} compareMode={false} />);
+      // Checkbox should be visible even when compareMode is false
+      const checkbox = screen.getByRole('button', { name: /select|deselect/i });
+      expect(checkbox).toBeInTheDocument();
+    });
+
+    it('shows selection checkbox when compareMode is true', () => {
+      render(<NetworkHistoryRow {...defaultProps} compareMode={true} />);
+      // Checkbox should still be visible in compare mode
+      const checkbox = screen.getByRole('button', { name: /select|deselect/i });
+      expect(checkbox).toBeInTheDocument();
+    });
+
+    it('calls onSelect when selection checkbox is clicked', () => {
+      const onSelect = vi.fn();
+      render(<NetworkHistoryRow {...defaultProps} onSelect={onSelect} />);
+      const checkbox = screen.getByRole('button', { name: /select/i });
+      fireEvent.click(checkbox);
+      expect(onSelect).toHaveBeenCalledWith('hist_test123');
+    });
+
+    it('shows selected state when isSelected is true', () => {
+      render(<NetworkHistoryRow {...defaultProps} isSelected={true} />);
+      const checkbox = screen.getByRole('button', { name: /deselect/i });
+      expect(checkbox).toBeInTheDocument();
+      // Checkbox should have selected styling
+      expect(checkbox).toHaveClass('bg-accent-blue');
+    });
+  });
 });
