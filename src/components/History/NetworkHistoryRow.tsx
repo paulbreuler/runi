@@ -118,6 +118,7 @@ export const NetworkHistoryRow = ({
     if ((e.target as HTMLElement).closest('[data-testid="compare-checkbox"]') !== null) {
       return;
     }
+    // Selection checkbox handles its own click, so row click should also toggle selection
     onSelect(entry.id);
   };
 
@@ -157,6 +158,25 @@ export const NetworkHistoryRow = ({
           isSelected ? 'bg-bg-raised' : 'hover:bg-bg-raised/50'
         )}
       >
+        {/* Selection checkbox - always visible (like Console pattern) */}
+        <button
+          type="button"
+          onClick={(e): void => {
+            e.stopPropagation();
+            onSelect(entry.id);
+          }}
+          className={cn(
+            'shrink-0 mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors',
+            isSelected
+              ? 'bg-accent-blue border-accent-blue'
+              : 'border-border-default hover:border-border-emphasis'
+          )}
+          title={isSelected ? 'Deselect' : 'Select'}
+          aria-label={isSelected ? 'Deselect' : 'Select'}
+        >
+          {isSelected && <Check size={10} className="text-white" />}
+        </button>
+
         {/* Compare checkbox - only shown in compare mode */}
         {compareMode && (
           <div
