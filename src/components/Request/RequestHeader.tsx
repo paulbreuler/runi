@@ -108,6 +108,8 @@ export const RequestHeader = ({
       >
         <Select.Select value={method} onValueChange={handleMethodChange}>
           <Select.SelectTrigger
+            role="button"
+            aria-haspopup="listbox"
             className={`min-w-28 w-auto font-semibold bg-transparent border-0 hover:bg-bg-raised/50 rounded-lg transition-all duration-200 whitespace-nowrap ${methodColor}`}
             data-testid="method-select"
             disabled={loading}

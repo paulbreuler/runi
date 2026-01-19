@@ -9,6 +9,20 @@ const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
+/**
+ * SelectTrigger - The button that opens the select dropdown.
+ *
+ * By default, Radix UI applies `role="combobox"` which some accessibility
+ * checkers flag as requiring child elements. For non-editable selects,
+ * you can override with `role="button"` and `aria-haspopup="listbox"`.
+ *
+ * @example
+ * ```tsx
+ * <SelectTrigger role="button" aria-haspopup="listbox">
+ *   <SelectValue />
+ * </SelectTrigger>
+ * ```
+ */
 const SelectTrigger = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>

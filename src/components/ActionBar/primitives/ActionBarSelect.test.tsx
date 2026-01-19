@@ -28,7 +28,7 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    expect(screen.getByRole('combobox', { name: 'Select method' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Select method' })).toBeInTheDocument();
   });
 
   it('displays selected value in full mode', () => {
@@ -57,7 +57,7 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Select method' }));
 
     // Check that options are visible
     expect(screen.getByRole('option', { name: 'All Methods' })).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Select method' }));
     await userEvent.click(screen.getByRole('option', { name: 'POST' }));
 
     expect(handleChange).toHaveBeenCalledWith('POST');
