@@ -307,10 +307,7 @@ interface NetworkSelectionCellProps {
   size?: 'sm' | 'default' | 'lg';
 }
 
-const NetworkSelectionCell = ({
-  row,
-  size,
-}: NetworkSelectionCellProps): React.ReactElement => {
+const NetworkSelectionCell = ({ row, size }: NetworkSelectionCellProps): React.ReactElement => {
   // Always use TanStack Table selection
   const isSelected = row.getIsSelected();
 
@@ -349,9 +346,9 @@ function createNetworkSelectionColumn(
     // Disable filtering for selection column
     enableColumnFilter: false,
     // Fixed width for selection column
-    size: 40,
-    minSize: 40,
-    maxSize: 40,
+    size: 32,
+    minSize: 32,
+    maxSize: 32,
   };
 }
 
@@ -409,7 +406,7 @@ export function createNetworkColumns(
       enableSorting: true,
     },
 
-    // URL column (with intelligence signals)
+    // URL column (flexible - fills available space)
     {
       id: 'url',
       accessorFn: (row) => row.request.url,
@@ -417,7 +414,8 @@ export function createNetworkColumns(
       cell: ({ row }) => (
         <UrlCell url={row.original.request.url} intelligence={row.original.intelligence} />
       ),
-      size: 400,
+      size: 400, // Initial size, but will grow to fill space
+      minSize: 200,
       enableSorting: true,
     },
 
@@ -461,7 +459,7 @@ export function createNetworkColumns(
       enableSorting: true,
     },
 
-    // Actions column
+    // Actions column (fixed on right)
     {
       id: 'actions',
       header: undefined,
@@ -469,6 +467,8 @@ export function createNetworkColumns(
         <ActionsCell entry={row.original} onReplay={onReplay} onCopy={onCopy} onDelete={onDelete} />
       ),
       size: 100,
+      minSize: 100,
+      maxSize: 100,
       enableSorting: false,
     },
   ];

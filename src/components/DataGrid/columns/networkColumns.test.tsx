@@ -155,6 +155,47 @@ describe('createNetworkColumns', () => {
     expect(columns.find((c) => c.id === 'expand')).toBeDefined();
   });
 
+  it('URL column is flexible (no maxSize constraint)', () => {
+    const columns = createNetworkColumns({
+      onReplay: vi.fn(),
+      onCopy: vi.fn(),
+      onDelete: vi.fn(),
+    });
+
+    const urlColumn = columns.find((c) => c.id === 'url');
+    expect(urlColumn).toBeDefined();
+    expect(urlColumn?.maxSize).toBeUndefined(); // Flexible column should not have maxSize
+    expect(urlColumn?.minSize).toBeDefined(); // Should have minSize to prevent too narrow
+  });
+
+  it('actions column is fixed on right (has maxSize constraint)', () => {
+    const columns = createNetworkColumns({
+      onReplay: vi.fn(),
+      onCopy: vi.fn(),
+      onDelete: vi.fn(),
+    });
+
+    const actionsColumn = columns.find((c) => c.id === 'actions');
+    expect(actionsColumn).toBeDefined();
+    expect(actionsColumn?.maxSize).toBeDefined();
+    expect(actionsColumn?.minSize).toBeDefined();
+    expect(actionsColumn?.maxSize).toBe(actionsColumn?.minSize); // Fixed size
+  });
+
+  it('selection column has compact size (32px)', () => {
+    const columns = createNetworkColumns({
+      onReplay: vi.fn(),
+      onCopy: vi.fn(),
+      onDelete: vi.fn(),
+    });
+
+    const selectColumn = columns.find((c) => c.id === 'select');
+    expect(selectColumn).toBeDefined();
+    expect(selectColumn?.size).toBe(32);
+    expect(selectColumn?.minSize).toBe(32);
+    expect(selectColumn?.maxSize).toBe(32);
+  });
+
   it('does not accept compareMode prop (compare mode removed)', () => {
     // TypeScript should warn if compareMode is passed, but for runtime test:
     const columns = createNetworkColumns({
