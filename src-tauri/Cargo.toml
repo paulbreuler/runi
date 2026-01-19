@@ -28,6 +28,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "ansi"]
 
 [dev-dependencies]
 ts-rs = "10"
+serial_test = "3"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

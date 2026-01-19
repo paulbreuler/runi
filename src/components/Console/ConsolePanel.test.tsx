@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ConsolePanel } from './ConsolePanel';
-import { getConsoleService, initializeConsoleService } from '@/services/console-service';
+import { getConsoleService } from '@/services/console-service';
 
 // Mock motion/react to disable animations in tests
 vi.mock('motion/react', async () => {
@@ -22,8 +22,9 @@ describe('ConsolePanel', () => {
     service.clear();
     // Set minimum log level to debug to capture all logs in tests
     service.setMinLogLevel('debug');
-    // Always initialize to ensure console methods are intercepted
-    initializeConsoleService();
+    // Note: We don't call initializeConsoleService() here because:
+    // 1. Tests use service.addLog() directly, which doesn't need interception
+    // 2. Calling it would capture console output from the test runner and other tests
   });
 
   it('renders empty state when no logs', () => {
