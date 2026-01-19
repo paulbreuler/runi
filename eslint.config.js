@@ -281,6 +281,7 @@ export default tseslint.config(
       'src/types/generated/',
       '.storybook/',
       'tests/',
+      'scripts/', // Setup scripts (Node.js, not TypeScript)
       '*.config.js',
       '*.config.ts',
       'vitest.setup.ts',
