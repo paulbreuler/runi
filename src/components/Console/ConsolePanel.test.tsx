@@ -123,20 +123,21 @@ describe('ConsolePanel', () => {
   });
 
   it('filters logs by full-text search in args', async () => {
-    render(<ConsolePanel />);
     const service = getConsoleService();
+    service.clear(); // Ensure clean state
+    render(<ConsolePanel />);
 
-    // Add logs with args containing searchable text - wrap in act() to ensure React state updates are flushed
+    // Add logs with different messages and args containing searchable text
     await act(async () => {
       service.addLog({
         level: 'error',
-        message: 'Request failed',
+        message: 'Connection error',
         args: [{ error: 'Connection timeout', code: 500 }],
         timestamp: Date.now(),
       });
       service.addLog({
         level: 'error',
-        message: 'Request failed',
+        message: 'Authentication error',
         args: [{ error: 'Invalid credentials', code: 401 }],
         timestamp: Date.now(),
       });
@@ -144,17 +145,22 @@ describe('ConsolePanel', () => {
 
     // Wait for logs to appear
     await waitFor(() => {
-      expect(screen.getByText(/request failed/i)).toBeInTheDocument();
+      expect(screen.getByText(/connection error/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
-    // Search by text in args
+    // Initially both logs should be visible
+    expect(screen.getByText(/connection error/i)).toBeInTheDocument();
+    expect(screen.getByText(/authentication error/i)).toBeInTheDocument();
+
+    // Search by text in args - should only match the log with "timeout" in args
     const searchInput = screen.getByLabelText(/search logs/i);
     fireEvent.change(searchInput, { target: { value: 'timeout' } });
 
-    // Should find the log with "timeout" in args
-    expect(screen.getByText(/request failed/i)).toBeInTheDocument();
-    // Both logs have same message, but search should filter by args content
-    // Since they're grouped by message+args, we should see the grouped entry
+    // Should only show the log with "timeout" in args
+    await waitFor(() => {
+      expect(screen.getByText(/connection error/i)).toBeInTheDocument();
+      expect(screen.queryByText(/authentication error/i)).not.toBeInTheDocument();
+    }, WAIT_TIMEOUT);
   });
 
   it('filters logs by full-text search in correlation ID', async () => {
@@ -329,6 +335,193 @@ describe('ConsolePanel', () => {
     expect(autoButton).not.toHaveClass('bg-accent-blue');
   });
 
+  it('scrolls to bottom when new log arrives and auto-scroll is enabled', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Find the log container element
+    const logContainer = screen.getByTestId('console-logs');
+    expect(logContainer).toBeInTheDocument();
+
+    // Mock container dimensions to simulate a scrollable container
+    // In real app, this is set by parent layout, but in tests we need to mock it
+    const mockClientHeight = 200;
+    const mockScrollHeight = 1000; // Much larger than clientHeight to ensure scrolling
+
+    Object.defineProperty(logContainer, 'clientHeight', {
+      configurable: true,
+      get: () => mockClientHeight,
+    });
+
+    Object.defineProperty(logContainer, 'scrollHeight', {
+      configurable: true,
+      get: () => mockScrollHeight,
+    });
+
+    // Type assertion needed for property mocking
+    const containerElement = logContainer as HTMLDivElement;
+
+    // Add multiple logs to ensure there's content
+    await act(async () => {
+      for (let i = 0; i < 20; i++) {
+        service.addLog({
+          level: 'info',
+          message: `Initial log ${String(i)}`,
+          args: [],
+          timestamp: Date.now() + i,
+        });
+      }
+    });
+
+    // Wait for logs to appear
+    await waitFor(() => {
+      expect(screen.getByText(/initial log 19/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Wait for DOM to settle
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve(undefined);
+        });
+      });
+    });
+
+    // Verify we have scrollable content
+    expect(containerElement.scrollHeight).toBeGreaterThan(containerElement.clientHeight);
+
+    // Set scroll position to top (not at bottom)
+    containerElement.scrollTop = 0;
+    expect(containerElement.scrollTop).toBe(0);
+
+    // Add a new log that should trigger auto-scroll
+    await act(async () => {
+      service.addLog({
+        level: 'info',
+        message: 'New log that should trigger scroll',
+        args: [],
+        timestamp: Date.now(),
+      });
+    });
+
+    // Wait for new log to appear
+    await waitFor(() => {
+      expect(screen.getByText(/new log that should trigger scroll/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Wait for requestAnimationFrame in the effect to complete
+    // Need multiple frames to ensure the scroll happens
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolve(undefined);
+          });
+        });
+      });
+    });
+
+    // Verify scroll position changed (scrolled to bottom)
+    const finalScrollTop = containerElement.scrollTop;
+    const scrollHeight = containerElement.scrollHeight;
+    const clientHeight = containerElement.clientHeight;
+    const expectedScrollTop = Math.max(0, scrollHeight - clientHeight);
+
+    // The scroll should have happened - scrollTop should be set to scrollHeight - clientHeight
+    // In our mock: 1000 - 200 = 800
+    expect(finalScrollTop).toBe(expectedScrollTop);
+  });
+
+  it('does not scroll when auto-scroll is disabled', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Find the log container
+    const logContainer = screen.getByTestId('console-logs');
+    expect(logContainer).toBeInTheDocument();
+
+    // Mock container dimensions to simulate a scrollable container
+    const mockClientHeight = 200;
+    const mockScrollHeight = 1000; // Much larger than clientHeight to ensure scrolling
+
+    Object.defineProperty(logContainer, 'clientHeight', {
+      configurable: true,
+      get: () => mockClientHeight,
+    });
+
+    Object.defineProperty(logContainer, 'scrollHeight', {
+      configurable: true,
+      get: () => mockScrollHeight,
+    });
+
+    // Type assertion needed for property mocking
+    const containerElement = logContainer as HTMLDivElement;
+
+    // Add some initial logs
+    await act(async () => {
+      for (let i = 0; i < 10; i++) {
+        service.addLog({
+          level: 'info',
+          message: `Initial log ${String(i)}`,
+          args: [],
+          timestamp: Date.now() + i,
+        });
+      }
+    });
+
+    // Wait for logs to appear
+    await waitFor(() => {
+      expect(screen.getByText(/initial log 9/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Wait for DOM to settle
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve(undefined);
+        });
+      });
+    });
+
+    // Set scroll position to middle (not at bottom)
+    containerElement.scrollTop = 100;
+    const scrollPositionBefore = containerElement.scrollTop;
+    expect(scrollPositionBefore).toBe(100);
+
+    // Disable auto-scroll BEFORE adding new log
+    const autoButton = screen.getByRole('button', { name: /auto/i });
+    fireEvent.click(autoButton);
+
+    // Add a new log
+    await act(async () => {
+      service.addLog({
+        level: 'info',
+        message: 'Test log message',
+        args: [],
+        timestamp: Date.now(),
+      });
+    });
+
+    // Wait for log to appear
+    await waitFor(() => {
+      expect(screen.getByText(/test log message/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Wait for any potential scroll animations
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolve(undefined);
+          });
+        });
+      });
+    });
+
+    // Verify scroll position did NOT change (stayed at user's position)
+    expect(containerElement.scrollTop).toBe(scrollPositionBefore);
+  });
+
   it('displays log counts in filter buttons', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
@@ -498,6 +691,106 @@ describe('ConsolePanel', () => {
       const countBadge = screen.queryByTitle(/2 occurrences/i);
       expect(countBadge).not.toBeInTheDocument();
     }, WAIT_TIMEOUT);
+  });
+
+  it('deletes individual log when delete button is clicked', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add a single log
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'Test error message',
+        args: [],
+        timestamp: Date.now(),
+      });
+    });
+
+    // Wait for log to appear
+    await waitFor(() => {
+      expect(screen.getByText(/test error message/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Find the log entry and hover to show delete button
+    const logEntry = screen.getByText(/test error message/i).closest('.group');
+    expect(logEntry).toBeInTheDocument();
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+
+    // Find delete button (it should be visible on hover, but we can query it directly)
+    const deleteButton = logEntry.querySelector('button[title="Delete log"]')!;
+    expect(deleteButton).toBeInTheDocument();
+
+    // Click delete button
+    fireEvent.click(deleteButton);
+
+    // Wait for log to disappear
+    await waitFor(() => {
+      expect(screen.queryByText(/test error message/i)).not.toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Verify log was removed from service
+    const remainingLogs = service.getLogs();
+    expect(remainingLogs.length).toBe(0);
+  });
+
+  it('deletes all instances when deleting a grouped log', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    // Add 3 identical logs to create a group
+    const identicalArgs = [{ error: 'Connection timeout', code: 500 }];
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'Request failed',
+        args: identicalArgs,
+        timestamp: Date.now(),
+      });
+      service.addLog({
+        level: 'error',
+        message: 'Request failed',
+        args: identicalArgs,
+        timestamp: Date.now() + 1,
+      });
+      service.addLog({
+        level: 'error',
+        message: 'Request failed',
+        args: identicalArgs,
+        timestamp: Date.now() + 2,
+      });
+    });
+
+    // Wait for grouped log to appear with count badge
+    await waitFor(() => {
+      expect(screen.getByText(/request failed/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/3 occurrences/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Find the grouped log entry
+    const logEntry = screen.getByText(/request failed/i).closest('.group');
+    expect(logEntry).toBeInTheDocument();
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+
+    // Find delete button
+    const deleteButton = logEntry.querySelector('button[title="Delete log"]')!;
+    expect(deleteButton).toBeInTheDocument();
+
+    // Click delete button
+    fireEvent.click(deleteButton);
+
+    // Wait for grouped log to disappear
+    await waitFor(() => {
+      expect(screen.queryByText(/request failed/i)).not.toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    // Verify all 3 logs were removed from service
+    const remainingLogs = service.getLogs();
+    expect(remainingLogs.length).toBe(0);
   });
 
   it('copies single representative log entry when copying grouped log with "Copy all"', async () => {

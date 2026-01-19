@@ -49,6 +49,7 @@ class ConsoleService {
   private logIdCounter = 0;
   private subscribers = new Set<LogEventHandler>();
   private minLogLevel: LogLevel = 'info';
+  private notificationsSuppressed = false; // For Storybook: prevent notifications during setup
   private originalConsole: {
     log: typeof console.log;
     warn: typeof console.warn;
@@ -237,18 +238,20 @@ class ConsoleService {
       }
     }
 
-    // Notify subscribers
-    this.subscribers.forEach((handler) => {
-      try {
-        handler(fullLog);
-      } catch (error) {
-        // Ignore subscriber errors
-        this.originalConsole?.error('Console service subscriber error:', error);
-      }
-    });
+    // Notify subscribers (unless suppressed for Storybook isolation)
+    if (!this.notificationsSuppressed) {
+      this.subscribers.forEach((handler) => {
+        try {
+          handler(fullLog);
+        } catch (error) {
+          // Ignore subscriber errors
+          this.originalConsole?.error('Console service subscriber error:', error);
+        }
+      });
 
-    // Emit event via event bus
-    globalEventBus.emit(LOG_LEVEL_EVENTS[fullLog.level], fullLog);
+      // Emit event via event bus
+      globalEventBus.emit(LOG_LEVEL_EVENTS[fullLog.level], fullLog);
+    }
   }
 
   /**
@@ -277,6 +280,22 @@ class ConsoleService {
     this.logs = [];
     this.logIdCounter = 0;
     this.currentSizeBytes = 0;
+  }
+
+  /**
+   * Suppress notifications (for Storybook isolation).
+   * When suppressed, addLog() will not notify subscribers.
+   * This prevents cross-story contamination in Storybook.
+   */
+  public suppressNotifications(): void {
+    this.notificationsSuppressed = true;
+  }
+
+  /**
+   * Re-enable notifications (for Storybook isolation).
+   */
+  public enableNotifications(): void {
+    this.notificationsSuppressed = false;
   }
 
   /**

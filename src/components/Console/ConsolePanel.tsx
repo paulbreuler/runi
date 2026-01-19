@@ -118,32 +118,38 @@ export const ConsolePanel = ({
     const unsubscribe = service.subscribe(handler);
 
     // Also poll for logs periodically (fallback for tests)
-    const interval = setInterval(() => {
-      const currentLogs = service.getLogs();
-      setLogs((prev) => {
-        // Only update if logs changed
-        if (currentLogs.length !== prev.length) {
-          if (currentLogs.length > maxLogs) {
-            return currentLogs.slice(-maxLogs);
-          }
-          return currentLogs;
-        }
-        return prev;
-      });
-    }, 100); // Poll every 100ms for tests
+    // NOTE: Disable polling in Storybook to prevent cross-story contamination
+    // In Storybook, stories share the same console service singleton, and polling
+    // causes all stories to see each other's logs. The subscription mechanism is
+    // sufficient for Storybook.
+    const isStorybook =
+      typeof window !== 'undefined' &&
+      (window.location.href.includes('storybook') ||
+        (window.parent !== window && window.parent.location.href.includes('storybook')));
+
+    const interval = isStorybook
+      ? null
+      : setInterval(() => {
+          const currentLogs = service.getLogs();
+          setLogs((prev) => {
+            // Only update if logs changed
+            if (currentLogs.length !== prev.length) {
+              if (currentLogs.length > maxLogs) {
+                return currentLogs.slice(-maxLogs);
+              }
+              return currentLogs;
+            }
+            return prev;
+          });
+        }, 100); // Poll every 100ms for tests
 
     return (): void => {
       unsubscribe();
-      clearInterval(interval);
+      if (interval !== null) {
+        clearInterval(interval);
+      }
     };
   }, [maxLogs, maxSizeBytes]);
-
-  // Auto-scroll to bottom when new logs arrive
-  useEffect(() => {
-    if (autoScroll && logContainerRef.current !== null) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-    }
-  }, [logs, autoScroll]);
 
   // Helper function to check if log matches search text
   const matchesSearch = (log: ConsoleLog, searchText: string): boolean => {
@@ -252,6 +258,27 @@ export const ConsolePanel = ({
     });
   }, [logs, filter, searchFilter]);
 
+  // Auto-scroll to bottom when new logs arrive
+  useEffect(() => {
+    if (!autoScroll || logContainerRef.current === null) {
+      return;
+    }
+
+    // Defer scroll until DOM has updated
+    requestAnimationFrame(() => {
+      if (logContainerRef.current === null) {
+        return;
+      }
+
+      const container = logContainerRef.current;
+      const targetScroll = container.scrollHeight - container.clientHeight;
+
+      // Scroll to bottom (respects reduced motion preference)
+      // Note: Both paths do the same thing - reduced motion is handled by CSS
+      container.scrollTop = targetScroll;
+    });
+  }, [filteredLogs.length, autoScroll]); // Depend on filteredLogs.length, not logs
+
   const handleClear = (): void => {
     const service = getConsoleService();
     service.clear();
@@ -324,12 +351,19 @@ export const ConsolePanel = ({
         // Delete single log
         service.deleteLog(logId);
       }
-      // Refresh logs from service
-      setLogs(service.getLogs());
+      // Refresh logs from service using functional update with spread to ensure React sees a new reference
+      setLogs(() => [...service.getLogs()]);
       // Remove from selection
       setSelectedLogIds((prev) => {
         const next = new Set(prev);
         next.delete(logId);
+        return next;
+      });
+      // Remove from expanded logs (including occurrences key for grouped logs)
+      setExpandedLogIds((prev) => {
+        const next = new Set(prev);
+        next.delete(logId);
+        next.delete(`${logId}_occurrences`);
         return next;
       });
     }
