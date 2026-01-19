@@ -1,12 +1,12 @@
 import { useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Download, Trash2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { NetworkHistoryEntry, HistoryFilters } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
-import { NetworkHistoryFilters } from './NetworkHistoryFilters';
+import { FilterBar } from './FilterBar';
 import { NetworkHistoryRow } from './NetworkHistoryRow';
 import { NetworkStatusBar } from './NetworkStatusBar';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /** Estimated row height for virtualization */
 const ESTIMATED_ROW_HEIGHT = 48;
@@ -203,143 +203,136 @@ export const NetworkHistoryPanel = ({
     overscan: 5,
   });
 
+  // Render entry list based on count and virtualization threshold
+  const renderEntryList = (): React.ReactNode => {
+    // Empty state
+    if (filteredEntries.length === 0) {
+      return (
+        <EmptyState
+          variant="muted"
+          size="sm"
+          title={entries.length === 0 ? 'No requests yet' : 'No matching requests'}
+        />
+      );
+    }
+
+    // Virtualized rendering for large lists
+    if (filteredEntries.length >= VIRTUALIZATION_THRESHOLD) {
+      return (
+        <div
+          style={{
+            height: `${String(virtualizer.getTotalSize())}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const entry = filteredEntries[virtualRow.index];
+            if (entry === undefined) {
+              return null;
+            }
+            return (
+              <div
+                key={entry.id}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${String(virtualRow.start)}px)`,
+                }}
+              >
+                <NetworkHistoryRow
+                  entry={entry}
+                  isExpanded={expandedId === entry.id}
+                  isSelected={selectedId === entry.id}
+                  onToggleExpand={handleToggleExpand}
+                  onSelect={handleSelect}
+                  onReplay={onReplay}
+                  onCopyCurl={onCopyCurl}
+                  compareMode={compareMode}
+                  isCompareSelected={compareSelection.includes(entry.id)}
+                  onToggleCompare={toggleCompareSelection}
+                  onDelete={handleDelete}
+                />
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Standard rendering for small lists
+    return filteredEntries.map((entry) => (
+      <NetworkHistoryRow
+        key={entry.id}
+        entry={entry}
+        isExpanded={expandedId === entry.id}
+        isSelected={selectedId === entry.id}
+        onToggleExpand={handleToggleExpand}
+        onSelect={handleSelect}
+        onReplay={onReplay}
+        onCopyCurl={onCopyCurl}
+        compareMode={compareMode}
+        isCompareSelected={compareSelection.includes(entry.id)}
+        onToggleCompare={toggleCompareSelection}
+      />
+    ));
+  };
+
   return (
     <div className="flex flex-col h-full bg-bg-surface">
-      {/* Filter bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-subtle bg-bg-raised/30">
-        <NetworkHistoryFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          compareMode={compareMode}
-          onCompareModeToggle={handleCompareModeToggle}
-          compareSelectionCount={compareSelection.length}
-          onCompareResponses={handleCompareResponses}
-        />
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleSaveAll}
-            className="px-2 py-1 text-xs rounded text-text-muted hover:text-text-primary hover:bg-bg-raised/50 transition-colors flex items-center gap-1"
-            title="Save all entries"
-          >
-            <Download size={12} />
-            Save All
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveSelection}
-            disabled={compareSelection.length === 0}
-            className={cn(
-              'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
-              compareSelection.length === 0
-                ? 'text-text-muted/50 cursor-not-allowed'
-                : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-            )}
-            title="Save selected entries"
-          >
-            <Download size={12} />
-            Save Selection
-          </button>
-          <button
-            type="button"
-            onClick={handleClearAll}
-            className="px-2 py-1 text-xs rounded text-text-muted hover:text-signal-error hover:bg-bg-raised/50 transition-colors flex items-center gap-1"
-            title="Clear all history"
-          >
-            <Trash2 size={12} />
-            Clear All
-          </button>
+      {/* Filter bar - responsive with horizontal scroll */}
+      <FilterBar
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        compareMode={compareMode}
+        onCompareModeToggle={handleCompareModeToggle}
+        compareSelectionCount={compareSelection.length}
+        onCompareResponses={handleCompareResponses}
+        onSaveAll={handleSaveAll}
+        onSaveSelection={handleSaveSelection}
+        onClearAll={handleClearAll}
+        isSaveSelectionDisabled={compareSelection.length === 0}
+      />
+
+      {/* Table container - handles horizontal overflow */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-x-auto">
+        {/* Table header - fixed widths, can overflow horizontally */}
+        <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border-subtle bg-bg-raised/50 text-xs font-medium text-text-muted shrink-0 min-w-max">
+          {compareMode && <span className="w-4" />} {/* Checkbox space */}
+          <span className="w-5" /> {/* Chevron space */}
+          <span className="w-14">Method</span>
+          <span className="flex-1">URL</span>
+          <span className="w-12 text-right">Status</span>
+          <span className="w-14 text-right">Time</span>
+          <span className="w-16 text-right">Size</span>
+          <span className="w-16 text-right">When</span>
+          <span className="w-14" /> {/* Actions space */}
+        </div>
+
+        {/* Entry list - vertical scroll only */}
+        <div
+          ref={parentRef}
+          className={cn(
+            'flex-1 min-h-0',
+            filteredEntries.length === 0 ? 'flex flex-col' : 'overflow-y-auto'
+          )}
+          style={{ scrollbarGutter: 'stable' }}
+        >
+          {renderEntryList()}
         </div>
       </div>
 
-      {/* Table header */}
-      <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border-subtle bg-bg-raised/50 text-xs font-medium text-text-muted">
-        {compareMode && <span className="w-4" />} {/* Checkbox space */}
-        <span className="w-5" /> {/* Chevron space */}
-        <span className="w-14">Method</span>
-        <span className="flex-1">URL</span>
-        <span className="w-12 text-right">Status</span>
-        <span className="w-14 text-right">Time</span>
-        <span className="w-16 text-right">Size</span>
-        <span className="w-16 text-right">When</span>
-        <span className="w-14" /> {/* Actions space */}
+      {/* Status bar - fixed, no scroll */}
+      <div className="shrink-0">
+        <NetworkStatusBar
+          totalCount={entries.length}
+          driftCount={counts.drift}
+          aiCount={counts.ai}
+          boundCount={counts.bound}
+        />
       </div>
-
-      {/* Entry list */}
-      <div ref={parentRef} className="flex-1 overflow-auto">
-        {filteredEntries.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-text-muted text-sm">
-            {entries.length === 0 ? 'No requests yet' : 'No matching requests'}
-          </div>
-        ) : filteredEntries.length >= VIRTUALIZATION_THRESHOLD ? (
-          // Virtualized rendering for large lists
-          <div
-            style={{
-              height: `${String(virtualizer.getTotalSize())}px`,
-              width: '100%',
-              position: 'relative',
-            }}
-          >
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const entry = filteredEntries[virtualRow.index];
-              if (entry === undefined) {
-                return null;
-              }
-              return (
-                <div
-                  key={entry.id}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${String(virtualRow.start)}px)`,
-                  }}
-                >
-                  <NetworkHistoryRow
-                    entry={entry}
-                    isExpanded={expandedId === entry.id}
-                    isSelected={selectedId === entry.id}
-                    onToggleExpand={handleToggleExpand}
-                    onSelect={handleSelect}
-                    onReplay={onReplay}
-                    onCopyCurl={onCopyCurl}
-                    compareMode={compareMode}
-                    isCompareSelected={compareSelection.includes(entry.id)}
-                    onToggleCompare={toggleCompareSelection}
-                    onDelete={handleDelete}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          // Standard rendering for small lists
-          filteredEntries.map((entry) => (
-            <NetworkHistoryRow
-              key={entry.id}
-              entry={entry}
-              isExpanded={expandedId === entry.id}
-              isSelected={selectedId === entry.id}
-              onToggleExpand={handleToggleExpand}
-              onSelect={handleSelect}
-              onReplay={onReplay}
-              onCopyCurl={onCopyCurl}
-              compareMode={compareMode}
-              isCompareSelected={compareSelection.includes(entry.id)}
-              onToggleCompare={toggleCompareSelection}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Status bar */}
-      <NetworkStatusBar
-        totalCount={entries.length}
-        driftCount={counts.drift}
-        aiCount={counts.ai}
-        boundCount={counts.bound}
-      />
     </div>
   );
 };

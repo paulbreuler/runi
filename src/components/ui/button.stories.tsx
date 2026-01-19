@@ -7,16 +7,68 @@ const meta = {
   component: Button,
   parameters: {
     layout: 'centered',
+    docs: {
+      description: {
+        component: `Button component with multiple variants, sizes, and Motion animations.
+
+## Features
+
+- **Variants**: Default, destructive, destructive-outline, outline, secondary, ghost, link
+- **Sizes**: Extra small, small, default, large, and icon sizes (icon-xs, icon-sm, icon, icon-lg)
+- **Motion Animations**: Smooth spring-based hover and tap animations
+- **Accessible**: Supports all standard HTML button attributes including \`aria-label\`
+
+## Accessibility
+
+- **Icon-Only Buttons**: Always provide \`aria-label\` for icon-only buttons
+- **Keyboard Navigation**: Full keyboard support (Tab, Enter, Space)
+- **Focus Indicators**: Visible focus rings (2px) with accent colors
+- **Disabled State**: Properly disabled with \`disabled\` attribute
+
+## Usage
+
+**Text Button:**
+\`\`\`tsx
+<Button variant="default">Click me</Button>
+\`\`\`
+
+**Icon-Only Button:**
+\`\`\`tsx
+<Button size="icon" aria-label="Close dialog">
+  <X />
+</Button>
+\`\`\`
+
+**Button with Icon:**
+\`\`\`tsx
+<Button>
+  <Mail className="mr-2" />
+  Send Email
+</Button>
+\`\`\`
+
+See the Accessibility panel below for automated checks.
+        `,
+      },
+    },
   },
   tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
+      options: [
+        'default',
+        'destructive',
+        'destructive-outline',
+        'outline',
+        'secondary',
+        'ghost',
+        'link',
+      ],
     },
     size: {
       control: 'select',
-      options: ['default', 'sm', 'lg', 'icon', 'icon-sm', 'icon-lg'],
+      options: ['default', 'sm', 'xs', 'lg', 'icon', 'icon-sm', 'icon-xs', 'icon-lg'],
     },
     disabled: {
       control: 'boolean',
@@ -38,6 +90,10 @@ export const Variants: Story = {
     <div className="flex items-center gap-3 flex-wrap">
       <Button variant="default">Default</Button>
       <Button variant="destructive">Destructive</Button>
+      <Button variant="destructive-outline">
+        <Trash2 className="mr-2" />
+        Delete
+      </Button>
       <Button variant="outline">Outline</Button>
       <Button variant="secondary">Secondary</Button>
       <Button variant="ghost">Ghost</Button>
@@ -49,6 +105,7 @@ export const Variants: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-3">
+      <Button size="xs">Extra Small</Button>
       <Button size="sm">Small</Button>
       <Button size="default">Default</Button>
       <Button size="lg">Large</Button>
@@ -74,13 +131,16 @@ export const WithIcons: Story = {
         </Button>
       </div>
       <div className="flex items-center gap-3">
-        <Button size="icon">
+        <Button size="icon-xs" aria-label="Extra small icon">
           <Mail />
         </Button>
-        <Button size="icon-sm">
+        <Button size="icon-sm" aria-label="Small icon">
           <Download />
         </Button>
-        <Button size="icon-lg">
+        <Button size="icon" aria-label="Default icon">
+          <Mail />
+        </Button>
+        <Button size="icon-lg" aria-label="Large icon">
           <Trash2 />
         </Button>
       </div>

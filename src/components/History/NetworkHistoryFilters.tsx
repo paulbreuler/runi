@@ -1,6 +1,20 @@
-import { Search, GitCompare, ArrowRightLeft } from 'lucide-react';
-import { cn } from '@/utils/cn';
+import { GitCompare, ArrowRightLeft, Code, CheckCircle, Brain } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { HistoryFilters } from '@/types/history';
+import {
+  ActionBarGroup,
+  ActionBarSearch,
+  ActionBarSelect,
+  useOptionalActionBarContext,
+} from '@/components/ActionBar';
+import {
+  renderMethodOption,
+  renderStatusOption,
+  renderIntelligenceOption,
+  type MethodSelectOption,
+  type StatusSelectOption,
+  type IntelligenceSelectOption,
+} from '@/components/ActionBar/selectRenderers';
 
 interface NetworkHistoryFiltersProps {
   /** Current filter state */
@@ -17,12 +31,38 @@ interface NetworkHistoryFiltersProps {
   onCompareResponses?: () => void;
 }
 
-const selectClasses =
-  'bg-bg-surface border border-border-subtle rounded px-2 py-1 text-xs text-text-secondary focus:outline-none focus:border-border-emphasis';
+const METHOD_OPTIONS: MethodSelectOption[] = [
+  { value: 'ALL', label: 'All Methods' },
+  { value: 'GET', label: 'GET' },
+  { value: 'POST', label: 'POST' },
+  { value: 'PUT', label: 'PUT' },
+  { value: 'PATCH', label: 'PATCH' },
+  { value: 'DELETE', label: 'DELETE' },
+  { value: 'HEAD', label: 'HEAD' },
+  { value: 'OPTIONS', label: 'OPTIONS' },
+];
+
+const STATUS_OPTIONS: StatusSelectOption[] = [
+  { value: 'All', label: 'All Status' },
+  { value: '2xx', label: '2xx Success', range: '2xx' },
+  { value: '3xx', label: '3xx Redirect', range: '3xx' },
+  { value: '4xx', label: '4xx Client Error', range: '4xx' },
+  { value: '5xx', label: '5xx Server Error', range: '5xx' },
+];
+
+const INTELLIGENCE_OPTIONS: IntelligenceSelectOption[] = [
+  { value: 'All', label: 'All' },
+  { value: 'Has Drift', label: 'Has Drift', signal: 'drift' },
+  { value: 'AI Generated', label: 'AI Generated', signal: 'ai' },
+  { value: 'Bound to Spec', label: 'Bound to Spec', signal: 'bound' },
+  { value: 'Verified', label: 'Verified', signal: 'verified' },
+];
 
 /**
  * Filter controls for the Network History Panel.
  * URL search, method filter, status filter, intelligence filter, and compare mode toggle.
+ *
+ * Now built on ActionBar primitives for consistent responsive behavior.
  */
 export const NetworkHistoryFilters = ({
   filters,
@@ -32,103 +72,118 @@ export const NetworkHistoryFilters = ({
   compareSelectionCount = 0,
   onCompareResponses,
 }: NetworkHistoryFiltersProps): React.JSX.Element => {
+  const context = useOptionalActionBarContext();
+  const isIconMode = context?.variant === 'icon';
   const canCompare = compareMode && compareSelectionCount === 2;
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 border-b border-border-subtle">
-      {/* Search input */}
-      <div className="flex-1 relative">
-        <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          type="text"
+    <>
+      {/* Filters group */}
+      <ActionBarGroup aria-label="Filters">
+        <ActionBarSearch
           value={filters.search}
-          onChange={(e) => {
-            onFilterChange('search', e.target.value);
+          onChange={(value) => {
+            onFilterChange('search', value);
           }}
           placeholder="Filter by URL..."
-          className="w-full pl-7 pr-2 py-1 text-sm bg-bg-surface border border-border-subtle rounded focus:outline-none focus:border-border-emphasis text-text-secondary placeholder:text-text-muted"
+          aria-label="Filter history by URL"
         />
-      </div>
+        <ActionBarSelect
+          value={filters.method}
+          onValueChange={(value) => {
+            onFilterChange('method', value);
+          }}
+          options={METHOD_OPTIONS}
+          icon={<Code size={14} />}
+          aria-label="Filter by HTTP method"
+          data-testid="method-filter"
+          renderItem={renderMethodOption}
+        />
+        <ActionBarSelect
+          value={filters.status}
+          onValueChange={(value) => {
+            onFilterChange('status', value);
+          }}
+          options={STATUS_OPTIONS}
+          icon={<CheckCircle size={14} />}
+          aria-label="Filter by status code"
+          data-testid="status-filter"
+          renderItem={renderStatusOption}
+        />
+        <ActionBarSelect
+          value={filters.intelligence}
+          onValueChange={(value) => {
+            onFilterChange('intelligence', value);
+          }}
+          options={INTELLIGENCE_OPTIONS}
+          icon={<Brain size={14} />}
+          aria-label="Filter by intelligence"
+          data-testid="intelligence-filter"
+          renderItem={renderIntelligenceOption}
+        />
+      </ActionBarGroup>
 
-      {/* Method filter */}
-      <select
-        data-testid="method-filter"
-        value={filters.method}
-        onChange={(e) => {
-          onFilterChange('method', e.target.value);
-        }}
-        className={selectClasses}
-      >
-        <option value="ALL">All Methods</option>
-        <option value="GET">GET</option>
-        <option value="POST">POST</option>
-        <option value="PUT">PUT</option>
-        <option value="PATCH">PATCH</option>
-        <option value="DELETE">DELETE</option>
-        <option value="HEAD">HEAD</option>
-        <option value="OPTIONS">OPTIONS</option>
-      </select>
-
-      {/* Status filter */}
-      <select
-        data-testid="status-filter"
-        value={filters.status}
-        onChange={(e) => {
-          onFilterChange('status', e.target.value);
-        }}
-        className={selectClasses}
-      >
-        <option value="All">All Status</option>
-        <option value="2xx">2xx Success</option>
-        <option value="3xx">3xx Redirect</option>
-        <option value="4xx">4xx Client Error</option>
-        <option value="5xx">5xx Server Error</option>
-      </select>
-
-      {/* Intelligence filter */}
-      <select
-        data-testid="intelligence-filter"
-        value={filters.intelligence}
-        onChange={(e) => {
-          onFilterChange('intelligence', e.target.value);
-        }}
-        className={selectClasses}
-      >
-        <option value="All">All</option>
-        <option value="Has Drift">Has Drift</option>
-        <option value="AI Generated">AI Generated</option>
-        <option value="Bound to Spec">Bound to Spec</option>
-        <option value="Verified">Verified</option>
-      </select>
-
-      {/* Compare mode toggle */}
-      <button
-        data-testid="compare-toggle"
-        onClick={onCompareModeToggle}
-        className={cn(
-          'flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors',
-          compareMode
-            ? 'bg-accent-blue text-white'
-            : 'bg-bg-surface border border-border-subtle text-text-secondary hover:bg-bg-raised'
+      {/* Compare controls group */}
+      <ActionBarGroup separator aria-label="Compare controls">
+        {isIconMode ? (
+          <div className="relative">
+            <Button
+              data-testid="compare-toggle"
+              onClick={onCompareModeToggle}
+              variant={compareMode ? 'default' : 'outline'}
+              size="icon-xs"
+              title={
+                compareSelectionCount > 0
+                  ? `Compare two responses (${String(compareSelectionCount)} selected)`
+                  : 'Compare two responses'
+              }
+              aria-label={
+                compareSelectionCount > 0
+                  ? `Compare two responses, ${String(compareSelectionCount)} of 2 selected`
+                  : 'Compare two responses'
+              }
+              aria-pressed={compareMode}
+            >
+              <GitCompare size={14} />
+            </Button>
+            {compareSelectionCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 w-4 h-4 bg-signal-error text-white text-[10px] rounded-full flex items-center justify-center pointer-events-none"
+                aria-hidden="true"
+              >
+                {compareSelectionCount}
+              </span>
+            )}
+          </div>
+        ) : (
+          <Button
+            data-testid="compare-toggle"
+            onClick={onCompareModeToggle}
+            variant={compareMode ? 'default' : 'outline'}
+            size="xs"
+            title="Compare two responses"
+            aria-pressed={compareMode}
+          >
+            <GitCompare size={14} />
+            <span>Compare</span>
+          </Button>
         )}
-        title="Compare two responses"
-      >
-        <GitCompare size={14} />
-        <span>Compare</span>
-      </button>
 
-      {/* Compare Responses button - shown when 2 entries are selected */}
-      {canCompare && (
-        <button
-          data-testid="compare-responses-button"
-          onClick={onCompareResponses}
-          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-signal-ai text-white hover:bg-signal-ai/90 transition-colors"
-          title="Compare the selected responses"
-        >
-          <ArrowRightLeft size={14} />
-          <span>Compare Responses</span>
-        </button>
-      )}
-    </div>
+        {/* Compare Responses button - shown when 2 entries are selected */}
+        {canCompare && (
+          <Button
+            data-testid="compare-responses-button"
+            onClick={onCompareResponses}
+            size={isIconMode ? 'icon-xs' : 'xs'}
+            className="bg-signal-ai text-white hover:bg-signal-ai/90"
+            title="Compare the selected responses"
+            aria-label={isIconMode ? 'Compare the selected responses' : undefined}
+          >
+            <ArrowRightLeft size={14} />
+            {!isIconMode && <span>Compare Responses</span>}
+          </Button>
+        )}
+      </ActionBarGroup>
+    </>
   );
 };

@@ -7,13 +7,13 @@ import {
   ChevronRight,
   ChevronDown,
   Check,
-  Download,
-  Copy as CopyIcon,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
 import { ConsoleContextMenu } from './ConsoleContextMenu';
+import { ConsoleToolbar } from './ConsoleToolbar';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export type { LogLevel, ConsoleLog } from '@/types/console';
 
@@ -365,177 +365,38 @@ export const ConsolePanel = ({
 
   return (
     <div className="flex flex-col h-full bg-bg-surface">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-default shrink-0">
-        <div className="flex items-center gap-2 flex-1">
-          {/* Filter buttons */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={(): void => {
-                setFilter('all');
-              }}
-              className={cn(
-                'px-2 py-1 text-xs rounded transition-colors',
-                filter === 'all'
-                  ? 'bg-bg-raised text-text-primary'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-            >
-              All ({logs.length})
-            </button>
-            <button
-              type="button"
-              onClick={(): void => {
-                setFilter('error');
-              }}
-              className={cn(
-                'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
-                filter === 'error'
-                  ? 'bg-bg-raised text-signal-error'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-            >
-              <AlertCircle size={12} />
-              Errors ({countByLevel.error})
-            </button>
-            <button
-              type="button"
-              onClick={(): void => {
-                setFilter('warn');
-              }}
-              className={cn(
-                'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
-                filter === 'warn'
-                  ? 'bg-bg-raised text-signal-warning'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-            >
-              <AlertCircle size={12} />
-              Warnings ({countByLevel.warn})
-            </button>
-            <button
-              type="button"
-              onClick={(): void => {
-                setFilter('info');
-              }}
-              className={cn(
-                'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
-                filter === 'info'
-                  ? 'bg-bg-raised text-accent-blue'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-            >
-              <Info size={12} />
-              Info ({countByLevel.info})
-            </button>
-            <button
-              type="button"
-              onClick={(): void => {
-                setFilter('debug');
-              }}
-              className={cn(
-                'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
-                filter === 'debug'
-                  ? 'bg-bg-raised text-text-secondary'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-            >
-              <Terminal size={12} />
-              Debug ({countByLevel.debug})
-            </button>
-          </div>
-
-          {/* Correlation ID filter */}
-          <input
-            type="text"
-            placeholder="Filter by correlation ID"
-            value={correlationIdFilter}
-            onChange={(e): void => {
-              setCorrelationIdFilter(e.target.value);
-            }}
-            className="px-2 py-1 text-xs rounded bg-bg-raised text-text-primary border border-border-default focus:outline-none focus:border-border-emphasis max-w-32 font-mono"
-            title="Filter logs by correlation ID"
-          />
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleSaveAll}
-            className="px-2 py-1 text-xs rounded text-text-muted hover:text-text-primary hover:bg-bg-raised/50 transition-colors flex items-center gap-1"
-            title="Save all logs"
-          >
-            <Download size={12} />
-            Save All
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveSelection}
-            disabled={selectedLogIds.size === 0}
-            className={cn(
-              'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
-              selectedLogIds.size === 0
-                ? 'text-text-muted/50 cursor-not-allowed'
-                : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-            )}
-            title="Save selected logs"
-          >
-            <Download size={12} />
-            Save Selection
-          </button>
-          <button
-            type="button"
-            onClick={handleCopySelection}
-            disabled={selectedLogIds.size === 0}
-            className={cn(
-              'px-2 py-1 text-xs rounded transition-colors flex items-center gap-1',
-              selectedLogIds.size === 0
-                ? 'text-text-muted/50 cursor-not-allowed'
-                : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-            )}
-            title="Copy selected logs"
-          >
-            <CopyIcon size={12} />
-            Copy
-          </button>
-          <button
-            type="button"
-            onClick={(): void => {
-              setAutoScroll(!autoScroll);
-            }}
-            className={cn(
-              'px-2 py-1 text-xs rounded transition-colors',
-              autoScroll
-                ? 'bg-bg-raised text-text-primary'
-                : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-            )}
-            title="Auto-scroll"
-          >
-            Auto
-          </button>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="px-2 py-1 text-xs rounded text-text-muted hover:text-text-primary hover:bg-bg-raised/50 transition-colors flex items-center gap-1"
-            title="Clear console"
-          >
-            <Trash2 size={12} />
-            Clear
-          </button>
-        </div>
-      </div>
+      {/* Toolbar - now using ConsoleToolbar component */}
+      <ConsoleToolbar
+        filter={filter}
+        onFilterChange={setFilter}
+        correlationIdFilter={correlationIdFilter}
+        onCorrelationIdFilterChange={setCorrelationIdFilter}
+        autoScroll={autoScroll}
+        onAutoScrollToggle={() => {
+          setAutoScroll(!autoScroll);
+        }}
+        onClear={handleClear}
+        onSaveAll={handleSaveAll}
+        onSaveSelection={handleSaveSelection}
+        onCopySelection={handleCopySelection}
+        selectedCount={selectedLogIds.size}
+        counts={countByLevel}
+        totalCount={logs.length}
+      />
 
       {/* Log list */}
       <div
         ref={logContainerRef}
-        className="flex-1 overflow-auto font-mono text-xs"
+        className="flex-1 overflow-auto min-h-0 font-mono text-xs"
+        style={{ scrollbarGutter: 'stable' }}
         data-testid="console-logs"
       >
         {filteredLogs.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-text-muted">
-            No logs {filter !== 'all' && `(${filter} only)`}
-          </div>
+          <EmptyState
+            variant="muted"
+            size="sm"
+            title={`No logs${filter !== 'all' ? ` (${filter} only)` : ''}`}
+          />
         ) : (
           <div className="p-2 space-y-0.5">
             {filteredLogs.map((displayLog) => {
@@ -651,11 +512,15 @@ export const ConsolePanel = ({
                       <span
                         className={cn(
                           'shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold min-w-[20px] text-center',
-                          logLevel === 'error'
-                            ? 'bg-signal-error/20 text-signal-error'
-                            : logLevel === 'warn'
-                              ? 'bg-signal-warning/20 text-signal-warning'
-                              : 'bg-text-muted/20 text-text-muted'
+                          ((): string => {
+                            if (logLevel === 'error') {
+                              return 'bg-signal-error/20 text-signal-error';
+                            }
+                            if (logLevel === 'warn') {
+                              return 'bg-signal-warning/20 text-signal-warning';
+                            }
+                            return 'bg-text-muted/20 text-text-muted';
+                          })()
                         )}
                         title={`${String(displayLog.count)} occurrences`}
                       >

@@ -28,11 +28,12 @@ storybook-static
 # Misc
 .DS_Store
 *.pem
+
+# Environment files (secrets)
 .env
-.env.test
 .env.local
-.env.production.local
-.env.test.local
+.env.*.local
+!.env.example
 
 # Debug
 .vscode/*

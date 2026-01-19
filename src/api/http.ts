@@ -15,6 +15,26 @@ import { getConsoleService } from '@/services/console-service';
 import type { HttpResponse, RequestParams } from '@/types/http';
 
 /**
+ * Extract error message from various error types.
+ * Handles strings, Error objects, and unknown values.
+ */
+function extractErrorMessage(primary: unknown, fallback: unknown = 'Unknown error'): string {
+  if (typeof primary === 'string') {
+    return primary;
+  }
+  if (primary instanceof Error) {
+    return primary.message;
+  }
+  if (typeof fallback === 'string') {
+    return fallback;
+  }
+  if (fallback instanceof Error) {
+    return fallback.message;
+  }
+  return 'Unknown error';
+}
+
+/**
  * Check if running in Tauri context
  */
 function isTauri(): boolean {
@@ -93,12 +113,7 @@ export async function executeRequest(params: RequestParams): Promise<HttpRespons
             appError = fromBackendError({
               correlation_id: parsed.correlation_id,
               code: typeof parsed.code === 'string' ? parsed.code : 'UNKNOWN_ERROR',
-              message:
-                typeof parsed.message === 'string'
-                  ? parsed.message
-                  : typeof error === 'string'
-                    ? error
-                    : 'Unknown error',
+              message: extractErrorMessage(parsed.message, error),
               details: parsed.details,
             });
           } else {
@@ -106,14 +121,7 @@ export async function executeRequest(params: RequestParams): Promise<HttpRespons
           }
         } catch (parseError: unknown) {
           // Not JSON or not AppError - fallback
-          const errorMessage =
-            typeof parseError === 'string'
-              ? parseError
-              : parseError instanceof Error
-                ? parseError.message
-                : typeof error === 'string'
-                  ? error
-                  : 'Unknown error';
+          const errorMessage = extractErrorMessage(parseError, error);
           appError = {
             correlationId,
             code: 'HTTP_REQUEST_FAILED',
@@ -129,22 +137,12 @@ export async function executeRequest(params: RequestParams): Promise<HttpRespons
           appError = fromBackendError({
             correlation_id: err.correlation_id,
             code: typeof err.code === 'string' ? err.code : 'UNKNOWN_ERROR',
-            message:
-              typeof err.message === 'string'
-                ? err.message
-                : error instanceof Error
-                  ? error.message
-                  : 'Unknown error',
+            message: extractErrorMessage(err.message, error),
             details: err.details,
           });
         } else {
           // Fallback: create frontend error with correlation ID
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : typeof error === 'string'
-                ? error
-                : 'Unknown error';
+          const errorMessage = extractErrorMessage(error);
           appError = {
             correlationId,
             code: 'HTTP_REQUEST_FAILED',
@@ -155,12 +153,7 @@ export async function executeRequest(params: RequestParams): Promise<HttpRespons
         }
       } else {
         // Fallback: create frontend error with correlation ID
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : typeof error === 'string'
-              ? error
-              : 'Unknown error';
+        const errorMessage = extractErrorMessage(error);
         appError = {
           correlationId,
           code: 'HTTP_REQUEST_FAILED',

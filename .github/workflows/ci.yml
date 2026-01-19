@@ -25,8 +25,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
+
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Check formatting
         run: just fmt-check-frontend
@@ -64,8 +69,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
+
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -113,8 +123,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
+
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Install Playwright browsers
         run: just test-e2e-install

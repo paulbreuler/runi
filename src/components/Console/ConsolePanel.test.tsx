@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ConsolePanel } from './ConsolePanel';
-import { getConsoleService, initializeConsoleService } from '@/services/console-service';
+import { getConsoleService } from '@/services/console-service';
 
 // Mock motion/react to disable animations in tests
 vi.mock('motion/react', async () => {
@@ -22,8 +22,9 @@ describe('ConsolePanel', () => {
     service.clear();
     // Set minimum log level to debug to capture all logs in tests
     service.setMinLogLevel('debug');
-    // Always initialize to ensure console methods are intercepted
-    initializeConsoleService();
+    // Note: We don't call initializeConsoleService() here because:
+    // 1. Tests use service.addLog() directly, which doesn't need interception
+    // 2. Calling it would capture console output from the test runner and other tests
   });
 
   it('renders empty state when no logs', () => {
@@ -117,7 +118,7 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
 
     // Filter by correlation ID (exact match)
-    const filterInput = screen.getByPlaceholderText(/filter by correlation id/i);
+    const filterInput = screen.getByLabelText(/filter by correlation id/i);
     fireEvent.change(filterInput, { target: { value: correlationId } });
 
     expect(screen.getByText(/message 1/i)).toBeInTheDocument();
@@ -153,7 +154,7 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
 
     // Filter by partial correlation ID (first 8 chars should match)
-    const filterInput = screen.getByPlaceholderText(/filter by correlation id/i);
+    const filterInput = screen.getByLabelText(/filter by correlation id/i);
     fireEvent.change(filterInput, { target: { value: '7c7c06ef' } });
 
     // Should match the log with full correlation ID
@@ -242,11 +243,12 @@ describe('ConsolePanel', () => {
     render(<ConsolePanel />);
 
     const autoButton = screen.getByRole('button', { name: /auto/i });
-    expect(autoButton).toHaveClass('bg-bg-raised'); // Active by default
+    // Active by default - uses default variant which is bg-accent-blue
+    expect(autoButton).toHaveClass('bg-accent-blue');
 
     fireEvent.click(autoButton);
-    // Button should toggle active state (we check class changes)
-    // In real usage, auto-scroll behavior would be tested via scrolling
+    // When toggled off, should use outline variant
+    expect(autoButton).not.toHaveClass('bg-accent-blue');
   });
 
   it('displays log counts in filter buttons', async () => {
@@ -262,10 +264,11 @@ describe('ConsolePanel', () => {
 
     // Wait for logs to appear and counts to update
     await waitFor(() => {
-      const debugButton = screen.getByRole('button', { name: /debug/i });
+      // All button shows total count in label
+      const allButton = screen.getByRole('button', { name: /all \(3\)/i });
+      expect(allButton).toBeInTheDocument();
+      // Error button has badge with count
       const errorButton = screen.getByRole('button', { name: /errors/i });
-      // Counts should be displayed in buttons (format: "Debug (2)")
-      expect(debugButton.textContent).toContain('2');
       expect(errorButton.textContent).toContain('1');
     }, WAIT_TIMEOUT);
   });

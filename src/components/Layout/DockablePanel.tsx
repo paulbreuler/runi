@@ -104,10 +104,23 @@ const trayContentVariants = {
 };
 
 /**
- * DockablePanel - A DevTools-style panel that can dock to different positions.
+ * DevTools-style panel that can dock to bottom, left, or right positions.
  *
- * Supports bottom, left, and right docking with resize capability.
- * Panel can be collapsed to a thin bar.
+ * Supports resizing, collapsing, and horizontal scrolling of header content.
+ *
+ * @example
+ * ```tsx
+ * <DockablePanel
+ *   title="DevTools"
+ *   headerContent={<PanelTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+ * >
+ *   <PanelContent
+ *     activeTab={activeTab}
+ *     networkContent={<NetworkHistoryPanel />}
+ *     consoleContent={<ConsolePanel />}
+ *   />
+ * </DockablePanel>
+ * ```
  */
 export const DockablePanel = ({
   title,
@@ -130,6 +143,14 @@ export const DockablePanel = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false); // Unified hover for collapsed tray
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Horizontal scroll state for header
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isScrollIdle, setIsScrollIdle] = useState(true);
+  const scrollIdleTimeout = useRef<number | undefined>(undefined);
 
   // Compute current variant based on state - used for orchestrated animations
   const getTrayVariant = (): 'rest' | 'hover' | 'dragging' => {
@@ -222,6 +243,74 @@ export const DockablePanel = ({
       setCollapsed(false);
     }
   }, [isCollapsed, isHorizontal, setCollapsed]);
+
+  // Update scroll state for header
+  const updateScrollState = useCallback((): void => {
+    if (isCollapsed || headerScrollRef.current === null) {
+      return;
+    }
+    const container = headerScrollRef.current;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const hasScrollableOverflow = maxScroll > 4;
+    setHasOverflow(hasScrollableOverflow);
+    setCanScrollLeft(container.scrollLeft > 2);
+    setCanScrollRight(container.scrollLeft < maxScroll - 2);
+  }, [isCollapsed]);
+
+  // Setup scroll detection for header
+  useEffect(() => {
+    if (isCollapsed || headerScrollRef.current === null) {
+      return;
+    }
+
+    updateScrollState();
+    const container = headerScrollRef.current;
+
+    const handleScroll = (): void => {
+      updateScrollState();
+      setIsScrollIdle(false);
+      if (scrollIdleTimeout.current !== undefined) {
+        window.clearTimeout(scrollIdleTimeout.current);
+      }
+      scrollIdleTimeout.current = window.setTimeout(() => {
+        setIsScrollIdle(true);
+      }, 220);
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateScrollState();
+    });
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    resizeObserver.observe(container);
+
+    return (): void => {
+      container.removeEventListener('scroll', handleScroll);
+      resizeObserver.disconnect();
+      if (scrollIdleTimeout.current !== undefined) {
+        window.clearTimeout(scrollIdleTimeout.current);
+      }
+    };
+  }, [updateScrollState, isCollapsed]);
+
+  // Helper function to get overflow animation props
+  const getOverflowAnimation = (
+    direction: 'left' | 'right'
+  ): {
+    opacity: number | number[];
+    x: number | number[];
+  } => {
+    if (prefersReducedMotion) {
+      return { opacity: 0.35, x: 0 };
+    }
+    if (isScrollIdle) {
+      const xValue = direction === 'left' ? [0, 3, 0] : [0, -3, 0];
+      return { opacity: [0.2, 0.4, 0.2], x: xValue };
+    }
+    return { opacity: 0.25, x: 0 };
+  };
+
+  const showOverflowCue = hasOverflow && !isCollapsed;
 
   // Resize handlers
   const handlePointerDown = useCallback(
@@ -580,15 +669,43 @@ export const DockablePanel = ({
             {/* Panel header */}
             <div
               data-testid="panel-header"
-              className="flex items-center justify-between h-8 px-3 border-b border-border-default shrink-0 relative z-20"
+              className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative z-20"
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {headerContent ?? (
-                  <span className="text-sm font-medium text-text-primary truncate">{title}</span>
-                )}
+              {/* Scrollable header content */}
+              <div
+                ref={headerScrollRef}
+                className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x min-w-0"
+                aria-label="Panel header content"
+              >
+                <div className="flex items-center gap-2 min-w-max">
+                  {headerContent ?? (
+                    <span className="text-sm font-medium text-text-primary truncate">{title}</span>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-1">
+              {/* Overflow gradient cues */}
+              {showOverflowCue && canScrollLeft && (
+                <motion.div
+                  className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
+                  data-testid="panel-header-overflow-left"
+                  initial={false}
+                  animate={getOverflowAnimation('left')}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              )}
+              {showOverflowCue && canScrollRight && (
+                <motion.div
+                  className="pointer-events-none absolute inset-y-0 right-[84px] w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
+                  data-testid="panel-header-overflow-right"
+                  initial={false}
+                  animate={getOverflowAnimation('right')}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              )}
+
+              {/* Control buttons - fixed on right */}
+              <div className="flex items-center gap-1 shrink-0">
                 {/* Dock controls */}
                 <DockControls className="mr-2" />
 
@@ -615,7 +732,7 @@ export const DockablePanel = ({
             </div>
 
             {/* Panel content */}
-            <div className="flex-1 overflow-auto" data-testid="panel-content-area">
+            <div className="flex-1 overflow-hidden min-h-0" data-testid="panel-content-area">
               {children}
             </div>
           </>

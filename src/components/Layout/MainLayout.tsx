@@ -19,7 +19,8 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/utils/cn';
 import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
 import { ConsolePanel } from '../Console/ConsolePanel';
-import { PanelTabs, type PanelTabType } from './PanelTabs';
+import { PanelTabs, type PanelTabType } from '@/components/PanelTabs';
+import { PanelContent } from '@/components/PanelContent';
 import { globalEventBus } from '@/events/bus';
 import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';
@@ -492,11 +493,11 @@ export const MainLayout = ({
                   />
                 }
               >
-                {activeTab === 'network' ? (
-                  <NetworkHistoryPanel {...historyPanelProps} />
-                ) : (
-                  <ConsolePanel />
-                )}
+                <PanelContent
+                  activeTab={activeTab}
+                  networkContent={<NetworkHistoryPanel {...historyPanelProps} />}
+                  consoleContent={<ConsolePanel />}
+                />
               </DockablePanel>
             )}
 
@@ -585,11 +586,11 @@ export const MainLayout = ({
                   />
                 }
               >
-                {activeTab === 'network' ? (
-                  <NetworkHistoryPanel {...historyPanelProps} />
-                ) : (
-                  <ConsolePanel />
-                )}
+                <PanelContent
+                  activeTab={activeTab}
+                  networkContent={<NetworkHistoryPanel {...historyPanelProps} />}
+                  consoleContent={<ConsolePanel />}
+                />
               </DockablePanel>
             )}
           </div>
@@ -608,11 +609,11 @@ export const MainLayout = ({
             />
           }
         >
-          {activeTab === 'network' ? (
-            <NetworkHistoryPanel {...historyPanelProps} />
-          ) : (
-            <ConsolePanel />
-          )}
+          <PanelContent
+            activeTab={activeTab}
+            networkContent={<NetworkHistoryPanel {...historyPanelProps} />}
+            consoleContent={<ConsolePanel />}
+          />
         </DockablePanel>
       )}
 

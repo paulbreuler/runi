@@ -206,7 +206,7 @@ export const HomePage = (): React.JSX.Element => {
                 <EmptyState
                   title="Response will appear here"
                   description="Send a request to see the response, headers, and timing information displayed in a clear, readable format."
-                  muted
+                  variant="muted"
                 />
               </motion.div>
             )}

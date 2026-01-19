@@ -7,6 +7,7 @@ import type { NetworkHistoryEntry } from '@/types/history';
 import { calculateWaterfallSegments } from '@/types/history';
 import { IntelligenceSignals } from './IntelligenceSignals';
 import { TimingWaterfall } from './TimingWaterfall';
+import { Button } from '@/components/ui/button';
 
 interface NetworkHistoryRowProps {
   /** The history entry to display */
@@ -239,34 +240,37 @@ export const NetworkHistoryRow = ({
           data-testid="row-actions"
           className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          <button
+          <Button
             data-testid="replay-button"
+            variant="ghost"
+            size="icon-xs"
             onClick={handleReplayClick}
-            className="p-1 hover:bg-bg-elevated rounded transition-colors"
             aria-label="Replay request"
             title="Replay request"
           >
-            <Play size={14} className="text-text-muted hover:text-text-primary" />
-          </button>
-          <button
+            <Play size={14} />
+          </Button>
+          <Button
             data-testid="copy-curl-button"
+            variant="ghost"
+            size="icon-xs"
             onClick={handleCopyClick}
-            className="p-1 hover:bg-bg-elevated rounded transition-colors"
             aria-label="Copy as cURL"
             title="Copy as cURL"
           >
-            <Copy size={14} className="text-text-muted hover:text-text-primary" />
-          </button>
+            <Copy size={14} />
+          </Button>
           {onDelete !== undefined && (
-            <button
+            <Button
               data-testid="delete-button"
+              variant="destructive-outline"
+              size="icon-xs"
               onClick={handleDeleteClick}
-              className="p-1 hover:bg-bg-elevated rounded transition-colors"
               aria-label="Delete entry"
               title="Delete entry"
             >
-              <Trash2 size={14} className="text-text-muted hover:text-signal-error" />
-            </button>
+              <Trash2 size={14} />
+            </Button>
           )}
         </div>
       </div>

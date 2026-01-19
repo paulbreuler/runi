@@ -13,6 +13,9 @@ const buttonVariants = cva(
         default: 'bg-accent-blue hover:bg-accent-blue-hover text-white',
         // Destructive: Soft error styling
         destructive: 'bg-signal-error/10 text-signal-error hover:bg-signal-error/20',
+        // Destructive Outline: Ghost until hover, then reveals destructive intent
+        'destructive-outline':
+          'bg-transparent border border-transparent text-text-muted hover:text-signal-error hover:bg-signal-error/10 hover:border-signal-error/20',
         // Outline: Subtle border, ghost-like
         outline:
           'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50',
@@ -27,9 +30,11 @@ const buttonVariants = cva(
       size: {
         default: 'h-9 px-5 py-2 text-sm',
         sm: 'h-8 px-3 py-1.5 text-sm',
+        xs: 'h-7 px-2 py-1 text-xs',
         lg: 'h-10 px-6 py-2.5 text-sm',
         icon: 'size-9',
         'icon-sm': 'size-8',
+        'icon-xs': 'size-7',
         'icon-lg': 'size-10',
       },
     },
