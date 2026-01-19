@@ -9,6 +9,7 @@
 import type { ColumnDef, Table, Row, HeaderContext, CellContext } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
+import { COLUMN_WIDTHS } from '@/components/DataGrid/constants';
 
 /**
  * Options for customizing the selection column
@@ -117,9 +118,9 @@ export function createSelectionColumn<TData>(
     enableSorting: false,
     // Disable filtering for selection column
     enableColumnFilter: false,
-    // Fixed width for selection column
-    size: 32,
-    minSize: 32,
-    maxSize: 32,
+    // Fixed width for selection column (matches expander column)
+    size: COLUMN_WIDTHS.SELECTION,
+    minSize: COLUMN_WIDTHS.SELECTION,
+    maxSize: COLUMN_WIDTHS.SELECTION,
   };
 }

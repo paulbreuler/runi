@@ -70,6 +70,17 @@ export const LevelCell = ({ level }: LevelCellProps): React.ReactElement => {
 // Message Cell
 // ============================================================================
 
+/**
+ * Truncates a message to a maximum of 250 characters.
+ * If truncated, appends "..." to indicate truncation.
+ */
+function truncateMessage(message: string, maxLength = 250): string {
+  if (message.length <= maxLength) {
+    return message;
+  }
+  return `${message.slice(0, maxLength)}...`;
+}
+
 interface MessageCellProps {
   message: string;
   count?: number;
@@ -77,12 +88,20 @@ interface MessageCellProps {
 
 /**
  * Renders a log message with optional repeat count badge.
+ * Message is truncated to 250 characters max, even when row is expanded.
+ * Full message is available via tooltip (title attribute).
  */
 export const MessageCell = ({ message, count }: MessageCellProps): React.ReactElement => {
+  const truncatedMessage = truncateMessage(message);
+  const isTruncated = message.length > 250;
+
   return (
     <div className="flex items-center gap-2 min-w-0">
-      <span className="text-sm text-text-primary truncate" title={message}>
-        {message}
+      <span
+        className="text-sm text-text-primary truncate"
+        title={isTruncated ? message : undefined}
+      >
+        {truncatedMessage}
       </span>
       {count !== undefined && count > 1 && (
         <span className="shrink-0 px-1.5 py-0.5 text-xs font-medium bg-bg-raised rounded text-text-muted">
