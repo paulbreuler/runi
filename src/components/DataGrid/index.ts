@@ -36,3 +36,15 @@ export type { SelectionColumnOptions } from './columns/selectionColumn';
 
 export { createExpanderColumn } from './columns/expanderColumn';
 export type { ExpanderColumnOptions } from './columns/expanderColumn';
+
+// Network panel columns
+export {
+  createNetworkColumns,
+  MethodCell,
+  StatusCell,
+  UrlCell,
+  TimingCell,
+  SizeCell,
+  TimeAgoCell,
+  ActionsCell,
+} from './columns/networkColumns';
