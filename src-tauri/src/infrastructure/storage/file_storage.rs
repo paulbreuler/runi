@@ -55,4 +55,37 @@ impl HistoryStorage for FileHistoryStorage {
     async fn clear_all(&self) -> Result<(), String> {
         clear_history().await
     }
+
+    async fn count(&self) -> Result<usize, String> {
+        // For file storage, count by listing entries
+        let entries = self.load_entries(None).await?;
+        Ok(entries.len())
+    }
+
+    async fn get_ids(
+        &self,
+        limit: usize,
+        offset: usize,
+        _sort_desc: bool,
+    ) -> Result<Vec<String>, String> {
+        // For file storage, load entries and extract IDs
+        // Note: File storage doesn't efficiently support windowed queries
+        let entries = self.load_entries(None).await?;
+        Ok(entries
+            .into_iter()
+            .skip(offset)
+            .take(limit)
+            .map(|e| e.id)
+            .collect())
+    }
+
+    async fn get_batch(&self, ids: &[String]) -> Result<Vec<HistoryEntry>, String> {
+        // For file storage, load all and filter
+        // Note: File storage doesn't efficiently support batch queries
+        let entries = self.load_entries(None).await?;
+        Ok(entries
+            .into_iter()
+            .filter(|e| ids.contains(&e.id))
+            .collect())
+    }
 }

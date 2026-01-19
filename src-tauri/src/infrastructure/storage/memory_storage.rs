@@ -88,6 +88,61 @@ impl HistoryStorage for MemoryHistoryStorage {
         entries.clear();
         Ok(())
     }
+
+    /// Get the total count of history entries.
+    async fn count(&self) -> Result<usize, String> {
+        let entries = self
+            .entries
+            .read()
+            .map_err(|e| format!("Failed to acquire read lock: {e}"))?;
+        Ok(entries.len())
+    }
+
+    /// Get history entry IDs with pagination.
+    async fn get_ids(
+        &self,
+        limit: usize,
+        offset: usize,
+        sort_desc: bool,
+    ) -> Result<Vec<String>, String> {
+        let entries = self
+            .entries
+            .read()
+            .map_err(|e| format!("Failed to acquire read lock: {e}"))?;
+
+        // Entries are already sorted newest-first
+        if sort_desc {
+            Ok(entries
+                .iter()
+                .skip(offset)
+                .take(limit)
+                .map(|e| e.id.clone())
+                .collect())
+        } else {
+            // Need to reverse for ascending order
+            Ok(entries
+                .iter()
+                .rev()
+                .skip(offset)
+                .take(limit)
+                .map(|e| e.id.clone())
+                .collect())
+        }
+    }
+
+    /// Get history entries by their IDs (batch load).
+    async fn get_batch(&self, ids: &[String]) -> Result<Vec<HistoryEntry>, String> {
+        let entries = self
+            .entries
+            .read()
+            .map_err(|e| format!("Failed to acquire read lock: {e}"))?;
+
+        Ok(entries
+            .iter()
+            .filter(|e| ids.contains(&e.id))
+            .cloned()
+            .collect())
+    }
 }
 
 #[cfg(test)]

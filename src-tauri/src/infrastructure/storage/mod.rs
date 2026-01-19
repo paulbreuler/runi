@@ -3,6 +3,7 @@
 pub mod file_storage;
 pub mod history;
 pub mod memory_storage;
+pub mod sqlite_storage;
 pub mod traits;
 
 use std::path::{Path, PathBuf};
