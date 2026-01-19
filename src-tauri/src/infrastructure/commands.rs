@@ -7,6 +7,7 @@ use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
 use std::sync::{Arc, LazyLock};
+use tauri::Emitter;
 use tokio::sync::Mutex;
 
 /// Global history storage instance (in-memory by default).
@@ -70,23 +71,31 @@ pub fn get_platform() -> Result<String, String> {
 
 /// Save a request and response to history.
 ///
-/// Uses the configured storage backend (default: file-based).
+/// Uses the configured storage backend (default: in-memory).
+/// Emits a `history:new` event with the new entry for live updates.
 ///
 /// # Errors
 ///
 /// Returns an error if the history entry cannot be saved.
 #[tauri::command]
 pub async fn save_request_history(
+    app: tauri::AppHandle,
     request: RequestParams,
     response: HttpResponse,
 ) -> Result<String, String> {
     let entry = HistoryEntry::new(request, response);
-    HISTORY_STORAGE.save_entry(&entry).await
+    let id = HISTORY_STORAGE.save_entry(&entry).await?;
+
+    // Emit event for live updates
+    app.emit("history:new", &entry)
+        .map_err(|e| format!("Failed to emit history:new event: {e}"))?;
+
+    Ok(id)
 }
 
 /// Load recent history entries.
 ///
-/// Uses the configured storage backend (default: file-based).
+/// Uses the configured storage backend (default: in-memory).
 ///
 /// # Arguments
 ///
@@ -102,26 +111,84 @@ pub async fn load_request_history(limit: Option<usize>) -> Result<Vec<HistoryEnt
 
 /// Delete a history entry by ID.
 ///
-/// Uses the configured storage backend (default: file-based).
+/// Uses the configured storage backend (default: in-memory).
+/// Emits a `history:deleted` event with the deleted ID.
 ///
 /// # Errors
 ///
 /// Returns an error if the history entry cannot be found or deleted.
 #[tauri::command]
-pub async fn delete_history_entry(id: String) -> Result<(), String> {
-    HISTORY_STORAGE.delete_entry(&id).await
+pub async fn delete_history_entry(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    HISTORY_STORAGE.delete_entry(&id).await?;
+
+    // Emit event for live updates
+    app.emit("history:deleted", &id)
+        .map_err(|e| format!("Failed to emit history:deleted event: {e}"))?;
+
+    Ok(())
 }
 
 /// Clear all history entries.
 ///
-/// Uses the configured storage backend (default: file-based).
+/// Uses the configured storage backend (default: in-memory).
+/// Emits a `history:cleared` event.
 ///
 /// # Errors
 ///
 /// Returns an error if history entries cannot be cleared.
 #[tauri::command]
-pub async fn clear_request_history() -> Result<(), String> {
-    HISTORY_STORAGE.clear_all().await
+pub async fn clear_request_history(app: tauri::AppHandle) -> Result<(), String> {
+    HISTORY_STORAGE.clear_all().await?;
+
+    // Emit event for live updates
+    app.emit("history:cleared", ())
+        .map_err(|e| format!("Failed to emit history:cleared event: {e}"))?;
+
+    Ok(())
+}
+
+/// Get the total count of history entries.
+///
+/// # Errors
+///
+/// Returns an error if the count cannot be determined.
+#[tauri::command]
+pub async fn get_history_count() -> Result<usize, String> {
+    HISTORY_STORAGE.count().await
+}
+
+/// Get history entry IDs with pagination.
+///
+/// # Arguments
+///
+/// * `limit` - Maximum number of IDs to return
+/// * `offset` - Number of IDs to skip (for pagination)
+/// * `sort_desc` - Sort by timestamp descending (newest first) if true
+///
+/// # Errors
+///
+/// Returns an error if IDs cannot be retrieved.
+#[tauri::command]
+pub async fn get_history_ids(
+    limit: usize,
+    offset: usize,
+    sort_desc: bool,
+) -> Result<Vec<String>, String> {
+    HISTORY_STORAGE.get_ids(limit, offset, sort_desc).await
+}
+
+/// Get history entries by their IDs (batch load).
+///
+/// # Arguments
+///
+/// * `ids` - Vector of entry IDs to fetch
+///
+/// # Errors
+///
+/// Returns an error if entries cannot be retrieved.
+#[tauri::command]
+pub async fn get_history_batch(ids: Vec<String>) -> Result<Vec<HistoryEntry>, String> {
+    HISTORY_STORAGE.get_batch(&ids).await
 }
 
 /// Set the log level at runtime.
@@ -193,15 +260,19 @@ mod tests {
         assert_eq!(response.message, "Hello from Runi!");
     }
 
+    /// Helper to save an entry using the storage directly (for tests)
+    async fn save_test_entry(request: RequestParams, response: HttpResponse) -> String {
+        let entry = HistoryEntry::new(request, response);
+        HISTORY_STORAGE.save_entry(&entry).await.unwrap()
+    }
+
     #[tokio::test]
     #[serial]
     async fn test_save_request_history() {
         let request = create_test_request("save");
         let response = create_test_response();
 
-        let result = save_request_history(request, response).await;
-        assert!(result.is_ok(), "Should save history entry");
-        let id = result.unwrap();
+        let id = save_test_entry(request, response).await;
         assert!(id.starts_with("hist_"), "ID should start with 'hist_'");
     }
 
@@ -209,13 +280,13 @@ mod tests {
     #[serial]
     async fn test_load_request_history() {
         // Clear history first for isolation
-        let _ = clear_request_history().await;
+        HISTORY_STORAGE.clear_all().await.unwrap();
 
         let request = create_test_request("load");
         let response = create_test_response();
         let url = request.url.clone();
 
-        let _ = save_request_history(request, response).await;
+        let _ = save_test_entry(request, response).await;
 
         // Now load it
         let result = load_request_history(Some(10)).await;
@@ -234,14 +305,14 @@ mod tests {
         let request = create_test_request("delete");
         let response = create_test_response();
 
-        let id = save_request_history(request, response).await.unwrap();
+        let id = save_test_entry(request, response).await;
 
-        // Delete it
-        let result = delete_history_entry(id.clone()).await;
+        // Delete it (use storage directly since command needs AppHandle)
+        let result = HISTORY_STORAGE.delete_entry(&id).await;
         assert!(result.is_ok(), "Should delete history entry");
 
         // Verify it's gone
-        let result = delete_history_entry(id).await;
+        let result = HISTORY_STORAGE.delete_entry(&id).await;
         assert!(
             result.is_err(),
             "Should error when deleting non-existent entry"
@@ -304,13 +375,13 @@ mod tests {
     #[serial]
     async fn test_clear_request_history() {
         // Clear first for isolation
-        let _ = clear_request_history().await;
+        HISTORY_STORAGE.clear_all().await.unwrap();
 
         // Save a few entries
         for i in 0..3 {
             let request = create_test_request(&format!("clear-{i}"));
             let response = create_test_response();
-            let _ = save_request_history(request, response).await;
+            let _ = save_test_entry(request, response).await;
         }
 
         // Verify entries were saved
@@ -320,8 +391,8 @@ mod tests {
             "Should have at least 3 entries before clear"
         );
 
-        // Clear all
-        let result = clear_request_history().await;
+        // Clear all (use storage directly since command needs AppHandle)
+        let result = HISTORY_STORAGE.clear_all().await;
         assert!(result.is_ok(), "Should clear history");
 
         // Verify history is empty
@@ -330,5 +401,76 @@ mod tests {
             entries_after.is_empty(),
             "History should be empty after clear"
         );
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_get_history_count() {
+        // Clear first for isolation
+        HISTORY_STORAGE.clear_all().await.unwrap();
+
+        assert_eq!(get_history_count().await.unwrap(), 0);
+
+        // Save 3 entries
+        for i in 0..3 {
+            let request = create_test_request(&format!("count-{i}"));
+            let response = create_test_response();
+            let _ = save_test_entry(request, response).await;
+        }
+
+        assert_eq!(get_history_count().await.unwrap(), 3);
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_get_history_ids() {
+        // Clear first for isolation
+        HISTORY_STORAGE.clear_all().await.unwrap();
+
+        // Save 5 entries
+        let mut saved_ids = Vec::new();
+        for i in 0..5 {
+            let request = create_test_request(&format!("ids-{i}"));
+            let response = create_test_response();
+            let id = save_test_entry(request, response).await;
+            saved_ids.push(id);
+        }
+
+        // Get first page (2 items)
+        let page1 = get_history_ids(2, 0, true).await.unwrap();
+        assert_eq!(page1.len(), 2);
+
+        // Get second page (2 items)
+        let page2 = get_history_ids(2, 2, true).await.unwrap();
+        assert_eq!(page2.len(), 2);
+
+        // No overlap
+        for id in &page1 {
+            assert!(!page2.contains(id));
+        }
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_get_history_batch() {
+        // Clear first for isolation
+        HISTORY_STORAGE.clear_all().await.unwrap();
+
+        // Save 5 entries
+        let mut saved_ids = Vec::new();
+        for i in 0..5 {
+            let request = create_test_request(&format!("batch-{i}"));
+            let response = create_test_response();
+            let id = save_test_entry(request, response).await;
+            saved_ids.push(id);
+        }
+
+        // Get batch of specific IDs
+        let batch_ids = vec![saved_ids[1].clone(), saved_ids[3].clone()];
+        let batch = get_history_batch(batch_ids.clone()).await.unwrap();
+
+        assert_eq!(batch.len(), 2);
+        assert!(batch.iter().any(|e| e.id == saved_ids[1]));
+        assert!(batch.iter().any(|e| e.id == saved_ids[3]));
     }
 }
