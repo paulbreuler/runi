@@ -38,6 +38,7 @@ function createMockEntry(overrides: Partial<NetworkHistoryEntry> = {}): NetworkH
       method: 'GET',
       headers: {},
       body: null,
+      timeout_ms: 30000,
     },
     response: {
       status: 200,
@@ -339,6 +340,7 @@ describe('Network columns integration', () => {
         method: 'POST',
         headers: {},
         body: '{"name": "John"}',
+        timeout_ms: 30000,
       },
       response: {
         status: 201,
