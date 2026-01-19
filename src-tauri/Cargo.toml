@@ -28,6 +28,10 @@ async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "ansi"] }
 rusqlite = { version = "0.33", features = ["bundled"] }
+# Encryption (Phase 10)
+aes-gcm = "0.10.3"
+base64 = "0.22.1"
+keyring = "3.6"
 
 [dev-dependencies]
 ts-rs = "10"

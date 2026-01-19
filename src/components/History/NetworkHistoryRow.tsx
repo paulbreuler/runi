@@ -234,10 +234,7 @@ export const NetworkHistoryRow = ({
 
         {/* URL with intelligence signals */}
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span
-            className="text-sm text-text-secondary font-mono truncate"
-            title={entry.request.url}
-          >
+          <span className="text-sm text-text-primary font-mono truncate" title={entry.request.url}>
             {entry.request.url}
           </span>
           <IntelligenceSignals intelligence={entry.intelligence} />
