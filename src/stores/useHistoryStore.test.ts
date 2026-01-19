@@ -11,12 +11,19 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 // Mock event bus
 vi.mock('@/events/bus', async () => {
-  const actual = await vi.importActual<typeof import('@/events/bus')>('@/events/bus');
+  const actual = await vi.importActual<{
+    globalEventBus: {
+      on: (...args: unknown[]) => unknown;
+      off: (...args: unknown[]) => unknown;
+      emit: (...args: unknown[]) => unknown;
+    };
+  }>('@/events/bus');
   const mockEmit = vi.fn();
   return {
     ...actual,
     globalEventBus: {
-      ...actual.globalEventBus,
+      on: actual.globalEventBus.on.bind(actual.globalEventBus),
+      off: actual.globalEventBus.off.bind(actual.globalEventBus),
       emit: mockEmit,
     },
     __mockEmit: mockEmit,

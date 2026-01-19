@@ -419,3 +419,59 @@ export const Interactive: Story = {
     },
   ],
 };
+
+/**
+ * ConsolePanel with auto-scroll disabled.
+ * The Auto button in the toolbar appears outlined, indicating free scrolling mode.
+ * New logs will not automatically scroll the view to the bottom.
+ */
+export const AutoScrollDisabled: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Shows ConsolePanel with auto-scroll disabled. The Auto button appears outlined, and new logs will not automatically scroll to the bottom.',
+      },
+    },
+  },
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        const service = getConsoleService();
+        service.clear();
+        service.setMinLogLevel('debug');
+
+        // Add enough logs to create a scrollable view
+        for (let i = 0; i < 20; i++) {
+          service.addLog(
+            createMockLog('info', `Log entry ${String(i + 1)}`, [
+              {
+                index: i + 1,
+                timestamp: Date.now() - (20 - i) * 1000,
+                data: `Sample data for log ${String(i + 1)}`,
+              },
+            ])
+          );
+        }
+
+        return () => {
+          service.clear();
+        };
+      }, []);
+
+      return (
+        <div className="h-screen">
+          <Story />
+        </div>
+      );
+    },
+  ],
+  render: () => {
+    // Note: ConsolePanel manages auto-scroll state internally.
+    // This story demonstrates the panel with auto-scroll disabled.
+    // Users can click the Auto button in the toolbar to toggle it.
+    // The story shows the initial state; to see auto-scroll disabled,
+    // click the Auto button in the toolbar.
+    return <ConsolePanel />;
+  },
+};

@@ -187,7 +187,7 @@ export function useDataGrid<TData>({
   initialColumnSizing = {},
   enableColumnOrdering: _enableColumnOrdering = false, // Reserved for future drag-and-drop UI
   initialColumnOrder = [],
-  enableColumnPinning: _enableColumnPinning = false, // Reserved for future pinning UI
+  enableColumnPinning = true, // Enable column pinning for frozen columns (e.g., actions)
   initialColumnPinning = {},
   persistenceKey,
 }: UseDataGridOptions<TData>): UseDataGridReturn<TData> {
@@ -315,6 +315,7 @@ export function useDataGrid<TData>({
       // Column features options
       enableColumnResizing,
       columnResizeMode,
+      enableColumnPinning,
     }),
     [
       data,
@@ -335,6 +336,7 @@ export function useDataGrid<TData>({
       getRowCanExpand,
       enableColumnResizing,
       columnResizeMode,
+      enableColumnPinning,
     ]
   );
 

@@ -212,7 +212,7 @@ export const ActionsCell = ({
   };
 
   return (
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <Button
         data-testid="replay-button"
         variant="ghost"
@@ -302,6 +302,7 @@ export function createNetworkColumns(
       size: 100,
       minSize: 100,
       maxSize: 100,
+      enableResizing: false,
       enableSorting: true,
     },
 
@@ -358,17 +359,20 @@ export function createNetworkColumns(
       enableSorting: true,
     },
 
-    // Actions column (fixed on right, reduced width for tighter spacing)
+    // Actions column (pinned to right, frozen during horizontal scroll)
+    // Width: 3 buttons (28px each) + 2 gaps (4px each) + left padding (12px) + right padding (12px) = 104px
     {
       id: 'actions',
-      header: undefined,
+      header: 'Actions',
       cell: ({ row }) => (
         <ActionsCell entry={row.original} onReplay={onReplay} onCopy={onCopy} onDelete={onDelete} />
       ),
-      size: 80,
-      minSize: 80,
-      maxSize: 80,
+      size: 104,
+      minSize: 104,
+      maxSize: 104,
+      enableResizing: false,
       enableSorting: false,
+      enablePinning: true,
     },
   ];
 

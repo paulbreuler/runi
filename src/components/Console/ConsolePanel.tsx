@@ -947,6 +947,7 @@ export const ConsolePanel = ({
             getRowCanExpand={() => true}
             initialRowSelection={initialRowSelection}
             initialExpanded={initialExpanded}
+            initialColumnPinning={{ right: ['actions'] }}
             onRowSelectionChange={handleRowSelectionChange}
             onExpandedChange={handleExpandedChange}
             onSetRowSelectionReady={handleSetRowSelectionReady}

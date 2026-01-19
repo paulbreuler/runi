@@ -112,7 +112,9 @@ export function createExpanderColumn<TData>(
     enableSorting: false,
     // Disable filtering for expander column
     enableColumnFilter: false,
-    // Fixed width for expander column
+    // Disable resizing for expander column (fixed width)
+    enableResizing: false,
+    // Fixed width for expander column (32px)
     size: COLUMN_WIDTHS.EXPANDER,
     minSize: COLUMN_WIDTHS.EXPANDER,
     maxSize: COLUMN_WIDTHS.EXPANDER,

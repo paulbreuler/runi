@@ -515,6 +515,7 @@ export const NetworkHistoryPanel = ({
             getRowCanExpand={() => true}
             initialRowSelection={initialRowSelection}
             initialExpanded={initialExpanded}
+            initialColumnPinning={{ right: ['actions'] }}
             onRowSelectionChange={handleRowSelectionChange}
             onExpandedChange={handleExpandedChange}
             onSetRowSelectionReady={handleSetRowSelectionReady}
