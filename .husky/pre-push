@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Check if only documentation files have changed
 DOCS_ONLY=$(bash scripts/check-docs-only.sh)
 
