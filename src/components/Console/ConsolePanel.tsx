@@ -937,7 +937,11 @@ export const ConsolePanel = ({
         {/* Note: Select all is handled via TanStack Table's header checkbox in selection column */}
 
         {/* VirtualDataGrid - replaces custom rendering */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-x-auto" ref={logContainerRef}>
+        <div
+          className="flex-1 flex flex-col min-h-0 overflow-x-auto"
+          ref={logContainerRef}
+          data-testid="console-logs"
+        >
           <VirtualDataGrid
             data={tableData}
             columns={columns}

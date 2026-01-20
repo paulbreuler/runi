@@ -41,10 +41,11 @@ describe('TimingCell', () => {
       expect(element).not.toHaveClass('text-text-muted');
     });
 
-    it('highlights exactly 1000ms requests in red', () => {
+    it('does not highlight exactly 1000ms requests (threshold is >1000)', () => {
       render(<TimingCell totalMs={1000} />);
       const element = screen.getByText('1000ms');
-      expect(element).toHaveClass('text-signal-error');
+      expect(element).toHaveClass('text-text-muted');
+      expect(element).not.toHaveClass('text-signal-error');
     });
 
     it('does not highlight requests at 1000ms threshold', () => {

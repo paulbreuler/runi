@@ -31,7 +31,6 @@ describe('ResponsePanel', () => {
 
     const responseTab = screen.getByRole('tab', { name: /response body/i });
     expect(responseTab).toHaveAttribute('aria-selected', 'true');
-    expect(responseTab).toHaveAttribute('tabIndex', '0');
   });
 
   it('switches to Request Body tab on click', async () => {

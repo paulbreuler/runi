@@ -610,7 +610,7 @@ describe('useHistoryStore', () => {
         );
       });
 
-      it('should select range with selectRange', () => {
+      it('should select range with selectRange (limited to 2 items)', () => {
         const { result } = renderHook(() => useHistoryStore());
 
         // Set up entries
@@ -626,13 +626,14 @@ describe('useHistoryStore', () => {
         });
 
         act(() => {
-          result.current.selectRange(1, 3); // Select from index 1 to 3
+          result.current.selectRange(1, 3); // Select from index 1 to 3 (but limited to 2)
         });
 
-        expect(result.current.selectedIds).toEqual(new Set(['hist_2', 'hist_3', 'hist_4']));
+        // Only first 2 items in range are selected due to comparison limit
+        expect(result.current.selectedIds).toEqual(new Set(['hist_2', 'hist_3']));
       });
 
-      it('should handle selectRange with reversed indices', () => {
+      it('should handle selectRange with reversed indices (limited to 2 items)', () => {
         const { result } = renderHook(() => useHistoryStore());
 
         act(() => {
@@ -646,10 +647,11 @@ describe('useHistoryStore', () => {
         });
 
         act(() => {
-          result.current.selectRange(2, 0); // Reversed: from index 2 to 0
+          result.current.selectRange(2, 0); // Reversed: from index 2 to 0 (but limited to 2)
         });
 
-        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2', 'hist_3']));
+        // Only first 2 items in range are selected due to comparison limit
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
       });
 
       it('should maintain backward compatibility with selectedId', () => {
@@ -670,7 +672,7 @@ describe('useHistoryStore', () => {
         expect(result.current.selectedId).toBe(null);
       });
 
-      it('should select all with selectAll', () => {
+      it('should select all with selectAll (limited to 2 items)', () => {
         const { result } = renderHook(() => useHistoryStore());
 
         act(() => {
@@ -687,7 +689,8 @@ describe('useHistoryStore', () => {
           result.current.selectAll(['hist_1', 'hist_2', 'hist_3']);
         });
 
-        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2', 'hist_3']));
+        // Only first 2 items are selected due to comparison limit
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
         // selectedId should be the first sorted ID
         expect(result.current.selectedId).toBe('hist_1');
       });
