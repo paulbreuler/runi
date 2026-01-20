@@ -14,7 +14,7 @@
 export const COLUMN_WIDTHS = {
   /** Selection checkbox column width (32px for square appearance, matches natural checkbox size) */
   SELECTION: 32,
-  /** Expander chevron column width (32px to match selection column for square appearance) */
+  /** Expander chevron column width (16px for compact chevron with 14px icon) */
   EXPANDER: 16,
 } as const;
 
@@ -44,12 +44,12 @@ export const CELL_PADDING = {
  *
  * This accounts for:
  * - Selection column width (32px)
- * - Expander column width (32px)
+ * - Expander column width (16px)
  * - First data column's left padding (6px from px-3)
  *
- * Total: 32 + 32 + 6 = 70px
+ * Total: 32 + 16 + 6 = 54px
  *
  * Use this with inline styles: `style={{ marginLeft: \`${EXPANDED_CONTENT_LEFT_MARGIN_PX}px\` }}`
  */
 export const EXPANDED_CONTENT_LEFT_MARGIN_PX =
-  COLUMN_WIDTHS.SELECTION + COLUMN_WIDTHS.EXPANDER + CELL_PADDING.REGULAR; // 32 + 32 + 6 = 70px
+  COLUMN_WIDTHS.SELECTION + COLUMN_WIDTHS.EXPANDER + CELL_PADDING.REGULAR; // 32 + 16 + 6 = 54px

@@ -158,17 +158,10 @@ test.describe('Console Panel', () => {
     expect(warnButtonText).toContain('2');
 
     // Info button should show badge with count 3
-    // Find button containing "Info" text
-    const allButtons = await page.locator('button').all();
-    const infoButton = allButtons.find(async (btn) => {
-      const text = await btn.textContent();
-      return text?.includes('Info') && !text?.includes('All');
-    });
-    expect(infoButton).toBeDefined();
-    if (infoButton) {
-      const infoButtonText = await infoButton.textContent();
-      expect(infoButtonText).toContain('3');
-    }
+    const infoButton = page.locator('[data-testid="segment-info"]');
+    await expect(infoButton).toBeVisible();
+    const infoButtonText = await infoButton.textContent();
+    expect(infoButtonText).toContain('3');
 
     // All button should show total count in label (at least 7: 2 errors + 2 warnings + 3 info)
     const allButton = page.getByRole('button', { name: /all/i });

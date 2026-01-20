@@ -271,7 +271,7 @@ export function createConsoleColumns(
     },
 
     // Actions column (pinned to right, frozen during horizontal scroll)
-    // Width: 2 buttons (28px each) + 1 gap (4px) + left padding (12px) + right padding (12px) + extra space for header (8px) = 80px
+    // Width: fixed at 80px to accommodate two action buttons, spacing, and cell padding
     {
       id: 'actions',
       header: 'Actions',
