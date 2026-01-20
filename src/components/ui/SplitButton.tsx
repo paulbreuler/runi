@@ -21,7 +21,7 @@ interface SplitButtonSeparator {
 type SplitButtonItem = SplitButtonMenuItem | SplitButtonSeparator;
 
 const splitButtonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -198,7 +198,7 @@ export const SplitButton = ({
           <motion.button
             type="button"
             className={cn(
-              'inline-flex items-center justify-center font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app rounded-r-lg rounded-l-none',
+              'inline-flex items-center justify-center font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app rounded-r-lg rounded-l-none',
               getTriggerClasses(),
               getTriggerSizeClasses()
             )}

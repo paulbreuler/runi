@@ -1,19 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for E2E tests against Vite dev server.
- *
- * This configuration tests the app running in dev mode with mocked Tauri IPC.
- * For macOS compatibility, we test against the dev server rather than the built
- * Tauri app (WKWebView driver limitations).
- *
- * @see https://playwright.dev/docs/test-configuration
+ * Playwright configuration for testing Storybook stories.
  */
 export default defineConfig({
   testDir: './tests/e2e',
-
-  /* Skip Storybook tests in CI - they require Storybook server on port 6006 */
-  testIgnore: process.env.CI ? ['**/*.storybook.spec.ts'] : undefined,
+  testMatch: '**/*.storybook.spec.ts',
 
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -33,7 +25,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:6006',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -50,11 +42,11 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Run Storybook server before starting the tests */
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    command: 'npm run storybook',
+    url: 'http://localhost:6006',
+    reuseExistingServer: true, // Always reuse if Storybook is already running
     timeout: 120 * 1000,
     stdout: 'ignore',
     stderr: 'pipe',

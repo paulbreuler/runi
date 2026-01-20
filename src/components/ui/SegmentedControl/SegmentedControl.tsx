@@ -27,6 +27,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import { MUI_TIER_CONFIG, getSettlingConfig } from './config';
 import { usePowerLevel, PowerLevelContext, type PowerLevelContextValue } from './usePowerLevel';
 import {
@@ -365,7 +366,9 @@ export const SegmentedControl = <T extends string>({
                   isDisabled === true &&
                     'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-text-muted',
                   // Icon mode specific sizing
-                  isIconMode && 'min-w-[28px]'
+                  isIconMode && 'min-w-[28px]',
+                  // Focus ring for accessibility
+                  focusRingClasses
                 )}
                 // Set initial to match animate to prevent mount animation flash
                 initial={{

@@ -8,6 +8,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Play, Copy, Trash2 } from 'lucide-react';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/utils/cn';
+import { useFocusVisible } from '@/utils/accessibility';
 import { createExpanderColumn } from './expanderColumn';
 import { createSelectionColumn } from './selectionColumn';
 import { MethodCell } from './methodCell';
@@ -41,6 +43,9 @@ export const ActionsCell = ({
   onCopy,
   onDelete,
 }: ActionsCellProps): React.ReactElement => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const isVisible = useFocusVisible(containerRef);
+
   const handleReplayClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
     onReplay(entry);
@@ -57,7 +62,13 @@ export const ActionsCell = ({
   };
 
   return (
-    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div
+      ref={containerRef}
+      className={cn(
+        'flex items-center justify-end gap-1 transition-opacity',
+        isVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      )}
+    >
       <Button
         data-testid="replay-button"
         variant="ghost"

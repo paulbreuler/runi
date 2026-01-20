@@ -7,6 +7,7 @@ import * as React from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Copy, Trash2, Info, AlertTriangle, XCircle, Bug } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useFocusVisible } from '@/utils/accessibility';
 import type { ConsoleLog, LogLevel } from '@/types/console';
 import { Button } from '@/components/ui/button';
 import { createSelectionColumn } from './selectionColumn';
@@ -154,6 +155,9 @@ export const ConsoleActionsCell = ({
   onCopy,
   onDelete,
 }: ConsoleActionsCellProps): React.ReactElement => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const isVisible = useFocusVisible(containerRef);
+
   const handleCopyClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
     onCopy(log);
@@ -165,7 +169,13 @@ export const ConsoleActionsCell = ({
   };
 
   return (
-    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div
+      ref={containerRef}
+      className={cn(
+        'flex items-center justify-end gap-1 transition-opacity',
+        isVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      )}
+    >
       <Button
         variant="ghost"
         size="icon-xs"

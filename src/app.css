@@ -75,7 +75,9 @@
   --color-destructive: var(--color-signal-error);
   --color-border: var(--color-border-default);
   --color-input: var(--color-bg-raised);
-  --color-ring: var(--color-accent-blue);
+  --color-ring: var(
+    --color-accent-blue
+  ); /* Default fallback - components should use accent-blue explicitly */
 }
 
 /* ============================================
@@ -242,6 +244,6 @@ aside[data-testid='sidebar'] {
    ============================================ */
 
 ::selection {
-  background: rgba(168, 85, 247, 0.3);
+  background: oklch(0.623 0.214 259.1 / 0.3); /* accent-blue with 30% opacity */
   color: var(--color-text-primary);
 }

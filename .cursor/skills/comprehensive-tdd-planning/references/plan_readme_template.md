@@ -1,39 +1,81 @@
-# [Project] [Type] - Plan README
+# [Project] [Type] Plan
 
-Quick reference for this plan directory.
+**Created**: [Date] | **Status**: 0/N complete
 
-## Files in This Directory
+## Dependency Graph
 
-- **[plan.md](./plan.md)** - Main plan document with all features, Gherkin scenarios, and TDD todos
-- **[parallelization.md](./parallelization.md)** - Parallelization analysis and agent assignments
-- **[speed_prompts.md](./speed_prompts.md)** - Quick-reference prompts for each agent (copy-paste ready)
+```mermaid
+graph TD
+    subgraph A1[Agent: Core]
+        F1[#1 Base]
+    end
+    subgraph A2[Agent: Columns]
+        F2[#2 Headers]
+        F3[#3 Resize]
+        F4[#4 Sorting]
+    end
+    subgraph A3[Agent: Rows]
+        F5[#5 Render]
+        F6[#6 Expand]
+    end
+
+    F1 --> F2
+    F1 --> F5
+    F2 --> F3
+    F2 --> F4
+    F5 --> F6
+
+    style F1 fill:#FFCCCB
+    style F2 fill:#FFCCCB
+    style F3 fill:#FFCCCB
+    style F4 fill:#FFCCCB
+    style F5 fill:#FFCCCB
+    style F6 fill:#FFCCCB
+```
+
+## Status
+
+| #   | Feature | Agent   | Status | Blocked By |
+| --- | ------- | ------- | ------ | ---------- |
+| 1   | Base    | Core    | ❌ GAP | -          |
+| 2   | Headers | Columns | ❌ GAP | #1         |
+| 3   | Resize  | Columns | ❌ GAP | #2         |
+| 4   | Sorting | Columns | ❌ GAP | #2         |
+| 5   | Render  | Rows    | ❌ GAP | #1         |
+| 6   | Expand  | Rows    | ❌ GAP | #5         |
+
+## Agents
+
+| Agent   | Features   | Owns                      | Depends On    |
+| ------- | ---------- | ------------------------- | ------------- |
+| Core    | #1         | `src/core/*`              | -             |
+| Columns | #2, #3, #4 | `src/components/Column/*` | Core          |
+| Rows    | #5, #6     | `src/components/Row/*`    | Core, Columns |
+
+## Files
+
+| Doc                                                  | Purpose                  | Lines  |
+| ---------------------------------------------------- | ------------------------ | ------ |
+| [plan.md](./plan.md)                                 | Full feature specs       | ~1000  |
+| [interfaces.md](./interfaces.md)                     | Contract source of truth | ~300   |
+| [gotchas.md](./gotchas.md)                           | Discovered issues        | append |
+| [agents/core.agent.md](./agents/core.agent.md)       | Core execution           | ~150   |
+| [agents/columns.agent.md](./agents/columns.agent.md) | Columns execution        | ~200   |
+| [agents/rows.agent.md](./agents/rows.agent.md)       | Rows execution           | ~180   |
 
 ## Quick Start
 
-1. **Read the plan**: Start with `plan.md` to understand all features
-2. **Check parallelization**: See `parallelization.md` for dependencies and agent assignments
-3. **Create agent prompts**: Use `speed_prompts.md` + template to create agent assignments
+1. Check status table above
+2. Copy appropriate `agents/*.agent.md` to Claude
+3. Agent implements per spec
+4. Update status when complete
+5. Append to `gotchas.md` if issues found
 
-## Template Location
+## Legend
 
-**Agent Assignment Template**: `../templates/agent_assignment_prompt_template.md` (relative from plan directory)
-
-## Work Type
-
-**Type**: [Refactor | Overhaul | Feature Implementation | Combination]
-
-[Brief description of work type and goals]
-
-## Key Information
-
-- **Total Features**: [N]
-- **Prerequisites**: [List Phase 0 features]
-- **Parallel Streams**: [N] agents can work in parallel
-- **Status**: [Overall status]
-
-## Links
-
-- Main Plan: [plan.md](./plan.md)
-- Parallelization: [parallelization.md](./parallelization.md)
-- Speed Prompts: [speed_prompts.md](./speed_prompts.md)
-- Template: [../../templates/agent_assignment_prompt_template.md](../../templates/agent_assignment_prompt_template.md)
+| Icon | Status            |
+| ---- | ----------------- |
+| ❌   | GAP - not started |
+| 🔄   | WIP - in progress |
+| ✅   | PASS - complete   |
+| ⛔   | BLOCKED - waiting |

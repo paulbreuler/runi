@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, within } from '@storybook/test';
 import { DockablePanel } from './DockablePanel';
 import { usePanelStore, DEFAULT_PANEL_SIZES } from '@/stores/usePanelStore';
 import { useEffect, useState } from 'react';
@@ -598,5 +599,164 @@ export const WithHorizontalScroll: Story = {
         </div>
       </DockablePanel>
     );
+  },
+};
+
+/**
+ * Interactive story for testing focus restoration when changing dock positions.
+ *
+ * This story uses Storybook's `play` function to automatically test focus restoration.
+ * The test runs when you view this story in Storybook - check the Interactions panel
+ * to see the test steps execute in real-time.
+ *
+ * **Expected Behavior:**
+ * - Focus stays on the button after position change
+ * - No focus loss when panel remounts in new position
+ * - Keyboard navigation remains continuous
+ */
+export const FocusRestorationTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'bottom',
+          isVisible: true,
+          isCollapsed: false,
+          sizes: { ...DEFAULT_PANEL_SIZES },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex flex-col overflow-hidden">
+          <div className="p-4 text-sm text-text-secondary shrink-0 border-b border-border-default">
+            <h2 className="font-semibold text-text-primary mb-2">Focus Restoration Test</h2>
+            <p className="text-xs text-text-muted mb-2">
+              This story includes automated interaction tests. Open the{' '}
+              <strong>Interactions</strong> panel at the bottom to see the test steps execute
+              automatically.
+            </p>
+            <p className="text-xs text-text-muted">
+              Expected: Focus stays on the button after position change, no focus loss when panel
+              remounts.
+            </p>
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Story />
+          </div>
+        </div>
+      );
+    },
+  ],
+  render: () => {
+    const [activeTab, setActiveTab] = useState<PanelTabType>('network');
+    return (
+      <DockablePanel
+        title="DevTools"
+        headerContent={
+          <PanelTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            networkCount={5}
+            consoleCount={3}
+          />
+        }
+      >
+        <div className="p-4 text-text-secondary">
+          <p className="mb-2">Panel content for focus testing.</p>
+          <p className="text-xs text-text-muted">
+            The interaction test will automatically navigate and verify focus restoration.
+          </p>
+        </div>
+      </DockablePanel>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    // Wait for panel to render
+    await expect(canvas.getByTestId('dockable-panel')).toBeVisible();
+
+    // Find dock control buttons
+    const bottomButton = canvas.getByRole('button', { name: /dock bottom/i });
+    const leftButton = canvas.getByRole('button', { name: /dock left/i });
+    const rightButton = canvas.getByRole('button', { name: /dock right/i });
+
+    // Verify initial state (bottom is active)
+    await expect(bottomButton).toHaveAttribute('aria-pressed', 'true');
+
+    // Helper to tab to a specific button
+    const tabToButton = async (targetButton: HTMLElement, maxTabs = 10): Promise<boolean> => {
+      for (let i = 0; i < maxTabs; i++) {
+        await userEvent.tab();
+
+        // Use expect with built-in retry logic (no timeout option in Storybook)
+        try {
+          await expect(targetButton).toHaveFocus();
+          return true;
+        } catch {
+          // Continue to next tab if not focused yet
+        }
+      }
+      return false;
+    };
+
+    // Test 1: Change from bottom to left
+    await step('Change position from bottom to left and verify focus', async () => {
+      // Focus the panel header first to start from a neutral position
+      const panelHeader = canvas.getByTestId('panel-header');
+      await userEvent.click(panelHeader);
+
+      // Tab to left button
+      const foundLeft = await tabToButton(leftButton);
+      if (!foundLeft) {
+        throw new Error('Failed to tab to left button');
+      }
+
+      // Activate left button
+      await userEvent.keyboard('{Space}');
+
+      // Wait for position change using expect's built-in retry logic
+      // This is more reliable than hardcoded timeouts
+      await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
+
+      // Verify focus is still on left button
+      await expect(leftButton).toHaveFocus();
+    });
+
+    // Test 2: Change from left to right
+    await step('Change position from left to right and verify focus', async () => {
+      // Tab to right button (should be next)
+      await userEvent.tab();
+
+      // Verify we're on right button using expect's built-in retry logic
+      await expect(rightButton).toHaveFocus();
+
+      // Activate right button
+      await userEvent.keyboard('{Space}');
+
+      // Wait for position change using expect's built-in retry logic
+      await expect(rightButton).toHaveAttribute('aria-pressed', 'true');
+
+      // Verify focus is still on right button
+      await expect(rightButton).toHaveFocus();
+    });
+
+    // Test 3: Change back to left
+    await step('Change position back to left and verify focus', async () => {
+      // Tab backwards to left button
+      await userEvent.tab({ shift: true });
+
+      // Verify we're on left button using expect's built-in retry logic
+      await expect(leftButton).toHaveFocus();
+
+      // Activate left button
+      await userEvent.keyboard('{Space}');
+
+      // Wait for position change using expect's built-in retry logic
+      await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
+
+      // Verify focus is still on left button
+      await expect(leftButton).toHaveFocus();
+    });
   },
 };

@@ -1,330 +1,161 @@
 ---
 name: comprehensive-tdd-planning
-description: Create comprehensive TDD plans for refactoring, overhaul, or feature implementation projects with Gherkin scenarios, feature tracking, parallelization analysis, and agent assignment prompts. Use when planning refactors (changing code without behavior change), overhauls (major restructuring), feature implementations (new functionality), or combinations that require strict TDD methodology and parallel agent coordination.
+version: 2.0.0
+description: TDD planning with agent-per-file execution. Planning is verbose. Agent files are minimal execution context.
 ---
 
-# Comprehensive TDD Planning
+# Comprehensive TDD Planning v2.0.0
 
-This skill guides creation of comprehensive TDD plans for large refactoring or overhaul projects, enabling parallel agent work with strict quality gates.
+## Architecture
 
-## When to Use
+| Phase                        | Verbosity | Purpose                                     |
+| ---------------------------- | --------- | ------------------------------------------- |
+| **Planning** (`plan.md`)     | Verbose   | Figure things out, iterate, full specs      |
+| **Execution** (`*.agent.md`) | Minimal   | Distilled context for agent, ~200-400 lines |
 
-- **Refactoring**: Changing existing code structure without changing behavior
-- **Overhauling**: Major restructuring or rewrite of existing systems
-- **Feature Implementation**: Adding new functionality (single or multiple features)
-- **Combinations**: Overhauls with new features, refactors that enable features, etc.
-- Breaking down work into testable, trackable components
-- Coordinating multiple agents working in parallel
-- Ensuring complete test coverage and documentation
-- Managing complex implementations with dependencies
-
-## Work Type Distinctions
-
-### Refactor
-
-- **Goal**: Improve code structure without changing behavior
-- **Focus**: Code quality, maintainability, performance
-- **Tests**: Ensure behavior is preserved
-- **Naming**: `[project]_refactor_[id].plan.md`
-- **May include**: New features enabled by refactor
-
-### Overhaul
-
-- **Goal**: Major restructuring or rewrite
-- **Focus**: New architecture, breaking changes, migration
-- **Tests**: New behavior, migration paths
-- **Naming**: `[project]_overhaul_[id].plan.md`
-- **May include**: New features as part of overhaul
-
-### Feature Implementation
-
-- **Goal**: Add new functionality
-- **Focus**: New features, integration points
-- **Tests**: New behavior, edge cases
-- **Naming**: `[project]_features_[id].plan.md`
-- **May include**: Refactoring to support features
-
-### Combination
-
-- **Primary Type**: Determine main goal (refactor/overhaul/feature)
-- **Secondary Types**: Note additional work types included
-- **Naming**: Use primary type (e.g., `overhaul` if overhaul with features)
-- **Plan Structure**: Adjust based on primary type
-
-## Core Methodology
-
-### 1. Feature Breakdown
-
-Break down the project into discrete, testable features. Each feature should have:
-
-- **Feature Number**: Unique identifier (#1, #2, etc.)
-- **Feature Name**: Clear, descriptive name
-- **Gherkin Scenario**: Behavior-driven description
-- **TDD Todos**: Red-Green-Refactor cycles
-- **Component Design**: Required components
-- **Storybook**: Required stories
-- **Status Tracking**: Current status (PASS/GAP/MISMATCH/IN_PROGRESS)
-
-### 2. Gherkin Scenarios
-
-Each feature needs a Gherkin-style scenario describing expected behavior:
-
-```gherkin
-Feature: [Feature Name]
-  Scenario: [Specific behavior]
-    Given [initial state]
-    When [action]
-    Then [expected outcome]
-    And [additional expectations]
-```
-
-### 3. TDD Structure
-
-For each feature, define TDD cycles:
-
-- **RED**: Write failing test first
-- **GREEN**: Minimum code to pass
-- **REFACTOR**: Improve while tests stay green
-
-Never skip the RED phase.
-
-### 4. Feature Tracking Table
-
-Create a tracking table following this format:
+## Directory Structure
 
 ```
-────────────────────────────────────────
-#: [NUMBER]
-Feature: [FEATURE NAME]
-Expected Behavior: [BEHAVIOR DESCRIPTION]
-Current Test Coverage: [✅ Covered | ⚠️ Partial | ❌ Not tested]
-Status: [PASS | GAP | MISMATCH | IN_PROGRESS | PENDING]
-────────────────────────────────────────
+[project]_[type]_[timestamp]/
+├── README.md           # Index, dependency graph, status matrix
+├── plan.md             # Full verbose feature specs (planning reference)
+├── interfaces.md       # Contract source of truth
+├── gotchas.md          # Discovered issues (append-only)
+└── agents/
+    └── [name].agent.md # Minimal execution context per agent
 ```
 
-### 5. Parallelization Analysis
+## Agent Files: Design Principles
 
-Identify:
+Agent files are **distilled execution context**, not documentation.
 
-- **Prerequisites**: Features that must complete first
-- **Independent Features**: Can work in parallel
-- **Dependencies**: Features that depend on others
-- **Coordination Points**: Shared files or integration points
-- **Agent Assignments**: Which agent works on which features
+### IN Agent Files
 
-### 6. Agent Assignment Prompts
+- Feature IDs + one-line TL;DRs
+- Interface contracts (your exports + what you receive)
+- Files to create/modify
+- Test IDs
+- Concise TDD cycles (one line per cycle)
+- Relevant gotchas (brief)
+- Done checklist
 
-Create customized prompts for each agent with:
+### OUT of Agent Files
 
-- Specific feature numbers
-- Prototype/reference documents
-- Files to create
-- Dependencies
-- Git workflow requirements
-- Deliverables checklist
+- Verbose Gherkin (TL;DR sufficient)
+- Methodology explanations (agent knows TDD)
+- Git workflow (in CLAUDE.md)
+- Other agents' details
+- Historical context
 
-## Plan Document Structure
+### Target Size
 
-### Main Plan Document
+~200-400 lines for 2-4 features. Larger = split agent.
 
-1. **Overview**: Project context and goals
-2. **Feature Breakdown**: All features with Gherkin scenarios
-3. **Implementation Order**: Suggested sequence
-4. **Feature Tracking Table**: Status and coverage
-5. **Storybook Requirements**: Stories needed
-6. **Documentation Requirements**: Docs needed
+### Searching is Failure
 
-### Parallelization Document
+If agent files are well-constructed, searching `plan.md` is rare—only for unexpected edge cases. Frequent searching means agent files need improvement.
 
-1. **Prerequisites**: Must-complete-first features
-2. **Parallel Work Streams**: Independent feature groups
-3. **Coordination Points**: Shared files and integration
-4. **Agent Assignments**: Who works on what
-5. **Risk Mitigation**: Merge conflicts, dependencies
+## Workflow
 
-### Agent Prompts
+### Create Plan
 
-1. **Assignment**: Feature numbers
-2. **Context**: Project and tech stack
-3. **Planning Documents**: References
-4. **Requirements**: TDD, components, tests, stories
-5. **Files to Create**: Specific file paths
-6. **Coordination**: Dependencies and shared files
-7. **Git Workflow**: Pre-commit/pre-push hooks
-8. **Deliverables**: Checklist
+1. Gather context → verbose `plan.md`
+2. Map interfaces → `interfaces.md`
+3. Draw dependencies → `README.md`
+4. **Distill** agent files → `agents/*.agent.md`
 
-### Speed Prompts File
-
-A quick-reference file for rapid agent creation:
-
-- **Purpose**: Enable fast agent assignment without modifying template repeatedly
-- **Structure**: One section per agent/feature with:
-  - Feature number and name
-  - Link to plan section
-  - Link to template location
-  - Critical information (constraints, files, dependencies)
-  - Key TDD steps
-  - Success criteria
-  - Template injection guide
-- **Usage**: Copy relevant section, inject into template, customize
-- **Benefits**: No file modification needed, consistent structure, fast agent creation
-
-## Best Practices
-
-### Feature Granularity
-
-- **Too Large**: Hard to test, track, and parallelize
-- **Too Small**: Overhead outweighs benefit
-- **Just Right**: Single, testable behavior with clear boundaries
-
-### Gherkin Scenarios
-
-- Focus on **behavior**, not implementation
-- Use **specific examples** (not abstract)
-- Include **edge cases** and **error states**
-- Make **testable** (can write a test for it)
-
-### TDD Todos
-
-- Break into **small, incremental steps**
-- Each step should be **independently testable**
-- Include **refactoring** steps explicitly
-- Consider **integration** and **accessibility** tests
-- **Test selectors**: Specify `data-test-id` attributes for all interactive elements and test targets
-- **Test queries**: Tests must use `getByTestId` for element selection (not generic selectors like `getByText` or `getByRole` for component identification)
-
-### Parallelization
-
-- **Maximize independence**: Prefer features with no dependencies
-- **Minimize coordination**: Reduce shared file conflicts
-- **Clear boundaries**: Each agent owns specific files
-- **Integration points**: Plan how independent work integrates
-
-### Status Tracking
-
-- **Update frequently**: As work progresses
-- **Be specific**: Note what's tested, what's not
-- **Track deviations**: Document when behavior differs from plan
-- **Implementation notes**: Add notes about decisions made
-
-## Example Structure
-
-Directory structure (each plan gets its own directory):
+### Assign Work
 
 ```
-../runi-planning-docs/plans/
-├── [project]_[type]_[timestamp]/          # Plan directory
-│   ├── README.md                           # Quick reference (optional)
-│   ├── plan.md                             # Main plan document
-│   ├── parallelization.md                  # Parallelization analysis
-│   ├── speed_prompts.md                    # Quick-reference agent prompts
-│   └── agents/                             # Agent-specific prompts (optional)
-│       └── agent_[stream]_[number].md
-└── templates/                               # Shared templates
-    └── agent_assignment_prompt_template.md
+Copy agents/columns.agent.md → paste to agent → done
 ```
 
-**Examples:**
+### During Execution
 
-- Refactor: `datagrid_refactor_abc123/` directory containing all related files
-- Overhaul: `datagrid_overhaul_abc123/` directory containing all related files
-- Features: `auth_features_abc123/` directory containing all related files
-- Combination: Use primary type (e.g., `overhaul` if overhaul with features)
+- Agent works from their `.agent.md`
+- Updates status when complete
+- Appends to `gotchas.md` if issues found
+- Searches only for unexpected edge cases
 
-**Benefits of Directory Structure**:
+## Status Values
 
-- ✅ All plan files in one place
-- ✅ Easy to find related files
-- ✅ Clean root directory
-- ✅ Can archive/delete entire plan directories
-- ✅ Clear organization
-- ✅ Source controlled in separate private repository
+| Status    | Meaning        | Action         |
+| --------- | -------------- | -------------- |
+| `GAP`     | Not started    | Begin work     |
+| `WIP`     | In progress    | Continue       |
+| `PASS`    | Complete       | Done           |
+| `BLOCKED` | Waiting on dep | Work elsewhere |
 
-**Speed Prompts File**:
+## Commands
 
-- Always generated in plan directory: `[plan_dir]/speed_prompts.md`
-- Contains quick-reference sections for each agent
-- References template at `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`
-- Enables fast agent creation without template modification
+| Command                | Purpose                        | When                                    |
+| ---------------------- | ------------------------------ | --------------------------------------- |
+| `create-feature-plan`  | Create new plan + agent files  | Starting new work                       |
+| `update-feature-plan`  | Modify plan, regenerate agents | Mid-flight changes, interface evolution |
+| `close-feature-agent`  | Verify completion, sync status | Agent finishes work                     |
+| `migrate-feature-plan` | Convert v1.x plan to v2.0.0    | Existing plans need migration           |
+| `list-feature-plans`   | List available plans           | Finding plans                           |
 
-## Integration with Git Workflow
+### update-feature-plan
 
-### Pre-Commit Hooks
+Handles mid-flight changes:
 
-- Format and lint staged files
-- Agents commit only their changes
-- Prevents committing other agents' work
+1. **Apply feedback** to verbose planning docs
+2. **Identify cascade** - interface changes affect downstream agents
+3. **Regenerate** affected agent files (distill, don't patch)
+4. **Verify** consistency across all files
 
-### Pre-Push Hooks
+Key insight: Interface changes cascade. If #2's export changes, all agents that receive from #2 need regenerated files.
 
-- Full validation (format, lint, type check, tests)
-- **Optimization**: Tests are automatically skipped for documentation-only changes
-- Agents run `just ci` before pushing (or `just ci-no-test` for docs-only changes)
-- Ensures quality gates pass
-- If only documentation files changed, pre-push hook automatically skips tests
+### migrate-feature-plan
 
-### Commit Messages
+Converts v1.x plans (with `parallelization.md`, `speed_prompts.md`, YAML front matter) to v2.0.0:
 
-Format: `feat(scope): #[number] [brief description]`
+1. **Extract** interfaces from YAML → `interfaces.md`
+2. **Extract** gotchas → `gotchas.md`
+3. **Distill** agent files from plan + parallelization → `agents/*.agent.md`
+4. **Archive** old files (`parallelization.md`, `speed_prompts.md`)
 
-Example: `feat(datagrid): #19 implement timing tab with waterfall visualization`
+### Lifecycle
 
-### PR Creation and Management
+```
+create-feature-plan
+       ↓
+   [plan.md + agents/*.agent.md created]
+       ↓
+   [copy agent file to Claude]
+       ↓
+   [agent implements]
+       ↓
+   [PR merged]
+       ↓
+close-feature-agent ←─────────────────┐
+       ↓                              │
+   [status synced, unblocked identified]
+       ↓                              │
+   [if interfaces changed] → update-feature-plan
+       ↓                              │
+   [next agent file ready]            │
+       ↓                              │
+   [repeat] ──────────────────────────┘
+```
 
-After completing features:
+### close-feature-agent
 
-- **Create PR**: Use `/pr` command to generate comprehensive PR description
-- **PR Requirements**:
-  - Summary of changes
-  - Detailed changes list
-  - Testing checklist (unit, integration, E2E, migration if applicable, performance if applicable)
-  - Breaking changes section (for overhauls) with migration guide
-  - Related issues
-  - Review checklist
-- **Fix CI Checks**: Use `/pr-check-fixes` to systematically fix failing CI checks (see `CLAUDE.md` PR Workflow section)
-- **Manage Reviews**: Use `/pr-comments` to address PR review comments (see `CLAUDE.md` PR Workflow section)
+Lightweight checkpoint:
 
-**For Overhauls**: PR must include:
+1. **Verify** - Files exist, exports match, tests pass
+2. **Sync** - Update README.md status matrix
+3. **Report** - Show newly-unblocked features
+4. **Capture** - Sync gotchas to gotchas.md
 
-- Breaking changes section
-- Migration guide
-- Backward compatibility notes
-- Migration test results
-
-## Deliverables Checklist
-
-For each feature:
-
-- ✅ Tests: All TDD tests passing
-  - Unit tests: Complete coverage (≥85%)
-  - Integration tests: If multiple components interact
-  - E2E tests: If user-facing feature (Playwright)
-  - Migration tests: If overhaul with data structure changes
-  - Performance tests: If data-heavy feature (with thresholds)
-  - **Test selectors**: All components include `data-test-id` attributes on interactive elements
-  - **Test queries**: Tests use `getByTestId` for element selection (resilient to UI changes)
-- ✅ Components: Fully implemented
-- ✅ Stories: Storybook stories with demos (must build and work correctly)
-- ✅ Documentation: JSDoc comments
-- ✅ Status Update: Feature tracking table updated
-- ✅ PR Created: If feature is complete (use `/pr` command)
-- ✅ Breaking Changes: Documented if overhaul (with migration guide)
-
-## References
-
-- Main plan document: Contains all features with full details
-- Parallelization document: Shows dependencies and coordination
-- Prototype documents: Visual and structural references
-- Agent prompts: Specific assignments for each agent
+Does NOT regenerate agent files (use `update-feature-plan` for that).
 
 ## Key Principles
 
-1. **Test-First**: Every feature starts with a failing test
-2. **Component-Driven**: Build in Storybook first
-3. **Track Everything**: Feature table shows progress
-4. **Enable Parallelism**: Maximize independent work
-5. **Quality Gates**: Pre-commit and pre-push hooks enforce quality (tests auto-skipped for docs-only changes)
-6. **Clear Boundaries**: Each agent owns specific files
-7. **Documentation**: JSDoc, stories, and tracking keep knowledge accessible
-8. **Comprehensive Testing**: Unit, integration, E2E, migration (for overhauls), and performance (for data-heavy features)
-9. **PR Readiness**: Features should be PR-ready with comprehensive descriptions and breaking changes documentation
+1. **Planning is cheap** - Be verbose, iterate
+2. **Execution context is precious** - Minimal, dense
+3. **Distill, don't copy** - Agent files are refined extracts
+4. **Interfaces are boundaries** - Clear contracts enable parallelism
+5. **One agent, one file** - Coherent context, no mental merging
+6. **Close the loop** - Verify completion before moving on

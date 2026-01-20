@@ -107,18 +107,18 @@ Signal (error):       #ef4444    Red—breaking change, critical threat
 
 Use these Tailwind classes for the **grayscale foundation**:
 
-| Tailwind Class                                   | Usage                           |
-| ------------------------------------------------ | ------------------------------- |
-| `bg-background` / `text-foreground`              | Page backgrounds, primary text  |
-| `bg-card` / `text-card-foreground`               | Cards, elevated surfaces        |
-| `bg-muted` / `text-muted-foreground`             | Secondary text, disabled states |
-| `bg-primary` / `text-primary-foreground`         | Primary buttons, CTAs           |
-| `bg-secondary` / `text-secondary-foreground`     | Secondary buttons               |
-| `bg-accent` / `text-accent-foreground`           | Hover states, highlights        |
-| `bg-destructive` / `text-destructive-foreground` | Errors, delete actions          |
-| `border-border`                                  | Borders, dividers               |
-| `bg-input` / `border-input`                      | Form inputs, selectors          |
-| `ring-ring`                                      | Focus rings                     |
+| Tailwind Class                                   | Usage                                               |
+| ------------------------------------------------ | --------------------------------------------------- |
+| `bg-background` / `text-foreground`              | Page backgrounds, primary text                      |
+| `bg-card` / `text-card-foreground`               | Cards, elevated surfaces                            |
+| `bg-muted` / `text-muted-foreground`             | Secondary text, disabled states                     |
+| `bg-primary` / `text-primary-foreground`         | Primary buttons, CTAs                               |
+| `bg-secondary` / `text-secondary-foreground`     | Secondary buttons                                   |
+| `bg-accent` / `text-accent-foreground`           | Hover states, highlights                            |
+| `bg-destructive` / `text-destructive-foreground` | Errors, delete actions                              |
+| `border-border`                                  | Borders, dividers                                   |
+| `bg-input` / `border-input`                      | Form inputs, selectors                              |
+| `ring-ring`                                      | Focus rings (default, use `accent-blue` explicitly) |
 
 **Strategic Color: When and Where**
 
@@ -491,6 +491,26 @@ export const RequestCard = ({
 - Always include proper aria attributes
 - Use semantic HTML (`<nav>`, `<main>`, `<aside>`)
 - Focus management with proper tabIndex
+
+**Focus Ring Standard:**
+
+All interactive elements must have visible focus indicators that meet WCAG 2.1 AA requirements:
+
+- **Color**: `accent-blue` (oklch(0.623 0.214 259.1)) - aligns with design system "Blue—action, selection, focus"
+- **Width**: `2px` (`ring-2`)
+- **Offset**: `2px` (`ring-offset-2`)
+- **Offset Color**: `bg-app` (`ring-offset-bg-app`)
+- **Pseudo-class**: `:focus-visible` (only shows on keyboard focus, not mouse clicks)
+
+**Tailwind Classes**:
+
+```typescript
+'outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app';
+```
+
+**Reusable Utility**: Use `focusRingClasses` from `@/utils/accessibility` for consistency.
+
+**Hover-Only Elements**: Use `useFocusVisible` hook from `@/utils/accessibility` for elements that are hidden by default and shown on hover, but must be visible when focused.
 
 **Error Handling:**
 

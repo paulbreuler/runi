@@ -63,7 +63,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         'bg-bg-raised border border-border-default',
         'transition-colors duration-200',
         'focus-visible:border-accent-blue focus-visible:ring-2',
-        'focus-visible:ring-accent-purple focus-visible:ring-offset-2',
+        'focus-visible:ring-accent-blue focus-visible:ring-offset-2',
       ],
       className
     );
