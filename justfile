@@ -160,11 +160,11 @@ storybook-serve: storybook-build
 # ============================================================================
 
 # Run complete CI pipeline locally (use before pushing)
-ci: fmt-check lint check test
+ci: fmt-check lint check test docs-check
     @echo "✅ All CI checks passed!"
 
 # Run CI pipeline without tests (for documentation-only changes)
-ci-no-test: fmt-check lint check
+ci-no-test: fmt-check lint check docs-check
     @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"
 
 # Pre-commit hook: fast checks only
@@ -225,6 +225,18 @@ clean-ralph:
 # ============================================================================
 # 📚 Documentation
 # ============================================================================
+
+# Check documentation formatting (same as CI docs-review)
+# Prettier handles: formatting, trailing whitespace, line endings
+docs-check:
+    @echo "📚 Checking markdown formatting..."
+    npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+
+# Fix documentation formatting
+docs-fix:
+    @echo "📚 Fixing markdown formatting..."
+    npx prettier --write "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+    @echo "✅ Documentation formatting fixed"
 
 # Generate Rust documentation
 docs:
@@ -309,6 +321,8 @@ help:
     @echo ""
     @echo "Documentation:"
     @echo "  just docs          - Generate Rust documentation"
+    @echo "  just docs-check    - Check documentation formatting (same as CI)"
+    @echo "  just docs-fix      - Fix documentation formatting issues"
     @echo ""
     @echo "Planning:"
     @echo "  just list-plans    - List all TDD plans in runi-planning-docs"

@@ -77,26 +77,9 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Check Markdown formatting
-        run: npx prettier --check "**/*.md" "**/*.mdx" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md" || (echo "❌ Markdown formatting issues found. Run 'npm run format' to fix." && exit 1)
-
-      - name: Check for common markdown issues
-        run: |
-          echo "✅ Checking for common markdown issues..."
-
-          # Determine base ref
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_REF="${{ github.event.pull_request.base.ref }}"
-          else
-            BASE_REF="main"
-          fi
-
-          # Check for trailing whitespace in markdown files
-          if git diff --name-only origin/${BASE_REF}...HEAD | grep -E '\.(md|mdx)$' | xargs grep -l '[[:space:]]$' 2>/dev/null; then
-            echo "❌ Found trailing whitespace in markdown files"
-            exit 1
-          fi
-
-          echo "✅ Markdown formatting check passed"
+        # Prettier handles: formatting, trailing whitespace, line endings
+        # This matches local: just docs-check
+        run: npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
 
   frontend:
     name: Frontend
