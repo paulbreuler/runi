@@ -210,7 +210,7 @@ A quick-reference file for rapid agent creation:
 Directory structure (each plan gets its own directory):
 
 ```
-.cursor/plans/
+../runi-planning-docs/plans/
 ├── [project]_[type]_[timestamp]/          # Plan directory
 │   ├── README.md                           # Quick reference (optional)
 │   ├── plan.md                             # Main plan document
@@ -236,12 +236,13 @@ Directory structure (each plan gets its own directory):
 - ✅ Clean root directory
 - ✅ Can archive/delete entire plan directories
 - ✅ Clear organization
+- ✅ Source controlled in separate private repository
 
 **Speed Prompts File**:
 
 - Always generated in plan directory: `[plan_dir]/speed_prompts.md`
 - Contains quick-reference sections for each agent
-- References template at `.cursor/plans/templates/agent_assignment_prompt_template.md`
+- References template at `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`
 - Enables fast agent creation without template modification
 
 ## Integration with Git Workflow

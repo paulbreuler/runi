@@ -162,7 +162,7 @@ Structure your review like this:
 **Files Reviewed:** [list of files]
 **Automated Checks:** ✅ Passing | ❌ Failing
 **Test Coverage:** [percentage]% (target: ≥85%)
-**Overall Status:** ✅ Approve | ⚠️ Needs Changes | ❌ Reject
+**Overall Status:** CODE REVIEW COMPLED: ✅ Approve | ⚠️ Needs Changes | ❌ Reject
 
 ### Critical Issues (Must Fix)
 

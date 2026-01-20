@@ -30,11 +30,11 @@ Generate a comprehensive TDD plan for refactoring, overhaul, or feature implemen
    - Group features by area (Core Display, Filtering, etc.)
 
 4. **Create Plan Directory Structure:**
-   - Create directory: `.cursor/plans/[project]_[type]_[timestamp]/`
+   - Create directory: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/`
    - All plan-related files go in this directory
    - Structure:
      ```
-     .cursor/plans/[project]_[type]_[timestamp]/
+     ../runi-planning-docs/plans/[project]_[type]_[timestamp]/
      ├── plan.md                    # Main plan document
      ├── parallelization.md          # Parallelization analysis
      ├── speed_prompts.md            # Quick-reference agent prompts
@@ -43,7 +43,7 @@ Generate a comprehensive TDD plan for refactoring, overhaul, or feature implemen
      ```
 
 5. **Create Main Plan Document:**
-   - Generate at `.cursor/plans/[project]_[type]_[timestamp]/plan.md`
+   - Generate at `../runi-planning-docs/plans/[project]_[type]_[timestamp]/plan.md`
    - Naming based on work type:
      - **Refactor**: `[project]_refactor_[timestamp]`
      - **Overhaul**: `[project]_overhaul_[timestamp]`
@@ -66,7 +66,7 @@ Generate a comprehensive TDD plan for refactoring, overhaul, or feature implemen
    - List Storybook and documentation requirements
 
 6. **Create Parallelization Analysis:**
-   - Generate at `.cursor/plans/[project]_[type]_[timestamp]/parallelization.md`
+   - Generate at `../runi-planning-docs/plans/[project]_[type]_[timestamp]/parallelization.md`
    - Use same directory as main plan
    - Identify prerequisites (Phase 0 features)
    - Group features into parallel work streams
@@ -76,12 +76,12 @@ Generate a comprehensive TDD plan for refactoring, overhaul, or feature implemen
    - Estimate timing and risk mitigation
 
 7. **Create Speed Prompts File:**
-   - Generate at `.cursor/plans/[project]_[type]_[timestamp]/speed_prompts.md`
+   - Generate at `../runi-planning-docs/plans/[project]_[type]_[timestamp]/speed_prompts.md`
    - Use same directory as main plan
-   - Reference template location: `.cursor/plans/templates/agent_assignment_prompt_template.md`
+   - Reference template location: `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`
 
 8. **Check/Create Agent Assignment Template:**
-   - Check if `.cursor/plans/templates/agent_assignment_prompt_template.md` exists
+   - Check if `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md` exists
    - If not, create it with full prompt structure
    - Include placeholders for feature numbers
    - Include all requirements (TDD, hooks, deliverables)
@@ -98,15 +98,15 @@ Generate a comprehensive TDD plan for refactoring, overhaul, or feature implemen
    - Format: Easy to copy-paste sections for quick agent creation
 
 9. **Generate Agent-Specific Prompts (if requested):**
-   - Create directory: `.cursor/plans/[project]_[type]_[timestamp]/agents/`
+   - Create directory: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/agents/`
    - For each agent/stream, create customized prompt
    - Replace feature number placeholders
    - Add agent-specific file lists
    - Include prototype component references
-   - Save as `.cursor/plans/[project]_[type]_[timestamp]/agents/agent_[stream]_[number].md`
+   - Save as `../runi-planning-docs/plans/[project]_[type]_[timestamp]/agents/agent_[stream]_[number].md`
 
 10. **Create README (Optional but Recommended):**
-    - Generate at `.cursor/plans/[project]_[type]_[timestamp]/README.md`
+    - Generate at `../runi-planning-docs/plans/[project]_[type]_[timestamp]/README.md`
     - Include links to all files in the directory
     - Quick start guide
     - Links to template and other resources
@@ -246,7 +246,7 @@ Status: [STATUS]
 Each plan gets its own directory:
 
 ```
-.cursor/plans/
+../runi-planning-docs/plans/
 ├── [project]_[type]_[timestamp]/          # Plan directory
 │   ├── README.md                           # Quick reference (optional)
 │   ├── plan.md                             # Main plan document
@@ -267,12 +267,12 @@ Each plan gets its own directory:
 
 **Files Generated**:
 
-1. **Main Plan**: `.cursor/plans/[project]_[type]_[timestamp]/plan.md`
-2. **Parallelization**: `.cursor/plans/[project]_[type]_[timestamp]/parallelization.md`
-3. **Speed Prompts**: `.cursor/plans/[project]_[type]_[timestamp]/speed_prompts.md`
-4. **Template** (shared): `.cursor/plans/templates/agent_assignment_prompt_template.md`
-5. **Agent Prompts** (if requested): `.cursor/plans/[project]_[type]_[timestamp]/agents/agent_[stream]_[number].md`
-6. **README** (optional): `.cursor/plans/[project]_[type]_[timestamp]/README.md`
+1. **Main Plan**: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/plan.md`
+2. **Parallelization**: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/parallelization.md`
+3. **Speed Prompts**: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/speed_prompts.md`
+4. **Template** (shared): `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`
+5. **Agent Prompts** (if requested): `../runi-planning-docs/plans/[project]_[type]_[timestamp]/agents/agent_[stream]_[number].md`
+6. **README** (optional): `../runi-planning-docs/plans/[project]_[type]_[timestamp]/README.md`
 
 ### Speed Prompts File Structure
 
@@ -281,9 +281,9 @@ The speed prompts file contains quick-reference sections for each agent:
 ```markdown
 # [Project] [Type] - Speed Prompts
 
-**Template Location**: `.cursor/plans/templates/agent_assignment_prompt_template.md`
+**Template Location**: `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`
 **How to Use**: [Instructions]
-**Plan Location**: `.cursor/plans/[project]_[type]_[timestamp]/plan.md` (this directory)
+**Plan Location**: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/plan.md` (this directory)
 
 ---
 
@@ -363,12 +363,12 @@ If work includes multiple types:
 1. User invokes command: `/create-tdd-plan`
 2. Ask clarifying questions about scope and work type
 3. Analyze codebase/prototype to discover features
-4. **Create plan directory**: `.cursor/plans/[project]_[type]_[timestamp]/`
+4. **Create plan directory**: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/`
 5. Generate main plan in directory: `plan.md`
 6. Analyze dependencies for parallelization
 7. Generate parallelization document: `parallelization.md`
 8. Generate speed prompts file: `speed_prompts.md`
-9. Check/create shared template: `templates/agent_assignment_prompt_template.md`
+9. Check/create shared template: `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`
 10. Optionally generate agent-specific prompts in `agents/` subdirectory
 11. Optionally create README.md with links to all files
 12. Present summary and directory location
@@ -384,15 +384,4 @@ If work includes multiple types:
 
 ## Migration Note
 
-If you have existing plans at the root level (e.g., `datagrid_overhaul_4a5b9879.plan.md`), you can optionally migrate them:
-
-1. Create directory: `.cursor/plans/datagrid_overhaul_4a5b9879/`
-2. Move related files into directory:
-   - `plan.md` (rename from `.plan.md`)
-   - `parallelization.md`
-   - `speed_prompts.md`
-   - `agents/` directory if exists
-3. Update references in files (template paths, etc.)
-4. Create `README.md` for quick reference
-
-This is optional - legacy plans can stay at root, but new plans will use directories.
+All plans are now stored in `../runi-planning-docs/plans/` (separate repository). Legacy plans have been migrated to directory structure. New plans should always use the directory structure in the planning repository.
