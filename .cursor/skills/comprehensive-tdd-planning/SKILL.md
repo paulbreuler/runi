@@ -16,13 +16,13 @@ description: TDD planning with agent-per-file execution. Planning is verbose. Ag
 ## Directory Structure
 
 ```
-[project]_[type]_[timestamp]/
+NNNN-descriptive-name/
 ├── README.md           # Index, dependency graph, status matrix
 ├── plan.md             # Full verbose feature specs (planning reference)
 ├── interfaces.md       # Contract source of truth
 ├── gotchas.md          # Discovered issues (append-only)
 └── agents/
-    └── [name].agent.md # Minimal execution context per agent
+    └── NNN_agent_[name].agent.md # Minimal execution context per agent (zero-padded)
 ```
 
 ## Agent Files: Design Principles

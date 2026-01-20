@@ -17,16 +17,21 @@ Foundation knowledge for understanding and using the TDD planning system.
 ### Directory Structure
 
 ```
-N-descriptive-name/
+NNNN-descriptive-name/
 ├── README.md           # Index, dependency graph, status matrix
 ├── plan.md             # Full verbose feature specs (planning reference)
 ├── interfaces.md       # Contract source of truth
 ├── gotchas.md          # Discovered issues (append-only)
 └── agents/
-    ├── 0_agent_*.agent.md    # First agent (foundation)
-    ├── 1_agent_*.agent.md    # Second agent
+    ├── 000_agent_*.agent.md    # First agent (foundation)
+    ├── 001_agent_*.agent.md    # Second agent
+    ├── 010_agent_*.agent.md    # 10th agent
     └── completed/             # Completed agents (archived)
-        └── N_agent_*.agent.md
+        └── NNN_agent_*.agent.md
+
+**Numbering Format**:
+- Plans: Zero-padded to 4 digits (0001, 0002, ..., 0007, 0008)
+- Agents: Zero-padded to 3 digits (000, 001, 002, ..., 010, 011, ..., 017)
 ```
 
 ## Workflow States

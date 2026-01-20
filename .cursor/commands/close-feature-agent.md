@@ -118,44 +118,54 @@ All gotchas synced ✓
 
 ## Output Format
 
-```markdown
-# Agent Close Report: columns.agent.md
+The output should be clean, readable text with minimal markdown formatting. Use plain text sections, not markdown headers. Structure:
 
-## Verification
+```
+Agent Close Report: columns.agent.md
 
-| Feature    | Status | Files  | Exports  | Tests   |
-| ---------- | ------ | ------ | -------- | ------- |
-| #2 Headers | ✅     | ✅ 4/4 | ✅ match | ✅ pass |
-| #3 Resize  | ✅     | ✅ 4/4 | ✅ match | ✅ pass |
-| #4 Sorting | ✅     | ✅ 4/4 | ✅ match | ✅ pass |
+Verification
 
-## Status Synced
+Feature    Status  Files   Exports  Tests
+#2 Headers  PASS    4/4     match    pass
+#3 Resize   PASS    4/4     match    pass
+#4 Sorting  PASS    4/4     match    pass
 
-README.md updated:
+Status Synced
 
+interfaces.md updated:
 - #2: WIP → PASS
 - #3: GAP → PASS
 - #4: GAP → PASS
 
-## Unblocked
+Unblocked
 
-| Feature             | Agent       | Action         |
-| ------------------- | ----------- | -------------- |
-| #5 Row Expand       | rows        | Ready to start |
-| #7 Sort Integration | integration | Ready to start |
+Feature             Agent       Action
+#5 Row Expand       rows        Ready to start
+#7 Sort Integration integration Ready to start
 
-## Gotchas
+Gotchas
 
-- 1 new gotcha added to gotchas.md
+- No gotchas found
 
-## Next Steps
+Next Steps
 
-1. ✅ Agent `columns` work complete
-2. 🔄 Agent `rows` can continue (was blocked on #2)
-3. ❓ Consider `update-plan` if interfaces evolved during implementation
-4. 📊 Run `/work` to assess overall plan status and find next task
-5. 🧹 Run `/heal` if cleanup is needed (completed agents not moved)
+- Agent columns work complete
+- Agent rows can continue (was blocked on #2)
+- Run /work to assess overall plan status
+- Run /heal if cleanup is needed
 ```
+
+**Critical Formatting Rules:**
+
+- DO NOT use markdown headers (#, ##, ###) - they render as all caps/giant headers
+- Use plain text section titles (no # symbols)
+- Use simple spacing between sections (blank lines)
+- Keep tables simple (spaced columns, not markdown table syntax if it causes issues)
+- Use bullet points (-) not numbered lists unless sequence is critical
+- Avoid emoji in section titles
+- Keep content concise and scannable
+
+````
 
 ## Failure Cases
 
@@ -170,7 +180,7 @@ README.md updated:
 | #4 Sorting | ❌     | Export mismatch: toggle() returns void, declared boolean |
 
 **Action**: Agent must fix issues before close
-```
+````
 
 ### Tests Failing
 

@@ -129,6 +129,7 @@ Agent 2: Status & Timing Columns
 
 - Only shows active agents (excludes `completed/` directory)
 - Agent files are clickable and open directly in Cursor
-- Agent numbers come from filename prefix (`agent_<N>_`)
+- Agent numbers come from filename prefix (`<NNN>_agent_` or `agent_<N>_` for backward compatibility)
+- Agent files should use zero-padded 3-digit format (000, 001, 002, ...) for proper lexicographical ordering
 - Status is parsed from agent file `**Status:**` markers
 - Use this to find agents, then run with `/run-agent --agent [path]`
