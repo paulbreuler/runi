@@ -321,6 +321,9 @@ describe('VirtualDataGrid', () => {
         });
         expect(rowCheckboxes.length).toBeGreaterThan(0);
         const checkbox = rowCheckboxes[0];
+        if (checkbox === undefined) {
+          throw new Error('Expected checkbox to be defined');
+        }
 
         // Click checkbox - should not trigger row click handler
         fireEvent.click(checkbox);
