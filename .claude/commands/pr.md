@@ -24,6 +24,21 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - If no agent detected:
      - Proceed with standard PR generation (non-agent work)
 
+2a. **Validate agent status (if agent detected):**
+
+- Run `bash scripts/assess-agent-status.sh --agent <agent-file-path>` to check agent status
+- Parse assessment output to check:
+  - If all features have status PASS/Complete (e.g., "4 PASS, 0 WIP, 0 GAP")
+  - If agent file is still in `agents/` directory (File Organization: "active (in agents/)")
+  - If recommendations include "All features PASS but file not marked as completed"
+- If validation conditions met (all PASS + not completed):
+  - Display warning message with agent name, feature counts, and recommendation
+  - Prompt user: "Continue with PR creation anyway? (y/n)"
+  - If `y` or non-interactive: Proceed with PR creation
+  - If `n`: Suggest running `/close-feature-agent <agent-file-path>` first, then exit gracefully
+- If validation conditions not met or assessment fails:
+  - Proceed normally with PR creation (no warning)
+
 3. **Analyze git changes:**
    - Get current branch name
    - Determine base branch (default: main/master)
@@ -304,6 +319,43 @@ Compares current branch with main, detects agent from branch name or modified fi
 
 - Modified: `../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_4_selection__expander_columns.agent.md` → Detects Agent 4
 
+### Agent Status Validation Example
+
+**Scenario:** Agent 0 has all features complete but hasn't been closed
+
+```text
+/pr
+```
+
+**Output:**
+
+```
+⚠️  Agent Status Warning
+
+Agent "Accessibility Foundation (Early)" has all features complete (4 PASS, 0 GAP)
+but hasn't been moved to completed/ directory.
+
+Recommended: Run `/close-feature-agent` before creating PR to:
+  - Verify completion
+  - Sync status to README.md
+  - Move agent to completed/
+
+Continue with PR creation anyway? (y/n)
+```
+
+**User chooses `n`:**
+
+```
+Suggestion: Run `/close-feature-agent ../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_0_accessibility_foundation_early.agent.md` first
+```
+
+**User chooses `y`:**
+
+```
+Proceeding with PR creation...
+[PR created successfully]
+```
+
 ## Integration with Code Review
 
 After code review, use `/pr` to create the PR:
@@ -352,6 +404,36 @@ If agent detection fails (no agent found):
 - Use conventional commit format for title
 - Note in description that this is non-agent work (optional)
 - This is expected for work not part of a feature plan
+
+### Agent Status Validation Warning
+
+If agent is detected and has all features PASS but isn't closed:
+
+**Warning Message:**
+
+```
+⚠️  Agent Status Warning
+
+Agent "Accessibility Foundation (Early)" has all features complete (4 PASS, 0 GAP)
+but hasn't been moved to completed/ directory.
+
+Recommended: Run `/close-feature-agent` before creating PR to:
+  - Verify completion
+  - Sync status to README.md
+  - Move agent to completed/
+
+Continue with PR creation anyway? (y/n)
+```
+
+**User Options:**
+
+- `y`: Proceed with PR creation (validation is non-blocking)
+- `n`: Exit and suggest running `/close-feature-agent <agent-file-path>` first
+
+**Non-Interactive Mode:**
+
+- Warning is displayed but PR creation proceeds automatically
+- Warning includes actionable next steps for post-PR cleanup
 
 ## Related Commands
 
