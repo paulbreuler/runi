@@ -205,7 +205,9 @@ open_agent_file() {
     
     # Open file in Cursor
     if command -v cursor >/dev/null 2>&1; then
-        cursor -r "$agent_path" 2>/dev/null || cursor "$agent_path" 2>/dev/null || true
+        if ! cursor -r "$agent_path" 2>/dev/null && ! cursor "$agent_path" 2>/dev/null; then
+            echo -e "${YELLOW}⚠️  Failed to open agent file in Cursor. You can open it manually at: ${agent_path}${RESET}" >&2
+        fi
     else
         echo -e "${YELLOW}⚠️  Cursor CLI not found. Install it from Cursor: Cmd+Shift+P → 'Shell Command: Install cursor command'${RESET}" >&2
     fi

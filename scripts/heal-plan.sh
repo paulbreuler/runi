@@ -97,10 +97,27 @@ detect_stuck_agents() {
     
     find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" 2>/dev/null | while read -r agent_file; do
         local agent_name=$(basename "$agent_file" .agent.md)
-        local modified_time=$(stat -f "%m" "$agent_file" 2>/dev/null || stat -c "%Y" "$agent_file" 2>/dev/null || echo "0")
+
+        # Determine last modification time in a platform-aware way
+        local modified_time=""
+        case "$(uname 2>/dev/null || echo unknown)" in
+            Darwin|FreeBSD)
+                modified_time=$(stat -f "%m" "$agent_file" 2>/dev/null) || modified_time=""
+                ;;
+            *)
+                modified_time=$(stat -c "%Y" "$agent_file" 2>/dev/null) || modified_time=""
+                ;;
+        esac
+
+        # If we could not determine a valid numeric modification time, skip this file
+        if ! [[ "$modified_time" =~ ^[0-9]+$ ]]; then
+            echo "Warning: could not determine modification time for agent file: $agent_file" >&2
+            continue
+        fi
+
         local current_time=$(date +%s)
         local days_old=$(( (current_time - modified_time) / 86400 ))
-        
+
         # Check if agent has been WIP for 7+ days
         if [ "$days_old" -ge 7 ]; then
             # Check if status is WIP
@@ -200,10 +217,13 @@ main() {
     # Load learning data
     local learning_data=$(load_learning_data "$plan_name")
     
-    # Auto-Fix Actions
+    # Create all temp files upfront and set up comprehensive cleanup trap
     local temp_file=$(mktemp)
-    trap "rm -f $temp_file" EXIT
-    
+    local stuck_file=$(mktemp)
+    local bottleneck_file=$(mktemp)
+    trap "rm -f $temp_file $stuck_file $bottleneck_file" EXIT
+
+    # Auto-Fix Actions
     echo -e "${BOLD}Auto-Fix Actions:${RESET}"
     
     # Check for completed agents that need to be moved
@@ -257,11 +277,7 @@ main() {
     
     # Patterns Detected
     echo -e "${BOLD}Patterns Detected:${RESET}"
-    
-    local stuck_file=$(mktemp)
-    local bottleneck_file=$(mktemp)
-    trap "rm -f $temp_file $stuck_file $bottleneck_file" EXIT
-    
+
     detect_stuck_agents "$plan_dir" > "$stuck_file" 2>/dev/null || true
     detect_bottlenecks "$plan_dir" > "$bottleneck_file" 2>/dev/null || true
     

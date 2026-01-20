@@ -8,10 +8,27 @@ PLANS_DIR="../runi-planning-docs/plans"
 # Function to extract plan name from text
 extract_plan_name() {
     local text="$1"
-    
-    # Try to find plan references in text
-    # Look for patterns like "datagrid", "datagrid_overhaul", plan directory names
-    echo "$text" | grep -oE "(datagrid|storybook|timingtab|virtualdatagrid|discord|accessibility|mcp|popout)[_a-z0-9]*" | head -1 || true
+
+    # Build a dynamic pattern from existing plan directories
+    # This avoids hardcoding plan names and automatically picks up new plans
+    local plan_dirs pattern
+
+    # Get base names of plan directories (strip timestamps and suffixes for matching)
+    plan_dirs=$(find "$PLANS_DIR" -maxdepth 1 -mindepth 1 -type d ! -name "plans" ! -name "templates" -exec basename {} \; 2>/dev/null | \
+        sed -E 's/_[0-9a-f]{8,}$//' | \
+        sed -E 's/_(overhaul|refactor|features)$//' | \
+        sort -u || true)
+
+    # If no plan directories are found, return nothing without failing
+    if [ -z "$plan_dirs" ]; then
+        return 0
+    fi
+
+    # Join directory names into a single alternation pattern: name1|name2|...
+    pattern=$(echo "$plan_dirs" | tr '\n' '|' | sed 's/|$//')
+
+    # Try to find plan references in text, allowing suffixes like "_overhaul"
+    echo "$text" | grep -oE "(${pattern})[_a-z0-9]*" | head -1 || true
 }
 
 # Function to normalize plan name for matching
@@ -105,12 +122,28 @@ main() {
         return 1
     fi
     
-    # Extract PR information
-    local pr_number=$(echo "$pr_data" | grep -o '"number":[0-9]*' | grep -o '[0-9]*' || echo "")
-    local pr_title=$(echo "$pr_data" | grep -o '"title":"[^"]*"' | sed 's/"title":"//' | sed 's/"$//' || echo "")
-    local pr_branch=$(echo "$pr_data" | grep -o '"headRefName":"[^"]*"' | sed 's/"headRefName":"//' | sed 's/"$//' || echo "")
-    local pr_body=$(echo "$pr_data" | grep -o '"body":"[^"]*"' | sed 's/"body":"//' | sed 's/"$//' || echo "")
-    local pr_files=$(echo "$pr_data" | grep -o '"files":\[.*\]' || echo "")
+    # Extract PR information (prefer jq for robust JSON parsing, fallback to grep/sed)
+    local pr_number=""
+    local pr_title=""
+    local pr_branch=""
+    local pr_body=""
+    local pr_files=""
+
+    if command -v jq >/dev/null 2>&1; then
+        pr_number=$(echo "$pr_data" | jq -r '.[0].number // empty')
+        pr_title=$(echo "$pr_data" | jq -r '.[0].title // empty')
+        pr_branch=$(echo "$pr_data" | jq -r '.[0].headRefName // empty')
+        pr_body=$(echo "$pr_data" | jq -r '.[0].body // empty')
+        # Produce a newline-separated list of file paths for check_files_for_plan
+        pr_files=$(echo "$pr_data" | jq -r '.[0].files[]?.path // empty')
+    else
+        # Fallback to grep/sed (may break with escaped quotes or complex JSON)
+        pr_number=$(echo "$pr_data" | grep -o '"number":[0-9]*' | grep -o '[0-9]*' || echo "")
+        pr_title=$(echo "$pr_data" | grep -o '"title":"[^"]*"' | sed 's/"title":"//' | sed 's/"$//' || echo "")
+        pr_branch=$(echo "$pr_data" | grep -o '"headRefName":"[^"]*"' | sed 's/"headRefName":"//' | sed 's/"$//' || echo "")
+        pr_body=$(echo "$pr_data" | grep -o '"body":"[^"]*"' | sed 's/"body":"//' | sed 's/"$//' || echo "")
+        pr_files=$(echo "$pr_data" | grep -o '"files":\[.*\]' || echo "")
+    fi
     
     # Try to extract plan name from multiple sources (priority order)
     local detected_plan=""

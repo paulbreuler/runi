@@ -205,7 +205,13 @@ calculate_score() {
     if [ ${#feature_ids[@]} -gt 0 ]; then
         avg_feature_id=$((sum / ${#feature_ids[@]}))
     fi
-    local priority_score=$(echo "scale=2; (1 - ($avg_feature_id / $max_feature_id)) * 30" | bc 2>/dev/null || echo "15")
+    local priority_score
+    if [ "$max_feature_id" -gt 0 ]; then
+        priority_score=$(echo "scale=2; (1 - ($avg_feature_id / $max_feature_id)) * 30" | bc 2>/dev/null || echo "15")
+    else
+        # Fallback when max_feature_id is 0 to avoid division by zero
+        priority_score="15"
+    fi
     
     # Workload score (30%): will be calculated relative to other agents
     echo "$dep_score|$priority_score|$gap_count|$wip_count"
