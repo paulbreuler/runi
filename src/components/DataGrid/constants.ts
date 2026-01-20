@@ -15,7 +15,7 @@ export const COLUMN_WIDTHS = {
   /** Selection checkbox column width (32px for square appearance, matches natural checkbox size) */
   SELECTION: 32,
   /** Expander chevron column width (32px to match selection column for square appearance) */
-  EXPANDER: 32,
+  EXPANDER: 16,
 } as const;
 
 /**
