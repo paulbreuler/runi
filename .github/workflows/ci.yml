@@ -16,6 +16,7 @@ jobs:
     outputs:
       has-code-changes: ${{ steps.filter.outputs.has-code-changes }}
       has-docs-changes: ${{ steps.filter.outputs.has-docs-changes }}
+      has-workflow-changes: ${{ steps.filter.outputs.has-workflow-changes }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,8 +33,20 @@ jobs:
 
           CHANGED_FILES=$(git diff --name-only origin/${BASE_REF}...HEAD)
 
-          # Check for code changes (exclude docs/scripts)
-          if echo "$CHANGED_FILES" | grep -qvE '^(.cursor/|scripts/|justfile|docs/|\.md$|\.claude/)'; then
+          # Check for workflow file changes (we want to run tests to validate workflow)
+          if echo "$CHANGED_FILES" | grep -qE '^\.github/'; then
+            echo "has-workflow-changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-workflow-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for code changes
+          # Run tests if: actual code files changed OR workflow files changed
+          # Skip tests if: only docs/scripts changed (and no workflow files)
+          HAS_WORKFLOW_CHANGES=$(echo "$CHANGED_FILES" | grep -qE '^\.github/' && echo 'true' || echo 'false')
+          HAS_CODE_CHANGES=$(echo "$CHANGED_FILES" | grep -qvE '^(.cursor/|scripts/|justfile|docs/|\.md$|\.claude/|\.github/)' && echo 'true' || echo 'false')
+
+          if [ "$HAS_CODE_CHANGES" = "true" ] || [ "$HAS_WORKFLOW_CHANGES" = "true" ]; then
             echo "has-code-changes=true" >> $GITHUB_OUTPUT
           else
             echo "has-code-changes=false" >> $GITHUB_OUTPUT
