@@ -13,6 +13,10 @@ interface TimingWaterfallProps {
   compact?: boolean;
   /** Custom height class (default: h-2) */
   height?: string;
+  /** Show inline timing labels inside segments when large enough (requires taller height) */
+  showInlineLabels?: boolean;
+  /** Minimum width percentage for showing inline labels (default: 15) */
+  inlineLabelMinWidth?: number;
 }
 
 const segmentConfig = [
@@ -33,6 +37,8 @@ export const TimingWaterfall = ({
   showLegend = false,
   compact = false,
   height = 'h-2',
+  showInlineLabels = false,
+  inlineLabelMinWidth = 15,
 }: TimingWaterfallProps): React.JSX.Element => {
   const shouldReduceMotion = useReducedMotion();
 
@@ -64,11 +70,12 @@ export const TimingWaterfall = ({
         {segmentConfig.map(({ key, color }, index) => {
           const ms = segments[key as keyof TimingWaterfallSegments];
           const widthPercent = getWidth(ms);
+          const showLabel = showInlineLabels && widthPercent >= inlineLabelMinWidth;
           return (
             <motion.div
               key={key}
               data-testid={`timing-${key}`}
-              className={cn(color)}
+              className={cn(color, showLabel && 'flex justify-center items-center overflow-hidden')}
               initial={
                 shouldReduceMotion === true
                   ? { width: `${String(widthPercent)}%` }
@@ -81,7 +88,13 @@ export const TimingWaterfall = ({
                   : { duration: 0.4, delay: index * 0.05, ease: 'easeOut' }
               }
               title={`${key}: ${String(ms)}ms`}
-            />
+            >
+              {showLabel && (
+                <span className="text-[10px] font-mono font-medium text-white/90 whitespace-nowrap">
+                  {ms}ms
+                </span>
+              )}
+            </motion.div>
           );
         })}
       </div>
