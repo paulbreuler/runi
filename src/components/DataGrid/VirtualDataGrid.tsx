@@ -141,12 +141,74 @@ export function VirtualDataGrid<TData>({
   // Get rows from table
   const { rows } = table.getRowModel();
 
-  // Set up virtualizer
+  // Set up virtualizer with dynamic height measurement
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => estimateRowHeight,
+    estimateSize: (index) => {
+      // Provide better estimates for expanded rows
+      const row = rows[index];
+      if (row?.getIsExpanded() === true) {
+        // Estimate expanded row height (base + expanded content)
+        return estimateRowHeight * 3; // Rough estimate for expanded content
+      }
+      return estimateRowHeight;
+    },
     overscan,
+    // Measure actual row heights including expanded content
+    measureElement: (element) => {
+      // The element passed here is the element with data-index attribute
+      // We need to find the actual row <tr> element
+      const rowElement = element as HTMLTableRowElement;
+
+      // Get row index from data-index (set by virtualizer)
+      const rowIndexAttr = rowElement.getAttribute('data-index');
+      if (rowIndexAttr === null) {
+        return estimateRowHeight;
+      }
+
+      const rowIndex = Number.parseInt(rowIndexAttr, 10);
+      if (Number.isNaN(rowIndex) || rowIndex < 0 || rowIndex >= rows.length) {
+        return estimateRowHeight;
+      }
+
+      // Get the row from TanStack Table
+      const row = rows[rowIndex];
+      if (row === undefined) {
+        return estimateRowHeight;
+      }
+
+      // Check if this row is expanded
+      const isExpanded = row.getIsExpanded();
+
+      if (!isExpanded) {
+        // Simple case: just measure the row itself
+        return rowElement.offsetHeight;
+      }
+
+      // Expanded case: need to measure main row + expanded row
+      // The expanded row is the next sibling <tr> after this one
+      // It can be identified by: no data-index attribute (not a virtual row), has td with colSpan
+      let totalHeight = rowElement.offsetHeight;
+      const nextSibling = rowElement.nextElementSibling;
+
+      if (nextSibling !== null && nextSibling.tagName === 'TR') {
+        const nextRow = nextSibling as HTMLTableRowElement;
+        // Check if it's the expanded row:
+        // 1. No data-index (not a virtualized row)
+        // 2. Has a td with colSpan (expanded content spans all columns)
+        // 3. Has expanded-section testid (more reliable check)
+        const hasDataIndex = nextRow.hasAttribute('data-index');
+        const expandedTd = nextRow.querySelector('td[colspan]');
+        const expandedSection = nextRow.querySelector('[data-testid="expanded-section"]');
+
+        if (!hasDataIndex && expandedTd !== null && expandedSection !== null) {
+          totalHeight += nextRow.offsetHeight;
+        }
+      }
+
+      return totalHeight;
+    },
   });
 
   const virtualRows = virtualizer.getVirtualItems();
@@ -188,6 +250,20 @@ export function VirtualDataGrid<TData>({
   React.useEffect(() => {
     onExpandedChangeRef.current?.(expanded as Record<string, boolean>);
   }, [expanded]);
+
+  // Trigger remeasurement when expanded state changes
+  // This ensures the virtualizer recalculates row heights after expansion/collapse
+  React.useEffect(() => {
+    // Small delay to allow DOM to update after expansion animation completes
+    const timeoutId = setTimeout((): void => {
+      // Force remeasurement of all items to update cached heights
+      virtualizer.measure();
+    }, 250); // Slightly longer than animation duration (200ms) to ensure measurement after animation
+
+    return (): void => {
+      clearTimeout(timeoutId);
+    };
+  }, [expanded, virtualizer]);
 
   // Calculate padding for virtual rows
   const paddingTop = virtualRows.length > 0 ? (virtualRows[0]?.start ?? 0) : 0;
@@ -232,6 +308,15 @@ export function VirtualDataGrid<TData>({
     anchorColumns
   );
 
+  // Calculate total table width and detect horizontal overflow
+  const totalTableWidth = React.useMemo(() => {
+    return table.getAllLeafColumns().reduce((sum, col) => {
+      return sum + getWidth(col.id);
+    }, 0);
+  }, [table, getWidth]);
+
+  const hasHorizontalOverflow = ready && totalTableWidth > containerWidth;
+
   // Default cell renderer
   const renderDefaultCells = (row: Row<TData>): React.ReactNode => {
     const leftColumns = table.getLeftLeafColumns();
@@ -271,31 +356,36 @@ export function VirtualDataGrid<TData>({
       };
 
       // Add sticky positioning for pinned columns
+      // Left-pinned columns are always sticky
       if (isPinned && pinSide === 'left') {
         cellStyle.position = 'sticky';
         cellStyle.left = leftOffsets.get(columnId) ?? 0;
         cellStyle.zIndex = 5;
-      } else if (isPinned && pinSide === 'right') {
+      } else if (isPinned && pinSide === 'right' && hasHorizontalOverflow) {
+        // Right-pinned (actions) only sticky when table overflows horizontally
         cellStyle.position = 'sticky';
         cellStyle.right = rightOffsets.get(columnId) ?? 0;
-        cellStyle.zIndex = 5;
+        cellStyle.zIndex = 10; // Higher z-index to appear above scrolling content
       }
 
       const paddingClass = getCellPaddingClass(columnId);
       // Pinned cells need background to cover scrolled content
       // Left-pinned columns use raised background
-      // Right-pinned (actions) match row exactly - transparent when not selected
+      // Right-pinned (actions) need background when sticky to cover scrolling content
       let bgClass = '';
       if (isPinned && pinSide === 'left') {
         bgClass = row.getIsSelected() ? 'bg-accent-blue/10' : 'bg-bg-raised';
-      } else if (isPinned && pinSide === 'right') {
-        // Right-pinned (actions) only get background when row is selected to match row
+      } else if (isPinned && pinSide === 'right' && hasHorizontalOverflow) {
+        // Right-pinned (actions) when sticky: need background to cover scrolling content
+        // Match row's background state exactly
         if (row.getIsSelected()) {
-          bgClass = 'bg-accent-blue/10';
-        }
-        // When not selected, explicitly set transparent background to match row
-        else {
-          cellStyle.backgroundColor = 'transparent';
+          bgClass = 'bg-accent-blue/10'; // Match row's selected background
+        } else {
+          // When sticky and not selected, we need a background to cover scrolling content
+          // Rows are transparent by default, showing the container background
+          // Use the container/table background to ensure content scrolls underneath
+          // This matches what the row shows (transparent = shows container background)
+          bgClass = 'bg-bg-app'; // Match the default app background that rows show through
         }
       }
 
@@ -382,7 +472,55 @@ export function VirtualDataGrid<TData>({
           if (row === undefined) {
             return null;
           }
-          return renderSingleRow(row);
+
+          // Render the row - we need to attach data-index and ref to the first <tr>
+          // so the virtualizer can measure it (including expanded content if present)
+          const rowContent = renderSingleRow(row);
+
+          // If the row content is a fragment (main row + expanded row),
+          // we need to attach data-index and ref to the first <tr>
+          if (React.isValidElement(rowContent) && rowContent.type === React.Fragment) {
+            const fragmentProps = rowContent.props as { children?: React.ReactNode };
+            const children = React.Children.toArray(fragmentProps.children);
+            if (children.length > 0 && React.isValidElement(children[0])) {
+              // Clone the first child (main row) and add data-index and ref for virtualizer measurement
+              const mainRow = React.cloneElement(
+                children[0] as React.ReactElement<{
+                  'data-index'?: number;
+                  ref?: React.Ref<HTMLTableRowElement>;
+                }>,
+                {
+                  'data-index': virtualRow.index,
+                  ref: virtualizer.measureElement,
+                }
+              );
+
+              // Return fragment with updated main row
+              return (
+                <React.Fragment key={virtualRow.key}>
+                  {mainRow}
+                  {children.slice(1)}
+                </React.Fragment>
+              );
+            }
+          }
+
+          // For single row elements, attach data-index and measure ref
+          if (React.isValidElement(rowContent)) {
+            return React.cloneElement(
+              rowContent as React.ReactElement<{
+                'data-index'?: number;
+                ref?: React.Ref<HTMLTableRowElement>;
+              }>,
+              {
+                key: virtualRow.key,
+                'data-index': virtualRow.index,
+                ref: virtualizer.measureElement,
+              }
+            );
+          }
+
+          return rowContent;
         })}
         {paddingBottom > 0 && (
           <tr key="padding-bottom">
@@ -458,14 +596,16 @@ export function VirtualDataGrid<TData>({
                     };
 
                     // Add sticky positioning for pinned columns
+                    // Left-pinned columns are always sticky
                     if (isPinned && pinSide === 'left') {
                       headerStyle.position = 'sticky';
                       headerStyle.left = leftOffsets.get(header.column.id) ?? 0;
                       headerStyle.zIndex = 15; // Higher than body cells
-                    } else if (isPinned && pinSide === 'right') {
+                    } else if (isPinned && pinSide === 'right' && hasHorizontalOverflow) {
+                      // Right-pinned (actions) only sticky when table overflows horizontally
                       headerStyle.position = 'sticky';
                       headerStyle.right = rightOffsets.get(header.column.id) ?? 0;
-                      headerStyle.zIndex = 15; // Higher than body cells
+                      headerStyle.zIndex = 20; // Higher than everything to appear above scrolling content
                     }
 
                     // Headers all use the same background color (bg-bg-app)
