@@ -22,16 +22,18 @@ Ask user for:
 
 ### Phase 2: Create Planning Docs (Verbose)
 
-Create directory: `../runi-planning-docs/plans/N-descriptive-name/` where N is the next available plan number and descriptive-name is a kebab-case version of the plan name.
+Create directory: `../runi-planning-docs/plans/NNNN-descriptive-name/` where NNNN is the next available plan number (zero-padded to 4 digits) and descriptive-name is a kebab-case version of the plan name.
 
 **To determine next plan number:**
 
 1. List all directories in `../runi-planning-docs/plans/` matching pattern `[0-9]+-*`
-2. Extract the numeric prefix from each directory name
-3. Find the maximum plan number
+2. Extract the numeric prefix from each directory name (handle both padded and unpadded formats)
+3. Find the maximum plan number (treat "0007" and "7" as the same number)
 4. Next plan number = max + 1
-5. Create directory as `N-descriptive-name` (e.g., if max is 7 and plan is "DataGrid Overhaul", create `8-datagrid-overhaul`)
+5. Create directory as `NNNN-descriptive-name` with zero-padding to 4 digits (e.g., if max is 7 and plan is "DataGrid Overhaul", create `0008-datagrid-overhaul`)
 6. The directory name itself is the source of truth - no registry needed
+
+**Plan Number Format**: Zero-padded to 4 digits (0001, 0002, ..., 0007, 0008, ...) for proper lexicographical ordering. Scripts support both padded and unpadded formats for backward compatibility.
 
 **1. plan.md** - Full feature specifications
 
@@ -77,18 +79,25 @@ Each agent should have:
 
 **Critical step**: Distill, don't copy.
 
-For each agent, create `agents/<N>_agent_<descriptive-name>.agent.md` where N is sequential starting from 0:
+For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NNN is sequential starting from 000 (zero-padded to 3 digits):
 
 **Agent File Naming Pattern**:
 
-- Format: `agent_<N>_<descriptive-name>.agent.md`
-- N starts at 0 and increments sequentially based on dependency order
+- Format: `<NNN>_agent_<descriptive-name>.agent.md` (zero-padded to 3 digits)
+- NNN starts at 000 and increments sequentially based on dependency order
 - Examples:
-  - `0_agent_infrastructure.agent.md` (no dependencies, runs first)
-  - `1_agent_testing_utilities.agent.md` (depends on infrastructure)
-  - `2_agent_ui_components.agent.md` (depends on testing utilities)
+  - `000_agent_infrastructure.agent.md` (no dependencies, runs first)
+  - `001_agent_testing_utilities.agent.md` (depends on infrastructure)
+  - `002_agent_ui_components.agent.md` (depends on testing utilities)
+  - `010_agent_selection_sorting.agent.md` (10th agent)
 
-**Rationale**: Numeric prefixes make execution order clear to humans, even though `next-task.sh` uses scoring algorithm. This helps when manually selecting agents or understanding plan structure.
+**Rationale**:
+
+- Zero-padding ensures proper lexicographical ordering (000, 001, 002, ... 010, 011, ... 017)
+- Numeric prefixes make execution order clear to humans, even though `next-task.sh` uses scoring algorithm
+- This helps when manually selecting agents or understanding plan structure
+
+**Note**: Scripts support both padded (000, 001) and unpadded (0, 1) formats for backward compatibility, but new agents should use zero-padding.
 
 **Extract only**:
 
@@ -121,20 +130,20 @@ For each agent, create `agents/<N>_agent_<descriptive-name>.agent.md` where N is
 ## Output Structure
 
 ```
-N-plan/
+NNNN-descriptive-name/
 ├── README.md              # Index, graph, status
 ├── plan.md                # Full specs (verbose, ~1000+ lines OK)
 ├── interfaces.md          # Contracts (~200-500 lines)
 ├── gotchas.md             # Empty template
 └── agents/
-    ├── 0_agent_infrastructure.agent.md      # ~200-400 lines
-    ├── 1_agent_testing_utilities.agent.md  # ~200-400 lines
-    └── 2_agent_ui_components.agent.md      # ~200-400 lines
+    ├── 000_agent_infrastructure.agent.md      # ~200-400 lines
+    ├── 001_agent_testing_utilities.agent.md  # ~200-400 lines
+    └── 002_agent_ui_components.agent.md      # ~200-400 lines
 ```
 
 ## Agent File Format
 
-**File naming**: `<N>_agent_<descriptive-name>.agent.md` (e.g., `0_agent_infrastructure.agent.md`) - Number first for lexicographical ordering
+**File naming**: `<NNN>_agent_<descriptive-name>.agent.md` (e.g., `000_agent_infrastructure.agent.md`) - Zero-padded to 3 digits for proper lexicographical ordering
 
 **File header**: The agent header in the file should still be descriptive:
 

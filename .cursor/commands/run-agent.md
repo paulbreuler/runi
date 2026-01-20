@@ -29,7 +29,7 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
 ### Select and Run Next Task
 
 ```
-/run-agent datagrid_overhaul_4a5b9879
+/run-agent 0004-datagrid-overhaul
 ```
 
 This will:
@@ -51,7 +51,7 @@ Automatically detects the active plan from the last merged PR and runs the next 
 ### Run Specific Agent File
 
 ```
-/run-agent --agent ../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/4_agent_selection__expander_columns.agent.md
+/run-agent --agent ../runi-planning-docs/plans/0004-datagrid-overhaul/agents/004_agent_selection__expander_columns.agent.md
 ```
 
 Opens the specified agent file directly in Cursor.
@@ -61,7 +61,7 @@ Opens the specified agent file directly in Cursor.
 ### Assess Agent Status
 
 ```
-/run-agent --assess datagrid_overhaul_4a5b9879
+/run-agent --assess 0004-datagrid-overhaul
 ```
 
 Assesses all agents in the plan for completion status and file organization.
@@ -148,7 +148,7 @@ The command outputs:
 ## Example Output
 
 ```
-Next Best Task: 4_agent_selection__expander_columns.agent.md
+Next Best Task: 004_agent_selection__expander_columns.agent.md
 
 Agent: Selection & Expander Columns
 Features: #4, #5, #6
@@ -158,7 +158,7 @@ Score: 85/100
   - Priority: 25/30 (avg feature #5)
   - Workload: 20/30 (3 remaining tasks)
 
-🚀 Starting Agent Work: 4_agent_selection__expander_columns.agent.md
+🚀 Starting Agent Work: 004_agent_selection__expander_columns.agent.md
 
 Agent: Selection & Expander Columns
 Features: #4, #5, #6
@@ -174,7 +174,7 @@ Instructions:
 1. Agent file opened in Cursor
 2. Copy agent file content to Cursor Agent Chat
 3. Agent implements features per spec
-4. Run: just assess-agents datagrid_overhaul_4a5b9879 when done
+4. Run: just assess-agents 0004-datagrid-overhaul when done
 5. Run: just close-feature-agent [agent-path] to verify completion
 ```
 

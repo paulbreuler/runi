@@ -85,7 +85,7 @@ find_plan_dir() {
         return 1
     fi
     
-    # Resolve plan number (1 → 1-plan, 1-plan → 1-plan)
+    # Resolve plan number (1 → 1-descriptive-name)
     local resolved=$(resolve_plan_number "$plan_name")
     
     # Try exact match first
@@ -95,33 +95,106 @@ find_plan_dir() {
         return
     fi
     
-    # Try partial match (for backward compatibility)
-    local found=$(find "$PLANS_DIR" -maxdepth 1 -type d -name "*${plan_name}*" ! -name "plans" ! -name "templates" | head -1)
-    if [ -n "$found" ]; then
-        echo "$found"
-        return
+    # Try fuzzy match - prefer better matches
+    local normalized=$(echo "$plan_name" | tr '[:upper:]' '[:lower:]')
+    local all_matches=()
+    
+    # Find all matching directories
+    while IFS= read -r match; do
+        if [ -n "$match" ]; then
+            all_matches+=("$match")
+        fi
+    done < <(find "$PLANS_DIR" -maxdepth 1 -type d -name "*${plan_name}*" ! -name "plans" ! -name "templates" 2>/dev/null)
+    
+    if [ ${#all_matches[@]} -eq 0 ]; then
+        return 1
     fi
     
-    return 1
+    # Score matches: prefer exact word matches over embedded matches
+    local best_match=""
+    local best_score=0
+    
+    for match in "${all_matches[@]}"; do
+        local basename=$(basename "$match")
+        local basename_lower=$(echo "$basename" | tr '[:upper:]' '[:lower:]')
+        local score=0
+        
+        # Exact match gets highest score
+        if [[ "$basename_lower" == *"${normalized}"* ]]; then
+            score=10
+            # Prefer matches where search term is at word boundary (not embedded)
+            if [[ "$basename_lower" =~ (^|[^a-z0-9])${normalized}([^a-z0-9]|$) ]]; then
+                score=20
+            fi
+            # Prefer matches that start with the search term
+            if [[ "$basename_lower" =~ ^[0-9]+-${normalized} ]]; then
+                score=30
+            fi
+        fi
+        
+        if [ "$score" -gt "$best_score" ]; then
+            best_score=$score
+            best_match="$match"
+        fi
+    done
+    
+    if [ -n "$best_match" ]; then
+        echo "$best_match"
+        return 0
+    fi
+    
+    # Fallback to first match
+    echo "${all_matches[0]}"
+    return 0
 }
 
 # Function to extract agent number from filename
 extract_agent_number() {
     local filename="$1"
-    # Extract number from agent_<N>_ pattern
+    # Try new pattern first: <NNN>_agent_ (zero-padded 3 digits)
+    if [[ "$filename" =~ ^([0-9]{3})_agent_ ]]; then
+        # Remove leading zeros for display
+        echo "$(echo "${BASH_REMATCH[1]}" | sed 's/^0*//')"
+        return 0
+    fi
+    # Try old pattern: agent_<N>_ (backward compatibility)
     if [[ "$filename" =~ agent_([0-9]+)_ ]]; then
         echo "${BASH_REMATCH[1]}"
-    else
-        echo ""
+        return 0
     fi
+    # Try new pattern without zero-padding: <N>_agent_ (backward compatibility)
+    if [[ "$filename" =~ ^([0-9]+)_agent_ ]]; then
+        echo "${BASH_REMATCH[1]}"
+        return 0
+    fi
+    echo ""
 }
 
-# Function to extract agent display name from filename
+# Function to extract agent display name from agent file
 extract_agent_display_name() {
-    local filename="$1"
+    local agent_file="$1"
+    
+    # Try to extract from file header first: "# Agent: <name>" or "# Agent <N>: <name>"
+    if [ -f "$agent_file" ]; then
+        local header_name=$(grep -E "^# Agent( [0-9]+)?:" "$agent_file" | head -1 | sed -E 's/^# Agent( [0-9]+)?: *//' | sed 's/^ *//' | sed 's/ *$//')
+        if [ -n "$header_name" ]; then
+            # If header is just filename-like (underscores), format it better
+            if [[ "$header_name" =~ _ ]]; then
+                # Replace underscores with spaces and capitalize each word
+                header_name=$(echo "$header_name" | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g')
+            fi
+            echo "$header_name"
+            return 0
+        fi
+    fi
+    
+    # Fallback to filename extraction
+    local filename=$(basename "$agent_file")
     local basename=$(basename "$filename" .agent.md)
     # Remove agent_<N>_ prefix
     local name=$(echo "$basename" | sed -E 's/^agent_[0-9]+_//')
+    # Remove <N>_agent_ prefix (new pattern)
+    name=$(echo "$name" | sed -E 's/^[0-9]+_agent_//')
     # Replace underscores with spaces and capitalize
     echo "$name" | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g'
 }
@@ -165,22 +238,28 @@ parse_agent_info() {
     local wip_count=0
     local gap_count=0
     
-    for status in "${statuses[@]}"; do
-        case "$status" in
-            PASS)
-                pass_count=$((pass_count + 1))
-                ;;
-            WIP)
-                wip_count=$((wip_count + 1))
-                ;;
-            GAP|BLOCKED)
-                gap_count=$((gap_count + 1))
-                ;;
-        esac
-    done
+    # Only iterate if statuses array has elements
+    if [ ${#statuses[@]} -gt 0 ]; then
+        for status in "${statuses[@]}"; do
+            case "$status" in
+                PASS)
+                    pass_count=$((pass_count + 1))
+                    ;;
+                WIP)
+                    wip_count=$((wip_count + 1))
+                    ;;
+                GAP|BLOCKED)
+                    gap_count=$((gap_count + 1))
+                    ;;
+            esac
+        done
+    fi
     
     # Format feature list
-    local feature_list=$(IFS=,; echo "${features[*]}" | sed 's/,/, #/g' | sed 's/^/#/')
+    local feature_list=""
+    if [ ${#features[@]} -gt 0 ]; then
+        feature_list=$(IFS=,; echo "${features[*]}" | sed 's/,/, #/g' | sed 's/^/#/')
+    fi
     
     echo "$feature_list|$pass_count|$wip_count|$gap_count"
 }
@@ -242,15 +321,22 @@ main() {
     
     echo ""
     echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${BOLD}${WHITE}📋 Agents in Plan: ${CYAN}$plan_name${RESET}"
+    # Display resolved plan name (extract number if in N-descriptive-name format)
+    local display_plan_name="$plan_name"
+    if [[ "$(basename "$plan_dir")" =~ ^([0-9]+)- ]]; then
+        display_plan_name="${BASH_REMATCH[1]} ($(basename "$plan_dir"))"
+    else
+        display_plan_name="$(basename "$plan_dir")"
+    fi
+    echo -e "${BOLD}${WHITE}📋 Agents in Plan: ${CYAN}$display_plan_name${RESET}"
     echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo ""
     
-    # Find and sort agents
+    # Find and sort agents by number (use version sort for numeric ordering)
     local agent_files=()
     while IFS= read -r agent_file; do
         agent_files+=("$agent_file")
-    done < <(find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | sort)
+    done < <(find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | sort -V)
     
     if [ ${#agent_files[@]} -eq 0 ]; then
         echo -e "${YELLOW}No active agents found in plan${RESET}"
@@ -261,7 +347,7 @@ main() {
     # Display each agent
     for agent_file in "${agent_files[@]}"; do
         local agent_number=$(extract_agent_number "$(basename "$agent_file")")
-        local agent_display_name=$(extract_agent_display_name "$(basename "$agent_file")")
+        local agent_display_name=$(extract_agent_display_name "$agent_file")
         local agent_info=$(parse_agent_info "$agent_file")
         
         local feature_list=$(echo "$agent_info" | cut -d'|' -f1)
@@ -285,6 +371,11 @@ main() {
         
         # Status summary
         local status_parts=()
+        # Ensure counts are numeric (default to 0 if empty)
+        pass_count=${pass_count:-0}
+        wip_count=${wip_count:-0}
+        gap_count=${gap_count:-0}
+        
         if [ "$pass_count" -gt 0 ]; then
             status_parts+=("${GREEN}$pass_count PASS${RESET}")
         fi
