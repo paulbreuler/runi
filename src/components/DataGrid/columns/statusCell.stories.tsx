@@ -3,7 +3,6 @@
  * @description Visual documentation for HTTP status code cell component
  */
 
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { StatusCell } from './statusCell';
 

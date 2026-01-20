@@ -3,7 +3,6 @@
  * @description Visual documentation for response size cell component
  */
 
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { SizeCell } from './sizeCell';
 

@@ -13,15 +13,12 @@ import {
   type ExpandedState,
   type RowSelectionState,
 } from '@tanstack/react-table';
-import {
-  createNetworkColumns,
-  MethodCell,
-  StatusCell,
-  UrlCell,
-  TimingCell,
-  SizeCell,
-  ActionsCell,
-} from './networkColumns';
+import { createNetworkColumns, ActionsCell } from './networkColumns';
+import { MethodCell } from './methodCell';
+import { UrlCell } from './urlCell';
+import { StatusCell } from './statusCell';
+import { TimingCell } from './timingCell';
+import { SizeCell } from './sizeCell';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 // Mock entry factory

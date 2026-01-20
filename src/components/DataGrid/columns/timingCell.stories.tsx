@@ -3,7 +3,6 @@
  * @description Visual documentation for request timing cell component
  */
 
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { TimingCell } from './timingCell';
 
