@@ -77,42 +77,60 @@ export const DockControls = ({ className, onPopout }: DockControlsProps): React.
   // Restore focus after position changes and component remounts
   useEffect(() => {
     if (position !== previousPositionRef.current && clickedPositionRef.current !== null) {
-      // Wait for component to fully remount and DOM to be ready
-      // Use multiple RAFs + timeout to ensure we're after all React updates
-      const attemptFocus = (attempts = 0): void => {
-        const maxAttempts = 10;
-        let buttonToFocus: HTMLButtonElement | null = null;
+      // Determine which button to focus based on clicked position
+      let buttonToFocus: HTMLButtonElement | null = null;
+      if (clickedPositionRef.current === 'bottom') {
+        buttonToFocus = bottomButtonRef.current;
+      } else if (clickedPositionRef.current === 'left') {
+        buttonToFocus = leftButtonRef.current;
+      } else if (clickedPositionRef.current === 'right') {
+        buttonToFocus = rightButtonRef.current;
+      }
 
-        if (clickedPositionRef.current === 'bottom') {
-          buttonToFocus = bottomButtonRef.current;
-        } else if (clickedPositionRef.current === 'left') {
-          buttonToFocus = leftButtonRef.current;
-        } else if (clickedPositionRef.current === 'right') {
-          buttonToFocus = rightButtonRef.current;
-        }
+      if (buttonToFocus === null) {
+        clickedPositionRef.current = null;
+        previousPositionRef.current = position;
+        return;
+      }
 
-        if (buttonToFocus?.isConnected === true) {
+      // Capture button reference for use in callbacks
+      const button = buttonToFocus;
+
+      // Use MutationObserver to detect when button is connected to DOM
+      // This is more reliable than polling and avoids arbitrary retry counts
+      const observer = new MutationObserver(() => {
+        if (button.isConnected) {
           // Button is in DOM, restore focus
-          buttonToFocus.focus();
-          clickedPositionRef.current = null;
-        } else if (attempts < maxAttempts) {
-          // Button not ready yet, try again
           requestAnimationFrame(() => {
-            setTimeout(() => {
-              attemptFocus(attempts + 1);
-            }, 10);
+            button.focus();
+            clickedPositionRef.current = null;
+            observer.disconnect();
+          });
+        }
+      });
+
+      // Start observing after a short delay to allow React to start remounting
+      requestAnimationFrame(() => {
+        // Observe the parent container (document.body) for subtree changes
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+
+        // If button is already connected, focus immediately
+        if (button.isConnected) {
+          requestAnimationFrame(() => {
+            button.focus();
+            clickedPositionRef.current = null;
+            observer.disconnect();
           });
         } else {
-          // Give up after max attempts
-          clickedPositionRef.current = null;
+          // Set a timeout to give up if button doesn't appear (safety net)
+          setTimeout(() => {
+            observer.disconnect();
+            clickedPositionRef.current = null;
+          }, 1000);
         }
-      };
-
-      // Start focus restoration after a short delay to allow remount
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          attemptFocus();
-        });
       });
     }
     previousPositionRef.current = position;

@@ -14,11 +14,10 @@ test.describe('DockControls Focus Restoration', () => {
       'http://localhost:6006/iframe.html?id=layout-dockablepanel--focus-restoration-test'
     );
 
-    // Wait for the panel to render
+    // Wait for the panel to render and React to fully hydrate
     await page.waitForSelector('[data-testid="dockable-panel"]', { timeout: 15000 });
-
-    // Wait a bit more for React to fully hydrate
-    await page.waitForTimeout(500);
+    // Wait for panel to be interactive (buttons are rendered)
+    await page.waitForSelector('[role="button"][aria-label*="dock"]', { timeout: 2000 });
   });
 
   test('focus remains on button after changing position from bottom to left', async ({ page }) => {
@@ -38,49 +37,35 @@ test.describe('DockControls Focus Restoration', () => {
     const panelHeader = page.getByTestId('panel-header');
     await panelHeader.click();
 
-    // Tab multiple times to reach the left button (may need to pass through other controls)
-    // We'll tab until we find a button with "dock" in the label
-    let foundLeftButton = false;
-    for (let i = 0; i < 10; i++) {
-      await page.keyboard.press('Tab');
-      await page.waitForTimeout(100);
-
-      const activeLabel = await page.evaluate(() => {
+    // Tab multiple times to reach the left button using waitForFunction
+    await page.waitForFunction(
+      () => {
         const active = document.activeElement;
-        return active instanceof HTMLElement ? active.getAttribute('aria-label') : null;
-      });
-
-      if (activeLabel?.toLowerCase().includes('dock left')) {
-        foundLeftButton = true;
-        break;
-      }
-    }
-
-    expect(foundLeftButton).toBe(true);
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('dock left')
+        );
+      },
+      { timeout: 5000 }
+    );
 
     // Press Space on the left button to change position
     await page.keyboard.press('Space');
 
-    // Wait for position change (panel remounts)
-    await page.waitForTimeout(800); // Give more time for remount
-
-    // Verify position changed to left
-    await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
+    // Wait for position change using Playwright's built-in retry logic
+    await expect(leftButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
 
     // Verify focus is still on the left button
-    const activeElementAfter = await page.evaluate(() => {
-      const active = document.activeElement;
-      if (active instanceof HTMLElement) {
-        return {
-          ariaLabel: active.getAttribute('aria-label'),
-          tagName: active.tagName,
-        };
-      }
-      return null;
-    });
-
-    expect(activeElementAfter).not.toBeNull();
-    expect(activeElementAfter?.ariaLabel?.toLowerCase()).toContain('left');
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('left')
+        );
+      },
+      { timeout: 2000 }
+    );
   });
 
   test('focus remains on button after changing position from left to right', async ({ page }) => {
@@ -92,62 +77,56 @@ test.describe('DockControls Focus Restoration', () => {
     const panelHeader = page.getByTestId('panel-header');
     await panelHeader.click();
 
-    // Tab to left button
-    let foundLeftButton = false;
-    for (let i = 0; i < 10; i++) {
-      await page.keyboard.press('Tab');
-      await page.waitForTimeout(100);
-
-      const activeLabel = await page.evaluate(() => {
+    // Tab to left button using waitForFunction
+    await page.waitForFunction(
+      () => {
         const active = document.activeElement;
-        return active instanceof HTMLElement ? active.getAttribute('aria-label') : null;
-      });
-
-      if (activeLabel?.toLowerCase().includes('dock left')) {
-        foundLeftButton = true;
-        break;
-      }
-    }
-
-    expect(foundLeftButton).toBe(true);
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('dock left')
+        );
+      },
+      { timeout: 5000 }
+    );
 
     // Activate left button
     await page.keyboard.press('Space');
-    await page.waitForTimeout(800);
 
-    // Verify left is active
-    await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
+    // Wait for position change
+    await expect(leftButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
 
     // Tab to right button (should be next)
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
 
-    // Verify we're on right button
-    const activeLabelBefore = await page.evaluate(() => {
-      const active = document.activeElement;
-      return active instanceof HTMLElement ? active.getAttribute('aria-label') : null;
-    });
-    expect(activeLabelBefore?.toLowerCase()).toContain('right');
+    // Verify we're on right button using waitForFunction
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('dock right')
+        );
+      },
+      { timeout: 1000 }
+    );
 
     // Press Space to change to right
     await page.keyboard.press('Space');
 
     // Wait for position change
-    await page.waitForTimeout(800);
-
-    // Verify position changed to right
-    await expect(rightButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(rightButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
 
     // Verify focus is still on the right button
-    const activeElement = await page.evaluate(() => {
-      const active = document.activeElement;
-      if (active instanceof HTMLElement) {
-        return active.getAttribute('aria-label');
-      }
-      return null;
-    });
-
-    expect(activeElement?.toLowerCase()).toContain('right');
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('right')
+        );
+      },
+      { timeout: 2000 }
+    );
   });
 
   test('focus restoration works for multiple sequential position changes', async ({ page }) => {
@@ -158,22 +137,23 @@ test.describe('DockControls Focus Restoration', () => {
     // Start from bottom
     await expect(bottomButton).toHaveAttribute('aria-pressed', 'true');
 
-    // Helper function to tab to a specific button
+    // Helper function to tab to a specific button using waitForFunction
     const tabToButton = async (targetLabel: string): Promise<boolean> => {
-      for (let i = 0; i < 15; i++) {
-        await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
-
-        const activeLabel = await page.evaluate(() => {
-          const active = document.activeElement;
-          return active instanceof HTMLElement ? active.getAttribute('aria-label') : null;
-        });
-
-        if (activeLabel?.toLowerCase().includes(targetLabel.toLowerCase())) {
-          return true;
-        }
+      try {
+        await page.waitForFunction(
+          () => {
+            const active = document.activeElement;
+            return (
+              active instanceof HTMLElement &&
+              active.getAttribute('aria-label')?.toLowerCase().includes(targetLabel.toLowerCase())
+            );
+          },
+          { timeout: 5000 }
+        );
+        return true;
+      } catch {
+        return false;
       }
-      return false;
     };
 
     // Start from a neutral position
@@ -184,42 +164,80 @@ test.describe('DockControls Focus Restoration', () => {
     const foundLeft = await tabToButton('dock left');
     expect(foundLeft).toBe(true);
     await page.keyboard.press('Space');
-    await page.waitForTimeout(800);
+
+    // Wait for position change using Playwright's built-in retry logic
+    await expect(leftButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
 
     // Verify focus on left after position change
-    let activeLabel = await page.evaluate(() => {
-      const active = document.activeElement;
-      return active instanceof HTMLElement ? active.getAttribute('aria-label') : null;
-    });
-    expect(activeLabel?.toLowerCase()).toContain('left');
-    await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('left')
+        );
+      },
+      { timeout: 2000 }
+    );
 
     // Test 2: Navigate to right button and activate
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
+    // Wait for focus to move using waitForFunction
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('right')
+        );
+      },
+      { timeout: 1000 }
+    );
     await page.keyboard.press('Space');
-    await page.waitForTimeout(800);
+
+    // Wait for position change
+    await expect(rightButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
 
     // Verify focus on right after position change
-    activeLabel = await page.evaluate(() => {
-      const active = document.activeElement;
-      return active instanceof HTMLElement ? active.getAttribute('aria-label') : null;
-    });
-    expect(activeLabel?.toLowerCase()).toContain('right');
-    await expect(rightButton).toHaveAttribute('aria-pressed', 'true');
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('right')
+        );
+      },
+      { timeout: 2000 }
+    );
 
     // Test 3: Navigate back to left and verify focus restoration still works
     await page.keyboard.press('Shift+Tab'); // Go back to left button
-    await page.waitForTimeout(200);
+    // Wait for focus to move back
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('left')
+        );
+      },
+      { timeout: 1000 }
+    );
     await page.keyboard.press('Space');
-    await page.waitForTimeout(800);
+
+    // Wait for position change
+    await expect(leftButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
 
     // Verify focus on left after position change
-    activeLabel = await page.evaluate(() => {
-      const active = document.activeElement;
-      return active instanceof HTMLElement ? active.getAttribute('aria-label') : null;
-    });
-    expect(activeLabel?.toLowerCase()).toContain('left');
-    await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
+    await page.waitForFunction(
+      () => {
+        const active = document.activeElement;
+        return (
+          active instanceof HTMLElement &&
+          active.getAttribute('aria-label')?.toLowerCase().includes('left')
+        );
+      },
+      { timeout: 2000 }
+    );
   });
 });
