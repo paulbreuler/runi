@@ -4,47 +4,34 @@
 set -e
 
 # Get the list of changed files
-# For pre-push hook, we compare against the remote branch
-# For pre-commit, we compare against HEAD
-if [ -n "$1" ]; then
-  # If branch name provided, compare against remote
-  REMOTE_REF="$1"
-  CHANGED_FILES=$(git diff --name-only "$REMOTE_REF" HEAD 2>/dev/null || git diff --name-only origin/"$REMOTE_REF" HEAD 2>/dev/null || echo "")
-else
-  # Default: compare against remote tracking branch or origin/main
-  REMOTE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "origin/main")
+# For pre-push hook: Git provides remote name and URL as $1 and $2
+# We need to compare local refs that are being pushed
+# For other contexts, compare against provided ref or default
+
+# Try to get the remote tracking branch
+REMOTE_REF=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
+
+if [ -n "$REMOTE_REF" ]; then
+  # Compare against remote tracking branch
   CHANGED_FILES=$(git diff --name-only "$REMOTE_REF" HEAD 2>/dev/null || echo "")
+elif [ -n "$1" ] && git rev-parse --verify "$1" >/dev/null 2>&1; then
+  # If a ref is provided and exists, use it
+  CHANGED_FILES=$(git diff --name-only "$1" HEAD 2>/dev/null || echo "")
+else
+  # Fallback: compare against origin/main or main
+  for ref in "origin/main" "origin/master" "main" "master"; do
+    if git rev-parse --verify "$ref" >/dev/null 2>&1; then
+      CHANGED_FILES=$(git diff --name-only "$ref" HEAD 2>/dev/null || echo "")
+      break
+    fi
+  done
 fi
 
-# If no changes detected, assume code changes (safer default)
+# If still no changes detected, assume code changes (safer default)
 if [ -z "$CHANGED_FILES" ]; then
   echo "false"
   exit 0
 fi
-
-# Documentation file patterns
-DOC_PATTERNS=(
-  "*.md"
-  "*.MD"
-  "*.txt"
-  "*.TXT"
-  "docs/**"
-  ".claude/**"
-  ".cursor/**"
-  "*.mdx"
-  "*.MDX"
-  "README*"
-  "readme*"
-  "CHANGELOG*"
-  "changelog*"
-  "LICENSE*"
-  "license*"
-  "CONTRIBUTING*"
-  "contributing*"
-  ".github/**/*.md"
-  ".github/**/*.yml"
-  ".github/**/*.yaml"
-)
 
 # Check if all changed files match documentation patterns
 ALL_DOCS=true
@@ -54,15 +41,33 @@ while IFS= read -r file; do
   fi
   
   IS_DOC=false
-  for pattern in "${DOC_PATTERNS[@]}"; do
-    # Use shell glob matching
-    case "$file" in
-      $pattern)
+  
+  # Check file extension patterns
+  case "$file" in
+    *.md|*.MD|*.mdx|*.MDX|*.txt|*.TXT)
+      IS_DOC=true
+      ;;
+    README*|readme*|CHANGELOG*|changelog*|LICENSE*|license*|CONTRIBUTING*|contributing*)
+      IS_DOC=true
+      ;;
+    docs/*|.claude/*|.cursor/*)
+      IS_DOC=true
+      ;;
+    .github/*.md|.github/*.yml|.github/*.yaml)
+      IS_DOC=true
+      ;;
+    *)
+      # Check if file is in a documentation directory
+      if [[ "$file" == docs/* ]] || \
+         [[ "$file" == .claude/* ]] || \
+         [[ "$file" == .cursor/* ]] || \
+         [[ "$file" == .github/*.md ]] || \
+         [[ "$file" == .github/*.yml ]] || \
+         [[ "$file" == .github/*.yaml ]]; then
         IS_DOC=true
-        break
-        ;;
-    esac
-  done
+      fi
+      ;;
+  esac
   
   if [ "$IS_DOC" = false ]; then
     ALL_DOCS=false
