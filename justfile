@@ -160,11 +160,11 @@ storybook-serve: storybook-build
 # ============================================================================
 
 # Run complete CI pipeline locally (use before pushing)
-ci: fmt-check lint check test
+ci: fmt-check lint check test docs-check
     @echo "✅ All CI checks passed!"
 
 # Run CI pipeline without tests (for documentation-only changes)
-ci-no-test: fmt-check lint check
+ci-no-test: fmt-check lint check docs-check
     @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"
 
 # Pre-commit hook: fast checks only
@@ -226,6 +226,18 @@ clean-ralph:
 # 📚 Documentation
 # ============================================================================
 
+# Check documentation formatting (same as CI docs-review)
+# Prettier handles: formatting, trailing whitespace, line endings
+docs-check:
+    @echo "📚 Checking markdown formatting..."
+    npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+
+# Fix documentation formatting
+docs-fix:
+    @echo "📚 Fixing markdown formatting..."
+    npx prettier --write "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+    @echo "✅ Documentation formatting fixed"
+
 # Generate Rust documentation
 docs:
     cd src-tauri && cargo doc --no-deps --open
@@ -233,6 +245,34 @@ docs:
 # List all TDD plans in runi-planning-docs repository
 list-plans:
     @bash scripts/list-plans.sh
+
+# Smart orchestration - detects plan from last PR and suggests actions
+work:
+    @bash scripts/work.sh
+
+# Auto-heal plan with auto-detection
+heal:
+    @bash scripts/heal-plan.sh --auto
+
+# Auto-heal specific plan
+heal-plan plan-name:
+    @bash scripts/heal-plan.sh --plan "{{plan-name}}"
+
+# Select and run next best agent task from a plan
+run plan-name:
+    @bash scripts/run-agent.sh --plan "{{plan-name}}"
+
+# Select next task without running (shows selection only)
+next-task plan-name:
+    @bash scripts/next-task.sh --plan "{{plan-name}}"
+
+# Assess agent completion status for a plan
+assess-agents plan-name:
+    @bash scripts/assess-agent-status.sh --plan "{{plan-name}}" --all
+
+# Run specific agent file
+run-agent agent-path:
+    @bash scripts/run-agent.sh --agent "{{agent-path}}"
 
 # ============================================================================
 # 📖 Help
@@ -281,8 +321,17 @@ help:
     @echo ""
     @echo "Documentation:"
     @echo "  just docs          - Generate Rust documentation"
+    @echo "  just docs-check    - Check documentation formatting (same as CI)"
+    @echo "  just docs-fix      - Fix documentation formatting issues"
     @echo ""
     @echo "Planning:"
     @echo "  just list-plans    - List all TDD plans in runi-planning-docs"
+    @echo "  just work          - Smart orchestration (detects plan, suggests actions)"
+    @echo "  just run <plan>    - Select and run next best agent task"
+    @echo "  just next-task <plan> - Select next task (no run)"
+    @echo "  just assess-agents <plan> - Assess agent completion status"
+    @echo "  just run-agent <path> - Run specific agent file"
+    @echo "  just heal          - Auto-heal plan (auto-detects from PR)"
+    @echo "  just heal-plan <plan> - Auto-heal specific plan"
     @echo ""
     @echo "For a full list of commands: just list"

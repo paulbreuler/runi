@@ -12,31 +12,65 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - Verify GitHub CLI is available (`gh --version`)
    - Check if PR already exists (`gh pr view`)
 
-2. **Analyze git changes:**
+2. **Detect active agent (if working with feature plan):**
+   - Run `bash scripts/detect-active-agent.sh --json` to detect agent from:
+     - Branch name (e.g., `feat/datagrid/agent_0_accessibility`)
+     - Recent commit messages (e.g., mentions "agent_2" or "Agent 2")
+     - Modified files (e.g., changes to `agents/agent_4_*.agent.md`)
+     - Recently modified agent files (fallback)
+   - If agent detected:
+     - Extract agent name, feature numbers, and TL;DR descriptions from agent file
+     - Use agent context for PR title and description
+   - If no agent detected:
+     - Proceed with standard PR generation (non-agent work)
+
+2a. **Validate agent status (if agent detected):**
+
+- Run `bash scripts/assess-agent-status.sh --agent <agent-file-path>` to check agent status
+- Parse assessment output to check:
+  - If all features have status PASS/Complete (e.g., "4 PASS, 0 WIP, 0 GAP")
+  - If agent file is still in `agents/` directory (File Organization: "active (in agents/)")
+  - If recommendations include "All features PASS but file not marked as completed"
+- If validation conditions met (all PASS + not completed):
+  - Display warning message with agent name, feature counts, and recommendation
+  - Prompt user: "Continue with PR creation anyway? (y/n)"
+  - If `y` or non-interactive: Proceed with PR creation
+  - If `n`: Suggest running `/close-feature-agent <agent-file-path>` first, then exit gracefully
+- If validation conditions not met or assessment fails:
+  - Proceed normally with PR creation (no warning)
+
+3. **Analyze git changes:**
    - Get current branch name
    - Determine base branch (default: main/master)
    - Use `git log` to get commits since base branch
    - Use `git diff` to understand what changed
    - Count files changed and lines changed
 
-3. **Generate PR description (in memory, NO files):**
+4. **Generate PR description (in memory, NO files):**
    - Summary of changes
    - Detailed changes list
    - Test plan
    - Breaking changes (if any)
    - Related issues (if mentioned in commits)
+   - **Related Agent section** (if agent detected):
+     - Agent name
+     - Feature numbers
+     - Plan name
+     - Brief description from agent file TL;DR
    - Review checklist
    - Use markdown formatting
    - Include code references where helpful
 
-4. **Create PR on GitHub:**
+5. **Create PR on GitHub:**
    - Push branch if not already pushed (`git push -u origin <branch>`)
    - Use `gh pr create` with generated description
    - Set base branch correctly
-   - Use conventional commit format for title
+   - **Generate PR title:**
+     - **If agent detected:** `feat(<scope>): <agent-name> - <primary-feature-description>`
+     - **If no agent:** Use conventional commit format based on code analysis
    - Display PR URL when created
 
-5. **Handle errors gracefully:**
+6. **Handle errors gracefully:**
    - If PR already exists: show existing PR URL
    - If GitHub CLI not available: show instructions
    - If branch not pushed: push first, then create PR
@@ -102,6 +136,16 @@ The generated PR follows this structure:
 
 Brief description of what this PR does and why.
 
+## Related Agent
+
+_(Only included if agent detected)_
+
+Working on: [Agent Name]
+Features: #48, #49, #50
+Plan: [plan-name]
+
+[Brief description from agent file TL;DR]
+
 ## Changes
 
 - [File/Component] - Description of change
@@ -145,6 +189,39 @@ Related to #456
 - [ ] CLAUDE.md decision log updated (if applicable)
 ```
 
+## PR Title Format
+
+PR titles follow conventional commit format, with agent context when available:
+
+**With Agent Detected:**
+
+```
+feat(<scope>): <agent-name> - <primary-feature-description>
+```
+
+**Without Agent (Fallback):**
+
+```
+<type>(<scope>): <description>
+```
+
+**Examples with Agent:**
+
+```
+feat(accessibility): implement keyboard navigation, ARIA attributes, and focus management for DataGrid
+feat(datagrid): add status and timing columns with color coding
+feat(datagrid): implement selection and expander columns
+```
+
+**Examples without Agent:**
+
+```
+feat(http): add request timeout configuration
+fix(ui): resolve header tab overflow on small screens
+test(auth): add bearer token validation tests
+refactor(commands): extract HTTP client to separate module
+```
+
 ## Commit Message Format
 
 Generated commit messages follow conventional commits:
@@ -166,15 +243,6 @@ Generated commit messages follow conventional commits:
 - `docs`: Documentation
 - `style`: Formatting (no code change)
 - `chore`: Maintenance
-
-**Examples:**
-
-```
-feat(http): add request timeout configuration
-fix(ui): resolve header tab overflow on small screens
-test(auth): add bearer token validation tests
-refactor(commands): extract HTTP client to separate module
-```
 
 ## Analysis Process
 
@@ -206,13 +274,18 @@ The command analyzes:
 
 ## Examples
 
-### PR from Staged Changes
+### PR from Staged Changes (with Agent Detection)
 
 ```text
 /pr
 ```
 
-Analyzes staged changes and generates PR description.
+Analyzes staged changes, detects agent if working on feature plan, and generates PR description with agent context.
+
+**Example Output:**
+
+- If agent detected: Title includes agent name and features
+- If no agent: Standard PR title based on code changes
 
 ### PR from Recent Commits
 
@@ -220,7 +293,7 @@ Analyzes staged changes and generates PR description.
 /pr --commits HEAD~3..HEAD
 ```
 
-Analyzes last 3 commits and generates PR description.
+Analyzes last 3 commits, checks commit messages for agent references, and generates PR description.
 
 ### PR Comparing Branches
 
@@ -228,7 +301,60 @@ Analyzes last 3 commits and generates PR description.
 /pr --base main
 ```
 
-Compares current branch with main and generates PR description.
+Compares current branch with main, detects agent from branch name or modified files, and generates PR description.
+
+### Agent Detection Examples
+
+**Branch Name Pattern:**
+
+- Branch: `feat/datagrid/agent_0_accessibility` → Detects Agent 0 from datagrid plan
+- Branch: `agent-2-status-timing` → Detects Agent 2
+
+**Commit Message Pattern:**
+
+- Commit: `feat(agent_2): add status column` → Detects Agent 2
+- Commit: `Working on Agent 0 accessibility features` → Detects Agent 0
+
+**Modified Files Pattern:**
+
+- Modified: `../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_4_selection__expander_columns.agent.md` → Detects Agent 4
+
+### Agent Status Validation Example
+
+**Scenario:** Agent 0 has all features complete but hasn't been closed
+
+```text
+/pr
+```
+
+**Output:**
+
+```
+⚠️  Agent Status Warning
+
+Agent "Accessibility Foundation (Early)" has all features complete (4 PASS, 0 GAP)
+but hasn't been moved to completed/ directory.
+
+Recommended: Run `/close-feature-agent` before creating PR to:
+  - Verify completion
+  - Sync status to README.md
+  - Move agent to completed/
+
+Continue with PR creation anyway? (y/n)
+```
+
+**User chooses `n`:**
+
+```
+Suggestion: Run `/close-feature-agent ../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_0_accessibility_foundation_early.agent.md` first
+```
+
+**User chooses `y`:**
+
+```
+Proceeding with PR creation...
+[PR created successfully]
+```
 
 ## Integration with Code Review
 
@@ -270,6 +396,45 @@ If no commits exist since base branch:
 - Inform user
 - Suggest committing changes first
 
+### Agent Detection Fails
+
+If agent detection fails (no agent found):
+
+- Continue with standard PR generation
+- Use conventional commit format for title
+- Note in description that this is non-agent work (optional)
+- This is expected for work not part of a feature plan
+
+### Agent Status Validation Warning
+
+If agent is detected and has all features PASS but isn't closed:
+
+**Warning Message:**
+
+```
+⚠️  Agent Status Warning
+
+Agent "Accessibility Foundation (Early)" has all features complete (4 PASS, 0 GAP)
+but hasn't been moved to completed/ directory.
+
+Recommended: Run `/close-feature-agent` before creating PR to:
+  - Verify completion
+  - Sync status to README.md
+  - Move agent to completed/
+
+Continue with PR creation anyway? (y/n)
+```
+
+**User Options:**
+
+- `y`: Proceed with PR creation (validation is non-blocking)
+- `n`: Exit and suggest running `/close-feature-agent <agent-file-path>` first
+
+**Non-Interactive Mode:**
+
+- Warning is displayed but PR creation proceeds automatically
+- Warning includes actionable next steps for post-PR cleanup
+
 ## Related Commands
 
 - `/code-review` - Review code before creating PR
@@ -280,10 +445,13 @@ If no commits exist since base branch:
 ## Notes
 
 - **No Files Created:** Description is generated in memory and passed directly to GitHub CLI
-- **Conventional Commits:** PR title follows conventional commit format
+- **Agent Detection:** Automatically detects agent/feature context when working on feature plans
+- **PR Title:** Matches feature being worked on when agent detected, falls back to conventional commit format
+- **Conventional Commits:** PR title follows conventional commit format (with agent context when available)
 - **Test Coverage:** PR includes coverage information (unit, integration, E2E, migration if applicable, performance if applicable)
 - **Breaking Changes:** Clearly marked with migration guide (required for overhauls)
 - **Migration Testing:** Overhauls must include migration test results
 - **Performance Testing:** Data-heavy features must include performance test results with thresholds
 - **Review Checklist:** Helps maintainers review efficiently
 - **GitHub CLI Required:** This command uses `gh pr create` to actually create the PR
+- **Graceful Fallback:** Works correctly even when no agent is detected (for non-agent work)

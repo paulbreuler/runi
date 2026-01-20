@@ -10,9 +10,82 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  check-changes:
+    name: Check Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has-code-changes: ${{ steps.filter.outputs.has-code-changes }}
+      has-docs-changes: ${{ steps.filter.outputs.has-docs-changes }}
+      has-workflow-changes: ${{ steps.filter.outputs.has-workflow-changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for code changes
+        id: filter
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+          else
+            BASE_REF="main"
+          fi
+
+          CHANGED_FILES=$(git diff --name-only origin/${BASE_REF}...HEAD)
+
+          # Check for workflow file changes (we want to run tests to validate workflow)
+          if echo "$CHANGED_FILES" | grep -qE '^\.github/'; then
+            echo "has-workflow-changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-workflow-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for code changes
+          # Run tests if: actual code files changed OR workflow files changed
+          # Skip tests if: only docs/scripts changed (and no workflow files)
+          HAS_WORKFLOW_CHANGES=$(echo "$CHANGED_FILES" | grep -qE '^\.github/' && echo 'true' || echo 'false')
+          HAS_CODE_CHANGES=$(echo "$CHANGED_FILES" | grep -qvE '^(.cursor/|scripts/|justfile|docs/|\.md$|\.claude/|\.github/)' && echo 'true' || echo 'false')
+
+          if [ "$HAS_CODE_CHANGES" = "true" ] || [ "$HAS_WORKFLOW_CHANGES" = "true" ]; then
+            echo "has-code-changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-code-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for documentation changes
+          if echo "$CHANGED_FILES" | grep -qE '\.(md|mdx)$|^\.cursor/|^docs/|^\.claude/'; then
+            echo "has-docs-changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-docs-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+  docs-review:
+    name: Documentation Review
+    runs-on: ubuntu-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.has-docs-changes == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Check Markdown formatting
+        # Prettier handles: formatting, trailing whitespace, line endings
+        # This matches local: just docs-check
+        run: npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.has-code-changes == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +121,8 @@ jobs:
   rust:
     name: Rust Backend
     runs-on: ${{ matrix.os }}
+    needs: check-changes
+    if: needs.check-changes.outputs.has-code-changes == 'true'
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
