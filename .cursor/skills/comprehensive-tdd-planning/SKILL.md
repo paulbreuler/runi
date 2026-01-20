@@ -88,13 +88,18 @@ Copy agents/columns.agent.md → paste to agent → done
 
 ## Commands
 
-| Command                | Purpose                        | When                                    |
-| ---------------------- | ------------------------------ | --------------------------------------- |
-| `create-feature-plan`  | Create new plan + agent files  | Starting new work                       |
-| `update-feature-plan`  | Modify plan, regenerate agents | Mid-flight changes, interface evolution |
-| `close-feature-agent`  | Verify completion, sync status | Agent finishes work                     |
-| `migrate-feature-plan` | Convert v1.x plan to v2.0.0    | Existing plans need migration           |
-| `list-feature-plans`   | List available plans           | Finding plans                           |
+| Command                | Purpose                                                 | When                                    |
+| ---------------------- | ------------------------------------------------------- | --------------------------------------- |
+| `create-feature-plan`  | Create new plan + agent files                           | Starting new work                       |
+| `update-feature-plan`  | Modify plan, regenerate agents                          | Mid-flight changes, interface evolution |
+| `close-feature-agent`  | Verify completion, sync status                          | Agent finishes work                     |
+| `migrate-feature-plan` | Convert v1.x plan to v2.0.0                             | Existing plans need migration           |
+| `list-feature-plans`   | List available plans                                    | Finding plans                           |
+| `work`                 | Smart orchestration (auto-detect plan, assess, suggest) | After PR merged, starting new session   |
+| `heal`                 | Auto-heal plan (cleanup, pattern detection)             | Cleanup completed agents, detect issues |
+| `run <plan>`           | Select and run next best agent task                     | Ready to start work on plan             |
+| `next-task <plan>`     | Select next task (no run)                               | Preview next task selection             |
+| `assess-agents <plan>` | Assess agent completion status                          | Check status, find cleanup needs        |
 
 ### update-feature-plan
 
@@ -129,6 +134,10 @@ create-feature-plan
        ↓
    [PR merged]
        ↓
+   just work (auto-detect plan, assess status, suggest next task)
+       ↓
+   [if cleanup needed] → just heal (auto-fix completed agents)
+       ↓
 close-feature-agent ←─────────────────┐
        ↓                              │
    [status synced, unblocked identified]
@@ -139,6 +148,29 @@ close-feature-agent ←─────────────────┐
        ↓                              │
    [repeat] ──────────────────────────┘
 ```
+
+### Smart Orchestration
+
+After a PR is merged, use `just work` to:
+
+1. **Auto-detect plan** from last merged PR (title, branch, description, files)
+2. **Assess status** of all agents (completed, active, needs cleanup)
+3. **Identify cleanup** (completed agents not moved to `completed/`)
+4. **Determine next task** using scoring algorithm (dependencies, workload, priority)
+5. **Provide recommendations** with clickable links to plan files
+
+Use `just heal` to:
+
+- Auto-move completed agents to `completed/` directory
+- Detect stuck agents (WIP for 7+ days)
+- Identify dependency bottlenecks
+- Learn from patterns and suggest improvements
+
+All commands support `--auto` flag to auto-detect plan from last PR:
+
+- `just next-task --auto`
+- `just assess-agents --auto`
+- `just run-agent --auto`
 
 ### close-feature-agent
 

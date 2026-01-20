@@ -153,6 +153,8 @@ README.md updated:
 1. ✅ Agent `columns` work complete
 2. 🔄 Agent `rows` can continue (was blocked on #2)
 3. ❓ Consider `update-plan` if interfaces evolved during implementation
+4. 📊 Run `/work` to assess overall plan status and find next task
+5. 🧹 Run `/heal` if cleanup is needed (completed agents not moved)
 ```
 
 ## Failure Cases
@@ -191,13 +193,38 @@ create-feature-plan
     ↓
 close-feature-agent  ←── YOU ARE HERE
     ↓
+[PR merged]
+    ↓
+work (auto-detect plan, assess status, suggest next task)
+    ↓
+[if cleanup needed] → heal (auto-fix completed agents)
+    ↓
 [if interfaces changed] → update-feature-plan → regenerate affected agents
+    ↓
+run-agent (start next task)
     ↓
 [next agent implements]
     ↓
 close-feature-agent
     ↓
 [repeat until done]
+```
+
+## After Closing
+
+After closing an agent, use these commands to continue work:
+
+1. **Assess overall plan status**: Run `/work` to auto-detect the plan from the last merged PR, assess all agent statuses, identify cleanup needs, and see the next best task
+2. **Auto-cleanup if needed**: If `/work` shows completed agents that need cleanup, run `/heal` or `just heal` to automatically move completed agents to `completed/` directory
+3. **Start next task**: Use `/work` recommendations or `/run-agent --auto` to start the next best task
+
+### Recommended Post-Close Workflow
+
+```
+1. Close agent: /close-feature-agent [agent-path]
+2. Assess status: /work (auto-detects plan, shows cleanup needs, suggests next task)
+3. Cleanup if needed: /heal (auto-fixes completed agents)
+4. Start next task: /run-agent --auto (uses detected plan)
 ```
 
 ## Command Flags

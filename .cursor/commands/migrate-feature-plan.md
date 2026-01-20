@@ -299,6 +299,18 @@ After migration, use normal v2.0.0 commands:
 
 - `update-feature-plan` - Modify plan, regenerate agents
 - `close-feature-agent` - Verify completion, sync status
+- `work` - Assess plan status, find next task
+- `heal` - Auto-cleanup completed agents
+
+## After Migration
+
+After migration completes:
+
+1. **Assess plan status**: Run `/work --plan <plan-name>` to see overall plan status, identify cleanup needs, and find the next best task
+2. **Start work**: Use `/work` recommendations or `/run-agent --plan <plan-name>` to start work on the migrated plan
+3. **Auto-cleanup if needed**: If cleanup is needed, run `/heal --plan <plan-name>` to auto-fix completed agents
+
+The migrated plan is now ready for v2.0.0 workflow with agent-per-file execution.
 
 ## Commit Message
 

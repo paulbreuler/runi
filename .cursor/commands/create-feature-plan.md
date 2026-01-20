@@ -229,7 +229,13 @@ Agent implements
 
 ```
 
+**Optional: Assess initial status**:
+After creating a plan, you can use `/work --plan <plan-name>` to assess the initial plan status and see the first recommended task. This is optional but can help verify the plan structure is correct.
+
+```
+
 **Update plan**:
+
 ```
 
 /update-feature-plan [path]
@@ -238,4 +244,7 @@ Agent implements
 
 **Check status**:
 Review README.md status matrix
+
+```
+
 ```

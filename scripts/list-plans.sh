@@ -48,8 +48,60 @@ get_work_type() {
 # Function to get plan name (project name from directory)
 get_plan_name() {
     local dirname="$1"
-    # Remove timestamp suffix (last underscore and numbers)
-    echo "$dirname" | sed -E 's/_[0-9]+$//' | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g'
+    local name="$dirname"
+    
+    # Remove timestamp patterns first (most specific to least specific)
+    # Pattern: _YYYYMMDD_HHMMSS (date_time format)
+    name=$(echo "$name" | sed -E 's/_[0-9]{8}_[0-9]{6}$//')
+    # Pattern: _hash (alphanumeric hash like 4a5b9879)
+    name=$(echo "$name" | sed -E 's/_[0-9a-f]{8,}$//')
+    # Pattern: _numbers (simple numeric suffix)
+    name=$(echo "$name" | sed -E 's/_[0-9]+$//')
+    
+    # Remove work type suffix patterns (must come after timestamp removal)
+    # Match: _refactor_, _overhaul_, _features_ followed by optional content
+    name=$(echo "$name" | sed -E 's/_(refactor|overhaul|features)(_[^_]*)?$//')
+    
+    # Replace underscores and hyphens with spaces
+    name=$(echo "$name" | sed 's/[-_]/ /g' | sed 's/^ *//' | sed 's/ *$//')
+    
+    # Capitalize first letter of each word (using awk for reliability)
+    echo "$name" | awk '{for(i=1;i<=NF;i++){sub(/./, toupper(substr($i,1,1)), $i)} print}'
+}
+
+# Function to get absolute path (for clickable links in Cursor)
+get_absolute_path() {
+    local path="$1"
+    if [[ "$path" == /* ]]; then
+        echo "$path"
+    elif command -v realpath >/dev/null 2>&1; then
+        realpath "$path" 2>/dev/null || echo "$path"
+    else
+        local dir
+        dir=$(cd "$(dirname "$path")" 2>/dev/null && pwd)
+        if [ -n "$dir" ]; then
+            echo "$dir/$(basename "$path")"
+        else
+            echo "$path"
+        fi
+    fi
+}
+
+# Function to create a clickable hyperlink with compact display text
+# Usage: create_hyperlink "/full/path/to/file.md" "display text"
+# Uses cursor://file/ URL scheme to open files directly in Cursor
+create_hyperlink() {
+    local full_path="$1"
+    local display_text="$2"
+    # OSC 8 hyperlink with cursor://file/ URL scheme
+    # Format: \e]8;;cursor://file/URL\e\\text\e]8;;\e\\
+    # Cursor expects: cursor://file/path (absolute path without leading slash in URL)
+    # URL encode the path (replace spaces with %20, etc.)
+    local encoded_path
+    encoded_path=$(printf '%s' "$full_path" | sed 's/ /%20/g' | sed 's/#/%23/g' | sed 's/\[/%5B/g' | sed 's/\]/%5D/g')
+    # Remove leading slash if present (cursor://file/ already provides the root)
+    encoded_path="${encoded_path#/}"
+    printf '\e]8;;cursor://file/%s\e\\%s\e]8;;\e\\' "$encoded_path" "$display_text"
 }
 
 # Function to get overview from plan.md if available
@@ -77,13 +129,55 @@ find "$PLANS_DIR" -maxdepth 1 -type d ! -name "plans" ! -name "templates" ! -nam
     
     echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "$work_type  ${BOLD}${WHITE}${plan_name}${RESET}"
-    echo -e "   ${DIM}Directory:${RESET} ${GRAY}${dirname}${RESET}"
     if [ -n "$overview" ]; then
         echo -e "   ${DIM}Overview:${RESET} ${overview}..."
     fi
-    if [ -f "$plan_dir/README.md" ]; then
-        echo -e "   ${GREEN}📄 README available${RESET}"
+    
+    # Get base directory for relative paths
+    plan_base=$(get_absolute_path "$plan_dir")
+    
+    # Show clickable file paths with compact display
+    # Try OSC 8 hyperlinks first, fallback to relative paths
+    if [ -f "$plan_dir/plan.md" ]; then
+        plan_path=$(get_absolute_path "$plan_dir/plan.md")
+        printf "   "
+        create_hyperlink "$plan_path" "plan.md"
+        echo ""
     fi
+    if [ -f "$plan_dir/README.md" ]; then
+        readme_path=$(get_absolute_path "$plan_dir/README.md")
+        printf "   "
+        create_hyperlink "$readme_path" "README.md"
+        echo ""
+    fi
+    if [ -f "$plan_dir/interfaces.md" ]; then
+        interfaces_path=$(get_absolute_path "$plan_dir/interfaces.md")
+        printf "   "
+        create_hyperlink "$interfaces_path" "interfaces.md"
+        echo ""
+    fi
+    if [ -f "$plan_dir/gotchas.md" ]; then
+        gotchas_path=$(get_absolute_path "$plan_dir/gotchas.md")
+        printf "   "
+        create_hyperlink "$gotchas_path" "gotchas.md"
+        echo ""
+    fi
+    
+    # List agent files with YAML-like indentation
+    if [ -d "$plan_dir/agents" ]; then
+        agent_count=$(find "$plan_dir/agents" -name "*.agent.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$agent_count" -gt 0 ]; then
+            echo -e "   ${DIM}agents:${RESET}"
+            find "$plan_dir/agents" -name "*.agent.md" -type f 2>/dev/null | sort | while read -r agent_file; do
+                agent_path=$(get_absolute_path "$agent_file")
+                agent_name=$(basename "$agent_file")
+                printf "     ${DIM}-${RESET} "
+                create_hyperlink "$agent_path" "$agent_name"
+                echo ""
+            done
+        fi
+    fi
+    
     echo ""
 done
 

@@ -13,12 +13,15 @@ List all available TDD plans in the runi-planning-docs repository with their wor
 2. **Display the output:**
    - Show the formatted list of plans
    - Include work type (Refactor/Overhaul/Feature)
-   - Include plan names and directory names
+   - Include plan names
    - Show overviews if available
+   - **Display clickable absolute file paths** for all files (plan.md, README.md, interfaces.md, gotchas.md, and all agent files)
+   - Paths are formatted without ANSI codes so they're clickable in Cursor terminal
 
 3. **Provide navigation help:**
-   - Explain how to view a specific plan
-   - Show how to access plan README files
+   - Explain that paths are clickable in most modern terminals (Command+Click on macOS, Ctrl+Click on Linux/Windows)
+   - Explain how to view a specific plan using the provided paths
+   - Show how to access plan README files, interfaces, gotchas, and agent files
    - Reference the plan directory structure
 
 ## Usage
@@ -35,44 +38,78 @@ bash scripts/list-plans.sh
 
 ## Output Format
 
-The script displays:
+The script displays each plan with:
 
-- Total number of plans
-- Each plan with:
-  - Work type icon and label (🔧 Refactor, 🔄 Overhaul, ✨ Feature)
-  - Plan name (human-readable)
-  - Directory name (for navigation)
-  - Overview snippet (if available from plan.md)
-  - README availability indicator
+- Work type icon and label (🔧 Refactor, 🔄 Overhaul, ✨ Feature)
+- Plan name (human-readable)
+- Overview snippet (if available from plan.md)
+- **Clickable absolute file paths** (one per line):
+  - `plan.md` - Full feature specifications
+  - `README.md` - Index and status (if exists)
+  - `interfaces.md` - Interface contracts (if exists)
+  - `gotchas.md` - Discovered issues (if exists)
+  - All `*.agent.md` files in `agents/` directory
+
+**Navigation:**
+
+- All file links use Cursor's `cursor://file/` URL scheme to open directly in Cursor
+- Links display compact text (e.g., `plan.md`, `agents/agent_1.agent.md`) but open the full file path
+- Click any link in the terminal to open the file in Cursor
+- Works with OSC 8 hyperlink support (iTerm2, Windows Terminal, Alacritty, WezTerm, and Cursor's terminal)
 
 ## Example Output
 
 ```
 📋 TDD Plans in runi-planning-docs/plans/
 
-Total plans: 13
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 Overhaul  Datagrid Overhaul
+   Overview: Major overhaul of DataGrid component...
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/plan.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/README.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/interfaces.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/gotchas.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_0_accessibility_foundation_early.agent.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_1_column_display_features.agent.md
+   ...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔧 Refactor  Timingtab Refactor
-   Directory: timingtab_refactor_1768875182
    Overview: Refactor TimingTab to extract reusable SignalBadge component...
-   📄 README available
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔄 Overhaul  Datagrid Overhaul
-   Directory: datagrid_overhaul_4a5b9879
-   Overview: Major overhaul of DataGrid component...
-   📄 README available
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/timingtab_refactor_1768875182/plan.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/timingtab_refactor_1768875182/README.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/timingtab_refactor_1768875182/agents/accessibility.agent.md
+   ...
 ```
+
+**Note:** All file links use Cursor's `cursor://file/` URL scheme. Clicking on compact labels like `plan.md` or `agents/agent_1.agent.md` will open the full file path directly in Cursor.
 
 ## Viewing Plans
 
 After listing, you can:
 
-- **View a plan**: `cat ../runi-planning-docs/plans/[plan-name]/plan.md`
-- **View README**: `cat ../runi-planning-docs/plans/[plan-name]/README.md`
-- **View parallelization**: `cat ../runi-planning-docs/plans/[plan-name]/parallelization.md`
-- **View speed prompts**: `cat ../runi-planning-docs/plans/[plan-name]/speed_prompts.md`
+- **Click any file link** in the Cursor terminal to open it directly in Cursor
+- Links show compact text (e.g., `plan.md`) but open the full file path
+- All links use Cursor's `cursor://file/` URL scheme for direct integration
+
+**Quick Navigation:**
+
+- Click on compact labels like `plan.md`, `README.md`, or `agents/agent_1.agent.md`
+- Files open directly in Cursor when clicked
+
+**Opening in Current Window:**
+To ensure files open in your current Cursor window (not a new window), set this in your Cursor settings:
+
+```json
+{
+  "window.openFilesInNewWindow": "off"
+}
+```
+
+Or use the CLI with the `-r` flag: `cursor -r [path]`
+
+**Fallback:**
+If hyperlinks don't work in your terminal, you can use the `cursor` CLI command: `cursor [path]`
 
 ## Integration
 

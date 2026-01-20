@@ -28,7 +28,18 @@ Agent files are **distilled**, not copied. When plan changes, affected agent fil
 8. Regenerate affected agent files (distill, don't copy)
 9. Verify consistency
 10. Commit
+11. Assess status: /work --plan <plan-name> (optional, see next task)
 ```
+
+## After Update
+
+After updating a plan and regenerating agent files:
+
+1. **Assess plan status**: Run `/work --plan <plan-name>` to see overall plan status, identify cleanup needs, and find the next best task
+2. **Auto-cleanup if needed**: If cleanup is needed, run `/heal --plan <plan-name>` to auto-fix completed agents
+3. **Start next work**: Use `/work` recommendations or `/run-agent --plan <plan-name>` to start the next task
+
+This helps ensure the plan is in a good state after updates and ready for continued work.
 
 ## Instructions
 
@@ -321,6 +332,8 @@ Example:
 | `create-feature-plan` | Create new plan | Starting work |
 | **`update-feature-plan`** | Modify plan, regenerate agents | Mid-flight changes |
 | `close-feature-agent` | Verify completion, sync status | Agent finishes |
+| `work` | Assess status, find next task | After update, after PR merge |
+| `heal` | Auto-cleanup completed agents | When cleanup needed |
 
 Typical flow:
 ```
@@ -334,6 +347,8 @@ close-feature-agent (verify, sync status)
 update-feature-plan (if interfaces evolved) ←── YOU ARE HERE
 ↓
 [regenerated agent files ready]
+↓
+work (assess status, find next task)
 ↓
 [next agent implements]
 

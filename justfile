@@ -234,6 +234,34 @@ docs:
 list-plans:
     @bash scripts/list-plans.sh
 
+# Smart orchestration - detects plan from last PR and suggests actions
+work:
+    @bash scripts/work.sh
+
+# Auto-heal plan with auto-detection
+heal:
+    @bash scripts/heal-plan.sh --auto
+
+# Auto-heal specific plan
+heal-plan plan-name:
+    @bash scripts/heal-plan.sh --plan "{{plan-name}}"
+
+# Select and run next best agent task from a plan
+run plan-name:
+    @bash scripts/run-agent.sh --plan "{{plan-name}}"
+
+# Select next task without running (shows selection only)
+next-task plan-name:
+    @bash scripts/next-task.sh --plan "{{plan-name}}"
+
+# Assess agent completion status for a plan
+assess-agents plan-name:
+    @bash scripts/assess-agent-status.sh --plan "{{plan-name}}" --all
+
+# Run specific agent file
+run-agent agent-path:
+    @bash scripts/run-agent.sh --agent "{{agent-path}}"
+
 # ============================================================================
 # 📖 Help
 # ============================================================================
@@ -284,5 +312,12 @@ help:
     @echo ""
     @echo "Planning:"
     @echo "  just list-plans    - List all TDD plans in runi-planning-docs"
+    @echo "  just work          - Smart orchestration (detects plan, suggests actions)"
+    @echo "  just run <plan>    - Select and run next best agent task"
+    @echo "  just next-task <plan> - Select next task (no run)"
+    @echo "  just assess-agents <plan> - Assess agent completion status"
+    @echo "  just run-agent <path> - Run specific agent file"
+    @echo "  just heal          - Auto-heal plan (auto-detects from PR)"
+    @echo "  just heal-plan <plan> - Auto-heal specific plan"
     @echo ""
     @echo "For a full list of commands: just list"
