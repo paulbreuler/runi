@@ -69,8 +69,9 @@ export function generateGoCode(entry: NetworkHistoryEntry): string {
       const contentTypeKey = Object.keys(headers).find(
         (key) => key.toLowerCase() === 'content-type'
       );
-      const contentType = contentTypeKey ? (headers[contentTypeKey]?.toLowerCase() ?? '') : '';
-      if (contentType !== '' && contentType.includes('application/json')) {
+      const contentType =
+        contentTypeKey !== undefined ? (headers[contentTypeKey]?.toLowerCase() ?? '') : '';
+      if (contentType.length > 0 && contentType.includes('application/json')) {
         // For JSON, use the body as a string literal
         // Escape backticks for Go raw string literals
         const escaped = body.replace(/`/g, '` + "`" + `');

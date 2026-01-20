@@ -77,8 +77,8 @@ export const LargeBodies: Story = {
       {
         data: Array.from({ length: 50 }, (_, i) => ({
           id: i + 1,
-          name: `Item ${i + 1}`,
-          description: `Description for item ${i + 1}`,
+          name: `Item ${String(i + 1)}`,
+          description: `Description for item ${String(i + 1)}`,
         })),
       },
       null,
@@ -89,7 +89,7 @@ export const LargeBodies: Story = {
         success: true,
         data: Array.from({ length: 50 }, (_, i) => ({
           id: i + 1,
-          name: `Item ${i + 1}`,
+          name: `Item ${String(i + 1)}`,
           status: 'active',
         })),
         pagination: {

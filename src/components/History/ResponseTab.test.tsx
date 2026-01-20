@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import _userEvent from '@testing-library/user-event';
 import { ResponseTab } from './ResponseTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 

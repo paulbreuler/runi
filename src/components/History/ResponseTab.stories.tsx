@@ -116,8 +116,8 @@ export const LargeResponse: Story = {
           {
             data: Array.from({ length: 100 }, (_, i) => ({
               id: i + 1,
-              name: `User ${i + 1}`,
-              email: `user${i + 1}@example.com`,
+              name: `User ${String(i + 1)}`,
+              email: `user${String(i + 1)}@example.com`,
             })),
           },
           null,
