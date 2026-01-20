@@ -13,6 +13,8 @@ import { flexRender, type Row, type ColumnDef } from '@tanstack/react-table';
 import { useDataGrid, type UseDataGridOptions } from './useDataGrid';
 import { cn } from '@/utils/cn';
 import { useAnchorColumnWidths, type AnchorColumnDef } from './useAnchorColumnWidths';
+// Keyboard navigation is handled at the interactive element level (checkboxes, buttons)
+// Rows and cells are NOT focusable to prevent page scrolling
 
 /**
  * Gets the appropriate padding class for a column based on its ID.
@@ -389,9 +391,13 @@ export function VirtualDataGrid<TData>({
         }
       }
 
+      // Cells are NOT focusable - only interactive elements inside (checkboxes, buttons) are focusable
+      // This prevents page scrolling when Space is pressed on non-interactive elements
+
       return (
         <td
           key={cell.id}
+          role="cell"
           className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden', bgClass)}
           style={cellStyle}
         >
@@ -421,18 +427,30 @@ export function VirtualDataGrid<TData>({
     );
   };
 
+  // Row component - rows are NOT focusable, only interactive elements inside are
+  interface DataGridRowProps {
+    row: Row<TData>;
+    cells: React.ReactNode;
+  }
+
+  const DataGridRow = ({ row, cells }: DataGridRowProps): React.ReactElement => {
+    return (
+      <tr
+        role="row"
+        className={cn(
+          'group border-b border-border-default hover:bg-bg-raised transition-colors',
+          row.getIsSelected() && 'bg-accent-blue/10'
+        )}
+        data-row-id={row.id}
+      >
+        {cells}
+      </tr>
+    );
+  };
+
   // Default row renderer
   const renderDefaultRow = (row: Row<TData>, cells: React.ReactNode): React.ReactNode => (
-    <tr
-      key={row.id}
-      className={cn(
-        'border-b border-border-default hover:bg-bg-raised transition-colors',
-        row.getIsSelected() && 'bg-accent-blue/10'
-      )}
-      data-row-id={row.id}
-    >
-      {cells}
-    </tr>
+    <DataGridRow key={row.id} row={row} cells={cells} />
   );
 
   // Render a single row with proper cell handling
@@ -630,7 +648,7 @@ export function VirtualDataGrid<TData>({
                   };
 
                   return (
-                    <tr key={headerGroup.id}>
+                    <tr key={headerGroup.id} role="row">
                       {/* Left pinned headers */}
                       {leftColumns.map((column) => {
                         const header = headerGroup.headers.find((h) => h.column.id === column.id);

@@ -8,6 +8,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Play, Copy, Trash2 } from 'lucide-react';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/utils/cn';
 import { createExpanderColumn } from './expanderColumn';
 import { createSelectionColumn } from './selectionColumn';
 import { MethodCell } from './methodCell';
@@ -41,6 +42,38 @@ export const ActionsCell = ({
   onCopy,
   onDelete,
 }: ActionsCellProps): React.ReactElement => {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Track focus within the container
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) {
+      return;
+    }
+
+    const handleFocusIn = (): void => {
+      setIsVisible(true);
+    };
+
+    const handleFocusOut = (e: FocusEvent): void => {
+      // Check if focus is moving to another element within the container
+      const relatedTarget = e.relatedTarget as Node | null;
+      if (relatedTarget !== null && container.contains(relatedTarget)) {
+        return; // Focus is still within the container
+      }
+      setIsVisible(false);
+    };
+
+    container.addEventListener('focusin', handleFocusIn);
+    container.addEventListener('focusout', handleFocusOut);
+
+    return (): void => {
+      container.removeEventListener('focusin', handleFocusIn);
+      container.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
+
   const handleReplayClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
     onReplay(entry);
@@ -57,7 +90,13 @@ export const ActionsCell = ({
   };
 
   return (
-    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div
+      ref={containerRef}
+      className={cn(
+        'flex items-center justify-end gap-1 transition-opacity',
+        isVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      )}
+    >
       <Button
         data-testid="replay-button"
         variant="ghost"

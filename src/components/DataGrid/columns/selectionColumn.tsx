@@ -6,10 +6,12 @@
  * renders checkboxes in both header (select all) and cells (select row).
  */
 
+import * as React from 'react';
 import type { ColumnDef, Table, Row, HeaderContext, CellContext } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
 import { COLUMN_WIDTHS } from '@/components/DataGrid/constants';
+import { useKeyboardNavInteractive } from '../accessibility/keyboardNav';
 
 /**
  * Options for customizing the selection column
@@ -80,13 +82,27 @@ const SelectionCell = <TData,>({ row, size }: SelectionCellProps<TData>): React.
     row.toggleSelected(!isSelected);
   };
 
+  const { onKeyDown: onArrowKeyDown } = useKeyboardNavInteractive();
+
+  // Radix Checkbox already handles Space key for toggling
+  // We add arrow key navigation for moving between checkboxes
+  // The wrapper div handles Arrow keys, checkbox handles Space/Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
+    // Only handle Arrow keys in the wrapper (let checkbox handle Space/Enter)
+    if (e.key.startsWith('Arrow')) {
+      onArrowKeyDown(e);
+    }
+  };
+
   return (
-    <Checkbox
-      checked={isSelected}
-      onCheckedChange={handleCheckedChange}
-      aria-label={isSelected ? 'Deselect row' : 'Select row'}
-      size={size}
-    />
+    <div onKeyDown={handleKeyDown}>
+      <Checkbox
+        checked={isSelected}
+        onCheckedChange={handleCheckedChange}
+        aria-label={isSelected ? 'Deselect row' : 'Select row'}
+        size={size}
+      />
+    </div>
   );
 };
 

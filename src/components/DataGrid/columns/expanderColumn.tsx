@@ -6,11 +6,13 @@
  * renders animated chevron buttons that rotate 90 degrees when expanded.
  */
 
+import * as React from 'react';
 import type { ColumnDef, Row, CellContext } from '@tanstack/react-table';
 import { motion, useReducedMotion } from 'motion/react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { COLUMN_WIDTHS } from '@/components/DataGrid/constants';
+import { useKeyboardNavExpander, useKeyboardNavInteractive } from '../accessibility/keyboardNav';
 
 /**
  * Options for customizing the expander column
@@ -42,6 +44,16 @@ const ExpanderCell = <TData,>({
   const isExpanded = row.getIsExpanded();
   const canExpand = row.getCanExpand();
 
+  const handleToggleExpand = React.useCallback((): void => {
+    row.toggleExpanded();
+  }, [row]);
+
+  const { onKeyDown: onExpanderKeyDown } = useKeyboardNavExpander({
+    onToggleExpand: handleToggleExpand,
+  });
+
+  const { onKeyDown: onArrowKeyDown } = useKeyboardNavInteractive();
+
   if (!canExpand) {
     return null;
   }
@@ -51,11 +63,19 @@ const ExpanderCell = <TData,>({
     row.toggleExpanded();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>): void => {
+    // Handle Enter/Space for expand/collapse
+    onExpanderKeyDown(e);
+    // Handle Arrow keys for navigation between interactive elements
+    onArrowKeyDown(e);
+  };
+
   return (
     <button
       data-testid="expand-button"
       type="button"
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       className={cn(
         'w-full h-full flex items-center justify-center rounded transition-colors',
         'hover:bg-bg-raised',
