@@ -16,16 +16,13 @@ import {
   type ColumnDef,
   type ExpandedState,
 } from '@tanstack/react-table';
-import {
-  createNetworkColumns,
-  MethodCell,
-  StatusCell,
-  UrlCell,
-  TimingCell,
-  SizeCell,
-  TimeAgoCell,
-  ActionsCell,
-} from './networkColumns';
+import { createNetworkColumns, ActionsCell } from './networkColumns';
+import { MethodCell } from './methodCell';
+import { UrlCell } from './urlCell';
+import { StatusCell } from './statusCell';
+import { TimingCell } from './timingCell';
+import { SizeCell } from './sizeCell';
+import { TimeAgoCell } from './timeAgoCell';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 // Mock entry factory
@@ -132,7 +129,7 @@ describe('createNetworkColumns', () => {
       onDelete: vi.fn(),
     });
 
-    expect(columns).toHaveLength(9); // select, expand, method, url, status, timing, size, time, actions
+    expect(columns).toHaveLength(10); // select, expand, method, url, status, timing, size, time, protocol, actions
   });
 
   it('includes selection column', () => {
