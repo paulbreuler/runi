@@ -44,7 +44,6 @@ export const CodeGenPanel = ({
     try {
       return generateCode(entry, activeLanguage);
     } catch (error) {
-       
       console.error(`Failed to generate ${activeLanguage} code:`, error);
       return `// Error generating ${activeLanguage} code`;
     }
