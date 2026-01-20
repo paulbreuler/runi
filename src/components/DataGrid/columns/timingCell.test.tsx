@@ -3,7 +3,6 @@
  * @description Tests for request timing cell component
  */
 
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { TimingCell } from './timingCell';
