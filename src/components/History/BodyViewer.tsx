@@ -32,7 +32,7 @@ export const BodyViewer = ({ body, className }: BodyViewerProps): React.ReactEle
 
     // Try to parse and format as JSON
     try {
-      const parsed = JSON.parse(body);
+      const parsed: unknown = JSON.parse(body);
       return JSON.stringify(parsed, null, 2);
     } catch {
       // Not valid JSON, return as-is

@@ -81,8 +81,9 @@ export function generatePythonCode(entry: NetworkHistoryEntry): string {
       const contentTypeKey = Object.keys(headers).find(
         (key) => key.toLowerCase() === 'content-type'
       );
-      const contentType = contentTypeKey ? (headers[contentTypeKey]?.toLowerCase() ?? '') : '';
-      if (contentType !== '' && contentType.includes('application/json')) {
+      const contentType =
+        contentTypeKey !== undefined ? (headers[contentTypeKey]?.toLowerCase() ?? '') : '';
+      if (contentType.length > 0 && contentType.includes('application/json')) {
         // For JSON, parse and use json parameter with the parsed object
         try {
           const parsed: unknown = JSON.parse(body);

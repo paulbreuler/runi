@@ -36,7 +36,7 @@ describe('BodyViewer', () => {
     const container = screen.getByTestId('body-viewer');
     expect(container).toBeInTheDocument();
     // Formatted JSON should have newlines
-    const formatted = container.textContent ?? '';
+    const formatted = container.textContent;
     expect(formatted).toContain('\n');
   });
 

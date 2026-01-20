@@ -34,15 +34,16 @@ export function generateRubyCode(entry: NetworkHistoryEntry): string {
   }
 
   // Add body for methods that support it
-  if (body !== null && body.length > 0) {
+  if (body !== null) {
     const methodUpper = method.toUpperCase();
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(methodUpper)) {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(methodUpper) && body.length > 0) {
       // Check if Content-Type suggests JSON (case-insensitive)
       const contentTypeKey = Object.keys(headers).find(
         (key) => key.toLowerCase() === 'content-type'
       );
-      const contentType = contentTypeKey ? (headers[contentTypeKey]?.toLowerCase() ?? '') : '';
-      if (contentType !== '' && contentType.includes('application/json')) {
+      const contentType =
+        contentTypeKey !== undefined ? (headers[contentTypeKey]?.toLowerCase() ?? '') : '';
+      if (contentType.length > 0 && contentType.includes('application/json')) {
         // For JSON, use the body as-is (it's already JSON)
         lines.push(`request.body = '${escapeRubyString(body)}'`);
         lines.push("request['Content-Type'] = 'application/json'");
