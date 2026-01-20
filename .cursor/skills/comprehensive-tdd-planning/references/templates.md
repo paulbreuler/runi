@@ -255,7 +255,7 @@ Feature: [Component] expansion
 
 Quick-reference prompts for each agent. Copy the relevant section and inject into the template.
 
-**Template Location**: `.cursor/plans/templates/agent_assignment_prompt_template.md`
+**Template Location**: `../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`
 
 **How to Use**:
 
@@ -264,7 +264,7 @@ Quick-reference prompts for each agent. Copy the relevant section and inject int
 3. Replace placeholders in the template with information from your section
 4. The template has placeholders like `[NUMBER]`, `[FEATURE NAME]`, etc. - replace with values from your section
 
-**Plan Location**: `.cursor/plans/[project]_[type]_[timestamp]/plan.md` (in this directory)
+**Plan Location**: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/plan.md` (in this directory)
 
 ---
 
@@ -303,7 +303,7 @@ Quick-reference prompts for each agent. Copy the relevant section and inject int
 
 ## Template Injection Guide
 
-When using the template (`.cursor/plans/agent_assignment_prompt_template.md`), replace:
+When using the template (`../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md`), replace:
 
 - `[NUMBER(s)]` → Feature number(s) from your section above
 - `[FEATURE NAME(s)]` → Feature name(s) from your section above
@@ -327,8 +327,8 @@ For fastest agent creation, copy this format and fill in from your section:
 ```
 
 Feature: #[NUMBER] - [FEATURE NAME]
-Plan: .cursor/plans/[project]_[type]_[id].plan.md (Feature #[NUMBER])
-Template: .cursor/plans/agent_assignment_prompt_template.md
+Plan: ../runi-planning-docs/plans/[project]_[type]_[id]/plan.md (Feature #[NUMBER])
+Template: ../runi-planning-docs/plans/templates/agent_assignment_prompt_template.md
 
 Critical:
 
