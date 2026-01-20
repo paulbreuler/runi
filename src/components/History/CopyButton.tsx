@@ -44,7 +44,6 @@ export const CopyButton = ({
         setCopied(false);
       }, feedbackDuration);
     } catch (error) {
-       
       console.error('Failed to copy text:', error);
     }
   }, [text, feedbackDuration]);

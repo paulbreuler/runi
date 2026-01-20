@@ -43,7 +43,7 @@ export const ResponsePanel = ({
   const currentBody = activeTab === 'response' ? responseBody : requestBody;
   const currentBodyText = currentBody ?? '';
 
-  const handleTabKeyDown = useCallback((e: React.KeyboardEvent, tab: TabType): void => {
+  const _handleTabKeyDown = useCallback((e: React.KeyboardEvent, tab: TabType): void => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setActiveTab(tab);
@@ -64,7 +64,9 @@ export const ResponsePanel = ({
           type="button"
           role="tab"
           aria-selected={activeTab === 'response'}
-          onClick={(): void => { setActiveTab('response'); }}
+          onClick={(): void => {
+            setActiveTab('response');
+          }}
           className={cn(
             'px-3 py-1.5 text-xs font-medium transition-colors',
             'border-b-2 -mb-px',
@@ -79,7 +81,9 @@ export const ResponsePanel = ({
           type="button"
           role="tab"
           aria-selected={activeTab === 'request'}
-          onClick={(): void => { setActiveTab('request'); }}
+          onClick={(): void => {
+            setActiveTab('request');
+          }}
           className={cn(
             'px-3 py-1.5 text-xs font-medium transition-colors',
             'border-b-2 -mb-px',
