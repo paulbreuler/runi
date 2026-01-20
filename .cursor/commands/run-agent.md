@@ -56,6 +56,8 @@ Automatically detects the active plan from the last merged PR and runs the next 
 
 Opens the specified agent file directly in Cursor.
 
+**To find agents**: Use `/plan-list-agents <plan-name>` to see all available agents with clickable links, then use `/run-agent --agent [path]` to run the specific one you want.
+
 ### Assess Agent Status
 
 ```
@@ -90,6 +92,7 @@ Assesses all agents in the plan for completion status and file organization.
 ## Integration with Other Commands
 
 - **work**: Use `/work` first to auto-detect plan, assess status, and see recommendations. Then use `/run-agent --auto` or `/run-agent <plan-name>` to start work
+- **plan-list-agents**: Use to find and see all agents in a plan, then use `/run-agent --agent [path]` to run a specific one
 - **heal**: After completing work, use `/heal` or `just heal` to auto-cleanup completed agents
 - **list-feature-plans**: Use to discover plans, then use `/run-agent <plan-name>`
 - **close-feature-agent**: After closing, use `/work` to assess overall status or `/run-agent --assess <plan-name>` to check cleanup

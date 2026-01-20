@@ -68,7 +68,18 @@ Each agent should have:
 
 **Critical step**: Distill, don't copy.
 
-For each agent, create `agents/[name].agent.md`:
+For each agent, create `agents/agent_<N>_<descriptive-name>.agent.md` where N is sequential starting from 0:
+
+**Agent File Naming Pattern**:
+
+- Format: `agent_<N>_<descriptive-name>.agent.md`
+- N starts at 0 and increments sequentially based on dependency order
+- Examples:
+  - `agent_0_infrastructure.agent.md` (no dependencies, runs first)
+  - `agent_1_testing_utilities.agent.md` (depends on infrastructure)
+  - `agent_2_ui_components.agent.md` (depends on testing utilities)
+
+**Rationale**: Numeric prefixes make execution order clear to humans, even though `next-task.sh` uses scoring algorithm. This helps when manually selecting agents or understanding plan structure.
 
 **Extract only**:
 
@@ -107,15 +118,19 @@ For each agent, create `agents/[name].agent.md`:
 ├── interfaces.md          # Contracts (~200-500 lines)
 ├── gotchas.md             # Empty template
 └── agents/
-    ├── core.agent.md      # ~200-400 lines
-    ├── columns.agent.md   # ~200-400 lines
-    └── rows.agent.md      # ~200-400 lines
+    ├── agent_0_infrastructure.agent.md      # ~200-400 lines
+    ├── agent_1_testing_utilities.agent.md  # ~200-400 lines
+    └── agent_2_ui_components.agent.md      # ~200-400 lines
 ```
 
 ## Agent File Format
 
+**File naming**: `agent_<N>_<descriptive-name>.agent.md` (e.g., `agent_0_infrastructure.agent.md`)
+
+**File header**: The agent header in the file should still be descriptive:
+
 ````markdown
-# Agent: [Name]
+# Agent <N>: [Descriptive Name]
 
 ## Scope
 
@@ -216,6 +231,7 @@ Before presenting plan:
 - [ ] Dependency graph complete
 - [ ] All features assigned
 - [ ] File ownership clear (no conflicts)
+- [ ] Agent files use numeric prefixes (agent_0_, agent_1_, etc.)
 - [ ] gotchas.md template ready
 
 ## Usage After Creation

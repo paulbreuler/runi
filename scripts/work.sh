@@ -134,13 +134,8 @@ main() {
         exit 1
     fi
     
-    echo ""
-    echo -e "${BOLD}${WHITE}Active Plan: ${CYAN}$plan_name${RESET}"
-    echo -e "${DIM}Detected from: $detection_info${RESET}"
-    echo ""
-    
-    # Assess agent status
-    echo -e "${DIM}Assessing agent status...${RESET}"
+    # Assess agent status (do this first to determine quick decision)
+    echo -e "${DIM}Assessing agent status...${RESET}" >&2
     local assessment_output=$(bash "$SCRIPT_DIR/assess-agent-status.sh" --plan "$plan_name" --all 2>&1)
     
     # Parse assessment for cleanup needs
@@ -187,7 +182,49 @@ main() {
         fi
     done <<< "$assessment_output"
     
-    # Display status summary
+    # Get next best task (needed for quick decision)
+    echo -e "${DIM}Determining next best task...${RESET}" >&2
+    local next_task_output=$(bash "$SCRIPT_DIR/next-task.sh" --plan "$plan_name" 2>&1)
+    local next_task_exit=$?
+    local agent_file=""
+    
+    if [ $next_task_exit -eq 0 ] && [ -n "$next_task_output" ]; then
+        # Extract agent file path (last line)
+        agent_file=$(echo "$next_task_output" | tail -1)
+    fi
+    
+    # Output starts here with clear hierarchy
+    echo ""
+    echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${BOLD}${WHITE}🎯 QUICK DECISION: What should you do next?${RESET}"
+    echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo ""
+    
+    # Determine primary action
+    if [ ${#cleanup_needed[@]} -gt 0 ]; then
+        echo -e "  ${YELLOW}→ Cleanup needed${RESET}: Run ${CYAN}/heal${RESET} or ${CYAN}just heal-plan $plan_name${RESET}"
+        echo -e "     ${DIM}(${#cleanup_needed[@]} completed agent(s) need to be moved to completed/)${RESET}"
+    elif [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
+        echo -e "  ${GREEN}→ Ready to work${RESET}: Run ${CYAN}/run-agent${RESET} or ${CYAN}just run $plan_name${RESET}"
+        echo -e "     ${DIM}(Next best task identified and ready)${RESET}"
+    elif [ "$active_count" -eq 0 ]; then
+        echo -e "  ${GREEN}→ All complete${RESET}: Plan is finished!"
+        echo -e "     ${DIM}(All agents completed, no work remaining)${RESET}"
+    else
+        echo -e "  ${BLUE}→ Check details${RESET}: Run ${CYAN}/assess-agents $plan_name${RESET}"
+        echo -e "     ${DIM}(Tasks may be blocked by dependencies)${RESET}"
+    fi
+    
+    echo ""
+    echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${BOLD}${WHITE}📊 PLAN STATUS${RESET}"
+    echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo ""
+    
+    echo -e "${BOLD}Active Plan:${RESET} ${CYAN}$plan_name${RESET}"
+    echo -e "${DIM}Detected from: $detection_info${RESET}"
+    echo ""
+    
     echo -e "${BOLD}Status Summary:${RESET}"
     echo -e "  - ${GREEN}$completed_count${RESET} agents completed"
     if [ ${#cleanup_needed[@]} -gt 0 ]; then
@@ -201,9 +238,9 @@ main() {
         echo -e "${YELLOW}Cleanup Needed:${RESET}"
         local idx=1
         for agent in "${cleanup_needed[@]}"; do
-            local agent_file=$(find "$plan_dir/agents" -name "*${agent}*.agent.md" ! -name "*.completed.md" 2>/dev/null | head -1)
-            if [ -n "$agent_file" ]; then
-                local agent_display=$(basename "$agent_file" .agent.md | sed 's/agent_[0-9]*_//' | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g')
+            local cleanup_agent_file=$(find "$plan_dir/agents" -name "*${agent}*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | head -1)
+            if [ -n "$cleanup_agent_file" ]; then
+                local agent_display=$(basename "$cleanup_agent_file" .agent.md | sed 's/agent_[0-9]*_//' | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g')
                 echo -e "  $idx. ${agent_display} - All features PASS, should move to completed/"
             fi
             idx=$((idx + 1))
@@ -211,52 +248,44 @@ main() {
         echo ""
     fi
     
-    # Get next best task
-    echo -e "${DIM}Determining next best task...${RESET}"
-    local next_task_output=$(bash "$SCRIPT_DIR/next-task.sh" --plan "$plan_name" 2>&1)
-    local next_task_exit=$?
-    
-    if [ $next_task_exit -eq 0 ] && [ -n "$next_task_output" ]; then
-        # Extract agent file path (last line)
-        local agent_file=$(echo "$next_task_output" | tail -1)
-        
-        if [ -f "$agent_file" ]; then
-            echo -e "${BOLD}Next Best Task:${RESET}"
-            # Display selection info (everything except last line)
-            local line_count=$(echo "$next_task_output" | wc -l | tr -d ' ')
-            if [ "$line_count" -gt 1 ]; then
-                echo "$next_task_output" | head -n $((line_count - 1))
-            else
-                echo "$next_task_output"
-            fi
-            echo ""
+    # Show next best task
+    if [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
+        echo -e "${BOLD}Next Best Task:${RESET}"
+        # Display selection info (everything except last line)
+        local line_count=$(echo "$next_task_output" | wc -l | tr -d ' ')
+        if [ "$line_count" -gt 1 ]; then
+            echo "$next_task_output" | head -n $((line_count - 1))
         else
-            echo -e "${GREEN}✅ All tasks completed or blocked${RESET}"
-            echo ""
+            echo "$next_task_output"
         fi
-    else
-        echo -e "${GREEN}✅ All tasks completed or blocked${RESET}"
+        echo ""
+    elif [ "$active_count" -gt 0 ]; then
+        echo -e "${BOLD}Next Best Task:${RESET}"
+        echo -e "  ${DIM}All available tasks are blocked by dependencies${RESET}"
         echo ""
     fi
     
-    # Generate recommended actions
-    echo -e "${BOLD}Recommended Actions:${RESET}"
+    echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${BOLD}${WHITE}🎬 RECOMMENDED ACTIONS (in order)${RESET}"
+    echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo ""
+    
     local action_num=1
     
     if [ ${#cleanup_needed[@]} -gt 0 ]; then
-        echo -e "  $action_num. Run: ${CYAN}just heal-plan $plan_name${RESET} (auto-cleanup completed agents)"
+        echo -e "  ${BOLD}$action_num.${RESET} Run: ${CYAN}just heal-plan $plan_name${RESET} (auto-cleanup completed agents)"
         action_num=$((action_num + 1))
     fi
     
-    if [ $next_task_exit -eq 0 ] && [ -n "$next_task_output" ] && [ -f "$agent_file" ]; then
-        echo -e "  $action_num. Run: ${CYAN}just run $plan_name${RESET} (start next task)"
+    if [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
+        echo -e "  ${BOLD}$action_num.${RESET} Run: ${CYAN}just run $plan_name${RESET} (start next task)"
         action_num=$((action_num + 1))
     fi
     
-    echo -e "  $action_num. Run: ${CYAN}just assess-agents $plan_name${RESET} (detailed status)"
+    echo -e "  ${BOLD}$action_num.${RESET} Run: ${CYAN}just assess-agents $plan_name${RESET} (detailed status)"
     action_num=$((action_num + 1))
     
-    echo -e "  $action_num. Run: ${CYAN}just list-plans${RESET} (view all plans)"
+    echo -e "  ${BOLD}$action_num.${RESET} Run: ${CYAN}just list-plans${RESET} (view all plans)"
     echo ""
     
     # Quick links

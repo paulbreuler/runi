@@ -228,8 +228,8 @@ main() {
         echo -e "${BOLD}${WHITE}Agent Status Assessment: $plan_name${RESET}"
         echo ""
         
-        # Assess all agent files
-        find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" | sort | while read -r agent_file; do
+        # Assess all agent files (exclude completed/)
+        find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" | sort | while read -r agent_file; do
             assess_single_agent "$agent_file" "$plan_dir"
             echo ""
         done

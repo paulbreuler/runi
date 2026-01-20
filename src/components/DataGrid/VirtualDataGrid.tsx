@@ -13,6 +13,7 @@ import { flexRender, type Row, type ColumnDef } from '@tanstack/react-table';
 import { useDataGrid, type UseDataGridOptions } from './useDataGrid';
 import { cn } from '@/utils/cn';
 import { useAnchorColumnWidths, type AnchorColumnDef } from './useAnchorColumnWidths';
+import { SortIndicator, type SortDirection } from './columns/SortIndicator';
 // Keyboard navigation is handled at the interactive element level (checkboxes, buttons)
 // Rows and cells are NOT focusable to prevent page scrolling
 
@@ -116,11 +117,12 @@ export function VirtualDataGrid<TData>({
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Use the base data grid hook
-  const { table, rowSelection, sorting, expanded, setRowSelection, setExpanded } = useDataGrid({
-    data,
-    columns,
-    ...hookOptions,
-  });
+  const { table, rowSelection, sorting, expanded, setRowSelection, setExpanded, setSorting } =
+    useDataGrid({
+      data,
+      columns,
+      ...hookOptions,
+    });
 
   // Expose setRowSelection to parent if requested
   React.useEffect(() => {
@@ -434,14 +436,38 @@ export function VirtualDataGrid<TData>({
   }
 
   const DataGridRow = ({ row, cells }: DataGridRowProps): React.ReactElement => {
+    // Handle row click for single row selection (Feature #31)
+    const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>): void => {
+      // Don't toggle if clicking on buttons, checkboxes, or inputs
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('button') !== null ||
+        target.closest('[role="checkbox"]') !== null ||
+        target.closest('input') !== null
+      ) {
+        return;
+      }
+
+      // Single row selection: select this row and deselect all others
+      if (hookOptions.enableRowSelection === true) {
+        const newSelection: Record<string, boolean> = {};
+        if (!row.getIsSelected()) {
+          newSelection[row.id] = true;
+        }
+        setRowSelection(newSelection);
+      }
+    };
+
     return (
       <tr
         role="row"
         className={cn(
           'group border-b border-border-default hover:bg-bg-raised transition-colors',
-          row.getIsSelected() && 'bg-accent-blue/10'
+          row.getIsSelected() && 'bg-accent-blue/10',
+          hookOptions.enableRowSelection === true && 'cursor-pointer'
         )}
         data-row-id={row.id}
+        onClick={hookOptions.enableRowSelection === true ? handleRowClick : undefined}
       >
         {cells}
       </tr>
@@ -606,6 +632,54 @@ export function VirtualDataGrid<TData>({
                     pinSide: 'left' | 'right' | null
                   ): React.ReactNode => {
                     const paddingClass = getCellPaddingClass(header.column.id);
+                    const canSort =
+                      hookOptions.enableSorting === true && header.column.getCanSort();
+
+                    // Get sort direction for this column
+                    const sortDirection: SortDirection = ((): SortDirection => {
+                      if (!canSort) {
+                        return null;
+                      }
+                      const sortInfo = sorting.find((s) => s.id === header.column.id);
+                      if (sortInfo === undefined) {
+                        return null;
+                      }
+                      return sortInfo.desc ? 'desc' : 'asc';
+                    })();
+
+                    // Get aria-sort value for accessibility
+                    const getAriaSort = (): 'ascending' | 'descending' | 'none' => {
+                      if (sortDirection === 'asc') {
+                        return 'ascending';
+                      }
+                      if (sortDirection === 'desc') {
+                        return 'descending';
+                      }
+                      return 'none';
+                    };
+
+                    // Handle header click for sorting (Feature #34)
+                    const handleHeaderClick = (): void => {
+                      if (!canSort) {
+                        return;
+                      }
+
+                      const currentSort = sorting.find((s) => s.id === header.column.id);
+                      let newSorting: Array<{ id: string; desc: boolean }>;
+
+                      if (currentSort === undefined) {
+                        // First click: sort ascending
+                        newSorting = [{ id: header.column.id, desc: false }];
+                      } else if (!currentSort.desc) {
+                        // Second click: sort descending
+                        newSorting = [{ id: header.column.id, desc: true }];
+                      } else {
+                        // Third click: clear sort
+                        newSorting = [];
+                      }
+
+                      setSorting(newSorting);
+                    };
 
                     // Use anchor-based calculated width
                     const columnStyle = getColumnStyle(header.column.id);
@@ -635,14 +709,20 @@ export function VirtualDataGrid<TData>({
                         className={cn(
                           paddingClass,
                           'text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b border-border-default overflow-hidden',
-                          headerBgClass
+                          headerBgClass,
+                          canSort && 'cursor-pointer hover:bg-bg-raised transition-colors'
                         )}
                         style={headerStyle}
                         role="columnheader"
+                        onClick={canSort ? handleHeaderClick : undefined}
+                        aria-sort={getAriaSort()}
                       >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder ? null : (
+                          <div className="flex items-center gap-2">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {canSort && <SortIndicator direction={sortDirection} />}
+                          </div>
+                        )}
                       </th>
                     );
                   };

@@ -29,14 +29,14 @@ find_agent_by_number() {
     fi
     
     # Try exact match first: agent_0_*.agent.md
-    local agent_file=$(find "$agents_dir" -name "agent_${agent_num}_*.agent.md" ! -name "*.completed.md" 2>/dev/null | head -1)
+    local agent_file=$(find "$agents_dir" -name "agent_${agent_num}_*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | head -1)
     if [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
         echo "$agent_file"
         return 0
     fi
     
     # Try pattern match: agent_0*.agent.md
-    agent_file=$(find "$agents_dir" -name "agent_${agent_num}*.agent.md" ! -name "*.completed.md" 2>/dev/null | head -1)
+    agent_file=$(find "$agents_dir" -name "agent_${agent_num}*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | head -1)
     if [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
         echo "$agent_file"
         return 0
@@ -199,12 +199,12 @@ detect_from_commits() {
 detect_from_files() {
     local file_list="$1"
     
-    # Check if any files are agent files
-    local agent_file=$(echo "$file_list" | grep -E "runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | head -1)
+    # Check if any files are agent files (exclude completed/)
+    local agent_file=$(echo "$file_list" | grep -E "runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | grep -v "/completed/" | head -1)
     
     if [ -z "$agent_file" ]; then
         # Try relative path
-        agent_file=$(echo "$file_list" | grep -E "\.\./runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | head -1)
+        agent_file=$(echo "$file_list" | grep -E "\.\./runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | grep -v "/completed/" | head -1)
     fi
     
     if [ -z "$agent_file" ]; then
@@ -227,7 +227,7 @@ detect_from_files() {
 # Function to detect from recently modified agent files
 detect_from_recent_files() {
     # Get recently modified agent files (last 7 days)
-    local recent_agent=$(find "$PLANS_DIR" -name "*.agent.md" -type f ! -name "*.completed.md" -mtime -7 2>/dev/null | head -1)
+    local recent_agent=$(find "$PLANS_DIR" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" -mtime -7 2>/dev/null | head -1)
     
     if [ -z "$recent_agent" ] || [ ! -f "$recent_agent" ]; then
         return 1

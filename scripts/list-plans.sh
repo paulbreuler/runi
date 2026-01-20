@@ -165,10 +165,10 @@ find "$PLANS_DIR" -maxdepth 1 -type d ! -name "plans" ! -name "templates" ! -nam
     
     # List agent files with YAML-like indentation
     if [ -d "$plan_dir/agents" ]; then
-        agent_count=$(find "$plan_dir/agents" -name "*.agent.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+        agent_count=$(find "$plan_dir/agents" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | wc -l | tr -d ' ')
         if [ "$agent_count" -gt 0 ]; then
             echo -e "   ${DIM}agents:${RESET}"
-            find "$plan_dir/agents" -name "*.agent.md" -type f 2>/dev/null | sort | while read -r agent_file; do
+            find "$plan_dir/agents" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | sort | while read -r agent_file; do
                 agent_path=$(get_absolute_path "$agent_file")
                 agent_name=$(basename "$agent_file")
                 printf "     ${DIM}-${RESET} "

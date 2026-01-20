@@ -95,7 +95,7 @@ detect_stuck_agents() {
         return
     fi
     
-    find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" 2>/dev/null | while read -r agent_file; do
+    find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | while read -r agent_file; do
         local agent_name=$(basename "$agent_file" .agent.md)
 
         # Determine last modification time in a platform-aware way
@@ -229,7 +229,7 @@ main() {
     # Check for completed agents that need to be moved
     local move_count=0
     if [ -d "$agents_dir" ]; then
-        find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" | while read -r agent_file; do
+        find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" | while read -r agent_file; do
             local agent_name=$(basename "$agent_file" .agent.md)
             
             # Check if all features are PASS

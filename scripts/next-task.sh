@@ -94,7 +94,7 @@ parse_agent_files() {
         return
     fi
     
-    find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" | sort | while read -r agent_file; do
+    find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" | sort | while read -r agent_file; do
         local agent_name=$(basename "$agent_file" .agent.md)
         local features=()
         local statuses=()
@@ -351,10 +351,10 @@ main() {
     fi
     
     # Find agent file
-    local agent_file=$(find "$agents_dir" -name "*${best_agent}*.agent.md" ! -name "*.completed.md" | head -1)
+    local agent_file=$(find "$agents_dir" -name "*${best_agent}*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" | head -1)
     if [ -z "$agent_file" ]; then
         # Try to find by agent number
-        agent_file=$(find "$agents_dir" -name "agent_*.agent.md" ! -name "*.completed.md" | grep -i "$best_agent" | head -1)
+        agent_file=$(find "$agents_dir" -name "agent_*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" | grep -i "$best_agent" | head -1)
     fi
     
     if [ -z "$agent_file" ]; then

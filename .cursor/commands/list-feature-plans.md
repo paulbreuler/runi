@@ -48,7 +48,7 @@ The script displays each plan with:
   - `README.md` - Index and status (if exists)
   - `interfaces.md` - Interface contracts (if exists)
   - `gotchas.md` - Discovered issues (if exists)
-  - All `*.agent.md` files in `agents/` directory
+  - All `*.agent.md` files in `agents/` directory (excludes completed agents in `agents/completed/` subdirectory)
 
 **Navigation:**
 
@@ -119,3 +119,5 @@ This command is useful for:
 - Finding plans by work type
 - Getting quick overviews of plan scope
 - Navigating to specific plans for reference
+
+**Note**: Completed agents (moved to `agents/completed/` directory) are automatically excluded from listings to show only active work.

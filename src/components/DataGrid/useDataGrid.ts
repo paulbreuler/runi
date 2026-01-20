@@ -342,6 +342,36 @@ export function useDataGrid<TData>({
 
   const table = useReactTable(tableOptions);
 
+  // Feature #33: Selection Persistence - Maintain selection across filter changes
+  // When filters change, deselect rows that no longer match the filter
+  useEffect(() => {
+    if (!enableFiltering || !enableRowSelection) {
+      return;
+    }
+
+    // Get all visible row IDs after filtering
+    const visibleRowIds = new Set(table.getRowModel().rows.map((row) => row.id));
+
+    // Filter selection to only include rows that are still visible
+    const filteredSelection: RowSelectionState = {};
+    let hasChanges = false;
+
+    for (const [rowId, isSelected] of Object.entries(rowSelection)) {
+      if (isSelected && visibleRowIds.has(rowId)) {
+        filteredSelection[rowId] = true;
+      } else if (isSelected && !visibleRowIds.has(rowId)) {
+        // Row was selected but is no longer visible - deselect it
+        hasChanges = true;
+      }
+    }
+
+    // Only update if there are changes to avoid infinite loops
+    if (hasChanges && Object.keys(filteredSelection).length !== Object.keys(rowSelection).length) {
+      setRowSelection(filteredSelection);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run when filters change, not when rowSelection changes
+  }, [columnFilters, globalFilter, table, enableFiltering, enableRowSelection]);
+
   return {
     table,
     sorting,
