@@ -3,7 +3,7 @@
  * @description Panel with tabs for Request Body and Response Body
  */
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { cn } from '@/utils/cn';
 import { BodyViewer } from './BodyViewer';
 import { CopyButton } from './CopyButton';
@@ -42,19 +42,6 @@ export const ResponsePanel = ({
 
   const currentBody = activeTab === 'response' ? responseBody : requestBody;
   const currentBodyText = currentBody ?? '';
-
-  const _handleTabKeyDown = useCallback((e: React.KeyboardEvent, tab: TabType): void => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setActiveTab(tab);
-    } else if (e.key === 'ArrowLeft' && tab === 'request') {
-      e.preventDefault();
-      setActiveTab('response');
-    } else if (e.key === 'ArrowRight' && tab === 'response') {
-      e.preventDefault();
-      setActiveTab('request');
-    }
-  }, []);
 
   return (
     <div data-testid="response-panel" className={cn('flex flex-col', className)}>

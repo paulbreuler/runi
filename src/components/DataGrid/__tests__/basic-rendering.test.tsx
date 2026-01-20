@@ -6,7 +6,6 @@
  * with all required columns and handles empty states.
  */
 
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { VirtualDataGrid } from '../VirtualDataGrid';

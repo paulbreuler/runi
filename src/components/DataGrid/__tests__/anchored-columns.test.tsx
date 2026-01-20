@@ -5,17 +5,21 @@
  * TDD: RED phase - these tests verify the column width calculation system
  */
 
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { VirtualDataGrid } from '../VirtualDataGrid';
 import { createNetworkColumns } from '../columns/networkColumns';
 import type { NetworkHistoryEntry } from '@/types/history';
 
+/** Deep partial type for nested overrides */
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
 /**
  * Create a mock NetworkHistoryEntry for testing.
  */
-function createMockEntry(overrides: Partial<NetworkHistoryEntry> = {}): NetworkHistoryEntry {
+function createMockEntry(overrides: DeepPartial<NetworkHistoryEntry> = {}): NetworkHistoryEntry {
   const baseEntry: NetworkHistoryEntry = {
     id: `hist_${String(Date.now())}`,
     timestamp: new Date().toISOString(),
@@ -48,27 +52,49 @@ function createMockEntry(overrides: Partial<NetworkHistoryEntry> = {}): NetworkH
     },
   };
 
-  // Deep merge overrides
-  return {
-    ...baseEntry,
-    ...overrides,
+  // Deep merge overrides - use type assertion for full control
+  const result: NetworkHistoryEntry = {
+    id: overrides.id ?? baseEntry.id,
+    timestamp: overrides.timestamp ?? baseEntry.timestamp,
     request: {
-      ...baseEntry.request,
-      ...(overrides.request ?? {}),
+      url: overrides.request?.url ?? baseEntry.request.url,
+      method: overrides.request?.method ?? baseEntry.request.method,
+      headers:
+        overrides.request?.headers !== undefined
+          ? (overrides.request.headers as Record<string, string>)
+          : baseEntry.request.headers,
+      body: overrides.request?.body ?? baseEntry.request.body,
+      timeout_ms: overrides.request?.timeout_ms ?? baseEntry.request.timeout_ms,
     },
     response: {
-      ...baseEntry.response,
-      ...(overrides.response ?? {}),
+      status: overrides.response?.status ?? baseEntry.response.status,
+      status_text: overrides.response?.status_text ?? baseEntry.response.status_text,
+      headers:
+        overrides.response?.headers !== undefined
+          ? (overrides.response.headers as Record<string, string>)
+          : baseEntry.response.headers,
+      body: overrides.response?.body ?? baseEntry.response.body,
       timing: {
-        ...baseEntry.response.timing,
-        ...(overrides.response?.timing ?? {}),
+        total_ms: overrides.response?.timing?.total_ms ?? baseEntry.response.timing.total_ms,
+        dns_ms: overrides.response?.timing?.dns_ms ?? baseEntry.response.timing.dns_ms,
+        connect_ms: overrides.response?.timing?.connect_ms ?? baseEntry.response.timing.connect_ms,
+        tls_ms: overrides.response?.timing?.tls_ms ?? baseEntry.response.timing.tls_ms,
+        first_byte_ms:
+          overrides.response?.timing?.first_byte_ms ?? baseEntry.response.timing.first_byte_ms,
       },
     },
     intelligence: {
-      ...baseEntry.intelligence,
-      ...(overrides.intelligence ?? {}),
+      boundToSpec:
+        overrides.intelligence?.boundToSpec ?? baseEntry.intelligence?.boundToSpec ?? false,
+      specOperation:
+        overrides.intelligence?.specOperation ?? baseEntry.intelligence?.specOperation ?? null,
+      drift: overrides.intelligence?.drift ?? baseEntry.intelligence?.drift ?? null,
+      aiGenerated:
+        overrides.intelligence?.aiGenerated ?? baseEntry.intelligence?.aiGenerated ?? false,
+      verified: overrides.intelligence?.verified ?? baseEntry.intelligence?.verified ?? false,
     },
   };
+  return result;
 }
 
 describe('Features #38-40: Anchored Columns', () => {
