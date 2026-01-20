@@ -153,8 +153,8 @@ extract_agent_number() {
     local filename="$1"
     # Try new pattern first: <NNN>_agent_ (zero-padded 3 digits)
     if [[ "$filename" =~ ^([0-9]{3})_agent_ ]]; then
-        # Remove leading zeros for display
-        echo "$(echo "${BASH_REMATCH[1]}" | sed 's/^0*//')"
+        # Remove leading zeros for display, but preserve at least one digit
+        echo "$(echo "${BASH_REMATCH[1]}" | sed 's/^0*\([0-9]\)/\1/')"
         return 0
     fi
     # Try old pattern: agent_<N>_ (backward compatibility)
@@ -180,8 +180,8 @@ extract_agent_display_name() {
         if [ -n "$header_name" ]; then
             # If header is just filename-like (underscores), format it better
             if [[ "$header_name" =~ _ ]]; then
-                # Replace underscores with spaces and capitalize each word
-                header_name=$(echo "$header_name" | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g')
+                # Replace underscores with spaces and capitalize each word (portable awk solution)
+                header_name=$(echo "$header_name" | sed 's/_/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
             fi
             echo "$header_name"
             return 0
@@ -195,8 +195,8 @@ extract_agent_display_name() {
     local name=$(echo "$basename" | sed -E 's/^agent_[0-9]+_//')
     # Remove <N>_agent_ prefix (new pattern)
     name=$(echo "$name" | sed -E 's/^[0-9]+_agent_//')
-    # Replace underscores with spaces and capitalize
-    echo "$name" | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g'
+    # Replace underscores with spaces and capitalize (portable awk solution)
+    echo "$name" | sed 's/_/ /g' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1'
 }
 
 # Function to parse agent features and status
@@ -324,7 +324,9 @@ main() {
     # Display resolved plan name (extract number if in N-descriptive-name format)
     local display_plan_name="$plan_name"
     if [[ "$(basename "$plan_dir")" =~ ^([0-9]+)- ]]; then
-        display_plan_name="${BASH_REMATCH[1]} ($(basename "$plan_dir"))"
+        # Strip leading zeros from plan number for display
+        local plan_number=$((10#${BASH_REMATCH[1]}))
+        display_plan_name="${plan_number} ($(basename "$plan_dir"))"
     else
         display_plan_name="$(basename "$plan_dir")"
     fi
