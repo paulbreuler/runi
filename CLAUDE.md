@@ -268,10 +268,24 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 
 **TDD Workflow:**
 
-1. Write failing test first
+1. Write failing test first (tests are defined in TDD plans, not generated separately)
 2. Write minimum code to pass
 3. Refactor while tests stay green
 4. Commit only when `just ci` passes
+
+**Test Types:**
+
+- **Unit tests**: Always required (≥85% coverage)
+- **Integration tests**: For multi-component interactions
+- **E2E tests**: For user-facing features and complex interactions (Playwright)
+- **Migration tests**: Required for overhauls that change data structures or APIs
+- **Performance tests**: Required for data-heavy features (include thresholds, e.g., render 1000 rows in <500ms)
+
+**Test Planning:**
+
+- Tests are defined upfront in TDD plans (see `/create-tdd-plan` command)
+- Feature requirements include test specifications with Gherkin scenarios
+- Tests are written as part of implementation, not generated afterward
 
 ---
 
@@ -431,6 +445,195 @@ feat(http): add request timeout configuration
 fix(ui): resolve header tab overflow on small screens
 test(auth): add bearer token validation tests
 ```
+
+---
+
+## PR Workflow
+
+### Creating Pull Requests
+
+Use `/pr` command to create pull requests with comprehensive descriptions. See `.claude/commands/pr.md` for full details.
+
+**PR Description Template:**
+
+```markdown
+## Summary
+
+Brief description of what this PR does and why.
+
+## Changes
+
+- [File/Component] - Description of change
+- [File/Component] - Description of change
+
+## Testing
+
+- [ ] Unit tests added/updated
+- [ ] Integration tests pass
+- [ ] E2E tests pass (if user-facing feature or complex interactions)
+- [ ] Migration tests pass (if overhaul with data structure changes)
+- [ ] Performance tests pass (if data-heavy feature, include thresholds)
+- [ ] Manual testing completed
+- [ ] Coverage: [percentage]% (target: ≥85%)
+
+## Breaking Changes
+
+None (or description of breaking changes with migration guide)
+
+**For Overhauls:** Must include:
+
+- Explicit migration guide
+- Backward compatibility considerations
+- Migration test results
+- Data integrity validation
+
+## Related Issues
+
+Closes #123
+Related to #456
+
+## Checklist
+
+- [ ] Code follows runi's style guidelines
+- [ ] Tests added/updated (TDD workflow)
+- [ ] Documentation updated (if needed)
+- [ ] `just ci` passes locally
+- [ ] No warnings in CI
+- [ ] CLAUDE.md decision log updated (if applicable)
+```
+
+### Fixing PR Check Failures
+
+Use `/pr-check-fixes` to systematically fix failing CI checks. See `CLAUDE.md` PR Workflow section for full details.
+
+**Process:**
+
+1. **Identify PR and repo context:**
+   - Get current branch name (`git branch --show-current`)
+   - Resolve PR via `gh pr view --json number,title,state,headRefName,baseRefName,url`
+   - If no PR exists: inform user and suggest `/pr` first
+
+2. **Pull latest check state:**
+   - Fetch PR checks via `gh pr view <PR> --json statusCheckRollup,mergeStateStatus,reviewDecision`
+   - Wait for latest run if in progress (poll with 10-20s backoff, max 5-7 min)
+   - Prioritize run associated with current head SHA
+
+3. **Summarize status:**
+   - List each check with name, status, conclusion, and URL
+   - Call out failures and skipped checks
+   - Provide merge status
+
+4. **Triage failures:**
+   - Open logs via `detailsUrl` and extract failing step + error output
+   - Group by category: **format**, **lint**, **typecheck**, **tests**, **migration**, **performance**, **coverage**, **build**
+   - **Note:** Pre-push hook automatically skips tests for documentation-only changes
+
+5. **Fix with strict TDD:**
+   - Follow **RED → GREEN → REFACTOR** for each failure
+   - Ensure coverage remains ≥85%
+   - Run minimal local command to reproduce failure before changes
+   - Apply formatting/lint fixes (`just fmt`, `just pre-commit`) when relevant
+   - Avoid unrelated refactors
+
+6. **Validate fixes locally:**
+   - **ALWAYS run `just ci` as final validation** (not just `just test`)
+   - Re-run exact failing check command
+   - Confirm specific failure is gone
+   - Verify all checks pass locally
+
+7. **Report and update:**
+   - Summarize what was fixed and what remains
+   - If new commits made, push and re-check CI status
+   - Continue loop until clean or blocked
+
+**Quality Gates (must all pass):**
+
+1. ✅ Formatting: `just fmt-check` or `just fmt`
+2. ✅ Linting: `just lint` (Rust clippy + ESLint)
+3. ✅ Type checking: `just check` (cargo check + TypeScript)
+4. ✅ Unit tests: Rust tests + frontend tests
+5. ✅ E2E tests: Playwright tests
+6. ✅ Migration tests: For overhauls with data structure changes
+7. ✅ Performance tests: For data-heavy features (with thresholds)
+8. ✅ Coverage: ≥85% (verify with coverage reports)
+9. ✅ Browser validation: Open Chrome tools, validate functionality, page source, console errors
+
+**Commands Cheat Sheet:**
+
+- Check PR + CI: `gh pr view --json statusCheckRollup,mergeStateStatus,reviewDecision`
+- Logs: Use `detailsUrl` from `statusCheckRollup` or `gh run view <run-id> --log`
+- Local verification:
+  - `just pre-commit` - Fast checks before committing
+  - `just test` - Run all tests (iteration)
+  - `just ci` - **Full CI gate (required final run)**
+  - `just fmt` - Fix formatting
+
+### Managing PR Comments
+
+Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAUDE.md` PR Workflow section for full details.
+
+**Process:**
+
+1. **Fetch PR information:**
+
+   ```bash
+   # Get PR number and branch name
+   gh pr view --json number,headRefName
+
+   # Get repository owner and name (IMPORTANT: use this, not headRepository)
+   gh repo view --json owner,name
+
+   # Get PR-level comments
+   gh api /repos/{owner}/{repo}/issues/{number}/comments
+
+   # Get review comments (inline code comments)
+   gh api /repos/{owner}/{repo}/pulls/{number}/comments
+   ```
+
+2. **Display comments** formatted for review with file:line references
+
+3. **Triage comments:**
+   - Already resolved - Comment addressed in subsequent commit
+   - Needs code change - Feedback requires modifying code
+   - Needs clarification - Question that can be answered with citation
+   - Won't fix - Valid feedback but intentionally not addressing (explain why)
+
+4. **Address feedback:**
+   - Make necessary code changes
+   - Note file and line numbers of fix
+   - Prepare reply citing the fix
+
+5. **Resolve comments:**
+
+   ```bash
+   # Reply to review comment with resolution
+   gh api /repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
+     -f body="Fixed in \`file.ts:42-45\` - [description of change]"
+   ```
+
+6. **Mark threads as resolved** (if permission allows)
+
+**Reply format examples:**
+
+- Code fix: `"Fixed in \`src/components/Button.tsx:23\` - removed unused import"`
+- Multiple lines: `"Fixed in \`src/utils/api.ts:15-22\` - added error handling"`
+- Already fixed: `"This was addressed in commit f9c0ed2 - see \`src/App.tsx:10\`"`
+- Won't fix: `"Intentionally kept as-is because [reason]. See CLAUDE.md for rationale."`
+
+**Acceptance Criteria:**
+
+- [ ] All comments reviewed
+- [ ] Code changes made for actionable feedback
+- [ ] Each addressed comment has reply with file:line citation
+- [ ] Resolved threads marked as resolved (where possible)
+- [ ] Any "won't fix" items have clear explanations
+
+**Notes:**
+
+- Always use `gh repo view --json owner,name` to get correct repository owner
+- Comment threading: Review comments have `in_reply_to_id` for replies
+- Citations matter: Always cite specific file:line references
+- GitHub CLI required: Requires `gh` CLI tool installed and authenticated
 
 ---
 

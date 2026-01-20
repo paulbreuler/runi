@@ -58,9 +58,11 @@ Perform a comprehensive code review following runi's quality standards and best 
    - **Quality Issues** (should fix - style, documentation, test coverage)
    - **Architectural Violations** (must fix - hardcoded layouts, tight coupling, missing event bus usage)
    - **Architectural Improvements** (should fix - container/presentational separation, dependency injection, configuration-driven)
+   - **Testing Gaps** (missing unit, integration, E2E, migration, or performance tests)
    - **Suggestions** (nice to have - optimizations, improvements)
    - **Security Concerns** (auth patterns, data handling, API security)
-   - **Performance** (potential bottlenecks, inefficiencies)
+   - **Performance** (potential bottlenecks, inefficiencies, missing performance tests for data-heavy features)
+   - **Breaking Changes** (missing migration guide for overhauls)
 
 5. **Reference specific lines** using code references format:
 
@@ -107,6 +109,11 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **Coverage**: New code has ≥85% test coverage
 - [ ] **Tests Pass**: 100% pass rate (no exceptions)
 - [ ] **Test Quality**: Tests are meaningful and cover edge cases
+- [ ] **Unit Tests**: All new code has unit test coverage
+- [ ] **Integration Tests**: Multi-component interactions tested (if applicable)
+- [ ] **E2E Tests**: User-facing features and complex interactions tested with Playwright
+- [ ] **Migration Tests**: For overhauls that change data structures - backward compatibility and data integrity validated
+- [ ] **Performance Tests**: For data-heavy features - thresholds validated (e.g., render 1000 rows in <500ms)
 - [ ] **Storybook**: Component stories created (for UI components)
 
 ### Architecture & Patterns
@@ -151,6 +158,7 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **Code Comments**: Complex logic explained
 - [ ] **Commit Messages**: Follow conventional commits format
 - [ ] **PR Description**: Clear summary and test plan (if applicable)
+- [ ] **Breaking Changes**: For overhauls - migration guide documented with backward compatibility considerations
 
 ## Review Output Format
 

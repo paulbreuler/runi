@@ -25,7 +25,10 @@ Apply feedback from LLMs or other sources to an existing TDD plan, suggest chang
      - Speed prompts updates
      - Documentation improvements
      - Architectural concerns
-     - Missing test coverage
+     - Missing test coverage (unit, integration, E2E, migration, performance)
+     - PR-related feedback (breaking changes, migration guides, PR descriptions)
+     - Performance requirements or thresholds
+     - Migration testing requirements
      - Clarifications needed
 
 3. **Read the Current Plan:**
@@ -88,9 +91,11 @@ just list-plans
 1. Read current `plan.md`
 2. Add new feature section with Gherkin scenario
 3. Add TDD todos for the feature
-4. Update feature tracking table
-5. Update `parallelization.md` if needed
-6. Update `speed_prompts.md` with new agent section
+4. Add testing requirements (unit, integration, E2E if applicable, migration if overhaul, performance if data-heavy)
+5. Update feature tracking table
+6. Update `parallelization.md` if needed
+7. Update `speed_prompts.md` with new agent section
+8. If overhaul: Add breaking changes and migration guide requirements
 
 ### Modifying Existing Feature
 
@@ -105,7 +110,8 @@ just list-plans
 1. Read current `plan.md`
 2. Find feature tracking table
 3. Update status (GAP → IN_PROGRESS → PASS, etc.)
-4. Update test coverage indicators
+4. Update test coverage indicators (unit, integration, E2E, migration, performance)
+5. Update PR status if applicable (PR created, CI passing, etc.)
 
 ### Changing Dependencies
 

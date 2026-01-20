@@ -256,8 +256,10 @@ Directory structure (each plan gets its own directory):
 ### Pre-Push Hooks
 
 - Full validation (format, lint, type check, tests)
-- Agents run `just ci` before pushing
+- **Optimization**: Tests are automatically skipped for documentation-only changes
+- Agents run `just ci` before pushing (or `just ci-no-test` for docs-only changes)
 - Ensures quality gates pass
+- If only documentation files changed, pre-push hook automatically skips tests
 
 ### Commit Messages
 
@@ -265,15 +267,44 @@ Format: `feat(scope): #[number] [brief description]`
 
 Example: `feat(datagrid): #19 implement timing tab with waterfall visualization`
 
+### PR Creation and Management
+
+After completing features:
+
+- **Create PR**: Use `/pr` command to generate comprehensive PR description
+- **PR Requirements**:
+  - Summary of changes
+  - Detailed changes list
+  - Testing checklist (unit, integration, E2E, migration if applicable, performance if applicable)
+  - Breaking changes section (for overhauls) with migration guide
+  - Related issues
+  - Review checklist
+- **Fix CI Checks**: Use `/pr-check-fixes` to systematically fix failing CI checks (see `CLAUDE.md` PR Workflow section)
+- **Manage Reviews**: Use `/pr-comments` to address PR review comments (see `CLAUDE.md` PR Workflow section)
+
+**For Overhauls**: PR must include:
+
+- Breaking changes section
+- Migration guide
+- Backward compatibility notes
+- Migration test results
+
 ## Deliverables Checklist
 
 For each feature:
 
 - ✅ Tests: All TDD tests passing
+  - Unit tests: Complete coverage (≥85%)
+  - Integration tests: If multiple components interact
+  - E2E tests: If user-facing feature (Playwright)
+  - Migration tests: If overhaul with data structure changes
+  - Performance tests: If data-heavy feature (with thresholds)
 - ✅ Components: Fully implemented
-- ✅ Stories: Storybook stories with demos
+- ✅ Stories: Storybook stories with demos (must build and work correctly)
 - ✅ Documentation: JSDoc comments
 - ✅ Status Update: Feature tracking table updated
+- ✅ PR Created: If feature is complete (use `/pr` command)
+- ✅ Breaking Changes: Documented if overhaul (with migration guide)
 
 ## References
 
@@ -288,6 +319,8 @@ For each feature:
 2. **Component-Driven**: Build in Storybook first
 3. **Track Everything**: Feature table shows progress
 4. **Enable Parallelism**: Maximize independent work
-5. **Quality Gates**: Pre-commit and pre-push hooks enforce quality
+5. **Quality Gates**: Pre-commit and pre-push hooks enforce quality (tests auto-skipped for docs-only changes)
 6. **Clear Boundaries**: Each agent owns specific files
 7. **Documentation**: JSDoc, stories, and tracking keep knowledge accessible
+8. **Comprehensive Testing**: Unit, integration, E2E, migration (for overhauls), and performance (for data-heavy features)
+9. **PR Readiness**: Features should be PR-ready with comprehensive descriptions and breaking changes documentation

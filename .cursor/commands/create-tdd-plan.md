@@ -60,10 +60,13 @@ Generate a comprehensive TDD plan for refactoring, overhaul, or feature implemen
      - TDD todos (RED → GREEN → REFACTOR cycles)
      - Component design requirements
      - Storybook story requirements
+     - Testing requirements (unit, integration, E2E if applicable, migration if overhaul, performance if data-heavy)
      - Initial status (GAP/IN_PROGRESS)
    - Add feature tracking table at the end
    - Include implementation order
    - List Storybook and documentation requirements
+   - For overhauls: Include breaking changes section and migration guide requirements
+   - For data-heavy features: Include performance testing requirements with thresholds
 
 6. **Create Parallelization Analysis:**
    - Generate at `../runi-planning-docs/plans/[project]_[type]_[timestamp]/parallelization.md`
@@ -168,6 +171,15 @@ Feature: [Name]
 
 - [ ] Story: `[StoryName]` - [description]
 - [ ] **VALIDATION REQUIRED**: Build Storybook (`npm run build-storybook`), verify no errors, test interactively if possible using MCP tools
+- [ ] **CRITICAL**: Creating story files is not enough - stories must build and work correctly
+
+**Testing Requirements:**
+
+- [ ] Unit tests: [description]
+- [ ] Integration tests: [if applicable]
+- [ ] E2E tests: [if user-facing feature]
+- [ ] Migration tests: [if overhaul with data structure changes]
+- [ ] Performance tests: [if data-heavy feature, include threshold]
 
 **Status:** ❌ Not tested | Status: GAP
 
@@ -381,6 +393,60 @@ If work includes multiple types:
 - All documents use consistent naming and structure
 - **Directory Structure**: New plans use directory-per-plan structure
 - **Legacy Plans**: Existing plans at root level can remain, but new plans should use directories
+
+## PR Creation and Management
+
+After completing features, create PRs using:
+
+- **`/pr` command**: Creates PR with comprehensive description including:
+  - Summary of changes
+  - Detailed changes list
+  - Testing checklist
+  - Breaking changes (if any) with migration guide
+  - Related issues
+  - Review checklist
+- **`/pr-check-fixes` command**: Fixes failing CI checks systematically (see `CLAUDE.md` PR Workflow section)
+- **`/pr-comments` command**: Manages PR review comments (see `CLAUDE.md` PR Workflow section)
+
+**PR Requirements for Overhauls:**
+
+- Must include breaking changes section
+- Must include migration guide
+- Must document backward compatibility considerations
+- Must include migration test results
+
+## Testing Requirements
+
+### Unit Tests
+
+- All features require unit tests
+- Follow TDD: RED → GREEN → REFACTOR
+- Coverage target: ≥85%
+
+### Integration Tests
+
+- Required for features with multiple component interactions
+- Test component integration points
+
+### E2E Tests (Playwright)
+
+- Required for user-facing features
+- Required for complex interactions
+- Test critical user workflows
+
+### Migration Tests
+
+- **Required for overhauls** that change data structures or APIs
+- Test backward compatibility
+- Test migration paths
+- Validate data integrity after migration
+
+### Performance Tests
+
+- **Required for data-heavy features** (large datasets, virtual scrolling, etc.)
+- Include performance thresholds (e.g., render 1000 rows in <500ms)
+- Validate performance under load
+- Document performance characteristics
 
 ## Migration Note
 
