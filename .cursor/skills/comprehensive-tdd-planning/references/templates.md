@@ -248,6 +248,103 @@ Feature: [Component] expansion
 - **⚠️ Partial**: Some tests, incomplete coverage
 - **❌ Not tested**: No tests written
 
+## Speed Prompts File Template
+
+```markdown
+# [Project] [Type] - Speed Prompts
+
+Quick-reference prompts for each agent. Copy the relevant section and inject into the template.
+
+**Template Location**: `.cursor/plans/templates/agent_assignment_prompt_template.md`
+
+**How to Use**:
+
+1. Copy the section below for your assigned feature
+2. Open the template file
+3. Replace placeholders in the template with information from your section
+4. The template has placeholders like `[NUMBER]`, `[FEATURE NAME]`, etc. - replace with values from your section
+
+**Plan Location**: `.cursor/plans/[project]_[type]_[timestamp]/plan.md` (in this directory)
+
+---
+
+## Agent [N]: Feature #[NUMBER] - [Feature Name]
+
+**Feature Numbers**: `#[NUMBER]` (or `#[N1], #[N2]`)
+
+**Feature Name**: [Feature Name]
+
+**Plan Section**: See "Feature #[NUMBER]" in the main plan document
+
+**Critical Information**:
+
+- **Work Type**: [Refactor | Overhaul | Feature]
+- **Goal**: [Primary goal]
+- **Key Constraint**: [Most important constraint]
+- **Type Requirement**: [If applicable]
+- **Files to Modify**: [List files]
+- **Files to Create**: [List files]
+- **Dependencies**: [List or "None"]
+- **Coordination**: [Coordination notes or "None - independent"]
+
+**Key TDD Steps**:
+
+1. RED: [Test description]
+2. GREEN: [Implementation step]
+3. REFACTOR: [Improvement step]
+
+**Success Criteria**:
+
+- ✅ [Criteria 1]
+- ✅ [Criteria 2]
+- ✅ [Criteria 3]
+
+---
+
+## Template Injection Guide
+
+When using the template (`.cursor/plans/agent_assignment_prompt_template.md`), replace:
+
+- `[NUMBER(s)]` → Feature number(s) from your section above
+- `[FEATURE NAME(s)]` → Feature name(s) from your section above
+- `[DESCRIPTION]` → Copy from "Critical Information" section
+- `[Files to Work On]` → Use "Files to Modify/Create" from your section
+- `[Dependencies]` → Use "Dependencies" from your section
+- `[Coordination]` → Use "Coordination" from your section
+
+**Example**:
+
+- Replace `[NUMBER(s)]` with `#1`
+- Replace `[FEATURE NAME(s)]` with `Split TestRow Stories into Separate File`
+- Copy the "Critical Information" section into the template's "Feature Details" section
+- Use "Files to Modify" in the "Files to Work On" section
+
+---
+
+## Quick Copy Format
+
+For fastest agent creation, copy this format and fill in from your section:
+```
+
+Feature: #[NUMBER] - [FEATURE NAME]
+Plan: .cursor/plans/[project]_[type]_[id].plan.md (Feature #[NUMBER])
+Template: .cursor/plans/agent_assignment_prompt_template.md
+
+Critical:
+
+- [Key constraint]
+- [Type requirement]
+- [Files]
+- [Dependencies]
+- [Coordination]
+
+TDD: [RED] → [GREEN] → [REFACTOR]
+Success: [Criteria]
+
+```
+
+```
+
 ## Common Feature Areas
 
 - **CORE DISPLAY**: Basic rendering, columns, cells

@@ -153,6 +153,22 @@ Create customized prompts for each agent with:
 7. **Git Workflow**: Pre-commit/pre-push hooks
 8. **Deliverables**: Checklist
 
+### Speed Prompts File
+
+A quick-reference file for rapid agent creation:
+
+- **Purpose**: Enable fast agent assignment without modifying template repeatedly
+- **Structure**: One section per agent/feature with:
+  - Feature number and name
+  - Link to plan section
+  - Link to template location
+  - Critical information (constraints, files, dependencies)
+  - Key TDD steps
+  - Success criteria
+  - Template injection guide
+- **Usage**: Copy relevant section, inject into template, customize
+- **Benefits**: No file modification needed, consistent structure, fast agent creation
+
 ## Best Practices
 
 ### Feature Granularity
@@ -191,23 +207,42 @@ Create customized prompts for each agent with:
 
 ## Example Structure
 
-File naming based on work type:
+Directory structure (each plan gets its own directory):
 
 ```
 .cursor/plans/
-├── [project]_[type]_[id].plan.md              # Main plan
-│   # Types: refactor, overhaul, features
-├── [project]_[type]_parallelization.md         # Parallelization
-├── agent_assignment_prompt_template.md         # Template
-└── agent_[feature_group]_[number].md           # Agent prompts
+├── [project]_[type]_[timestamp]/          # Plan directory
+│   ├── README.md                           # Quick reference (optional)
+│   ├── plan.md                             # Main plan document
+│   ├── parallelization.md                  # Parallelization analysis
+│   ├── speed_prompts.md                    # Quick-reference agent prompts
+│   └── agents/                             # Agent-specific prompts (optional)
+│       └── agent_[stream]_[number].md
+└── templates/                               # Shared templates
+    └── agent_assignment_prompt_template.md
 ```
 
 **Examples:**
 
-- Refactor: `datagrid_refactor_abc123.plan.md`
-- Overhaul: `datagrid_overhaul_abc123.plan.md`
-- Features: `auth_features_abc123.plan.md`
+- Refactor: `datagrid_refactor_abc123/` directory containing all related files
+- Overhaul: `datagrid_overhaul_abc123/` directory containing all related files
+- Features: `auth_features_abc123/` directory containing all related files
 - Combination: Use primary type (e.g., `overhaul` if overhaul with features)
+
+**Benefits of Directory Structure**:
+
+- ✅ All plan files in one place
+- ✅ Easy to find related files
+- ✅ Clean root directory
+- ✅ Can archive/delete entire plan directories
+- ✅ Clear organization
+
+**Speed Prompts File**:
+
+- Always generated in plan directory: `[plan_dir]/speed_prompts.md`
+- Contains quick-reference sections for each agent
+- References template at `.cursor/plans/templates/agent_assignment_prompt_template.md`
+- Enables fast agent creation without template modification
 
 ## Integration with Git Workflow
 
