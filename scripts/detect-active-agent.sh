@@ -28,15 +28,22 @@ find_agent_by_number() {
         return 1
     fi
     
-    # Try exact match first: agent_0_*.agent.md
-    local agent_file=$(find "$agents_dir" -name "agent_${agent_num}_*.agent.md" ! -name "*.completed.md" 2>/dev/null | head -1)
+    # Try exact match first: N_agent_*.agent.md (new pattern with number first)
+    local agent_file=$(find "$agents_dir" -name "${agent_num}_agent_*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | head -1)
     if [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
         echo "$agent_file"
         return 0
     fi
     
-    # Try pattern match: agent_0*.agent.md
-    agent_file=$(find "$agents_dir" -name "agent_${agent_num}*.agent.md" ! -name "*.completed.md" 2>/dev/null | head -1)
+    # Try pattern match: N_agent*.agent.md
+    agent_file=$(find "$agents_dir" -name "${agent_num}_agent*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | head -1)
+    if [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
+        echo "$agent_file"
+        return 0
+    fi
+    
+    # Fallback: Try old pattern agent_N_*.agent.md for backward compatibility
+    agent_file=$(find "$agents_dir" -name "agent_${agent_num}_*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" 2>/dev/null | head -1)
     if [ -n "$agent_file" ] && [ -f "$agent_file" ]; then
         echo "$agent_file"
         return 0
@@ -87,7 +94,7 @@ extract_agent_info() {
         fi
     fi
     
-    # Extract plan name from agent file path
+    # Extract plan name from agent file path (supports both N-plan and old patterns)
     local plan_name=$(echo "$agent_file" | sed -E 's|.*/plans/([^/]+)/.*|\1|')
     
     echo "{\"agent_file\": \"$agent_file\", \"agent_name\": \"$agent_name\", \"features\": \"$features\", \"feature_numbers\": \"$feature_numbers\", \"plan_name\": \"$plan_name\"}"
@@ -199,12 +206,22 @@ detect_from_commits() {
 detect_from_files() {
     local file_list="$1"
     
-    # Check if any files are agent files
-    local agent_file=$(echo "$file_list" | grep -E "runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | head -1)
+    # Check if any files are agent files (exclude completed/) - try new pattern first
+    local agent_file=$(echo "$file_list" | grep -E "runi-planning-docs/plans/[^/]+/agents/[0-9]+_agent_.*\.agent\.md" | grep -v "/completed/" | head -1)
     
     if [ -z "$agent_file" ]; then
-        # Try relative path
-        agent_file=$(echo "$file_list" | grep -E "\.\./runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | head -1)
+        # Try relative path with new pattern
+        agent_file=$(echo "$file_list" | grep -E "\.\./runi-planning-docs/plans/[^/]+/agents/[0-9]+_agent_.*\.agent\.md" | grep -v "/completed/" | head -1)
+    fi
+    
+    if [ -z "$agent_file" ]; then
+        # Fallback: Try old pattern agent_N_*.agent.md for backward compatibility
+        agent_file=$(echo "$file_list" | grep -E "runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | grep -v "/completed/" | head -1)
+    fi
+    
+    if [ -z "$agent_file" ]; then
+        # Try relative path with old pattern
+        agent_file=$(echo "$file_list" | grep -E "\.\./runi-planning-docs/plans/[^/]+/agents/agent_[0-9]+.*\.agent\.md" | grep -v "/completed/" | head -1)
     fi
     
     if [ -z "$agent_file" ]; then
@@ -227,7 +244,7 @@ detect_from_files() {
 # Function to detect from recently modified agent files
 detect_from_recent_files() {
     # Get recently modified agent files (last 7 days)
-    local recent_agent=$(find "$PLANS_DIR" -name "*.agent.md" -type f ! -name "*.completed.md" -mtime -7 2>/dev/null | head -1)
+    local recent_agent=$(find "$PLANS_DIR" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" -mtime -7 2>/dev/null | head -1)
     
     if [ -z "$recent_agent" ] || [ ! -f "$recent_agent" ]; then
         return 1

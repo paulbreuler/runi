@@ -104,7 +104,9 @@ main() {
             echo "❌ Plan name required for assessment" >&2
             exit 1
         fi
-        bash "$SCRIPT_DIR/assess-agent-status.sh" --plan "$plan_name" --all
+        # Resolve plan number (1 → 1-plan)
+        local resolved_plan=$(resolve_plan_number "$plan_name")
+        bash "$SCRIPT_DIR/assess-agent-status.sh" --plan "$resolved_plan" --all
         return
     fi
     
@@ -114,7 +116,8 @@ main() {
         if [[ "$agent_file" != /* ]] && [[ "$agent_file" != ../* ]]; then
             # Relative path, try to resolve
             if [ -n "$plan_name" ]; then
-                local plan_dir="../runi-planning-docs/plans/$plan_name"
+                local resolved_plan=$(resolve_plan_number "$plan_name")
+                local plan_dir="../runi-planning-docs/plans/$resolved_plan"
                 agent_file="$plan_dir/agents/$agent_path"
             fi
         fi
@@ -132,8 +135,10 @@ main() {
     
     # If plan name provided, select next task
     if [ -n "$plan_name" ]; then
+        # Resolve plan number (1 → 1-plan)
+        local resolved_plan=$(resolve_plan_number "$plan_name")
         # Get next task
-        local next_task_output=$(bash "$SCRIPT_DIR/next-task.sh" --plan "$plan_name" 2>&1)
+        local next_task_output=$(bash "$SCRIPT_DIR/next-task.sh" --plan "$resolved_plan" 2>&1)
         local agent_file=$(echo "$next_task_output" | tail -1)
         
         if [ -z "$agent_file" ] || [[ "$agent_file" == *"❌"* ]] || [[ "$agent_file" == *"✅"* ]]; then
@@ -165,9 +170,10 @@ main() {
     echo "Usage: $0 [--plan <plan-name>] [--agent <agent-path>] [--assess [plan-name]]" >&2
     echo "" >&2
     echo "Examples:" >&2
-    echo "  $0 --plan datagrid_overhaul_4a5b9879" >&2
+    echo "  $0 --plan 4" >&2
+    echo "  $0 --plan 4-plan" >&2
     echo "  $0 --agent ../runi-planning-docs/plans/.../agents/agent_1.agent.md" >&2
-    echo "  $0 --assess datagrid_overhaul_4a5b9879" >&2
+    echo "  $0 --assess 4" >&2
     exit 1
 }
 

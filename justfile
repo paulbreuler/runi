@@ -274,6 +274,14 @@ assess-agents plan-name:
 run-agent agent-path:
     @bash scripts/run-agent.sh --agent "{{agent-path}}"
 
+# List all agents in a plan (non-AI, direct execution)
+list-agents plan-name:
+    @bash scripts/list-agents.sh --plan "{{plan-name}}"
+
+# List agents with auto-detection (non-AI, direct execution)
+list-agents-auto:
+    @bash scripts/list-agents.sh --auto
+
 # ============================================================================
 # 📖 Help
 # ============================================================================
@@ -329,6 +337,8 @@ help:
     @echo "  just work          - Smart orchestration (detects plan, suggests actions)"
     @echo "  just run <plan>    - Select and run next best agent task"
     @echo "  just next-task <plan> - Select next task (no run)"
+    @echo "  just list-agents <plan> - List all agents in a plan with status"
+    @echo "  just list-agents-auto - List agents with auto-detection"
     @echo "  just assess-agents <plan> - Assess agent completion status"
     @echo "  just run-agent <path> - Run specific agent file"
     @echo "  just heal          - Auto-heal plan (auto-detects from PR)"

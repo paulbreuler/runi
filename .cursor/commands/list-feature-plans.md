@@ -48,7 +48,7 @@ The script displays each plan with:
   - `README.md` - Index and status (if exists)
   - `interfaces.md` - Interface contracts (if exists)
   - `gotchas.md` - Discovered issues (if exists)
-  - All `*.agent.md` files in `agents/` directory
+  - All `*.agent.md` files in `agents/` directory (excludes completed agents in `agents/completed/` subdirectory)
 
 **Navigation:**
 
@@ -65,20 +65,20 @@ The script displays each plan with:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔄 Overhaul  Datagrid Overhaul
    Overview: Major overhaul of DataGrid component...
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/plan.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/4-plan/plan.md
    /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/README.md
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/interfaces.md
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/gotchas.md
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_0_accessibility_foundation_early.agent.md
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_1_column_display_features.agent.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/4-plan/interfaces.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/4-plan/gotchas.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/4-plan/agents/0_agent_accessibility_foundation_early.agent.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/4-plan/agents/1_agent_column_display_features.agent.md
    ...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔧 Refactor  Timingtab Refactor
    Overview: Refactor TimingTab to extract reusable SignalBadge component...
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/timingtab_refactor_1768875182/plan.md
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/timingtab_refactor_1768875182/README.md
-   /Users/paul/Documents/GitHub/runi-planning-docs/plans/timingtab_refactor_1768875182/agents/accessibility.agent.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/6-plan/plan.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/6-plan/README.md
+   /Users/paul/Documents/GitHub/runi-planning-docs/plans/6-plan/agents/accessibility.agent.md
    ...
 ```
 
@@ -119,3 +119,5 @@ This command is useful for:
 - Finding plans by work type
 - Getting quick overviews of plan scope
 - Navigating to specific plans for reference
+
+**Note**: Completed agents (moved to `agents/completed/` directory) are automatically excluded from listings to show only active work.

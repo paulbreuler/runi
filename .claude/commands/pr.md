@@ -16,7 +16,7 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - Run `bash scripts/detect-active-agent.sh --json` to detect agent from:
      - Branch name (e.g., `feat/datagrid/agent_0_accessibility`)
      - Recent commit messages (e.g., mentions "agent_2" or "Agent 2")
-     - Modified files (e.g., changes to `agents/agent_4_*.agent.md`)
+     - Modified files (e.g., changes to `agents/4_agent_*.agent.md` or `agents/agent_4_*.agent.md`)
      - Recently modified agent files (fallback)
    - If agent detected:
      - Extract agent name, feature numbers, and TL;DR descriptions from agent file
@@ -307,7 +307,7 @@ Compares current branch with main, detects agent from branch name or modified fi
 
 **Branch Name Pattern:**
 
-- Branch: `feat/datagrid/agent_0_accessibility` → Detects Agent 0 from datagrid plan
+- Branch: `feat/datagrid/agent_0_accessibility` → Detects Agent 0 from datagrid plan (works with both old and new naming)
 - Branch: `agent-2-status-timing` → Detects Agent 2
 
 **Commit Message Pattern:**
@@ -317,7 +317,7 @@ Compares current branch with main, detects agent from branch name or modified fi
 
 **Modified Files Pattern:**
 
-- Modified: `../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_4_selection__expander_columns.agent.md` → Detects Agent 4
+- Modified: `../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/4_agent_selection__expander_columns.agent.md` → Detects Agent 4 (new pattern) or `agent_4_*.agent.md` (old pattern for backward compatibility)
 
 ### Agent Status Validation Example
 
@@ -346,7 +346,7 @@ Continue with PR creation anyway? (y/n)
 **User chooses `n`:**
 
 ```
-Suggestion: Run `/close-feature-agent ../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_0_accessibility_foundation_early.agent.md` first
+Suggestion: Run `/close-feature-agent ../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/0_agent_accessibility_foundation_early.agent.md` first
 ```
 
 **User chooses `y`:**

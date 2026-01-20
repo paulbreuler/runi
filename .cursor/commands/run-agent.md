@@ -5,10 +5,10 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
 ## Invocation
 
 ```
-/run-agent [plan-name]
+/run-agent [plan-number]
 /run-agent --auto
 /run-agent --agent [agent-path]
-/run-agent --assess [plan-name]
+/run-agent --assess [plan-number]
 ```
 
 ## What This Command Does
@@ -51,10 +51,12 @@ Automatically detects the active plan from the last merged PR and runs the next 
 ### Run Specific Agent File
 
 ```
-/run-agent --agent ../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/agent_4_selection__expander_columns.agent.md
+/run-agent --agent ../runi-planning-docs/plans/datagrid_overhaul_4a5b9879/agents/4_agent_selection__expander_columns.agent.md
 ```
 
 Opens the specified agent file directly in Cursor.
+
+**To find agents**: Use `/plan-list-agents <plan-number>` to see all available agents with clickable links, then use `/run-agent --agent [path]` to run the specific one you want.
 
 ### Assess Agent Status
 
@@ -90,6 +92,7 @@ Assesses all agents in the plan for completion status and file organization.
 ## Integration with Other Commands
 
 - **work**: Use `/work` first to auto-detect plan, assess status, and see recommendations. Then use `/run-agent --auto` or `/run-agent <plan-name>` to start work
+- **plan-list-agents**: Use to find and see all agents in a plan, then use `/run-agent --agent [path]` to run a specific one
 - **heal**: After completing work, use `/heal` or `just heal` to auto-cleanup completed agents
 - **list-feature-plans**: Use to discover plans, then use `/run-agent <plan-name>`
 - **close-feature-agent**: After closing, use `/work` to assess overall status or `/run-agent --assess <plan-name>` to check cleanup
@@ -145,7 +148,7 @@ The command outputs:
 ## Example Output
 
 ```
-Next Best Task: agent_4_selection__expander_columns.agent.md
+Next Best Task: 4_agent_selection__expander_columns.agent.md
 
 Agent: Selection & Expander Columns
 Features: #4, #5, #6
@@ -155,7 +158,7 @@ Score: 85/100
   - Priority: 25/30 (avg feature #5)
   - Workload: 20/30 (3 remaining tasks)
 
-🚀 Starting Agent Work: agent_4_selection__expander_columns.agent.md
+🚀 Starting Agent Work: 4_agent_selection__expander_columns.agent.md
 
 Agent: Selection & Expander Columns
 Features: #4, #5, #6

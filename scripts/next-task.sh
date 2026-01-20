@@ -35,23 +35,55 @@ get_absolute_path() {
     fi
 }
 
+# Function to resolve plan number to directory name
+resolve_plan_number() {
+    local plan_input="$1"
+    
+    # If it's already in N-descriptive-name format, return as-is
+    if [[ "$plan_input" =~ ^[0-9]+- ]]; then
+        echo "$plan_input"
+        return 0
+    fi
+    
+    # If it's just a number, find the directory that starts with N-
+    if [[ "$plan_input" =~ ^[0-9]+$ ]]; then
+        local found=$(find "$PLANS_DIR" -maxdepth 1 -type d -name "${plan_input}-*" ! -name "plans" ! -name "templates" | head -1)
+        if [ -n "$found" ]; then
+            echo "$(basename "$found")"
+            return 0
+        fi
+        # Fallback: try N-plan for backward compatibility
+        if [ -d "$PLANS_DIR/${plan_input}-plan" ]; then
+            echo "${plan_input}-plan"
+            return 0
+        fi
+    fi
+    
+    # Otherwise, return as-is (for backward compatibility with old names)
+    echo "$plan_input"
+    return 0
+}
+
 # Function to find plan directory
 find_plan_dir() {
     local plan_name="$1"
     if [ -z "$plan_name" ]; then
         echo "❌ Plan name required" >&2
-        echo "Usage: $0 --plan <plan-name>" >&2
+        echo "Usage: $0 --plan <plan-number>" >&2
         exit 1
     fi
     
+    # Resolve plan number (1 → 1-plan, 1-plan → 1-plan)
+    local resolved=$(resolve_plan_number "$plan_name")
+    
     # Try exact match first
-    local plan_dir="$PLANS_DIR/$plan_name"
+    local plan_dir="$PLANS_DIR/$resolved"
     if [ -d "$plan_dir" ]; then
         echo "$plan_dir"
         return
     fi
     
-    # Try partial match
+    # Try partial match (for backward compatibility)
     local found=$(find "$PLANS_DIR" -maxdepth 1 -type d -name "*${plan_name}*" ! -name "plans" ! -name "templates" | head -1)
     if [ -n "$found" ]; then
         echo "$found"
@@ -59,6 +91,7 @@ find_plan_dir() {
     fi
     
     echo "❌ Plan not found: $plan_name" >&2
+    echo "   Available plans: $(ls -1 "$PLANS_DIR" | grep -E '^[0-9]+-' | sort -V | tr '\n' ' ' || echo 'none')" >&2
     exit 1
 }
 
@@ -94,7 +127,7 @@ parse_agent_files() {
         return
     fi
     
-    find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" | sort | while read -r agent_file; do
+    find "$agents_dir" -name "*.agent.md" -type f ! -name "*.completed.md" ! -path "*/completed/*" | sort | while read -r agent_file; do
         local agent_name=$(basename "$agent_file" .agent.md)
         local features=()
         local statuses=()
@@ -351,10 +384,10 @@ main() {
     fi
     
     # Find agent file
-    local agent_file=$(find "$agents_dir" -name "*${best_agent}*.agent.md" ! -name "*.completed.md" | head -1)
+    local agent_file=$(find "$agents_dir" -name "*${best_agent}*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" | head -1)
     if [ -z "$agent_file" ]; then
         # Try to find by agent number
-        agent_file=$(find "$agents_dir" -name "agent_*.agent.md" ! -name "*.completed.md" | grep -i "$best_agent" | head -1)
+        agent_file=$(find "$agents_dir" -name "agent_*.agent.md" ! -name "*.completed.md" ! -path "*/completed/*" | grep -i "$best_agent" | head -1)
     fi
     
     if [ -z "$agent_file" ]; then

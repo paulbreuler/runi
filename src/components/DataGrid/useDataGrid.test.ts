@@ -394,6 +394,72 @@ describe('useDataGrid', () => {
 
       expect(result.current.table.getIsAllRowsSelected()).toBe(true);
     });
+
+    describe('selection persistence (Feature #33)', () => {
+      it('maintains selection across filters', () => {
+        const { result } = renderHook(() =>
+          useDataGrid({
+            data: testData,
+            columns: testColumns,
+            enableRowSelection: true,
+            enableFiltering: true,
+            getRowId: (row) => row.id,
+            initialRowSelection: { '1': true, '2': true, '3': true },
+          })
+        );
+
+        // Initially all rows selected
+        expect(result.current.rowSelection).toEqual({ '1': true, '2': true, '3': true });
+        expect(result.current.table.getRowModel().rows).toHaveLength(3);
+
+        // Apply filter that excludes row '2' and '3' (only 'Alpha' matches)
+        act(() => {
+          result.current.setGlobalFilter('Alpha');
+        });
+
+        // After filtering, only row '1' (Alpha) should be visible and selected
+        expect(result.current.table.getRowModel().rows).toHaveLength(1);
+        const visibleRow = result.current.table.getRowModel().rows[0];
+        expect(visibleRow).toBeDefined();
+        expect(visibleRow?.id).toBe('1');
+
+        // Selection should be updated to only include visible rows
+        // The persistence logic should deselect rows '2' and '3' that are no longer visible
+        expect(result.current.rowSelection).toEqual({ '1': true });
+      });
+
+      it('deselects non-matching rows when filters change', () => {
+        const { result } = renderHook(() =>
+          useDataGrid({
+            data: testData,
+            columns: testColumns,
+            enableRowSelection: true,
+            enableFiltering: true,
+            getRowId: (row) => row.id,
+            initialRowSelection: { '1': true, '3': true },
+          })
+        );
+
+        // Initially rows '1' and '3' selected
+        expect(result.current.rowSelection).toEqual({ '1': true, '3': true });
+
+        // Apply filter that only matches row '1' (Alpha) - excludes row '3' (Gamma)
+        act(() => {
+          result.current.setGlobalFilter('Alpha');
+        });
+
+        // After filtering, only row '1' should be visible
+        const visibleRows = result.current.table.getRowModel().rows;
+        expect(visibleRows).toHaveLength(1);
+        const visibleIds = visibleRows.map((row) => row.id);
+        expect(visibleIds).toContain('1');
+        expect(visibleIds).not.toContain('3');
+
+        // Row '3' should be deselected because it's no longer visible
+        // Row '1' should remain selected because it's still visible
+        expect(result.current.rowSelection).toEqual({ '1': true });
+      });
+    });
   });
 
   describe('expansion state', () => {

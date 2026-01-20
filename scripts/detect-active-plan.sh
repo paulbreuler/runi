@@ -13,10 +13,12 @@ extract_plan_name() {
     # This avoids hardcoding plan names and automatically picks up new plans
     local plan_dirs pattern
 
-    # Get base names of plan directories (strip timestamps and suffixes for matching)
+    # Get base names of plan directories (supports N-descriptive-name pattern and legacy names)
     plan_dirs=$(find "$PLANS_DIR" -maxdepth 1 -mindepth 1 -type d ! -name "plans" ! -name "templates" -exec basename {} \; 2>/dev/null | \
+        sed -E 's/^[0-9]+-plan$//' | \
         sed -E 's/_[0-9a-f]{8,}$//' | \
         sed -E 's/_(overhaul|refactor|features)$//' | \
+        grep -v '^$' | \
         sort -u || true)
 
     # If no plan directories are found, return nothing without failing

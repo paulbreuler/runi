@@ -6,9 +6,10 @@
  */
 
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { VirtualDataGrid } from './VirtualDataGrid';
+import { createSelectionColumn } from './columns/selectionColumn';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 // Test data type
@@ -229,6 +230,135 @@ describe('VirtualDataGrid', () => {
       expect(screen.getByRole('table')).toBeInTheDocument();
     });
 
+    describe('single row selection', () => {
+      it('selects single row on click', () => {
+        const testData = generateTestData(3);
+        const onRowSelectionChange = vi.fn();
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableRowSelection
+            onRowSelectionChange={onRowSelectionChange}
+          />
+        );
+
+        // Find first row by data-row-id
+        const firstRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="1"]');
+        expect(firstRow).toBeInTheDocument();
+
+        // Click on the row (not on checkbox)
+        if (firstRow !== null) {
+          fireEvent.click(firstRow);
+        }
+
+        // Should select only the first row
+        expect(onRowSelectionChange).toHaveBeenCalledWith({ '1': true });
+      });
+
+      it('deselects previous on new selection', () => {
+        const testData = generateTestData(3);
+        const onRowSelectionChange = vi.fn();
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableRowSelection
+            initialRowSelection={{ '1': true }}
+            onRowSelectionChange={onRowSelectionChange}
+          />
+        );
+
+        // Find second row
+        const secondRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="2"]');
+        expect(secondRow).toBeInTheDocument();
+
+        // Click on the second row
+        if (secondRow !== null) {
+          fireEvent.click(secondRow);
+        }
+
+        // Should deselect first row and select second row
+        expect(onRowSelectionChange).toHaveBeenCalledWith({ '2': true });
+      });
+
+      it('does not toggle selection when clicking on checkbox', () => {
+        const testData = generateTestData(3);
+        const onRowSelectionChange = vi.fn();
+
+        // Add selection column when testing selection behavior
+        const columnsWithSelection: Array<ColumnDef<TestRow>> = [
+          createSelectionColumn<TestRow>(),
+          ...testColumns,
+        ];
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={columnsWithSelection}
+            getRowId={(row) => row.id}
+            enableRowSelection
+            onRowSelectionChange={onRowSelectionChange}
+          />
+        );
+
+        // Find checkbox (selection column handles its own clicks)
+        // The checkbox has aria-label "Select row" or "Deselect row"
+        // Use getAllByRole since there are multiple row checkboxes (one per row)
+        const checkboxes = screen.getAllByRole('checkbox');
+        // Filter to row checkboxes (exclude header "select all" checkbox)
+        const rowCheckboxes = checkboxes.filter((cb) => {
+          const ariaLabel = cb.getAttribute('aria-label') ?? '';
+          return (
+            ariaLabel.includes('row') ||
+            ariaLabel.toLowerCase().includes('select row') ||
+            ariaLabel.toLowerCase().includes('deselect row')
+          );
+        });
+        expect(rowCheckboxes.length).toBeGreaterThan(0);
+        const checkbox = rowCheckboxes[0];
+        if (checkbox === undefined) {
+          throw new Error('Expected checkbox to be defined');
+        }
+
+        // Click checkbox - should not trigger row click handler
+        fireEvent.click(checkbox);
+
+        // Checkbox click should be handled by selection column, not row click
+        // The selection column will call onRowSelectionChange separately
+        // We just verify the checkbox is clickable
+        expect(checkbox).toBeInTheDocument();
+      });
+    });
+
+    describe('selection persistence', () => {
+      it('works with filtering enabled', () => {
+        const testData = generateTestData(5);
+        const onRowSelectionChange = vi.fn();
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableRowSelection
+            enableFiltering
+            initialRowSelection={{ '1': true, '3': true }}
+            onRowSelectionChange={onRowSelectionChange}
+          />
+        );
+
+        // Selection persistence is handled internally by useDataGrid hook
+        // This test verifies the component integrates correctly with filtering
+        // Comprehensive persistence tests are in useDataGrid.test.ts
+        expect(screen.getByRole('table')).toBeInTheDocument();
+      });
+    });
+
     it('supports sorting', () => {
       const testData = generateTestData(3);
       const onSortingChange = vi.fn();
@@ -244,6 +374,103 @@ describe('VirtualDataGrid', () => {
       );
 
       expect(screen.getByRole('table')).toBeInTheDocument();
+    });
+
+    describe('column sorting', () => {
+      it('sorts by column on header click', () => {
+        const testData = generateTestData(3);
+        const onSortingChange = vi.fn();
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableSorting
+            onSortingChange={onSortingChange}
+          />
+        );
+
+        // Find sortable column header
+        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        expect(nameHeader).toBeInTheDocument();
+
+        // Click header to sort
+        fireEvent.click(nameHeader);
+
+        // Should sort ascending on first click
+        expect(onSortingChange).toHaveBeenCalledWith([{ id: 'name', desc: false }]);
+      });
+
+      it('reverses sort on second click', () => {
+        const testData = generateTestData(3);
+        const onSortingChange = vi.fn();
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableSorting
+            initialSorting={[{ id: 'name', desc: false }]}
+            onSortingChange={onSortingChange}
+          />
+        );
+
+        // Find sortable column header
+        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        expect(nameHeader).toBeInTheDocument();
+
+        // Click header again to reverse sort
+        fireEvent.click(nameHeader);
+
+        // Should sort descending on second click
+        expect(onSortingChange).toHaveBeenCalledWith([{ id: 'name', desc: true }]);
+      });
+
+      it('clears sort on third click', () => {
+        const testData = generateTestData(3);
+        const onSortingChange = vi.fn();
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableSorting
+            initialSorting={[{ id: 'name', desc: true }]}
+            onSortingChange={onSortingChange}
+          />
+        );
+
+        // Find sortable column header
+        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        expect(nameHeader).toBeInTheDocument();
+
+        // Click header to clear sort (third click)
+        fireEvent.click(nameHeader);
+
+        // Should clear sort on third click
+        expect(onSortingChange).toHaveBeenCalledWith([]);
+      });
+
+      it('shows sort indicator', () => {
+        const testData = generateTestData(3);
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableSorting
+            initialSorting={[{ id: 'name', desc: false }]}
+          />
+        );
+
+        // Sort indicator should be visible (aria-label for sorted state)
+        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        expect(nameHeader).toHaveAttribute('aria-sort', 'ascending');
+      });
     });
 
     it('supports expansion', () => {

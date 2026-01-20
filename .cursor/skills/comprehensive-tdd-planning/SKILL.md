@@ -183,6 +183,41 @@ Lightweight checkpoint:
 
 Does NOT regenerate agent files (use `update-feature-plan` for that).
 
+## Workflow Entry Points
+
+See `workflow.md` for complete workflow documentation including:
+
+- System overview (plan, agent, feature, status concepts)
+- Workflow states and transitions
+- Command decision tree
+- When to use each command
+- Common patterns and anti-patterns
+- Troubleshooting guide
+
+### Quick Reference: When to Use Which Command
+
+**Primary Entry Point**:
+
+- `/work` - After PR merge, starting work session, need status overview
+
+**Focused Entry Points**:
+
+- `/run-agent <plan>` or `/run-agent --auto` - Ready to start working, auto-selects next best agent
+- `/plan-list-agents <plan>` - Want to see all agents and choose which one to run
+- `/plan-cleanup` or `/heal` - Cleanup needed, want to auto-fix
+- `/plan-check-status` or `/assess-agents <plan>` - Need detailed status, troubleshooting
+- `/list-feature-plans` - Need to find a plan
+
+**After Work**:
+
+- `/close-feature-agent <agent-path>` - Verify completion, sync status
+
+**Plan Management**:
+
+- `/create-feature-plan` - Create new plan
+- `/update-feature-plan <plan>` - Modify existing plan
+- `/list-feature-plans` - List all plans
+
 ## Key Principles
 
 1. **Planning is cheap** - Be verbose, iterate
