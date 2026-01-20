@@ -148,19 +148,42 @@ main() {
     local completed_count=0
     local active_count=0
     local total_agents=0
+    local current_agent=""
+    local agent_context=""  # Buffer to check for "All features PASS"
     
     while IFS= read -r line; do
-        if [[ "$line" =~ Agent:\ (.*) ]]; then
+        # Track current agent name (strip ANSI codes first)
+        local clean_line=$(echo "$line" | sed 's/\x1b\[[0-9;]*m//g')
+        if [[ "$clean_line" =~ Agent:\ ([^[:space:]]+) ]]; then
+            current_agent="${BASH_REMATCH[1]}"
             total_agents=$((total_agents + 1))
-        elif [[ "$line" =~ File\ Organization:\ completed ]]; then
+            agent_context=""  # Reset context for new agent
+        elif [[ "$clean_line" =~ File\ Organization:\ completed ]]; then
             completed_count=$((completed_count + 1))
-        elif [[ "$line" =~ File\ Organization:\ active ]]; then
+            agent_context=""
+        elif [[ "$clean_line" =~ File\ Organization:\ active ]]; then
             active_count=$((active_count + 1))
-            # Check if all features PASS but file not moved
-            if echo "$assessment_output" | grep -A 5 "$line" | grep -q "All features PASS but file not marked as completed"; then
-                local agent_name=$(echo "$line" | grep -o "Agent: [^ ]*" | cut -d' ' -f2)
-                cleanup_needed+=("$agent_name")
+            agent_context="active"
+        elif [[ -n "$agent_context" ]] && [[ "$clean_line" =~ All\ features\ PASS\ but\ file\ not\ marked\ as\ completed ]]; then
+            # This agent has all features PASS but hasn't been moved
+            if [[ -n "$current_agent" ]]; then
+                # Check if already in cleanup_needed (avoid duplicates)
+                local found=false
+                if [ ${#cleanup_needed[@]} -gt 0 ]; then
+                    for existing in "${cleanup_needed[@]}"; do
+                        if [[ "$existing" == "$current_agent" ]]; then
+                            found=true
+                            break
+                        fi
+                    done
+                fi
+                if [[ "$found" == false ]]; then
+                    cleanup_needed+=("$current_agent")
+                    completed_count=$((completed_count + 1))  # Count as completed
+                    active_count=$((active_count - 1))  # Don't count as active
+                fi
             fi
+            agent_context=""
         fi
     done <<< "$assessment_output"
     
