@@ -6,7 +6,7 @@ List all agents in a plan with their status, features, and clickable links. Help
 
 ```
 /plan-list-agents
-/plan-list-agents --plan <plan-name>
+/plan-list-agents --plan <plan-number>
 /plan-list-agents --auto
 ```
 
@@ -39,7 +39,7 @@ This will:
 ### Specify Plan
 
 ```
-/plan-list-agents --plan datagrid_overhaul_4a5b9879
+/plan-list-agents --plan 4
 ```
 
 Bypasses auto-detection and uses the specified plan.
@@ -49,7 +49,7 @@ Bypasses auto-detection and uses the specified plan.
 **When this command is invoked, you must:**
 
 1. **Run the list-agents script:**
-   - If `--plan` provided: `bash scripts/list-agents.sh --plan <plan-name>`
+   - If `--plan` provided: `bash scripts/list-agents.sh --plan <plan-number>`
    - If `--auto` provided: `bash scripts/list-agents.sh --auto`
    - Otherwise: `bash scripts/list-agents.sh --auto` (auto-detects plan)
 
@@ -73,12 +73,12 @@ Bypasses auto-detection and uses the specified plan.
 - You need to find an agent by name or features
 - You want to see agent status at a glance
 
-**Use `/run-agent <plan-name>` instead when:**
+**Use `/run-agent <plan-number>` instead when:**
 
 - You want to auto-select the next best agent
 - You're ready to start working and don't care which agent
 
-**Use `/assess-agents <plan-name>` instead when:**
+**Use `/assess-agents <plan-number>` instead when:**
 
 - You need detailed status assessment
 - You're troubleshooting agent issues
@@ -90,7 +90,7 @@ This command helps you find agents, then use `/run-agent --agent [agent-file-pat
 
 **Workflow**:
 
-1. `/plan-list-agents <plan-name>` - See all agents
+1. `/plan-list-agents <plan-number>` - See all agents
 2. Click agent file link or copy path
 3. `/run-agent --agent [agent-file-path]` - Run the specific agent
 
@@ -104,17 +104,17 @@ This command helps you find agents, then use `/run-agent --agent [agent-file-pat
 Agent 0: Accessibility Foundation Early
   Features: #1, #2
   Status: 2 PASS, 0 WIP, 0 GAP
-  File: agent_0_accessibility_foundation_early.agent.md
+  File: 0_agent_accessibility_foundation_early.agent.md
 
 Agent 1: Column Display Features
   Features: #3, #4, #5
   Status: 0 PASS, 1 WIP, 2 GAP
-  File: agent_1_column_display_features.agent.md
+  File: 1_agent_column_display_features.agent.md
 
 Agent 2: Status & Timing Columns
   Features: #6, #7
   Status: 0 PASS, 0 WIP, 2 GAP
-  File: agent_2_status__timing_columns.agent.md
+  File: 2_agent_status__timing_columns.agent.md
 
   (3 agent(s) in completed/ directory)
 

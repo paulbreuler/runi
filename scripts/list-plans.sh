@@ -120,15 +120,47 @@ get_overview() {
     fi
 }
 
+# Function to get plan display name from directory or plan files
+get_plan_display_name() {
+    local plan_dir="$1"
+    local dirname=$(basename "$plan_dir")
+    
+    # For N-descriptive-name format, extract and format the descriptive part
+    if [[ "$dirname" =~ ^[0-9]+-(.+)$ ]]; then
+        local descriptive="${BASH_REMATCH[1]}"
+        # Convert kebab-case to Title Case
+        echo "$descriptive" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++){sub(/./, toupper(substr($i,1,1)), $i)} print}'
+        return 0
+    fi
+    
+    # Fallback to original function for legacy plan names
+    get_plan_name "$dirname"
+}
+
 # List all plans
-find "$PLANS_DIR" -maxdepth 1 -type d ! -name "plans" ! -name "templates" ! -name "." | sort | while read -r plan_dir; do
+find "$PLANS_DIR" -maxdepth 1 -type d ! -name "plans" ! -name "templates" ! -name "." | sort -V | while read -r plan_dir; do
     dirname=$(basename "$plan_dir")
     work_type=$(get_work_type "$dirname")
-    plan_name=$(get_plan_name "$dirname")
+    
+    # Extract plan number if in N-descriptive-name format
+    plan_number=""
+    display_name=""
+    if [[ "$dirname" =~ ^([0-9]+)- ]]; then
+        plan_number="${BASH_REMATCH[1]}"
+        display_name=$(get_plan_display_name "$plan_dir")
+    else
+        # Legacy plan name
+        display_name=$(get_plan_name "$dirname")
+    fi
+    
     overview=$(get_overview "$plan_dir")
     
     echo -e "${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "$work_type  ${BOLD}${WHITE}${plan_name}${RESET}"
+    if [ -n "$plan_number" ]; then
+        echo -e "$work_type  ${BOLD}${CYAN}Plan ${plan_number}${RESET}: ${BOLD}${WHITE}${display_name}${RESET}"
+    else
+        echo -e "$work_type  ${BOLD}${WHITE}${display_name}${RESET}"
+    fi
     if [ -n "$overview" ]; then
         echo -e "   ${DIM}Overview:${RESET} ${overview}..."
     fi

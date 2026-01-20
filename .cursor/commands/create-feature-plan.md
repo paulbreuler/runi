@@ -22,7 +22,16 @@ Ask user for:
 
 ### Phase 2: Create Planning Docs (Verbose)
 
-Create directory: `../runi-planning-docs/plans/[project]_[type]_[timestamp]/`
+Create directory: `../runi-planning-docs/plans/N-descriptive-name/` where N is the next available plan number and descriptive-name is a kebab-case version of the plan name.
+
+**To determine next plan number:**
+
+1. List all directories in `../runi-planning-docs/plans/` matching pattern `[0-9]+-*`
+2. Extract the numeric prefix from each directory name
+3. Find the maximum plan number
+4. Next plan number = max + 1
+5. Create directory as `N-descriptive-name` (e.g., if max is 7 and plan is "DataGrid Overhaul", create `8-datagrid-overhaul`)
+6. The directory name itself is the source of truth - no registry needed
 
 **1. plan.md** - Full feature specifications
 
@@ -68,16 +77,16 @@ Each agent should have:
 
 **Critical step**: Distill, don't copy.
 
-For each agent, create `agents/agent_<N>_<descriptive-name>.agent.md` where N is sequential starting from 0:
+For each agent, create `agents/<N>_agent_<descriptive-name>.agent.md` where N is sequential starting from 0:
 
 **Agent File Naming Pattern**:
 
 - Format: `agent_<N>_<descriptive-name>.agent.md`
 - N starts at 0 and increments sequentially based on dependency order
 - Examples:
-  - `agent_0_infrastructure.agent.md` (no dependencies, runs first)
-  - `agent_1_testing_utilities.agent.md` (depends on infrastructure)
-  - `agent_2_ui_components.agent.md` (depends on testing utilities)
+  - `0_agent_infrastructure.agent.md` (no dependencies, runs first)
+  - `1_agent_testing_utilities.agent.md` (depends on infrastructure)
+  - `2_agent_ui_components.agent.md` (depends on testing utilities)
 
 **Rationale**: Numeric prefixes make execution order clear to humans, even though `next-task.sh` uses scoring algorithm. This helps when manually selecting agents or understanding plan structure.
 
@@ -112,20 +121,20 @@ For each agent, create `agents/agent_<N>_<descriptive-name>.agent.md` where N is
 ## Output Structure
 
 ```
-[project]_[type]_[timestamp]/
+N-plan/
 ├── README.md              # Index, graph, status
 ├── plan.md                # Full specs (verbose, ~1000+ lines OK)
 ├── interfaces.md          # Contracts (~200-500 lines)
 ├── gotchas.md             # Empty template
 └── agents/
-    ├── agent_0_infrastructure.agent.md      # ~200-400 lines
-    ├── agent_1_testing_utilities.agent.md  # ~200-400 lines
-    └── agent_2_ui_components.agent.md      # ~200-400 lines
+    ├── 0_agent_infrastructure.agent.md      # ~200-400 lines
+    ├── 1_agent_testing_utilities.agent.md  # ~200-400 lines
+    └── 2_agent_ui_components.agent.md      # ~200-400 lines
 ```
 
 ## Agent File Format
 
-**File naming**: `agent_<N>_<descriptive-name>.agent.md` (e.g., `agent_0_infrastructure.agent.md`)
+**File naming**: `<N>_agent_<descriptive-name>.agent.md` (e.g., `0_agent_infrastructure.agent.md`) - Number first for lexicographical ordering
 
 **File header**: The agent header in the file should still be descriptive:
 
@@ -231,7 +240,7 @@ Before presenting plan:
 - [ ] Dependency graph complete
 - [ ] All features assigned
 - [ ] File ownership clear (no conflicts)
-- [ ] Agent files use numeric prefixes (agent_0_, agent_1_, etc.)
+- [ ] Agent files use numeric prefixes (0_agent_, 1_agent_, etc.) - Number first for lexicographical ordering
 - [ ] gotchas.md template ready
 
 ## Usage After Creation
@@ -246,7 +255,7 @@ Agent implements
 ```
 
 **Optional: Assess initial status**:
-After creating a plan, you can use `/work --plan <plan-name>` to assess the initial plan status and see the first recommended task. This is optional but can help verify the plan structure is correct.
+After creating a plan, you can use `/work --plan <plan-number>` (e.g., `/work --plan 1`) to assess the initial plan status and see the first recommended task. This is optional but can help verify the plan structure is correct.
 
 ```
 

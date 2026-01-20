@@ -49,6 +49,35 @@ create_hyperlink() {
     printf '\e]8;;cursor://file/%s\e\\%s\e]8;;\e\\' "$encoded_path" "$display_text"
 }
 
+# Function to resolve plan number to directory name
+resolve_plan_number() {
+    local plan_input="$1"
+    
+    # If it's already in N-descriptive-name format, return as-is
+    if [[ "$plan_input" =~ ^[0-9]+- ]]; then
+        echo "$plan_input"
+        return 0
+    fi
+    
+    # If it's just a number, find the directory that starts with N-
+    if [[ "$plan_input" =~ ^[0-9]+$ ]]; then
+        local found=$(find "$PLANS_DIR" -maxdepth 1 -type d -name "${plan_input}-*" ! -name "plans" ! -name "templates" | head -1)
+        if [ -n "$found" ]; then
+            echo "$(basename "$found")"
+            return 0
+        fi
+        # Fallback: try N-plan for backward compatibility
+        if [ -d "$PLANS_DIR/${plan_input}-plan" ]; then
+            echo "${plan_input}-plan"
+            return 0
+        fi
+    fi
+    
+    # Otherwise, return as-is (for backward compatibility with old names)
+    echo "$plan_input"
+    return 0
+}
+
 # Function to find plan directory
 find_plan_dir() {
     local plan_name="$1"
@@ -56,14 +85,17 @@ find_plan_dir() {
         return 1
     fi
     
+    # Resolve plan number (1 → 1-plan, 1-plan → 1-plan)
+    local resolved=$(resolve_plan_number "$plan_name")
+    
     # Try exact match first
-    local plan_dir="$PLANS_DIR/$plan_name"
+    local plan_dir="$PLANS_DIR/$resolved"
     if [ -d "$plan_dir" ]; then
         echo "$plan_dir"
         return
     fi
     
-    # Try partial match
+    # Try partial match (for backward compatibility)
     local found=$(find "$PLANS_DIR" -maxdepth 1 -type d -name "*${plan_name}*" ! -name "plans" ! -name "templates" | head -1)
     if [ -n "$found" ]; then
         echo "$found"

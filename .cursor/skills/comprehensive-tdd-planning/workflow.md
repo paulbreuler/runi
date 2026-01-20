@@ -17,16 +17,16 @@ Foundation knowledge for understanding and using the TDD planning system.
 ### Directory Structure
 
 ```
-[project]_[type]_[timestamp]/
+N-descriptive-name/
 ├── README.md           # Index, dependency graph, status matrix
 ├── plan.md             # Full verbose feature specs (planning reference)
 ├── interfaces.md       # Contract source of truth
 ├── gotchas.md          # Discovered issues (append-only)
 └── agents/
-    ├── agent_0_*.agent.md    # First agent (foundation)
-    ├── agent_1_*.agent.md    # Second agent
+    ├── 0_agent_*.agent.md    # First agent (foundation)
+    ├── 1_agent_*.agent.md    # Second agent
     └── completed/             # Completed agents (archived)
-        └── agent_N_*.agent.md
+        └── N_agent_*.agent.md
 ```
 
 ## Workflow States
@@ -52,7 +52,7 @@ The planning system has distinct states that determine what actions to take:
 - Agents with all features PASS but still in `agents/` directory
 - File organization inconsistent
 
-**Action**: Run `/heal` or `/heal-plan <plan-name>` to auto-cleanup
+**Action**: Run `/heal` or `/heal-plan <plan-number>` to auto-cleanup
 
 ### 3. Ready to Work State
 
@@ -63,7 +63,7 @@ The planning system has distinct states that determine what actions to take:
 - Next best task identified
 - Dependencies satisfied
 
-**Action**: Run `/run-agent <plan-name>` or `/run-agent --auto` to start work
+**Action**: Run `/run-agent <plan-number>` or `/run-agent --auto` to start work
 
 ### 4. Working State
 
@@ -177,12 +177,6 @@ After PR Merge or Starting Work
 - **What**: Lists all available plans with overviews
 - **Use instead of**: `/work` when you don't know which plan
 
-**`/plan-list-agents <plan>`**
-
-- **When**: Want to see all agents in a plan to choose which one to run
-- **What**: Lists all agents with status, features, and clickable links
-- **Use instead of**: `/run-agent <plan>` when you want to control which specific agent to run
-
 ## Common Patterns
 
 ### Pattern 1: After PR Merge (Recommended)
@@ -199,17 +193,17 @@ After PR Merge or Starting Work
 ### Pattern 2: Quick Start (When You Know the Plan)
 
 ```
-1. /run-agent <plan-name>  # Start next task directly
+1. /run-agent <plan-number>  # Start next task directly
 2. [Implement work]
 3. /close-feature-agent     # Verify completion
-4. /work --plan <plan-name> # Check status, get next task
+4. /work --plan <plan-number> # Check status, get next task
 ```
 
 ### Pattern 3: Status Check Only
 
 ```
-1. /work --plan <plan-name>  # Get status overview
-2. /assess-agents <plan-name> # Get detailed status if needed
+1. /work --plan <plan-number>  # Get status overview
+2. /assess-agents <plan-number> # Get detailed status if needed
 ```
 
 ### Pattern 4: Cleanup First
@@ -246,15 +240,15 @@ After PR Merge or Starting Work
 
 ### "I want to start working"
 
-→ Run `/run-agent <plan-name>` or `/run-agent --auto` (auto-selects next best agent)
+→ Run `/run-agent <plan-number>` or `/run-agent --auto` (auto-selects next best agent)
 
 ### "I want to choose which agent to run"
 
-→ Run `/plan-list-agents <plan-name>` to see all agents, then `/run-agent --agent [path]` to run specific one
+→ Run `/plan-list-agents <plan-number>` to see all agents, then `/run-agent --agent [path]` to run specific one
 
 ### "I need to clean up"
 
-→ Run `/plan-cleanup` or `/heal` or `/heal-plan <plan-name>`
+→ Run `/plan-cleanup` or `/heal` or `/heal-plan <plan-number>`
 
 ### "I want to see detailed status"
 
@@ -266,7 +260,7 @@ After PR Merge or Starting Work
 
 ### "I want to choose which agent to run"
 
-→ Run `/plan-list-agents <plan-name>` to see all agents, then `/run-agent --agent [path]` to run the specific one
+→ Run `/plan-list-agents <plan-number>` to see all agents, then `/run-agent --agent [path]` to run the specific one
 
 ### "No tasks available but work remains"
 

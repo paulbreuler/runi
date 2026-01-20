@@ -6,7 +6,7 @@ Simple entry point: "I want to clean up completed agents". Auto-detects plan and
 
 ```
 /plan-cleanup
-/plan-cleanup --plan <plan-name>
+/plan-cleanup --plan <plan-number>
 ```
 
 ## What This Command Does
@@ -35,7 +35,7 @@ This will:
 ### Specify Plan
 
 ```
-/plan-cleanup --plan datagrid_overhaul_4a5b9879
+/plan-cleanup --plan 4
 ```
 
 Bypasses auto-detection and uses the specified plan.
@@ -53,7 +53,7 @@ Skips confirmation prompt and automatically moves completed agents.
 **When this command is invoked, you must:**
 
 1. **Run the heal-plan script:**
-   - If `--plan` provided: `just heal-plan <plan-name>` or `bash scripts/heal-plan.sh --plan <plan-name>`
+   - If `--plan` provided: `just heal-plan <plan-number>` or `bash scripts/heal-plan.sh --plan <plan-number>`
    - Otherwise: `just heal` or `bash scripts/heal-plan.sh --auto`
 
 2. **Display the output:**
@@ -96,14 +96,14 @@ But skips the status overview and goes straight to cleanup.
 Healing Plan: datagrid_overhaul_4a5b9879
 
 Auto-Fix Actions:
-  1. Move agent_0_accessibility_foundation_early.agent.md to completed/
-  2. Move agent_1_column_display_features.agent.md to completed/
+  1. Move 0_agent_accessibility_foundation_early.agent.md to completed/
+  2. Move 1_agent_column_display_features.agent.md to completed/
 
 Apply fixes? (y/n)
 y
 
-✓ Moved agent_0_accessibility_foundation_early.agent.md to completed/
-✓ Moved agent_1_column_display_features.agent.md to completed/
+✓ Moved 0_agent_accessibility_foundation_early.agent.md to completed/
+✓ Moved 1_agent_column_display_features.agent.md to completed/
 ✓ Moved 2 agent(s) to completed/
 ```
 

@@ -9,8 +9,8 @@ Smart orchestration command that detects the active plan from the last merged PR
 1. Run `/work` - it will show you a **QUICK DECISION** at the top with the immediate next action
 2. Follow the recommendation:
    - If cleanup needed → `/heal` or `just heal`
-   - If ready to work → `/run-agent` or `just run <plan-name>`
-   - If need details → `/assess-agents <plan-name>`
+   - If ready to work → `/run-agent` or `just run <plan-number>`
+   - If need details → `/assess-agents <plan-number>`
 
 **That's it!** The command tells you exactly what to do next.
 
@@ -49,7 +49,7 @@ This will:
 ### Specify Plan Explicitly
 
 ```
-/work --plan datagrid_overhaul_4a5b9879
+/work --plan 4
 ```
 
 Bypasses auto-detection and uses the specified plan.
@@ -61,7 +61,7 @@ Bypasses auto-detection and uses the specified plan.
 1. **Run the work script:**
    - Execute: `just work` or `bash scripts/work.sh`
    - The script will auto-detect the plan from the last PR
-   - Or use `just work --plan <plan-name>` to specify a plan
+   - Or use `just work --plan <plan-number>` to specify a plan
 
 2. **Display the output:**
    - Show active plan and detection source
@@ -88,10 +88,10 @@ The command outputs with clear visual hierarchy:
 
 The top section shows the immediate next action:
 
-- **Cleanup needed** → Run `/heal` or `just heal-plan <plan-name>`
-- **Ready to work** → Run `/run-agent` or `just run <plan-name>`
+- **Cleanup needed** → Run `/heal` or `just heal-plan <plan-number>`
+- **Ready to work** → Run `/run-agent` or `just run <plan-number>`
 - **All complete** → Plan is finished!
-- **Check details** → Run `/assess-agents <plan-name>` for more info
+- **Check details** → Run `/assess-agents <plan-number>` for more info
 
 ## Example Output
 
@@ -100,14 +100,14 @@ The top section shows the immediate next action:
 🎯 QUICK DECISION: What should you do next?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  → Ready to work: Run /run-agent or just run datagrid_overhaul_4a5b9879
+  → Ready to work: Run /run-agent or just run 4
      (Next best task identified and ready)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 PLAN STATUS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Active Plan: datagrid_overhaul_4a5b9879
+Active Plan: 4 (DataGrid Overhaul)
 Detected from: PR #24: feat(accessibility): implement keyboard navigation... (confidence: low)
 
 Status Summary:
@@ -127,8 +127,8 @@ Score: 78/100
 🎬 RECOMMENDED ACTIONS (in order)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  1. Run: just run datagrid_overhaul_4a5b9879 (start next task)
-  2. Run: just assess-agents datagrid_overhaul_4a5b9879 (detailed status)
+  1. Run: just run 4 (start next task)
+  2. Run: just assess-agents 4 (detailed status)
   3. Run: just list-plans (view all plans)
 
 Quick Links:
@@ -140,9 +140,9 @@ Quick Links:
 
 ## Integration with Other Commands
 
-- **list-feature-plans**: Use to discover plans, then use `/work --plan <plan-name>`
+- **list-feature-plans**: Use to discover plans, then use `/work --plan <plan-number>`
 - **heal**: After `/work` shows cleanup needed, use `/heal` or `just heal` to auto-fix
-- **run**: After `/work` shows next task, use `just run <plan-name>` to start work
+- **run**: After `/work` shows next task, use `just run <plan-number>` to start work
 - **close-feature-agent**: After completing work, use to verify and sync status
 
 ## Decision Tree
@@ -197,10 +197,10 @@ After PR Merge or Starting Work
 ### Alternative: Quick Start (When You Know the Plan)
 
 ```
-1. /run-agent <plan-name>   # Start next task directly
+1. /run-agent <plan-number>   # Start next task directly
 2. [Implement work]
 3. /close-feature-agent     # Verify completion
-4. /work --plan <plan-name> # Check status, get next task
+4. /work --plan <plan-number> # Check status, get next task
 ```
 
 ## Error Handling
