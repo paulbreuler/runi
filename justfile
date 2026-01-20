@@ -163,6 +163,10 @@ storybook-serve: storybook-build
 ci: fmt-check lint check test
     @echo "✅ All CI checks passed!"
 
+# Run CI pipeline without tests (for documentation-only changes)
+ci-no-test: fmt-check lint check
+    @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"
+
 # Pre-commit hook: fast checks only
 pre-commit: fmt-check-rust fmt-check-frontend check-frontend
     @echo "✅ Pre-commit checks passed!"
