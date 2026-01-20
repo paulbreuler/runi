@@ -5,7 +5,6 @@
  * TDD: RED phase - these tests define the expected behavior of protocolCell
  */
 
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { ProtocolCell } from './protocolCell';
