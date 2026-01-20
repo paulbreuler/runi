@@ -12,6 +12,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
 
+  /* Skip Storybook tests in CI - they require Storybook server on port 6006 */
+  testIgnore: process.env.CI ? ['**/*.storybook.spec.ts'] : undefined,
+
   /* Run tests in files in parallel */
   fullyParallel: true,
 

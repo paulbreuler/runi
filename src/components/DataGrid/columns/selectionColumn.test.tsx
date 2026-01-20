@@ -329,30 +329,32 @@ describe('selectionColumn', () => {
 
       const rowCheckboxes = screen.getAllByRole('checkbox', { name: /select row/i });
       const firstCheckbox = rowCheckboxes[0];
-      expect(firstCheckbox).toBeDefined();
+      if (firstCheckbox === undefined) {
+        throw new Error('First checkbox not found');
+      }
 
       const wrapper = firstCheckbox.closest('div');
-      expect(wrapper).toBeDefined();
-
-      if (wrapper !== null) {
-        wrapper.focus();
-
-        // Press ArrowDown - wrapper should handle this for navigation
-        // The wrapper only handles Arrow keys, not Space/Enter
-        // Create a mock event to verify it's not prevented
-        const mockEvent = {
-          key: 'ArrowDown',
-          code: 'ArrowDown',
-          defaultPrevented: false,
-        } as KeyboardEvent;
-
-        fireEvent.keyDown(wrapper, mockEvent);
-
-        // Arrow keys should be handled by wrapper (for navigation)
-        // Space/Enter should pass through to Radix Checkbox
-        // The wrapper doesn't prevent default, allowing navigation to work
-        expect(mockEvent.defaultPrevented).toBe(false);
+      if (wrapper === null) {
+        throw new Error('Wrapper div not found');
       }
+
+      wrapper.focus();
+
+      // Press ArrowDown - wrapper should handle this for navigation
+      // The wrapper only handles Arrow keys, not Space/Enter
+      // Create a mock event to verify it's not prevented
+      const mockEvent = {
+        key: 'ArrowDown',
+        code: 'ArrowDown',
+        defaultPrevented: false,
+      } as KeyboardEvent;
+
+      fireEvent.keyDown(wrapper, mockEvent);
+
+      // Arrow keys should be handled by wrapper (for navigation)
+      // Space/Enter should pass through to Radix Checkbox
+      // The wrapper doesn't prevent default, allowing navigation to work
+      expect(mockEvent.defaultPrevented).toBe(false);
     });
 
     it('does not interfere with Radix Checkbox keyboard handling', () => {
