@@ -689,9 +689,9 @@ export const FocusRestorationTest: Story = {
       for (let i = 0; i < maxTabs; i++) {
         await userEvent.tab();
 
-        // Use expect with retry logic instead of hardcoded timeout
+        // Use expect with built-in retry logic (no timeout option in Storybook)
         try {
-          await expect(targetButton).toHaveFocus({ timeout: 200 });
+          await expect(targetButton).toHaveFocus();
           return true;
         } catch {
           // Continue to next tab if not focused yet
@@ -717,7 +717,7 @@ export const FocusRestorationTest: Story = {
 
       // Wait for position change using expect's built-in retry logic
       // This is more reliable than hardcoded timeouts
-      await expect(leftButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
+      await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
 
       // Verify focus is still on left button
       await expect(leftButton).toHaveFocus();
@@ -729,13 +729,13 @@ export const FocusRestorationTest: Story = {
       await userEvent.tab();
 
       // Verify we're on right button using expect's built-in retry logic
-      await expect(rightButton).toHaveFocus({ timeout: 1000 });
+      await expect(rightButton).toHaveFocus();
 
       // Activate right button
       await userEvent.keyboard('{Space}');
 
       // Wait for position change using expect's built-in retry logic
-      await expect(rightButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
+      await expect(rightButton).toHaveAttribute('aria-pressed', 'true');
 
       // Verify focus is still on right button
       await expect(rightButton).toHaveFocus();
@@ -747,13 +747,13 @@ export const FocusRestorationTest: Story = {
       await userEvent.tab({ shift: true });
 
       // Verify we're on left button using expect's built-in retry logic
-      await expect(leftButton).toHaveFocus({ timeout: 1000 });
+      await expect(leftButton).toHaveFocus();
 
       // Activate left button
       await userEvent.keyboard('{Space}');
 
       // Wait for position change using expect's built-in retry logic
-      await expect(leftButton).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
+      await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
 
       // Verify focus is still on left button
       await expect(leftButton).toHaveFocus();
