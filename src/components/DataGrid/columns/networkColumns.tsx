@@ -6,175 +6,20 @@
 import * as React from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Play, Copy, Trash2 } from 'lucide-react';
-import { cn } from '@/utils/cn';
-import { formatRelativeTime } from '@/utils/relative-time';
-import type { NetworkHistoryEntry, IntelligenceInfo } from '@/types/history';
-import { IntelligenceSignals } from '@/components/History/IntelligenceSignals';
+import type { NetworkHistoryEntry } from '@/types/history';
 import { Button } from '@/components/ui/button';
 import { createExpanderColumn } from './expanderColumn';
 import { createSelectionColumn } from './selectionColumn';
+import { MethodCell } from './methodCell';
+import { UrlCell } from './urlCell';
+import { StatusCell } from './statusCell';
+import { TimingCell } from './timingCell';
+import { SizeCell } from './sizeCell';
+import { TimeAgoCell } from './timeAgoCell';
+import { ProtocolCell } from './protocolCell';
 
-// ============================================================================
-// Method Cell
-// ============================================================================
-
-const methodColors: Record<string, string> = {
-  GET: 'text-accent-blue',
-  POST: 'text-signal-success',
-  PUT: 'text-signal-warning',
-  PATCH: 'text-signal-warning',
-  DELETE: 'text-signal-error',
-  HEAD: 'text-text-muted',
-  OPTIONS: 'text-text-muted',
-};
-
-const methodBgColors: Record<string, string> = {
-  GET: 'bg-accent-blue/10',
-  POST: 'bg-signal-success/10',
-  PUT: 'bg-signal-warning/10',
-  PATCH: 'bg-signal-warning/10',
-  DELETE: 'bg-signal-error/10',
-  HEAD: 'bg-text-muted/10',
-  OPTIONS: 'bg-text-muted/10',
-};
-
-interface MethodCellProps {
-  method: string;
-}
-
-/**
- * Renders an HTTP method badge with appropriate color styling.
- */
-export const MethodCell = ({ method }: MethodCellProps): React.ReactElement => {
-  const upperMethod = method.toUpperCase();
-  const colorClass = methodColors[upperMethod] ?? 'text-text-muted';
-  const bgClass = methodBgColors[upperMethod] ?? 'bg-text-muted/10';
-
-  return (
-    <span
-      className={cn('px-1.5 py-0.5 text-xs font-semibold rounded font-mono', colorClass, bgClass)}
-    >
-      {upperMethod}
-    </span>
-  );
-};
-
-// ============================================================================
-// Status Cell
-// ============================================================================
-
-function getStatusColorClass(status: number): string {
-  if (status >= 200 && status < 300) {
-    return 'text-signal-success';
-  }
-  if (status >= 300 && status < 400) {
-    return 'text-accent-blue';
-  }
-  if (status >= 400 && status < 500) {
-    return 'text-signal-warning';
-  }
-  if (status >= 500) {
-    return 'text-signal-error';
-  }
-  return 'text-text-muted';
-}
-
-interface StatusCellProps {
-  status: number;
-}
-
-/**
- * Renders an HTTP status code with appropriate color styling.
- */
-export const StatusCell = ({ status }: StatusCellProps): React.ReactElement => {
-  return (
-    <span className={cn('text-sm font-mono font-semibold', getStatusColorClass(status))}>
-      {status}
-    </span>
-  );
-};
-
-// ============================================================================
-// URL Cell
-// ============================================================================
-
-interface UrlCellProps {
-  url: string;
-  intelligence?: IntelligenceInfo;
-}
-
-/**
- * Renders a URL with optional intelligence signals.
- */
-export const UrlCell = ({ url, intelligence }: UrlCellProps): React.ReactElement => {
-  return (
-    <div className="flex-1 min-w-0 flex items-center gap-2">
-      <span className="text-sm text-text-primary font-mono truncate" title={url}>
-        {url}
-      </span>
-      {intelligence !== undefined && (
-        <div data-testid="intelligence-signals">
-          <IntelligenceSignals intelligence={intelligence} />
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ============================================================================
-// Timing Cell
-// ============================================================================
-
-interface TimingCellProps {
-  totalMs: number;
-}
-
-/**
- * Renders request timing in milliseconds.
- */
-export const TimingCell = ({ totalMs }: TimingCellProps): React.ReactElement => {
-  return <span className="text-xs font-mono text-text-muted">{totalMs}ms</span>;
-};
-
-// ============================================================================
-// Size Cell
-// ============================================================================
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) {
-    return `${String(bytes)} B`;
-  }
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-interface SizeCellProps {
-  bytes: number;
-}
-
-/**
- * Renders response body size in human-readable format.
- */
-export const SizeCell = ({ bytes }: SizeCellProps): React.ReactElement => {
-  return <span className="text-xs font-mono text-text-muted">{formatSize(bytes)}</span>;
-};
-
-// ============================================================================
-// Time Ago Cell
-// ============================================================================
-
-interface TimeAgoCellProps {
-  timestamp: string;
-}
-
-/**
- * Renders a relative time (e.g., "5 mins ago").
- */
-export const TimeAgoCell = ({ timestamp }: TimeAgoCellProps): React.ReactElement => {
-  return <span className="text-xs text-text-muted">{formatRelativeTime(timestamp)}</span>;
-};
+// Re-export for backward compatibility
+export { MethodCell, UrlCell, StatusCell, TimingCell, SizeCell, TimeAgoCell, ProtocolCell };
 
 // ============================================================================
 // Actions Cell
@@ -356,6 +201,18 @@ export function createNetworkColumns(
       header: 'When',
       cell: ({ getValue }) => <TimeAgoCell timestamp={getValue() as string} />,
       size: 70,
+      enableSorting: true,
+    },
+
+    // Protocol column (reduced width for tighter spacing)
+    // Note: Protocol information is not yet captured in the data model
+    // This column will show null/undefined until backend is updated
+    {
+      id: 'protocol',
+      accessorFn: (row) => (row.response as { protocol?: string }).protocol,
+      header: 'Protocol',
+      cell: ({ getValue }) => <ProtocolCell protocol={getValue() as string | null | undefined} />,
+      size: 80,
       enableSorting: true,
     },
 
