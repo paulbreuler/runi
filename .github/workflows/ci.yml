@@ -23,7 +23,13 @@ jobs:
       - name: Check for code changes
         id: filter
         run: |
-          if git diff --name-only origin/main...HEAD | grep -qvE '^(.cursor/|scripts/|justfile|docs/|\.md$|\.claude/)'; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+          else
+            BASE_REF="main"
+          fi
+
+          if git diff --name-only origin/${BASE_REF}...HEAD | grep -qvE '^(.cursor/|scripts/|justfile|docs/|\.md$|\.claude/)'; then
             echo "has-code-changes=true" >> $GITHUB_OUTPUT
           else
             echo "has-code-changes=false" >> $GITHUB_OUTPUT
