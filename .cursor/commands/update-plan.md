@@ -22,7 +22,7 @@ Apply feedback from LLMs or other sources to an existing TDD plan, suggest chang
      - TDD todo modifications
      - Status updates (feature tracking table)
      - Parallelization changes
-     - Speed prompts updates
+     - Speed prompts updates (preserve critical "Read Planning Documents First" section)
      - Documentation improvements
      - Architectural concerns
      - Missing test coverage (unit, integration, E2E, migration, performance)
@@ -57,17 +57,27 @@ Apply feedback from LLMs or other sources to an existing TDD plan, suggest chang
 
 6. **Apply Changes (After Approval):**
    - Update the relevant plan files based on approved feedback
-   - Maintain plan structure and format
+   - **Maintain YAML front matter structure** in plan.md:
+     - Preserve YAML front matter at start of each feature section
+     - Update YAML fields if feature metadata changes
+     - Ensure YAML is valid and properly formatted
+   - Update feature content after YAML front matter
    - Update feature tracking table if features change
    - Update parallelization if dependencies change
-   - Update speed prompts if feature details change
+   - Update speed prompts if feature details change:
+     - Maintain minimal snippet format (feature IDs, plan location, quick context)
+     - Keep discovery instructions
+     - Do not embed full feature details
    - Update README if plan overview changes
 
 7. **Verify Consistency:**
    - Ensure all files are consistent
-   - Verify feature numbers match across files
+   - Verify feature IDs in YAML front matter match feature numbers
+   - Verify YAML front matter `dependencies` match parallelization.md
    - Check that parallelization reflects current features
-   - Ensure speed prompts match plan details
+   - Ensure speed prompts match plan details (minimal format)
+   - Verify YAML front matter structure is preserved
+   - Check that planning document paths are correct and relative from workspace root
 
 8. **Commit Changes (After Approval):**
    - Stage modified files in runi-planning-docs repository
@@ -90,22 +100,53 @@ just list-plans
 ### Adding a New Feature
 
 1. Read current `plan.md`
-2. Add new feature section with Gherkin scenario
-3. Add TDD todos for the feature
-4. Add testing requirements (unit, integration, E2E if applicable, migration if overhaul, performance if data-heavy)
-5. Add `data-test-id` requirements for all interactive elements and test targets
-6. Update feature tracking table
-7. Update `parallelization.md` if needed
-8. Update `speed_prompts.md` with new agent section
-9. If overhaul: Add breaking changes and migration guide requirements
+2. Add new feature section with:
+   - **YAML front matter** (structured metadata):
+     ```yaml
+     ---
+     feature_id: #[NUMBER]
+     feature_name: '[Feature Name]'
+     feature_area: '[Feature Area]'
+     dependencies: ['#[ID1]', '#[ID2]']
+     blocks: []
+     files:
+       create: ['path/to/file.tsx']
+       modify: []
+     status: 'GAP'
+     test_coverage: '❌ Not tested'
+     coordination: 'None'
+     ---
+     ```
+   - **Feature content** (after front matter):
+     - Gherkin scenario
+     - TDD todos
+     - Component design requirements
+     - Storybook requirements
+     - Testing requirements
+3. Add `data-test-id` requirements for all interactive elements and test targets
+4. Update feature tracking table
+5. Update `parallelization.md` if needed (update dependencies)
+6. Update `speed_prompts.md` with new minimal agent section:
+   - Feature IDs
+   - Plan location
+   - Quick context
+   - Discovery instructions
+7. If overhaul: Add breaking changes and migration guide requirements
 
 ### Modifying Existing Feature
 
 1. Read current `plan.md`
-2. Locate the feature section
-3. Update Gherkin scenario, TDD todos, or requirements
-4. Update feature tracking table status if needed
-5. Update `speed_prompts.md` if feature details changed
+2. Locate the feature section (search for `feature_id: #[X]`)
+3. **Preserve YAML front matter structure**:
+   - Update YAML fields if needed (dependencies, files, status, etc.)
+   - Keep YAML front matter at start of feature section
+   - Ensure YAML is valid and properly formatted
+4. Update feature content after YAML (Gherkin scenario, TDD todos, requirements)
+5. Update feature tracking table status if needed
+6. Update `speed_prompts.md` if feature details changed:
+   - Maintain minimal snippet format
+   - Update quick context if needed
+   - Keep discovery instructions
 
 ### Updating Status
 
@@ -204,6 +245,24 @@ When proposing changes, show:
   + ...
   ```
 
+### File: speed_prompts.md
+
+**Change 1: Add Agent 5 Section**
+
+- **Reason**: New feature requires new agent section
+- **Location**: After Agent 4 section
+- **Note**: Preserving "⚠️ CRITICAL: Read Planning Documents First" section at top
+- **Diff**:
+
+  ```diff
+  ## Agent 5: Feature #5 - Accessibility Improvements
+
+  + **📖 Read First**: See the specific feature sections in `plan.md` for detailed Gherkin scenarios, TDD todos, and requirements.
+
+  **Feature Numbers**: `#5`
+  ...
+  ```
+
 ## Summary
 
 - **Files Modified**: 2 (plan.md, parallelization.md)
@@ -242,4 +301,7 @@ git commit -m "update(plans): [plan-name] - [description of changes]"
 - **Consistency**: Keep all plan files in sync when making changes
 - **Feature Numbers**: Maintain sequential numbering when adding features
 - **Status Tracking**: Update feature tracking table as work progresses
+- **Speed Prompts Critical Section**: **ALWAYS preserve** the "⚠️ CRITICAL: Read Planning Documents First" section at the top of `speed_prompts.md` when updating
+- **Agent Section Reminders**: Ensure all agent sections include "📖 Read First" reminder pointing to specific feature sections in `plan.md`
+- **Planning Document Paths**: Maintain correct relative paths to planning documents (from workspace root)
 - **Rejections**: If user rejects changes, explain why and ask for clarification

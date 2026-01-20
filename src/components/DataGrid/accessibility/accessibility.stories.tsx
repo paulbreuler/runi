@@ -83,7 +83,7 @@ const meta = {
 
 ## Focus Management
 
-- **Visible focus**: Focus indicators with purple ring
+- **Visible focus**: Focus indicators with blue ring
 - **Logical order**: Tab order follows visual layout
 - **No focus trap**: Users can tab in and out of the table
 - **Interactive elements**: Only interactive cells have \`tabindex="0"\`
@@ -250,7 +250,7 @@ export const ARIA: Story = {
  * Focus management demonstration.
  *
  * Try tabbing through the table:
- * - Focus indicators are visible (purple ring)
+ * - Focus indicators are visible (blue ring)
  * - Focus moves logically through interactive elements
  * - You can tab in and out of the table (no focus trap)
  */
@@ -271,7 +271,7 @@ export const FocusManagement: Story = {
       <div className="text-sm text-text-secondary">
         <p className="font-medium mb-2">Focus Features:</p>
         <ul className="list-disc list-inside space-y-1">
-          <li>Visible focus indicators (purple ring)</li>
+          <li>Visible focus indicators (blue ring)</li>
           <li>Logical tab order</li>
           <li>No focus trap - can tab in and out</li>
           <li>Only interactive elements are focusable</li>

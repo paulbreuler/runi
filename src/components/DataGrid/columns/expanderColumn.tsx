@@ -79,7 +79,7 @@ const ExpanderCell = <TData,>({
       className={cn(
         'w-full h-full flex items-center justify-center rounded transition-colors',
         'hover:bg-bg-raised',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-1'
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-1'
       )}
       aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
       aria-expanded={isExpanded}

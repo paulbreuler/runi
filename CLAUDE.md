@@ -319,7 +319,7 @@ When creating or updating components:
 - [ ] Form inputs have associated labels (`htmlFor`/`id` or `aria-label`)
 - [ ] Icon-only buttons have `aria-label`
 - [ ] Custom components use appropriate ARIA roles
-- [ ] Focus indicators are visible (minimum 2px outline)
+- [ ] Focus indicators are visible (minimum 2px outline, blue accent-blue color)
 - [ ] Color is not the only means of conveying information
 - [ ] Animations respect `prefers-reduced-motion`
 - [ ] Error states use `aria-invalid` and `aria-describedby`
@@ -349,6 +349,20 @@ When creating or updating components:
 - Test with screen reader (NVDA, JAWS, VoiceOver)
 - Use browser DevTools Accessibility panel
 - Run automated tools: axe DevTools, WAVE
+
+### Focus Ring Standard
+
+All interactive elements must use consistent focus ring styling:
+
+- **Color**: `accent-blue` (aligns with design system: "Blue—action, selection, focus")
+- **Width**: `2px` (`ring-2`)
+- **Offset**: `2px` (`ring-offset-2`)
+- **Offset Color**: `bg-app` (`ring-offset-bg-app`)
+- **Pseudo-class**: `:focus-visible` (only shows on keyboard focus, not mouse clicks)
+
+**Reusable Utility**: Use `focusRingClasses` from `@/utils/accessibility` for consistency.
+
+**Hover-Only Elements**: Use `useFocusVisible` hook from `@/utils/accessibility` for elements that are hidden by default and shown on hover, but must be visible when focused.
 
 ### Common Patterns
 
@@ -390,15 +404,16 @@ When creating or updating components:
 
 ## Storybook Best Practices
 
-Stories are **visual documentation**, not automated test suites.
+Stories are **visual documentation** and **interactive test cases**.
 
 **Do:**
 
 - Create stories that showcase component states and variations
-- Use stories for manual interaction testing (drag, resize, click)
+- Use `play` functions for interaction testing (keyboard navigation, user flows, state changes)
 - Keep stories minimal and focused (1 concept per story)
 - Add brief JSDoc comments explaining each story's purpose
-- Use `play` functions only for basic verification assertions
+- Use `@storybook/test` utilities (`expect`, `userEvent`, `within`) for assertions
+- Leverage Storybook's built-in testing (play functions, Vitest addon, accessibility addon)
 
 **Don't:**
 
@@ -413,17 +428,35 @@ Stories are **visual documentation**, not automated test suites.
 - `WithContent` - component with realistic content
 - `[StateName]` - specific state (e.g., `SidebarCollapsed`, `Loading`, `Error`)
 - `FullIntegration` - component with real child components
+- `[Feature]Test` - stories with `play` functions for automated testing
 
-**Example:**
+**Example with Play Function:**
 
 ```tsx
-/**
- * Sidebar starts collapsed. Click the left edge to expand.
- */
-export const SidebarCollapsed: Story = {
-  render: () => <MainLayout initialSidebarVisible={false} />,
+import { expect, userEvent, within } from '@storybook/test';
+
+export const FocusRestorationTest: Story = {
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button', { name: /dock left/i });
+
+    await step('Activate button and verify focus', async () => {
+      await userEvent.tab();
+      await userEvent.keyboard('{Space}');
+      await expect(button).toHaveFocus();
+    });
+  },
 };
 ```
+
+**Testing Approaches:**
+
+1. **Play Functions** - For component interactions (recommended for most cases)
+2. **Playwright E2E** - For complex multi-component flows (see `docs/STORYBOOK_TESTING.md`)
+3. **Vitest Addon** - Convert stories to test cases automatically
+4. **Accessibility Addon** - Automatic a11y checks on all stories
+
+See `docs/STORYBOOK_TESTING.md` for complete testing guide.
 
 ---
 

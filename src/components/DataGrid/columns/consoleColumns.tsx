@@ -7,6 +7,7 @@ import * as React from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Copy, Trash2, Info, AlertTriangle, XCircle, Bug } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useFocusVisible } from '@/utils/accessibility';
 import type { ConsoleLog, LogLevel } from '@/types/console';
 import { Button } from '@/components/ui/button';
 import { createSelectionColumn } from './selectionColumn';
@@ -154,37 +155,8 @@ export const ConsoleActionsCell = ({
   onCopy,
   onDelete,
 }: ConsoleActionsCellProps): React.ReactElement => {
-  const [isVisible, setIsVisible] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
-
-  // Track focus within the container
-  React.useEffect(() => {
-    const container = containerRef.current;
-    if (container === null) {
-      return;
-    }
-
-    const handleFocusIn = (): void => {
-      setIsVisible(true);
-    };
-
-    const handleFocusOut = (e: FocusEvent): void => {
-      // Check if focus is moving to another element within the container
-      const relatedTarget = e.relatedTarget as Node | null;
-      if (relatedTarget !== null && container.contains(relatedTarget)) {
-        return; // Focus is still within the container
-      }
-      setIsVisible(false);
-    };
-
-    container.addEventListener('focusin', handleFocusIn);
-    container.addEventListener('focusout', handleFocusOut);
-
-    return (): void => {
-      container.removeEventListener('focusin', handleFocusIn);
-      container.removeEventListener('focusout', handleFocusOut);
-    };
-  }, []);
+  const isVisible = useFocusVisible(containerRef);
 
   const handleCopyClick = (e: React.MouseEvent): void => {
     e.stopPropagation();

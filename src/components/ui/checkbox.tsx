@@ -11,7 +11,7 @@ const checkboxVariants = cva(
     'peer shrink-0 rounded border-2 flex items-center justify-center',
     'transition-colors duration-200',
     'outline-none',
-    'focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app',
+    'focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app',
     'disabled:cursor-not-allowed disabled:opacity-50',
     // Unchecked state
     'data-[state=unchecked]:border-border-default data-[state=unchecked]:hover:border-border-emphasis',

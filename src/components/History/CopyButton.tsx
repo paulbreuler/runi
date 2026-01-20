@@ -55,7 +55,7 @@ export const CopyButton = ({
       className={cn(
         'flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary',
         'hover:text-text-primary transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-1 rounded',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-1 rounded',
         className
       )}
       aria-label={ariaLabel}
