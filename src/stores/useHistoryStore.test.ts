@@ -9,9 +9,36 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
+// Mock event bus
+vi.mock('@/events/bus', async () => {
+  const actual = await vi.importActual<{
+    globalEventBus: {
+      on: (...args: unknown[]) => unknown;
+      off: (...args: unknown[]) => unknown;
+      emit: (...args: unknown[]) => unknown;
+    };
+  }>('@/events/bus');
+  const mockEmit = vi.fn();
+  return {
+    ...actual,
+    globalEventBus: {
+      on: actual.globalEventBus.on.bind(actual.globalEventBus),
+      off: actual.globalEventBus.off.bind(actual.globalEventBus),
+      emit: mockEmit,
+    },
+    __mockEmit: mockEmit,
+  };
+});
+
 describe('useHistoryStore', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Clear event bus mock
+    const busModule = await import('@/events/bus');
+    const mockEmit = (busModule as { __mockEmit?: ReturnType<typeof vi.fn> }).__mockEmit;
+    if (mockEmit !== undefined) {
+      mockEmit.mockClear();
+    }
     // Reset store to initial state
     useHistoryStore.setState({
       entries: [],
@@ -24,6 +51,8 @@ describe('useHistoryStore', () => {
         intelligence: 'All',
       },
       selectedId: null,
+      selectedIds: new Set<string>(),
+      lastSelectedIndex: null,
       expandedId: null,
       compareMode: false,
       compareSelection: [],
@@ -501,6 +530,201 @@ describe('useHistoryStore', () => {
         });
 
         expect(result.current.expandedId).toBe(null);
+      });
+
+      it('should initialize with empty selectedIds Set', () => {
+        const { result } = renderHook(() => useHistoryStore());
+        expect(result.current.selectedIds).toEqual(new Set());
+      });
+
+      it('should toggle selection with toggleSelection', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1']));
+      });
+
+      it('should remove from selection when toggling again', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set());
+      });
+
+      it('should support multiple selections up to 2 items', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
+      });
+
+      it('should prevent selecting more than 2 items', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+          result.current.toggleSelection('hist_3'); // Should not add
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
+        expect(result.current.selectedIds.has('hist_3')).toBe(false);
+      });
+
+      it('should show toast warning when trying to select 3rd item', async () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+        });
+
+        act(() => {
+          result.current.toggleSelection('hist_3'); // Should trigger toast
+        });
+
+        // Get mock emit function
+        const busModule = await import('@/events/bus');
+        const mockEmit = (busModule as { __mockEmit?: ReturnType<typeof vi.fn> }).__mockEmit;
+
+        expect(mockEmit).toHaveBeenCalledWith(
+          'toast.show',
+          expect.objectContaining({
+            type: 'warning',
+            message: expect.stringContaining('maximum of 2 items'),
+          })
+        );
+      });
+
+      it('should select range with selectRange (limited to 2 items)', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        // Set up entries
+        act(() => {
+          useHistoryStore.setState({
+            entries: [
+              { id: 'hist_1' } as HistoryEntry,
+              { id: 'hist_2' } as HistoryEntry,
+              { id: 'hist_3' } as HistoryEntry,
+              { id: 'hist_4' } as HistoryEntry,
+            ],
+          });
+        });
+
+        act(() => {
+          result.current.selectRange(1, 3); // Select from index 1 to 3 (but limited to 2)
+        });
+
+        // Only first 2 items in range are selected due to comparison limit
+        expect(result.current.selectedIds).toEqual(new Set(['hist_2', 'hist_3']));
+      });
+
+      it('should handle selectRange with reversed indices (limited to 2 items)', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          useHistoryStore.setState({
+            entries: [
+              { id: 'hist_1' } as HistoryEntry,
+              { id: 'hist_2' } as HistoryEntry,
+              { id: 'hist_3' } as HistoryEntry,
+            ],
+          });
+        });
+
+        act(() => {
+          result.current.selectRange(2, 0); // Reversed: from index 2 to 0 (but limited to 2)
+        });
+
+        // Only first 2 items in range are selected due to comparison limit
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
+      });
+
+      it('should maintain backward compatibility with selectedId', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        // When selectedIds has one item, selectedId should match
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedId).toBe('hist_1');
+
+        // When selectedIds is empty, selectedId should be null
+        act(() => {
+          result.current.toggleSelection('hist_1');
+        });
+
+        expect(result.current.selectedId).toBe(null);
+      });
+
+      it('should select all with selectAll (limited to 2 items)', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          useHistoryStore.setState({
+            entries: [
+              { id: 'hist_1' } as HistoryEntry,
+              { id: 'hist_2' } as HistoryEntry,
+              { id: 'hist_3' } as HistoryEntry,
+            ],
+          });
+        });
+
+        act(() => {
+          result.current.selectAll(['hist_1', 'hist_2', 'hist_3']);
+        });
+
+        // Only first 2 items are selected due to comparison limit
+        expect(result.current.selectedIds).toEqual(new Set(['hist_1', 'hist_2']));
+        // selectedId should be the first sorted ID
+        expect(result.current.selectedId).toBe('hist_1');
+      });
+
+      it('should deselect all with deselectAll', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        // First select some entries
+        act(() => {
+          result.current.toggleSelection('hist_1');
+          result.current.toggleSelection('hist_2');
+        });
+
+        expect(result.current.selectedIds.size).toBe(2);
+
+        // Then deselect all
+        act(() => {
+          result.current.deselectAll();
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set());
+        expect(result.current.selectedId).toBe(null);
+        expect(result.current.lastSelectedIndex).toBe(null);
+      });
+
+      it('should handle selectAll with empty array', () => {
+        const { result } = renderHook(() => useHistoryStore());
+
+        act(() => {
+          result.current.selectAll([]);
+        });
+
+        expect(result.current.selectedIds).toEqual(new Set());
+        expect(result.current.selectedId).toBe(null);
       });
     });
 

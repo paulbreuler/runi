@@ -9,6 +9,7 @@ import {
   ArrowDownToLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SplitButton } from '@/components/ui/SplitButton';
 import {
   ActionBar,
   ActionBarGroup,
@@ -23,10 +24,10 @@ interface ConsoleToolbarProps {
   filter: LogLevel | 'all';
   /** Callback when filter changes */
   onFilterChange: (level: LogLevel | 'all') => void;
-  /** Current correlation ID filter */
-  correlationIdFilter: string;
-  /** Callback when correlation ID filter changes */
-  onCorrelationIdFilterChange: (value: string) => void;
+  /** Current full-text search filter */
+  searchFilter: string;
+  /** Callback when search filter changes */
+  onSearchFilterChange: (value: string) => void;
   /**
    * Whether auto-scroll is enabled.
    *
@@ -88,16 +89,29 @@ const ConsoleToolbarActions = ({
   if (isIconMode) {
     return (
       <ActionBarGroup align="end" aria-label="Actions">
-        <Button
-          type="button"
-          onClick={onSaveAll}
+        <SplitButton
+          label="Save"
+          icon={<Download size={12} />}
+          onClick={selectedCount > 0 ? onSaveSelection : onSaveAll}
           variant="ghost"
-          size="icon-xs"
-          title="Save all logs"
-          aria-label="Save all logs"
-        >
-          <Download size={14} />
-        </Button>
+          size="xs"
+          dropdownAriaLabel="More save options"
+          items={[
+            {
+              id: 'save-selection',
+              label: 'Save Selection',
+              icon: <Download size={12} />,
+              onClick: onSaveSelection,
+              disabled: selectedCount === 0,
+            },
+            {
+              id: 'save-all',
+              label: 'Save All',
+              icon: <Download size={12} />,
+              onClick: onSaveAll,
+            },
+          ]}
+        />
         <Button
           type="button"
           onClick={onCopySelection}
@@ -138,21 +152,29 @@ const ConsoleToolbarActions = ({
   // Full/compact mode with labels
   return (
     <ActionBarGroup align="end" aria-label="Actions">
-      <Button type="button" onClick={onSaveAll} variant="ghost" size="xs" title="Save all logs">
-        <Download size={12} />
-        <span>Save All</span>
-      </Button>
-      <Button
-        type="button"
-        onClick={onSaveSelection}
-        disabled={selectedCount === 0}
+      <SplitButton
+        label="Save"
+        icon={<Download size={12} />}
+        onClick={selectedCount > 0 ? onSaveSelection : onSaveAll}
         variant="ghost"
         size="xs"
-        title="Save selected logs"
-      >
-        <Download size={12} />
-        <span>Save Selection</span>
-      </Button>
+        dropdownAriaLabel="More save options"
+        items={[
+          {
+            id: 'save-selection',
+            label: 'Save Selection',
+            icon: <Download size={12} />,
+            onClick: onSaveSelection,
+            disabled: selectedCount === 0,
+          },
+          {
+            id: 'save-all',
+            label: 'Save All',
+            icon: <Download size={12} />,
+            onClick: onSaveAll,
+          },
+        ]}
+      />
       <Button
         type="button"
         onClick={onCopySelection}
@@ -194,13 +216,13 @@ const ConsoleToolbarActions = ({
  * ConsoleToolbar - Toolbar for the Console Panel.
  *
  * Built on the ActionBar component system for consistency across panels.
- * Includes log level filters, correlation ID search, and action buttons.
+ * Includes log level filters, full-text search, and action buttons.
  */
 export const ConsoleToolbar = ({
   filter,
   onFilterChange,
-  correlationIdFilter,
-  onCorrelationIdFilterChange,
+  searchFilter,
+  onSearchFilterChange,
   autoScroll,
   onAutoScrollToggle,
   onClear,
@@ -235,20 +257,22 @@ export const ConsoleToolbar = ({
               value: 'info',
               label: 'Info',
               icon: <Info size={12} className="text-accent-blue" />,
+              badge: counts.info,
             },
             {
               value: 'debug',
               label: 'Debug',
               icon: <Terminal size={12} className="text-text-muted" />,
+              badge: counts.debug,
             },
           ]}
           aria-label="Filter by log level"
         />
         <ActionBarSearch
-          value={correlationIdFilter}
-          onChange={onCorrelationIdFilterChange}
-          placeholder="Correlation ID..."
-          aria-label="Filter by correlation ID"
+          value={searchFilter}
+          onChange={onSearchFilterChange}
+          placeholder="Search logs..."
+          aria-label="Search logs"
         />
       </ActionBarGroup>
 

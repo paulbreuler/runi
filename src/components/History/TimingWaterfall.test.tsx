@@ -202,4 +202,67 @@ describe('TimingWaterfall', () => {
       expect(screen.getByTestId('timing-waterfall')).toBeInTheDocument();
     });
   });
+
+  describe('inline labels', () => {
+    it('shows inline labels when showInlineLabels is true and segment is large enough', () => {
+      // Wait is 50% of total, should show inline label
+      const segments: TimingWaterfallSegments = {
+        dns: 10,
+        connect: 10,
+        tls: 10,
+        wait: 50,
+        download: 20,
+      };
+      render(<TimingWaterfall segments={segments} totalMs={100} showInlineLabels />);
+
+      // Wait segment (50%) should show inline label
+      expect(screen.getByTestId('timing-wait')).toHaveTextContent('50ms');
+    });
+
+    it('does not show inline labels for small segments', () => {
+      // DNS is only 5% of total, too small for inline label
+      const segments: TimingWaterfallSegments = {
+        dns: 5,
+        connect: 5,
+        tls: 5,
+        wait: 80,
+        download: 5,
+      };
+      render(<TimingWaterfall segments={segments} totalMs={100} showInlineLabels />);
+
+      // DNS segment (5%) should not show inline label
+      const dnsSegment = screen.getByTestId('timing-dns');
+      expect(dnsSegment).not.toHaveTextContent('5ms');
+    });
+
+    it('does not show inline labels by default', () => {
+      const segments: TimingWaterfallSegments = {
+        dns: 10,
+        connect: 10,
+        tls: 10,
+        wait: 50,
+        download: 20,
+      };
+      render(<TimingWaterfall segments={segments} totalMs={100} />);
+
+      // Even large segments should not show labels without the prop
+      const waitSegment = screen.getByTestId('timing-wait');
+      expect(waitSegment).not.toHaveTextContent('50ms');
+    });
+
+    it('centers the inline label within the segment', () => {
+      const segments: TimingWaterfallSegments = {
+        dns: 0,
+        connect: 0,
+        tls: 0,
+        wait: 100,
+        download: 0,
+      };
+      render(<TimingWaterfall segments={segments} totalMs={100} showInlineLabels />);
+
+      const waitSegment = screen.getByTestId('timing-wait');
+      expect(waitSegment).toHaveClass('justify-center');
+      expect(waitSegment).toHaveClass('items-center');
+    });
+  });
 });

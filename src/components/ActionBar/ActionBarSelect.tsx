@@ -79,6 +79,8 @@ export const ActionBarSelect = <T extends BaseSelectOption>({
   return (
     <Select.Select value={value} onValueChange={onValueChange}>
       <Select.SelectTrigger
+        role="button"
+        aria-haspopup="listbox"
         data-testid={testId}
         className={cn(isIconMode ? iconTriggerClasses : normalTriggerClasses, className)}
         aria-label={ariaLabel}

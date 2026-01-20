@@ -90,31 +90,63 @@ export const intelligenceColors: Record<IntelligenceSignal, { text: string; dot:
 };
 
 /**
- * Get color classes for an HTTP status code.
+ * Get color classes for an HTTP status code (text only).
  *
  * Status ranges:
  * - 2xx: Green (success)
  * - 3xx: Blue (redirect)
- * - 4xx: Yellow/Orange (client error)
+ * - 4xx: Orange (client error)
  * - 5xx: Red (server error)
  *
+ * Uses design system signal colors for consistency.
+ *
  * @param status - The HTTP status code
- * @returns Color classes string for the status
+ * @returns Text color class string for the status
+ */
+export function getStatusTextColor(status: number): string {
+  if (status >= 200 && status < 300) {
+    return 'text-signal-success';
+  }
+  if (status >= 300 && status < 400) {
+    return 'text-accent-blue';
+  }
+  if (status >= 400 && status < 500) {
+    return 'text-signal-warning';
+  }
+  if (status >= 500) {
+    return 'text-signal-error';
+  }
+  return 'text-text-muted';
+}
+
+/**
+ * Get color classes for an HTTP status code (with background for badges).
+ *
+ * Status ranges:
+ * - 2xx: Green (success)
+ * - 3xx: Blue (redirect)
+ * - 4xx: Orange (client error)
+ * - 5xx: Red (server error)
+ *
+ * Uses design system signal colors for consistency.
+ *
+ * @param status - The HTTP status code
+ * @returns Color classes string (text + background) for the status
  */
 export function getStatusColor(status: number): string {
   if (status >= 200 && status < 300) {
-    return 'bg-green-600 text-white dark:bg-green-700 dark:text-green-100';
+    return 'bg-signal-success/10 text-signal-success';
   }
   if (status >= 300 && status < 400) {
-    return 'bg-blue-600 text-white dark:bg-blue-700 dark:text-blue-100';
+    return 'bg-accent-blue/10 text-accent-blue';
   }
   if (status >= 400 && status < 500) {
-    return 'bg-yellow-600 text-white dark:bg-yellow-700 dark:text-yellow-100';
+    return 'bg-signal-warning/10 text-signal-warning';
   }
   if (status >= 500) {
-    return 'bg-red-600 text-white dark:bg-red-700 dark:text-red-100';
+    return 'bg-signal-error/10 text-signal-error';
   }
-  return 'bg-gray-600 text-white dark:bg-gray-700 dark:text-gray-100';
+  return 'bg-text-muted/10 text-text-muted';
 }
 
 /**

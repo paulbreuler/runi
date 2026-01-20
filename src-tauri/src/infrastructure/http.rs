@@ -111,6 +111,12 @@ fn status_text_for_code(code: u32) -> String {
         502 => "Bad Gateway",
         503 => "Service Unavailable",
         504 => "Gateway Timeout",
+        // Cloudflare-specific error codes
+        520 => "Web Server Returned an Unknown Error",
+        521 => "Web Server Is Down",
+        522 => "Connection Timed Out",
+        523 => "Origin Is Unreachable",
+        524 => "A Timeout Occurred",
         _ => "Unknown",
     }
     .to_string()

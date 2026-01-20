@@ -1,8 +1,11 @@
 // Storage infrastructure for pluggable storage backends
 
+pub mod encryption;
 pub mod file_storage;
 pub mod history;
 pub mod memory_storage;
+pub mod migrations;
+pub mod sqlite_storage;
 pub mod traits;
 
 use std::path::{Path, PathBuf};

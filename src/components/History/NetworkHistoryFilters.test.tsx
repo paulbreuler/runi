@@ -15,12 +15,10 @@ describe('NetworkHistoryFilters', () => {
   const defaultProps = {
     filters: defaultFilters,
     onFilterChange: vi.fn(),
-    compareMode: false,
-    onCompareModeToggle: vi.fn(),
+    selectedCount: 0,
   };
 
   type TestProps = typeof defaultProps & {
-    compareSelectionCount?: number;
     onCompareResponses?: () => void;
   };
 
@@ -56,9 +54,9 @@ describe('NetworkHistoryFilters', () => {
     expect(screen.getByTestId('intelligence-filter')).toBeInTheDocument();
   });
 
-  it('renders compare mode toggle', () => {
+  it('does not render compare mode toggle', () => {
     renderWithActionBar(defaultProps);
-    expect(screen.getByTestId('compare-toggle')).toBeInTheDocument();
+    expect(screen.queryByTestId('compare-toggle')).not.toBeInTheDocument();
   });
 
   it('calls onFilterChange when search input changes', () => {
@@ -69,21 +67,6 @@ describe('NetworkHistoryFilters', () => {
     fireEvent.change(input, { target: { value: 'api.example' } });
 
     expect(onFilterChange).toHaveBeenCalledWith('search', 'api.example');
-  });
-
-  it('calls onCompareModeToggle when compare button is clicked', () => {
-    const onCompareModeToggle = vi.fn();
-    renderWithActionBar({ ...defaultProps, onCompareModeToggle });
-
-    fireEvent.click(screen.getByTestId('compare-toggle'));
-
-    expect(onCompareModeToggle).toHaveBeenCalled();
-  });
-
-  it('shows active compare mode styling when compareMode is true', () => {
-    renderWithActionBar({ ...defaultProps, compareMode: true });
-    const button = screen.getByTestId('compare-toggle');
-    expect(button).toHaveClass('bg-accent-blue');
   });
 
   it('displays current filter values in triggers', () => {
@@ -123,36 +106,43 @@ describe('NetworkHistoryFilters', () => {
     expect(trigger).toHaveAttribute('aria-label', 'Filter by intelligence');
   });
 
-  it('shows compare responses button when 2 entries are selected in compare mode', () => {
+  it('shows Compare Selected button when exactly 2 entries are selected', () => {
     renderWithActionBar({
       ...defaultProps,
-      compareMode: true,
-      compareSelectionCount: 2,
+      selectedCount: 2,
       onCompareResponses: vi.fn(),
     });
-    expect(screen.getByTestId('compare-responses-button')).toBeInTheDocument();
+    expect(screen.getByTestId('compare-selected-button')).toBeInTheDocument();
+    expect(screen.getByText('Compare Selected')).toBeInTheDocument();
   });
 
-  it('does not show compare responses button when fewer than 2 entries are selected', () => {
+  it('does not show Compare Selected button when 0 entries are selected', () => {
     renderWithActionBar({
       ...defaultProps,
-      compareMode: true,
-      compareSelectionCount: 1,
+      selectedCount: 0,
       onCompareResponses: vi.fn(),
     });
-    expect(screen.queryByTestId('compare-responses-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('compare-selected-button')).not.toBeInTheDocument();
   });
 
-  it('calls onCompareResponses when compare responses button is clicked', () => {
+  it('does not show Compare Selected button when 1 entry is selected', () => {
+    renderWithActionBar({
+      ...defaultProps,
+      selectedCount: 1,
+      onCompareResponses: vi.fn(),
+    });
+    expect(screen.queryByTestId('compare-selected-button')).not.toBeInTheDocument();
+  });
+
+  it('calls onCompareResponses when Compare Selected button is clicked', () => {
     const onCompareResponses = vi.fn();
     renderWithActionBar({
       ...defaultProps,
-      compareMode: true,
-      compareSelectionCount: 2,
+      selectedCount: 2,
       onCompareResponses,
     });
 
-    fireEvent.click(screen.getByTestId('compare-responses-button'));
+    fireEvent.click(screen.getByTestId('compare-selected-button'));
     expect(onCompareResponses).toHaveBeenCalled();
   });
 

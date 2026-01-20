@@ -41,6 +41,8 @@ Perform a comprehensive code review following runi's quality standards and best 
    - ✅ Test coverage ≥85% for new code
    - ✅ Component tests use vitest with @testing-library/react
    - ✅ TDD workflow followed (tests written first)
+   - ✅ **Test selectors**: Components include `data-test-id` attributes on interactive elements and test targets
+   - ✅ **Test queries**: Tests use `getByTestId` for element selection (not `getByText`, `getByRole`, or `getByLabel` for component identification)
    - ✅ Zustand for global state (not Redux, not Context for shared state)
    - ✅ Motion 12 for animations (import from `motion/react`)
 
@@ -58,9 +60,11 @@ Perform a comprehensive code review following runi's quality standards and best 
    - **Quality Issues** (should fix - style, documentation, test coverage)
    - **Architectural Violations** (must fix - hardcoded layouts, tight coupling, missing event bus usage)
    - **Architectural Improvements** (should fix - container/presentational separation, dependency injection, configuration-driven)
+   - **Testing Gaps** (missing unit, integration, E2E, migration, or performance tests, or missing `data-test-id` attributes)
    - **Suggestions** (nice to have - optimizations, improvements)
    - **Security Concerns** (auth patterns, data handling, API security)
-   - **Performance** (potential bottlenecks, inefficiencies)
+   - **Performance** (potential bottlenecks, inefficiencies, missing performance tests for data-heavy features)
+   - **Breaking Changes** (missing migration guide for overhauls)
 
 5. **Reference specific lines** using code references format:
 
@@ -107,6 +111,13 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **Coverage**: New code has ≥85% test coverage
 - [ ] **Tests Pass**: 100% pass rate (no exceptions)
 - [ ] **Test Quality**: Tests are meaningful and cover edge cases
+- [ ] **Unit Tests**: All new code has unit test coverage
+- [ ] **Integration Tests**: Multi-component interactions tested (if applicable)
+- [ ] **E2E Tests**: User-facing features and complex interactions tested with Playwright
+- [ ] **Migration Tests**: For overhauls that change data structures - backward compatibility and data integrity validated
+- [ ] **Performance Tests**: For data-heavy features - thresholds validated (e.g., render 1000 rows in <500ms)
+- [ ] **Test Selectors**: Components include `data-test-id` attributes on interactive elements and test targets
+- [ ] **Test Queries**: Tests use `getByTestId` for element selection (not generic selectors for component identification)
 - [ ] **Storybook**: Component stories created (for UI components)
 
 ### Architecture & Patterns
@@ -151,6 +162,7 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **Code Comments**: Complex logic explained
 - [ ] **Commit Messages**: Follow conventional commits format
 - [ ] **PR Description**: Clear summary and test plan (if applicable)
+- [ ] **Breaking Changes**: For overhauls - migration guide documented with backward compatibility considerations
 
 ## Review Output Format
 
@@ -162,7 +174,7 @@ Structure your review like this:
 **Files Reviewed:** [list of files]
 **Automated Checks:** ✅ Passing | ❌ Failing
 **Test Coverage:** [percentage]% (target: ≥85%)
-**Overall Status:** ✅ Approve | ⚠️ Needs Changes | ❌ Reject
+**Overall Status:** CODE REVIEW COMPLED: ✅ Approve | ⚠️ Needs Changes | ❌ Reject
 
 ### Critical Issues (Must Fix)
 

@@ -1,1 +1,10 @@
-just ci
+# Check if only documentation files have changed
+DOCS_ONLY=$(bash scripts/check-docs-only.sh)
+
+if [ "$DOCS_ONLY" = "true" ]; then
+  echo "📚 Only documentation files changed, skipping tests..."
+  just ci-no-test
+else
+  echo "🔍 Code changes detected, running full CI pipeline..."
+  just ci
+fi

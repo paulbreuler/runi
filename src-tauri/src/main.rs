@@ -8,8 +8,9 @@ mod domain;
 mod infrastructure;
 
 use infrastructure::commands::{
-    clear_request_history, create_proxy_service, delete_history_entry, get_platform, hello_world,
-    load_request_history, save_request_history, set_log_level,
+    clear_request_history, create_proxy_service, delete_history_entry, get_history_batch,
+    get_history_count, get_history_ids, get_platform, hello_world, load_request_history,
+    save_request_history, set_log_level,
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
@@ -19,12 +20,15 @@ use infrastructure::logging::init_logging;
 /// Sets up the Tauri builder with plugins, command handlers, and managed state.
 /// In debug mode, automatically opens developer tools.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+#[allow(clippy::large_stack_frames)] // Tauri's generate_context! macro creates large stack frames
 pub fn run() {
     // Initialize structured logging before anything else
     init_logging();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             #[cfg(debug_assertions)]
             {
@@ -46,6 +50,9 @@ pub fn run() {
             load_request_history,
             delete_history_entry,
             clear_request_history,
+            get_history_count,
+            get_history_ids,
+            get_history_batch,
             set_log_level
         ])
         .run(tauri::generate_context!())

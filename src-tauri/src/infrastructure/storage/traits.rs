@@ -47,4 +47,40 @@ pub trait HistoryStorage: Send + Sync {
     ///
     /// Returns an error if entries cannot be cleared.
     async fn clear_all(&self) -> Result<(), String>;
+
+    /// Get the total count of history entries.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the count cannot be determined.
+    async fn count(&self) -> Result<usize, String>;
+
+    /// Get history entry IDs with pagination.
+    ///
+    /// # Arguments
+    ///
+    /// * `limit` - Maximum number of IDs to return
+    /// * `offset` - Number of IDs to skip (for pagination)
+    /// * `sort_desc` - Sort by timestamp descending (newest first) if true
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if IDs cannot be retrieved.
+    async fn get_ids(
+        &self,
+        limit: usize,
+        offset: usize,
+        sort_desc: bool,
+    ) -> Result<Vec<String>, String>;
+
+    /// Get history entries by their IDs (batch load).
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - Vector of entry IDs to fetch
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if entries cannot be retrieved.
+    async fn get_batch(&self, ids: &[String]) -> Result<Vec<HistoryEntry>, String>;
 }

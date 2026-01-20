@@ -4,6 +4,7 @@ import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 import type { RequestParams, HttpResponse } from '@/types/http';
 import type { HistoryFilters, NetworkHistoryEntry } from '@/types/history';
 import { DEFAULT_HISTORY_FILTERS } from '@/types/history';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 interface HistoryState {
   // Data State
@@ -14,6 +15,8 @@ interface HistoryState {
   // UI State
   filters: HistoryFilters;
   selectedId: string | null;
+  selectedIds: Set<string>; // Multi-select support
+  lastSelectedIndex: number | null; // For range selection
   expandedId: string | null;
   compareMode: boolean;
   compareSelection: string[];
@@ -28,6 +31,10 @@ interface HistoryState {
   setFilter: (key: keyof HistoryFilters, value: string) => void;
   resetFilters: () => void;
   setSelectedId: (id: string | null) => void;
+  toggleSelection: (id: string) => void;
+  selectRange: (fromIndex: number, toIndex: number) => void;
+  selectAll: (ids: string[]) => void;
+  deselectAll: () => void;
   setExpandedId: (id: string | null) => void;
   setCompareMode: (enabled: boolean) => void;
   toggleCompareSelection: (id: string) => void;
@@ -45,6 +52,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   // UI State
   filters: { ...DEFAULT_HISTORY_FILTERS },
   selectedId: null,
+  selectedIds: new Set<string>(),
+  lastSelectedIndex: null,
   expandedId: null,
   compareMode: false,
   compareSelection: [],
@@ -123,7 +132,124 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   setSelectedId: (id: string | null): void => {
-    set({ selectedId: id });
+    if (id === null) {
+      set({ selectedId: null, selectedIds: new Set<string>() });
+    } else {
+      set({ selectedId: id, selectedIds: new Set([id]) });
+    }
+  },
+
+  toggleSelection: (id: string): void => {
+    set((state) => {
+      const newSelectedIds = new Set(state.selectedIds);
+      if (newSelectedIds.has(id)) {
+        // Removing from selection - always allowed
+        newSelectedIds.delete(id);
+      } else {
+        // Adding to selection - check limit
+        if (newSelectedIds.size >= 2) {
+          // Already at max, show warning toast
+          globalEventBus.emit<ToastEventPayload>('toast.show', {
+            type: 'warning',
+            message: 'You can select a maximum of 2 items for comparison.',
+            duration: 3000,
+          });
+          // Don't add the item
+          return state;
+        }
+        newSelectedIds.add(id);
+      }
+
+      // Update selectedId for backward compatibility (first item in Set, sorted for determinism)
+      const selectedId =
+        newSelectedIds.size > 0 ? (Array.from(newSelectedIds).sort()[0] ?? null) : null;
+
+      // Update lastSelectedIndex to current entry index
+      const currentIndex = state.entries.findIndex((entry) => entry.id === id);
+      const lastSelectedIndex = currentIndex >= 0 ? currentIndex : state.lastSelectedIndex;
+
+      return {
+        selectedIds: newSelectedIds,
+        selectedId,
+        lastSelectedIndex,
+      };
+    });
+  },
+
+  selectRange: (fromIndex: number, toIndex: number): void => {
+    set((state) => {
+      const { entries, selectedIds } = state;
+      const newSelectedIds = new Set(selectedIds);
+
+      const start = Math.min(fromIndex, toIndex);
+      const end = Math.max(fromIndex, toIndex);
+
+      // Add all entries in range (only if they exist), but limit to 2 items total
+      for (let i = start; i <= end && i < entries.length && newSelectedIds.size < 2; i++) {
+        const entry = entries[i];
+        if (entry !== undefined) {
+          newSelectedIds.add(entry.id);
+        }
+      }
+
+      // Show warning if range would exceed limit
+      const rangeSize = end - start + 1;
+      if (rangeSize > 2 || (selectedIds.size > 0 && rangeSize + selectedIds.size > 2)) {
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'warning',
+          message: 'You can select a maximum of 2 items for comparison.',
+          duration: 3000,
+        });
+      }
+
+      // Update selectedId for backward compatibility (first item, sorted for determinism)
+      const selectedId =
+        newSelectedIds.size > 0 ? (Array.from(newSelectedIds).sort()[0] ?? null) : null;
+
+      return {
+        selectedIds: newSelectedIds,
+        selectedId,
+        lastSelectedIndex: toIndex,
+      };
+    });
+  },
+
+  selectAll: (ids: string[]): void => {
+    set((state) => {
+      // Limit to first 2 items
+      const limitedIds = ids.slice(0, 2);
+      const newSelectedIds = new Set(limitedIds);
+
+      // Show warning if more than 2 items were provided
+      if (ids.length > 2) {
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'warning',
+          message: 'You can select a maximum of 2 items for comparison.',
+          duration: 3000,
+        });
+      }
+
+      // Update selectedId for backward compatibility
+      const selectedId =
+        newSelectedIds.size > 0 ? (Array.from(newSelectedIds).sort()[0] ?? null) : null;
+      const lastSelectedIndex =
+        limitedIds.length > 0
+          ? state.entries.findIndex((e) => e.id === limitedIds[limitedIds.length - 1])
+          : null;
+      return {
+        selectedIds: newSelectedIds,
+        selectedId,
+        lastSelectedIndex,
+      };
+    });
+  },
+
+  deselectAll: (): void => {
+    set({
+      selectedIds: new Set<string>(),
+      selectedId: null,
+      lastSelectedIndex: null,
+    });
   },
 
   setExpandedId: (id: string | null): void => {

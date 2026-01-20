@@ -163,6 +163,10 @@ storybook-serve: storybook-build
 ci: fmt-check lint check test
     @echo "✅ All CI checks passed!"
 
+# Run CI pipeline without tests (for documentation-only changes)
+ci-no-test: fmt-check lint check
+    @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"
+
 # Pre-commit hook: fast checks only
 pre-commit: fmt-check-rust fmt-check-frontend check-frontend
     @echo "✅ Pre-commit checks passed!"
@@ -226,6 +230,10 @@ clean-ralph:
 docs:
     cd src-tauri && cargo doc --no-deps --open
 
+# List all TDD plans in runi-planning-docs repository
+list-plans:
+    @bash scripts/list-plans.sh
+
 # ============================================================================
 # 📖 Help
 # ============================================================================
@@ -273,5 +281,8 @@ help:
     @echo ""
     @echo "Documentation:"
     @echo "  just docs          - Generate Rust documentation"
+    @echo ""
+    @echo "Planning:"
+    @echo "  just list-plans    - List all TDD plans in runi-planning-docs"
     @echo ""
     @echo "For a full list of commands: just list"

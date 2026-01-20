@@ -11,13 +11,9 @@ interface FilterBarProps {
   filters: HistoryFilters;
   /** Update a filter value */
   onFilterChange: (key: keyof HistoryFilters, value: string) => void;
-  /** Whether compare mode is active */
-  compareMode: boolean;
-  /** Toggle compare mode */
-  onCompareModeToggle: () => void;
-  /** Number of selected entries for comparison */
-  compareSelectionCount?: number;
-  /** Callback when user clicks Compare Responses button */
+  /** Number of selected entries */
+  selectedCount: number;
+  /** Callback when user clicks Compare Selected button */
   onCompareResponses?: () => void;
   /** Callback to save all entries */
   onSaveAll: () => void;
@@ -43,9 +39,7 @@ interface FilterBarProps {
 export const FilterBar = ({
   filters,
   onFilterChange,
-  compareMode,
-  onCompareModeToggle,
-  compareSelectionCount = 0,
+  selectedCount,
   onCompareResponses,
   onSaveAll,
   onSaveSelection,
@@ -57,9 +51,7 @@ export const FilterBar = ({
       <NetworkHistoryFilters
         filters={filters}
         onFilterChange={onFilterChange}
-        compareMode={compareMode}
-        onCompareModeToggle={onCompareModeToggle}
-        compareSelectionCount={compareSelectionCount}
+        selectedCount={selectedCount}
         onCompareResponses={onCompareResponses}
       />
       <FilterBarActions

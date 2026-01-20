@@ -20,14 +20,14 @@ const meta = {
 
 ## Components
 
-- **NetworkHistoryFilters**: Search, method/status/intelligence filters, compare toggle
+- **NetworkHistoryFilters**: Search, method/status/intelligence filters, compare selected button
 - **FilterBarActions**: Save and delete buttons with composite button pattern
 
 ## Accessibility
 
 - All buttons have aria-labels
 - Filter dropdowns are keyboard accessible
-- Compare toggle uses aria-pressed for state
+- Compare Selected button appears when exactly 2 entries are selected
 `,
       },
     },
@@ -48,8 +48,7 @@ export const Default: Story = {
   args: {
     filters: DEFAULT_HISTORY_FILTERS,
     onFilterChange: noop,
-    compareMode: false,
-    onCompareModeToggle: noop,
+    selectedCount: 0,
     onSaveAll: noop,
     onSaveSelection: noop,
     onClearAll: noopAsync,
@@ -64,8 +63,7 @@ export const SaveDisabled: Story = {
   args: {
     filters: DEFAULT_HISTORY_FILTERS,
     onFilterChange: noop,
-    compareMode: false,
-    onCompareModeToggle: noop,
+    selectedCount: 0,
     onSaveAll: noop,
     onSaveSelection: noop,
     onClearAll: noopAsync,
@@ -74,15 +72,13 @@ export const SaveDisabled: Story = {
 };
 
 /**
- * Compare mode active with 1 entry selected.
+ * With 1 entry selected (Compare Selected button hidden).
  */
-export const CompareModeActive: Story = {
+export const OneSelected: Story = {
   args: {
     filters: DEFAULT_HISTORY_FILTERS,
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
-    compareSelectionCount: 1,
+    selectedCount: 1,
     onSaveAll: noop,
     onSaveSelection: noop,
     onClearAll: noopAsync,
@@ -91,15 +87,13 @@ export const CompareModeActive: Story = {
 };
 
 /**
- * Ready to compare (2 entries selected).
+ * Ready to compare (2 entries selected, Compare Selected button visible).
  */
 export const ReadyToCompare: Story = {
   args: {
     filters: DEFAULT_HISTORY_FILTERS,
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
-    compareSelectionCount: 2,
+    selectedCount: 2,
     onCompareResponses: noop,
     onSaveAll: noop,
     onSaveSelection: noop,
@@ -116,9 +110,8 @@ export const AllVariants: Story = {
   args: {
     filters: { ...DEFAULT_HISTORY_FILTERS, method: 'GET', status: '2xx' },
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
-    compareSelectionCount: 1,
+    selectedCount: 2,
+    onCompareResponses: noop,
     onSaveAll: noop,
     onSaveSelection: noop,
     onClearAll: noopAsync,
@@ -161,9 +154,7 @@ export const WithOverflow: Story = {
   args: {
     filters: { ...DEFAULT_HISTORY_FILTERS, method: 'POST', status: '4xx' },
     onFilterChange: noop,
-    compareMode: true,
-    onCompareModeToggle: noop,
-    compareSelectionCount: 2,
+    selectedCount: 2,
     onCompareResponses: noop,
     onSaveAll: noop,
     onSaveSelection: noop,

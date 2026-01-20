@@ -111,13 +111,24 @@ Brief description of what this PR does and why.
 
 - [ ] Unit tests added/updated
 - [ ] Integration tests pass
-- [ ] E2E tests pass (if applicable)
+- [ ] E2E tests pass (if user-facing feature or complex interactions)
+- [ ] Migration tests pass (if overhaul with data structure changes)
+- [ ] Performance tests pass (if data-heavy feature, include thresholds)
+- [ ] **Test selectors**: Components include `data-test-id` attributes on interactive elements
+- [ ] **Test queries**: Tests use `getByTestId` for element selection (resilient to UI changes)
 - [ ] Manual testing completed
 - [ ] Coverage: [percentage]% (target: ≥85%)
 
 ## Breaking Changes
 
 None (or description of breaking changes with migration guide)
+
+**For Overhauls:** Must include:
+
+- Explicit migration guide
+- Backward compatibility considerations
+- Migration test results
+- Data integrity validation
 
 ## Related Issues
 
@@ -182,9 +193,11 @@ The command analyzes:
    - Test additions
 
 3. **Test Coverage:**
-   - New tests added
+   - New tests added (unit, integration, E2E, migration if applicable, performance if applicable)
    - Coverage percentage
    - Test quality
+   - Migration test results (for overhauls)
+   - Performance test results with thresholds (for data-heavy features)
 
 4. **Documentation:**
    - Doc comments added
@@ -232,7 +245,7 @@ After code review, use `/pr` to create the PR:
 If a PR already exists for the current branch:
 
 - Show existing PR URL
-- Suggest using `/pr-comments` to manage PR comments
+- Suggest using `/pr-comments` to manage PR comments (see `CLAUDE.md` PR Workflow section)
 - Exit gracefully
 
 ### GitHub CLI Not Available
@@ -260,7 +273,7 @@ If no commits exist since base branch:
 ## Related Commands
 
 - `/code-review` - Review code before creating PR
-- `/pr-comments` - Get and address PR comments
+- `/pr-comments` - Get and address PR comments (see `CLAUDE.md` PR Workflow section)
 - `just ci` - Run CI checks before PR
 - `git commit` - Commit changes before creating PR
 
@@ -268,7 +281,9 @@ If no commits exist since base branch:
 
 - **No Files Created:** Description is generated in memory and passed directly to GitHub CLI
 - **Conventional Commits:** PR title follows conventional commit format
-- **Test Coverage:** PR includes coverage information
-- **Breaking Changes:** Clearly marked with migration guide
+- **Test Coverage:** PR includes coverage information (unit, integration, E2E, migration if applicable, performance if applicable)
+- **Breaking Changes:** Clearly marked with migration guide (required for overhauls)
+- **Migration Testing:** Overhauls must include migration test results
+- **Performance Testing:** Data-heavy features must include performance test results with thresholds
 - **Review Checklist:** Helps maintainers review efficiently
 - **GitHub CLI Required:** This command uses `gh pr create` to actually create the PR
