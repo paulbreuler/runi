@@ -287,6 +287,16 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 - Feature requirements include test specifications with Gherkin scenarios
 - Tests are written as part of implementation, not generated afterward
 
+**Test Selectors (CRITICAL):**
+
+- **Always use `data-test-id` attributes** for test selectors - never use generic selectors like `getByText`, `getByRole`, or `getByLabel` for component identification
+- `data-test-id` makes tests resilient to UI changes (text, styling, structure)
+- Components must include `data-test-id` attributes on all interactive elements and key test targets
+- Test files must use `getByTestId` or `screen.getByTestId` for finding elements
+- Example: `<button data-test-id="save-button">Save</button>` → `screen.getByTestId('save-button')`
+- **Exception**: Use semantic queries (`getByRole`, `getByLabel`) only when testing accessibility, not for component identification
+- This ensures tests remain stable when UI text, styling, or structure changes
+
 ---
 
 ## Accessibility Requirements

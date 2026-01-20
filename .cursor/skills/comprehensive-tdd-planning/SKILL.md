@@ -190,6 +190,8 @@ A quick-reference file for rapid agent creation:
 - Each step should be **independently testable**
 - Include **refactoring** steps explicitly
 - Consider **integration** and **accessibility** tests
+- **Test selectors**: Specify `data-test-id` attributes for all interactive elements and test targets
+- **Test queries**: Tests must use `getByTestId` for element selection (not generic selectors like `getByText` or `getByRole` for component identification)
 
 ### Parallelization
 
@@ -299,6 +301,8 @@ For each feature:
   - E2E tests: If user-facing feature (Playwright)
   - Migration tests: If overhaul with data structure changes
   - Performance tests: If data-heavy feature (with thresholds)
+  - **Test selectors**: All components include `data-test-id` attributes on interactive elements
+  - **Test queries**: Tests use `getByTestId` for element selection (resilient to UI changes)
 - ✅ Components: Fully implemented
 - ✅ Stories: Storybook stories with demos (must build and work correctly)
 - ✅ Documentation: JSDoc comments

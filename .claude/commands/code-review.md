@@ -41,6 +41,8 @@ Perform a comprehensive code review following runi's quality standards and best 
    - ✅ Test coverage ≥85% for new code
    - ✅ Component tests use vitest with @testing-library/react
    - ✅ TDD workflow followed (tests written first)
+   - ✅ **Test selectors**: Components include `data-test-id` attributes on interactive elements and test targets
+   - ✅ **Test queries**: Tests use `getByTestId` for element selection (not `getByText`, `getByRole`, or `getByLabel` for component identification)
    - ✅ Zustand for global state (not Redux, not Context for shared state)
    - ✅ Motion 12 for animations (import from `motion/react`)
 
@@ -58,7 +60,7 @@ Perform a comprehensive code review following runi's quality standards and best 
    - **Quality Issues** (should fix - style, documentation, test coverage)
    - **Architectural Violations** (must fix - hardcoded layouts, tight coupling, missing event bus usage)
    - **Architectural Improvements** (should fix - container/presentational separation, dependency injection, configuration-driven)
-   - **Testing Gaps** (missing unit, integration, E2E, migration, or performance tests)
+   - **Testing Gaps** (missing unit, integration, E2E, migration, or performance tests, or missing `data-test-id` attributes)
    - **Suggestions** (nice to have - optimizations, improvements)
    - **Security Concerns** (auth patterns, data handling, API security)
    - **Performance** (potential bottlenecks, inefficiencies, missing performance tests for data-heavy features)
@@ -114,6 +116,8 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **E2E Tests**: User-facing features and complex interactions tested with Playwright
 - [ ] **Migration Tests**: For overhauls that change data structures - backward compatibility and data integrity validated
 - [ ] **Performance Tests**: For data-heavy features - thresholds validated (e.g., render 1000 rows in <500ms)
+- [ ] **Test Selectors**: Components include `data-test-id` attributes on interactive elements and test targets
+- [ ] **Test Queries**: Tests use `getByTestId` for element selection (not generic selectors for component identification)
 - [ ] **Storybook**: Component stories created (for UI components)
 
 ### Architecture & Patterns

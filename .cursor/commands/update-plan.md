@@ -26,6 +26,7 @@ Apply feedback from LLMs or other sources to an existing TDD plan, suggest chang
      - Documentation improvements
      - Architectural concerns
      - Missing test coverage (unit, integration, E2E, migration, performance)
+     - Missing `data-test-id` attributes or incorrect test selector usage
      - PR-related feedback (breaking changes, migration guides, PR descriptions)
      - Performance requirements or thresholds
      - Migration testing requirements
@@ -92,10 +93,11 @@ just list-plans
 2. Add new feature section with Gherkin scenario
 3. Add TDD todos for the feature
 4. Add testing requirements (unit, integration, E2E if applicable, migration if overhaul, performance if data-heavy)
-5. Update feature tracking table
-6. Update `parallelization.md` if needed
-7. Update `speed_prompts.md` with new agent section
-8. If overhaul: Add breaking changes and migration guide requirements
+5. Add `data-test-id` requirements for all interactive elements and test targets
+6. Update feature tracking table
+7. Update `parallelization.md` if needed
+8. Update `speed_prompts.md` with new agent section
+9. If overhaul: Add breaking changes and migration guide requirements
 
 ### Modifying Existing Feature
 

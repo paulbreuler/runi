@@ -114,6 +114,8 @@ Brief description of what this PR does and why.
 - [ ] E2E tests pass (if user-facing feature or complex interactions)
 - [ ] Migration tests pass (if overhaul with data structure changes)
 - [ ] Performance tests pass (if data-heavy feature, include thresholds)
+- [ ] **Test selectors**: Components include `data-test-id` attributes on interactive elements
+- [ ] **Test queries**: Tests use `getByTestId` for element selection (resilient to UI changes)
 - [ ] Manual testing completed
 - [ ] Coverage: [percentage]% (target: ≥85%)
 

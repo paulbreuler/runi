@@ -180,6 +180,8 @@ Feature: [Name]
 - [ ] E2E tests: [if user-facing feature]
 - [ ] Migration tests: [if overhaul with data structure changes]
 - [ ] Performance tests: [if data-heavy feature, include threshold]
+- [ ] **Test selectors**: All components must include `data-test-id` attributes on interactive elements and test targets
+- [ ] **Test queries**: Tests must use `getByTestId` for element selection (not `getByText`, `getByRole`, or `getByLabel` for component identification)
 
 **Status:** ❌ Not tested | Status: GAP
 
@@ -422,6 +424,8 @@ After completing features, create PRs using:
 - All features require unit tests
 - Follow TDD: RED → GREEN → REFACTOR
 - Coverage target: ≥85%
+- **Test selectors**: Use `data-test-id` attributes on all interactive elements and test targets
+- **Test queries**: Use `getByTestId` for element selection (not `getByText`, `getByRole`, or `getByLabel` for component identification)
 
 ### Integration Tests
 
@@ -433,6 +437,8 @@ After completing features, create PRs using:
 - Required for user-facing features
 - Required for complex interactions
 - Test critical user workflows
+- **Test selectors**: Use `data-test-id` attributes for element selection in Playwright tests
+- **Test queries**: Use `page.getByTestId()` for finding elements (ensures tests are resilient to UI changes)
 
 ### Migration Tests
 
