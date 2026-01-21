@@ -112,14 +112,14 @@ describe('ExpandedPanel', () => {
       method: 'GET',
       url: 'https://example.com/api',
       headers: {},
-      body: null,
+      body: '',
       timeout_ms: 30000,
     },
     response: {
       status: 200,
-      statusText: 'OK',
+      status_text: 'OK',
       headers: {},
-      body: null,
+      body: '',
       timing: {
         dns_ms: 10,
         connect_ms: 20,
@@ -128,7 +128,7 @@ describe('ExpandedPanel', () => {
         total_ms: 150,
       },
     },
-    timestamp: Date.now(),
+    timestamp: new Date().toISOString(),
   };
 
   describe('Feature #18: Tab Navigation', () => {

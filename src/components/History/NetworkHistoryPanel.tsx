@@ -274,14 +274,11 @@ export const NetworkHistoryPanel = ({
       const expandedIds = Object.keys(expanded).filter((id) => expanded[id] === true);
       const newExpandedId = expandedIds.length > 0 ? (expandedIds[0] ?? null) : null;
 
-      setExpandedId((currentExpandedId: string | null) => {
-        if (newExpandedId !== currentExpandedId) {
-          return newExpandedId;
-        }
-        return currentExpandedId;
-      });
+      if (newExpandedId !== expandedId) {
+        setExpandedId(newExpandedId);
+      }
     },
-    [setExpandedId]
+    [expandedId, setExpandedId]
   );
 
   // Convert store selection to TanStack Table format
