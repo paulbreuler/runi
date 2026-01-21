@@ -1,0 +1,255 @@
+/**
+ * @file ExpandedPanel Storybook stories
+ * @description Visual documentation for ExpandedPanel component with tab navigation
+ */
+
+import type { Meta, StoryObj } from '@storybook/react';
+import { ExpandedPanel } from './ExpandedPanel';
+import type { NetworkHistoryEntry } from '@/types/history';
+
+const meta: Meta<typeof ExpandedPanel> = {
+  title: 'DataGrid/ExpandedPanel',
+  component: ExpandedPanel,
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component: `
+ExpandedPanel provides a tabbed interface for displaying detailed network history entry information.
+
+**Features:**
+- **Tab Navigation**: Switch between Timing, Response, Headers, TLS, and Code Gen tabs
+- **Timing Tab (default)**: Shows timing waterfall visualization and intelligence signals
+- **Response Tab**: Displays request and response bodies with formatting
+- **Headers Tab**: Shows request and response headers
+- **TLS Tab**: Displays TLS certificate details and connection information
+- **Code Gen Tab**: Generates code snippets in multiple languages
+
+**Accessibility:**
+- Full keyboard navigation via Radix Tabs
+- ARIA attributes handled automatically
+- Focus management on tab activation
+        `,
+      },
+    },
+  },
+  tags: ['autodocs'],
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+/**
+ * Creates a mock network history entry for stories.
+ */
+const createMockEntry = (overrides?: Partial<NetworkHistoryEntry>): NetworkHistoryEntry => ({
+  id: 'hist_1',
+  timestamp: new Date().toISOString(),
+  request: {
+    url: 'https://api.example.com/users',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer token123',
+    },
+    body: JSON.stringify(
+      {
+        name: 'John Doe',
+        email: 'john@example.com',
+      },
+      null,
+      2
+    ),
+    timeout_ms: 30000,
+  },
+  response: {
+    status: 200,
+    status_text: 'OK',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Rate-Limit': '100',
+    },
+    body: JSON.stringify(
+      {
+        id: 1,
+        name: 'John Doe',
+        email: 'john@example.com',
+        createdAt: '2024-01-01T00:00:00Z',
+      },
+      null,
+      2
+    ),
+    timing: {
+      total_ms: 290,
+      dns_ms: 15,
+      connect_ms: 25,
+      tls_ms: 45,
+      first_byte_ms: 120,
+    },
+  },
+  ...overrides,
+});
+
+/**
+ * Default expanded panel showing all tabs with typical network entry.
+ */
+export const Default: Story = {
+  args: {
+    entry: createMockEntry(),
+  },
+};
+
+/**
+ * Expanded panel with verified request (intelligence signals).
+ */
+export const VerifiedRequest: Story = {
+  args: {
+    entry: createMockEntry({
+      intelligence: {
+        verified: true,
+        drift: null,
+        aiGenerated: false,
+        boundToSpec: true,
+        specOperation: 'createUser',
+      },
+    }),
+  },
+};
+
+/**
+ * Expanded panel with drift detected.
+ */
+export const DriftDetected: Story = {
+  args: {
+    entry: createMockEntry({
+      intelligence: {
+        verified: false,
+        drift: {
+          type: 'response',
+          fields: ['body.email'],
+          message: 'Expected string, got number',
+        },
+        aiGenerated: false,
+        boundToSpec: true,
+        specOperation: 'getUserById',
+      },
+    }),
+  },
+};
+
+/**
+ * Expanded panel with AI-generated request.
+ */
+export const AIGenerated: Story = {
+  args: {
+    entry: createMockEntry({
+      intelligence: {
+        verified: false,
+        drift: null,
+        aiGenerated: true,
+        boundToSpec: false,
+        specOperation: null,
+      },
+    }),
+  },
+};
+
+/**
+ * Expanded panel with GET request (no request body).
+ */
+export const GetRequest: Story = {
+  args: {
+    entry: createMockEntry({
+      request: {
+        url: 'https://api.example.com/users',
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer token123',
+        },
+        body: null,
+        timeout_ms: 30000,
+      },
+      response: {
+        status: 200,
+        status_text: 'OK',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          {
+            users: [
+              { id: 1, name: 'John' },
+              { id: 2, name: 'Jane' },
+            ],
+          },
+          null,
+          2
+        ),
+        timing: {
+          total_ms: 156,
+          dns_ms: 12,
+          connect_ms: 23,
+          tls_ms: 34,
+          first_byte_ms: 50,
+        },
+      },
+    }),
+  },
+};
+
+/**
+ * Expanded panel with error response (4xx).
+ */
+export const ErrorResponse: Story = {
+  args: {
+    entry: createMockEntry({
+      response: {
+        status: 404,
+        status_text: 'Not Found',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ error: 'Resource not found' }, null, 2),
+        timing: {
+          total_ms: 45,
+          dns_ms: 5,
+          connect_ms: 10,
+          tls_ms: 15,
+          first_byte_ms: 30,
+        },
+      },
+    }),
+  },
+};
+
+/**
+ * Expanded panel with TLS certificate data.
+ */
+export const WithTLSCertificate: Story = {
+  args: {
+    entry: createMockEntry(),
+    certificate: {
+      subject: {
+        commonName: 'example.com',
+        organization: 'Example Inc',
+        country: 'US',
+      },
+      issuer: {
+        commonName: 'Example CA',
+        organization: 'Example Certificate Authority',
+      },
+      validFrom: '2024-01-01T00:00:00Z',
+      validTo: '2025-01-01T00:00:00Z',
+      serialNumber: '1234567890',
+      fingerprint: {
+        sha256: 'A1:B2:C3:D4:E5:F6:...',
+        sha1: 'AA:BB:CC:DD:EE:FF:...',
+      },
+      version: 3,
+      signatureAlgorithm: 'SHA256withRSA',
+      publicKeyAlgorithm: 'RSA',
+      keySize: 2048,
+    },
+    protocolVersion: 'TLS 1.3',
+  },
+};

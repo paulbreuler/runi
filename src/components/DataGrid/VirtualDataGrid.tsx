@@ -500,7 +500,13 @@ export function VirtualDataGrid<TData>({
 
     // Fallback: render all rows when virtualization doesn't work (e.g., jsdom)
     if (shouldRenderAllRows) {
-      return <>{rows.map(renderSingleRow)}</>;
+      return (
+        <>
+          {rows.map((row) => (
+            <React.Fragment key={row.id}>{renderSingleRow(row)}</React.Fragment>
+          ))}
+        </>
+      );
     }
 
     // Virtualized rendering
@@ -539,11 +545,25 @@ export function VirtualDataGrid<TData>({
                 }
               );
 
+              // Ensure remaining children have keys (preserve existing keys if present)
+              const remainingChildren = children.slice(1).map((child, index) => {
+                if (React.isValidElement(child)) {
+                  // Preserve existing key, only add one if missing
+                  // eslint-disable-next-line eqeqeq -- Check for both null and undefined
+                  if (child.key == null) {
+                    return React.cloneElement(child, {
+                      key: `${String(virtualRow.key)}-child-${String(index)}`,
+                    });
+                  }
+                }
+                return child;
+              });
+
               // Return fragment with updated main row
               return (
                 <React.Fragment key={virtualRow.key}>
                   {mainRow}
-                  {children.slice(1)}
+                  {remainingChildren}
                 </React.Fragment>
               );
             }

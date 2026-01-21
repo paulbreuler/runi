@@ -32,35 +32,33 @@ export interface CodeSnippetProps {
  * <CodeSnippet code="const x = 1;" language="javascript" />
  * ```
  */
-export const CodeSnippet = ({
-  code,
-  language,
-  className,
-}: CodeSnippetProps): React.ReactElement => {
+export const CodeSnippet = ({ code, language, className }: CodeSnippetProps): React.JSX.Element => {
   return (
     <div data-testid="code-snippet" className={cn('flex flex-col', className)}>
       {/* Header with copy button */}
-      <div className="flex items-center justify-end mb-2">
+      <div className="flex items-center justify-end mb-1">
         <CopyButton text={code} aria-label={`Copy ${language} code`} />
       </div>
 
       {/* Code content */}
       <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
-        <div className="p-4" data-language={language}>
+        <div className="pt-1 px-4 pb-4" data-language={language}>
           <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
-            <SyntaxHighlighter
-              language={language}
-              style={syntaxHighlightTheme}
-              customStyle={syntaxHighlightBaseStyle}
-              showLineNumbers
-              lineNumberStyle={syntaxHighlightLineNumberStyle}
-              PreTag="div"
-              codeTagProps={{
-                style: syntaxHighlightCodeTagStyle,
-              }}
-            >
-              {code}
-            </SyntaxHighlighter>
+            <div className="code-snippet-wrapper">
+              <SyntaxHighlighter
+                language={language}
+                style={syntaxHighlightTheme}
+                customStyle={syntaxHighlightBaseStyle}
+                showLineNumbers
+                lineNumberStyle={syntaxHighlightLineNumberStyle}
+                PreTag="div"
+                codeTagProps={{
+                  style: syntaxHighlightCodeTagStyle,
+                }}
+              >
+                {code}
+              </SyntaxHighlighter>
+            </div>
           </div>
         </div>
       </div>
