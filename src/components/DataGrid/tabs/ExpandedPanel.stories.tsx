@@ -96,12 +96,6 @@ const createMockEntry = (overrides?: Partial<NetworkHistoryEntry>): NetworkHisto
 export const Default: Story = {
   args: {
     entry: createMockEntry(),
-    onReplay: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
-    onCopyCurl: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
   },
 };
 
@@ -119,12 +113,6 @@ export const VerifiedRequest: Story = {
         specOperation: 'createUser',
       },
     }),
-    onReplay: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
-    onCopyCurl: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
   },
 };
 
@@ -146,12 +134,6 @@ export const DriftDetected: Story = {
         specOperation: 'getUserById',
       },
     }),
-    onReplay: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
-    onCopyCurl: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
   },
 };
 
@@ -169,12 +151,6 @@ export const AIGenerated: Story = {
         specOperation: null,
       },
     }),
-    onReplay: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
-    onCopyCurl: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
   },
 };
 
@@ -218,12 +194,6 @@ export const GetRequest: Story = {
         },
       },
     }),
-    onReplay: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
-    onCopyCurl: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
   },
 };
 
@@ -249,12 +219,6 @@ export const ErrorResponse: Story = {
         },
       },
     }),
-    onReplay: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
-    onCopyCurl: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
   },
 };
 
@@ -287,11 +251,5 @@ export const WithTLSCertificate: Story = {
       keySize: 2048,
     },
     protocolVersion: 'TLS 1.3',
-    onReplay: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
-    onCopyCurl: (_entry: NetworkHistoryEntry) => {
-      // Storybook placeholder - no action needed
-    },
   },
 };
