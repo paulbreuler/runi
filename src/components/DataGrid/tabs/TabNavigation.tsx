@@ -52,6 +52,7 @@ export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Elem
             <motion.button
               type="button"
               role="tab"
+              data-testid={`tab-${tab.id}`}
               aria-selected={activeTab === tab.id}
               className={cn(
                 'px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative',

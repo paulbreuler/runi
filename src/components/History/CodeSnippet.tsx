@@ -32,11 +32,7 @@ export interface CodeSnippetProps {
  * <CodeSnippet code="const x = 1;" language="javascript" />
  * ```
  */
-export const CodeSnippet = ({
-  code,
-  language,
-  className,
-}: CodeSnippetProps): React.ReactElement => {
+export const CodeSnippet = ({ code, language, className }: CodeSnippetProps): React.JSX.Element => {
   return (
     <div data-testid="code-snippet" className={cn('flex flex-col', className)}>
       {/* Header with copy button */}

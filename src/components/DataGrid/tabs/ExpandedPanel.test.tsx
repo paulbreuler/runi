@@ -65,7 +65,7 @@ vi.mock('@radix-ui/react-tabs', () => ({
       const childProps = {
         ...props,
         onClick: handleClick,
-        'data-testid': 'tabs-trigger',
+        'data-testid': `tab-${value ?? 'unknown'}`,
         'data-value': value,
         'data-as-child': asChild,
         role: 'tab',
@@ -80,7 +80,7 @@ vi.mock('@radix-ui/react-tabs', () => ({
 
     return (
       <div
-        data-testid="tabs-trigger"
+        data-testid={`tab-${value ?? 'unknown'}`}
         data-value={value}
         role="tab"
         aria-selected={value === mockCurrentValue ? 'true' : 'false'}
@@ -168,12 +168,10 @@ describe('ExpandedPanel', () => {
 
       render(<ExpandedPanel entry={mockEntry} />);
 
-      // Find the Response tab button by text content
-      const responseTab = screen.getByText('Response').closest('[role="tab"]');
+      // Find the Response tab button by data-testid
+      const responseTab = screen.getByTestId('tab-response');
       expect(responseTab).toBeInTheDocument();
-      if (responseTab !== null) {
-        await user.click(responseTab);
-      }
+      await user.click(responseTab);
 
       const tabsRoot = screen.getByTestId('tabs-root');
       expect(tabsRoot).toHaveAttribute('data-value', 'response');
@@ -182,8 +180,8 @@ describe('ExpandedPanel', () => {
     it('highlights active tab', () => {
       render(<ExpandedPanel entry={mockEntry} />);
 
-      // Find the Timing tab button in the expanded tabs list
-      const timingTab = screen.getByRole('tab', { name: /timing/i });
+      // Find the Timing tab button by data-testid
+      const timingTab = screen.getByTestId('tab-timing');
       // Active tab should have text-text-primary class
       expect(timingTab).toHaveClass('text-text-primary');
     });
