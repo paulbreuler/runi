@@ -11,6 +11,7 @@ import type { NetworkHistoryEntry } from '@/types/history';
 
 // Mock Radix Tabs (similar to PanelTabs.test.tsx)
 let mockOnValueChange: ((value: string) => void) | undefined;
+let mockCurrentValue: string | undefined;
 
 vi.mock('@radix-ui/react-tabs', () => ({
   Root: ({
@@ -25,6 +26,7 @@ vi.mock('@radix-ui/react-tabs', () => ({
     [key: string]: unknown;
   }): React.JSX.Element => {
     mockOnValueChange = onValueChange;
+    mockCurrentValue = value;
     return (
       <div data-testid="tabs-root" data-value={value} {...props}>
         {children}
@@ -67,10 +69,13 @@ vi.mock('@radix-ui/react-tabs', () => ({
         'data-value': value,
         'data-as-child': asChild,
         role: 'tab',
-        'aria-selected': value === mockOnValueChange ? 'true' : 'false',
+        'aria-selected': value === mockCurrentValue ? 'true' : 'false',
       };
 
-      return React.cloneElement(children as React.ReactElement<any>, childProps);
+      return React.cloneElement(
+        children as React.ReactElement<Record<string, unknown>>,
+        childProps
+      );
     }
 
     return (
@@ -78,7 +83,7 @@ vi.mock('@radix-ui/react-tabs', () => ({
         data-testid="tabs-trigger"
         data-value={value}
         role="tab"
-        aria-selected={value === mockOnValueChange ? 'true' : 'false'}
+        aria-selected={value === mockCurrentValue ? 'true' : 'false'}
         onClick={handleClick}
         {...props}
       >

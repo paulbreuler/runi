@@ -25,10 +25,6 @@ export interface ExpandedPanelProps {
   certificate?: CertificateData | null;
   /** TLS protocol version (optional) */
   protocolVersion?: string | null;
-  /** Callback for replay action */
-  onReplay?: (entry: NetworkHistoryEntry) => void;
-  /** Callback for copy cURL action */
-  onCopyCurl?: (entry: NetworkHistoryEntry) => void;
   /** Additional CSS classes */
   className?: string;
 }
@@ -48,8 +44,6 @@ export interface ExpandedPanelProps {
  * <ExpandedPanel
  *   entry={networkHistoryEntry}
  *   certificate={certData}
- *   onReplay={handleReplay}
- *   onCopyCurl={handleCopyCurl}
  * />
  * ```
  */
@@ -57,20 +51,12 @@ export const ExpandedPanel = ({
   entry,
   certificate,
   protocolVersion,
-  onReplay: _onReplay,
-  onCopyCurl: _onCopyCurl,
   className,
 }: ExpandedPanelProps): React.JSX.Element => {
   const [activeTab, setActiveTab] = useState<ExpandedPanelTabType>('timing');
 
-  // Calculate timing segments using helper function
-  const segments = calculateWaterfallSegments(entry.response.timing) ?? {
-    dns: 0,
-    connect: 0,
-    tls: 0,
-    wait: 0,
-    download: 0,
-  };
+  // Calculate timing segments using helper function (TimingTab handles undefined)
+  const segments = calculateWaterfallSegments(entry.response.timing);
 
   return (
     <Tabs.Root
@@ -79,7 +65,7 @@ export const ExpandedPanel = ({
       className={cn('flex flex-col', className)}
     >
       <div data-testid="expanded-panel">
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNavigation activeTab={activeTab} />
 
         <Tabs.Content value="timing" className="px-4 py-3">
           <TimingTab

@@ -66,17 +66,6 @@ export const CodeSnippet = ({
           </div>
         </div>
       </div>
-      {/* CSS to prevent line number selection */}
-      <style>{`
-        .code-snippet-wrapper .token-line > span:first-child,
-        .code-snippet-wrapper span[class*="linenumber"] {
-          user-select: none !important;
-          -webkit-user-select: none !important;
-          -moz-user-select: none !important;
-          -ms-user-select: none !important;
-          pointer-events: none;
-        }
-      `}</style>
     </div>
   );
 };

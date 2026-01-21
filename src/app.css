@@ -247,3 +247,16 @@ aside[data-testid='sidebar'] {
   background: oklch(0.623 0.214 259.1 / 0.3); /* accent-blue with 30% opacity */
   color: var(--color-text-primary);
 }
+
+/* ============================================
+   Code Snippet - Line Number Selection Prevention
+   ============================================ */
+
+.code-snippet-wrapper .token-line > span:first-child,
+.code-snippet-wrapper span[class*='linenumber'] {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  pointer-events: none;
+}

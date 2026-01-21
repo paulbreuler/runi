@@ -406,7 +406,7 @@ export const NetworkHistoryPanel = ({
                       className="bg-bg-elevated border-t border-border-subtle"
                       style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
                     >
-                      <ExpandedPanel entry={entry} onReplay={onReplay} onCopyCurl={onCopyCurl} />
+                      <ExpandedPanel entry={entry} />
                     </div>
                   </motion.div>
                 </td>
@@ -421,8 +421,6 @@ export const NetworkHistoryPanel = ({
       columns.length,
       handleSelect,
       handleToggleExpand,
-      onReplay,
-      onCopyCurl,
       initialRowSelection,
       // setRowSelectionRef and setExpandedRef are refs, don't need to be in deps
     ]

@@ -10,12 +10,15 @@ import { test, expect } from '@playwright/test';
  * - Expanded content (ExpandedPanel) is visible when a row is expanded
  * - Clicking the same expander again collapses the row
  */
+// Storybook URL can be configured via STORYBOOK_URL environment variable for CI/CD
+const STORYBOOK_BASE_URL = process.env.STORYBOOK_URL ?? 'http://localhost:6006';
+
 test.describe('Network History Panel Expander', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate directly to the ExpanderTest story iframe
     // Storybook URL structure: /iframe.html?id=components-history-networkhistorypanel--expander-test
     await page.goto(
-      'http://localhost:6006/iframe.html?id=components-history-networkhistorypanel--expander-test'
+      `${STORYBOOK_BASE_URL}/iframe.html?id=components-history-networkhistorypanel--expander-test`
     );
 
     // Wait for the panel to render and React to fully hydrate
@@ -125,7 +128,9 @@ test.describe('Network History Panel Expander', () => {
     // Expand second row
     const secondButton = expandButtons.nth(1);
     await secondButton.evaluate((el) => (el as HTMLElement).click());
-    await page.waitForTimeout(300); // Wait for collapse animation
+
+    // Wait for expanded section to stabilize (first collapses, second expands)
+    await expect(page.locator('[data-testid="expanded-section"]')).toHaveCount(1);
 
     // Count expanded sections (should still be 1, first should collapse)
     expandedSections = page.locator('[data-testid="expanded-section"]');
@@ -143,17 +148,14 @@ test.describe('Network History Panel Expander', () => {
     await page.waitForSelector('[data-testid="expanded-section"]', { timeout: 2000 });
 
     // Verify expanded
-    let expandedPanel = page.locator('[data-testid="expanded-panel"]');
+    const expandedPanel = page.locator('[data-testid="expanded-panel"]');
     await expect(expandedPanel).toBeVisible();
 
     // Click again to collapse
     await firstButton.evaluate((el) => (el as HTMLElement).click());
-    await page.waitForTimeout(300); // Wait for collapse animation
 
-    // Verify collapsed (expanded section should not be visible)
-    const expandedSections = page.locator('[data-testid="expanded-section"]');
-    const expandedCount = await expandedSections.count();
-    expect(expandedCount).toBe(0);
+    // Wait for expanded section to be removed (deterministic wait)
+    await expect(page.locator('[data-testid="expanded-section"]')).toHaveCount(0);
   });
 
   test('expanded panel shows tabs', async ({ page }) => {
@@ -189,14 +191,16 @@ test.describe('Network History Panel Expander', () => {
     // Expand second row (first should collapse)
     const secondBtn = expandButtons.nth(1);
     await secondBtn.evaluate((el) => (el as HTMLElement).click());
-    await page.waitForTimeout(300);
+    // Wait for transition to stabilize - only one expanded section should exist
+    await expect(page.locator('[data-testid="expanded-section"]')).toHaveCount(1);
     expandedPanel = page.locator('[data-testid="expanded-panel"]');
     await expect(expandedPanel).toBeVisible();
 
     // Expand third row (second should collapse)
     const thirdBtn = expandButtons.nth(2);
     await thirdBtn.evaluate((el) => (el as HTMLElement).click());
-    await page.waitForTimeout(300);
+    // Wait for transition to stabilize - only one expanded section should exist
+    await expect(page.locator('[data-testid="expanded-section"]')).toHaveCount(1);
     expandedPanel = page.locator('[data-testid="expanded-panel"]');
     await expect(expandedPanel).toBeVisible();
   });

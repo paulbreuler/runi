@@ -19,7 +19,7 @@ import type { ExpandedPanelTabType } from './ExpandedPanel';
  * @example
  * ```tsx
  * <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
- *   <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+ *   <TabNavigation activeTab={activeTab} />
  *   <Tabs.Content value="timing">...</Tabs.Content>
  * </Tabs.Root>
  * ```
@@ -28,14 +28,9 @@ import type { ExpandedPanelTabType } from './ExpandedPanel';
 export interface TabNavigationProps {
   /** Active tab */
   activeTab: ExpandedPanelTabType;
-  /** Callback when tab changes */
-  onTabChange: (tab: ExpandedPanelTabType) => void;
 }
 
-export const TabNavigation = ({
-  activeTab,
-  onTabChange: _onTabChange,
-}: TabNavigationProps): React.JSX.Element => {
+export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Element => {
   const prefersReducedMotion = useReducedMotion() === true;
 
   const tabs: Array<{ id: ExpandedPanelTabType; label: string }> = [
