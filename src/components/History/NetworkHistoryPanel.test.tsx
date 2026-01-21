@@ -222,19 +222,18 @@ describe('NetworkHistoryPanel', () => {
       expect(Number.parseInt(colSpan ?? '0', 10)).toBeGreaterThan(1);
     });
 
-    // TODO: Fix test - CSS selector and style assertion mismatch after refactor
-    it.skip('expanded content uses EXPANDED_CONTENT_LEFT_MARGIN_PX for alignment', () => {
+    it('expanded content uses EXPANDED_CONTENT_LEFT_MARGIN_PX for alignment', () => {
       render(<NetworkHistoryPanel {...defaultProps} />);
       const expandButton = screen.getAllByTestId('expand-button')[0]!;
       fireEvent.click(expandButton);
 
       const expandedSection = screen.getByTestId('expanded-section');
-      // Find the inner div that has the marginLeft style (it's a direct child of motion.div)
-      const innerDiv = expandedSection.querySelector('div.py-3.bg-bg-elevated');
+      // Find the inner div that has the marginLeft style (contains ExpandedPanel)
+      const innerDiv = expandedSection.querySelector('div.bg-bg-elevated.border-t');
 
-      // Should use EXPANDED_CONTENT_LEFT_MARGIN_PX (70px = 32+32+6)
+      // Should use EXPANDED_CONTENT_LEFT_MARGIN_PX (54px = 32+16+6)
       expect(innerDiv).toBeInTheDocument();
-      expect(innerDiv).toHaveStyle({ marginLeft: '70px' });
+      expect(innerDiv).toHaveStyle({ marginLeft: '54px' });
     });
   });
 

@@ -227,3 +227,20 @@ export const SingleEntry: Story = {
     </div>
   ),
 };
+
+/**
+ * Test story for expander functionality - multiple rows to test expansion on different rows.
+ * This story is used by Playwright E2E tests to verify expander works on all rows, not just the last one.
+ */
+export const ExpanderTest: Story = {
+  args: {
+    entries: mockEntries.slice(0, 5), // Use first 5 entries for testing
+    onReplay: noop,
+    onCopyCurl: noop,
+  },
+  render: (args) => (
+    <div className="h-[800px] bg-bg-app">
+      <NetworkHistoryPanel {...args} />
+    </div>
+  ),
+};

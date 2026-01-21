@@ -32,6 +32,10 @@ export const syntaxHighlightLineNumberStyle = {
   color: 'var(--color-text-muted)',
   opacity: 0.5,
   userSelect: 'none' as const,
+  WebkitUserSelect: 'none' as const,
+  MozUserSelect: 'none' as const,
+  msUserSelect: 'none' as const,
+  pointerEvents: 'none' as const,
 };
 
 export const syntaxHighlightCodeTagStyle = {

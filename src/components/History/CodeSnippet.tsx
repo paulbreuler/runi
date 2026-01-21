@@ -40,30 +40,43 @@ export const CodeSnippet = ({
   return (
     <div data-testid="code-snippet" className={cn('flex flex-col', className)}>
       {/* Header with copy button */}
-      <div className="flex items-center justify-end mb-2">
+      <div className="flex items-center justify-end mb-1">
         <CopyButton text={code} aria-label={`Copy ${language} code`} />
       </div>
 
       {/* Code content */}
       <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
-        <div className="p-4" data-language={language}>
+        <div className="pt-1 px-4 pb-4" data-language={language}>
           <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
-            <SyntaxHighlighter
-              language={language}
-              style={syntaxHighlightTheme}
-              customStyle={syntaxHighlightBaseStyle}
-              showLineNumbers
-              lineNumberStyle={syntaxHighlightLineNumberStyle}
-              PreTag="div"
-              codeTagProps={{
-                style: syntaxHighlightCodeTagStyle,
-              }}
-            >
-              {code}
-            </SyntaxHighlighter>
+            <div className="code-snippet-wrapper">
+              <SyntaxHighlighter
+                language={language}
+                style={syntaxHighlightTheme}
+                customStyle={syntaxHighlightBaseStyle}
+                showLineNumbers
+                lineNumberStyle={syntaxHighlightLineNumberStyle}
+                PreTag="div"
+                codeTagProps={{
+                  style: syntaxHighlightCodeTagStyle,
+                }}
+              >
+                {code}
+              </SyntaxHighlighter>
+            </div>
           </div>
         </div>
       </div>
+      {/* CSS to prevent line number selection */}
+      <style>{`
+        .code-snippet-wrapper .token-line > span:first-child,
+        .code-snippet-wrapper span[class*="linenumber"] {
+          user-select: none !important;
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          -ms-user-select: none !important;
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 };

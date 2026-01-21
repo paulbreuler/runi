@@ -9,9 +9,8 @@ import { NetworkStatusBar } from './NetworkStatusBar';
 import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
 import { createNetworkColumns } from '@/components/DataGrid/columns/networkColumns';
 import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from '@/components/DataGrid/constants';
-import { TimingWaterfall } from './TimingWaterfall';
-import { calculateWaterfallSegments } from '@/types/history';
 import { motion, AnimatePresence } from 'motion/react';
+import { ExpandedPanel } from '@/components/DataGrid/tabs';
 import type { Row } from '@tanstack/react-table';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
@@ -275,11 +274,14 @@ export const NetworkHistoryPanel = ({
       const expandedIds = Object.keys(expanded).filter((id) => expanded[id] === true);
       const newExpandedId = expandedIds.length > 0 ? (expandedIds[0] ?? null) : null;
 
-      if (newExpandedId !== expandedId) {
-        setExpandedId(newExpandedId);
-      }
+      setExpandedId((currentExpandedId: string | null) => {
+        if (newExpandedId !== currentExpandedId) {
+          return newExpandedId;
+        }
+        return currentExpandedId;
+      });
     },
-    [expandedId, setExpandedId]
+    [setExpandedId]
   );
 
   // Convert store selection to TanStack Table format
@@ -323,10 +325,10 @@ export const NetworkHistoryPanel = ({
   const renderRow = useCallback(
     (row: Row<NetworkHistoryEntry>, cells: React.ReactNode): React.ReactNode => {
       const entry = row.original;
-      const isExpanded = expandedId === entry.id;
+      // Use TanStack Table's expanded state as source of truth, not store's expandedId
+      // This ensures expansion works correctly for all rows, not just the last one
+      const isExpanded = row.getIsExpanded();
       const isSelected = selectedIds.has(entry.id);
-      const segments = calculateWaterfallSegments(entry.response.timing);
-      const totalMs = entry.response.timing.total_ms;
 
       // Handle row click for selection
       const handleRowClick = (e: React.MouseEvent): void => {
@@ -404,66 +406,10 @@ export const NetworkHistoryPanel = ({
                     className="overflow-hidden"
                   >
                     <div
-                      className="py-3 bg-bg-elevated border-t border-border-subtle"
+                      className="bg-bg-elevated border-t border-border-subtle"
                       style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
                     >
-                      {/* Timing waterfall */}
-                      <div className="mb-4">
-                        <p className="text-xs text-text-muted mb-2">Timing</p>
-                        <TimingWaterfall
-                          segments={segments}
-                          totalMs={totalMs}
-                          showLegend
-                          height="h-2"
-                        />
-                      </div>
-
-                      {/* Intelligence details */}
-                      {entry.intelligence !== undefined && (
-                        <div className="mb-4">
-                          <p className="text-xs text-text-muted mb-2">Intelligence</p>
-                          <div className="flex flex-wrap gap-3 text-xs">
-                            {entry.intelligence.verified && (
-                              <span className="text-signal-success">Verified</span>
-                            )}
-                            {entry.intelligence.boundToSpec && (
-                              <span className="text-accent-blue">
-                                Bound to {entry.intelligence.specOperation ?? 'spec'}
-                              </span>
-                            )}
-                            {entry.intelligence.drift !== null && (
-                              <span className="text-signal-warning">
-                                Drift: {entry.intelligence.drift.message}
-                              </span>
-                            )}
-                            {entry.intelligence.aiGenerated && (
-                              <span className="text-signal-ai">AI Generated</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded transition-colors"
-                          onClick={(): void => {
-                            onReplay(entry);
-                          }}
-                        >
-                          Edit & Replay
-                        </button>
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded transition-colors"
-                          onClick={(): void => {
-                            onCopyCurl(entry);
-                          }}
-                        >
-                          Copy as cURL
-                        </button>
-                      </div>
+                      <ExpandedPanel entry={entry} onReplay={onReplay} onCopyCurl={onCopyCurl} />
                     </div>
                   </motion.div>
                 </td>
@@ -474,7 +420,6 @@ export const NetworkHistoryPanel = ({
       );
     },
     [
-      expandedId,
       selectedIds,
       columns.length,
       handleSelect,
