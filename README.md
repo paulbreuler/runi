@@ -22,6 +22,14 @@
 </p>
 
 <p align="center">
+  <img src=".github/assets/runi-demo.gif" alt="runi demo showing HTTP client interface, network history, and timing waterfall" width="800" />
+</p>
+
+<p align="center">
+  <sub>Demo: HTTP client interface, network history panel, and timing waterfall visualization</sub>
+</p>
+
+<p align="center">
   <a href="#installation">Installation</a> •
   <a href="#why-runi">Why runi?</a> •
   <a href="#features">Features</a> •
@@ -71,6 +79,8 @@ Everything you expect, nothing you don't:
 
 - Full REST control — methods, headers, body, params, auth
 - Response viewer with syntax highlighting & timing
+- **Network history panel** — see all requests with filtering and search
+- **Timing waterfall visualization** — DNS, Connect, TLS, Wait, Download breakdown
 - Environment variables with `{{substitution}}`
 - **Collections as YAML** — version control your API workflows
 - Import from Postman, Bruno, Insomnia, OpenAPI
@@ -171,7 +181,7 @@ just dev
 #    Change your spec. See the yellow badge appear.
 ```
 
-> **The Adoption Ladder:** runi reveals features progressively as you use it. Start with the HTTP client, discover drift detection, then AI verification, semantic links, and temporal awareness. See [the adoption strategy](../runi-planning-docs/addendums/002-adoption-positioning.md) for details.
+> **The Adoption Ladder:** runi reveals features progressively as you use it. Start with the HTTP client and network history, discover drift detection when you import a spec, then AI verification, semantic links, and temporal awareness. See [the adoption strategy](../runi-planning-docs/addendums/002-adoption-positioning.md) for details.
 
 ---
 
@@ -203,6 +213,8 @@ just dev
 ### Now
 
 - [x] HTTP client core
+- [x] Network history panel with filtering
+- [x] Timing waterfall visualization
 - [ ] Collections as YAML
 - [ ] Import/export (Postman, Bruno, OpenAPI)
 - [ ] Spec binding and drift detection
