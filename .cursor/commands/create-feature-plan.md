@@ -16,6 +16,8 @@ This command uses MCP planning tools for document management:
 - `mcp_runi_Planning_create_doc` - Create planning documents (plan.md, interfaces.md, README.md, gotchas.md)
 - `mcp_runi_Planning_list_docs` - List existing plans to determine next plan number
 - `mcp_runi_Planning_read_doc` - Read existing documents for reference
+- `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
+- `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
 
 ## Skills Integration
 
@@ -133,6 +135,25 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
 
 **Note**: Scripts support both padded (000, 001) and unpadded (0, 1) formats for backward compatibility, but new agents should use zero-padding.
 
+**GitHub Issue Integration**:
+
+- Issues are created automatically when agents start (via `/run-agent` command)
+- **Agent Issue (parent)**: Represents the agent work, includes reference to local agent file
+- **Feature Subissues (children)**: One subissue per feature, created using `gh sub-issue` extension, linked to agent issue as parent
+- **Agent files store issue numbers**:
+  - `**GitHub Issue**: #123` at top (agent issue - parent)
+  - `**GitHub Subissue**: #124` in each feature section (feature subissue - child)
+- **Relationship**:
+  - Local agent files are the source of truth
+  - Agent issue is parent, feature subissues are children
+  - Features reference their subissues (not random PRs)
+- **PRs link to feature subissues**: Use `Closes #124, #125, #126` for feature subissues in PR description
+- **Critical**: `Closes #XXX` only works when PR targets the repository's default branch (main/master)
+- GitHub automatically closes feature subissues when PR with `Closes #124, #125, #126` merges to default branch
+- Agent issue (parent) is not closed by PR - only feature subissues are closed
+- If agent doesn't have issues when PR is created, issues are created retroactively by `/pr` command
+- See plan documentation for full workflow details
+
 **Extract only**:
 
 - Feature IDs + one-line TL;DRs
@@ -186,6 +207,9 @@ NNNN-descriptive-name/
 ````markdown
 # Agent <N>: [Descriptive Name]
 
+**Plan Location**: `../runi-planning-docs/plans/[plan-name]/plan.md`
+**GitHub Issue**: #123 (agent issue - parent, created when agent started)
+
 ## Scope
 
 Features: #X, #Y, #Z
@@ -216,6 +240,7 @@ export Component: FC<Props>;
 
 ### #X: [Name]
 
+**GitHub Subissue**: #124 (feature subissue - child of agent issue, created when agent started)
 TL;DR: [One sentence]
 Status: `GAP`
 Test IDs: `x-element-id`
@@ -379,6 +404,36 @@ const existingPlan = await mcp_runi_Planning_read_doc({
 const interfaces = await mcp_runi_Planning_read_doc({
   path: 'plans/0005-storybook-testing-overhaul/interfaces.md',
   lines: [1, 50], // Read lines 1-50
+});
+```
+
+### Querying Documents with RLM Tools
+
+```typescript
+// Extract all GAP features from a plan
+const gapFeatures = await rlm_query({
+  path: 'plans/0008-storybook-testing-overhaul/plan.md',
+  code: `
+    const features = extractFeatures(doc.content);
+    return features.filter(f => f.status === 'GAP');
+  `,
+});
+
+// Analyze feature distribution across all plans
+const planSummary = await rlm_multi_query({
+  pattern: 'plans/*/plan.md',
+  code: `
+    return docs.map(doc => {
+      const features = extractFeatures(doc.content);
+      return {
+        plan: extractFrontmatter(doc.content).meta.name,
+        total: features.length,
+        gap: features.filter(f => f.status === 'GAP').length,
+        wip: features.filter(f => f.status === 'WIP').length,
+        pass: features.filter(f => f.status === 'PASS').length
+      };
+    });
+  `,
 });
 ```
 

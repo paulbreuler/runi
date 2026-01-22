@@ -8,6 +8,7 @@ import { defineWorkspace } from 'vitest/config';
  * - Storybook tests: run from Storybook's Vitest panel or with `npm run test-storybook`
  *
  * The workspace allows the Storybook addon-vitest panel to discover and run tests.
+ * Projects are defined by config file paths, which Vitest will automatically discover.
  */
 export default defineWorkspace([
   // Unit tests (jsdom environment) - project name: 'unit'

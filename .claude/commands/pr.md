@@ -19,8 +19,20 @@ Create a pull request on GitHub with a comprehensive description from staged cha
      - Modified files (e.g., changes to `agents/4_agent_*.agent.md` or `agents/agent_4_*.agent.md`)
      - Recently modified agent files (fallback)
    - If agent detected:
-     - Extract agent name, feature numbers, and TL;DR descriptions from agent file
+     - Extract agent file path from JSON response
+     - **Validate/Create GitHub issues** (CRITICAL - must exist before PR creation):
+       - Check if agent issue exists in agent file (`**GitHub Issue**: #XXX`)
+       - If missing, run `bash scripts/run-agent.sh --agent <agent-file>` to create:
+         - Agent issue (parent) - represents the agent
+         - Feature subissues (children) - one per feature using `gh sub-issue create`
+       - Verify all feature subissues exist in agent file (`**GitHub Subissue**: #XXX` in each feature section)
+       - If any subissues missing, run `bash scripts/run-agent.sh --agent <agent-file>` again to create missing subissues
+     - **Extract GitHub issue numbers** (NOT local feature numbers):
+       - Agent issue number: From `agent_issue` field in JSON (e.g., "#36") - extracted from `**GitHub Issue**: #36` in agent file header
+       - Feature subissue numbers: From `feature_subissues` field in JSON (e.g., "#37, #38, #39") - extracted from `**GitHub Subissue**: #37` in each feature section
+     - **DO NOT include local feature numbers** (#13, #14, #15) in PR body - these are planning references only, not GitHub issues
      - Use agent context for PR title and description
+     - **Use GitHub issues in PR**: Include `Closes #37, #38, #39` in PR description "Related Issues" section (feature subissues only, not agent issue)
    - If no agent detected:
      - Proceed with standard PR generation (non-agent work)
 
@@ -47,16 +59,21 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - Count files changed and lines changed
 
 4. **Generate PR description (in memory, NO files):**
+   - **Related Issues section** (at top, if agent detected with feature subissues):
+     - Use `Closes #37, #38, #39` for feature subissues (GitHub official method - automatically closes subissues when PR merges to default branch)
+     - **Critical**: Only works when PR targets default branch (main/master)
+     - **Note**: Don't close agent issue - only close feature subissues (agent issue is parent, subissues are children)
    - Summary of changes
    - Detailed changes list
    - Test plan
    - Breaking changes (if any)
-   - Related issues (if mentioned in commits)
    - **Related Agent section** (if agent detected):
      - Agent name
-     - Feature numbers
      - Plan name
+     - Agent GitHub Issue: #36 (parent issue - for context, not closed by PR)
+     - Feature Subissues: #37, #38, #39 (closed by PR)
      - Brief description from agent file TL;DR
+     - **DO NOT include local feature numbers** (#13, #14, #15) - these are planning references, not GitHub issues
    - Review checklist
    - Use markdown formatting
    - Include code references where helpful
@@ -141,10 +158,13 @@ Brief description of what this PR does and why.
 _(Only included if agent detected)_
 
 Working on: [Agent Name]
-Features: #48, #49, #50
 Plan: [plan-name]
+Agent Issue: #36 (parent issue - provides context, not closed by PR)
+Feature Subissues: #37, #38, #39 (closed by this PR)
 
 [Brief description from agent file TL;DR]
+
+**Note**: Local feature numbers (#13, #14, #15) are planning references and are not included in PR body. Only GitHub issues (agent issue and feature subissues) are referenced.
 
 ## Changes
 
@@ -176,8 +196,9 @@ None (or description of breaking changes with migration guide)
 
 ## Related Issues
 
-Closes #123
-Related to #456
+Closes #37, #38, #39 <!-- Feature subissues - will auto-close when PR merges to default branch -->
+
+<!-- Agent Issue #36 is parent and provides context, but is not closed by this PR -->
 
 ## Checklist
 

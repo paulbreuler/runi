@@ -30,7 +30,7 @@ Ralph files are discovered dynamically:
 - All `prompts/*.md` files (automatically found)
 - No hardcoded file lists - adapts to project structure
 
-**Planning Documents:** Strategic planning documents are in a separate repository accessed via MCP tools. Use `mcp_runi_Planning_read_doc` to read planning documents. See `CLAUDE.md` for references to planning docs.
+**Planning Documents:** Strategic planning documents are in a separate repository accessed via MCP tools. Use `mcp_runi_Planning_read_doc` to read planning documents, or `rlm_query`/`rlm_multi_query` for JavaScript-based queries. See `CLAUDE.md` for references to planning docs.
 
 ---
 

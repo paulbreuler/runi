@@ -47,6 +47,445 @@ create_hyperlink() {
     printf '\e]8;;cursor://file/%s\e\\%s\e]8;;\e\\' "$encoded_path" "$display_text"
 }
 
+# Function to extract GitHub issue number from agent file
+extract_issue_number() {
+    local agent_file="$1"
+    if [ ! -f "$agent_file" ]; then
+        return 1
+    fi
+    
+    # Look for "**GitHub Issue**: #123" pattern
+    local issue_line=$(grep -E '\*\*GitHub Issue\*\*:\s*#?[0-9]+' "$agent_file" | head -1)
+    if [ -z "$issue_line" ]; then
+        return 1
+    fi
+    
+    # Extract issue number
+    echo "$issue_line" | sed -E 's/.*\*\*GitHub Issue\*\*:\s*#?([0-9]+).*/\1/'
+    return 0
+}
+
+# Function to extract agent metadata for issue creation
+extract_agent_metadata() {
+    local agent_file="$1"
+    
+    # Extract agent name from first line
+    local agent_name=$(head -1 "$agent_file" | sed 's/^# Agent [0-9]*: //' | sed 's/\*\*Plan Location\*\*.*//' | sed 's/\*\*GitHub Issue\*\*.*//' | xargs)
+    
+    # Extract agent number
+    local agent_num=$(head -1 "$agent_file" | sed -E 's/^# Agent ([0-9]+):.*/\1/')
+    
+    # Extract plan name from file path
+    local plan_name=$(echo "$agent_file" | sed -E 's|.*/plans/([^/]+)/.*|\1|')
+    
+    # Extract feature data (numbers, names, TL;DRs, files per feature)
+    local feature_numbers=()
+    local feature_names=()
+    local feature_tldrs=()
+    local feature_files_map=()
+    
+    local current_feature=""
+    local current_feature_files=""
+    local in_feature_files_section=false
+    
+    while IFS= read -r line; do
+        # Feature header
+        if [[ "$line" =~ ^###\ Feature\ #([0-9]+):\ (.+)$ ]]; then
+            # Save previous feature files if any
+            if [ -n "$current_feature" ]; then
+                feature_files_map+=("${current_feature}:${current_feature_files}")
+            fi
+            
+            current_feature="${BASH_REMATCH[1]}"
+            local feature_name="${BASH_REMATCH[2]}"
+            feature_numbers+=("${current_feature}")
+            feature_names+=("${current_feature}:${feature_name}")
+            current_feature_files=""
+            in_feature_files_section=false
+        # Feature TL;DR
+        elif echo "$line" | grep -qE '\*\*TL;DR\*\*:' && [ -n "$current_feature" ]; then
+            local tldr=$(echo "$line" | sed -E 's/.*\*\*TL;DR\*\*:[[:space:]]+(.*)/\1/')
+            feature_tldrs+=("${current_feature}:${tldr}")
+        # Feature files section
+        elif echo "$line" | grep -qE '\*\*Files to Create/Modify\*\*:' && [ -n "$current_feature" ]; then
+            in_feature_files_section=true
+        elif [ "$in_feature_files_section" = true ] && [ -n "$current_feature" ]; then
+            if echo "$line" | grep -qE '^[[:space:]]*-[[:space:]]*`'; then
+                local file=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*`([^`]+)`.*/\1/')
+                if [ -n "$file" ]; then
+                    current_feature_files="${current_feature_files}${current_feature_files:+ }${file}"
+                fi
+            elif [[ "$line" =~ ^###\ Feature\ # ]] || echo "$line" | grep -qE '^##[^#]'; then
+                # New section starts, save current feature files
+                if [ -n "$current_feature" ]; then
+                    feature_files_map+=("${current_feature}:${current_feature_files}")
+                    current_feature=""
+                    in_feature_files_section=false
+                fi
+            fi
+        fi
+    done < "$agent_file"
+    
+    # Save last feature files
+    if [ -n "$current_feature" ]; then
+        feature_files_map+=("${current_feature}:${current_feature_files}")
+    fi
+    
+    # Format as strings
+    local feature_numbers_str=""
+    if [ ${#feature_numbers[@]} -gt 0 ]; then
+        IFS=',' feature_numbers_str="${feature_numbers[*]}"
+    fi
+    
+    local feature_names_str=""
+    if [ ${#feature_names[@]} -gt 0 ]; then
+        IFS='|' feature_names_str="${feature_names[*]}"
+    fi
+    
+    local feature_tldrs_str=""
+    if [ ${#feature_tldrs[@]} -gt 0 ]; then
+        IFS='|' feature_tldrs_str="${feature_tldrs[*]}"
+    fi
+    
+    local feature_files_str=""
+    if [ ${#feature_files_map[@]} -gt 0 ]; then
+        IFS='|' feature_files_str="${feature_files_map[*]}"
+    fi
+    
+    echo "${agent_name}|${agent_num}|${plan_name}|${feature_numbers_str}|${feature_names_str}|${feature_tldrs_str}|${feature_files_str}"
+}
+
+# Function to create feature subissue
+create_feature_subissue() {
+    local parent_issue="$1"
+    local feature_num="$2"
+    local feature_name="$3"
+    local feature_tldr="$4"
+    local feature_files="$5"
+    local agent_issue_num="$6"
+    local agent_name="$7"
+    local plan_name="$8"
+    
+    # Check if gh sub-issue extension is available
+    if ! command -v gh >/dev/null 2>&1 || ! gh extension list 2>/dev/null | grep -q "gh-sub-issue"; then
+        echo -e "${YELLOW}⚠️  gh sub-issue extension not found. Skipping subissue creation.${RESET}" >&2
+        return 1
+    fi
+    
+    # Get repository owner and name
+    local repo_info=$(gh repo view --json owner,name 2>/dev/null || echo "")
+    if [ -z "$repo_info" ]; then
+        echo -e "${YELLOW}⚠️  Could not determine repository. Skipping subissue creation.${RESET}" >&2
+        return 1
+    fi
+    
+    local repo_owner=""
+    local repo_name=""
+    if command -v jq >/dev/null 2>&1; then
+        repo_owner=$(echo "$repo_info" | jq -r '.owner.login' 2>/dev/null || echo "")
+        repo_name=$(echo "$repo_info" | jq -r '.name' 2>/dev/null || echo "")
+    else
+        repo_owner=$(echo "$repo_info" | grep -oE '"owner"[^}]*"login"[^"]*"([^"]+)"' | sed -E 's/.*"login"[^"]*"([^"]+)".*/\1/' || echo "")
+        repo_name=$(echo "$repo_info" | grep -oE '"name"[^,}]*"([^"]+)"' | sed -E 's/.*"name"[^"]*"([^"]+)".*/\1/' || echo "")
+    fi
+    
+    if [ -z "$repo_owner" ] || [ -z "$repo_name" ]; then
+        echo -e "${YELLOW}⚠️  Could not parse repository info. Skipping subissue creation.${RESET}" >&2
+        return 1
+    fi
+    
+    # Create subissue title
+    local subissue_title="Feature #${feature_num}: ${feature_name}"
+    
+    # Create subissue body
+    local subissue_body="## Feature #${feature_num}: ${feature_name}
+
+**Parent Issue**: #${agent_issue_num} (${agent_name})
+**Status**: In Progress
+**TL;DR**: ${feature_tldr:-No description}
+
+### Files
+"
+    
+    if [ -n "$feature_files" ]; then
+        IFS=' ' read -ra FILES_ARRAY <<< "$feature_files"
+        for file in "${FILES_ARRAY[@]}"; do
+            if [ -n "$file" ]; then
+                subissue_body="${subissue_body}
+- \`${file}\`"
+            fi
+        done
+    else
+        subissue_body="${subissue_body}
+- (See agent file for file list)"
+    fi
+    
+    subissue_body="${subissue_body}
+
+---
+
+This subissue tracks Feature #${feature_num} from ${agent_name}. See parent issue #${agent_issue_num} for agent context and the local agent file for complete execution context, TDD cycles, and feature specifications."
+    
+    # Create subissue using gh sub-issue extension
+    # Use temp file for body since --body with multiline can be tricky
+    local temp_body_file=$(mktemp)
+    echo "$subissue_body" > "$temp_body_file"
+    
+    local subissue_output
+    subissue_output=$(gh sub-issue create \
+        --parent "$parent_issue" \
+        --title "$subissue_title" \
+        --body "$(cat "$temp_body_file")" \
+        --repo "${repo_owner}/${repo_name}" 2>&1) || {
+        rm -f "$temp_body_file"
+        echo -e "${RED}❌ Failed to create feature subissue:${RESET}" >&2
+        echo "$subissue_output" >&2
+        rm -f "$temp_body_file"
+        return 1
+    }
+    
+    rm -f "$temp_body_file"
+    
+    # Extract subissue number from output
+    local subissue_number=""
+    if echo "$subissue_output" | grep -qE 'https://github.com/[^/]+/[^/]+/issues/[0-9]+'; then
+        subissue_number=$(echo "$subissue_output" | grep -oE '/issues/[0-9]+' | grep -oE '[0-9]+' | head -1)
+    elif echo "$subissue_output" | grep -qE '#[0-9]+'; then
+        subissue_number=$(echo "$subissue_output" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1)
+    else
+        local subissue_url=$(echo "$subissue_output" | grep -oE 'https://[^[:space:]]+' | head -1)
+        if [ -n "$subissue_url" ]; then
+            subissue_number=$(echo "$subissue_url" | grep -oE '/issues/[0-9]+' | grep -oE '[0-9]+' | head -1)
+        fi
+    fi
+    
+    if [ -z "$subissue_number" ]; then
+        echo -e "${YELLOW}⚠️  Subissue created but could not extract issue number.${RESET}" >&2
+        echo "$subissue_output" >&2
+        return 1
+    fi
+    
+    echo "$subissue_number"
+    return 0
+}
+
+# Function to create GitHub issue for agent (parent issue)
+create_agent_issue() {
+    local agent_file="$1"
+    local agent_name="$2"
+    local agent_num="$3"
+    local plan_name="$4"
+    local feature_numbers="$5"
+    local feature_tldrs="$6"
+    local files_list="$7"
+    
+    # Check if GitHub CLI is available
+    if ! command -v gh >/dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  GitHub CLI not found. Skipping issue creation.${RESET}" >&2
+        return 1
+    fi
+    
+    # Check if authenticated
+    if ! gh auth status >/dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  GitHub CLI not authenticated. Skipping issue creation.${RESET}" >&2
+        return 1
+    fi
+    
+    # Get repository owner and name
+    local repo_info=$(gh repo view --json owner,name 2>/dev/null || echo "")
+    if [ -z "$repo_info" ]; then
+        echo -e "${YELLOW}⚠️  Could not determine repository. Skipping issue creation.${RESET}" >&2
+        return 1
+    fi
+    
+    local repo_owner=""
+    local repo_name=""
+    if command -v jq >/dev/null 2>&1; then
+        repo_owner=$(echo "$repo_info" | jq -r '.owner.login' 2>/dev/null || echo "")
+        repo_name=$(echo "$repo_info" | jq -r '.name' 2>/dev/null || echo "")
+    else
+        # Fallback parsing
+        repo_owner=$(echo "$repo_info" | grep -oE '"owner"[^}]*"login"[^"]*"([^"]+)"' | sed -E 's/.*"login"[^"]*"([^"]+)".*/\1/' || echo "")
+        repo_name=$(echo "$repo_info" | grep -oE '"name"[^,}]*"([^"]+)"' | sed -E 's/.*"name"[^"]*"([^"]+)".*/\1/' || echo "")
+    fi
+    
+    if [ -z "$repo_owner" ] || [ -z "$repo_name" ]; then
+        echo -e "${YELLOW}⚠️  Could not parse repository info. Skipping issue creation.${RESET}" >&2
+        return 1
+    fi
+    
+    # Format feature numbers for title
+    local feature_list=$(echo "$feature_numbers" | tr ',' ' ' | sed 's/\([0-9]\+\)/#\1/g' | tr ' ' ',')
+    
+    # Create issue title
+    local issue_title="[${plan_name}] Agent ${agent_num}: ${agent_name} - Features ${feature_list}"
+    
+    # Calculate relative path to agent file from runi-planning-docs root
+    # Handle both absolute and relative paths
+    local agent_file_rel_path=""
+    local normalized_path="$agent_file"
+    
+    # If path is relative and starts with ../, resolve it
+    if [[ "$agent_file" == ../* ]]; then
+        # Try to get absolute path for extraction
+        if command -v realpath >/dev/null 2>&1; then
+            normalized_path=$(realpath "$agent_file" 2>/dev/null || echo "$agent_file")
+        fi
+    fi
+    
+    # Extract path relative to runi-planning-docs
+    if [[ "$normalized_path" == *"runi-planning-docs"* ]]; then
+        agent_file_rel_path=$(echo "$normalized_path" | sed -E 's|.*runi-planning-docs/(.+)$|\1|')
+    elif [[ "$agent_file" == *"runi-planning-docs"* ]]; then
+        # Fallback: try original path
+        agent_file_rel_path=$(echo "$agent_file" | sed -E 's|.*runi-planning-docs/(.+)$|\1|')
+    else
+        # Fallback: construct from plan name and filename
+        agent_file_rel_path="plans/${plan_name}/agents/$(basename "$agent_file")"
+    fi
+    
+    # Create simplified agent issue body (parent issue)
+    local issue_body="## Agent: ${agent_name}
+
+**Local Agent File**: \`${agent_file_rel_path}\`
+**Plan**: ${plan_name}
+**Features**: $(echo "$feature_numbers" | tr ',' ' ' | sed 's/\([0-9]\+\)/#\1/g' | tr ' ' ', ')
+
+This issue represents Agent ${agent_num} work. See feature subissues for individual feature tracking.
+
+### Feature Subissues
+
+_Feature subissues will be created and linked here._
+
+---
+
+**Local Planning Context**
+
+This issue represents agent work defined in:
+- **Agent File**: \`${agent_file_rel_path}\`
+- **Plan**: \`plans/${plan_name}/plan.md\`
+
+The local agent file contains the complete execution context, TDD cycles, and feature specifications."
+    
+    # Create labels
+    local labels="agent-work,plan-${plan_name}"
+    
+    # Create issue using GitHub CLI
+    local issue_output
+    issue_output=$(gh issue create \
+        --title "$issue_title" \
+        --body "$issue_body" \
+        --label "$labels" \
+        --repo "${repo_owner}/${repo_name}" 2>&1) || {
+        echo -e "${RED}❌ Failed to create GitHub issue:${RESET}" >&2
+        echo "$issue_output" >&2
+        return 1
+    }
+    
+    # Extract issue number from output
+    local issue_number=""
+    if echo "$issue_output" | grep -qE 'https://github.com/[^/]+/[^/]+/issues/[0-9]+'; then
+        issue_number=$(echo "$issue_output" | grep -oE '/issues/[0-9]+' | grep -oE '[0-9]+' | head -1)
+    elif echo "$issue_output" | grep -qE '#[0-9]+'; then
+        issue_number=$(echo "$issue_output" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1)
+    else
+        # Try to get issue number from API
+        local issue_url=$(echo "$issue_output" | grep -oE 'https://[^[:space:]]+' | head -1)
+        if [ -n "$issue_url" ]; then
+            issue_number=$(echo "$issue_url" | grep -oE '/issues/[0-9]+' | grep -oE '[0-9]+' | head -1)
+        fi
+    fi
+    
+    if [ -z "$issue_number" ]; then
+        echo -e "${YELLOW}⚠️  Issue created but could not extract issue number.${RESET}" >&2
+        echo "$issue_output" >&2
+        return 1
+    fi
+    
+    echo "$issue_number"
+    return 0
+}
+
+# Function to update agent file with issue and subissue numbers
+update_agent_file_with_issues() {
+    local agent_file="$1"
+    local agent_issue_number="$2"
+    local feature_subissues="$3"  # Format: "13:37|14:38|15:39"
+    
+    # Check if file exists
+    if [ ! -f "$agent_file" ]; then
+        return 1
+    fi
+    
+    # Update or add agent issue number
+    if grep -qE '\*\*GitHub Issue\*\*:' "$agent_file"; then
+        # Update existing issue number
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/\*\*GitHub Issue\*\*:.*/\*\*GitHub Issue\*\*: #${agent_issue_number}/" "$agent_file"
+        else
+            sed -i "s/\*\*GitHub Issue\*\*:.*/\*\*GitHub Issue\*\*: #${agent_issue_number}/" "$agent_file"
+        fi
+    else
+        # Add issue number after Plan Location
+        if grep -q '\*\*Plan Location\*\*:' "$agent_file"; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "/\*\*Plan Location\*\*:/a\\
+**GitHub Issue**: #${agent_issue_number}
+" "$agent_file"
+            else
+                sed -i "/\*\*Plan Location\*\*:/a\\\*\*GitHub Issue\*\*: #${agent_issue_number}" "$agent_file"
+            fi
+        else
+            # Add after agent header (first line)
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "1a\\
+\\
+**GitHub Issue**: #${agent_issue_number}
+" "$agent_file"
+            else
+                sed -i "1a\\\n\*\*GitHub Issue\*\*: #${agent_issue_number}" "$agent_file"
+            fi
+        fi
+    fi
+    
+    # Update feature sections with subissue numbers
+    if [ -n "$feature_subissues" ]; then
+        IFS='|' read -ra SUBISSUE_ARRAY <<< "$feature_subissues"
+        for subissue_entry in "${SUBISSUE_ARRAY[@]}"; do
+            if [[ "$subissue_entry" =~ ^([0-9]+):([0-9]+)$ ]]; then
+                local feature_num="${BASH_REMATCH[1]}"
+                local subissue_num="${BASH_REMATCH[2]}"
+                
+                # Check if subissue number already exists for this feature
+                if grep -A 5 "^### Feature #${feature_num}:" "$agent_file" | grep -qE '\*\*GitHub Subissue\*\*:'; then
+                    # Update existing subissue number
+                    if [[ "$OSTYPE" == "darwin"* ]]; then
+                        sed -i '' "/^### Feature #${feature_num}:/,/^### Feature #/ {
+                            s/\*\*GitHub Subissue\*\*:.*/\*\*GitHub Subissue\*\*: #${subissue_num}/
+                        }" "$agent_file"
+                    else
+                        sed -i "/^### Feature #${feature_num}:/,/^### Feature #/ {
+                            s/\*\*GitHub Subissue\*\*:.*/\*\*GitHub Subissue\*\*: #${subissue_num}/
+                        }" "$agent_file"
+                    fi
+                else
+                    # Add subissue number after feature header
+                    if [[ "$OSTYPE" == "darwin"* ]]; then
+                        sed -i '' "/^### Feature #${feature_num}:/a\\
+\\
+**GitHub Subissue**: #${subissue_num}
+" "$agent_file"
+                    else
+                        sed -i "/^### Feature #${feature_num}:/a\\\n\*\*GitHub Subissue\*\*: #${subissue_num}" "$agent_file"
+                    fi
+                fi
+            fi
+        done
+    fi
+    
+    return 0
+}
+
 # Main execution
 main() {
     local plan_name=""
@@ -184,8 +623,135 @@ open_agent_file() {
     local plan_dir=$(dirname "$(dirname "$agent_file")")
     local agent_name=$(basename "$agent_file" .agent.md)
     
-    # Extract agent display name
-    local agent_display=$(echo "$agent_name" | sed 's/agent_[0-9]*_//' | sed 's/_/ /g' | sed 's/\b\(.\)/\u\1/g')
+    # Check if GitHub issue exists, create if not
+    local existing_issue=$(extract_issue_number "$agent_file" 2>/dev/null || echo "")
+    if [ -z "$existing_issue" ]; then
+        echo -e "${DIM}Creating GitHub issue and feature subissues for agent...${RESET}"
+        
+        # Extract agent metadata (now includes per-feature data)
+        local metadata=$(extract_agent_metadata "$agent_file")
+        IFS='|' read -r agent_display_name agent_num plan_name feature_numbers feature_names feature_tldrs feature_files <<< "$metadata"
+        
+        # Create agent issue (parent)
+        local agent_issue_number
+        agent_issue_number=$(create_agent_issue "$agent_file" "$agent_display_name" "$agent_num" "$plan_name" "$feature_numbers" "$feature_tldrs" "" 2>&1)
+        
+        if [ $? -ne 0 ] || [ -z "$agent_issue_number" ]; then
+            echo -e "${YELLOW}⚠️  Failed to create agent issue (non-blocking)${RESET}" >&2
+            if [ -n "$agent_issue_number" ]; then
+                echo "$agent_issue_number" >&2
+            fi
+            echo ""
+        else
+            echo -e "${GREEN}✅ Created agent issue #${agent_issue_number}${RESET}"
+            
+            # Create feature subissues
+            local feature_subissues=""
+            IFS=',' read -ra FEATURE_NUM_ARRAY <<< "$feature_numbers"
+            IFS='|' read -ra FEATURE_NAME_ARRAY <<< "$feature_names"
+            IFS='|' read -ra FEATURE_TLDR_ARRAY <<< "$feature_tldrs"
+            IFS='|' read -ra FEATURE_FILES_ARRAY <<< "$feature_files"
+            
+            for i in "${!FEATURE_NUM_ARRAY[@]}"; do
+                local feature_num="${FEATURE_NUM_ARRAY[$i]}"
+                local feature_name=""
+                local feature_tldr=""
+                local feature_files_for_subissue=""
+                
+                # Find feature name
+                for name_entry in "${FEATURE_NAME_ARRAY[@]}"; do
+                    if [[ "$name_entry" =~ ^${feature_num}:(.*)$ ]]; then
+                        feature_name="${BASH_REMATCH[1]}"
+                        break
+                    fi
+                done
+                
+                # Find feature TL;DR
+                for tldr_entry in "${FEATURE_TLDR_ARRAY[@]}"; do
+                    if [[ "$tldr_entry" =~ ^${feature_num}:(.*)$ ]]; then
+                        feature_tldr="${BASH_REMATCH[1]}"
+                        break
+                    fi
+                done
+                
+                # Find feature files
+                for files_entry in "${FEATURE_FILES_ARRAY[@]}"; do
+                    if [[ "$files_entry" =~ ^${feature_num}:(.*)$ ]]; then
+                        feature_files_for_subissue="${BASH_REMATCH[1]}"
+                        break
+                    fi
+                done
+                
+                # Create subissue
+                local subissue_number
+                subissue_number=$(create_feature_subissue "$agent_issue_number" "$feature_num" "$feature_name" "$feature_tldr" "$feature_files_for_subissue" "$agent_issue_number" "$agent_display_name" "$plan_name" 2>&1)
+                
+                if [ $? -eq 0 ] && [ -n "$subissue_number" ]; then
+                    echo -e "${GREEN}  ✅ Created feature #${feature_num} subissue #${subissue_number}${RESET}"
+                    feature_subissues="${feature_subissues}${feature_subissues:+|}${feature_num}:${subissue_number}"
+                else
+                    echo -e "${YELLOW}  ⚠️  Failed to create feature #${feature_num} subissue${RESET}" >&2
+                fi
+            done
+            
+            # Update agent issue body with subissue links
+            if [ -n "$feature_subissues" ]; then
+                local subissue_list=""
+                IFS='|' read -ra SUBISSUE_ARRAY <<< "$feature_subissues"
+                for subissue_entry in "${SUBISSUE_ARRAY[@]}"; do
+                    if [[ "$subissue_entry" =~ ^([0-9]+):([0-9]+)$ ]]; then
+                        local feature_num="${BASH_REMATCH[1]}"
+                        local subissue_num="${BASH_REMATCH[2]}"
+                        local feature_name_for_list=""
+                        for name_entry in "${FEATURE_NAME_ARRAY[@]}"; do
+                            if [[ "$name_entry" =~ ^${feature_num}:(.*)$ ]]; then
+                                feature_name_for_list="${BASH_REMATCH[1]}"
+                                break
+                            fi
+                        done
+                        subissue_list="${subissue_list}
+- #${subissue_num} - Feature #${feature_num}: ${feature_name_for_list}"
+                    fi
+                done
+                
+                # Update agent issue body
+                local repo_info=$(gh repo view --json owner,name 2>/dev/null || echo "")
+                if [ -n "$repo_info" ] && command -v jq >/dev/null 2>&1; then
+                    local repo_owner=$(echo "$repo_info" | jq -r '.owner.login' 2>/dev/null || echo "")
+                    local repo_name=$(echo "$repo_info" | jq -r '.name' 2>/dev/null || echo "")
+                    if [ -n "$repo_owner" ] && [ -n "$repo_name" ]; then
+                        local current_body=$(gh issue view "$agent_issue_number" --json body -q '.body' --repo "${repo_owner}/${repo_name}" 2>/dev/null || echo "")
+                        if [ -n "$current_body" ]; then
+                            # Replace placeholder with actual subissue list
+                            local updated_body=$(echo "$current_body" | sed "s/_Feature subissues will be created and linked here._/${subissue_list}/")
+                            gh issue edit "$agent_issue_number" --body "$updated_body" --repo "${repo_owner}/${repo_name}" >/dev/null 2>&1 || true
+                        fi
+                    fi
+                fi
+            fi
+            
+            # Update agent file with agent issue and feature subissues
+            if update_agent_file_with_issues "$agent_file" "$agent_issue_number" "$feature_subissues"; then
+                echo -e "${GREEN}✅ Updated agent file with issue and subissue numbers${RESET}"
+                local repo_info=$(gh repo view --json owner,name 2>/dev/null || echo "")
+                if [ -n "$repo_info" ] && command -v jq >/dev/null 2>&1; then
+                    local repo_owner=$(echo "$repo_info" | jq -r '.owner.login' 2>/dev/null || echo "")
+                    local repo_name=$(echo "$repo_info" | jq -r '.name' 2>/dev/null || echo "")
+                    if [ -n "$repo_owner" ] && [ -n "$repo_name" ]; then
+                        echo -e "${DIM}   Agent Issue: https://github.com/${repo_owner}/${repo_name}/issues/${agent_issue_number}${RESET}"
+                    fi
+                fi
+            else
+                echo -e "${YELLOW}⚠️  Issues created but failed to update agent file${RESET}" >&2
+            fi
+            echo ""
+        fi
+    else
+        echo -e "${DIM}GitHub issue #${existing_issue} already exists${RESET}"
+    fi
+    
+    # Extract agent display name from first line of agent file
+    local agent_display=$(head -1 "$agent_file" | sed 's/^# Agent [0-9]*: //' | sed 's/\*\*Plan Location\*\*.*//' | sed 's/\*\*GitHub Issue\*\*.*//' | xargs)
     
     # Extract features from agent file
     local features=()

@@ -75,6 +75,24 @@ Bypasses auto-detection and uses the specified plan.
    - Reference related commands (`just heal`, `just run`, `just assess-agents`)
    - Show how to verify completion
 
+## RLM Query Integration (Optional)
+
+The `/work` command can optionally use RLM query tools to extract plan status programmatically:
+
+```typescript
+// Extract next GAP feature from plan
+const nextGap = await rlm_query({
+  path: `plans/${planName}/plan.md`,
+  code: `
+    const features = extractFeatures(doc.content);
+    const gaps = features.filter(f => f.status === 'GAP');
+    return gaps.sort((a, b) => a.priority - b.priority)[0];
+  `,
+});
+```
+
+This is optional - the script-based approach remains the primary method.
+
 ## Output Format
 
 The command outputs with clear visual hierarchy:

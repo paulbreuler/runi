@@ -18,7 +18,13 @@ const config: StorybookConfig = {
 
   addons: [
     '@storybook/addon-a11y',
-    '@storybook/addon-vitest',
+    {
+      name: '@storybook/addon-vitest',
+      options: {
+        // Let the addon auto-discover the workspace and project
+        // It will use the configDir from the storybookTest plugin
+      },
+    },
     '@storybook/addon-docs',
     {
       name: '@storybook/addon-mcp',

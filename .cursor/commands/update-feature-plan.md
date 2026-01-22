@@ -168,6 +168,15 @@ An agent file needs regeneration if:
 | TDD one-liners | Historical context |
 | Relevant gotchas | |
 | Done checklist | |
+| **GitHub Issue number** (agent issue) | (preserve from existing file) |
+| **GitHub Subissue numbers** (feature subissues) | (preserve from existing file per feature) |
+
+**Critical**: When regenerating agent files, **preserve the GitHub issue numbers** from the existing agent file:
+- Extract agent issue number from existing file: `**GitHub Issue**: #123` (parent)
+- Extract feature subissue numbers from existing file: `**GitHub Subissue**: #124` in each feature section (children)
+- Include in regenerated file metadata
+- **Do not create new issues** when regenerating (keep existing agent issue and feature subissues)
+- If no issues exist in old file, leave issue number fields empty (will be created by `/run-agent` or `/pr`)
 
 Target: ~200-400 lines for 2-4 features.
 
@@ -179,6 +188,7 @@ Target: ~200-400 lines for 2-4 features.
 - [ ] README.md status matrix is current
 - [ ] Dependency graph is accurate
 - [ ] No orphaned features
+- [ ] GitHub issue numbers preserved in regenerated agent files (if they existed)
 
 ### 10. Commit (After Final Approval)
 
@@ -250,6 +260,35 @@ Example:
 1. Append to `gotchas.md`
 2. Add to affected features in `plan.md`
 3. Regenerate agent files that need to know
+
+## RLM Query Tools for Plan Analysis
+
+RLM query tools can help analyze plans before and after updates:
+
+```typescript
+// Find all features affected by an interface change
+const affectedFeatures = await rlm_query({
+  path: 'plans/[plan-name]/plan.md',
+  code: `
+    const features = extractFeatures(doc.content);
+    const interface = extractInterfaces(doc.content).find(i => i.name === 'useColumnHeader');
+    return features.filter(f => f.dependsOn?.includes(interface.id));
+  `,
+});
+
+// Compare feature status before/after update
+const statusDiff = await rlm_query({
+  path: 'plans/[plan-name]/plan.md',
+  code: `
+    const features = extractFeatures(doc.content);
+    return {
+      gap: features.filter(f => f.status === 'GAP').length,
+      wip: features.filter(f => f.status === 'WIP').length,
+      pass: features.filter(f => f.status === 'PASS').length
+    };
+  `,
+});
+```
 
 ## Change Proposal Format
 

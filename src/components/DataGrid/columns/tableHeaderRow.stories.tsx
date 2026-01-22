@@ -90,7 +90,7 @@ const DemoTable = ({ data, columns, sticky = false }: DemoTableProps): React.Rea
 };
 
 const meta: Meta = {
-  title: 'DataGrid/Table Header Row',
+  title: 'Components/DataGrid/Table Header Row',
   parameters: {
     layout: 'padded',
   },

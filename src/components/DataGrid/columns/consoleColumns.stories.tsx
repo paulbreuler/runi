@@ -135,7 +135,7 @@ const DemoTable = ({ data }: DemoTableProps): React.ReactElement => {
 
 // Meta
 const meta: Meta = {
-  title: 'DataGrid/Console Columns',
+  title: 'Components/DataGrid/Console Columns',
   parameters: {
     layout: 'padded',
   },

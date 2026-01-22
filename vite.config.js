@@ -15,12 +15,12 @@ export default defineConfig({
     exclude: ['storybook-static'],
   },
   server: {
-    port: 5173,
+    port: 5175,
     strictPort: true,
     hmr: {
       protocol: 'ws',
       host: 'localhost',
-      port: 5173,
+      port: 5175,
     },
     watch: {
       ignored: ['**/src-tauri/**', '**/storybook-static/**'],

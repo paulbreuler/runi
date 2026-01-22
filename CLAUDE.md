@@ -44,6 +44,16 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 > - `research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
 > - `MANIFEST.md` — Complete document hierarchy
 >
+> **Use RLM query tools for advanced queries:**
+>
+> - `rlm_query` — Execute JavaScript code on a single document (extract features, filter by status, analyze structure)
+> - `rlm_multi_query` — Execute JavaScript code on multiple documents (summarize plans, aggregate data across plans)
+>
+> **Example RLM queries:**
+>
+> - Extract all features with status 'GAP': `rlm_query({ path: 'plans/0013-rlm-query-tool/plan.md', code: "extractFeatures(doc.content).filter(f => f.status === 'GAP')" })`
+> - Summarize all plans: `rlm_multi_query({ pattern: 'plans/*/plan.md', code: "docs.map(d => ({ name: extractFrontmatter(d.content).meta.name, featureCount: extractFeatures(d.content).length }))" })`
+>
 > **Example:** `mcp_runi_Planning_read_doc({ path: 'VISION.md' })` or `mcp_runi_Planning_read_doc({ path: 'DESIGN_IDEOLOGY.md' })`
 
 ---

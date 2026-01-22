@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TimeAgoCell } from './timeAgoCell';
 
 const meta: Meta<typeof TimeAgoCell> = {
-  title: 'DataGrid/TimeAgoCell',
+  title: 'Components/DataGrid/TimeAgoCell',
   component: TimeAgoCell,
   parameters: {
     layout: 'padded',

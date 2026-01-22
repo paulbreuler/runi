@@ -18,11 +18,23 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
    - Workload balance (30%): Agents with fewer remaining tasks get higher score
    - Priority (30%): Lower feature IDs (earlier in plan) get higher score
 
-2. **Assesses agent status** - Checks completion state and file organization
+2. **Creates GitHub issues** (if not exists) - Automatically creates GitHub issues for the agent work:
+   - **Agent Issue (parent)**: Represents the agent work
+     - Title: `[Plan Name] Agent N: [Agent Name] - Features #[N], #[N+1]`
+     - Description: Simplified agent summary with reference to local agent file
+     - Labels: `agent-work`, `plan-[plan-name]`
+   - **Feature Subissues (children)**: One subissue per feature using `gh sub-issue` extension
+     - Title: `Feature #X: [Feature Name]`
+     - Description: Feature-specific details, files, TL;DR
+     - Linked to agent issue as parent
+   - **Stores issue numbers**: Agent issue number and feature subissue numbers stored in agent file
+   - **Relationship**: Agent issue is parent, feature subissues are children; local agent file is source of truth
 
-3. **Opens agent file in Cursor** - Opens the selected or specified agent file with context
+3. **Assesses agent status** - Checks completion state and file organization
 
-4. **Displays instructions** - Shows quick links and next steps
+4. **Opens agent file in Cursor** - Opens the selected or specified agent file with context
+
+5. **Displays instructions** - Shows quick links and next steps
 
 ## Usage Examples
 
@@ -78,13 +90,24 @@ Assesses all agents in the plan for completion status and file organization.
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
-2. **Display output:**
+2. **GitHub Issue Creation:**
+   - The script automatically creates GitHub issues when an agent file is opened (if issues don't exist)
+   - **Agent Issue (parent)**: Created first, represents the agent work
+   - **Feature Subissues (children)**: Created for each feature using `gh sub-issue create --parent <agent-issue>`
+   - Issue numbers stored in agent file:
+     - `**GitHub Issue**: #123` at top (agent issue)
+     - `**GitHub Subissue**: #124` in each feature section
+   - Feature subissues will automatically close when PR with `Closes #124, #125, #126` merges to default branch
+   - Agent issue remains open (parent issue, not closed by PR)
+   - If GitHub CLI or `gh sub-issue` extension is not available, issue creation is skipped (non-blocking)
+
+3. **Display output:**
    - Show task selection results (if applicable)
    - Show agent status assessment
    - Show context and instructions
    - Display clickable file links
 
-3. **Provide guidance:**
+4. **Provide guidance:**
    - Explain next steps for the agent
    - Reference related commands (`just close-feature-agent`, `just assess-agents`, `just work`, `just heal`)
    - Show how to verify completion
