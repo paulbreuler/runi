@@ -19,8 +19,10 @@ Create a pull request on GitHub with a comprehensive description from staged cha
      - Modified files (e.g., changes to `agents/4_agent_*.agent.md` or `agents/agent_4_*.agent.md`)
      - Recently modified agent files (fallback)
    - If agent detected:
-     - Extract agent name, feature numbers, and TL;DR descriptions from agent file
+     - Extract agent name, feature numbers, TL;DR descriptions, and **feature subissue numbers** from agent file JSON response
      - Use agent context for PR title and description
+     - **Extract feature subissue numbers**: Look for `feature_subissues` field in JSON (e.g., "#37, #38, #39")
+     - **Use subissues in PR**: Include `Closes #37, #38, #39` in PR description "Related Issues" section
    - If no agent detected:
      - Proceed with standard PR generation (non-agent work)
 
@@ -47,15 +49,20 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - Count files changed and lines changed
 
 4. **Generate PR description (in memory, NO files):**
+   - **Related Issues section** (at top, if agent detected with feature subissues):
+     - Use `Closes #37, #38, #39` for feature subissues (GitHub official method - automatically closes subissues when PR merges to default branch)
+     - **Critical**: Only works when PR targets default branch (main/master)
+     - **Note**: Don't close agent issue - only close feature subissues (agent issue is parent, subissues are children)
    - Summary of changes
    - Detailed changes list
    - Test plan
    - Breaking changes (if any)
-   - Related issues (if mentioned in commits)
    - **Related Agent section** (if agent detected):
      - Agent name
      - Feature numbers
      - Plan name
+     - Agent GitHub Issue: #36 (parent issue - for context, not closed by PR)
+     - Feature Subissues: #37, #38, #39 (closed by PR)
      - Brief description from agent file TL;DR
    - Review checklist
    - Use markdown formatting
@@ -143,6 +150,8 @@ _(Only included if agent detected)_
 Working on: [Agent Name]
 Features: #48, #49, #50
 Plan: [plan-name]
+Agent Issue: #36 (parent issue - provides context)
+Feature Subissues: #37, #38, #39 (closed by this PR)
 
 [Brief description from agent file TL;DR]
 
@@ -176,8 +185,9 @@ None (or description of breaking changes with migration guide)
 
 ## Related Issues
 
-Closes #123
-Related to #456
+Closes #37, #38, #39 <!-- Feature subissues - will auto-close when PR merges to default branch -->
+
+<!-- Agent Issue #36 is parent and provides context, but is not closed by this PR -->
 
 ## Checklist
 

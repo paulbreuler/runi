@@ -18,11 +18,17 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
    - Workload balance (30%): Agents with fewer remaining tasks get higher score
    - Priority (30%): Lower feature IDs (earlier in plan) get higher score
 
-2. **Creates GitHub issue** (if not exists) - Automatically creates a GitHub issue for the agent work:
-   - Title: `[Plan Name] Agent N: [Agent Name] - Features #[N], #[N+1]`
-   - Description: Agent summary, feature list, TL;DR descriptions, files to modify
-   - Labels: `agent-work`, `plan-[plan-name]`
-   - Stores issue number in agent file metadata
+2. **Creates GitHub issues** (if not exists) - Automatically creates GitHub issues for the agent work:
+   - **Agent Issue (parent)**: Represents the agent work
+     - Title: `[Plan Name] Agent N: [Agent Name] - Features #[N], #[N+1]`
+     - Description: Simplified agent summary with reference to local agent file
+     - Labels: `agent-work`, `plan-[plan-name]`
+   - **Feature Subissues (children)**: One subissue per feature using `gh sub-issue` extension
+     - Title: `Feature #X: [Feature Name]`
+     - Description: Feature-specific details, files, TL;DR
+     - Linked to agent issue as parent
+   - **Stores issue numbers**: Agent issue number and feature subissue numbers stored in agent file
+   - **Relationship**: Agent issue is parent, feature subissues are children; local agent file is source of truth
 
 3. **Assesses agent status** - Checks completion state and file organization
 
@@ -85,10 +91,15 @@ Assesses all agents in the plan for completion status and file organization.
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
 2. **GitHub Issue Creation:**
-   - The script automatically creates a GitHub issue when an agent file is opened (if issue doesn't exist)
-   - Issue number is stored in agent file metadata as `**GitHub Issue**: #123`
-   - Issue will automatically close when PR with `Closes #123` merges to default branch
-   - If GitHub CLI is not available or not authenticated, issue creation is skipped (non-blocking)
+   - The script automatically creates GitHub issues when an agent file is opened (if issues don't exist)
+   - **Agent Issue (parent)**: Created first, represents the agent work
+   - **Feature Subissues (children)**: Created for each feature using `gh sub-issue create --parent <agent-issue>`
+   - Issue numbers stored in agent file:
+     - `**GitHub Issue**: #123` at top (agent issue)
+     - `**GitHub Subissue**: #124` in each feature section
+   - Feature subissues will automatically close when PR with `Closes #124, #125, #126` merges to default branch
+   - Agent issue remains open (parent issue, not closed by PR)
+   - If GitHub CLI or `gh sub-issue` extension is not available, issue creation is skipped (non-blocking)
 
 3. **Display output:**
    - Show task selection results (if applicable)
