@@ -53,11 +53,7 @@ export const ExpandedContent = ({
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          transition={
-            shouldReduceMotion
-              ? { duration: 0 }
-              : { duration: 0.2, ease: 'easeInOut' }
-          }
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
           <div

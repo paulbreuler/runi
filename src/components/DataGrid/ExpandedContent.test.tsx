@@ -61,7 +61,7 @@ describe('ExpandedContent', () => {
     });
 
     it('expanded content spans all columns', () => {
-      const { container } = render(
+      const { container: _container } = render(
         <table>
           <tbody>
             <tr>

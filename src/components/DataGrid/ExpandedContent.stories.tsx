@@ -215,10 +215,12 @@ export const AnimationTest: Story = {
           <button
             type="button"
             data-testid="toggle-button"
-            onClick={(): void => setIsVisible(!isVisible)}
+            onClick={(): void => {
+              setIsVisible(isVisible === true ? false : true);
+            }}
             className="px-3 py-1.5 text-xs bg-bg-raised border border-border-default rounded hover:bg-bg-elevated"
           >
-            {isVisible ? 'Collapse' : 'Expand'}
+            {isVisible === true ? 'Collapse' : 'Expand'}
           </button>
         </div>
         <table className="w-full">
@@ -237,7 +239,7 @@ export const AnimationTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify content is initially collapsed', async () => {
-      const expandedSection = canvas.queryByTestId('expanded-section');
+      const _expandedSection = canvas.queryByTestId('expanded-section');
       // When isVisible is false, AnimatePresence should not render the content
       // But we need to check after the initial render
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -270,7 +272,7 @@ export const AnimationTest: Story = {
       await new Promise((resolve) => setTimeout(resolve, 250));
       // After collapse, AnimatePresence removes the element
       // The element should no longer be in the document
-      const expandedSection = canvas.queryByTestId('expanded-section');
+      const _expandedSection = canvas.queryByTestId('expanded-section');
       // Note: AnimatePresence may keep the element briefly during exit animation
       // So we just verify the button text changed
       const toggleButton = canvas.getByTestId('toggle-button');
@@ -310,9 +312,7 @@ export const AlignmentTest: Story = {
       <table className="w-full">
         <thead>
           <tr>
-            <th className="w-8 px-2 text-left text-xs font-medium text-text-secondary">
-              ☐
-            </th>
+            <th className="w-8 px-2 text-left text-xs font-medium text-text-secondary">☐</th>
             <th className="w-4 px-2 text-left text-xs font-medium text-text-secondary">▶</th>
             <th className="px-3 text-left text-xs font-medium text-text-secondary">Method</th>
             <th className="px-3 text-left text-xs font-medium text-text-secondary">URL</th>
@@ -344,7 +344,9 @@ export const AlignmentTest: Story = {
       const innerDiv = expandedSection.querySelector('div.bg-bg-elevated.border-t');
 
       await expect(innerDiv).toBeInTheDocument();
-      await expect(innerDiv).toHaveStyle({ marginLeft: `${EXPANDED_CONTENT_LEFT_MARGIN_PX}px` });
+      await expect(innerDiv).toHaveStyle({
+        marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px`,
+      });
     });
 
     await step('Verify margin aligns with first data column', async () => {
@@ -355,10 +357,13 @@ export const AlignmentTest: Story = {
       // Total: 54px
       const expandedSection = canvas.getByTestId('expanded-section');
       const innerDiv = expandedSection.querySelector('div.bg-bg-elevated.border-t');
-      const computedStyle = window.getComputedStyle(innerDiv as Element);
+      if (innerDiv === null) {
+        throw new Error('Inner div not found');
+      }
+      const computedStyle = window.getComputedStyle(innerDiv);
       const marginLeft = computedStyle.marginLeft;
 
-      await expect(marginLeft).toBe(`${EXPANDED_CONTENT_LEFT_MARGIN_PX}px`);
+      await expect(marginLeft).toBe(`${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px`);
     });
   },
   parameters: {

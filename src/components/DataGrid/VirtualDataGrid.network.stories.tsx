@@ -727,7 +727,10 @@ export const NetworkLeftSticky: Story = {
     onExpandedChange: fn(),
   },
   render: (args) => (
-    <div className="w-[600px] h-[500px] bg-bg-app border border-border-default rounded" data-testid="left-sticky-test">
+    <div
+      className="w-[600px] h-[500px] bg-bg-app border border-border-default rounded"
+      data-testid="left-sticky-test"
+    >
       <div className="p-2 text-xs text-text-secondary mb-2">
         Scroll horizontally to see selection and expander columns remain fixed on the left.
       </div>
@@ -740,7 +743,7 @@ export const NetworkLeftSticky: Story = {
     await step('Verify left-pinned columns have sticky positioning', async () => {
       // Wait for component to render
       await new Promise((resolve) => setTimeout(resolve, 200));
-      
+
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
       if (container === null) {
         return;
@@ -754,10 +757,10 @@ export const NetworkLeftSticky: Story = {
       });
 
       // Should have sticky left columns
-      expect(leftStickyCells.length).toBeGreaterThan(0);
+      await expect(leftStickyCells.length).toBeGreaterThan(0);
     });
 
-    await step('Verify left columns have correct z-index', async () => {
+    await step('Verify left columns have correct z-index', () => {
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
       if (container === null) {
         return;
@@ -772,11 +775,11 @@ export const NetworkLeftSticky: Story = {
       leftStickyCells.forEach((cell) => {
         const style = (cell as HTMLElement).style;
         const zIndex = Number.parseInt(style.zIndex, 10);
-        expect(zIndex).toBeGreaterThanOrEqual(5);
+        void expect(zIndex).toBeGreaterThanOrEqual(5);
       });
     });
 
-    await step('Verify left columns have background classes', async () => {
+    await step('Verify left columns have background classes', () => {
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
       if (container === null) {
         return;
@@ -793,7 +796,7 @@ export const NetworkLeftSticky: Story = {
         return hasSticky && hasBgClass;
       });
 
-      expect(leftStickyCells.length).toBeGreaterThan(0);
+      void expect(leftStickyCells.length).toBeGreaterThan(0);
     });
 
     await step('Test keyboard navigation to left-pinned checkboxes', async () => {
@@ -846,7 +849,10 @@ export const NetworkRightSticky: Story = {
     onExpandedChange: fn(),
   },
   render: (args) => (
-    <div className="w-[600px] h-[500px] bg-bg-app border border-border-default rounded" data-testid="right-sticky-test">
+    <div
+      className="w-[600px] h-[500px] bg-bg-app border border-border-default rounded"
+      data-testid="right-sticky-test"
+    >
       <div className="p-2 text-xs text-text-secondary mb-2">
         Scroll horizontally to see actions column remain fixed on the right when table overflows.
       </div>
@@ -859,7 +865,7 @@ export const NetworkRightSticky: Story = {
     await step('Verify right-pinned columns have sticky positioning when overflow', async () => {
       // Wait for component to render and calculate overflow
       await new Promise((resolve) => setTimeout(resolve, 300));
-      
+
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
       if (container === null) {
         return;
@@ -874,10 +880,10 @@ export const NetworkRightSticky: Story = {
 
       // Right columns should be sticky when there's overflow
       // Note: In test environment, overflow detection may vary
-      expect(rightStickyCells.length).toBeGreaterThanOrEqual(0);
+      void expect(rightStickyCells.length).toBeGreaterThanOrEqual(0);
     });
 
-    await step('Verify right columns have correct z-index when sticky', async () => {
+    await step('Verify right columns have correct z-index when sticky', () => {
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
       if (container === null) {
         return;
@@ -892,7 +898,7 @@ export const NetworkRightSticky: Story = {
       rightStickyCells.forEach((cell) => {
         const style = (cell as HTMLElement).style;
         const zIndex = Number.parseInt(style.zIndex, 10);
-        expect(zIndex).toBeGreaterThanOrEqual(10);
+        void expect(zIndex).toBeGreaterThanOrEqual(10);
       });
     });
 
@@ -947,11 +953,11 @@ export const NetworkStickyOverflow: Story = {
     </div>
   ),
   play: async ({ canvasElement, step }) => {
-    await step('Verify overflow detection logic exists', async () => {
+    await step('Verify overflow detection logic exists', () => {
       // The component checks hasHorizontalOverflow before making right columns sticky
       // This test verifies the logic exists (actual overflow detection requires browser environment)
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
-      expect(container).toBeInTheDocument();
+      void expect(container).toBeInTheDocument();
     });
   },
   parameters: {
@@ -983,7 +989,8 @@ export const NetworkStickyHeader: Story = {
   render: (args) => (
     <div className="h-[500px] bg-bg-app" data-testid="sticky-header-test">
       <div className="mb-2 text-xs text-text-secondary">
-        Scroll vertically to see header remain fixed at the top. Sticky header columns align with body columns.
+        Scroll vertically to see header remain fixed at the top. Sticky header columns align with
+        body columns.
       </div>
       <VirtualDataGrid {...args} />
     </div>
@@ -994,13 +1001,13 @@ export const NetworkStickyHeader: Story = {
     await step('Verify header has sticky positioning', async () => {
       // Wait for component to render
       await new Promise((resolve) => setTimeout(resolve, 200));
-      
+
       const thead = canvasElement.querySelector('thead');
-      expect(thead).toBeInTheDocument();
-      expect(thead).toHaveClass('sticky', 'top-0');
+      void expect(thead).toBeInTheDocument();
+      void expect(thead).toHaveClass('sticky', 'top-0');
     });
 
-    await step('Verify sticky header columns align with body columns', async () => {
+    await step('Verify sticky header columns align with body columns', () => {
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
       if (container === null) {
         return;
@@ -1022,11 +1029,11 @@ export const NetworkStickyHeader: Story = {
       });
 
       // Both header and body should have sticky positioning for pinned columns
-      expect(headerCells.length).toBeGreaterThan(0);
-      expect(bodyCells.length).toBeGreaterThan(0);
+      void expect(headerCells.length).toBeGreaterThan(0);
+      void expect(bodyCells.length).toBeGreaterThan(0);
     });
 
-    await step('Verify header has correct z-index', async () => {
+    await step('Verify header has correct z-index', () => {
       const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
       if (container === null) {
         return;
@@ -1042,33 +1049,29 @@ export const NetworkStickyHeader: Story = {
         const style = (cell as HTMLElement).style;
         const zIndex = Number.parseInt(style.zIndex, 10);
         // Header z-index should be higher than body cells (15 for left, 20 for right)
-        expect(zIndex).toBeGreaterThanOrEqual(15);
+        void expect(zIndex).toBeGreaterThanOrEqual(15);
       });
 
       // The thead itself should also have z-index class
       const thead = container.querySelector('thead');
-      expect(thead).toHaveClass('z-10');
+      void expect(thead).toHaveClass('z-10');
     });
 
     await step('Test keyboard navigation to sortable headers', async () => {
       // Find sortable column headers
       const methodHeader = canvas.getByRole('columnheader', { name: /method/i });
-      if (methodHeader !== undefined) {
-        methodHeader.focus();
-        await waitForFocus(methodHeader, 2000);
-        await expect(methodHeader).toHaveFocus();
-        await expect(methodHeader).toHaveAttribute('aria-sort');
-      }
+      methodHeader.focus();
+      await waitForFocus(methodHeader, 2000);
+      await expect(methodHeader).toHaveFocus();
+      await expect(methodHeader).toHaveAttribute('aria-sort');
     });
 
     await step('Test header click for sorting', async () => {
       const methodHeader = canvas.getByRole('columnheader', { name: /method/i });
-      if (methodHeader !== undefined) {
-        await userEvent.click(methodHeader);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        // Header should have aria-sort attribute after click
-        await expect(methodHeader).toHaveAttribute('aria-sort');
-      }
+      await userEvent.click(methodHeader);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Header should have aria-sort attribute after click
+      await expect(methodHeader).toHaveAttribute('aria-sort');
     });
   },
   parameters: {
