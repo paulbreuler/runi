@@ -261,6 +261,35 @@ Example:
 2. Add to affected features in `plan.md`
 3. Regenerate agent files that need to know
 
+## RLM Query Tools for Plan Analysis
+
+RLM query tools can help analyze plans before and after updates:
+
+```typescript
+// Find all features affected by an interface change
+const affectedFeatures = await rlm_query({
+  path: 'plans/[plan-name]/plan.md',
+  code: `
+    const features = extractFeatures(doc.content);
+    const interface = extractInterfaces(doc.content).find(i => i.name === 'useColumnHeader');
+    return features.filter(f => f.dependsOn?.includes(interface.id));
+  `,
+});
+
+// Compare feature status before/after update
+const statusDiff = await rlm_query({
+  path: 'plans/[plan-name]/plan.md',
+  code: `
+    const features = extractFeatures(doc.content);
+    return {
+      gap: features.filter(f => f.status === 'GAP').length,
+      wip: features.filter(f => f.status === 'WIP').length,
+      pass: features.filter(f => f.status === 'PASS').length
+    };
+  `,
+});
+```
+
 ## Change Proposal Format
 
 ````markdown

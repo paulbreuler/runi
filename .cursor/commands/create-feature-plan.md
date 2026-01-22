@@ -16,6 +16,8 @@ This command uses MCP planning tools for document management:
 - `mcp_runi_Planning_create_doc` - Create planning documents (plan.md, interfaces.md, README.md, gotchas.md)
 - `mcp_runi_Planning_list_docs` - List existing plans to determine next plan number
 - `mcp_runi_Planning_read_doc` - Read existing documents for reference
+- `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
+- `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
 
 ## Skills Integration
 
@@ -402,6 +404,36 @@ const existingPlan = await mcp_runi_Planning_read_doc({
 const interfaces = await mcp_runi_Planning_read_doc({
   path: 'plans/0005-storybook-testing-overhaul/interfaces.md',
   lines: [1, 50], // Read lines 1-50
+});
+```
+
+### Querying Documents with RLM Tools
+
+```typescript
+// Extract all GAP features from a plan
+const gapFeatures = await rlm_query({
+  path: 'plans/0008-storybook-testing-overhaul/plan.md',
+  code: `
+    const features = extractFeatures(doc.content);
+    return features.filter(f => f.status === 'GAP');
+  `,
+});
+
+// Analyze feature distribution across all plans
+const planSummary = await rlm_multi_query({
+  pattern: 'plans/*/plan.md',
+  code: `
+    return docs.map(doc => {
+      const features = extractFeatures(doc.content);
+      return {
+        plan: extractFrontmatter(doc.content).meta.name,
+        total: features.length,
+        gap: features.filter(f => f.status === 'GAP').length,
+        wip: features.filter(f => f.status === 'WIP').length,
+        pass: features.filter(f => f.status === 'PASS').length
+      };
+    });
+  `,
 });
 ```
 

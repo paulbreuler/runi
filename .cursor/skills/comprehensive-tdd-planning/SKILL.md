@@ -101,6 +101,22 @@ Copy agents/columns.agent.md → paste to agent → done
 | `next-task <plan>`     | Select next task (no run)                               | Preview next task selection             |
 | `assess-agents <plan>` | Assess agent completion status                          | Check status, find cleanup needs        |
 
+## RLM Query Tools
+
+RLM (Run Language Model) query tools enable JavaScript-based queries on planning documents:
+
+- **`rlm_query`** - Query a single document (extract features, filter by status, analyze structure)
+- **`rlm_multi_query`** - Query multiple documents (aggregate data, find patterns)
+
+**Use cases:**
+
+- Extract all GAP features from a plan
+- Analyze feature distribution across plans
+- Find features affected by interface changes
+- Generate plan summaries programmatically
+
+See `CLAUDE.md` for detailed examples and usage patterns.
+
 ### update-feature-plan
 
 Handles mid-flight changes:
