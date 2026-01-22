@@ -455,11 +455,66 @@ export const FocusRestorationTest: Story = {
 **Testing Approaches:**
 
 1. **Play Functions** - For component interactions (recommended for most cases)
-2. **Playwright E2E** - For complex multi-component flows (see `docs/STORYBOOK_TESTING.md`)
-3. **Vitest Addon** - Convert stories to test cases automatically
-4. **Accessibility Addon** - Automatic a11y checks on all stories
+   - Run automatically when viewing stories
+   - Can be executed via Vitest addon in CI
+   - Use for keyboard navigation, user flows, state changes
+   - Use `step()` to organize test actions into logical groups
+   - Use testing utilities from `@/utils/storybook-test-helpers` (`tabToElement`, `waitForFocus`, etc.)
 
-See `docs/STORYBOOK_TESTING.md` for complete testing guide.
+2. **Vitest Addon** - Convert stories to test cases automatically
+   - Stories with `play` functions become test cases
+   - Run via `npm run test-storybook`
+   - No duplication: write tests once, run in both Storybook and CI
+   - Fast execution in Node.js (no browser overhead)
+   - Already configured in `.storybook/main.ts`
+
+3. **Playwright E2E** - For complex multi-component flows and cross-browser testing
+   - Use when test spans multiple components/pages
+   - Use for cross-browser verification
+   - Use for complex integration scenarios
+   - **Migration decision**: Migrate to play functions when:
+     - ✅ Test covers a single component's interactions
+     - ✅ Test doesn't require cross-browser verification
+     - ✅ Test can be expressed as keyboard/mouse interactions
+     - ✅ Test doesn't require complex setup or teardown
+   - **Keep Playwright when**: Cross-browser testing needed, spans multiple components, requires complex setup
+
+4. **Accessibility Addon** - Automatic a11y checks on all stories
+   - Checks WCAG 2.1 AA compliance automatically
+   - View results in "Accessibility" panel
+   - Tests color contrast, ARIA attributes, keyboard navigation
+   - Already configured in `.storybook/main.ts`
+
+5. **Visual Testing** - Screenshot-based regression testing
+   - Use Playwright for screenshot capture (see `tests/visual/storybook-visual.spec.ts`)
+   - Test responsive breakpoints and theme variations
+   - Run: `npm run test-storybook:visual` (requires Storybook running)
+   - Update baselines: `npx playwright test tests/visual/ --update-snapshots`
+   - Use consistent viewport sizes for reliable comparisons
+
+**Testing Utilities:**
+
+Use utilities from `@/utils/storybook-test-helpers`:
+
+- `tabToElement(target, maxTabs?)` - Navigate to element using Tab key
+- `waitForFocus(element, timeout?)` - Wait for element to receive focus
+- `waitForRemount(selector, timeout?)` - Wait for element to be removed and re-added
+- `waitForState(getState, expected, timeout?)` - Wait for state value to match expected
+
+**Story Templates:**
+
+Templates are in `.storybook/templates/`:
+
+- `interaction-story.template.tsx` - For keyboard navigation and interactions
+- `accessibility-story.template.tsx` - For ARIA and focus management testing
+- `visual-story.template.tsx` - For visual regression testing
+
+**Related Documentation:**
+
+- `.storybook/README.md` - Storybook configuration and features
+- `docs/STORYBOOK_10_FEATURES.md` - Storybook 10 features (sb.mock, tag filtering, etc.)
+- `.cursor/skills/storybook-testing/SKILL.md` - Complete Storybook testing skill guide
+- `src/utils/storybook-test-helpers.ts` - Testing utility source code
 
 ---
 

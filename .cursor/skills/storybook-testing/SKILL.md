@@ -236,13 +236,50 @@ See existing stories for reference:
 ## Testing Approaches
 
 1. **Play Functions** - For component interactions (recommended for most cases)
-2. **Playwright E2E** - For complex multi-component flows (see `tests/e2e/`)
-3. **Vitest Addon** - Convert stories to test cases automatically
+   - Run automatically when viewing stories
+   - Can be executed via Vitest addon in CI
+   - Use for keyboard navigation, user flows, state changes
+
+2. **Vitest Addon** - Convert stories to test cases automatically
+   - Stories with `play` functions become test cases
+   - Run via `npm run test-storybook`
+   - No duplication: write tests once, run in both Storybook and CI
+   - Fast execution in Node.js (no browser overhead)
+   - Already configured in `.storybook/main.ts`
+
+3. **Playwright E2E** - For complex multi-component flows and cross-browser testing
+   - Use when test spans multiple components/pages
+   - Use for cross-browser verification
+   - Use for complex integration scenarios
+   - **Migration decision**: Migrate to play functions when test covers single component and doesn't require cross-browser testing
+
 4. **Accessibility Addon** - Automatic a11y checks on all stories
+   - Checks WCAG 2.1 AA compliance automatically
+   - View results in "Accessibility" panel
+   - Tests color contrast, ARIA attributes, keyboard navigation
+
+5. **Visual Testing** - Screenshot-based regression testing
+   - Use Playwright for screenshot capture (see `tests/visual/storybook-visual.spec.ts`)
+   - Run: `npm run test-storybook:visual` (requires Storybook running)
+   - Update baselines: `npx playwright test tests/visual/ --update-snapshots`
+
+## Running Tests
+
+```bash
+# Start Storybook (required for visual tests)
+npm run storybook
+
+# Run Storybook tests via Vitest
+npm run test-storybook
+
+# Run visual tests (requires Storybook running)
+npm run test-storybook:visual
+```
 
 ## Related Documentation
 
-- `CLAUDE.md` - Storybook best practices section
+- `CLAUDE.md` - Storybook best practices section (complete guide)
 - `docs/STORYBOOK_10_FEATURES.md` - Storybook 10 features
+- `.storybook/README.md` - Storybook configuration
 - `src/utils/storybook-test-helpers.ts` - Testing utility source code
 - `.storybook/templates/` - Story template files
