@@ -16,7 +16,25 @@ const config: StorybookConfig = {
 
   stories: ['../src/components/**/*.stories.@(tsx|ts|jsx|js)', '../src/components/**/*.mdx'],
 
-  addons: ['@storybook/addon-a11y', '@storybook/addon-vitest', '@storybook/addon-docs'],
+  addons: [
+    '@storybook/addon-a11y',
+    '@storybook/addon-vitest',
+    '@storybook/addon-docs',
+    {
+      name: '@storybook/addon-mcp',
+      options: {
+        toolsets: {
+          dev: true, // Tools for story URL retrieval and UI building instructions
+          docs: true, // Tools for component manifest and documentation
+        },
+      },
+    },
+  ],
+
+  // Enable experimental component manifest for docs toolset
+  features: {
+    experimentalComponentsManifest: true, // Enable manifest generation for the docs toolset
+  },
 
   staticDirs: ['../static'],
 

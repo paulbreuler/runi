@@ -360,5 +360,5 @@ work (assess status, find next task)
 - **Interface changes cascade**: Always identify dependent agents
 - **Regenerate, don't patch**: Cleaner than surgical edits
 - **Verify consistency**: All files must agree
-- **Commit after approval**: Changes go to runi-planning-docs repo
+- **Commit after approval**: Changes go to runi-planning-docs repo (git operations use file paths, but document reading should use MCP tools)
 ```

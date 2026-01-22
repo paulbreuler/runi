@@ -30,18 +30,21 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 **The visual tone:** Zen, calm, and book-like. Muted surfaces, soft contrast, and selective emphasis. Use color as a signal, not decoration.
 
-> **Planning Documents:** See `../runi-planning-docs/` (separate repository) for detailed vision and architecture:
+> **Planning Documents:** Access design and planning documents via MCP tools (separate repository at `../runi-planning-docs/`):
 >
-> - `../runi-planning-docs/VISION.md` — North star document
-> - `../runi-planning-docs/runi-design-vision-v8.1.md` — Complete design specification
-> - `../runi-planning-docs/DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification)
-> - `../runi-planning-docs/addendums/001-ai-architecture.md` — AI provider abstraction and verification
-> - `../runi-planning-docs/addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
-> - `../runi-planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
-> - `../runi-planning-docs/next-frontier-in-api.md` — Research on API landscape, knowledge graphs, visualization, security, and AI-native patterns
-> - `../runi-planning-docs/research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
+> **Use `mcp_runi_Planning_read_doc` to read:**
 >
-> See `../runi-planning-docs/MANIFEST.md` for complete document hierarchy.
+> - `VISION.md` — North star document
+> - `runi-design-vision-v8.1.md` — Complete design specification
+> - `DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification)
+> - `addendums/001-ai-architecture.md` — AI provider abstraction and verification
+> - `addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
+> - `addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
+> - `next-frontier-in-api.md` — Research on API landscape, knowledge graphs, visualization, security, and AI-native patterns
+> - `research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
+> - `MANIFEST.md` — Complete document hierarchy
+>
+> **Example:** `mcp_runi_Planning_read_doc({ path: 'VISION.md' })` or `mcp_runi_Planning_read_doc({ path: 'DESIGN_IDEOLOGY.md' })`
 
 ---
 
@@ -125,7 +128,7 @@ runi/
 │   │   └── intelligence/         # AI/drift/semantic features
 │   ├── bindings/                 # ts-rs generated TypeScript types
 │   └── Cargo.toml
-├── ../runi-planning-docs/        # Design vision and strategy documents (separate repository)
+├── ../runi-planning-docs/        # Design vision and strategy documents (separate repository, accessed via MCP tools)
 ├── .tmp/                         # Ephemeral files (git-ignored, auto-cleanup)
 ├── specs/                        # Technical specifications
 ├── prompts/                      # Ralph prompt files
@@ -613,7 +616,9 @@ Use `/pr-check-fixes` to systematically fix failing CI checks. See `CLAUDE.md` P
 
 ### Managing PR Comments
 
-Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAUDE.md` PR Workflow section for full details.
+Use `/pr-comments` to fetch, review, address, and resolve PR comments.
+
+**CRITICAL: Use TodoWrite to track progress through each comment systematically.**
 
 **Process:**
 
@@ -633,20 +638,32 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
    gh api /repos/{owner}/{repo}/pulls/{number}/comments
    ```
 
-2. **Display comments** formatted for review with file:line references
+2. **Create todos for all comments** using TodoWrite with this format:
 
-3. **Triage comments:**
-   - Already resolved - Comment addressed in subsequent commit
-   - Needs code change - Feedback requires modifying code
-   - Needs clarification - Question that can be answered with citation
-   - Won't fix - Valid feedback but intentionally not addressing (explain why)
+   ```text
+   [File:line] Brief description of the issue
+   ```
 
-4. **Address feedback:**
+   Example todos:
+   - `helpers.ts:219 - Fix memory leak in waitForRemount`
+   - `main.ts:30 - Remove experimentalFormat option`
+   - `stories.tsx:724 - Add comment explaining manual focus`
+
+3. **Triage each comment** (update todo status as you go):
+
+   | Triage            | Todo Status                 | Action                        |
+   | ----------------- | --------------------------- | ----------------------------- |
+   | Needs code change | `in_progress` → `completed` | Fix code, reply with citation |
+   | Already fixed     | `completed`                 | Reply citing prior fix        |
+   | Won't fix         | `completed`                 | Reply with rationale          |
+   | Invalid/incorrect | `completed`                 | Reply explaining why          |
+
+4. **Address feedback** (mark todo `in_progress` before starting each):
    - Make necessary code changes
    - Note file and line numbers of fix
    - Prepare reply citing the fix
 
-5. **Resolve comments:**
+5. **Reply to comments:**
 
    ```bash
    # Reply to review comment with resolution
@@ -654,7 +671,31 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
      -f body="Fixed in \`file.ts:42-45\` - [description of change]"
    ```
 
-6. **Mark threads as resolved** (if permission allows)
+6. **Resolve threads using GraphQL API:**
+
+   ```bash
+   # Get thread IDs
+   gh api graphql -f query='
+   query {
+     repository(owner: "OWNER", name: "REPO") {
+       pullRequest(number: PR_NUMBER) {
+         reviewThreads(first: 50) {
+           nodes { id isResolved comments(first: 1) { nodes { body } } }
+         }
+       }
+     }
+   }'
+
+   # Resolve a thread
+   gh api graphql -f query='
+   mutation {
+     resolveReviewThread(input: { threadId: "THREAD_ID" }) {
+       thread { isResolved }
+     }
+   }'
+   ```
+
+7. **Mark todo as completed** after resolving each thread
 
 **Reply format examples:**
 
@@ -665,10 +706,11 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
 
 **Acceptance Criteria:**
 
-- [ ] All comments reviewed
+- [ ] All comments have corresponding todos
+- [ ] Each todo tracked through completion
 - [ ] Code changes made for actionable feedback
 - [ ] Each addressed comment has reply with file:line citation
-- [ ] Resolved threads marked as resolved (where possible)
+- [ ] Threads resolved via GraphQL API (not just replied to)
 - [ ] Any "won't fix" items have clear explanations
 
 **Notes:**
@@ -677,6 +719,7 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
 - Comment threading: Review comments have `in_reply_to_id` for replies
 - Citations matter: Always cite specific file:line references
 - GitHub CLI required: Requires `gh` CLI tool installed and authenticated
+- **GraphQL for resolution**: REST API can reply but GraphQL is required to mark threads as resolved
 
 ---
 
@@ -753,7 +796,7 @@ Intelligence communicates through consistent visual signals:
 
 - Import from `motion-plus/react` for React components
 - Follow patterns from `/Users/paul/Documents/GitHub/plus/dev/react-env/src/app/tests/[slug]/components`
-- See Motion+ documentation at https://plus.motion.dev/
+- See [Motion+ documentation](https://plus.motion.dev/)
 
 **Current Implementation**:
 
@@ -773,14 +816,6 @@ Intelligence communicates through consistent visual signals:
 
 **Internal Docs:**
 
-Planning documents are in a separate repository: `../runi-planning-docs/`
+Planning documents are accessed via MCP tools. See the "Planning Documents" section above (Product Context) for the complete list and MCP usage instructions.
 
-- `../runi-planning-docs/VISION.md` — North star
-- `../runi-planning-docs/runi-design-vision-v8.1.md` — Full design spec
-- `../runi-planning-docs/DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy
-- `../runi-planning-docs/addendums/001-ai-architecture.md` — AI verification architecture
-- `../runi-planning-docs/addendums/002-adoption-positioning.md` — Adoption strategy
-- `../runi-planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
-- `../runi-planning-docs/next-frontier-in-api.md` — API landscape research
-- `../runi-planning-docs/research/competitor-analysis.md` — Competitor feature analysis
 - `docs/DECISIONS.md` — Historical architectural decisions
