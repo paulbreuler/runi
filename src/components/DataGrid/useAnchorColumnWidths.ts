@@ -91,24 +91,6 @@ export function useAnchorColumnWidths(
   const columnWidths = useMemo(() => {
     const widths = new Map<string, number>();
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'useAnchorColumnWidths.ts:90',
-        message: 'Column width calculation started',
-        data: { containerWidth, columnCount: columns.length },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'A',
-      }),
-    }).catch(() => {
-      /* ignore */
-    });
-    // #endregion
-
     if (containerWidth === 0) {
       // Return default widths before measurement
       columns.forEach((col) => {
@@ -124,24 +106,6 @@ export function useAnchorColumnWidths(
     // 2. Calculate available width for flex columns
     const totalGap = gap * Math.max(0, columns.length - 1);
     const availableForFlex = Math.max(0, containerWidth - fixedTotalWidth - totalGap);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'useAnchorColumnWidths.ts:107',
-        message: 'Available space calculated',
-        data: { containerWidth, fixedTotalWidth, availableForFlex },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'B',
-      }),
-    }).catch(() => {
-      /* ignore */
-    });
-    // #endregion
 
     // 3. Calculate total flex weight
     const flexColumns = columns.filter((c) => c.sizing === 'flex');
@@ -167,34 +131,6 @@ export function useAnchorColumnWidths(
       fixedTotalWidth + flexWidths.reduce((sum, f) => sum + f.width, 0) + totalGap;
     const needsOverflow = totalWithMinimums > containerWidth;
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'useAnchorColumnWidths.ts:130',
-        message: 'Overflow detection',
-        data: {
-          totalWithMinimums,
-          containerWidth,
-          needsOverflow,
-          flexWidths: flexWidths.map((f) => ({
-            id: f.col.id,
-            compressedWidth: f.width,
-            defaultWidth: f.col.defaultWidth,
-            minWidth: f.col.minWidth,
-          })),
-        },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'C',
-      }),
-    }).catch(() => {
-      /* ignore */
-    });
-    // #endregion
-
     // 6. Assign all widths
     columns.forEach((col) => {
       if (col.sizing === 'fixed') {
@@ -204,49 +140,10 @@ export function useAnchorColumnWidths(
         if (needsOverflow && col.defaultWidth !== undefined) {
           const finalWidth = Math.max(col.minWidth ?? 50, col.defaultWidth);
           widths.set(col.id, finalWidth);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'useAnchorColumnWidths.ts:140',
-              message: 'Using defaultWidth for overflow',
-              data: {
-                columnId: col.id,
-                defaultWidth: col.defaultWidth,
-                minWidth: col.minWidth,
-                finalWidth,
-              },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'C',
-            }),
-          }).catch(() => {
-            /* ignore */
-          });
-          // #endregion
         } else {
           const flexInfo = flexWidths.find((f) => f.col.id === col.id);
           const assignedWidth = flexInfo?.width ?? 100;
           widths.set(col.id, assignedWidth);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'useAnchorColumnWidths.ts:147',
-              message: 'Using compressed width',
-              data: { columnId: col.id, assignedWidth, compressedWidth: flexInfo?.width },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'A',
-            }),
-          }).catch(() => {
-            /* ignore */
-          });
-          // #endregion
         }
       }
     });
@@ -265,26 +162,6 @@ export function useAnchorColumnWidths(
         }
       }
     }
-
-    // #region agent log
-    const finalWidths = Object.fromEntries(widths);
-    const totalFinalWidth = Array.from(widths.values()).reduce((a, b) => a + b, 0);
-    fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'useAnchorColumnWidths.ts:160',
-        message: 'Final column widths assigned',
-        data: { finalWidths, totalFinalWidth, containerWidth, needsOverflow },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'A',
-      }),
-    }).catch(() => {
-      /* ignore */
-    });
-    // #endregion
 
     return widths;
   }, [containerWidth, columns, gap]);

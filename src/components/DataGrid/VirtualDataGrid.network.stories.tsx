@@ -791,8 +791,8 @@ export const NetworkLeftSticky: Story = {
         const style = htmlCell.style;
         const hasSticky = style.position === 'sticky' && style.left !== '';
         const hasBgClass =
-          htmlCell.classList.contains('bg-bg-raised') ||
-          htmlCell.classList.contains('bg-accent-blue/10');
+          htmlCell.classList.contains('bg-bg-app') ||
+          htmlCell.classList.contains('bg-accent-blue/15');
         return hasSticky && hasBgClass;
       });
 
@@ -1003,8 +1003,8 @@ export const NetworkStickyHeader: Story = {
       await new Promise((resolve) => setTimeout(resolve, 200));
 
       const thead = canvasElement.querySelector('thead');
-      void expect(thead).toBeInTheDocument();
-      void expect(thead).toHaveClass('sticky', 'top-0');
+      await expect(thead).toBeInTheDocument();
+      await expect(thead).toHaveClass('sticky', 'top-0');
     });
 
     await step('Verify sticky header columns align with body columns', () => {

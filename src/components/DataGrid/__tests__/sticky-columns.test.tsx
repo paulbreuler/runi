@@ -402,7 +402,7 @@ describe('Features #41-43: Sticky Columns', () => {
         const hasSticky = style.position === 'sticky' && style.right !== '';
         const hasBgClass =
           htmlCell.classList.contains('bg-bg-app') ||
-          htmlCell.classList.contains('bg-accent-blue/10');
+          htmlCell.classList.contains('bg-accent-blue/15');
         return hasSticky && hasBgClass;
       });
 
