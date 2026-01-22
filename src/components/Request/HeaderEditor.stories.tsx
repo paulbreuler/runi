@@ -95,6 +95,8 @@ export const FormInteractionsTest: Story = {
       const valueInput = canvas.getByTestId('new-header-value-input');
       await userEvent.type(keyInput, 'X-Custom-Header');
       await userEvent.type(valueInput, 'custom-value');
+      // Wait for input values to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(keyInput).toHaveValue('X-Custom-Header');
       await expect(valueInput).toHaveValue('custom-value');
     });

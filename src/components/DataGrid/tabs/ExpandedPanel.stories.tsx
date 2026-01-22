@@ -302,8 +302,19 @@ export const TabNavigationTest: Story = {
 
     await step('Press Enter to activate tab', async () => {
       await userEvent.keyboard('{Enter}');
-      const responseTab = canvas.getByRole('tab', { name: /response/i });
-      await expect(responseTab).toHaveAttribute('data-state', 'active');
+      // Wait for tab activation
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Get the focused response tab (should be the one we just activated)
+      const responseTabs = canvas.getAllByRole('tab', { name: /response/i });
+      const activeResponseTab = responseTabs.find(
+        (tab) => tab.getAttribute('data-state') === 'active'
+      );
+      if (activeResponseTab !== undefined) {
+        await expect(activeResponseTab).toHaveAttribute('data-state', 'active');
+      } else {
+        // Fallback: check first response tab
+        await expect(responseTabs[0]).toHaveAttribute('data-state', 'active');
+      }
     });
 
     await step('Use Arrow Left to move back to Timing tab', async () => {

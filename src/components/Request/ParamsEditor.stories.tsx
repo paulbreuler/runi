@@ -105,6 +105,8 @@ export const FormInteractionsTest: Story = {
       const valueInput = canvas.getByTestId('new-param-value-input');
       await userEvent.type(keyInput, 'status');
       await userEvent.type(valueInput, 'active');
+      // Wait for input values to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(keyInput).toHaveValue('status');
       await expect(valueInput).toHaveValue('active');
     });
@@ -204,9 +206,13 @@ export const ValidationTest: Story = {
     await step('Add parameter with empty key should not save', async () => {
       const addButton = canvas.getByTestId('add-param-button');
       await userEvent.click(addButton);
-      const valueInput = canvas.getByTestId('new-param-value-input');
+      // Wait for inputs to appear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const valueInput = await canvas.findByTestId('new-param-value-input', {}, { timeout: 2000 });
       await userEvent.type(valueInput, 'value-only');
       await userEvent.keyboard('{Enter}');
+      // Wait for validation/cancel
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Empty key should cancel editing
       const keyInput = canvas.queryByTestId('new-param-key-input');
       await expect(keyInput).not.toBeInTheDocument();
@@ -215,9 +221,13 @@ export const ValidationTest: Story = {
     await step('Add parameter with key only should save', async () => {
       const addButton = canvas.getByTestId('add-param-button');
       await userEvent.click(addButton);
-      const keyInput = canvas.getByTestId('new-param-key-input');
+      // Wait for inputs to appear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const keyInput = await canvas.findByTestId('new-param-key-input', {}, { timeout: 2000 });
       await userEvent.type(keyInput, 'key-only');
       await userEvent.keyboard('{Enter}');
+      // Wait for save
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Should save with empty value
       await expect(canvas.getByText('key-only')).toBeVisible();
     });

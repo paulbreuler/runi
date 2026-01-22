@@ -306,7 +306,7 @@ export const ConsoleTableInteractionTest: Story = {
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
         // Wait for expansion animation
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 150));
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
       }
     });

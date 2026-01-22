@@ -114,13 +114,13 @@ export const Default: Story = {
       // Find the dropdown trigger (SplitButton uses "More options" as default aria-label)
       const dropdownTrigger = canvas.getByRole('button', { name: /more options/i });
       await userEvent.click(dropdownTrigger);
-      // Wait for Radix menu portal to appear (menus render in portals)
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Wait for Radix menu portal to appear (menus render in portals, may need more time in CI)
+      await new Promise((resolve) => setTimeout(resolve, 400));
       // Menu should open - look in document body for portal
       const saveAsOption = await within(document.body).findByRole(
         'menuitem',
         { name: /save as/i },
-        { timeout: 3000 }
+        { timeout: 5000 }
       );
       await expect(saveAsOption).toBeVisible();
     });

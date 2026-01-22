@@ -181,6 +181,8 @@ export const FilterInteractionsTest: Story = {
       const searchInput = canvas.getByLabelText(/filter history by url/i);
       await userEvent.clear(searchInput);
       await userEvent.type(searchInput, 'users');
+      // Wait for input value to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(searchInput).toHaveValue('users');
     });
 

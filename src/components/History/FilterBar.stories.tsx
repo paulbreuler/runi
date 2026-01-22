@@ -190,6 +190,8 @@ export const FilterInteractionsTest: Story = {
       const searchInput = canvas.getByLabelText(/filter history by url/i);
       await userEvent.clear(searchInput);
       await userEvent.type(searchInput, 'api.example.com');
+      // Wait for input value to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(searchInput).toHaveValue('api.example.com');
     });
 
@@ -290,13 +292,17 @@ export const StateManagementTest: Story = {
     await step('Interact with filters and verify state updates', async () => {
       const methodFilter = canvas.getByTestId('method-filter');
       await userEvent.click(methodFilter);
-      // Wait for select to open
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      // Find option - it might be in a portal, so use findByRole with timeout
-      const getOption = await canvas.findByRole('option', { name: /^get$/i }, { timeout: 2000 });
+      // Wait for select to open (Radix Select uses portals)
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Options are in a Radix portal (document.body)
+      const getOption = await within(document.body).findByRole(
+        'option',
+        { name: /^get$/i },
+        { timeout: 2000 }
+      );
       await userEvent.click(getOption);
       // Wait for select to close and update
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       // Verify filter state changed (button text updates)
       await expect(methodFilter).toHaveTextContent(/get/i);
     });

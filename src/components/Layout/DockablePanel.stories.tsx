@@ -906,7 +906,7 @@ export const KeyboardShortcutsTest: Story = {
     };
 
     await step('Verify panel starts hidden', async () => {
-      void expect(usePanelStore.getState().isVisible).toBe(false);
+      await expect(usePanelStore.getState().isVisible).toBe(false);
       // Panel may still render but be hidden, so check visibility
       const panel = canvas.queryByTestId('dockable-panel');
       if (panel !== null) {

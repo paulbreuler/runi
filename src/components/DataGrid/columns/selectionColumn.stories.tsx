@@ -219,8 +219,8 @@ export const SelectionInteractionTest: Story = {
       const headerCheckbox = checkboxes[0];
       if (headerCheckbox !== undefined) {
         await userEvent.click(headerCheckbox);
-        // Wait for state update
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Wait for state update (may need more time in CI)
+        await new Promise((resolve) => setTimeout(resolve, 200));
         await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
       }
     });

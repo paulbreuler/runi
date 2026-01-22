@@ -315,10 +315,17 @@ export const StateManagementTest: Story = {
     await step('Apply filter and verify state updates', async () => {
       const statusFilter = canvas.getByTestId('status-filter');
       await userEvent.click(statusFilter);
-      // Wait for select to open
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const statusOption = await canvas.findByRole('option', { name: /2xx/i }, { timeout: 2000 });
+      // Wait for select to open (Radix Select uses portals)
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Options are in a Radix portal (document.body)
+      const statusOption = await within(document.body).findByRole(
+        'option',
+        { name: /2xx/i },
+        { timeout: 2000 }
+      );
       await userEvent.click(statusOption);
+      // Wait for select to close and filter to apply
+      await new Promise((resolve) => setTimeout(resolve, 200));
       // Verify filter state changed
       await expect(statusFilter).toHaveTextContent(/2xx/i);
       // Verify rows are still visible (filtered)

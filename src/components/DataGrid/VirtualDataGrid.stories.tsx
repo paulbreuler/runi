@@ -406,6 +406,8 @@ export const RowSelectionTest: Story = {
       const headerCheckbox = checkboxes[0];
       if (headerCheckbox !== undefined) {
         await userEvent.click(headerCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 150));
         await expect(headerCheckbox).toHaveAttribute('aria-checked', 'false');
       }
     });
@@ -485,8 +487,8 @@ export const RowExpansionTest: Story = {
 
     await step('Press Space to collapse row', async () => {
       await userEvent.keyboard(' ');
-      // Wait for collapse
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for collapse animation
+      await new Promise((resolve) => setTimeout(resolve, 150));
       const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {

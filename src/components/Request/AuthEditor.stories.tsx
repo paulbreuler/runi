@@ -67,16 +67,17 @@ export const FormInteractionsTest: Story = {
     await step('Select Bearer Token auth type', async () => {
       const authSelect = canvas.getByTestId('auth-type-select');
       await userEvent.click(authSelect);
-      // Wait for select to open
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const bearerOption = await canvas.findByRole(
+      // Wait for select to open (Radix Select uses portals)
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Options are in a Radix portal (document.body)
+      const bearerOption = await within(document.body).findByRole(
         'option',
         { name: /bearer token/i },
         { timeout: 2000 }
       );
       await userEvent.click(bearerOption);
       // Wait for select to close and form to update
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       const tokenInput = await canvas.findByTestId('bearer-token-input', {}, { timeout: 2000 });
       await expect(tokenInput).toBeVisible();
     });
@@ -84,22 +85,25 @@ export const FormInteractionsTest: Story = {
     await step('Enter bearer token', async () => {
       const tokenInput = canvas.getByTestId('bearer-token-input');
       await userEvent.type(tokenInput, 'sk-live-test-token');
+      // Wait for input value to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(tokenInput).toHaveValue('sk-live-test-token');
     });
 
     await step('Switch to Basic Auth', async () => {
       const authSelect = canvas.getByTestId('auth-type-select');
       await userEvent.click(authSelect);
-      // Wait for select to open
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const basicOption = await canvas.findByRole(
+      // Wait for select to open (Radix Select uses portals)
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Options are in a Radix portal (document.body)
+      const basicOption = await within(document.body).findByRole(
         'option',
         { name: /basic auth/i },
         { timeout: 2000 }
       );
       await userEvent.click(basicOption);
       // Wait for select to close and form to update
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       const usernameInput = await canvas.findByTestId(
         'basic-username-input',
         {},
@@ -119,6 +123,8 @@ export const FormInteractionsTest: Story = {
       const passwordInput = canvas.getByTestId('basic-password-input');
       await userEvent.type(usernameInput, 'testuser');
       await userEvent.type(passwordInput, 'testpass');
+      // Wait for input values to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(usernameInput).toHaveValue('testuser');
       await expect(passwordInput).toHaveValue('testpass');
     });
@@ -174,16 +180,17 @@ export const KeyboardNavigationTest: Story = {
 
     await step('Select Bearer and tab to token input', async () => {
       await userEvent.keyboard('{Enter}');
-      // Wait for select to open
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const bearerOption = await canvas.findByRole(
+      // Wait for select to open (Radix Select uses portals)
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Options are in a Radix portal (document.body)
+      const bearerOption = await within(document.body).findByRole(
         'option',
         { name: /bearer token/i },
         { timeout: 2000 }
       );
       await userEvent.click(bearerOption);
       // Wait for select to close and form to update
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       const tokenInput = await canvas.findByTestId('bearer-token-input', {}, { timeout: 2000 });
       await userEvent.tab();
       await waitForFocus(tokenInput, 1000);

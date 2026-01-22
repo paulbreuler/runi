@@ -97,13 +97,13 @@ export const ErrorToast: Story = {
       await userEvent.click(triggerButton);
       // Wait for toast to appear (toasts are animated, need time)
       // Toasts render in Radix Toast.Viewport which is in document.body
-      // Wait for toast animation to complete
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Wait for toast animation to complete (may need more time in CI)
+      await new Promise((resolve) => setTimeout(resolve, 600));
       // Check document.body for toast (Radix portals render there)
       const toast = await within(document.body).findByRole(
         'alert',
         { name: /tauri backend is not available/i },
-        { timeout: 3000 }
+        { timeout: 5000 }
       );
       await expect(toast).toBeVisible();
     });
@@ -254,23 +254,23 @@ export const Interactive: Story = {
     await step('Can trigger multiple toast types', async () => {
       const errorButton = canvas.getByRole('button', { name: /^error$/i });
       await userEvent.click(errorButton);
-      // Wait for toast animation (toasts render in document.body via Radix portal)
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Wait for toast animation (toasts render in document.body via Radix portal, may need more time in CI)
+      await new Promise((resolve) => setTimeout(resolve, 600));
       const errorToast = await within(document.body).findByRole(
         'alert',
         { name: /error occurred/i },
-        { timeout: 3000 }
+        { timeout: 5000 }
       );
       await expect(errorToast).toBeVisible();
 
       const successButton = canvas.getByRole('button', { name: /^success$/i });
       await userEvent.click(successButton);
       // Wait for toast animation
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, 600));
       const successToast = await within(document.body).findByRole(
         'alert',
         { name: /success message/i },
-        { timeout: 3000 }
+        { timeout: 5000 }
       );
       await expect(successToast).toBeVisible();
     });

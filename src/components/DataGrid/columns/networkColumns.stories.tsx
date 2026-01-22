@@ -503,17 +503,21 @@ export const NetworkTableInteractionTest: Story = {
       const firstRowCheckbox = checkboxes[1];
       if (firstRowCheckbox !== undefined) {
         await userEvent.click(firstRowCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 150));
         await expect(firstRowCheckbox).toHaveAttribute('aria-checked', 'true');
       }
     });
 
     await step('Click expander to expand row and see details', async () => {
+      // Wait a bit for checkbox selection to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
         // Wait for expansion animation
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 150));
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
       }
     });

@@ -55,6 +55,8 @@ export const FormInteractionsTest: Story = {
     await step('Type valid JSON', async () => {
       const textarea = canvas.getByTestId('body-textarea');
       await userEvent.type(textarea, '{"name":"test","count":1}');
+      // Wait for input value and validation to update
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await expect(textarea).toHaveValue('{"name":"test","count":1}');
       // Should show valid JSON indicator
       await expect(canvas.getByText('Valid JSON')).toBeVisible();
@@ -63,6 +65,8 @@ export const FormInteractionsTest: Story = {
     await step('Format JSON', async () => {
       const formatButton = canvas.getByTestId('format-json-button');
       await userEvent.click(formatButton);
+      // Wait for formatting to complete
+      await new Promise((resolve) => setTimeout(resolve, 150));
       const textarea = canvas.getByTestId('body-textarea');
       // Should be formatted with 2-space indentation
       await expect(textarea).toHaveValue('{\n  "name": "test",\n  "count": 1\n}');
@@ -72,6 +76,8 @@ export const FormInteractionsTest: Story = {
       const textarea = canvas.getByTestId('body-textarea');
       await userEvent.clear(textarea);
       await userEvent.type(textarea, '{"name":"test",}');
+      // Wait for validation to run
+      await new Promise((resolve) => setTimeout(resolve, 150));
       // Should show invalid JSON indicator
       await expect(canvas.getByText('Invalid JSON')).toBeVisible();
       // Format button should not be visible
