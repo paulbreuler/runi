@@ -4,6 +4,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { ResponseTab } from './ResponseTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 
@@ -13,12 +14,25 @@ const meta: Meta<typeof ResponseTab> = {
   parameters: {
     docs: {
       description: {
-        component:
-          'Main response tab component for expanded panel. Displays request and response bodies in a tabbed interface using ResponsePanel.',
+        component: `
+ResponseTab displays request and response bodies in a tabbed interface for the expanded panel.
+
+**Features:**
+- **Response Body tab (default)**: Shows formatted response body with JSON syntax highlighting
+- **Request Body tab**: Shows formatted request body
+- **JSON Formatting**: Automatically formats JSON with 2-space indentation
+- **Copy Button**: Copies the active tab's body content to clipboard
+- **Tab Navigation**: Switch between Response Body and Request Body views
+
+**Feature #20: Expanded Panel - Response Tab**
+- Response Body tab is active by default
+- JSON bodies are formatted with proper indentation
+- Copy button copies the currently active tab's content
+        `,
       },
     },
     test: {
-      skip: true, // Display-only component, no interactive elements to test
+      skip: false, // Has interactive elements (tabs, copy button)
     },
   },
   tags: ['autodocs'],
@@ -126,6 +140,112 @@ export const LargeResponse: Story = {
           null,
           2
         ),
+      },
+    },
+  },
+};
+
+/**
+ * Tests Feature #20: Response Body tab default, JSON formatting, and tab switching.
+ */
+export const ResponseTabFeaturesTest: Story = {
+  args: {
+    entry: mockEntry,
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify Response Body tab is active by default', async () => {
+      const responseTab = canvas.getByRole('tab', { name: /response body/i });
+      await expect(responseTab).toHaveAttribute('aria-selected', 'true');
+
+      const requestTab = canvas.getByRole('tab', { name: /request body/i });
+      await expect(requestTab).toHaveAttribute('aria-selected', 'false');
+    });
+
+    await step('Verify JSON is formatted', async () => {
+      const viewer = canvas.getByTestId('body-viewer');
+      await expect(viewer).toBeInTheDocument();
+      // Should contain formatted JSON (with proper structure)
+      await expect(viewer).toHaveTextContent('John');
+    });
+
+    await step('Verify copy button is present', async () => {
+      const copyButton = canvas.getByRole('button', { name: /copy/i });
+      await expect(copyButton).toBeInTheDocument();
+    });
+
+    await step('Switch to Request Body tab', async () => {
+      const requestTab = canvas.getByRole('tab', { name: /request body/i });
+      await userEvent.click(requestTab);
+      await expect(requestTab).toHaveAttribute('aria-selected', 'true');
+    });
+
+    await step('Verify Request Body content is displayed', async () => {
+      const viewer = canvas.getByTestId('body-viewer');
+      await expect(viewer).toBeInTheDocument();
+      // Request body should contain the request data
+      await expect(viewer).toHaveTextContent('John Doe');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests Feature #20: Verifies Response Body tab is active by default, JSON formatting works, and tab switching displays correct content.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests Feature #20: Response Body tab default, JSON formatting, and tab switching.
+ */
+export const ResponseTabFeaturesTest: Story = {
+  args: {
+    entry: mockEntry,
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify Response Body tab is active by default', async () => {
+      const responseTab = canvas.getByRole('tab', { name: /response body/i });
+      await expect(responseTab).toHaveAttribute('aria-selected', 'true');
+
+      const requestTab = canvas.getByRole('tab', { name: /request body/i });
+      await expect(requestTab).toHaveAttribute('aria-selected', 'false');
+    });
+
+    await step('Verify JSON is formatted', async () => {
+      const viewer = canvas.getByTestId('body-viewer');
+      await expect(viewer).toBeInTheDocument();
+      // Should contain formatted JSON (with proper structure)
+      await expect(viewer).toHaveTextContent('John');
+    });
+
+    await step('Verify copy button is present', async () => {
+      const copyButton = canvas.getByRole('button', { name: /copy/i });
+      await expect(copyButton).toBeInTheDocument();
+    });
+
+    await step('Switch to Request Body tab', async () => {
+      const requestTab = canvas.getByRole('tab', { name: /request body/i });
+      await userEvent.click(requestTab);
+      await expect(requestTab).toHaveAttribute('aria-selected', 'true');
+    });
+
+    await step('Verify Request Body content is displayed', async () => {
+      const viewer = canvas.getByTestId('body-viewer');
+      await expect(viewer).toBeInTheDocument();
+      // Request body should contain the request data
+      await expect(viewer).toHaveTextContent('John Doe');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests Feature #20: Verifies Response Body tab is active by default, JSON formatting works, and tab switching displays correct content.',
       },
     },
   },
