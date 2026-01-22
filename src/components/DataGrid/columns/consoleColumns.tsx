@@ -265,8 +265,8 @@ export function createConsoleColumns(
           count={(row.original as { _groupCount?: number })._groupCount}
         />
       ),
-      size: 200, // Starting width, will grow to fill available space
-      minSize: 150,
+      size: 300, // Starting width (increased from 200), will grow to fill available space
+      minSize: 200, // Increased from 150 to ensure better readability
       enableSorting: true,
     },
 
@@ -276,7 +276,8 @@ export function createConsoleColumns(
       accessorKey: 'timestamp',
       header: 'Time',
       cell: ({ getValue }) => <TimestampCell timestamp={getValue() as number} />,
-      size: 100,
+      size: 120, // Increased from 100 to accommodate full timestamp format (HH:MM:SS.mmm)
+      minSize: 100, // Added minSize to prevent excessive compression
       enableSorting: true,
     },
 

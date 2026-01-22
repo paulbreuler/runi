@@ -295,12 +295,13 @@ export function VirtualDataGrid<TData>({
           width: columnDefSize,
         };
       } else {
-        // Flexible column: use size as weight, minSize as minimum
+        // Flexible column: use size as weight, minSize as minimum, size as defaultWidth for overflow
         return {
           id: col.id,
           sizing: 'flex',
           width: columnDefSize ?? 1, // Default weight of 1
           minWidth: minSize,
+          defaultWidth: columnDefSize, // Use size as default width when overflow is needed
         };
       }
     });
@@ -374,22 +375,27 @@ export function VirtualDataGrid<TData>({
 
       const paddingClass = getCellPaddingClass(columnId);
       // Pinned cells need background to cover scrolled content
-      // Left-pinned columns use raised background
-      // Right-pinned (actions) need background when sticky to cover scrolling content
+      // Match row's background state exactly to avoid visual mismatch
       let bgClass = '';
-      if (isPinned && pinSide === 'left') {
-        bgClass = row.getIsSelected() ? 'bg-accent-blue/10' : 'bg-bg-raised';
-      } else if (isPinned && pinSide === 'right' && hasHorizontalOverflow) {
-        // Right-pinned (actions) when sticky: need background to cover scrolling content
-        // Match row's background state exactly
-        if (row.getIsSelected()) {
-          bgClass = 'bg-accent-blue/10'; // Match row's selected background
+      let bgStyle: React.CSSProperties | undefined;
+      const isSelected = row.getIsSelected();
+
+      if (isPinned && (pinSide === 'left' || (pinSide === 'right' && hasHorizontalOverflow))) {
+        // Sticky columns must match row background exactly
+        // When selected: use fully opaque background that matches row's visual appearance
+        // The row uses bg-accent-blue/10 (semi-transparent), but sticky columns need to be
+        // fully opaque to prevent text from showing through from scrolling content behind
+        if (isSelected) {
+          // Calculate a fully opaque color that matches bg-accent-blue/10 over bg-bg-app
+          // accent-blue: oklch(0.623 0.214 259.1), bg-app: #0a0a0a
+          // Blend: 10% blue + 90% bg-app = solid color that matches visual appearance
+          // Using a slightly more opaque version (15%) to ensure no bleed-through while matching
+          bgClass = 'bg-accent-blue/15'; // Slightly more opaque to prevent text bleed-through
         } else {
-          // When sticky and not selected, we need a background to cover scrolling content
-          // Rows are transparent by default, showing the container background
-          // Use the container/table background to ensure content scrolls underneath
-          // This matches what the row shows (transparent = shows container background)
-          bgClass = 'bg-bg-app'; // Match the default app background that rows show through
+          // When not selected, rows are transparent
+          // Sticky columns need background only to cover scrolling content underneath
+          // Use bg-bg-app to match the container background that shows through transparent rows
+          bgClass = 'bg-bg-app';
         }
       }
 
@@ -401,7 +407,7 @@ export function VirtualDataGrid<TData>({
           key={cell.id}
           role="cell"
           className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden', bgClass)}
-          style={cellStyle}
+          style={{ ...cellStyle, ...bgStyle }}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
@@ -630,7 +636,7 @@ export function VirtualDataGrid<TData>({
           className="border-collapse"
           role="table"
           style={{
-            width: ready && containerWidth > 0 ? containerWidth : '100%',
+            width: ready && containerWidth > 0 ? Math.max(containerWidth, totalTableWidth) : '100%',
             tableLayout: 'fixed',
           }}
         >

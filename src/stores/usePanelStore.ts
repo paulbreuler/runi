@@ -32,8 +32,8 @@ export const DEFAULT_PANEL_SIZES: PanelSizes = {
  */
 export const MIN_PANEL_SIZES: PanelSizes = {
   bottom: 180, // 32px header + ~148px content = 3-4 visible rows
-  left: 280, // Fits "Network History" without text wrapping
-  right: 280, // Fits "Network History" without text wrapping
+  left: 320, // Increased from 280px to allow better console content visibility with horizontal scroll
+  right: 320, // Increased from 280px to allow better console content visibility with horizontal scroll
 };
 
 /**

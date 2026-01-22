@@ -5,7 +5,7 @@
  * TDD: RED phase - these tests verify sticky positioning behavior
  */
 
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { VirtualDataGrid } from '../VirtualDataGrid';
 import { createNetworkColumns } from '../columns/networkColumns';
@@ -425,12 +425,7 @@ describe('Features #41-43: Sticky Columns', () => {
       });
 
       const { container } = render(
-        <VirtualDataGrid
-          data={entries}
-          columns={columns}
-          getRowId={(row) => row.id}
-          height={200}
-        />
+        <VirtualDataGrid data={entries} columns={columns} getRowId={(row) => row.id} height={200} />
       );
 
       // Find thead element - it should have sticky positioning
