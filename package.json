@@ -11,6 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "test-storybook": "vitest --project=storybook",
+    "test-storybook:visual": "playwright test tests/visual/",
+    "test-storybook:visual:update": "playwright test tests/visual/ --update-snapshots",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -66,10 +69,11 @@
     "@eslint/js": "^9.39.2",
     "@internationalized/date": "^3.10.1",
     "@playwright/test": "^1.57.0",
-    "@storybook/addon-a11y": "^8.6.15",
-    "@storybook/addon-essentials": "^8.6.15",
-    "@storybook/addon-interactions": "^8.6.15",
-    "@storybook/react-vite": "^8.6.15",
+    "@storybook/addon-a11y": "^10.2.0",
+    "@storybook/addon-docs": "^10.2.0",
+    "@storybook/addon-vitest": "^10.2.0",
+    "@storybook/react-vite": "^10.2.0",
+    "@storybook/test": "^8.6.15",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/cli": "^2.9.6",
     "@testing-library/jest-dom": "^6.9.1",
@@ -79,6 +83,7 @@
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/browser-playwright": "^4.0.17",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "autoprefixer": "^10.4.23",
@@ -86,13 +91,14 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-storybook": "10.2.0",
     "globals": "^17.0.0",
     "husky": "^9.1.7",
     "jsdom": "^27.4.0",
     "lint-staged": "^16.2.7",
     "postcss": "^8.5.6",
     "prettier": "^3.8.0",
-    "storybook": "^8.6.15",
+    "storybook": "^10.2.0",
     "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
@@ -100,5 +106,10 @@
     "vite": "^7.3.1",
     "vitest": "^4.0.17"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "@storybook/test": {
+      "storybook": "^10.2.0"
+    }
+  }
 }

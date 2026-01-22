@@ -3,7 +3,7 @@
  * @description Visual documentation for HeadersTab component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { HeadersTab } from './HeadersTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 

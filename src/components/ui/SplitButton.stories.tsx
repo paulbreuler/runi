@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Download, Copy, Trash2, Save, FolderOpen, FileUp, Share } from 'lucide-react';
 import { SplitButton } from './SplitButton';
 

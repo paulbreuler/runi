@@ -3,7 +3,7 @@
  * @description Visual documentation for CodeSnippet component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CodeSnippet } from './CodeSnippet';
 
 const meta: Meta<typeof CodeSnippet> = {

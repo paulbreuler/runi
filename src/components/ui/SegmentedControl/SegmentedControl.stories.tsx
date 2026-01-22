@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AlertCircle, AlertTriangle, Info, Terminal, CheckCircle, XCircle } from 'lucide-react';
 import { SegmentedControl, SAIYAN_TIERS } from '.';
 

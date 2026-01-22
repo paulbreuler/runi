@@ -3,7 +3,7 @@
  * @description Visual documentation for HTTP protocol version cell component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ProtocolCell } from './protocolCell';
 
 const meta: Meta<typeof ProtocolCell> = {

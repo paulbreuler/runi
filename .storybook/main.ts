@@ -1,16 +1,38 @@
+// This file has been automatically migrated to valid ESM format by Storybook.
+import { fileURLToPath } from 'node:url';
 import type { StorybookConfig } from '@storybook/react-vite';
 import { mergeConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
+import path, { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const config: StorybookConfig = {
   framework: {
     name: '@storybook/react-vite',
     options: {},
   },
+
   stories: ['../src/components/**/*.stories.@(tsx|ts|jsx|js)', '../src/components/**/*.mdx'],
-  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions', '@storybook/addon-a11y'],
+
+  addons: ['@storybook/addon-a11y', '@storybook/addon-vitest', '@storybook/addon-docs'],
+
   staticDirs: ['../static'],
+
+  // Storybook 10: Tag filtering configuration
+  // Allows excluding stories from sidebar based on tags
+  tags: {
+    // Hide experimental stories from sidebar by default
+    experimental: {
+      defaultFilterSelection: 'exclude',
+    },
+    // Hide test stories from sidebar by default (for stories used only for testing)
+    test: {
+      defaultFilterSelection: 'exclude',
+    },
+  },
+
   async viteFinal(config) {
     return mergeConfig(config, {
       plugins: [tailwindcss()],
@@ -23,9 +45,6 @@ const config: StorybookConfig = {
         },
       },
     });
-  },
-  docs: {
-    autodocs: 'tag',
   },
 };
 

@@ -79,7 +79,7 @@ jobs:
       - name: Check Markdown formatting
         # Prettier handles: formatting, trailing whitespace, line endings
         # This matches local: just docs-check
-        run: npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+        run: npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
 
   frontend:
     name: Frontend
@@ -117,6 +117,23 @@ jobs:
 
       - name: Run tests
         run: just test-frontend
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Run Storybook tests
+        run: npm run test-storybook
+        env:
+          # Storybook tests run in browser mode, may need longer timeout
+          CI: true
+
+      - name: Upload Storybook test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-coverage
+          path: coverage/
+          retention-days: 7
 
   rust:
     name: Rust Backend
@@ -211,3 +228,67 @@ jobs:
 
       - name: Run E2E tests
         run: just test-e2e
+
+  storybook-visual:
+    name: Storybook Visual Tests
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run visual tests
+        # Note: continue-on-error is intentional during initial setup phase.
+        # Visual tests are informational until baselines are established.
+        # TODO: Remove continue-on-error once visual test baselines are stable.
+        continue-on-error: true
+        env:
+          CI: true
+        run: |
+          set -euo pipefail
+
+          npm run storybook -- --no-open &
+          STORYBOOK_PID=$!
+          echo "Started Storybook with PID ${STORYBOOK_PID}"
+
+          cleanup() {
+            echo "Stopping Storybook (PID: ${STORYBOOK_PID})"
+            kill "${STORYBOOK_PID}" 2>/dev/null || true
+            wait "${STORYBOOK_PID}" 2>/dev/null || true
+          }
+
+          trap cleanup EXIT
+
+          timeout 120 bash -c 'until curl -sf http://localhost:6006 > /dev/null; do sleep 2; done'
+          echo "Storybook is ready"
+
+          npm run test-storybook:visual
+
+      - name: Upload visual test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-visual-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

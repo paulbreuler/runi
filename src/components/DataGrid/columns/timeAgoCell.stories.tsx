@@ -3,7 +3,7 @@
  * @description Visual documentation for relative time cell component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TimeAgoCell } from './timeAgoCell';
 
 const meta: Meta<typeof TimeAgoCell> = {
@@ -11,6 +11,16 @@ const meta: Meta<typeof TimeAgoCell> = {
   component: TimeAgoCell,
   parameters: {
     layout: 'padded',
+    docs: {
+      description: {
+        component: `
+TimeAgoCell displays relative time (e.g., "2m ago", "yesterday") with automatic updates.
+
+The component uses \`setInterval\` to update every 30 seconds, recalculating the relative time
+based on the current time vs the fixed timestamp.
+        `,
+      },
+    },
   },
 };
 
@@ -95,6 +105,7 @@ export const TimeFormats: Story = {
 
 /**
  * Note: The component updates every 30 seconds automatically.
+ * Watch it change from "2m ago" → "3m ago" → "4m ago" as time passes.
  */
 export const AutoUpdate: Story = {
   render: () => {
@@ -105,6 +116,9 @@ export const AutoUpdate: Story = {
           <TimeAgoCell timestamp={twoMinutesAgo.toISOString()} />
           <p className="text-xs text-text-muted mt-2">
             This will update every 30 seconds automatically
+          </p>
+          <p className="text-xs text-text-secondary mt-2">
+            Watch it change: 2m ago → 3m ago → 4m ago (updates every 30s)
           </p>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { IntelligenceSignals } from './IntelligenceSignals';
 import type { IntelligenceInfo } from '@/types/history';
 

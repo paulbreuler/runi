@@ -3,7 +3,7 @@
  * @description Visual documentation for ResponseTab component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ResponseTab } from './ResponseTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 
