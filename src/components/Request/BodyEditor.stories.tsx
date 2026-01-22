@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { BodyEditor } from './BodyEditor';
 import { useRequestStore } from '@/stores/useRequestStore';

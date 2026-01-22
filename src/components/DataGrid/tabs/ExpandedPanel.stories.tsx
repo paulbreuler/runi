@@ -4,7 +4,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { ExpandedPanel } from './ExpandedPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';

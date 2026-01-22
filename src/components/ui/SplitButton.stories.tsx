@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { Download, Copy, Trash2, Save, FolderOpen, FileUp, Share } from 'lucide-react';
 import { SplitButton } from './SplitButton';
 

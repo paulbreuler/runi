@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './card';
 import { Button } from './button';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';

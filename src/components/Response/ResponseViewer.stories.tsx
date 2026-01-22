@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { ResponseViewer } from './ResponseViewer';
 import type { HttpResponse } from '@/types/http';

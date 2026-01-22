@@ -13,7 +13,7 @@
 
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn, expect, userEvent, within } from '@storybook/test';
+import { fn, expect, userEvent, within } from 'storybook/test';
 import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createSelectionColumn } from './columns/selectionColumn';
 import { createExpanderColumn } from './columns/expanderColumn';

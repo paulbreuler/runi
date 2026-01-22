@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { useReactTable, getCoreRowModel, type ColumnDef, flexRender } from '@tanstack/react-table';
 import { createSelectionColumn } from './selectionColumn';
 import { cn } from '@/utils/cn';

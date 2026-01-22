@@ -4,7 +4,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { CopyButton } from './CopyButton';
 import { tabToElement } from '@/utils/storybook-test-helpers';
 

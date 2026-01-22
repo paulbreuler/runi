@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
-import { fn } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
+import { fn } from 'storybook/test';
 import { NetworkHistoryPanel } from './NetworkHistoryPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
 

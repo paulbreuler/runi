@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { ConsoleToolbar } from './ConsoleToolbar';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
 

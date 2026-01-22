@@ -11,7 +11,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import type { Row } from '@tanstack/react-table';
 import { VirtualDataGrid } from '../VirtualDataGrid';
 import { createSelectionColumn } from '../columns/selectionColumn';

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { Button } from './button';
 import { Mail, Download, Trash2, ArrowRight } from 'lucide-react';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';

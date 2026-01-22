@@ -2,10 +2,10 @@
  * @file Storybook test helper utilities
  * @description Reusable helpers for keyboard navigation, focus management, and async waits in play functions
  *
- * These utilities are designed to work with @storybook/test and provide common
+ * These utilities are designed to work with storybook/test and provide common
  * patterns for testing component interactions in Storybook stories.
  *
- * Note: When used in Storybook play functions, you can use userEvent from @storybook/test
+ * Note: When used in Storybook play functions, you can use userEvent from storybook/test
  * to tab, but these utilities work with native DOM APIs for maximum compatibility.
  */
 
