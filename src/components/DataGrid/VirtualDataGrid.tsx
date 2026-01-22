@@ -460,12 +460,13 @@ export function VirtualDataGrid<TData>({
 
     // Handle row double-click for expansion (Feature #14)
     const handleRowDoubleClick = (e: React.MouseEvent<HTMLTableRowElement>): void => {
-      // Don't expand if clicking on buttons, checkboxes, or inputs
+      // Don't expand if clicking on interactive elements
       const target = e.target as HTMLElement;
       if (
         target.closest('button') !== null ||
         target.closest('[role="checkbox"]') !== null ||
-        target.closest('input') !== null
+        target.closest('input') !== null ||
+        target.closest('a') !== null
       ) {
         return;
       }
@@ -482,7 +483,8 @@ export function VirtualDataGrid<TData>({
         className={cn(
           'group border-b border-border-default hover:bg-bg-raised transition-colors',
           row.getIsSelected() && 'bg-accent-blue/10',
-          (hookOptions.enableRowSelection === true || hookOptions.enableExpanding === true) &&
+          (hookOptions.enableRowSelection === true ||
+            (hookOptions.enableExpanding === true && row.getCanExpand())) &&
             'cursor-pointer'
         )}
         data-row-id={row.id}

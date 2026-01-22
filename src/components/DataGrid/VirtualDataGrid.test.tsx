@@ -577,7 +577,7 @@ describe('VirtualDataGrid', () => {
         expect(onExpandedChange).toHaveBeenCalledWith({});
       });
 
-      it('does not expand when double-clicking on expander button', () => {
+      it('row double-click handler is bypassed when clicking on expander button', () => {
         const testData = generateTestData(3);
         const onExpandedChange = vi.fn();
 
@@ -608,13 +608,18 @@ describe('VirtualDataGrid', () => {
           throw new Error('Expected expand button to be defined');
         }
 
-        // Double-click on expander button - should not trigger row double-click handler
-        // The expander button handles its own clicks
+        // Double-click on expander button:
+        // - The button's onClick handler toggles expansion (fires twice, toggling expand/collapse)
+        // - The row's onDoubleClick handler is blocked by target.closest('button') check
         fireEvent.doubleClick(expandButton);
 
-        // The expander button will handle the click separately
-        // We just verify the button is clickable and doesn't interfere with row double-click
-        expect(expandButton).toBeInTheDocument();
+        // The button's click handler calls toggleExpanded, which triggers onExpandedChange.
+        // After double-click: first click expands, second click collapses, resulting in empty state.
+        // The row's double-click handler does NOT add an additional toggle because it checks
+        // target.closest('button') and returns early.
+        expect(onExpandedChange).toHaveBeenCalled();
+        // Final state should be collapsed (toggled twice = back to original)
+        expect(onExpandedChange).toHaveBeenLastCalledWith({});
       });
     });
   });
