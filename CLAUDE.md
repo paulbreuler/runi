@@ -796,7 +796,7 @@ Intelligence communicates through consistent visual signals:
 
 - Import from `motion-plus/react` for React components
 - Follow patterns from `/Users/paul/Documents/GitHub/plus/dev/react-env/src/app/tests/[slug]/components`
-- See Motion+ documentation at https://plus.motion.dev/
+- See [Motion+ documentation](https://plus.motion.dev/)
 
 **Current Implementation**:
 
