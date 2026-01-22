@@ -438,12 +438,13 @@ export function VirtualDataGrid<TData>({
   const DataGridRow = ({ row, cells }: DataGridRowProps): React.ReactElement => {
     // Handle row click for single row selection (Feature #13)
     const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>): void => {
-      // Don't toggle if clicking on buttons, checkboxes, or inputs
+      // Don't toggle if clicking on interactive elements
       const target = e.target as HTMLElement;
       if (
         target.closest('button') !== null ||
         target.closest('[role="checkbox"]') !== null ||
-        target.closest('input') !== null
+        target.closest('input') !== null ||
+        target.closest('a') !== null
       ) {
         return;
       }

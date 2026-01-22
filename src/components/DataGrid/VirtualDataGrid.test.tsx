@@ -621,6 +621,43 @@ describe('VirtualDataGrid', () => {
         // Final state should be collapsed (toggled twice = back to original)
         expect(onExpandedChange).toHaveBeenLastCalledWith({});
       });
+
+      it('works correctly when both selection and expansion are enabled', () => {
+        const testData = generateTestData(3);
+        const onRowSelectionChange = vi.fn();
+        const onExpandedChange = vi.fn();
+
+        render(
+          <VirtualDataGrid
+            data={testData}
+            columns={testColumns}
+            getRowId={(row) => row.id}
+            enableRowSelection
+            enableExpanding
+            getRowCanExpand={() => true}
+            onRowSelectionChange={onRowSelectionChange}
+            onExpandedChange={onExpandedChange}
+          />
+        );
+
+        // Find first row
+        const firstRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="1"]');
+        expect(firstRow).toBeInTheDocument();
+
+        // Double-click on the row
+        // This fires: click -> click -> dblclick events
+        // Both onClick (selection) and onDoubleClick (expansion) handlers are triggered
+        if (firstRow !== null) {
+          fireEvent.doubleClick(firstRow);
+        }
+
+        // Selection handler fires twice during double-click (once per click)
+        // First click: selects row, second click: deselects row (toggle behavior)
+        expect(onRowSelectionChange).toHaveBeenCalled();
+
+        // Expansion handler fires once on the double-click event
+        expect(onExpandedChange).toHaveBeenCalledWith({ '1': true });
+      });
     });
   });
 
