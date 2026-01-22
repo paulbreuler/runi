@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
-import { fn } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
+import { fn } from 'storybook/test';
 import { FilterBar } from './FilterBar';
 import { DEFAULT_HISTORY_FILTERS } from '@/types/history';
 import { tabToElement } from '@/utils/storybook-test-helpers';

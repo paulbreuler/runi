@@ -15,7 +15,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn, expect, userEvent, within } from '@storybook/test';
+import { fn, expect, userEvent, within } from 'storybook/test';
 import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createNetworkColumns } from './columns/networkColumns';
 import type { NetworkHistoryEntry } from '@/types/history';

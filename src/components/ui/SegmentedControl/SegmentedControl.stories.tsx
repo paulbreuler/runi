@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { AlertCircle, AlertTriangle, Info, Terminal, CheckCircle, XCircle } from 'lucide-react';
 import { SegmentedControl, SAIYAN_TIERS } from '.';
 

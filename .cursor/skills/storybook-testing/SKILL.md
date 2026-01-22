@@ -40,7 +40,7 @@ Templates are located in `.storybook/templates/` and provide reusable patterns f
 **Example**:
 
 ```tsx
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { tabToElement } from '@/utils/storybook-test-helpers';
 
 export const KeyboardNavigationTest: Story = {
@@ -221,7 +221,7 @@ Follow these naming patterns:
 
 - Keep stories minimal and focused (1 concept per story)
 - Add brief JSDoc comments explaining each story's purpose
-- Use `@storybook/test` utilities (`expect`, `userEvent`, `within`) for assertions
+- Use `storybook/test` utilities (`expect`, `userEvent`, `within`) for assertions
 - Don't duplicate unit test coverage in stories
 - Limit to 6-8 stories per component
 

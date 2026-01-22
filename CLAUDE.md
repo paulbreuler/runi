@@ -407,7 +407,9 @@ All interactive elements must use consistent focus ring styling:
 
 ## Storybook Best Practices
 
-Stories are **visual documentation** and **interactive test cases**.
+Stories are **visual documentation** and **interactive test cases**. All 62+ story files include play functions that test component interactions, accessibility, and visual states.
+
+**Status**: ✅ **Complete** - All stories have play functions, testing utilities are in place, and templates are available.
 
 **Do:**
 
@@ -415,8 +417,10 @@ Stories are **visual documentation** and **interactive test cases**.
 - Use `play` functions for interaction testing (keyboard navigation, user flows, state changes)
 - Keep stories minimal and focused (1 concept per story)
 - Add brief JSDoc comments explaining each story's purpose
-- Use `@storybook/test` utilities (`expect`, `userEvent`, `within`) for assertions
+- Use `storybook/test` utilities (`expect`, `userEvent`, `within`) for assertions
 - Leverage Storybook's built-in testing (play functions, Vitest addon, accessibility addon)
+- Use `data-test-id` attributes for test selectors (makes tests resilient to UI changes)
+- Use testing utilities from `@/utils/storybook-test-helpers` for common patterns
 
 **Don't:**
 
@@ -424,6 +428,7 @@ Stories are **visual documentation** and **interactive test cases**.
 - Create stories with complex automated test logic (loops, timing, etc.)
 - Duplicate unit test coverage in stories
 - Add more than 6-8 stories per component
+- Use `getByText()` or `getByRole()` for component identification (use `getByTestId()` instead)
 
 **Story Naming:**
 
@@ -436,17 +441,19 @@ Stories are **visual documentation** and **interactive test cases**.
 **Example with Play Function:**
 
 ```tsx
-import { expect, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
-export const FocusRestorationTest: Story = {
+export const KeyboardNavigationTest: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-    const button = canvas.getByRole('button', { name: /dock left/i });
+    const button = canvas.getByTestId('submit-button');
 
-    await step('Activate button and verify focus', async () => {
-      await userEvent.tab();
-      await userEvent.keyboard('{Space}');
+    await step('Tab to button and activate', async () => {
+      const focused = await tabToElement(button, 5);
+      expect(focused).toBe(true);
       await expect(button).toHaveFocus();
+      await userEvent.keyboard('{Enter}');
     });
   },
 };
@@ -454,12 +461,44 @@ export const FocusRestorationTest: Story = {
 
 **Testing Approaches:**
 
-1. **Play Functions** - For component interactions (recommended for most cases)
-2. **Playwright E2E** - For complex multi-component flows (see `docs/STORYBOOK_TESTING.md`)
-3. **Vitest Addon** - Convert stories to test cases automatically
-4. **Accessibility Addon** - Automatic a11y checks on all stories
+1. **Play Functions** - For component interactions (recommended for most cases) - ✅ All 62+ stories have play functions
+2. **Playwright E2E** - For complex multi-component flows and cross-browser testing (keyboard navigation specifically)
+3. **Vitest Addon** - Convert stories to test cases automatically (run via `npm run test-storybook`) - ✅ Configured
+4. **Accessibility Addon** - Automatic a11y checks on all stories - ✅ Configured
 
-See `docs/STORYBOOK_TESTING.md` for complete testing guide.
+**Testing Utilities:**
+
+Use utilities from `@/utils/storybook-test-helpers`:
+
+- `tabToElement(target, maxTabs?)` - Tab to a specific element
+- `waitForFocus(element, timeout?)` - Wait for focus
+- `waitForRemount(selector, timeout?)` - Wait for remount
+- `waitForState(getState, expected, timeout?)` - Wait for state change
+
+**Story Templates:**
+
+Templates are available in `.storybook/templates/`:
+
+- `interaction-story.template.tsx` - For user interactions
+- `accessibility-story.template.tsx` - For a11y testing
+- `visual-story.template.tsx` - For visual states
+
+**Coverage:**
+
+- ✅ **UI Components** (15 files) - All have play functions
+- ✅ **Layout Components** (5 files) - All have play functions
+- ✅ **Request Components** (5 files) - All have play functions
+- ✅ **Response Components** (2 files) - All have play functions
+- ✅ **History Components** (6 files) - All have play functions
+- ✅ **Console Components** (2 files) - All have play functions
+- ✅ **DataGrid Components** (10+ files) - All have play functions
+
+**Related Documentation:**
+
+- `docs/STORYBOOK_TESTING.md` - Complete testing guide
+- `docs/STORYBOOK_TEMPLATES.md` - Template usage guide
+- `docs/STORYBOOK_10_FEATURES.md` - Storybook 10 features
+- `.cursor/skills/storybook-testing/SKILL.md` - Complete testing guide
 
 ---
 

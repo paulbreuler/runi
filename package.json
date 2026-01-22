@@ -74,7 +74,6 @@
     "@storybook/addon-mcp": "^0.2.0",
     "@storybook/addon-vitest": "^10.2.0",
     "@storybook/react-vite": "^10.2.0",
-    "@storybook/test": "^8.6.15",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/cli": "^2.9.6",
     "@testing-library/jest-dom": "^6.9.1",
@@ -107,10 +106,5 @@
     "vite": "^7.3.1",
     "vitest": "^4.0.17"
   },
-  "type": "module",
-  "overrides": {
-    "@storybook/test": {
-      "storybook": "^10.2.0"
-    }
-  }
+  "type": "module"
 }
