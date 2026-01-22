@@ -616,7 +616,9 @@ Use `/pr-check-fixes` to systematically fix failing CI checks. See `CLAUDE.md` P
 
 ### Managing PR Comments
 
-Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAUDE.md` PR Workflow section for full details.
+Use `/pr-comments` to fetch, review, address, and resolve PR comments.
+
+**CRITICAL: Use TodoWrite to track progress through each comment systematically.**
 
 **Process:**
 
@@ -636,20 +638,32 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
    gh api /repos/{owner}/{repo}/pulls/{number}/comments
    ```
 
-2. **Display comments** formatted for review with file:line references
+2. **Create todos for all comments** using TodoWrite with this format:
 
-3. **Triage comments:**
-   - Already resolved - Comment addressed in subsequent commit
-   - Needs code change - Feedback requires modifying code
-   - Needs clarification - Question that can be answered with citation
-   - Won't fix - Valid feedback but intentionally not addressing (explain why)
+   ```text
+   [File:line] Brief description of the issue
+   ```
 
-4. **Address feedback:**
+   Example todos:
+   - `helpers.ts:219 - Fix memory leak in waitForRemount`
+   - `main.ts:30 - Remove experimentalFormat option`
+   - `stories.tsx:724 - Add comment explaining manual focus`
+
+3. **Triage each comment** (update todo status as you go):
+
+   | Triage            | Todo Status                 | Action                        |
+   | ----------------- | --------------------------- | ----------------------------- |
+   | Needs code change | `in_progress` → `completed` | Fix code, reply with citation |
+   | Already fixed     | `completed`                 | Reply citing prior fix        |
+   | Won't fix         | `completed`                 | Reply with rationale          |
+   | Invalid/incorrect | `completed`                 | Reply explaining why          |
+
+4. **Address feedback** (mark todo `in_progress` before starting each):
    - Make necessary code changes
    - Note file and line numbers of fix
    - Prepare reply citing the fix
 
-5. **Resolve comments:**
+5. **Reply to comments:**
 
    ```bash
    # Reply to review comment with resolution
@@ -657,7 +671,31 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
      -f body="Fixed in \`file.ts:42-45\` - [description of change]"
    ```
 
-6. **Mark threads as resolved** (if permission allows)
+6. **Resolve threads using GraphQL API:**
+
+   ```bash
+   # Get thread IDs
+   gh api graphql -f query='
+   query {
+     repository(owner: "OWNER", name: "REPO") {
+       pullRequest(number: PR_NUMBER) {
+         reviewThreads(first: 50) {
+           nodes { id isResolved comments(first: 1) { nodes { body } } }
+         }
+       }
+     }
+   }'
+
+   # Resolve a thread
+   gh api graphql -f query='
+   mutation {
+     resolveReviewThread(input: { threadId: "THREAD_ID" }) {
+       thread { isResolved }
+     }
+   }'
+   ```
+
+7. **Mark todo as completed** after resolving each thread
 
 **Reply format examples:**
 
@@ -668,10 +706,11 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
 
 **Acceptance Criteria:**
 
-- [ ] All comments reviewed
+- [ ] All comments have corresponding todos
+- [ ] Each todo tracked through completion
 - [ ] Code changes made for actionable feedback
 - [ ] Each addressed comment has reply with file:line citation
-- [ ] Resolved threads marked as resolved (where possible)
+- [ ] Threads resolved via GraphQL API (not just replied to)
 - [ ] Any "won't fix" items have clear explanations
 
 **Notes:**
@@ -680,6 +719,7 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `CLAU
 - Comment threading: Review comments have `in_reply_to_id` for replies
 - Citations matter: Always cite specific file:line references
 - GitHub CLI required: Requires `gh` CLI tool installed and authenticated
+- **GraphQL for resolution**: REST API can reply but GraphQL is required to mark threads as resolved
 
 ---
 
