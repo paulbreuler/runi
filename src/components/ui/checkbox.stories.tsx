@@ -160,9 +160,9 @@ export const States: Story = {
   ),
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-    const unchecked = canvas.getByRole('checkbox', { name: /unchecked/i });
-    const checked = canvas.getByRole('checkbox', { name: /checked/i });
-    const indeterminate = canvas.getByRole('checkbox', { name: /indeterminate/i });
+    const unchecked = canvas.getByRole('checkbox', { name: /^unchecked$/i });
+    const checked = canvas.getByRole('checkbox', { name: /^checked$/i });
+    const indeterminate = canvas.getByRole('checkbox', { name: /^indeterminate$/i });
     const disabled = canvas.getByRole('checkbox', { name: /^disabled$/i });
 
     await step('Unchecked checkbox is not checked', async () => {

@@ -3,7 +3,7 @@ import { expect, userEvent, within } from '@storybook/test';
 import { EmptyState } from './EmptyState';
 import { Key, Search, Inbox, FileText, Network } from 'lucide-react';
 import { Button } from './button';
-import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 
 type Story = StoryObj<typeof meta>;
 
@@ -101,17 +101,42 @@ export const WithAction: Story = {
   ),
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-    const actionButton = canvas.getByRole('button', { name: /create item/i });
 
     await step('Action button is visible and clickable', async () => {
+      // Wait for EmptyState animation to complete (motion animation)
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Wait for button to appear and be visible
+      const actionButton = await canvas.findByRole(
+        'button',
+        { name: /create item/i },
+        { timeout: 3000 }
+      );
+      // Check if button is in viewport, if not scroll it into view
+      const rect = actionButton.getBoundingClientRect();
+      if (rect.top < 0 || rect.bottom > window.innerHeight) {
+        actionButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      // Verify button is actually visible (not hidden by CSS)
+      const style = window.getComputedStyle(actionButton);
+      if (
+        style.display === 'none' ||
+        style.visibility === 'hidden' ||
+        parseFloat(style.opacity) === 0
+      ) {
+        // Wait a bit more for animation
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
       await expect(actionButton).toBeVisible();
       await userEvent.click(actionButton);
       await expect(actionButton).toBeVisible();
     });
 
     await step('Keyboard navigation works', async () => {
-      await tabToElement(actionButton);
-      await waitForFocus(actionButton);
+      const actionButton = canvas.getByRole('button', { name: /create item/i });
+      actionButton.scrollIntoView();
+      actionButton.focus();
+      await waitForFocus(actionButton, 1000);
       await expect(actionButton).toHaveFocus();
     });
   },

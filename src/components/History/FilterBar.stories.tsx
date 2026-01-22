@@ -290,8 +290,13 @@ export const StateManagementTest: Story = {
     await step('Interact with filters and verify state updates', async () => {
       const methodFilter = canvas.getByTestId('method-filter');
       await userEvent.click(methodFilter);
-      const getOption = canvas.getByRole('option', { name: /^get$/i });
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Find option - it might be in a portal, so use findByRole with timeout
+      const getOption = await canvas.findByRole('option', { name: /^get$/i }, { timeout: 2000 });
       await userEvent.click(getOption);
+      // Wait for select to close and update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       // Verify filter state changed (button text updates)
       await expect(methodFilter).toHaveTextContent(/get/i);
     });

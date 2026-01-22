@@ -814,7 +814,16 @@ export const ResizeInteractionsTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify panel and resizer are visible', async () => {
-      await expect(canvas.getByTestId('dockable-panel')).toBeVisible();
+      // Wait for panel animation to complete (opacity transition)
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const panel = canvas.getByTestId('dockable-panel');
+      // Check if panel is actually visible (not just in DOM)
+      const style = window.getComputedStyle(panel);
+      if (style.opacity === '0' || style.display === 'none' || style.visibility === 'hidden') {
+        // Wait a bit more for animation
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      await expect(panel).toBeVisible();
       await expect(canvas.getByTestId('panel-resizer')).toBeVisible();
     });
 
@@ -913,7 +922,8 @@ export const KeyboardShortcutsTest: Story = {
           resolve();
         }, 100);
       });
-      void expect(usePanelStore.getState().isVisible).toBe(true);
+      // Verify panel is visible after toggle
+      await expect(usePanelStore.getState().isVisible).toBe(true);
     });
 
     await step('Toggle panel back with keyboard shortcut', async () => {
@@ -978,10 +988,19 @@ export const StatePersistenceTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify initial panel state', async () => {
-      void expect(usePanelStore.getState().position).toBe('bottom');
-      void expect(usePanelStore.getState().isVisible).toBe(true);
-      void expect(usePanelStore.getState().isCollapsed).toBe(false);
-      await expect(canvas.getByTestId('dockable-panel')).toBeVisible();
+      await expect(usePanelStore.getState().position).toBe('bottom');
+      await expect(usePanelStore.getState().isVisible).toBe(true);
+      await expect(usePanelStore.getState().isCollapsed).toBe(false);
+      // Wait for panel animation to complete
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const panel = canvas.getByTestId('dockable-panel');
+      // Check if panel is actually visible (not just in DOM)
+      const style = window.getComputedStyle(panel);
+      if (style.opacity === '0' || style.display === 'none' || style.visibility === 'hidden') {
+        // Wait a bit more for animation
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      await expect(panel).toBeVisible();
     });
 
     await step('Change panel position and verify state persists', async () => {
@@ -991,7 +1010,8 @@ export const StatePersistenceTest: Story = {
           resolve();
         }, 100);
       });
-      void expect(usePanelStore.getState().position).toBe('left');
+      // Verify state actually changed
+      await expect(usePanelStore.getState().position).toBe('left');
     });
 
     await step('Collapse panel and verify state persists', async () => {
@@ -1001,7 +1021,8 @@ export const StatePersistenceTest: Story = {
           resolve();
         }, 100);
       });
-      void expect(usePanelStore.getState().isCollapsed).toBe(true);
+      // Verify state actually changed
+      await expect(usePanelStore.getState().isCollapsed).toBe(true);
     });
 
     await step('Expand panel and verify state persists', async () => {

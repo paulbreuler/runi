@@ -277,8 +277,12 @@ export const FilterInteractionsTest: Story = {
     await step('Filter by method', async () => {
       const methodFilter = canvas.getByTestId('method-filter');
       await userEvent.click(methodFilter);
-      const postOption = canvas.getByRole('option', { name: /^post$/i });
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
       await userEvent.click(postOption);
+      // Wait for select to close and filter to apply
+      await new Promise((resolve) => setTimeout(resolve, 100));
       // Verify only POST entries are shown
       const rows = canvas.getAllByTestId('history-row');
       await expect(rows.length).toBeGreaterThan(0);
@@ -311,7 +315,9 @@ export const StateManagementTest: Story = {
     await step('Apply filter and verify state updates', async () => {
       const statusFilter = canvas.getByTestId('status-filter');
       await userEvent.click(statusFilter);
-      const statusOption = canvas.getByRole('option', { name: /2xx/i });
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const statusOption = await canvas.findByRole('option', { name: /2xx/i }, { timeout: 2000 });
       await userEvent.click(statusOption);
       // Verify filter state changed
       await expect(statusFilter).toHaveTextContent(/2xx/i);

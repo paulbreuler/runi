@@ -219,13 +219,17 @@ export const SelectionInteractionTest: Story = {
       const headerCheckbox = checkboxes[0];
       if (headerCheckbox !== undefined) {
         await userEvent.click(headerCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
       }
     });
 
     await step('Verify selected count updates', async () => {
+      // Wait for count to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       // The component shows "Selected: X of Y rows"
-      const selectedText = canvas.getByText(/Selected: 5 of 5 rows/);
+      const selectedText = await canvas.findByText(/Selected: 5 of 5 rows/, {}, { timeout: 2000 });
       await expect(selectedText).toBeInTheDocument();
     });
 

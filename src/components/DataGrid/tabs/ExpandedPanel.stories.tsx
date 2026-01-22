@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from '@storybook/test';
 import { ExpandedPanel } from './ExpandedPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta: Meta<typeof ExpandedPanel> = {
   title: 'DataGrid/ExpandedPanel',
@@ -291,8 +291,13 @@ export const TabNavigationTest: Story = {
 
     await step('Use Arrow Right to move to next tab', async () => {
       await userEvent.keyboard('{ArrowRight}');
-      const responseTab = canvas.getByRole('tab', { name: /response/i });
-      await expect(responseTab).toHaveFocus();
+      // There might be multiple response tabs, get the first one that's focusable
+      const responseTabs = canvas.getAllByRole('tab', { name: /response/i });
+      const responseTab = responseTabs[0];
+      if (responseTab !== undefined) {
+        await waitForFocus(responseTab, 1000);
+        await expect(responseTab).toHaveFocus();
+      }
     });
 
     await step('Press Enter to activate tab', async () => {

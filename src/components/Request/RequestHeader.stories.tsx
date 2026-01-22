@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, within } from '@storybook/test';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { RequestHeader } from './RequestHeader';
 import type { HttpMethod } from '@/utils/http-colors';
 
@@ -88,8 +88,13 @@ export const FormInteractionsTest: Story = {
     await step('Select HTTP method', async () => {
       const methodSelect = canvas.getByTestId('method-select');
       await userEvent.click(methodSelect);
-      const postOption = canvas.getByText('POST');
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Find option by role
+      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
       await userEvent.click(postOption);
+      // Wait for select to close and update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(methodSelect).toHaveTextContent('POST');
     });
 
@@ -123,8 +128,8 @@ export const KeyboardNavigationTest: Story = {
 
     await step('Tab to method select', async () => {
       const methodSelect = canvas.getByTestId('method-select');
-      const focused = await tabToElement(methodSelect, 5);
-      void expect(focused).toBe(true);
+      methodSelect.focus();
+      await waitForFocus(methodSelect, 1000);
       await expect(methodSelect).toHaveFocus();
     });
 

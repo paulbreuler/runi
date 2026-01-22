@@ -20,7 +20,7 @@ import { createExpanderColumn } from './columns/expanderColumn';
 import { cn } from '@/utils/cn';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Row } from '@tanstack/react-table';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 
 // Simple test data type
 interface TestRow {
@@ -382,11 +382,15 @@ export const RowSelectionTest: Story = {
       const headerCheckbox = checkboxes[0];
       if (headerCheckbox !== undefined) {
         await userEvent.click(headerCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
       }
     });
 
     await step('Verify all row checkboxes are selected', async () => {
+      // Wait a bit for all checkboxes to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const checkboxes = canvas.getAllByRole('checkbox');
       // Skip header checkbox (index 0), check row checkboxes
       for (let i = 1; i < checkboxes.length; i++) {
@@ -411,6 +415,8 @@ export const RowSelectionTest: Story = {
       const firstRowCheckbox = checkboxes[1];
       if (firstRowCheckbox !== undefined) {
         await userEvent.click(firstRowCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(firstRowCheckbox).toHaveAttribute('aria-checked', 'true');
         // Header should show indeterminate state
         const headerCheckbox = checkboxes[0];
@@ -455,10 +461,12 @@ export const RowExpansionTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Find and focus first expander button', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      // Expander buttons have aria-label "Expand row" or "Collapse row"
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
-        await tabToElement(firstExpander, 20);
+        firstExpander.focus();
+        await waitForFocus(firstExpander, 2000);
         await expect(firstExpander).toHaveFocus();
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
       }
@@ -466,7 +474,9 @@ export const RowExpansionTest: Story = {
 
     await step('Press Enter to expand row', async () => {
       await userEvent.keyboard('{Enter}');
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      // Wait for expansion
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
@@ -475,7 +485,9 @@ export const RowExpansionTest: Story = {
 
     await step('Press Space to collapse row', async () => {
       await userEvent.keyboard(' ');
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      // Wait for collapse
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');

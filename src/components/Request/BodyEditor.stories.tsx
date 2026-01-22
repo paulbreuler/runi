@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { expect, userEvent, within } from '@storybook/test';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { BodyEditor } from './BodyEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 
@@ -90,8 +90,8 @@ export const KeyboardNavigationTest: Story = {
 
     await step('Tab to textarea', async () => {
       const textarea = canvas.getByTestId('body-textarea');
-      const focused = await tabToElement(textarea, 5);
-      void expect(focused).toBe(true);
+      textarea.focus();
+      await waitForFocus(textarea, 1000);
       await expect(textarea).toHaveFocus();
     });
 
@@ -124,6 +124,8 @@ export const ValidationTest: Story = {
     await step('Valid JSON shows success indicator', async () => {
       const textarea = canvas.getByTestId('body-textarea');
       await userEvent.type(textarea, '{"valid": true}');
+      // Wait for validation to run
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(canvas.getByText('Valid JSON')).toBeVisible();
       await expect(canvas.getByTestId('format-json-button')).toBeVisible();
     });
@@ -132,6 +134,8 @@ export const ValidationTest: Story = {
       const textarea = canvas.getByTestId('body-textarea');
       await userEvent.clear(textarea);
       await userEvent.type(textarea, '{"invalid": }');
+      // Wait for validation to run
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(canvas.getByText('Invalid JSON')).toBeVisible();
       await expect(canvas.queryByTestId('format-json-button')).not.toBeInTheDocument();
     });

@@ -301,19 +301,23 @@ export const ConsoleTableInteractionTest: Story = {
     });
 
     await step('Click expander to expand row', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
+        // Wait for expansion animation
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
       }
     });
 
     await step('Collapse expanded row', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
+        // Wait for collapse animation
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
       }
     });

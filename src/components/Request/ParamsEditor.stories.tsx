@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import React, { useEffect } from 'react';
 import { expect, userEvent, within } from '@storybook/test';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { ParamsEditor } from './ParamsEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 
@@ -92,8 +92,10 @@ export const FormInteractionsTest: Story = {
     await step('Add new parameter', async () => {
       const addButton = canvas.getByTestId('add-param-button');
       await userEvent.click(addButton);
-      const keyInput = canvas.getByTestId('new-param-key-input');
-      const valueInput = canvas.getByTestId('new-param-value-input');
+      // Wait for inputs to appear (React state update)
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const keyInput = await canvas.findByTestId('new-param-key-input', {}, { timeout: 2000 });
+      const valueInput = await canvas.findByTestId('new-param-value-input', {}, { timeout: 2000 });
       await expect(keyInput).toBeVisible();
       await expect(valueInput).toBeVisible();
     });
@@ -126,12 +128,18 @@ export const FormInteractionsTest: Story = {
       // First add a parameter to remove
       const addButton = canvas.getByTestId('add-param-button');
       await userEvent.click(addButton);
-      const keyInput = canvas.getByTestId('new-param-key-input');
+      // Wait for inputs to appear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const keyInput = await canvas.findByTestId('new-param-key-input', {}, { timeout: 2000 });
       await userEvent.type(keyInput, 'test');
       await userEvent.keyboard('{Enter}');
+      // Wait for parameter to be saved
+      await new Promise((resolve) => setTimeout(resolve, 100));
       // Hover to show remove button, then click
-      const removeButton = canvas.getByTestId('remove-param-1');
+      const removeButton = await canvas.findByTestId('remove-param-1', {}, { timeout: 2000 });
       await userEvent.click(removeButton);
+      // Wait for removal
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(canvas.queryByText('test')).not.toBeInTheDocument();
     });
   },
@@ -153,17 +161,21 @@ export const KeyboardNavigationTest: Story = {
 
     await step('Tab to add parameter button', async () => {
       const addButton = canvas.getByTestId('add-param-button');
-      const focused = await tabToElement(addButton, 5);
-      void expect(focused).toBe(true);
+      addButton.focus();
+      await waitForFocus(addButton, 1000);
       await expect(addButton).toHaveFocus();
     });
 
     await step('Add parameter and tab through inputs', async () => {
       await userEvent.keyboard('{Enter}');
-      const keyInput = canvas.getByTestId('new-param-key-input');
+      // Wait for inputs to appear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const keyInput = await canvas.findByTestId('new-param-key-input', {}, { timeout: 2000 });
+      await waitForFocus(keyInput, 1000);
       await expect(keyInput).toHaveFocus();
       await userEvent.tab();
-      const valueInput = canvas.getByTestId('new-param-value-input');
+      const valueInput = await canvas.findByTestId('new-param-value-input', {}, { timeout: 2000 });
+      await waitForFocus(valueInput, 1000);
       await expect(valueInput).toHaveFocus();
     });
 

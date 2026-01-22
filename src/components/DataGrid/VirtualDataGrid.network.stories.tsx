@@ -19,7 +19,7 @@ import { fn, expect, userEvent, within } from '@storybook/test';
 import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createNetworkColumns } from './columns/networkColumns';
 import type { NetworkHistoryEntry } from '@/types/history';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 // ============================================================================
 // Mock Data Generators
@@ -552,17 +552,21 @@ export const NetworkKeyboardNavigationTest: Story = {
     });
 
     await step('Tab to first expander button', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      // Expander buttons have aria-label "Expand row" or "Collapse row"
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
-        await tabToElement(firstExpander, 15);
+        firstExpander.focus();
+        await waitForFocus(firstExpander, 2000);
         await expect(firstExpander).toHaveFocus();
       }
     });
 
     await step('Press Enter to expand row', async () => {
       await userEvent.keyboard('{Enter}');
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      // Wait for expansion animation
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
@@ -571,7 +575,9 @@ export const NetworkKeyboardNavigationTest: Story = {
 
     await step('Press Enter again to collapse row', async () => {
       await userEvent.keyboard('{Enter}');
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      // Wait for collapse animation
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
@@ -611,28 +617,35 @@ export const NetworkExpansionTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Click expander to expand first row', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      // Expander buttons have aria-label "Expand row" or "Collapse row"
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
+        // Wait for expansion animation
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
       }
     });
 
     await step('Expand second row (multiple expansions)', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const secondExpander = expanderButtons[1];
       if (secondExpander !== undefined) {
         await userEvent.click(secondExpander);
+        // Wait for expansion animation
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(secondExpander).toHaveAttribute('aria-expanded', 'true');
       }
     });
 
     await step('Collapse first row', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
+        // Wait for collapse animation
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
       }
     });

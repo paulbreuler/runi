@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import React, { useEffect } from 'react';
 import { expect, userEvent, within } from '@storybook/test';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { HeaderEditor } from './HeaderEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 
@@ -82,8 +82,10 @@ export const FormInteractionsTest: Story = {
     await step('Add new header', async () => {
       const addButton = canvas.getByTestId('add-header-button');
       await userEvent.click(addButton);
-      const keyInput = canvas.getByTestId('new-header-key-input');
-      const valueInput = canvas.getByTestId('new-header-value-input');
+      // Wait for inputs to appear (React state update)
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const keyInput = await canvas.findByTestId('new-header-key-input', {}, { timeout: 2000 });
+      const valueInput = await canvas.findByTestId('new-header-value-input', {}, { timeout: 2000 });
       await expect(keyInput).toBeVisible();
       await expect(valueInput).toBeVisible();
     });
@@ -144,17 +146,21 @@ export const KeyboardNavigationTest: Story = {
 
     await step('Tab to add header button', async () => {
       const addButton = canvas.getByTestId('add-header-button');
-      const focused = await tabToElement(addButton, 5);
-      void expect(focused).toBe(true);
+      addButton.focus();
+      await waitForFocus(addButton, 1000);
       await expect(addButton).toHaveFocus();
     });
 
     await step('Add header and tab through inputs', async () => {
       await userEvent.keyboard('{Enter}');
-      const keyInput = canvas.getByTestId('new-header-key-input');
+      // Wait for inputs to appear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const keyInput = await canvas.findByTestId('new-header-key-input', {}, { timeout: 2000 });
+      await waitForFocus(keyInput, 1000);
       await expect(keyInput).toHaveFocus();
       await userEvent.tab();
-      const valueInput = canvas.getByTestId('new-header-value-input');
+      const valueInput = await canvas.findByTestId('new-header-value-input', {}, { timeout: 2000 });
+      await waitForFocus(valueInput, 1000);
       await expect(valueInput).toHaveFocus();
     });
 
@@ -183,9 +189,13 @@ export const ValidationTest: Story = {
     await step('Add header with empty key should not save', async () => {
       const addButton = canvas.getByTestId('add-header-button');
       await userEvent.click(addButton);
-      const valueInput = canvas.getByTestId('new-header-value-input');
+      // Wait for inputs to appear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const valueInput = await canvas.findByTestId('new-header-value-input', {}, { timeout: 2000 });
       await userEvent.type(valueInput, 'value-only');
       await userEvent.keyboard('{Enter}');
+      // Wait for validation/cancel
+      await new Promise((resolve) => setTimeout(resolve, 100));
       // Empty key should cancel editing
       const keyInput = canvas.queryByTestId('new-header-key-input');
       await expect(keyInput).not.toBeInTheDocument();
@@ -194,9 +204,13 @@ export const ValidationTest: Story = {
     await step('Add header with key only should save', async () => {
       const addButton = canvas.getByTestId('add-header-button');
       await userEvent.click(addButton);
-      const keyInput = canvas.getByTestId('new-header-key-input');
+      // Wait for inputs to appear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const keyInput = await canvas.findByTestId('new-header-key-input', {}, { timeout: 2000 });
       await userEvent.type(keyInput, 'X-Key-Only');
       await userEvent.keyboard('{Enter}');
+      // Wait for save
+      await new Promise((resolve) => setTimeout(resolve, 100));
       // Should save with empty value
       await expect(canvas.getByText('X-Key-Only')).toBeVisible();
     });

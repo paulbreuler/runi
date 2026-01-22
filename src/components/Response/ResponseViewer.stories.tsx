@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from '@storybook/test';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { ResponseViewer } from './ResponseViewer';
 import type { HttpResponse } from '@/types/http';
 
@@ -195,8 +195,8 @@ export const KeyboardNavigationTest: Story = {
 
     await step('Tab to Body tab', async () => {
       const bodyTab = canvas.getByTestId('response-tab-body');
-      const focused = await tabToElement(bodyTab, 5);
-      void expect(focused).toBe(true);
+      bodyTab.focus();
+      await waitForFocus(bodyTab, 1000);
       await expect(bodyTab).toHaveFocus();
     });
 

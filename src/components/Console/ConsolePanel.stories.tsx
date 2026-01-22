@@ -640,7 +640,8 @@ export const ClearFunctionalityTest: Story = {
     });
 
     await step('Clear logs and verify state', async () => {
-      const clearButton = canvas.getByRole('button', { name: /clear console/i });
+      // Button text is "Clear" in full mode, or aria-label "Clear console" in icon mode
+      const clearButton = canvas.getByRole('button', { name: /^clear$/i });
       await userEvent.click(clearButton);
       // Wait for logs to be cleared (state update)
       await new Promise((resolve) => {

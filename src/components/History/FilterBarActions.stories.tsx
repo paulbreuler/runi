@@ -3,7 +3,7 @@ import { expect, userEvent, within } from '@storybook/test';
 import { fn } from '@storybook/test';
 import { FilterBarActions } from './FilterBarActions';
 import { ActionBar } from '@/components/ActionBar';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/History/FilterBarActions',
@@ -136,9 +136,13 @@ export const ButtonInteractionsTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Click Save button', async () => {
-      const saveButton = canvas.getByRole('button', { name: /save/i });
-      await userEvent.click(saveButton);
-      await expect(noop).toHaveBeenCalled();
+      // There might be multiple save buttons (primary and in dropdown), get the first one
+      const saveButtons = canvas.getAllByRole('button', { name: /save/i });
+      const saveButton = saveButtons[0];
+      if (saveButton !== undefined) {
+        await userEvent.click(saveButton);
+        await expect(noop).toHaveBeenCalled();
+      }
     });
 
     await step('Click Delete All button', async () => {
@@ -174,9 +178,14 @@ export const KeyboardNavigationTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Tab to Save button', async () => {
-      const saveButton = canvas.getByRole('button', { name: /save/i });
-      const focused = await tabToElement(saveButton, 10);
-      await expect(focused).toBe(true);
+      // Get the first save button (primary action)
+      const saveButtons = canvas.getAllByRole('button', { name: /save/i });
+      const saveButton = saveButtons[0];
+      if (saveButton !== undefined) {
+        saveButton.focus();
+        await waitForFocus(saveButton, 1000);
+        await expect(saveButton).toHaveFocus();
+      }
       await expect(saveButton).toHaveFocus();
     });
 

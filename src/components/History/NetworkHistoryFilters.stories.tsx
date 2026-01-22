@@ -187,16 +187,24 @@ export const FilterInteractionsTest: Story = {
     await step('Change method filter to POST', async () => {
       const methodFilter = canvas.getByTestId('method-filter');
       await userEvent.click(methodFilter);
-      const postOption = canvas.getByRole('option', { name: /^post$/i });
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
       await userEvent.click(postOption);
+      // Wait for select to close and update
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(methodFilter).toHaveTextContent(/post/i);
     });
 
     await step('Change status filter to 4xx', async () => {
       const statusFilter = canvas.getByTestId('status-filter');
       await userEvent.click(statusFilter);
-      const statusOption = canvas.getByRole('option', { name: /4xx/i });
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const statusOption = await canvas.findByRole('option', { name: /4xx/i }, { timeout: 2000 });
       await userEvent.click(statusOption);
+      // Wait for select to close
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(statusFilter).toHaveTextContent(/4xx/i);
     });
 

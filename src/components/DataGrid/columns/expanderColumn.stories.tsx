@@ -314,7 +314,7 @@ export const ExpanderInteractionTest: Story = {
 
     await step('Find first expandable row and verify collapsed state', async () => {
       // First row is "Get Users" which has canExpand: true
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
@@ -322,7 +322,7 @@ export const ExpanderInteractionTest: Story = {
     });
 
     await step('Click expander button to expand row', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
@@ -337,7 +337,7 @@ export const ExpanderInteractionTest: Story = {
     });
 
     await step('Click same expander to collapse', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await userEvent.click(firstExpander);
@@ -346,7 +346,7 @@ export const ExpanderInteractionTest: Story = {
     });
 
     await step('Tab to expander and use Enter key to expand', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await tabToElement(firstExpander, 10);
@@ -358,7 +358,7 @@ export const ExpanderInteractionTest: Story = {
 
     await step('Use Space key to collapse', async () => {
       await userEvent.keyboard(' ');
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');

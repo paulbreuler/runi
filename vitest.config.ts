@@ -24,6 +24,7 @@ export default defineConfig({
     'import.meta.vitest': 'undefined',
   },
   test: {
+    name: 'unit',
     include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
     environment: 'jsdom',
     globals: true,

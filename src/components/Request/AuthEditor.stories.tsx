@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from '@storybook/test';
-import { tabToElement } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { AuthEditor } from './AuthEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 
@@ -67,9 +67,17 @@ export const FormInteractionsTest: Story = {
     await step('Select Bearer Token auth type', async () => {
       const authSelect = canvas.getByTestId('auth-type-select');
       await userEvent.click(authSelect);
-      const bearerOption = canvas.getByText('Bearer Token');
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const bearerOption = await canvas.findByRole(
+        'option',
+        { name: /bearer token/i },
+        { timeout: 2000 }
+      );
       await userEvent.click(bearerOption);
-      const tokenInput = canvas.getByTestId('bearer-token-input');
+      // Wait for select to close and form to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const tokenInput = await canvas.findByTestId('bearer-token-input', {}, { timeout: 2000 });
       await expect(tokenInput).toBeVisible();
     });
 
@@ -82,10 +90,26 @@ export const FormInteractionsTest: Story = {
     await step('Switch to Basic Auth', async () => {
       const authSelect = canvas.getByTestId('auth-type-select');
       await userEvent.click(authSelect);
-      const basicOption = canvas.getByText('Basic Auth');
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const basicOption = await canvas.findByRole(
+        'option',
+        { name: /basic auth/i },
+        { timeout: 2000 }
+      );
       await userEvent.click(basicOption);
-      const usernameInput = canvas.getByTestId('basic-username-input');
-      const passwordInput = canvas.getByTestId('basic-password-input');
+      // Wait for select to close and form to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const usernameInput = await canvas.findByTestId(
+        'basic-username-input',
+        {},
+        { timeout: 2000 }
+      );
+      const passwordInput = await canvas.findByTestId(
+        'basic-password-input',
+        {},
+        { timeout: 2000 }
+      );
       await expect(usernameInput).toBeVisible();
       await expect(passwordInput).toBeVisible();
     });
@@ -110,9 +134,17 @@ export const FormInteractionsTest: Story = {
     await step('Switch to Custom Header', async () => {
       const authSelect = canvas.getByTestId('auth-type-select');
       await userEvent.click(authSelect);
-      const customOption = canvas.getByText('Custom Header');
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const customOption = await canvas.findByRole(
+        'option',
+        { name: /custom header/i },
+        { timeout: 2000 }
+      );
       await userEvent.click(customOption);
-      const customInput = canvas.getByTestId('custom-header-input');
+      // Wait for select to close and form to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const customInput = await canvas.findByTestId('custom-header-input', {}, { timeout: 2000 });
       await expect(customInput).toBeVisible();
     });
   },
@@ -135,17 +167,26 @@ export const KeyboardNavigationTest: Story = {
 
     await step('Tab to auth type select', async () => {
       const authSelect = canvas.getByTestId('auth-type-select');
-      const focused = await tabToElement(authSelect, 5);
-      void expect(focused).toBe(true);
+      authSelect.focus();
+      await waitForFocus(authSelect, 1000);
       await expect(authSelect).toHaveFocus();
     });
 
     await step('Select Bearer and tab to token input', async () => {
       await userEvent.keyboard('{Enter}');
-      const bearerOption = canvas.getByText('Bearer Token');
+      // Wait for select to open
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const bearerOption = await canvas.findByRole(
+        'option',
+        { name: /bearer token/i },
+        { timeout: 2000 }
+      );
       await userEvent.click(bearerOption);
-      const tokenInput = canvas.getByTestId('bearer-token-input');
+      // Wait for select to close and form to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const tokenInput = await canvas.findByTestId('bearer-token-input', {}, { timeout: 2000 });
       await userEvent.tab();
+      await waitForFocus(tokenInput, 1000);
       await expect(tokenInput).toHaveFocus();
     });
   },

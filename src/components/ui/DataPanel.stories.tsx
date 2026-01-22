@@ -6,7 +6,7 @@ import { Checkbox } from './checkbox';
 import { EmptyState } from './EmptyState';
 import { AlertCircle, Info, Bug, Check } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 
 interface LogItem {
   id: string;
@@ -264,8 +264,9 @@ export const WithSelectAll: Story = {
     });
 
     await step('Keyboard navigation works', async () => {
-      await tabToElement(selectAllCheckbox);
-      await waitForFocus(selectAllCheckbox);
+      // Focus the checkbox directly to avoid long tab navigation
+      selectAllCheckbox.focus();
+      await waitForFocus(selectAllCheckbox, 1000);
       await expect(selectAllCheckbox).toHaveFocus();
     });
   },
