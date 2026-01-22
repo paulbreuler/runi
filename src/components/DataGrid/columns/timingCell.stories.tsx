@@ -3,7 +3,7 @@
  * @description Visual documentation for request timing cell component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TimingCell } from './timingCell';
 
 const meta: Meta<typeof TimingCell> = {

@@ -3,7 +3,7 @@
  * @description Visual documentation for CodeGenPanel component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CodeGenPanel } from './CodeGenPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
 

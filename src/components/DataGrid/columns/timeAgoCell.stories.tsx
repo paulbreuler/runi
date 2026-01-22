@@ -3,7 +3,7 @@
  * @description Visual documentation for relative time cell component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TimeAgoCell } from './timeAgoCell';
 
 const meta: Meta<typeof TimeAgoCell> = {

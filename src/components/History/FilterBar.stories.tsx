@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from '@storybook/test';
 import { FilterBar } from './FilterBar';
 import { DEFAULT_HISTORY_FILTERS } from '@/types/history';

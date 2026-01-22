@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Code, CheckCircle, Brain, Filter } from 'lucide-react';
 import { ActionBarSelect } from './ActionBarSelect';
 import { ActionBar } from './ActionBar';

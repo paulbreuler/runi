@@ -14,7 +14,7 @@
  * - NetworkContainerResize (column width recalculation on resize)
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from '@storybook/test';
 import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createNetworkColumns } from './columns/networkColumns';

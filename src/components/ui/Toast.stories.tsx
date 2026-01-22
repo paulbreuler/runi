@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ToastProvider, Toast } from './Toast';
 import { useToastStore, clearDedupCache } from '@/stores/useToastStore';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';

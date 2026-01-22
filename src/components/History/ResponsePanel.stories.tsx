@@ -3,7 +3,7 @@
  * @description Visual documentation for ResponsePanel component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ResponsePanel } from './ResponsePanel';
 
 const meta: Meta<typeof ResponsePanel> = {

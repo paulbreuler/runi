@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ResponseViewer } from './ResponseViewer';
 import type { HttpResponse } from '@/types/http';
 

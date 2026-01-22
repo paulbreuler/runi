@@ -3,7 +3,7 @@
  * @description Visual documentation for response size cell component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SizeCell } from './sizeCell';
 
 const meta: Meta<typeof SizeCell> = {

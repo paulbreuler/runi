@@ -3,7 +3,7 @@
  * @description Visual documentation for CodeGenTab component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CodeGenTab } from './CodeGenTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AuthEditor } from './AuthEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 

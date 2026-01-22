@@ -3,7 +3,7 @@
  * @description Visual documentation for HTTP status code cell component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { StatusCell } from './statusCell';
 
 const meta: Meta<typeof StatusCell> = {

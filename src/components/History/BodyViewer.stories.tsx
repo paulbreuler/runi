@@ -3,7 +3,7 @@
  * @description Visual documentation for BodyViewer component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BodyViewer } from './BodyViewer';
 
 const meta: Meta<typeof BodyViewer> = {

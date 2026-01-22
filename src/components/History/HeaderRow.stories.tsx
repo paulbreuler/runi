@@ -3,7 +3,7 @@
  * @description Visual documentation for HeaderRow component
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { HeaderRow } from './HeaderRow';
 
 const meta: Meta<typeof HeaderRow> = {

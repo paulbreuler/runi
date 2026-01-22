@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import React, { useEffect } from 'react';
 import { userEvent, within } from '@storybook/test';
 import { HeaderEditor } from './HeaderEditor';
