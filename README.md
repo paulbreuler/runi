@@ -16,7 +16,7 @@
 <p align="center">
   <a href="https://github.com/paulbreuler/runi/releases"><img src="https://img.shields.io/github/v/release/paulbreuler/runi?style=flat-square" alt="Release" /></a>
   <a href="https://github.com/paulbreuler/runi/actions/workflows/release.yml"><img src="https://github.com/paulbreuler/runi/actions/workflows/release.yml/badge.svg" alt="Release Workflow Status" /></a>
-  <a href="https://github.com/paulbreuler/runi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/paulbreuler/runi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square" alt="License" /></a>
   <a href="https://github.com/paulbreuler/runi/stargazers"><img src="https://img.shields.io/github/stars/paulbreuler/runi?style=flat-square" alt="Stars" /></a>
   <a href="https://discord.gg/MHzmdpw4TR"><img src="https://img.shields.io/discord/000000000?style=flat-square&logo=discord&logoColor=white&label=Discord" alt="Discord" /></a>
 </p>
@@ -315,7 +315,7 @@ Look for issues labeled [`good first issue`](https://github.com/paulbreuler/runi
 
 ## License
 
-[MIT](./LICENSE) — Use it however you want.
+[AGPL v3](./LICENSE) — See LICENSE for terms.
 
 ---
 
