@@ -77,6 +77,10 @@ export const AllMethods: Story = {
  * Tests form interactions: method selection, URL input, and send button.
  */
 export const FormInteractionsTest: Story = {
+  args: {
+    method: 'GET',
+    url: 'https://api.example.com/users',
+  },
   render: () => <RequestHeaderWithState />,
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
@@ -109,6 +113,10 @@ export const FormInteractionsTest: Story = {
  * Tests keyboard navigation through form elements.
  */
 export const KeyboardNavigationTest: Story = {
+  args: {
+    method: 'GET',
+    url: 'https://api.example.com/users',
+  },
   render: () => <RequestHeaderWithState />,
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);

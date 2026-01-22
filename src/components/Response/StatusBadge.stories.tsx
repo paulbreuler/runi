@@ -86,6 +86,10 @@ export const AllStatusRanges: Story = {
  * StatusBadge is a display-only component with no interactions.
  */
 export const StatusRangesTest: Story = {
+  args: {
+    status: 200,
+    statusText: 'OK',
+  },
   render: () => (
     <div className="flex flex-col gap-3">
       <StatusBadge status={200} statusText="OK" />
