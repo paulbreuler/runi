@@ -30,18 +30,21 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 **The visual tone:** Zen, calm, and book-like. Muted surfaces, soft contrast, and selective emphasis. Use color as a signal, not decoration.
 
-> **Planning Documents:** See `../runi-planning-docs/` (separate repository) for detailed vision and architecture:
+> **Planning Documents:** Access design and planning documents via MCP tools (separate repository at `../runi-planning-docs/`):
 >
-> - `../runi-planning-docs/VISION.md` — North star document
-> - `../runi-planning-docs/runi-design-vision-v8.1.md` — Complete design specification
-> - `../runi-planning-docs/DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification)
-> - `../runi-planning-docs/addendums/001-ai-architecture.md` — AI provider abstraction and verification
-> - `../runi-planning-docs/addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
-> - `../runi-planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
-> - `../runi-planning-docs/next-frontier-in-api.md` — Research on API landscape, knowledge graphs, visualization, security, and AI-native patterns
-> - `../runi-planning-docs/research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
+> **Use `mcp_runi_Planning_read_doc` to read:**
 >
-> See `../runi-planning-docs/MANIFEST.md` for complete document hierarchy.
+> - `VISION.md` — North star document
+> - `runi-design-vision-v8.1.md` — Complete design specification
+> - `DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification)
+> - `addendums/001-ai-architecture.md` — AI provider abstraction and verification
+> - `addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
+> - `addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
+> - `next-frontier-in-api.md` — Research on API landscape, knowledge graphs, visualization, security, and AI-native patterns
+> - `research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
+> - `MANIFEST.md` — Complete document hierarchy
+>
+> **Example:** `mcp_runi_Planning_read_doc({ path: 'VISION.md' })` or `mcp_runi_Planning_read_doc({ path: 'DESIGN_IDEOLOGY.md' })`
 
 ---
 
@@ -125,7 +128,7 @@ runi/
 │   │   └── intelligence/         # AI/drift/semantic features
 │   ├── bindings/                 # ts-rs generated TypeScript types
 │   └── Cargo.toml
-├── ../runi-planning-docs/        # Design vision and strategy documents (separate repository)
+├── ../runi-planning-docs/        # Design vision and strategy documents (separate repository, accessed via MCP tools)
 ├── .tmp/                         # Ephemeral files (git-ignored, auto-cleanup)
 ├── specs/                        # Technical specifications
 ├── prompts/                      # Ralph prompt files
@@ -773,14 +776,6 @@ Intelligence communicates through consistent visual signals:
 
 **Internal Docs:**
 
-Planning documents are in a separate repository: `../runi-planning-docs/`
+Planning documents are accessed via MCP tools. See the "Planning Documents" section above (Product Context) for the complete list and MCP usage instructions.
 
-- `../runi-planning-docs/VISION.md` — North star
-- `../runi-planning-docs/runi-design-vision-v8.1.md` — Full design spec
-- `../runi-planning-docs/DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy
-- `../runi-planning-docs/addendums/001-ai-architecture.md` — AI verification architecture
-- `../runi-planning-docs/addendums/002-adoption-positioning.md` — Adoption strategy
-- `../runi-planning-docs/addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
-- `../runi-planning-docs/next-frontier-in-api.md` — API landscape research
-- `../runi-planning-docs/research/competitor-analysis.md` — Competitor feature analysis
 - `docs/DECISIONS.md` — Historical architectural decisions
