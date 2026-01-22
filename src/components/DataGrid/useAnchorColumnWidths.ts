@@ -34,6 +34,7 @@ export interface AnchorColumnDef {
   sizing: ColumnSizing;
   width: number; // fixed: pixel width, flex: relative weight
   minWidth?: number; // optional minimum for flex columns
+  defaultWidth?: number; // optional default width for flex columns when overflow is needed
 }
 
 export interface UseAnchorColumnWidthsResult {
@@ -125,28 +126,40 @@ export function useAnchorColumnWidths(
       }
     });
 
-    // 5. Second pass: redistribute if some columns hit minimum
-    // (Simple approach: just let it overflow rather than complex rebalancing)
+    // 5. Calculate total width with minimums respected
+    const totalWithMinimums =
+      fixedTotalWidth + flexWidths.reduce((sum, f) => sum + f.width, 0) + totalGap;
+    const needsOverflow = totalWithMinimums > containerWidth;
 
     // 6. Assign all widths
     columns.forEach((col) => {
       if (col.sizing === 'fixed') {
         widths.set(col.id, col.width);
       } else {
-        const flexInfo = flexWidths.find((f) => f.col.id === col.id);
-        widths.set(col.id, flexInfo?.width ?? 100);
+        // When overflow is needed, use defaultWidth (original size) instead of compressed width
+        if (needsOverflow && col.defaultWidth !== undefined) {
+          const finalWidth = Math.max(col.minWidth ?? 50, col.defaultWidth);
+          widths.set(col.id, finalWidth);
+        } else {
+          const flexInfo = flexWidths.find((f) => f.col.id === col.id);
+          const assignedWidth = flexInfo?.width ?? 100;
+          widths.set(col.id, assignedWidth);
+        }
       }
     });
 
-    // 7. Handle rounding errors - adjust last flex column
-    const calculatedTotal = Array.from(widths.values()).reduce((a, b) => a + b, 0);
-    const diff = containerWidth - totalGap - calculatedTotal;
+    // 7. Handle rounding errors - only adjust if NOT overflowing
+    // When overflowing, we want to preserve minimum widths, not compress further
+    if (!needsOverflow) {
+      const calculatedTotal = Array.from(widths.values()).reduce((a, b) => a + b, 0);
+      const diff = containerWidth - totalGap - calculatedTotal;
 
-    if (diff !== 0 && flexColumns.length > 0) {
-      const lastFlex = flexColumns[flexColumns.length - 1];
-      if (lastFlex !== undefined) {
-        const current = widths.get(lastFlex.id) ?? 0;
-        widths.set(lastFlex.id, Math.max(lastFlex.minWidth ?? 50, current + diff));
+      if (diff !== 0 && flexColumns.length > 0) {
+        const lastFlex = flexColumns[flexColumns.length - 1];
+        if (lastFlex !== undefined) {
+          const current = widths.get(lastFlex.id) ?? 0;
+          widths.set(lastFlex.id, Math.max(lastFlex.minWidth ?? 50, current + diff));
+        }
       }
     }
 

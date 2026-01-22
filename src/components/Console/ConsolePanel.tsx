@@ -8,8 +8,7 @@ import { ConsoleContextMenu } from './ConsoleContextMenu';
 import { ConsoleToolbar } from './ConsoleToolbar';
 import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
 import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColumns';
-import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from '@/components/DataGrid/constants';
-import { motion, AnimatePresence } from 'motion/react';
+import { ExpandedContent } from '@/components/DataGrid/ExpandedContent';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Row } from '@tanstack/react-table';
 
@@ -636,7 +635,8 @@ export const ConsolePanel = ({
       }
 
       const isGrouped = isGroupedLog(originalLog);
-      const isExpanded = expandedLogIds.has(entry.id);
+      // Use TanStack Table's expanded state as source of truth (matches NetworkHistoryPanel pattern)
+      const isExpanded = row.getIsExpanded();
       const isSelected = selectedLogIds.has(entry.id);
       const logLevel = entry.level;
 
@@ -713,7 +713,8 @@ export const ConsolePanel = ({
         // Sync to TanStack Table
         if (setExpandedRef.current !== null) {
           const newExpanded: Record<string, boolean> = {};
-          const currentlyExpanded = expandedLogIds.has(entry.id);
+          // Use TanStack Table's expansion state as source of truth
+          const currentlyExpanded = row.getIsExpanded();
           if (!currentlyExpanded) {
             newExpanded[entry.id] = true;
           }
@@ -767,107 +768,19 @@ export const ConsolePanel = ({
             {cells}
           </tr>
           {/* Expanded content row */}
-          <AnimatePresence>
-            {isExpanded && (
-              <tr key={`${row.id}-expanded`}>
-                <td colSpan={columns.length} className="p-0">
-                  <motion.div
-                    data-testid="expanded-section"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeInOut' }}
-                    className="overflow-hidden"
-                  >
-                    <div
-                      className="mt-0.5 space-y-0.5 border-l border-border-default pl-2"
-                      style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
-                    >
-                      {isGrouped ? (
-                        <>
-                          {/* Args content (grouped logs show args once) */}
-                          {originalLog.sampleLog.args.length > 0 && (
-                            <div className="mb-2">
-                              <div className="pl-2 border-l border-border-default">
-                                {originalLog.sampleLog.args.map((arg: unknown, index: number) => (
-                                  <div
-                                    key={`${originalLog.id}-arg-${String(index)}`}
-                                    className="mb-1 text-xs font-mono text-text-secondary"
-                                  >
-                                    <pre className="whitespace-pre-wrap break-words overflow-x-auto">
-                                      {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
-                                    </pre>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Occurrences list */}
-                          {originalLog.count > 1 && (
-                            <div>
-                              <button
-                                type="button"
-                                onClick={(): void => {
-                                  const occurrencesKey = `${originalLog.id}_occurrences`;
-                                  setExpandedLogIds((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(occurrencesKey)) {
-                                      next.delete(occurrencesKey);
-                                    } else {
-                                      next.add(occurrencesKey);
-                                    }
-                                    return next;
-                                  });
-                                }}
-                                className="flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full"
-                              >
-                                {expandedLogIds.has(`${originalLog.id}_occurrences`) ? (
-                                  <ChevronDown size={12} />
-                                ) : (
-                                  <ChevronRight size={12} />
-                                )}
-                                <span>
-                                  {originalLog.count} occurrence{originalLog.count !== 1 ? 's' : ''}{' '}
-                                  at:
-                                </span>
-                              </button>
-                              {expandedLogIds.has(`${originalLog.id}_occurrences`) && (
-                                <div className="ml-6 mt-0.5 space-y-0.5">
-                                  {originalLog.allLogs.map((individualLog) => (
-                                    <div
-                                      key={individualLog.id}
-                                      className="flex items-center gap-2 px-2 py-0.5 text-xs text-text-muted font-mono"
-                                      onContextMenu={(e): void => {
-                                        handleContextMenu(e, individualLog);
-                                      }}
-                                    >
-                                      <span className="shrink-0 w-24">
-                                        {formatTimestamp(individualLog.timestamp)}
-                                      </span>
-                                      {individualLog.correlationId !== undefined &&
-                                        individualLog.correlationId !== '' && (
-                                          <span
-                                            className="shrink-0 text-text-muted text-xs font-mono w-40 truncate"
-                                            title={individualLog.correlationId}
-                                          >
-                                            {individualLog.correlationId}
-                                          </span>
-                                        )}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        /* Individual log args */
-                        entry.args.length > 0 && (
+          {isExpanded && (
+            <tr key={`${row.id}-expanded`}>
+              <td colSpan={columns.length} className="p-0">
+                <ExpandedContent innerClassName="mt-0.5 space-y-0.5 border-l border-border-default pl-2">
+                  {isGrouped ? (
+                    <>
+                      {/* Args content (grouped logs show args once) */}
+                      {originalLog.sampleLog.args.length > 0 && (
+                        <div className="mb-2">
                           <div className="pl-2 border-l border-border-default">
-                            {entry.args.map((arg: unknown, index: number) => (
+                            {originalLog.sampleLog.args.map((arg: unknown, index: number) => (
                               <div
-                                key={`${entry.id}-arg-${String(index)}`}
+                                key={`${originalLog.id}-arg-${String(index)}`}
                                 className="mb-1 text-xs font-mono text-text-secondary"
                               >
                                 <pre className="whitespace-pre-wrap break-words overflow-x-auto">
@@ -876,19 +789,92 @@ export const ConsolePanel = ({
                               </div>
                             ))}
                           </div>
-                        )
+                        </div>
                       )}
-                    </div>
-                  </motion.div>
-                </td>
-              </tr>
-            )}
-          </AnimatePresence>
+
+                      {/* Occurrences list */}
+                      {originalLog.count > 1 && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={(): void => {
+                              const occurrencesKey = `${originalLog.id}_occurrences`;
+                              setExpandedLogIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(occurrencesKey)) {
+                                  next.delete(occurrencesKey);
+                                } else {
+                                  next.add(occurrencesKey);
+                                }
+                                return next;
+                              });
+                            }}
+                            className="flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full"
+                          >
+                            {expandedLogIds.has(`${originalLog.id}_occurrences`) ? (
+                              <ChevronDown size={12} />
+                            ) : (
+                              <ChevronRight size={12} />
+                            )}
+                            <span>
+                              {originalLog.count} occurrence{originalLog.count !== 1 ? 's' : ''} at:
+                            </span>
+                          </button>
+                          {expandedLogIds.has(`${originalLog.id}_occurrences`) && (
+                            <div className="ml-6 mt-0.5 space-y-0.5">
+                              {originalLog.allLogs.map((individualLog) => (
+                                <div
+                                  key={individualLog.id}
+                                  className="flex items-center gap-2 px-2 py-0.5 text-xs text-text-muted font-mono"
+                                  onContextMenu={(e): void => {
+                                    handleContextMenu(e, individualLog);
+                                  }}
+                                >
+                                  <span className="shrink-0 w-24">
+                                    {formatTimestamp(individualLog.timestamp)}
+                                  </span>
+                                  {individualLog.correlationId !== undefined &&
+                                    individualLog.correlationId !== '' && (
+                                      <span
+                                        className="shrink-0 text-text-muted text-xs font-mono w-40 truncate"
+                                        title={individualLog.correlationId}
+                                      >
+                                        {individualLog.correlationId}
+                                      </span>
+                                    )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* Individual log args */
+                    entry.args.length > 0 && (
+                      <div className="pl-2 border-l border-border-default">
+                        {entry.args.map((arg: unknown, index: number) => (
+                          <div
+                            key={`${entry.id}-arg-${String(index)}`}
+                            className="mb-1 text-xs font-mono text-text-secondary"
+                          >
+                            <pre className="whitespace-pre-wrap break-words overflow-x-auto">
+                              {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
+                            </pre>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  )}
+                </ExpandedContent>
+              </td>
+            </tr>
+          )}
         </>
       );
     },
     [
-      expandedLogIds, // Needed to check isExpanded
+      expandedLogIds, // Needed for occurrences sub-expansion (nested within expanded rows)
       selectedLogIds,
       lastSelectedIndex,
       filteredLogs,
@@ -937,8 +923,9 @@ export const ConsolePanel = ({
         {/* Note: Select all is handled via TanStack Table's header checkbox in selection column */}
 
         {/* VirtualDataGrid - replaces custom rendering */}
+        {/* Note: VirtualDataGrid handles scrolling internally, no need for overflow-x-auto wrapper */}
         <div
-          className="flex-1 flex flex-col min-h-0 overflow-x-auto"
+          className="flex-1 flex flex-col min-h-0"
           ref={logContainerRef}
           data-testid="console-logs"
         >
@@ -951,7 +938,7 @@ export const ConsolePanel = ({
             getRowCanExpand={() => true}
             initialRowSelection={initialRowSelection}
             initialExpanded={initialExpanded}
-            initialColumnPinning={{ right: ['actions'] }}
+            initialColumnPinning={{ left: ['select', 'expand'], right: ['actions'] }}
             onRowSelectionChange={handleRowSelectionChange}
             onExpandedChange={handleExpandedChange}
             onSetRowSelectionReady={handleSetRowSelectionReady}
