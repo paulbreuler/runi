@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SizeCell } from './sizeCell';
 
 const meta: Meta<typeof SizeCell> = {
-  title: 'DataGrid/SizeCell',
+  title: 'Components/DataGrid/SizeCell',
   component: SizeCell,
   parameters: {
     layout: 'padded',

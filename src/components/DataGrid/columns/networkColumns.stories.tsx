@@ -207,7 +207,7 @@ const DemoTable = ({ data }: DemoTableProps): React.ReactElement => {
 
 // Individual cell stories
 const meta: Meta = {
-  title: 'DataGrid/Network Columns',
+  title: 'Components/DataGrid/Network Columns',
   parameters: {
     layout: 'padded',
   },

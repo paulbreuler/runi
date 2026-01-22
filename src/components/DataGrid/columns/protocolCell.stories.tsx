@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ProtocolCell } from './protocolCell';
 
 const meta: Meta<typeof ProtocolCell> = {
-  title: 'DataGrid/ProtocolCell',
+  title: 'Components/DataGrid/ProtocolCell',
   component: ProtocolCell,
   parameters: {
     layout: 'padded',

@@ -139,7 +139,7 @@ const DemoTable = ({
 };
 
 const meta: Meta<typeof DemoTable> = {
-  title: 'DataGrid/Columns/SelectionColumn',
+  title: 'Components/DataGrid/Columns/SelectionColumn',
   component: DemoTable,
   parameters: {
     layout: 'padded',

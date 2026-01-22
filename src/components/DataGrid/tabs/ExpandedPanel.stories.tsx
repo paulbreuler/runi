@@ -10,7 +10,7 @@ import type { NetworkHistoryEntry } from '@/types/history';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta: Meta<typeof ExpandedPanel> = {
-  title: 'DataGrid/ExpandedPanel',
+  title: 'Components/DataGrid/ExpandedPanel',
   component: ExpandedPanel,
   parameters: {
     layout: 'padded',
