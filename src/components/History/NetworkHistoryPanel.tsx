@@ -8,8 +8,7 @@ import { FilterBar } from './FilterBar';
 import { NetworkStatusBar } from './NetworkStatusBar';
 import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
 import { createNetworkColumns } from '@/components/DataGrid/columns/networkColumns';
-import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from '@/components/DataGrid/constants';
-import { motion, AnimatePresence } from 'motion/react';
+import { ExpandedContent } from '@/components/DataGrid/ExpandedContent';
 import { ExpandedPanel } from '@/components/DataGrid/tabs';
 import type { Row } from '@tanstack/react-table';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
@@ -390,29 +389,15 @@ export const NetworkHistoryPanel = ({
             {cells}
           </tr>
           {/* Expanded content row - CRITICAL: spans ALL columns for full width */}
-          <AnimatePresence>
-            {isExpanded && (
-              <tr key={`${row.id}-expanded`}>
-                <td colSpan={columns.length} className="p-0">
-                  <motion.div
-                    data-testid="expanded-section"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeInOut' }}
-                    className="overflow-hidden"
-                  >
-                    <div
-                      className="bg-bg-elevated border-t border-border-subtle"
-                      style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
-                    >
-                      <ExpandedPanel entry={entry} />
-                    </div>
-                  </motion.div>
-                </td>
-              </tr>
-            )}
-          </AnimatePresence>
+          {isExpanded && (
+            <tr key={`${row.id}-expanded`}>
+              <td colSpan={columns.length} className="p-0">
+                <ExpandedContent>
+                  <ExpandedPanel entry={entry} />
+                </ExpandedContent>
+              </td>
+            </tr>
+          )}
         </>
       );
     },
@@ -455,7 +440,7 @@ export const NetworkHistoryPanel = ({
             getRowCanExpand={() => true}
             initialRowSelection={initialRowSelection}
             initialExpanded={initialExpanded}
-            initialColumnPinning={{ right: ['actions'] }}
+            initialColumnPinning={{ left: ['select', 'expand'], right: ['actions'] }}
             onRowSelectionChange={handleRowSelectionChange}
             onExpandedChange={handleExpandedChange}
             onSetRowSelectionReady={handleSetRowSelectionReady}

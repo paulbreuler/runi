@@ -8,8 +8,7 @@ import { ConsoleContextMenu } from './ConsoleContextMenu';
 import { ConsoleToolbar } from './ConsoleToolbar';
 import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
 import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColumns';
-import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from '@/components/DataGrid/constants';
-import { motion, AnimatePresence } from 'motion/react';
+import { ExpandedContent } from '@/components/DataGrid/ExpandedContent';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Row } from '@tanstack/react-table';
 
@@ -767,22 +766,10 @@ export const ConsolePanel = ({
             {cells}
           </tr>
           {/* Expanded content row */}
-          <AnimatePresence>
-            {isExpanded && (
-              <tr key={`${row.id}-expanded`}>
-                <td colSpan={columns.length} className="p-0">
-                  <motion.div
-                    data-testid="expanded-section"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeInOut' }}
-                    className="overflow-hidden"
-                  >
-                    <div
-                      className="mt-0.5 space-y-0.5 border-l border-border-default pl-2"
-                      style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
-                    >
+          {isExpanded && (
+            <tr key={`${row.id}-expanded`}>
+              <td colSpan={columns.length} className="p-0">
+                <ExpandedContent innerClassName="mt-0.5 space-y-0.5 border-l border-border-default pl-2">
                       {isGrouped ? (
                         <>
                           {/* Args content (grouped logs show args once) */}
@@ -878,12 +865,10 @@ export const ConsolePanel = ({
                           </div>
                         )
                       )}
-                    </div>
-                  </motion.div>
-                </td>
-              </tr>
-            )}
-          </AnimatePresence>
+                </ExpandedContent>
+              </td>
+            </tr>
+          )}
         </>
       );
     },
@@ -951,7 +936,7 @@ export const ConsolePanel = ({
             getRowCanExpand={() => true}
             initialRowSelection={initialRowSelection}
             initialExpanded={initialExpanded}
-            initialColumnPinning={{ right: ['actions'] }}
+            initialColumnPinning={{ left: ['select', 'expand'], right: ['actions'] }}
             onRowSelectionChange={handleRowSelectionChange}
             onExpandedChange={handleExpandedChange}
             onSetRowSelectionReady={handleSetRowSelectionReady}

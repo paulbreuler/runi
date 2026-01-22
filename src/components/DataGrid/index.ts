@@ -58,5 +58,9 @@ export {
   ConsoleActionsCell,
 } from './columns/consoleColumns';
 
+// Expansion components
+export { ExpandedContent } from './ExpandedContent';
+export type { ExpandedContentProps } from './ExpandedContent';
+
 // Layout constants
 export { COLUMN_WIDTHS, CELL_PADDING, EXPANDED_CONTENT_LEFT_MARGIN_PX } from './constants';
