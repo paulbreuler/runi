@@ -239,7 +239,6 @@ export const AnimationTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify content is initially collapsed', async () => {
-      const _expandedSection = canvas.queryByTestId('expanded-section');
       // When isVisible is false, AnimatePresence should not render the content
       // But we need to check after the initial render
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -271,8 +270,6 @@ export const AnimationTest: Story = {
       // Wait for collapse animation to complete
       await new Promise((resolve) => setTimeout(resolve, 250));
       // After collapse, AnimatePresence removes the element
-      // The element should no longer be in the document
-      const _expandedSection = canvas.queryByTestId('expanded-section');
       // Note: AnimatePresence may keep the element briefly during exit animation
       // So we just verify the button text changed
       const toggleButton = canvas.getByTestId('toggle-button');

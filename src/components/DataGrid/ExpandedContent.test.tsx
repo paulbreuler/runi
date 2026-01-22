@@ -5,7 +5,6 @@
 
 import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
-import React from 'react';
 import { ExpandedContent } from './ExpandedContent';
 
 // Mock useReducedMotion to control animation behavior in tests
