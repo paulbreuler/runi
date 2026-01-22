@@ -273,6 +273,16 @@ export async function waitForRemount(selector: string, timeout = 5000): Promise<
  * deep equality (JSON.stringify) for objects and arrays. Useful for testing
  * asynchronous state changes triggered by user interactions or API calls.
  *
+ * **Limitations of JSON.stringify comparison:**
+ * - Functions are ignored (will be undefined)
+ * - undefined values in objects are ignored
+ * - Symbol keys are ignored
+ * - Circular references will cause errors
+ * - Property order matters for objects (different order = not equal)
+ * - Date objects are converted to strings
+ *
+ * For complex comparisons, consider using a proper deep equality library.
+ *
  * @param getState - Function that returns the current state
  * @param expected - The expected state value
  * @param timeout - Maximum time to wait in milliseconds (default: 5000)

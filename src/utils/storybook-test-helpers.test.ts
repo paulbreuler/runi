@@ -122,6 +122,22 @@ describe('storybook-test-helpers', () => {
       expect(result).toBe(true);
       expect(document.activeElement).toBe(button3);
     });
+
+    it('should return false for non-focusable target (hidden element)', async () => {
+      // Create a hidden button that cannot be focused
+      const hiddenButton = document.createElement('button');
+      hiddenButton.textContent = 'Hidden Button';
+      hiddenButton.style.display = 'none';
+      container.appendChild(hiddenButton);
+
+      button1.focus();
+
+      // Try to tab to hidden element - should fail since it's not in focusable list
+      const result = await tabToElement(hiddenButton, 5);
+
+      expect(result).toBe(false);
+      expect(document.activeElement).not.toBe(hiddenButton);
+    });
   });
 
   describe('waitForFocus', () => {
@@ -195,6 +211,15 @@ describe('storybook-test-helpers', () => {
       }, 50);
 
       await expect(promise).resolves.not.toThrow();
+    });
+
+    it('should reject if selector does not initially exist', async () => {
+      const selector = '[data-test-id="non-existent"]';
+      const promise = waitForRemount(selector, 100);
+
+      await expect(promise).rejects.toThrow(
+        'Element with selector "[data-test-id="non-existent"]" not found initially'
+      );
     });
   });
 

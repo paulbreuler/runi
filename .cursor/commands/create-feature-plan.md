@@ -394,7 +394,3 @@ const interfaces = await mcp_runi_Planning_read_doc({
 - **Templates available** - Use `addendum`, `research`, `example`, or `none` templates when creating docs
 - **Path format** - Always use relative paths from planning docs root: `plans/NNNN-name/filename.md`
 - **Storybook skill** - Automatically activated when features involve Storybook stories; reference templates and utilities in agent files
-
-```
-
-```

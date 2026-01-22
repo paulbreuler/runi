@@ -27,7 +27,6 @@ const config: StorybookConfig = {
           dev: true, // Tools for story URL retrieval and UI building instructions
           docs: true, // Tools for component manifest and documentation
         },
-        experimentalFormat: 'markdown', // Output format: 'markdown' (default) or 'xml'
       },
     },
   ],

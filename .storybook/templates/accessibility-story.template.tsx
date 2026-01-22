@@ -48,15 +48,12 @@ const meta = {
       },
     },
     // Enable a11y addon for automatic checks
+    // See: https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md
     a11y: {
       config: {
         rules: [
           {
             id: 'color-contrast',
-            enabled: true,
-          },
-          {
-            id: 'keyboard-navigation',
             enabled: true,
           },
         ],

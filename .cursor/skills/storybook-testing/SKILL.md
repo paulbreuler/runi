@@ -84,10 +84,7 @@ export const FocusManagementTest: Story = {
   parameters: {
     a11y: {
       config: {
-        rules: [
-          { id: 'color-contrast', enabled: true },
-          { id: 'keyboard-navigation', enabled: true },
-        ],
+        rules: [{ id: 'color-contrast', enabled: true }],
       },
     },
   },
