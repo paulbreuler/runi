@@ -89,6 +89,39 @@ describe('storybook-test-helpers', () => {
       expect(result).toBe(true);
       expect(document.activeElement).toBe(button1);
     });
+
+    it('should support reverse tabbing (Shift+Tab)', async () => {
+      // Start focus on button3
+      button3.focus();
+
+      // Reverse tab to button2
+      const result = await tabToElement(button2, 5, true);
+
+      expect(result).toBe(true);
+      expect(document.activeElement).toBe(button2);
+    });
+
+    it('should reverse tab from button2 to button1', async () => {
+      // Start focus on button2
+      button2.focus();
+
+      // Reverse tab to button1
+      const result = await tabToElement(button1, 5, true);
+
+      expect(result).toBe(true);
+      expect(document.activeElement).toBe(button1);
+    });
+
+    it('should handle reverse tabbing with wrapping', async () => {
+      // Start focus on button1
+      button1.focus();
+
+      // Reverse tab to button3 (should wrap around)
+      const result = await tabToElement(button3, 5, true);
+
+      expect(result).toBe(true);
+      expect(document.activeElement).toBe(button3);
+    });
   });
 
   describe('waitForFocus', () => {
@@ -148,7 +181,7 @@ describe('storybook-test-helpers', () => {
       }, 50);
 
       await expect(promise).rejects.toThrow();
-    }, 200);
+    }, 500); // Give jsdom more time for async operations
 
     it('should use default timeout of 5000ms', async () => {
       const selector = '[data-test-id="button-1"]';

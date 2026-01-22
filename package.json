@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test-storybook": "vitest --project=storybook",
+    "test-storybook": "vitest --config vitest.config.storybook.ts",
     "test-storybook:visual": "playwright test tests/visual/",
     "test-storybook:visual:update": "playwright test tests/visual/ --update-snapshots",
     "test:e2e": "playwright test",

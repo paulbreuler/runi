@@ -22,12 +22,25 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, within } from '@storybook/test';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
-// Import your component
+// ============================================================================
+// TEMPLATE INSTRUCTIONS
+// ============================================================================
+// 1. Copy this template to your component's stories file
+// 2. Uncomment and update the import below with your actual component
+// 3. Replace all instances of `ComponentName` with your component name
+// 4. Update the title to match your component's location in the sidebar
+// 5. Customize the render functions and play functions for your component
+// ============================================================================
+
+// TODO: Uncomment and update with your component import
 // import { ComponentName } from './ComponentName';
 
+// Placeholder for template - replace with your actual component
+const ComponentName = () => <div>Replace with your component</div>;
+
 const meta = {
-  title: 'Components/ComponentName',
-  component: ComponentName, // Replace with your component
+  title: 'Components/ComponentName', // TODO: Update path
+  component: ComponentName, // TODO: Replace with your imported component
   parameters: {
     docs: {
       description: {
