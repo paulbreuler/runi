@@ -79,7 +79,7 @@ jobs:
       - name: Check Markdown formatting
         # Prettier handles: formatting, trailing whitespace, line endings
         # This matches local: just docs-check
-        run: npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+        run: npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
 
   frontend:
     name: Frontend

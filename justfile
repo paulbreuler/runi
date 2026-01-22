@@ -230,12 +230,12 @@ clean-ralph:
 # Prettier handles: formatting, trailing whitespace, line endings
 docs-check:
     @echo "📚 Checking markdown formatting..."
-    npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+    npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
 
 # Fix documentation formatting
 docs-fix:
     @echo "📚 Fixing markdown formatting..."
-    npx prettier --write "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md"
+    npx prettier --write "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
     @echo "✅ Documentation formatting fixed"
 
 # Generate Rust documentation
