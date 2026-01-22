@@ -134,6 +134,8 @@ const meta = {
     layout: 'padded',
   },
   tags: ['autodocs'],
+  // Note: You can add 'test' or 'experimental' tags to hide stories from sidebar
+  // Example: tags: ['autodocs', 'test'] - would hide this story by default
 } satisfies Meta<typeof VirtualDataGrid>;
 
 export default meta;

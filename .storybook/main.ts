@@ -20,6 +20,19 @@ const config: StorybookConfig = {
 
   staticDirs: ['../static'],
 
+  // Storybook 10: Tag filtering configuration
+  // Allows excluding stories from sidebar based on tags
+  tags: {
+    // Hide experimental stories from sidebar by default
+    experimental: {
+      defaultFilterSelection: 'exclude',
+    },
+    // Hide test stories from sidebar by default (for stories used only for testing)
+    test: {
+      defaultFilterSelection: 'exclude',
+    },
+  },
+
   async viteFinal(config) {
     return mergeConfig(config, {
       plugins: [tailwindcss()],
