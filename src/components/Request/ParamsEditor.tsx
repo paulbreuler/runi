@@ -132,6 +132,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                     placeholder="Parameter name"
                     className="flex-1 font-mono text-sm"
                     autoFocus
+                    data-testid={`param-key-input-${String(index)}`}
                   />
                   <span className="text-text-muted">=</span>
                   <Input
@@ -143,12 +144,14 @@ export const ParamsEditor = (): React.JSX.Element => {
                     onKeyDown={handleKeyDown}
                     placeholder="Parameter value"
                     className="flex-1 font-mono text-sm"
+                    data-testid={`param-value-input-${String(index)}`}
                   />
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     onClick={handleSaveParam}
                     className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
+                    data-testid="save-param-button"
                   >
                     <X className="rotate-45" />
                   </Button>
@@ -157,6 +160,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                     size="icon-sm"
                     onClick={handleCancelEdit}
                     className="text-text-muted hover:text-text-secondary"
+                    data-testid="cancel-param-button"
                   >
                     <X />
                   </Button>
@@ -184,6 +188,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                       handleRemoveParam(index);
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
+                    data-testid={`remove-param-${String(index)}`}
                   >
                     <X />
                   </Button>
@@ -210,6 +215,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                 placeholder="Parameter name"
                 className="flex-1 font-mono text-sm"
                 autoFocus
+                data-testid="new-param-key-input"
               />
               <span className="text-text-muted">=</span>
               <Input
@@ -221,12 +227,14 @@ export const ParamsEditor = (): React.JSX.Element => {
                 onKeyDown={handleKeyDown}
                 placeholder="Parameter value"
                 className="flex-1 font-mono text-sm"
+                data-testid="new-param-value-input"
               />
               <Button
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleSaveParam}
                 className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
+                data-testid="save-new-param-button"
               >
                 <X className="rotate-45" />
               </Button>
@@ -235,6 +243,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                 size="icon-sm"
                 onClick={handleCancelEdit}
                 className="text-text-muted hover:text-text-secondary"
+                data-testid="cancel-new-param-button"
               >
                 <X />
               </Button>
@@ -245,7 +254,13 @@ export const ParamsEditor = (): React.JSX.Element => {
 
       {editingIndex === null && (
         <div className="border-t border-border-subtle p-4">
-          <Button variant="outline" size="sm" onClick={handleAddParam} className="w-full">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAddParam}
+            className="w-full"
+            data-testid="add-param-button"
+          >
             <Plus className="size-4" />
             Add Parameter
           </Button>

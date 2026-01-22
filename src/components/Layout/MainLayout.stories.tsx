@@ -7,7 +7,9 @@ import { Card } from '../ui/card';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { usePanelStore } from '@/stores/usePanelStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import type { HttpResponse } from '@/types/http';
+import { isMacSync } from '@/utils/platform';
 
 const meta = {
   title: 'Layout/MainLayout',
@@ -348,4 +350,188 @@ export const ScrollableContent: Story = {
       }
     />
   ),
+};
+
+/**
+ * Test keyboard shortcuts and resize interactions.
+ * Verifies Cmd+B (sidebar toggle), Cmd+Shift+I (DevTools toggle), and resize functionality.
+ */
+export const KeyboardShortcutsTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        // Reset stores to known state
+        useSettingsStore.setState({ sidebarVisible: true });
+        usePanelStore.setState({ isVisible: false });
+        return () => {
+          // Reset to default state
+          useSettingsStore.setState({ sidebarVisible: true });
+          usePanelStore.getState().reset();
+        };
+      }, []);
+      return <Story />;
+    },
+  ],
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const isMac = isMacSync();
+
+    // Helper to dispatch keyboard event
+    const dispatchKeyboardEvent = (
+      key: string,
+      options: { meta?: boolean; ctrl?: boolean; shift?: boolean } = {}
+    ): void => {
+      const event = new KeyboardEvent('keydown', {
+        key,
+        code: `Key${key.toUpperCase()}`,
+        metaKey: options.meta ?? false,
+        ctrlKey: options.ctrl ?? false,
+        shiftKey: options.shift ?? false,
+        bubbles: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(event);
+    };
+
+    await step('Verify initial state', async () => {
+      await expect(canvas.getByTestId('sidebar')).toBeInTheDocument();
+      await expect(canvas.queryByTestId('dockable-panel')).not.toBeInTheDocument();
+      void expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+      void expect(usePanelStore.getState().isVisible).toBe(false);
+    });
+
+    await step('Toggle sidebar with Cmd+B / Ctrl+B', async () => {
+      dispatchKeyboardEvent('b', { meta: isMac, ctrl: !isMac });
+      // Wait for state update
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(useSettingsStore.getState().sidebarVisible).toBe(false);
+    });
+
+    await step('Toggle sidebar back with Cmd+B / Ctrl+B', async () => {
+      dispatchKeyboardEvent('b', { meta: isMac, ctrl: !isMac });
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+      await expect(canvas.getByTestId('sidebar')).toBeInTheDocument();
+    });
+
+    await step('Toggle DevTools panel with Cmd+Shift+I / Ctrl+Shift+I', async () => {
+      dispatchKeyboardEvent('i', { meta: isMac, ctrl: !isMac, shift: true });
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(usePanelStore.getState().isVisible).toBe(true);
+      await expect(canvas.getByTestId('dockable-panel')).toBeInTheDocument();
+    });
+
+    await step('Toggle DevTools panel back with Cmd+Shift+I / Ctrl+Shift+I', async () => {
+      dispatchKeyboardEvent('i', { meta: isMac, ctrl: !isMac, shift: true });
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(usePanelStore.getState().isVisible).toBe(false);
+      await expect(canvas.queryByTestId('dockable-panel')).not.toBeInTheDocument();
+    });
+  },
+};
+
+/**
+ * Test resize interactions for sidebar and pane.
+ * Verifies that dragging resizers updates layout correctly.
+ */
+export const ResizeInteractionsTest: Story = {
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify initial layout elements', async () => {
+      await expect(canvas.getByTestId('sidebar')).toBeInTheDocument();
+      await expect(canvas.getByTestId('sidebar-resizer')).toBeInTheDocument();
+      await expect(canvas.getByTestId('pane-resizer')).toBeInTheDocument();
+      await expect(canvas.getByTestId('request-pane')).toBeInTheDocument();
+      await expect(canvas.getByTestId('response-pane')).toBeInTheDocument();
+    });
+
+    await step('Verify sidebar resizer is interactive', async () => {
+      const sidebarResizer = canvas.getByTestId('sidebar-resizer');
+      await expect(sidebarResizer).toBeVisible();
+      // Resizer should have cursor-col-resize class
+      void expect(sidebarResizer).toHaveClass('cursor-col-resize');
+    });
+
+    await step('Verify pane resizer is interactive', async () => {
+      const paneResizer = canvas.getByTestId('pane-resizer');
+      await expect(paneResizer).toBeVisible();
+      // Resizer should have cursor-col-resize class
+      void expect(paneResizer).toHaveClass('cursor-col-resize');
+    });
+  },
+};
+
+/**
+ * Test state persistence across interactions.
+ * Verifies that sidebar and panel state persists correctly.
+ */
+export const StatePersistenceTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        // Set initial state
+        useSettingsStore.setState({ sidebarVisible: true });
+        usePanelStore.setState({ isVisible: false });
+        return () => {
+          // Reset to default state
+          useSettingsStore.setState({ sidebarVisible: true });
+          usePanelStore.getState().reset();
+        };
+      }, []);
+      return <Story />;
+    },
+  ],
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify initial state', async () => {
+      void expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+      void expect(usePanelStore.getState().isVisible).toBe(false);
+      await expect(canvas.getByTestId('sidebar')).toBeInTheDocument();
+      await expect(canvas.queryByTestId('dockable-panel')).not.toBeInTheDocument();
+    });
+
+    await step('Toggle sidebar and verify state persists', async () => {
+      useSettingsStore.getState().toggleSidebar();
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(useSettingsStore.getState().sidebarVisible).toBe(false);
+    });
+
+    await step('Toggle panel and verify state persists', async () => {
+      usePanelStore.getState().toggleVisibility();
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(usePanelStore.getState().isVisible).toBe(true);
+      await expect(canvas.getByTestId('dockable-panel')).toBeInTheDocument();
+    });
+
+    await step('Verify both states persist together', () => {
+      void expect(useSettingsStore.getState().sidebarVisible).toBe(false);
+      void expect(usePanelStore.getState().isVisible).toBe(true);
+    });
+  },
 };

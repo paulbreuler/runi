@@ -126,7 +126,7 @@ export const AuthEditor = (): React.JSX.Element => {
           <div className="space-y-2">
             <label className="text-sm font-medium text-text-secondary">Authentication Type</label>
             <Select.Select value={authType} onValueChange={handleAuthTypeChange}>
-              <Select.SelectTrigger className="w-full">
+              <Select.SelectTrigger className="w-full" data-testid="auth-type-select">
                 <Select.SelectValue />
               </Select.SelectTrigger>
               <Select.SelectContent>
@@ -156,6 +156,7 @@ export const AuthEditor = (): React.JSX.Element => {
                 }}
                 placeholder="Enter bearer token"
                 className="font-mono text-sm"
+                data-testid="bearer-token-input"
               />
             </motion.div>
           )}
@@ -179,6 +180,7 @@ export const AuthEditor = (): React.JSX.Element => {
                   }}
                   placeholder="Enter username"
                   className="font-mono text-sm"
+                  data-testid="basic-username-input"
                 />
               </div>
               <div className="space-y-2">
@@ -193,6 +195,7 @@ export const AuthEditor = (): React.JSX.Element => {
                     }}
                     placeholder="Enter password"
                     className="font-mono text-sm pr-10"
+                    data-testid="basic-password-input"
                   />
                   <Button
                     variant="ghost"
@@ -201,6 +204,7 @@ export const AuthEditor = (): React.JSX.Element => {
                       setShowPassword(!showPassword);
                     }}
                     className="absolute right-2 top-1/2 -translate-y-1/2"
+                    data-testid="toggle-password-visibility"
                   >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </Button>
@@ -229,6 +233,7 @@ export const AuthEditor = (): React.JSX.Element => {
                 }}
                 placeholder="Enter custom authorization header value"
                 className="font-mono text-sm"
+                data-testid="custom-header-input"
               />
             </motion.div>
           )}

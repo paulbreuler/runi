@@ -177,6 +177,7 @@ export const BodyEditor = (): React.JSX.Element => {
               <button
                 onClick={formatJson}
                 className="px-2 py-1 text-xs rounded bg-bg-raised text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+                data-testid="format-json-button"
               >
                 Format
               </button>

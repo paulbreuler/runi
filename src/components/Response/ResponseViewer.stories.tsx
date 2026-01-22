@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 import { ResponseViewer } from './ResponseViewer';
 import type { HttpResponse } from '@/types/http';
 
@@ -126,4 +128,95 @@ export const LargeResponse: Story = {
       <ResponseViewer {...args} />
     </div>
   ),
+};
+
+/**
+ * Tests tab navigation between Body, Headers, and Raw views.
+ */
+export const TabNavigationTest: Story = {
+  args: {
+    response: mockResponse,
+  },
+  render: (args) => (
+    <div className="h-screen border border-border-default bg-bg-app">
+      <ResponseViewer {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Body tab is active by default', async () => {
+      const bodyTab = canvas.getByTestId('response-tab-body');
+      const bodyContent = canvas.getByTestId('response-body');
+      await expect(bodyTab).toHaveClass('bg-bg-raised');
+      await expect(bodyContent).toBeVisible();
+    });
+
+    await step('Click Headers tab', async () => {
+      const headersTab = canvas.getByTestId('response-tab-headers');
+      await userEvent.click(headersTab);
+      await expect(headersTab).toHaveClass('bg-bg-raised');
+      // Headers content should be visible
+      await expect(canvas.getByText('HTTP/1.1')).toBeVisible();
+    });
+
+    await step('Click Raw tab', async () => {
+      const rawTab = canvas.getByTestId('response-tab-raw');
+      await userEvent.click(rawTab);
+      await expect(rawTab).toHaveClass('bg-bg-raised');
+      const rawContent = canvas.getByTestId('response-raw');
+      await expect(rawContent).toBeVisible();
+    });
+
+    await step('Return to Body tab', async () => {
+      const bodyTab = canvas.getByTestId('response-tab-body');
+      await userEvent.click(bodyTab);
+      await expect(bodyTab).toHaveClass('bg-bg-raised');
+      const bodyContent = canvas.getByTestId('response-body');
+      await expect(bodyContent).toBeVisible();
+    });
+  },
+};
+
+/**
+ * Tests keyboard navigation through tabs.
+ */
+export const KeyboardNavigationTest: Story = {
+  args: {
+    response: mockResponse,
+  },
+  render: (args) => (
+    <div className="h-screen border border-border-default bg-bg-app">
+      <ResponseViewer {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to Body tab', async () => {
+      const bodyTab = canvas.getByTestId('response-tab-body');
+      const focused = await tabToElement(bodyTab, 5);
+      void expect(focused).toBe(true);
+      await expect(bodyTab).toHaveFocus();
+    });
+
+    await step('Tab to Headers tab', async () => {
+      const headersTab = canvas.getByTestId('response-tab-headers');
+      await userEvent.tab();
+      await expect(headersTab).toHaveFocus();
+    });
+
+    await step('Activate Headers tab with Enter', async () => {
+      const headersTab = canvas.getByTestId('response-tab-headers');
+      await userEvent.keyboard('{Enter}');
+      await expect(headersTab).toHaveClass('bg-bg-raised');
+      await expect(canvas.getByText('HTTP/1.1')).toBeVisible();
+    });
+
+    await step('Tab to Raw tab', async () => {
+      const rawTab = canvas.getByTestId('response-tab-raw');
+      await userEvent.tab();
+      await expect(rawTab).toHaveFocus();
+    });
+  },
 };
