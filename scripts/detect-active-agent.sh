@@ -97,7 +97,16 @@ extract_agent_info() {
     # Extract plan name from agent file path (supports both N-plan and old patterns)
     local plan_name=$(echo "$agent_file" | sed -E 's|.*/plans/([^/]+)/.*|\1|')
     
-    # Extract feature subissue numbers
+    # Extract agent issue number (GitHub issue for the agent)
+    local agent_issue=""
+    if grep -qE '\*\*GitHub Issue\*\*:' "$agent_file"; then
+        agent_issue=$(grep -E '\*\*GitHub Issue\*\*:' "$agent_file" | sed -E 's/.*\*\*GitHub Issue\*\*:\s*#?([0-9]+).*/\1/' | head -1)
+        if [ -n "$agent_issue" ]; then
+            agent_issue="#${agent_issue}"
+        fi
+    fi
+    
+    # Extract feature subissue numbers (GitHub issues for each feature)
     local feature_subissues=""
     local current_feature_num=""
     while IFS= read -r line; do
@@ -112,7 +121,7 @@ extract_agent_info() {
         fi
     done < "$agent_file"
     
-    echo "{\"agent_file\": \"$agent_file\", \"agent_name\": \"$agent_name\", \"features\": \"$features\", \"feature_numbers\": \"$feature_numbers\", \"plan_name\": \"$plan_name\", \"feature_subissues\": \"${feature_subissues}\"}"
+    echo "{\"agent_file\": \"$agent_file\", \"agent_name\": \"$agent_name\", \"features\": \"$features\", \"feature_numbers\": \"$feature_numbers\", \"plan_name\": \"$plan_name\", \"agent_issue\": \"${agent_issue}\", \"feature_subissues\": \"${feature_subissues}\"}"
 }
 
 # Function to detect agent from branch name
