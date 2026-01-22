@@ -15,6 +15,14 @@ export default defineConfig({
   /* Skip Storybook tests in CI - they require Storybook server on port 6006 */
   testIgnore: process.env.CI ? ['**/*.storybook.spec.ts'] : undefined,
 
+  /* Visual comparison settings */
+  expect: {
+    toHaveScreenshot: {
+      threshold: 0.2, // 20% pixel difference threshold
+      mode: 'strict', // Strict comparison mode
+    },
+  },
+
   /* Run tests in files in parallel */
   fullyParallel: true,
 

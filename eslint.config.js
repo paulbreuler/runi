@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook';
+
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
@@ -13,16 +16,10 @@ import globals from 'globals';
  */
 export default tseslint.config(
   // Base recommended rules
-  eslint.configs.recommended,
-
-  // TypeScript strict + stylistic rules (pedantic mode)
+  eslint.configs.recommended, // TypeScript strict + stylistic rules (pedantic mode)
   ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-
-  // Prettier must be last to disable conflicting rules
-  prettier,
-
-  // Main configuration
+  ...tseslint.configs.stylisticTypeChecked, // Prettier must be last to disable conflicting rules
+  prettier, // Main configuration
   {
     languageOptions: {
       globals: {
@@ -206,9 +203,7 @@ export default tseslint.config(
       // Curly braces required for all blocks
       curly: ['error', 'all'],
     },
-  },
-
-  // Storybook files - relax some rules for story definitions
+  }, // Storybook files - relax some rules for story definitions
   {
     files: ['**/*.stories.ts', '**/*.stories.tsx'],
     rules: {
@@ -228,9 +223,7 @@ export default tseslint.config(
       // Naming convention relaxed in stories
       '@typescript-eslint/naming-convention': 'off',
     },
-  },
-
-  // Test files - relax some rules for test ergonomics
+  }, // Test files - relax some rules for test ergonomics
   {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
     rules: {
@@ -253,9 +246,7 @@ export default tseslint.config(
       // Async functions without await are common in test setup
       '@typescript-eslint/require-await': 'off',
     },
-  },
-
-  // Generated types from ts-rs - don't lint these
+  }, // Generated types from ts-rs - don't lint these
   {
     files: ['src/types/generated/**/*.ts', 'src-tauri/bindings/**/*.ts'],
     rules: {
@@ -263,9 +254,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/naming-convention': 'off',
     },
-  },
-
-  // Global ignores
+  }, // Global ignores
   {
     ignores: [
       'build/',
@@ -287,5 +276,6 @@ export default tseslint.config(
       'vitest.setup.ts',
       'playwright*.ts',
     ],
-  }
+  },
+  storybook.configs['flat/recommended']
 );

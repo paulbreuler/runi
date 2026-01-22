@@ -118,6 +118,23 @@ jobs:
       - name: Run tests
         run: just test-frontend
 
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Run Storybook tests
+        run: npm run test-storybook
+        env:
+          # Storybook tests run in browser mode, may need longer timeout
+          CI: true
+
+      - name: Upload Storybook test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-coverage
+          path: coverage/
+          retention-days: 7
+
   rust:
     name: Rust Backend
     runs-on: ${{ matrix.os }}
@@ -211,3 +228,53 @@ jobs:
 
       - name: Run E2E tests
         run: just test-e2e
+
+  storybook-visual:
+    name: Storybook Visual Tests
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Motion+ token
+        run: node scripts/setup-motion-plus.js
+        env:
+          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Storybook server
+        run: npm run storybook -- --no-open &
+        env:
+          CI: true
+
+      - name: Wait for Storybook
+        run: |
+          timeout 120 bash -c 'until curl -f http://localhost:6006; do sleep 2; done'
+
+      - name: Run visual tests
+        run: npm run test-storybook:visual
+        continue-on-error: true
+
+      - name: Upload visual test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-visual-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

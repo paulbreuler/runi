@@ -8,7 +8,7 @@
  * - FocusManagement - Demonstrates focus visibility and logical focus order
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { Row } from '@tanstack/react-table';
 import { VirtualDataGrid } from '../VirtualDataGrid';
 import { createSelectionColumn } from '../columns/selectionColumn';
@@ -56,9 +56,11 @@ const createColumns = (): Array<ColumnDef<TestRow>> => [
   },
 ];
 
+import type { VirtualDataGridProps } from '../VirtualDataGrid';
+
 const meta = {
   title: 'Components/DataGrid/Accessibility',
-  component: VirtualDataGrid<TestRow>,
+  component: VirtualDataGrid,
   parameters: {
     layout: 'padded',
     docs: {
@@ -95,7 +97,7 @@ const meta = {
 } satisfies Meta<typeof VirtualDataGrid>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<VirtualDataGridProps<TestRow>>;
 
 /**
  * Keyboard navigation demonstration.

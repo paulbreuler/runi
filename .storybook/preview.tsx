@@ -10,23 +10,40 @@ const preview: Preview = {
       },
     },
     backgrounds: {
-      default: 'dark',
-      values: [
-        {
+      options: {
+        dark: {
           name: 'dark',
           value: '#0a0a0a',
         },
-        {
+
+        surface: {
           name: 'surface',
           value: '#141414',
         },
-        {
+
+        raised: {
           name: 'raised',
           value: '#1e1e1e',
         },
-      ],
+      },
+    },
+    // Testing widget configuration
+    test: {
+      // Enable accessibility testing (runs automatically with @storybook/addon-a11y)
+      a11y: {
+        config: {},
+        options: {
+          checks: { 'color-contrast': { options: { noScroll: true } } },
+          restoreScroll: true,
+        },
+      },
+      // Coverage reporting (when running with coverage flag)
+      coverage: {
+        enabled: true,
+      },
     },
   },
+
   decorators: [
     (Story) => (
       <div
@@ -39,6 +56,12 @@ const preview: Preview = {
       </div>
     ),
   ],
+
+  initialGlobals: {
+    backgrounds: {
+      value: 'dark',
+    },
+  },
 };
 
 export default preview;
