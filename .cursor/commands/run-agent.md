@@ -18,11 +18,17 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
    - Workload balance (30%): Agents with fewer remaining tasks get higher score
    - Priority (30%): Lower feature IDs (earlier in plan) get higher score
 
-2. **Assesses agent status** - Checks completion state and file organization
+2. **Creates GitHub issue** (if not exists) - Automatically creates a GitHub issue for the agent work:
+   - Title: `[Plan Name] Agent N: [Agent Name] - Features #[N], #[N+1]`
+   - Description: Agent summary, feature list, TL;DR descriptions, files to modify
+   - Labels: `agent-work`, `plan-[plan-name]`
+   - Stores issue number in agent file metadata
 
-3. **Opens agent file in Cursor** - Opens the selected or specified agent file with context
+3. **Assesses agent status** - Checks completion state and file organization
 
-4. **Displays instructions** - Shows quick links and next steps
+4. **Opens agent file in Cursor** - Opens the selected or specified agent file with context
+
+5. **Displays instructions** - Shows quick links and next steps
 
 ## Usage Examples
 
@@ -78,13 +84,19 @@ Assesses all agents in the plan for completion status and file organization.
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
-2. **Display output:**
+2. **GitHub Issue Creation:**
+   - The script automatically creates a GitHub issue when an agent file is opened (if issue doesn't exist)
+   - Issue number is stored in agent file metadata as `**GitHub Issue**: #123`
+   - Issue will automatically close when PR with `Closes #123` merges to default branch
+   - If GitHub CLI is not available or not authenticated, issue creation is skipped (non-blocking)
+
+3. **Display output:**
    - Show task selection results (if applicable)
    - Show agent status assessment
    - Show context and instructions
    - Display clickable file links
 
-3. **Provide guidance:**
+4. **Provide guidance:**
    - Explain next steps for the agent
    - Reference related commands (`just close-feature-agent`, `just assess-agents`, `just work`, `just heal`)
    - Show how to verify completion
