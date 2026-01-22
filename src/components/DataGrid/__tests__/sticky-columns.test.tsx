@@ -226,9 +226,11 @@ describe('Features #41-43: Sticky Columns', () => {
         const htmlCell = cell as HTMLElement;
         const style = htmlCell.style;
         const hasSticky = style.position === 'sticky' && style.left !== '';
+        // Sticky columns use bg-bg-app for non-selected, bg-accent-blue/15 for selected
         const hasBgClass =
-          htmlCell.classList.contains('bg-bg-raised') ||
-          htmlCell.classList.contains('bg-accent-blue/10');
+          htmlCell.classList.contains('bg-bg-app') ||
+          htmlCell.classList.contains('bg-accent-blue/15') ||
+          htmlCell.classList.contains('bg-accent-blue/10'); // Keep for backward compatibility
         return hasSticky && hasBgClass;
       });
 
