@@ -4,7 +4,7 @@ Generate a TDD plan with verbose planning docs and minimal agent execution files
 
 ## Invocation
 
-```
+```text
 /create-feature-plan
 ```
 
@@ -165,7 +165,7 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
 
 ## Output Structure
 
-```
+```text
 NNNN-descriptive-name/
 ├── README.md              # Index, graph, status
 ├── plan.md                # Full specs (verbose, ~1000+ lines OK)
@@ -247,31 +247,32 @@ Gotchas:
 - [ ] Storybook stories follow templates and best practices (if applicable)
 - [ ] Status → PASS
 
-```
-
 ## Distillation Rules
 
-| plan.md (verbose) | agent.md (distilled) |
-|-------------------|----------------------|
-| Full Gherkin scenario | One-line TL;DR |
-| Detailed TDD with code | `test → impl → refactor` |
-| Component design table | Just file paths |
-| Gotcha with full context | `issue: workaround` |
-| Interface with examples | Just signatures |
+| plan.md (verbose)        | agent.md (distilled)     |
+| ------------------------ | ------------------------ |
+| Full Gherkin scenario    | One-line TL;DR           |
+| Detailed TDD with code   | `test → impl → refactor` |
+| Component design table   | Just file paths          |
+| Gotcha with full context | `issue: workaround`      |
+| Interface with examples  | Just signatures          |
 
 ## Work Type Adjustments
 
 ### Refactor
+
 - Emphasize: behavior preservation tests
 - Agent files include: migration paths
 - Extra in plan.md: before/after comparisons
 
 ### Overhaul
+
 - Emphasize: rollback checkpoints
 - Agent files include: rollback commit hashes
 - Extra in plan.md: breaking changes, migration guide
 
-### Features
+### Feature Development
+
 - Emphasize: integration points
 - Agent files include: dependency status clearly marked
 - Extra in plan.md: user stories, acceptance criteria
@@ -291,37 +292,30 @@ Before presenting plan:
 - [ ] Dependency graph complete
 - [ ] All features assigned
 - [ ] File ownership clear (no conflicts)
-- [ ] Agent files use numeric prefixes (0_agent_, 1_agent_, etc.) - Number first for lexicographical ordering
+- [ ] Agent files use numeric prefixes (0*agent*, 1*agent*, etc.) - Number first for lexicographical ordering
 - [ ] gotchas.md template ready
 
 ## Usage After Creation
 
 **Assign work**:
-```
 
+```text
 Copy: agents/columns.agent.md
 Paste to Claude agent
 Agent implements
-
 ```
 
 **Optional: Assess initial status**:
 After creating a plan, you can use `/work --plan <plan-number>` (e.g., `/work --plan 1`) to assess the initial plan status and see the first recommended task. This is optional but can help verify the plan structure is correct.
 
-```
-
 **Update plan**:
 
-```
-
+```text
 /update-feature-plan [path]
-
 ```
 
 **Check status**:
 Review README.md status matrix
-
-````
 
 ## MCP Tool Usage Examples
 
@@ -334,44 +328,44 @@ const plans = await mcp_runi_Planning_list_docs({ path: 'plans' });
 // 2. Create plan structure
 await mcp_runi_Planning_create_plan({
   name: '0008-storybook-testing-overhaul',
-  description: 'Overhaul Storybook testing infrastructure with templates and utilities'
+  description: 'Overhaul Storybook testing infrastructure with templates and utilities',
 });
 
 // 3. Create plan.md
 await mcp_runi_Planning_create_doc({
   path: 'plans/0008-storybook-testing-overhaul/plan.md',
   content: '...', // Full verbose specs
-  template: 'none'
+  template: 'none',
 });
 
 // 4. Create interfaces.md
 await mcp_runi_Planning_create_doc({
   path: 'plans/0008-storybook-testing-overhaul/interfaces.md',
   content: '...', // Contract definitions
-  template: 'none'
+  template: 'none',
 });
 
 // 5. Create README.md
 await mcp_runi_Planning_create_doc({
   path: 'plans/0008-storybook-testing-overhaul/README.md',
   content: '...', // Index with dependency graph
-  template: 'none'
+  template: 'none',
 });
 
 // 6. Create gotchas.md
 await mcp_runi_Planning_create_doc({
   path: 'plans/0008-storybook-testing-overhaul/gotchas.md',
   content: '...', // Empty template
-  template: 'addendum' // or 'none' if addendum template not available
+  template: 'addendum', // or 'none' if addendum template not available
 });
 
 // 7. Create agent files
 await mcp_runi_Planning_create_doc({
   path: 'plans/0008-storybook-testing-overhaul/agents/000_agent_infrastructure.agent.md',
   content: '...', // Distilled agent context
-  template: 'none'
+  template: 'none',
 });
-````
+```
 
 ### Reading Existing Documents
 
