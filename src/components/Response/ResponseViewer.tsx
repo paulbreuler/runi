@@ -187,6 +187,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                     ? 'bg-bg-raised text-text-primary font-medium'
                     : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
                 }`}
+                data-testid={`response-tab-${tab.id}`}
               >
                 {tab.label}
                 {tab.id === 'headers' && (

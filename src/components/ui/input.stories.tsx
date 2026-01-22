@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { Input } from './input';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/UI/Input',
@@ -73,6 +75,27 @@ export const Default: Story = {
   args: {
     placeholder: 'Enter text...',
   },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const input = canvas.getByPlaceholderText(/enter text/i);
+
+    await step('Input is visible and focusable', async () => {
+      await expect(input).toBeVisible();
+      await expect(input).not.toBeDisabled();
+    });
+
+    await step('Input receives focus via keyboard', async () => {
+      await tabToElement(input);
+      await waitForFocus(input);
+      await expect(input).toHaveFocus();
+    });
+
+    await step('Input accepts text input', async () => {
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Hello, World!');
+      await expect(input).toHaveValue('Hello, World!');
+    });
+  },
 };
 
 export const Glass: Story = {
@@ -120,4 +143,34 @@ export const WithLabels: Story = {
       <Input id="email-input" type="email" placeholder="Enter your email" />
     </div>
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const nameInput = canvas.getByLabelText(/name/i);
+    const emailInput = canvas.getByLabelText(/email/i);
+
+    await step('Labeled inputs are accessible via labels', async () => {
+      await expect(nameInput).toBeVisible();
+      await expect(emailInput).toBeVisible();
+    });
+
+    await step('Can tab between labeled inputs', async () => {
+      await tabToElement(nameInput);
+      await waitForFocus(nameInput);
+      await expect(nameInput).toHaveFocus();
+
+      await userEvent.tab();
+      await waitForFocus(emailInput);
+      await expect(emailInput).toHaveFocus();
+    });
+
+    await step('Can type into labeled inputs', async () => {
+      await userEvent.clear(nameInput);
+      await userEvent.type(nameInput, 'John Doe');
+      await expect(nameInput).toHaveValue('John Doe');
+
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'john@example.com');
+      await expect(emailInput).toHaveValue('john@example.com');
+    });
+  },
 };

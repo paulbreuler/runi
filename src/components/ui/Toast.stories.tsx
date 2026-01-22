@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { ToastProvider, Toast } from './Toast';
 import { useToastStore, clearDedupCache } from '@/stores/useToastStore';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
@@ -88,6 +89,38 @@ export const ErrorToast: Story = {
       correlationId="23b109c8-292b-4c34-8f3c-1059255261e6"
     />
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const triggerButton = canvas.getByRole('button', { name: /show error toast/i });
+
+    await step('Toast appears after button click', async () => {
+      await userEvent.click(triggerButton);
+      // Wait for toast to appear (toasts are animated, need time)
+      // Toasts render in Radix Toast.Viewport which is in document.body
+      // Wait for toast animation to complete (may need more time in CI)
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      // Check document.body for toast (Radix portals render there)
+      const toast = await within(document.body).findByRole(
+        'alert',
+        { name: /tauri backend is not available/i },
+        { timeout: 5000 }
+      );
+      await expect(toast).toBeVisible();
+    });
+
+    await step('Error toast has dismiss button', async () => {
+      // Toast is in document.body (Radix portal)
+      const toast = within(document.body).getByRole('alert', {
+        name: /tauri backend is not available/i,
+      });
+      const dismissButton = within(toast).getByRole('button', { name: /dismiss notification/i });
+      await expect(dismissButton).toBeVisible();
+      await userEvent.click(dismissButton);
+      // Wait for toast to be removed (exit animation)
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await expect(toast).not.toBeInTheDocument();
+    });
+  },
 };
 
 /**
@@ -214,6 +247,43 @@ export const Interactive: Story = {
       );
     };
     return <InteractiveDemo />;
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Can trigger multiple toast types', async () => {
+      const errorButton = canvas.getByRole('button', { name: /^error$/i });
+      await userEvent.click(errorButton);
+      // Wait for toast animation (toasts render in document.body via Radix portal, may need more time in CI)
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      const errorToast = await within(document.body).findByRole(
+        'alert',
+        { name: /error occurred/i },
+        { timeout: 5000 }
+      );
+      await expect(errorToast).toBeVisible();
+
+      const successButton = canvas.getByRole('button', { name: /^success$/i });
+      await userEvent.click(successButton);
+      // Wait for toast animation
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      const successToast = await within(document.body).findByRole(
+        'alert',
+        { name: /success message/i },
+        { timeout: 5000 }
+      );
+      await expect(successToast).toBeVisible();
+    });
+
+    await step('Clear all button removes all toasts', async () => {
+      const clearButton = canvas.getByRole('button', { name: /clear all/i });
+      await userEvent.click(clearButton);
+      // Wait for toasts to be removed (exit animations)
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Check document.body for toasts (Radix portal)
+      const toasts = within(document.body).queryAllByRole('alert');
+      await expect(toasts).toHaveLength(0);
+    });
   },
 };
 

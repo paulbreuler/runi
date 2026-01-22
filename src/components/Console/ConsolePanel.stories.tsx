@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { ConsolePanel } from './ConsolePanel';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
@@ -473,5 +474,184 @@ export const AutoScrollDisabled: Story = {
     // The story shows the initial state; to see auto-scroll disabled,
     // click the Auto button in the toolbar.
     return <ConsolePanel />;
+  },
+};
+
+/**
+ * Test log expansion functionality.
+ */
+export const LogExpansionTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        const service = getConsoleService();
+        service.clear();
+        service.setMinLogLevel('debug');
+
+        // Add logs with expandable args
+        service.addLog(
+          createMockLog('info', 'Request completed', [
+            {
+              method: 'GET',
+              url: '/api/users',
+              status: 200,
+              duration: 45,
+            },
+          ])
+        );
+
+        service.addLog(
+          createMockLog('error', 'Request failed', [
+            {
+              event: 'tauri://error',
+              id: -1,
+              payload: 'webview.create_webview_window not allowed',
+            },
+          ])
+        );
+
+        return () => {
+          service.clear();
+        };
+      }, []);
+
+      return (
+        <div className="h-screen">
+          <Story />
+        </div>
+      );
+    },
+  ],
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Expand a log entry', async () => {
+      // Find expander button (chevron) for first log
+      const logsContainer = canvas.getByTestId('console-logs');
+      const expanderButtons = logsContainer.querySelectorAll('button[aria-label*="expand"]');
+      if (expanderButtons.length > 0) {
+        await userEvent.click(expanderButtons[0] as HTMLElement);
+        // Wait for expanded section to appear
+        const expandedSection = canvas.getByTestId('expanded-section');
+        await expect(expandedSection).toBeVisible();
+      }
+    });
+
+    await step('Collapse the expanded log', async () => {
+      const logsContainer = canvas.getByTestId('console-logs');
+      const collapseButtons = logsContainer.querySelectorAll('button[aria-label*="collapse"]');
+      if (collapseButtons.length > 0) {
+        await userEvent.click(collapseButtons[0] as HTMLElement);
+        // Expanded section should be hidden
+        const expandedSections = logsContainer.querySelectorAll('[data-testid="expanded-section"]');
+        // All should be hidden or removed
+        await expect(expandedSections.length).toBe(0);
+      }
+    });
+  },
+};
+
+/**
+ * Test filter interactions: changing log level filter and search.
+ */
+export const FilterInteractionsTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        const service = getConsoleService();
+        service.clear();
+        service.setMinLogLevel('debug');
+
+        // Add logs of different levels
+        service.addLog(createMockLog('error', 'Error message', []));
+        service.addLog(createMockLog('warn', 'Warning message', []));
+        service.addLog(createMockLog('info', 'Info message', []));
+        service.addLog(createMockLog('debug', 'Debug message', []));
+
+        return () => {
+          service.clear();
+        };
+      }, []);
+
+      return (
+        <div className="h-screen">
+          <Story />
+        </div>
+      );
+    },
+  ],
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Filter by error level', async () => {
+      const errorButton = canvas.getByRole('button', { name: /error/i });
+      await userEvent.click(errorButton);
+      // Verify only error logs are visible
+      const errorLogs = canvas.queryAllByTestId('console-log-error');
+      await expect(errorLogs.length).toBeGreaterThan(0);
+    });
+
+    await step('Filter by search term', async () => {
+      const searchInput = canvas.getByLabelText(/search logs/i);
+      await userEvent.clear(searchInput);
+      await userEvent.type(searchInput, 'Error');
+      await expect(searchInput).toHaveValue('Error');
+      // Verify filtered results
+      const errorLogs = canvas.queryAllByTestId('console-log-error');
+      await expect(errorLogs.length).toBeGreaterThan(0);
+    });
+  },
+};
+
+/**
+ * Test clear functionality.
+ */
+export const ClearFunctionalityTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        const service = getConsoleService();
+        service.clear();
+        service.setMinLogLevel('debug');
+
+        // Add some logs
+        for (let i = 0; i < 5; i++) {
+          service.addLog(createMockLog('info', `Log entry ${String(i + 1)}`, []));
+        }
+
+        return () => {
+          service.clear();
+        };
+      }, []);
+
+      return (
+        <div className="h-screen">
+          <Story />
+        </div>
+      );
+    },
+  ],
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify logs are present', async () => {
+      const logsContainer = canvas.getByTestId('console-logs');
+      await expect(logsContainer).toBeVisible();
+    });
+
+    await step('Clear logs and verify state', async () => {
+      // Button text is "Clear" in full mode, or aria-label "Clear console" in icon mode
+      const clearButton = canvas.getByRole('button', { name: /^clear$/i });
+      await userEvent.click(clearButton);
+      // Wait for logs to be cleared (state update)
+      await new Promise((resolve) => {
+        setTimeout(resolve, 200);
+      });
+      // Verify logs container is empty or shows empty state
+      const logsContainer = canvas.getByTestId('console-logs');
+      // After clearing, logs should be removed
+      const logRows = logsContainer.querySelectorAll('[data-testid^="console-log-"]');
+      await expect(logRows.length).toBe(0);
+    });
   },
 };

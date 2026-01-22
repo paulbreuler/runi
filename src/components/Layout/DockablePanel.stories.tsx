@@ -10,6 +10,7 @@ import { PanelContent } from '@/components/PanelContent';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { getConsoleService } from '@/services/console-service';
 import type { NetworkHistoryEntry } from '@/types/history';
+import { isMacSync } from '@/utils/platform';
 
 const meta: Meta<typeof DockablePanel> = {
   title: 'Layout/DockablePanel',
@@ -759,6 +760,291 @@ export const FocusRestorationTest: Story = {
       // Re-focus to verify focusability (see Test 1 comment for rationale)
       leftButton.focus();
       await expect(leftButton).toHaveFocus();
+    });
+  },
+};
+
+/**
+ * Test resize interactions for dockable panel.
+ * Verifies that panel can be resized in different dock positions.
+ */
+export const ResizeInteractionsTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'bottom',
+          isVisible: true,
+          isCollapsed: false,
+          sizes: { ...DEFAULT_PANEL_SIZES },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex flex-col overflow-hidden">
+          <div className="p-2 text-xs text-text-muted shrink-0">
+            Main content area - Panel docks below
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Story />
+          </div>
+        </div>
+      );
+    },
+  ],
+  render: () => {
+    const [activeTab, setActiveTab] = useState<PanelTabType>('network');
+    return (
+      <DockablePanel
+        title="DevTools"
+        headerContent={
+          <PanelTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            networkCount={5}
+            consoleCount={3}
+          />
+        }
+      >
+        <div className="p-4 text-text-secondary">Panel content for resize testing.</div>
+      </DockablePanel>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify panel and resizer are visible', async () => {
+      // Wait for panel animation to complete (opacity transition)
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const panel = canvas.getByTestId('dockable-panel');
+      // Check if panel is actually visible (not just in DOM)
+      const style = window.getComputedStyle(panel);
+      if (style.opacity === '0' || style.display === 'none' || style.visibility === 'hidden') {
+        // Wait a bit more for animation
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      await expect(panel).toBeVisible();
+      await expect(canvas.getByTestId('panel-resizer')).toBeVisible();
+    });
+
+    await step('Verify resizer is interactive', async () => {
+      const resizer = canvas.getByTestId('panel-resizer');
+      await expect(resizer).toBeVisible();
+      // Resizer should be interactive
+      void expect(resizer).toHaveClass('cursor-row-resize');
+    });
+  },
+};
+
+/**
+ * Test keyboard shortcuts for panel visibility.
+ * Verifies that Cmd+Shift+I / Ctrl+Shift+I toggles panel visibility.
+ */
+export const KeyboardShortcutsTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'bottom',
+          isVisible: false,
+          isCollapsed: false,
+          sizes: { ...DEFAULT_PANEL_SIZES },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex flex-col overflow-hidden">
+          <div className="p-2 text-xs text-text-muted shrink-0">
+            Main content area - Panel toggles with keyboard shortcut
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Story />
+          </div>
+        </div>
+      );
+    },
+  ],
+  render: () => {
+    const [activeTab, setActiveTab] = useState<PanelTabType>('network');
+    return (
+      <DockablePanel
+        title="DevTools"
+        headerContent={
+          <PanelTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            networkCount={5}
+            consoleCount={3}
+          />
+        }
+      >
+        <div className="p-4 text-text-secondary">
+          Panel content. Use Cmd+Shift+I (Mac) or Ctrl+Shift+I (Windows) to toggle visibility.
+        </div>
+      </DockablePanel>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const isMac = isMacSync();
+
+    // Helper to dispatch keyboard event
+    const dispatchKeyboardEvent = (
+      key: string,
+      options: { meta?: boolean; ctrl?: boolean; shift?: boolean } = {}
+    ): void => {
+      const event = new KeyboardEvent('keydown', {
+        key,
+        code: `Key${key.toUpperCase()}`,
+        metaKey: options.meta ?? false,
+        ctrlKey: options.ctrl ?? false,
+        shiftKey: options.shift ?? false,
+        bubbles: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(event);
+    };
+
+    await step('Verify panel starts hidden', async () => {
+      await expect(usePanelStore.getState().isVisible).toBe(false);
+      // Panel may still render but be hidden, so check visibility
+      const panel = canvas.queryByTestId('dockable-panel');
+      if (panel !== null) {
+        // If panel exists, it should not be visible
+        await expect(panel).not.toBeVisible();
+      }
+    });
+
+    await step('Toggle panel visibility with keyboard shortcut', async () => {
+      dispatchKeyboardEvent('i', { meta: isMac, ctrl: !isMac, shift: true });
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      // Verify panel is visible after toggle
+      await expect(usePanelStore.getState().isVisible).toBe(true);
+    });
+
+    await step('Toggle panel back with keyboard shortcut', async () => {
+      dispatchKeyboardEvent('i', { meta: isMac, ctrl: !isMac, shift: true });
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(usePanelStore.getState().isVisible).toBe(false);
+    });
+  },
+};
+
+/**
+ * Test state persistence for panel position and size.
+ * Verifies that panel state persists across interactions.
+ */
+export const StatePersistenceTest: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        usePanelStore.setState({
+          position: 'bottom',
+          isVisible: true,
+          isCollapsed: false,
+          sizes: { bottom: 300, left: 350, right: 350 },
+          isPopout: false,
+        });
+      }, []);
+      return (
+        <div className="h-screen bg-bg-app flex flex-col overflow-hidden">
+          <div className="p-2 text-xs text-text-muted shrink-0">
+            Main content area - Panel state persistence test
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Story />
+          </div>
+        </div>
+      );
+    },
+  ],
+  render: () => {
+    const [activeTab, setActiveTab] = useState<PanelTabType>('network');
+    return (
+      <DockablePanel
+        title="DevTools"
+        headerContent={
+          <PanelTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            networkCount={5}
+            consoleCount={3}
+          />
+        }
+      >
+        <div className="p-4 text-text-secondary">Panel content for state persistence testing.</div>
+      </DockablePanel>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify initial panel state', async () => {
+      await expect(usePanelStore.getState().position).toBe('bottom');
+      await expect(usePanelStore.getState().isVisible).toBe(true);
+      await expect(usePanelStore.getState().isCollapsed).toBe(false);
+      // Wait for panel animation to complete
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const panel = canvas.getByTestId('dockable-panel');
+      // Check if panel is actually visible (not just in DOM)
+      const style = window.getComputedStyle(panel);
+      if (style.opacity === '0' || style.display === 'none' || style.visibility === 'hidden') {
+        // Wait a bit more for animation
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+      await expect(panel).toBeVisible();
+    });
+
+    await step('Change panel position and verify state persists', async () => {
+      usePanelStore.getState().setPosition('left');
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      // Verify state actually changed
+      await expect(usePanelStore.getState().position).toBe('left');
+    });
+
+    await step('Collapse panel and verify state persists', async () => {
+      usePanelStore.getState().setCollapsed(true);
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      // Verify state actually changed
+      await expect(usePanelStore.getState().isCollapsed).toBe(true);
+    });
+
+    await step('Expand panel and verify state persists', async () => {
+      usePanelStore.getState().setCollapsed(false);
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(usePanelStore.getState().isCollapsed).toBe(false);
+    });
+
+    await step('Change position back and verify all state persists', async () => {
+      usePanelStore.getState().setPosition('bottom');
+      await new Promise<void>((resolve) => {
+        void setTimeout(() => {
+          resolve();
+        }, 100);
+      });
+      void expect(usePanelStore.getState().position).toBe('bottom');
+      void expect(usePanelStore.getState().isVisible).toBe(true);
+      void expect(usePanelStore.getState().isCollapsed).toBe(false);
     });
   },
 };

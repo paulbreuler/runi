@@ -17,6 +17,9 @@ const meta: Meta<typeof CodeGenPanel> = {
         component: 'Panel with language tabs for code generation from network history entries.',
       },
     },
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 };

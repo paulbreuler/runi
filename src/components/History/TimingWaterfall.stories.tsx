@@ -6,6 +6,9 @@ const meta = {
   component: TimingWaterfall,
   parameters: {
     layout: 'centered',
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 } satisfies Meta<typeof TimingWaterfall>;

@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './card';
 import { Button } from './button';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/UI/Card',
@@ -95,4 +97,25 @@ export const WithActions: Story = {
       </CardFooter>
     </Card>
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const cancelButton = canvas.getByRole('button', { name: /cancel/i });
+    const confirmButton = canvas.getByRole('button', { name: /confirm/i });
+
+    await step('Action buttons are clickable', async () => {
+      await expect(cancelButton).toBeVisible();
+      await expect(confirmButton).toBeVisible();
+      await userEvent.click(cancelButton);
+      await expect(cancelButton).toBeVisible();
+    });
+
+    await step('Keyboard navigation works', async () => {
+      await tabToElement(cancelButton);
+      await waitForFocus(cancelButton);
+      await expect(cancelButton).toHaveFocus();
+      await userEvent.tab();
+      await waitForFocus(confirmButton);
+      await expect(confirmButton).toHaveFocus();
+    });
+  },
 };

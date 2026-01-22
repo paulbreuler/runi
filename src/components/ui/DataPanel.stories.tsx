@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { useState } from 'react';
 import { DataPanel } from './DataPanel';
 import { Checkbox } from './checkbox';
 import { EmptyState } from './EmptyState';
 import { AlertCircle, Info, Bug, Check } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 
 interface LogItem {
   id: string;
@@ -234,6 +236,39 @@ export const WithSelectAll: Story = {
         </div>
       </div>
     );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const selectAllCheckbox = canvas.getByRole('checkbox', { name: /select all/i });
+
+    await step('Select all checkbox is visible', async () => {
+      await expect(selectAllCheckbox).toBeVisible();
+      await expect(selectAllCheckbox).not.toBeChecked();
+    });
+
+    await step('Select all selects all items', async () => {
+      await userEvent.click(selectAllCheckbox);
+      await expect(selectAllCheckbox).toBeChecked();
+      const statusText = canvas.getByText(/selected: 5 \/ 5/i);
+      await expect(statusText).toBeVisible();
+    });
+
+    await step('Individual checkboxes can be toggled', async () => {
+      const firstItemCheckbox = canvas.getByRole('checkbox', {
+        name: /select application started/i,
+      });
+      await userEvent.click(firstItemCheckbox);
+      await expect(firstItemCheckbox).not.toBeChecked();
+      // Select all should now be indeterminate
+      await expect(selectAllCheckbox).toHaveAttribute('aria-checked', 'mixed');
+    });
+
+    await step('Keyboard navigation works', async () => {
+      // Focus the checkbox directly to avoid long tab navigation
+      selectAllCheckbox.focus();
+      await waitForFocus(selectAllCheckbox, 1000);
+      await expect(selectAllCheckbox).toHaveFocus();
+    });
   },
 };
 

@@ -10,6 +10,9 @@ const meta: Meta<typeof TimingTab> = {
     backgrounds: {
       default: 'dark',
     },
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
     docs: {
       description: {
         component: `

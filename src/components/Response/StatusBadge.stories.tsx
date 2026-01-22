@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from '@storybook/test';
 import { StatusBadge } from './StatusBadge';
 
 const meta = {
@@ -78,4 +79,46 @@ export const AllStatusRanges: Story = {
       </div>
     </div>
   ),
+};
+
+/**
+ * Tests that status badges render correctly with different status codes.
+ * StatusBadge is a display-only component with no interactions.
+ */
+export const StatusRangesTest: Story = {
+  args: {
+    status: 200,
+    statusText: 'OK',
+  },
+  render: () => (
+    <div className="flex flex-col gap-3">
+      <StatusBadge status={200} statusText="OK" />
+      <StatusBadge status={404} statusText="Not Found" />
+      <StatusBadge status={500} statusText="Internal Server Error" />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Success status badge renders correctly', async () => {
+      const successBadge = canvas.getAllByTestId('status-badge')[0];
+      await expect(successBadge).toBeVisible();
+      await expect(successBadge).toHaveTextContent('200');
+      await expect(successBadge).toHaveTextContent('OK');
+    });
+
+    await step('Client error status badge renders correctly', async () => {
+      const errorBadge = canvas.getAllByTestId('status-badge')[1];
+      await expect(errorBadge).toBeVisible();
+      await expect(errorBadge).toHaveTextContent('404');
+      await expect(errorBadge).toHaveTextContent('Not Found');
+    });
+
+    await step('Server error status badge renders correctly', async () => {
+      const serverErrorBadge = canvas.getAllByTestId('status-badge')[2];
+      await expect(serverErrorBadge).toBeVisible();
+      await expect(serverErrorBadge).toHaveTextContent('500');
+      await expect(serverErrorBadge).toHaveTextContent('Internal Server Error');
+    });
+  },
 };

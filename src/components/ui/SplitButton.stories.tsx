@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { Download, Copy, Trash2, Save, FolderOpen, FileUp, Share } from 'lucide-react';
 import { SplitButton } from './SplitButton';
 
@@ -97,6 +98,39 @@ export const Default: Story = {
         },
       },
     ],
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const primaryButton = canvas.getByRole('button', { name: /^save$/i });
+
+    await step('Primary button is clickable', async () => {
+      await expect(primaryButton).toBeVisible();
+      await userEvent.click(primaryButton);
+      // Button should still be visible after click
+      await expect(primaryButton).toBeVisible();
+    });
+
+    await step('Dropdown trigger opens menu', async () => {
+      // Find the dropdown trigger (SplitButton uses "More options" as default aria-label)
+      const dropdownTrigger = canvas.getByRole('button', { name: /more options/i });
+      await userEvent.click(dropdownTrigger);
+      // Wait for Radix menu portal to appear (menus render in portals, may need more time in CI)
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Menu should open - look in document body for portal
+      const saveAsOption = await within(document.body).findByRole(
+        'menuitem',
+        { name: /save as/i },
+        { timeout: 5000 }
+      );
+      await expect(saveAsOption).toBeVisible();
+    });
+
+    await step('Keyboard navigation works', async () => {
+      // Focus the button directly to test focusability
+      primaryButton.focus();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await expect(primaryButton).toHaveFocus();
+    });
   },
 };
 

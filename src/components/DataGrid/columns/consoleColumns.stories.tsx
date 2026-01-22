@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import {
   useReactTable,
   getCoreRowModel,
@@ -267,4 +268,66 @@ export const ErrorLogs: Story = {
  */
 export const MixedLevels: Story = {
   render: () => <DemoTable data={sampleLogs} />,
+};
+
+/**
+ * Tests console table interactions: log level display, selection, and expansion.
+ */
+export const ConsoleTableInteractionTest: Story = {
+  render: () => <DemoTable data={sampleLogs} />,
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify all log levels are displayed', async () => {
+      // Check for different log levels
+      await expect(canvas.getByText('info')).toBeInTheDocument();
+      await expect(canvas.getByText('debug')).toBeInTheDocument();
+      await expect(canvas.getByText('warn')).toBeInTheDocument();
+      await expect(canvas.getByText('error')).toBeInTheDocument();
+    });
+
+    await step('Verify log messages are displayed', async () => {
+      await expect(canvas.getByText('Application started successfully')).toBeInTheDocument();
+      await expect(canvas.getByText('Failed to connect to database')).toBeInTheDocument();
+    });
+
+    await step('Click row checkbox to select', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const firstRowCheckbox = checkboxes[1];
+      if (firstRowCheckbox !== undefined) {
+        await userEvent.click(firstRowCheckbox);
+        await expect(firstRowCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+
+    await step('Click expander to expand row', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await userEvent.click(firstExpander);
+        // Wait for expansion animation
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+
+    await step('Collapse expanded row', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await userEvent.click(firstExpander);
+        // Wait for collapse animation
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests console table interactions: verifies log levels, messages, row selection, and expansion.',
+      },
+    },
+  },
 };

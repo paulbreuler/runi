@@ -17,6 +17,9 @@ const meta: Meta<typeof CodeGenTab> = {
         component: 'Main code generation tab component for expanded panel.',
       },
     },
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 };

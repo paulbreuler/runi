@@ -103,6 +103,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     placeholder="Header name"
                     className="flex-1 font-mono text-sm"
                     autoFocus
+                    data-testid={`header-key-input-${key}`}
                   />
                   <span className="text-text-muted">:</span>
                   <Input
@@ -114,12 +115,14 @@ export const HeaderEditor = (): React.JSX.Element => {
                     onKeyDown={handleKeyDown}
                     placeholder="Header value"
                     className="flex-1 font-mono text-sm"
+                    data-testid={`header-value-input-${key}`}
                   />
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     onClick={handleSaveHeader}
                     className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
+                    data-testid={`save-header-button-${key}`}
                   >
                     <X className="rotate-45" />
                   </Button>
@@ -128,6 +131,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     size="icon-sm"
                     onClick={handleCancelEdit}
                     className="text-text-muted hover:text-text-secondary"
+                    data-testid={`cancel-header-button-${key}`}
                   >
                     <X />
                   </Button>
@@ -180,6 +184,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 placeholder="Header name"
                 className="flex-1 font-mono text-sm"
                 autoFocus
+                data-testid="new-header-key-input"
               />
               <span className="text-text-muted">:</span>
               <Input
@@ -191,12 +196,14 @@ export const HeaderEditor = (): React.JSX.Element => {
                 onKeyDown={handleKeyDown}
                 placeholder="Header value"
                 className="flex-1 font-mono text-sm"
+                data-testid="new-header-value-input"
               />
               <Button
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleSaveHeader}
                 className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
+                data-testid="save-new-header-button"
               >
                 <X className="rotate-45" />
               </Button>
@@ -205,6 +212,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 size="icon-sm"
                 onClick={handleCancelEdit}
                 className="text-text-muted hover:text-text-secondary"
+                data-testid="cancel-new-header-button"
               >
                 <X />
               </Button>

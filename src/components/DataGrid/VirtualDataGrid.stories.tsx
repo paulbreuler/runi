@@ -13,13 +13,14 @@
 
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from '@storybook/test';
+import { fn, expect, userEvent, within } from '@storybook/test';
 import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createSelectionColumn } from './columns/selectionColumn';
 import { createExpanderColumn } from './columns/expanderColumn';
 import { cn } from '@/utils/cn';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Row } from '@tanstack/react-table';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 
 // Simple test data type
 interface TestRow {
@@ -350,4 +351,234 @@ export const WithSorting: Story = {
       <VirtualDataGrid {...args} />
     </div>
   ),
+};
+
+/**
+ * Tests row selection via checkbox interaction.
+ */
+export const RowSelectionTest: Story = {
+  args: {
+    data: generateTestData(5),
+    columns: createColumns(),
+    getRowId: (row: TestRow) => row.id,
+    height: 400,
+    enableRowSelection: true,
+    enableExpanding: true,
+    getRowCanExpand: () => true,
+    initialColumnPinning: { right: ['actions'] },
+    onRowSelectionChange: fn(),
+    onExpandedChange: fn(),
+  },
+  render: (args) => (
+    <div className="h-[500px] bg-bg-app" data-testid="selection-test-container">
+      <VirtualDataGrid {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click header checkbox to select all rows', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await userEvent.click(headerCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+
+    await step('Verify all row checkboxes are selected', async () => {
+      // Wait a bit for all checkboxes to update
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const checkboxes = canvas.getAllByRole('checkbox');
+      // Skip header checkbox (index 0), check row checkboxes
+      for (let i = 1; i < checkboxes.length; i++) {
+        const checkbox = checkboxes[i];
+        if (checkbox !== undefined) {
+          await expect(checkbox).toHaveAttribute('aria-checked', 'true');
+        }
+      }
+    });
+
+    await step('Click header checkbox again to deselect all', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await userEvent.click(headerCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'false');
+      }
+    });
+
+    await step('Click individual row checkbox to select single row', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const firstRowCheckbox = checkboxes[1];
+      if (firstRowCheckbox !== undefined) {
+        await userEvent.click(firstRowCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await expect(firstRowCheckbox).toHaveAttribute('aria-checked', 'true');
+        // Header should show indeterminate state
+        const headerCheckbox = checkboxes[0];
+        if (headerCheckbox !== undefined) {
+          await expect(headerCheckbox).toHaveAttribute('aria-checked', 'mixed');
+        }
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests row selection via checkbox clicks: select all, deselect all, and individual row selection.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests row expansion via keyboard.
+ */
+export const RowExpansionTest: Story = {
+  args: {
+    data: generateTestData(5),
+    columns: createColumns(),
+    getRowId: (row: TestRow) => row.id,
+    height: 400,
+    enableRowSelection: true,
+    enableExpanding: true,
+    getRowCanExpand: () => true,
+    initialColumnPinning: { right: ['actions'] },
+    onRowSelectionChange: fn(),
+    onExpandedChange: fn(),
+  },
+  render: (args) => (
+    <div className="h-[500px] bg-bg-app" data-testid="expansion-test-container">
+      <VirtualDataGrid {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Find and focus first expander button', async () => {
+      // Expander buttons have aria-label "Expand row" or "Collapse row"
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        firstExpander.focus();
+        await waitForFocus(firstExpander, 2000);
+        await expect(firstExpander).toHaveFocus();
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
+      }
+    });
+
+    await step('Press Enter to expand row', async () => {
+      await userEvent.keyboard('{Enter}');
+      // Wait for expansion
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+
+    await step('Press Space to collapse row', async () => {
+      await userEvent.keyboard(' ');
+      // Wait for collapse animation
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
+      }
+    });
+
+    await step('Click expander button to expand', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await userEvent.click(firstExpander);
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests row expansion: Enter key, Space key, and click interactions on expander buttons.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests sorting via header click.
+ */
+export const SortingTest: Story = {
+  args: {
+    data: generateTestData(10),
+    columns: createColumns().map((col) => {
+      if (col.id === 'name' || col.id === 'value') {
+        return {
+          ...col,
+          enableSorting: true,
+        };
+      }
+      return col;
+    }),
+    getRowId: (row: TestRow) => row.id,
+    height: 400,
+    enableRowSelection: true,
+    enableExpanding: true,
+    getRowCanExpand: () => true,
+    enableSorting: true,
+    initialColumnPinning: { right: ['actions'] },
+    onRowSelectionChange: fn(),
+    onExpandedChange: fn(),
+    onSortingChange: fn(),
+  },
+  render: (args) => (
+    <div className="h-[500px] bg-bg-app" data-testid="sorting-test-container">
+      <VirtualDataGrid {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click Name header to sort ascending', async () => {
+      const nameHeader = canvas.getByRole('columnheader', { name: /name/i });
+      await userEvent.click(nameHeader);
+      await expect(nameHeader).toHaveAttribute('aria-sort', 'ascending');
+    });
+
+    await step('Click Name header again to sort descending', async () => {
+      const nameHeader = canvas.getByRole('columnheader', { name: /name/i });
+      await userEvent.click(nameHeader);
+      await expect(nameHeader).toHaveAttribute('aria-sort', 'descending');
+    });
+
+    await step('Click Name header third time to clear sort', async () => {
+      const nameHeader = canvas.getByRole('columnheader', { name: /name/i });
+      await userEvent.click(nameHeader);
+      await expect(nameHeader).toHaveAttribute('aria-sort', 'none');
+    });
+
+    await step('Click Value header to sort a different column', async () => {
+      const valueHeader = canvas.getByRole('columnheader', { name: /value/i });
+      await userEvent.click(valueHeader);
+      await expect(valueHeader).toHaveAttribute('aria-sort', 'ascending');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests sorting: click header to cycle through ascending, descending, and no sort states.',
+      },
+    },
+  },
 };

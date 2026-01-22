@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import {
   useReactTable,
   getCoreRowModel,
@@ -469,5 +470,64 @@ export const WithSelection: Story = {
         </table>
       </div>
     );
+  },
+};
+
+/**
+ * Tests network table interactions: selection and row expansion.
+ */
+export const NetworkTableInteractionTest: Story = {
+  render: () => <DemoTable data={sampleEntries} />,
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify table renders with all HTTP methods', async () => {
+      // Verify different HTTP methods are displayed
+      await expect(canvas.getByText('GET')).toBeInTheDocument();
+      await expect(canvas.getByText('POST')).toBeInTheDocument();
+      await expect(canvas.getByText('DELETE')).toBeInTheDocument();
+      await expect(canvas.getByText('PATCH')).toBeInTheDocument();
+    });
+
+    await step('Verify status codes are displayed with correct styling', async () => {
+      // Check for status codes in the table
+      await expect(canvas.getByText('200')).toBeInTheDocument();
+      await expect(canvas.getByText('201')).toBeInTheDocument();
+      await expect(canvas.getByText('404')).toBeInTheDocument();
+      await expect(canvas.getByText('500')).toBeInTheDocument();
+    });
+
+    await step('Click row checkbox to select', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      // Skip header checkbox, click first row checkbox
+      const firstRowCheckbox = checkboxes[1];
+      if (firstRowCheckbox !== undefined) {
+        await userEvent.click(firstRowCheckbox);
+        // Wait for state update
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        await expect(firstRowCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+
+    await step('Click expander to expand row and see details', async () => {
+      // Wait a bit for checkbox selection to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await userEvent.click(firstExpander);
+        // Wait for expansion animation
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests network table interactions: verifies HTTP methods display, status codes, row selection, and expansion.',
+      },
+    },
   },
 };

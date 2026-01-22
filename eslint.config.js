@@ -274,6 +274,7 @@ export default tseslint.config(
       '*.config.js',
       '*.config.ts',
       'vitest.setup.ts',
+      'vitest.workspace.ts',
       'playwright*.ts',
     ],
   },
