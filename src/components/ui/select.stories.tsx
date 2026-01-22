@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import * as Select from './select';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/UI/Select',
@@ -27,6 +29,36 @@ export const Default: Story = {
       </Select.SelectContent>
     </Select.Select>
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    await step('Select trigger is visible', async () => {
+      await expect(trigger).toBeVisible();
+      await expect(trigger).toHaveTextContent('Apple');
+    });
+
+    await step('Select opens on click', async () => {
+      await userEvent.click(trigger);
+      const appleOption = await canvas.findByRole('option', { name: /apple/i });
+      await expect(appleOption).toBeVisible();
+    });
+
+    await step('Can select different option', async () => {
+      const bananaOption = canvas.getByRole('option', { name: /banana/i });
+      await userEvent.click(bananaOption);
+      await expect(trigger).toHaveTextContent('Banana');
+    });
+
+    await step('Keyboard navigation works', async () => {
+      await tabToElement(trigger);
+      await waitForFocus(trigger);
+      await expect(trigger).toHaveFocus();
+      await userEvent.keyboard('{Enter}');
+      const appleOption = await canvas.findByRole('option', { name: /apple/i });
+      await expect(appleOption).toBeVisible();
+    });
+  },
 };
 
 export const WithGroups: Story = {

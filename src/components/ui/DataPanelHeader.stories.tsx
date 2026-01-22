@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { useState } from 'react';
 import { DataPanelHeader } from './DataPanelHeader';
 import { Button } from './button';
 import { Download } from 'lucide-react';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/UI/DataPanelHeader',
@@ -221,5 +223,36 @@ export const Interactive: Story = {
         </div>
       </div>
     );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const selectAllCheckbox = canvas.getByRole('checkbox', { name: /select all/i });
+
+    await step('Select all starts in indeterminate state', async () => {
+      await expect(selectAllCheckbox).toBeVisible();
+      await expect(selectAllCheckbox).toHaveAttribute('aria-checked', 'mixed');
+      const statusText = canvas.getByText(/selected: 1 \/ 4/i);
+      await expect(statusText).toBeVisible();
+    });
+
+    await step('Select all selects all items', async () => {
+      await userEvent.click(selectAllCheckbox);
+      await expect(selectAllCheckbox).toBeChecked();
+      const statusText = canvas.getByText(/selected: 4 \/ 4/i);
+      await expect(statusText).toBeVisible();
+    });
+
+    await step('Select all unselects all items', async () => {
+      await userEvent.click(selectAllCheckbox);
+      await expect(selectAllCheckbox).not.toBeChecked();
+      const statusText = canvas.getByText(/selected: 0 \/ 4/i);
+      await expect(statusText).toBeVisible();
+    });
+
+    await step('Keyboard navigation works', async () => {
+      await tabToElement(selectAllCheckbox);
+      await waitForFocus(selectAllCheckbox);
+      await expect(selectAllCheckbox).toHaveFocus();
+    });
   },
 };

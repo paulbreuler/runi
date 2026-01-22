@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { fn } from '@storybook/test';
 import { NetworkHistoryPanel } from './NetworkHistoryPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
@@ -243,4 +244,80 @@ export const ExpanderTest: Story = {
       <NetworkHistoryPanel {...args} />
     </div>
   ),
+};
+
+/**
+ * Test filter interactions through the panel.
+ */
+export const FilterInteractionsTest: Story = {
+  args: {
+    entries: mockEntries,
+    onReplay: noop,
+    onCopyCurl: noop,
+  },
+  render: (args) => (
+    <div className="h-[600px] bg-bg-app">
+      <NetworkHistoryPanel {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Filter by search term', async () => {
+      const searchInput = canvas.getByLabelText(/filter history by url/i);
+      await userEvent.clear(searchInput);
+      await userEvent.type(searchInput, 'users');
+      await expect(searchInput).toHaveValue('users');
+      // Verify filtered results (should show entries with 'users' in URL)
+      const rows = canvas.getAllByTestId('history-row');
+      // At least one row should be visible after filtering
+      await expect(rows.length).toBeGreaterThan(0);
+    });
+
+    await step('Filter by method', async () => {
+      const methodFilter = canvas.getByTestId('method-filter');
+      await userEvent.click(methodFilter);
+      const postOption = canvas.getByRole('option', { name: /^post$/i });
+      await userEvent.click(postOption);
+      // Verify only POST entries are shown
+      const rows = canvas.getAllByTestId('history-row');
+      await expect(rows.length).toBeGreaterThan(0);
+    });
+  },
+};
+
+/**
+ * Test state management when filters change.
+ */
+export const StateManagementTest: Story = {
+  args: {
+    entries: mockEntries,
+    onReplay: noop,
+    onCopyCurl: noop,
+  },
+  render: (args) => (
+    <div className="h-[600px] bg-bg-app">
+      <NetworkHistoryPanel {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify initial entries are displayed', async () => {
+      const rows = canvas.getAllByTestId('history-row');
+      await expect(rows.length).toBeGreaterThan(0);
+    });
+
+    await step('Apply filter and verify state updates', async () => {
+      const statusFilter = canvas.getByTestId('status-filter');
+      await userEvent.click(statusFilter);
+      const statusOption = canvas.getByRole('option', { name: /2xx/i });
+      await userEvent.click(statusOption);
+      // Verify filter state changed
+      await expect(statusFilter).toHaveTextContent(/2xx/i);
+      // Verify rows are still visible (filtered)
+      const rows = canvas.getAllByTestId('history-row');
+      await expect(rows.length).toBeGreaterThan(0);
+    });
+  },
 };

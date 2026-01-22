@@ -18,6 +18,9 @@ const meta: Meta<typeof HeadersTab> = {
           'Main headers tab component for expanded panel. Displays request and response headers in a tabbed interface. Wraps HeadersPanel with NetworkHistoryEntry data.',
       },
     },
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 };

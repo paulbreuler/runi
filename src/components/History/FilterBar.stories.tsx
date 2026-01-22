@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { fn } from '@storybook/test';
 import { FilterBar } from './FilterBar';
 import { DEFAULT_HISTORY_FILTERS } from '@/types/history';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/History/FilterBar',
@@ -166,4 +168,132 @@ export const WithOverflow: Story = {
       <FilterBar {...args} />
     </div>
   ),
+};
+
+/**
+ * Test filter interactions: changing search, method, status, and intelligence filters.
+ */
+export const FilterInteractionsTest: Story = {
+  args: {
+    filters: DEFAULT_HISTORY_FILTERS,
+    onFilterChange: noop,
+    selectedCount: 0,
+    onSaveAll: noop,
+    onSaveSelection: noop,
+    onClearAll: noopAsync,
+    isSaveSelectionDisabled: false,
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Change search filter', async () => {
+      const searchInput = canvas.getByLabelText(/filter history by url/i);
+      await userEvent.clear(searchInput);
+      await userEvent.type(searchInput, 'api.example.com');
+      await expect(searchInput).toHaveValue('api.example.com');
+    });
+
+    await step('Change method filter', async () => {
+      const methodFilter = canvas.getByTestId('method-filter');
+      await userEvent.click(methodFilter);
+      const postOption = canvas.getByRole('option', { name: /^post$/i });
+      await userEvent.click(postOption);
+      await expect(methodFilter).toHaveTextContent(/post/i);
+    });
+
+    await step('Change status filter', async () => {
+      const statusFilter = canvas.getByTestId('status-filter');
+      await userEvent.click(statusFilter);
+      const statusOption = canvas.getByRole('option', { name: /4xx/i });
+      await userEvent.click(statusOption);
+      await expect(statusFilter).toHaveTextContent(/4xx/i);
+    });
+
+    await step('Change intelligence filter', async () => {
+      const intelligenceFilter = canvas.getByTestId('intelligence-filter');
+      await userEvent.click(intelligenceFilter);
+      const driftOption = canvas.getByRole('option', { name: /has drift/i });
+      await userEvent.click(driftOption);
+      await expect(intelligenceFilter).toHaveTextContent(/has drift/i);
+    });
+  },
+};
+
+/**
+ * Test keyboard navigation through filter controls.
+ */
+export const KeyboardNavigationTest: Story = {
+  args: {
+    filters: DEFAULT_HISTORY_FILTERS,
+    onFilterChange: noop,
+    selectedCount: 0,
+    onSaveAll: noop,
+    onSaveSelection: noop,
+    onClearAll: noopAsync,
+    isSaveSelectionDisabled: false,
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to search input', async () => {
+      const searchInput = canvas.getByLabelText(/filter history by url/i);
+      const focused = await tabToElement(searchInput, 10);
+      await expect(focused).toBe(true);
+      await expect(searchInput).toHaveFocus();
+    });
+
+    await step('Tab to method filter', async () => {
+      const methodFilter = canvas.getByTestId('method-filter');
+      const focused = await tabToElement(methodFilter, 10);
+      await expect(focused).toBe(true);
+      await expect(methodFilter).toHaveFocus();
+    });
+
+    await step('Tab to status filter', async () => {
+      const statusFilter = canvas.getByTestId('status-filter');
+      const focused = await tabToElement(statusFilter, 10);
+      await expect(focused).toBe(true);
+      await expect(statusFilter).toHaveFocus();
+    });
+
+    await step('Tab to intelligence filter', async () => {
+      const intelligenceFilter = canvas.getByTestId('intelligence-filter');
+      const focused = await tabToElement(intelligenceFilter, 10);
+      await expect(focused).toBe(true);
+      await expect(intelligenceFilter).toHaveFocus();
+    });
+  },
+};
+
+/**
+ * Test state management when filters change.
+ */
+export const StateManagementTest: Story = {
+  args: {
+    filters: DEFAULT_HISTORY_FILTERS,
+    onFilterChange: noop,
+    selectedCount: 2,
+    onCompareResponses: noop,
+    onSaveAll: noop,
+    onSaveSelection: noop,
+    onClearAll: noopAsync,
+    isSaveSelectionDisabled: false,
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify Compare Selected button appears with 2 selected', async () => {
+      const compareButton = canvas.getByTestId('compare-selected-button');
+      await expect(compareButton).toBeVisible();
+    });
+
+    await step('Interact with filters and verify state updates', async () => {
+      const methodFilter = canvas.getByTestId('method-filter');
+      await userEvent.click(methodFilter);
+      const getOption = canvas.getByRole('option', { name: /^get$/i });
+      await userEvent.click(getOption);
+      // Verify filter state changed (button text updates)
+      await expect(methodFilter).toHaveTextContent(/get/i);
+    });
+  },
 };

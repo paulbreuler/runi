@@ -4,8 +4,10 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { ExpandedPanel } from './ExpandedPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 const meta: Meta<typeof ExpandedPanel> = {
   title: 'DataGrid/ExpandedPanel',
@@ -251,5 +253,66 @@ export const WithTLSCertificate: Story = {
       keySize: 2048,
     },
     protocolVersion: 'TLS 1.3',
+  },
+};
+
+/**
+ * Tests tab navigation: click tabs to switch content, verify keyboard navigation.
+ */
+export const TabNavigationTest: Story = {
+  args: {
+    entry: createMockEntry(),
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify Timing tab is selected by default', async () => {
+      const timingTab = canvas.getByRole('tab', { name: /timing/i });
+      await expect(timingTab).toHaveAttribute('data-state', 'active');
+    });
+
+    await step('Click Response tab to switch content', async () => {
+      const responseTab = canvas.getByRole('tab', { name: /response/i });
+      await userEvent.click(responseTab);
+      await expect(responseTab).toHaveAttribute('data-state', 'active');
+    });
+
+    await step('Click Headers tab to switch content', async () => {
+      const headersTab = canvas.getByRole('tab', { name: /headers/i });
+      await userEvent.click(headersTab);
+      await expect(headersTab).toHaveAttribute('data-state', 'active');
+    });
+
+    await step('Tab to first tab and use keyboard navigation', async () => {
+      const timingTab = canvas.getByRole('tab', { name: /timing/i });
+      await tabToElement(timingTab, 20);
+      await expect(timingTab).toHaveFocus();
+    });
+
+    await step('Use Arrow Right to move to next tab', async () => {
+      await userEvent.keyboard('{ArrowRight}');
+      const responseTab = canvas.getByRole('tab', { name: /response/i });
+      await expect(responseTab).toHaveFocus();
+    });
+
+    await step('Press Enter to activate tab', async () => {
+      await userEvent.keyboard('{Enter}');
+      const responseTab = canvas.getByRole('tab', { name: /response/i });
+      await expect(responseTab).toHaveAttribute('data-state', 'active');
+    });
+
+    await step('Use Arrow Left to move back to Timing tab', async () => {
+      await userEvent.keyboard('{ArrowLeft}');
+      const timingTab = canvas.getByRole('tab', { name: /timing/i });
+      await expect(timingTab).toHaveFocus();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests tab navigation: click to switch tabs, Arrow Left/Right to navigate between tabs, Enter to activate.',
+      },
+    },
   },
 };

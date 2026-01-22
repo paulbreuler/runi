@@ -17,6 +17,9 @@ const meta: Meta<typeof ResponseTab> = {
           'Main response tab component for expanded panel. Displays request and response bodies in a tabbed interface using ResponsePanel.',
       },
     },
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 };

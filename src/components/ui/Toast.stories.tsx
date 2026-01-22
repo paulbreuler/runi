@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { ToastProvider, Toast } from './Toast';
 import { useToastStore, clearDedupCache } from '@/stores/useToastStore';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
@@ -88,6 +89,25 @@ export const ErrorToast: Story = {
       correlationId="23b109c8-292b-4c34-8f3c-1059255261e6"
     />
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const triggerButton = canvas.getByRole('button', { name: /show error toast/i });
+
+    await step('Toast appears after button click', async () => {
+      await userEvent.click(triggerButton);
+      // Wait for toast to appear
+      const toast = await canvas.findByRole('alert', { name: /tauri backend is not available/i });
+      await expect(toast).toBeVisible();
+
+      await step('Error toast has dismiss button', async () => {
+        const dismissButton = canvas.getByRole('button', { name: /close/i });
+        await expect(dismissButton).toBeVisible();
+        await userEvent.click(dismissButton);
+        // Toast should be removed
+        await expect(toast).not.toBeInTheDocument();
+      });
+    });
+  },
 };
 
 /**
@@ -214,6 +234,30 @@ export const Interactive: Story = {
       );
     };
     return <InteractiveDemo />;
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Can trigger multiple toast types', async () => {
+      const errorButton = canvas.getByRole('button', { name: /^error$/i });
+      await userEvent.click(errorButton);
+      const errorToast = await canvas.findByRole('alert', { name: /error occurred/i });
+      await expect(errorToast).toBeVisible();
+
+      const successButton = canvas.getByRole('button', { name: /^success$/i });
+      await userEvent.click(successButton);
+      const successToast = await canvas.findByRole('alert', { name: /success message/i });
+      await expect(successToast).toBeVisible();
+    });
+
+    await step('Clear all button removes all toasts', async () => {
+      const clearButton = canvas.getByRole('button', { name: /clear all/i });
+      await userEvent.click(clearButton);
+      // Wait a bit for toasts to be removed
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const toasts = canvas.queryAllByRole('alert');
+      await expect(toasts).toHaveLength(0);
+    });
   },
 };
 

@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { AlertCircle, AlertTriangle, Info, Terminal, CheckCircle, XCircle } from 'lucide-react';
 import { SegmentedControl, SAIYAN_TIERS } from '.';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/UI/SegmentedControl',
@@ -73,6 +75,36 @@ export const Default: Story = {
         <p className="text-xs text-text-muted">Selected: {value}</p>
       </div>
     );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const allButton = canvas.getByRole('button', { name: /^all$/i });
+    const activeButton = canvas.getByRole('button', { name: /^active$/i });
+
+    await step('Initial selection is correct', async () => {
+      await expect(allButton).toBeVisible();
+      await expect(allButton).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    await step('Can click to change selection', async () => {
+      await userEvent.click(activeButton);
+      await expect(activeButton).toHaveAttribute('aria-pressed', 'true');
+      await expect(allButton).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    await step('Keyboard navigation works', async () => {
+      await tabToElement(allButton);
+      await waitForFocus(allButton);
+      await expect(allButton).toHaveFocus();
+      await userEvent.keyboard('{ArrowRight}');
+      await waitForFocus(activeButton);
+      await expect(activeButton).toHaveFocus();
+    });
+
+    await step('Can activate with Enter key', async () => {
+      await userEvent.keyboard('{Enter}');
+      await expect(activeButton).toHaveAttribute('aria-pressed', 'true');
+    });
   },
 };
 

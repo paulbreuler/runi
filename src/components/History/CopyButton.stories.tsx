@@ -4,7 +4,9 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { CopyButton } from './CopyButton';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 const meta: Meta<typeof CopyButton> = {
   title: 'History/CopyButton',
@@ -62,5 +64,54 @@ export const LongText: Story = {
       null,
       2
     ),
+  },
+};
+
+/**
+ * Test copy functionality and feedback.
+ */
+export const CopyFunctionalityTest: Story = {
+  args: {
+    text: 'Test text to copy',
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click copy button', async () => {
+      const copyButton = canvas.getByRole('button', { name: /copy to clipboard/i });
+      await userEvent.click(copyButton);
+      // Verify feedback appears
+      const copiedText = canvas.getByText(/copied/i);
+      await expect(copiedText).toBeVisible();
+    });
+
+    await step('Verify feedback resets after duration', async () => {
+      // Wait for feedback duration (2000ms default)
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2100);
+      });
+      // Verify button shows "Copy" again
+      const copyText = canvas.getByText(/^copy$/i);
+      await expect(copyText).toBeVisible();
+    });
+  },
+};
+
+/**
+ * Test keyboard navigation.
+ */
+export const KeyboardNavigationTest: Story = {
+  args: {
+    text: 'Test text to copy',
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to copy button', async () => {
+      const copyButton = canvas.getByRole('button', { name: /copy to clipboard/i });
+      const focused = await tabToElement(copyButton, 10);
+      await expect(focused).toBe(true);
+      await expect(copyButton).toHaveFocus();
+    });
   },
 };

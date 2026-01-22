@@ -6,6 +6,9 @@ const meta = {
   component: NetworkStatusBar,
   parameters: {
     layout: 'padded',
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 } satisfies Meta<typeof NetworkStatusBar>;

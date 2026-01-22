@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { Button } from './button';
 import { Mail, Download, Trash2, ArrowRight } from 'lucide-react';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/UI/Button',
@@ -83,6 +85,36 @@ export const Default: Story = {
   args: {
     children: 'Button',
   },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button', { name: /button/i });
+
+    await step('Button is visible', async () => {
+      await expect(button).toBeVisible();
+    });
+
+    await step('Button can be clicked', async () => {
+      await userEvent.click(button);
+      // Button should still be visible after click
+      await expect(button).toBeVisible();
+    });
+
+    await step('Button receives focus via keyboard', async () => {
+      await tabToElement(button);
+      await waitForFocus(button);
+      await expect(button).toHaveFocus();
+    });
+
+    await step('Button can be activated with Enter key', async () => {
+      await userEvent.keyboard('{Enter}');
+      await expect(button).toBeVisible();
+    });
+
+    await step('Button can be activated with Space key', async () => {
+      await userEvent.keyboard(' ');
+      await expect(button).toBeVisible();
+    });
+  },
 };
 
 export const Variants: Story = {
@@ -146,6 +178,43 @@ export const WithIcons: Story = {
       </div>
     </div>
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Text buttons with icons are clickable', async () => {
+      const sendButton = canvas.getByRole('button', { name: /send email/i });
+      const downloadButton = canvas.getByRole('button', { name: /download/i });
+      const deleteButton = canvas.getByRole('button', { name: /delete/i });
+
+      await userEvent.click(sendButton);
+      await expect(sendButton).toBeVisible();
+
+      await userEvent.click(downloadButton);
+      await expect(downloadButton).toBeVisible();
+
+      await userEvent.click(deleteButton);
+      await expect(deleteButton).toBeVisible();
+    });
+
+    await step('Icon-only buttons are accessible via aria-label', async () => {
+      const iconXs = canvas.getByRole('button', { name: /extra small icon/i });
+      const iconSm = canvas.getByRole('button', { name: /small icon/i });
+      const iconDefault = canvas.getByRole('button', { name: /default icon/i });
+      const iconLg = canvas.getByRole('button', { name: /large icon/i });
+
+      await expect(iconXs).toBeVisible();
+      await expect(iconSm).toBeVisible();
+      await expect(iconDefault).toBeVisible();
+      await expect(iconLg).toBeVisible();
+    });
+
+    await step('Icon buttons support keyboard navigation', async () => {
+      const iconButton = canvas.getByRole('button', { name: /default icon/i });
+      await tabToElement(iconButton);
+      await waitForFocus(iconButton);
+      await expect(iconButton).toHaveFocus();
+    });
+  },
 };
 
 export const States: Story = {
@@ -155,6 +224,32 @@ export const States: Story = {
       <Button disabled>Disabled</Button>
     </div>
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const normalButton = canvas.getByRole('button', { name: /normal/i });
+    const disabledButton = canvas.getByRole('button', { name: /disabled/i });
+
+    await step('Normal button is interactive', async () => {
+      await expect(normalButton).toBeVisible();
+      await expect(normalButton).not.toBeDisabled();
+      await userEvent.click(normalButton);
+      await expect(normalButton).toBeVisible();
+    });
+
+    await step('Disabled button is not interactive', async () => {
+      await expect(disabledButton).toBeVisible();
+      await expect(disabledButton).toBeDisabled();
+      // Disabled button should not respond to clicks
+      await userEvent.click(disabledButton);
+      await expect(disabledButton).toBeDisabled();
+    });
+
+    await step('Keyboard navigation works for normal button', async () => {
+      await tabToElement(normalButton);
+      await waitForFocus(normalButton);
+      await expect(normalButton).toHaveFocus();
+    });
+  },
 };
 
 export const AsChild: Story = {

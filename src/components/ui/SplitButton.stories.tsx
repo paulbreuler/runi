@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { Download, Copy, Trash2, Save, FolderOpen, FileUp, Share } from 'lucide-react';
 import { SplitButton } from './SplitButton';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/UI/SplitButton',
@@ -97,6 +99,32 @@ export const Default: Story = {
         },
       },
     ],
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const primaryButton = canvas.getByRole('button', { name: /^save$/i });
+
+    await step('Primary button is clickable', async () => {
+      await expect(primaryButton).toBeVisible();
+      await userEvent.click(primaryButton);
+      // Button should still be visible after click
+      await expect(primaryButton).toBeVisible();
+    });
+
+    await step('Dropdown trigger opens menu', async () => {
+      // Find the dropdown trigger (usually the split part of the button)
+      const dropdownTrigger = canvas.getByRole('button', { name: /open menu/i });
+      await userEvent.click(dropdownTrigger);
+      // Menu should open
+      const saveAsOption = await canvas.findByRole('menuitem', { name: /save as/i });
+      await expect(saveAsOption).toBeVisible();
+    });
+
+    await step('Keyboard navigation works', async () => {
+      await tabToElement(primaryButton);
+      await waitForFocus(primaryButton);
+      await expect(primaryButton).toHaveFocus();
+    });
   },
 };
 

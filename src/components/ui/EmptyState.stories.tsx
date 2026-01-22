@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { EmptyState } from './EmptyState';
 import { Key, Search, Inbox, FileText, Network } from 'lucide-react';
 import { Button } from './button';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 type Story = StoryObj<typeof meta>;
 
@@ -97,6 +99,22 @@ export const WithAction: Story = {
       <EmptyState {...args} />
     </div>
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const actionButton = canvas.getByRole('button', { name: /create item/i });
+
+    await step('Action button is visible and clickable', async () => {
+      await expect(actionButton).toBeVisible();
+      await userEvent.click(actionButton);
+      await expect(actionButton).toBeVisible();
+    });
+
+    await step('Keyboard navigation works', async () => {
+      await tabToElement(actionButton);
+      await waitForFocus(actionButton);
+      await expect(actionButton).toHaveFocus();
+    });
+  },
 };
 
 /**

@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { fn } from '@storybook/test';
 import { FilterBarActions } from './FilterBarActions';
 import { ActionBar } from '@/components/ActionBar';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'Components/History/FilterBarActions',
@@ -113,4 +115,78 @@ export const AllVariants: Story = {
       </div>
     </div>
   ),
+};
+
+/**
+ * Test button interactions: Save and Delete buttons.
+ */
+export const ButtonInteractionsTest: Story = {
+  args: {
+    onSaveAll: noop,
+    onSaveSelection: noop,
+    onClearAll: noopAsync,
+    isSaveSelectionDisabled: false,
+  },
+  render: (args) => (
+    <ActionBar aria-label="Filter bar actions demo">
+      <FilterBarActions {...args} />
+    </ActionBar>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click Save button', async () => {
+      const saveButton = canvas.getByRole('button', { name: /save/i });
+      await userEvent.click(saveButton);
+      await expect(noop).toHaveBeenCalled();
+    });
+
+    await step('Click Delete All button', async () => {
+      const deleteButton = canvas.getByRole('button', {
+        name: /delete all network history entries/i,
+      });
+      await userEvent.click(deleteButton);
+      // onClearAll is async, so wait a bit
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      await expect(noopAsync).toHaveBeenCalled();
+    });
+  },
+};
+
+/**
+ * Test keyboard navigation through action buttons.
+ */
+export const KeyboardNavigationTest: Story = {
+  args: {
+    onSaveAll: noop,
+    onSaveSelection: noop,
+    onClearAll: noopAsync,
+    isSaveSelectionDisabled: false,
+  },
+  render: (args) => (
+    <ActionBar aria-label="Filter bar actions demo">
+      <FilterBarActions {...args} />
+    </ActionBar>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to Save button', async () => {
+      const saveButton = canvas.getByRole('button', { name: /save/i });
+      const focused = await tabToElement(saveButton, 10);
+      await expect(focused).toBe(true);
+      await expect(saveButton).toHaveFocus();
+    });
+
+    await step('Tab to Delete All button', async () => {
+      const deleteButton = canvas.getByRole('button', {
+        name: /delete all network history entries/i,
+      });
+      const focused = await tabToElement(deleteButton, 10);
+      await expect(focused).toBe(true);
+      await expect(deleteButton).toHaveFocus();
+    });
+  },
 };

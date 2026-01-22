@@ -15,10 +15,11 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from '@storybook/test';
+import { fn, expect, userEvent, within } from '@storybook/test';
 import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createNetworkColumns } from './columns/networkColumns';
 import type { NetworkHistoryEntry } from '@/types/history';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 // ============================================================================
 // Mock Data Generators
@@ -440,4 +441,217 @@ export const NetworkContainerResize: Story = {
       </div>
     </div>
   ),
+};
+
+/**
+ * Tests network grid row selection interaction.
+ */
+export const NetworkSelectionTest: Story = {
+  args: {
+    data: generateNetworkEntries(5),
+    columns: networkColumns,
+    getRowId: (row: NetworkHistoryEntry) => row.id,
+    height: 400,
+    enableRowSelection: true,
+    enableExpanding: true,
+    onRowSelectionChange: fn(),
+    onExpandedChange: fn(),
+  },
+  render: (args) => (
+    <div className="h-[500px] bg-bg-app" data-testid="network-selection-test">
+      <VirtualDataGrid {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click header checkbox to select all rows', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await userEvent.click(headerCheckbox);
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+
+    await step('Verify all rows are selected', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      for (let i = 1; i < checkboxes.length; i++) {
+        const checkbox = checkboxes[i];
+        if (checkbox !== undefined) {
+          await expect(checkbox).toHaveAttribute('aria-checked', 'true');
+        }
+      }
+    });
+
+    await step('Click individual checkbox to deselect one row', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const secondRowCheckbox = checkboxes[2];
+      if (secondRowCheckbox !== undefined) {
+        await userEvent.click(secondRowCheckbox);
+        await expect(secondRowCheckbox).toHaveAttribute('aria-checked', 'false');
+      }
+    });
+
+    await step('Header shows indeterminate state', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'mixed');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests network grid row selection: select all, individual selection, indeterminate state.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests network grid keyboard navigation.
+ */
+export const NetworkKeyboardNavigationTest: Story = {
+  args: {
+    data: generateNetworkEntries(5),
+    columns: networkColumns,
+    getRowId: (row: NetworkHistoryEntry) => row.id,
+    height: 400,
+    enableRowSelection: true,
+    enableExpanding: true,
+    onRowSelectionChange: fn(),
+    onExpandedChange: fn(),
+  },
+  render: (args) => (
+    <div className="h-[500px] bg-bg-app" data-testid="network-keyboard-test">
+      <VirtualDataGrid {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to first checkbox', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await tabToElement(headerCheckbox, 10);
+        await expect(headerCheckbox).toHaveFocus();
+      }
+    });
+
+    await step('Press Space to toggle checkbox', async () => {
+      await userEvent.keyboard(' ');
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+
+    await step('Tab to first expander button', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await tabToElement(firstExpander, 15);
+        await expect(firstExpander).toHaveFocus();
+      }
+    });
+
+    await step('Press Enter to expand row', async () => {
+      await userEvent.keyboard('{Enter}');
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+
+    await step('Press Enter again to collapse row', async () => {
+      await userEvent.keyboard('{Enter}');
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests network grid keyboard navigation: Tab through elements, Space for checkboxes, Enter for expanders.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests network grid expansion with virtual scrolling.
+ */
+export const NetworkExpansionTest: Story = {
+  args: {
+    data: generateNetworkEntries(10),
+    columns: networkColumns,
+    getRowId: (row: NetworkHistoryEntry) => row.id,
+    height: 400,
+    enableRowSelection: true,
+    enableExpanding: true,
+    onRowSelectionChange: fn(),
+    onExpandedChange: fn(),
+  },
+  render: (args) => (
+    <div className="h-[500px] bg-bg-app" data-testid="network-expansion-test">
+      <VirtualDataGrid {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click expander to expand first row', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await userEvent.click(firstExpander);
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+
+    await step('Expand second row (multiple expansions)', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const secondExpander = expanderButtons[1];
+      if (secondExpander !== undefined) {
+        await userEvent.click(secondExpander);
+        await expect(secondExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+
+    await step('Collapse first row', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await userEvent.click(firstExpander);
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
+      }
+    });
+
+    await step('Collapse second row', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand/i });
+      const secondExpander = expanderButtons[1];
+      if (secondExpander !== undefined) {
+        await userEvent.click(secondExpander);
+        await expect(secondExpander).toHaveAttribute('aria-expanded', 'false');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests network grid expansion: expand multiple rows, collapse them, verify virtual scrolling handles height changes.',
+      },
+    },
+  },
 };

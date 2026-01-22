@@ -5,9 +5,11 @@
 
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from '@storybook/test';
 import { useReactTable, getCoreRowModel, type ColumnDef, flexRender } from '@tanstack/react-table';
 import { createSelectionColumn } from './selectionColumn';
 import { cn } from '@/utils/cn';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 // Test data type
 interface DemoRow {
@@ -201,5 +203,80 @@ export const SmallCheckboxes: Story = {
 export const LargeCheckboxes: Story = {
   args: {
     checkboxSize: 'lg',
+  },
+};
+
+/**
+ * Tests checkbox selection interactions: click to select, keyboard navigation.
+ */
+export const SelectionInteractionTest: Story = {
+  args: {},
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click header checkbox to select all rows', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await userEvent.click(headerCheckbox);
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+
+    await step('Verify selected count updates', async () => {
+      // The component shows "Selected: X of Y rows"
+      const selectedText = canvas.getByText(/Selected: 5 of 5 rows/);
+      await expect(selectedText).toBeInTheDocument();
+    });
+
+    await step('Click individual row checkbox to deselect', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const firstRowCheckbox = checkboxes[1];
+      if (firstRowCheckbox !== undefined) {
+        await userEvent.click(firstRowCheckbox);
+        await expect(firstRowCheckbox).toHaveAttribute('aria-checked', 'false');
+        // Header should now show indeterminate state
+        const headerCheckbox = checkboxes[0];
+        if (headerCheckbox !== undefined) {
+          await expect(headerCheckbox).toHaveAttribute('aria-checked', 'mixed');
+        }
+      }
+    });
+
+    await step('Tab to checkbox and use Space key to toggle', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const secondRowCheckbox = checkboxes[2];
+      if (secondRowCheckbox !== undefined) {
+        await tabToElement(secondRowCheckbox, 10);
+        await expect(secondRowCheckbox).toHaveFocus();
+        // Press Space to toggle off
+        await userEvent.keyboard(' ');
+        await expect(secondRowCheckbox).toHaveAttribute('aria-checked', 'false');
+      }
+    });
+
+    await step('Click header checkbox to deselect all', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        // Click twice: first click selects all (from indeterminate), second deselects
+        await userEvent.click(headerCheckbox);
+        await userEvent.click(headerCheckbox);
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'false');
+      }
+    });
+
+    await step('Verify all deselected', async () => {
+      const selectedText = canvas.getByText(/Selected: 0 of 5 rows/);
+      await expect(selectedText).toBeInTheDocument();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests checkbox selection: click to select all/deselect, individual row selection, and keyboard interaction with Space key.',
+      },
+    },
   },
 };

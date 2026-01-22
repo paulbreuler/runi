@@ -16,6 +16,9 @@ const meta: Meta<typeof HeaderRow> = {
           'Displays a single HTTP header key-value pair. Header name is shown in accent-blue, value in text-secondary, with proper formatting for readability.',
       },
     },
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 };

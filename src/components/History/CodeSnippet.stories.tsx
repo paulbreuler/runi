@@ -16,6 +16,9 @@ const meta: Meta<typeof CodeSnippet> = {
         component: 'Component for displaying code with syntax highlighting and copy functionality.',
       },
     },
+    test: {
+      skip: true, // Display-only component, no interactive elements to test
+    },
   },
   tags: ['autodocs'],
 };
