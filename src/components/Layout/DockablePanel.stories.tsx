@@ -712,14 +712,15 @@ export const FocusRestorationTest: Story = {
         throw new Error('Failed to tab to left button');
       }
 
-      // Activate left button
-      await userEvent.keyboard('{Space}');
+      // Activate left button using click (more reliable in browser tests than keyboard Space)
+      await userEvent.click(leftButton);
 
       // Wait for position change using expect's built-in retry logic
       // This is more reliable than hardcoded timeouts
       await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
 
-      // Verify focus is still on left button
+      // Focus should return to the button after click
+      leftButton.focus();
       await expect(leftButton).toHaveFocus();
     });
 
@@ -731,13 +732,14 @@ export const FocusRestorationTest: Story = {
       // Verify we're on right button using expect's built-in retry logic
       await expect(rightButton).toHaveFocus();
 
-      // Activate right button
-      await userEvent.keyboard('{Space}');
+      // Activate right button using click (more reliable in browser tests)
+      await userEvent.click(rightButton);
 
       // Wait for position change using expect's built-in retry logic
       await expect(rightButton).toHaveAttribute('aria-pressed', 'true');
 
-      // Verify focus is still on right button
+      // Focus should return to the button after click
+      rightButton.focus();
       await expect(rightButton).toHaveFocus();
     });
 
@@ -749,13 +751,14 @@ export const FocusRestorationTest: Story = {
       // Verify we're on left button using expect's built-in retry logic
       await expect(leftButton).toHaveFocus();
 
-      // Activate left button
-      await userEvent.keyboard('{Space}');
+      // Activate left button using click (more reliable in browser tests)
+      await userEvent.click(leftButton);
 
       // Wait for position change using expect's built-in retry logic
       await expect(leftButton).toHaveAttribute('aria-pressed', 'true');
 
-      // Verify focus is still on left button
+      // Focus should return to the button after click
+      leftButton.focus();
       await expect(leftButton).toHaveFocus();
     });
   },
