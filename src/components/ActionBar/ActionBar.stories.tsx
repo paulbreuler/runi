@@ -35,6 +35,7 @@ import {
 } from './selectRenderers';
 import { Button } from '../ui/button';
 import { Filter } from 'lucide-react';
+import { getTierConfig } from '../ui/SegmentedControl/config';
 
 const meta = {
   title: 'ActionBar/ActionBar',
@@ -346,7 +347,7 @@ export const ConsolePanelToolbar: Story = {
   } as any,
   render: function ConsoleToolbarExample(args) {
     const storyArgs = args as unknown as ConsolePanelToolbarStoryArgs;
-    
+
     // Power tier presets
     const tierPresets: Record<
       string,
@@ -399,7 +400,13 @@ export const ConsolePanelToolbar: Story = {
         });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps -- tierPresets is stable
-    }, [storyArgs.powerTier, storyArgs.errorCount, storyArgs.warnCount, storyArgs.infoCount, storyArgs.debugCount]);
+    }, [
+      storyArgs.powerTier,
+      storyArgs.errorCount,
+      storyArgs.warnCount,
+      storyArgs.infoCount,
+      storyArgs.debugCount,
+    ]);
 
     // Interactive power-up functions
     const addHundred = (): void => {
@@ -486,15 +493,22 @@ export const ConsolePanelToolbar: Story = {
       const allOver9000 = badgesOver9000 === 4 && badges.every((b) => b >= 9000);
 
       if (allOver9000) {
-        if (totalPower >= 100000) return 8;
-        if (totalPower >= 80000) return 7;
-        if (totalPower >= 50000) return 6;
+        if (totalPower >= 100000) {
+          return 8;
+        }
+        if (totalPower >= 80000) {
+          return 7;
+        }
+        if (totalPower >= 50000) {
+          return 6;
+        }
         return 5;
       }
       return Math.min(badgesOver9000, 4);
     };
 
     const currentTier = calculateTier();
+    const tierConfig = getTierConfig(currentTier);
 
     return (
       <div className="space-y-4">
@@ -504,12 +518,17 @@ export const ConsolePanelToolbar: Story = {
           </p>
           {currentTier > 0 && (
             <div className="text-xs text-text-muted">
-              <span className="font-semibold text-accent-blue">Power Tier: {currentTier}</span>
+              <span
+                className="font-semibold"
+                style={currentTier > 0 ? { color: tierConfig.color } : undefined}
+              >
+                {tierConfig.name}
+              </span>
               {currentTier >= 5 && <span className="ml-2 text-signal-warning">⚡ ASCENDED ⚡</span>}
             </div>
           )}
         </div>
-        
+
         {/* Interactive Power-Up Controls */}
         <div className="flex flex-wrap items-center gap-2 p-3 bg-bg-raised/50 rounded-lg border border-border-subtle">
           <span className="text-xs font-medium text-text-secondary mr-2">Power-Up Controls:</span>

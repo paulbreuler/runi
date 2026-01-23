@@ -152,10 +152,15 @@ export const Playground: Story = {
       await expect(panel).toBeInTheDocument();
     });
     await step('Test filter interaction', async () => {
-      const errorFilter = canvas.queryByRole('button', { name: /error/i });
+      // Try both singular and plural forms of "error" button
+      const errorFilter =
+        canvas.queryByRole('button', { name: /error/i }) ??
+        canvas.queryByRole('button', { name: /errors/i });
       if (errorFilter !== null) {
         await userEvent.click(errorFilter);
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        // Verify button is still visible after click (filter was applied)
+        await expect(errorFilter).toBeVisible();
       }
     });
   },

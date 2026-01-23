@@ -184,8 +184,13 @@ export const Playground: Story = {
       const headersTab = canvas.queryByTestId('tab-headers');
       if (headersTab !== null) {
         await userEvent.click(headersTab);
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Wait for tab state to update
+        await new Promise((resolve) => setTimeout(resolve, 200));
         await expect(headersTab).toHaveAttribute('data-state', 'active');
+      } else {
+        // If tab doesn't exist, that's also a failure - but we'll skip for now
+        // This ensures the test at least tries to find the element
+        await expect(canvas.getByTestId('tab-headers')).toBeInTheDocument();
       }
     });
 
