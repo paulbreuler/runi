@@ -169,7 +169,7 @@ describe('NetworkHistoryPanel', () => {
     const row = screen.getAllByTestId('history-row')[0]!;
     fireEvent.click(row);
 
-    expect(row).toHaveClass('bg-bg-raised');
+    expect(row).toHaveClass('bg-bg-raised/30');
   });
 
   it('calls onReplay when replay button is clicked', () => {
@@ -364,6 +364,28 @@ describe('NetworkHistoryPanel', () => {
         fireEvent.doubleClick(rowCheckbox);
         // Should NOT expand
         expect(screen.queryByTestId('expanded-section')).not.toBeInTheDocument();
+      }
+    });
+
+    it('does not toggle selection when double-clicking row', () => {
+      render(<NetworkHistoryPanel {...defaultProps} />);
+
+      const row = screen.getAllByTestId('history-row')[0]!;
+      const checkboxes = screen.getAllByRole('checkbox');
+      const rowCheckbox = checkboxes.find((cb) => {
+        const label = cb.getAttribute('aria-label');
+        return label?.includes('Select') ?? false;
+      });
+
+      if (rowCheckbox) {
+        // Initially unchecked
+        expect(rowCheckbox).toHaveAttribute('aria-checked', 'false');
+
+        // Double-click should expand, not toggle selection
+        fireEvent.doubleClick(row);
+        expect(screen.getByTestId('expanded-section')).toBeInTheDocument();
+        // Selection should remain unchanged
+        expect(rowCheckbox).toHaveAttribute('aria-checked', 'false');
       }
     });
   });
