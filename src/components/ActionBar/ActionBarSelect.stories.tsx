@@ -19,7 +19,7 @@ import {
 } from './selectRenderers';
 
 const meta = {
-  title: 'Components/ActionBar/ActionBarSelect',
+  title: 'ActionBar/ActionBarSelect',
   component: ActionBarSelect,
   parameters: {
     layout: 'centered',

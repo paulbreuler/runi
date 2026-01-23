@@ -14,7 +14,7 @@ import { ResponseTab } from './ResponseTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 const meta: Meta<typeof ResponseTab> = {
-  title: 'History/ResponseTab',
+  title: 'History/Tabs/ResponseTab',
   component: ResponseTab,
   parameters: {
     docs: {

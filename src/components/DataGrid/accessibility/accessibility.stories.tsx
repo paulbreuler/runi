@@ -68,7 +68,7 @@ const createColumns = (): Array<ColumnDef<TestRow>> => [
 import type { VirtualDataGridProps } from '../VirtualDataGrid';
 
 const meta = {
-  title: 'Components/DataGrid/Accessibility',
+  title: 'DataGrid/Accessibility',
   component: VirtualDataGrid,
   parameters: {
     layout: 'padded',

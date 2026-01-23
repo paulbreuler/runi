@@ -9,7 +9,7 @@ import * as Select from './select';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
-  title: 'Components/UI/Select',
+  title: 'UI/Select',
   component: Select.Select,
   parameters: {
     layout: 'centered',

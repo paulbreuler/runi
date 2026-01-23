@@ -1,6 +1,6 @@
 # Storybook Configuration
 
-Storybook serves as both a **documentation tool** and a **comprehensive testing platform** for runi components. All 62+ story files include play functions that test component interactions, accessibility, and visual states.
+Storybook serves as both a **documentation tool** and a **comprehensive testing platform** for runi components. Stories use **Storybook 10 controls** to explore state variations instead of creating separate stories for every prop combination. All stories include play functions that test component interactions, accessibility, and visual states.
 
 ## Features
 
@@ -58,13 +58,17 @@ Interaction tests run automatically when viewing stories, but you need to:
 
 ## Story Organization
 
-- **Layout/** - MainLayout, Sidebar, DockablePanel, StatusBar, TitleBar (5 files)
-- **Request/** - AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, RequestHeader (5 files)
-- **Response/** - ResponseViewer, StatusBadge (2 files)
-- **History/** - NetworkHistoryPanel, FilterBar, CopyButton, LanguageTabs, etc. (6 files)
-- **Console/** - ConsolePanel, ConsoleToolbar (2 files)
-- **DataGrid/** - VirtualDataGrid, columns, tabs, accessibility stories (10+ files)
-- **ui/** - Button, Input, Select, Checkbox, Card, Toast, etc. (15 files)
+Stories are organized by domain for easy discovery:
+
+- **DataGrid/** - VirtualDataGrid (with controls for all features), Columns, ExpandedPanel, Accessibility
+- **History/** - NetworkHistoryPanel, FilterBar (includes FilterBarActions), CodeDisplay (CodeBox/CodeSnippet/CopyButton), Tabs (Headers/Response/Timing/CodeGen), Signals (IntelligenceSignals/SignalDot)
+- **Request/** - Request editors (AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, RequestHeader)
+- **Response/** - ResponseViewer (includes StatusBadge), StatusBadge
+- **Console/** - ConsolePanel (includes ConsoleToolbar)
+- **UI/** - Base UI components (Button, Input, Select, Checkbox, Card, Toast, etc.)
+- **Layout/** - MainLayout, Sidebar, DockablePanel, StatusBar, TitleBar
+
+**Controls-First**: Use the Controls panel to explore different states instead of browsing through many separate stories.
 
 ## Running Tests
 
@@ -112,17 +116,21 @@ npm run test:e2e
 const button = canvas.getByTestId('save-button');
 ```
 
-## Coverage
+## Controls-First Approach
 
-All 62+ story files include play functions that test:
+**Use controls for state variations** instead of creating separate stories:
 
-- ✅ **UI Components** (15 files) - Button, Input, Select, Checkbox, Card, Toast, etc.
-- ✅ **Layout Components** (5 files) - MainLayout, Sidebar, DockablePanel, StatusBar, TitleBar
-- ✅ **Request Components** (5 files) - AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, RequestHeader
-- ✅ **Response Components** (2 files) - ResponseViewer, StatusBadge
-- ✅ **History Components** (6 files) - NetworkHistoryPanel, FilterBar, CopyButton, LanguageTabs, etc.
-- ✅ **Console Components** (2 files) - ConsolePanel, ConsoleToolbar
-- ✅ **DataGrid Components** (10+ files) - VirtualDataGrid, columns, tabs, accessibility stories
+```tsx
+export const Playground: Story = {
+  args: { variant: 'default', disabled: false },
+  argTypes: {
+    variant: { control: 'select', options: ['default', 'destructive', ...] },
+    disabled: { control: 'boolean' },
+  },
+};
+```
+
+This reduces story count from 500+ to ~50-75 while maintaining full test coverage via play functions.
 
 ## Related Documentation
 

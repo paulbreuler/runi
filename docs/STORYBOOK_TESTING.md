@@ -4,7 +4,9 @@ Complete guide to testing with Storybook in the runi project.
 
 ## Overview
 
-Storybook serves as both a **documentation tool** and a **comprehensive testing platform** for runi components. All 62+ story files include play functions that test component interactions, accessibility, and visual states.
+Storybook serves as both a **documentation tool** and a **comprehensive testing platform** for runi components. Stories use **Storybook 10 controls** to explore state variations instead of creating separate stories for every prop combination. All stories include play functions that test component interactions, accessibility, and visual states.
+
+**Organization**: Stories are organized by domain (DataGrid/, History/, Request/, Response/, Console/, UI/, Layout/) for easy discovery.
 
 ## Testing Infrastructure
 
@@ -298,23 +300,61 @@ npm run test:e2e
 
 ### Story Structure
 
+- **Use controls for state variations** - Don't create separate stories for every prop combination
+- **One Playground story per component** - Use controls to explore all features
 - Keep stories minimal and focused (1 concept per story)
 - Add brief JSDoc comments explaining each story's purpose
 - Use `storybook/test` utilities (`expect`, `userEvent`, `within`) for assertions
 - Don't duplicate unit test coverage in stories
-- Limit to 6-8 stories per component
+- Limit to 1-3 stories per component (use controls for variations)
+
+### Controls-First Approach
+
+**Before (Bad)**:
+
+```tsx
+export const Default: Story = { args: { variant: 'default' } };
+export const Destructive: Story = { args: { variant: 'destructive' } };
+export const Disabled: Story = { args: { disabled: true } };
+```
+
+**After (Good)**:
+
+```tsx
+export const Playground: Story = {
+  args: { variant: 'default', disabled: false },
+  argTypes: {
+    variant: { control: 'select', options: ['default', 'destructive', ...] },
+    disabled: { control: 'boolean' },
+  },
+};
+```
+
+Use the Controls panel to explore different states instead of creating separate stories.
+
+## Organization
+
+Stories are organized by domain for easy discovery:
+
+- **DataGrid/** - VirtualDataGrid, columns, ExpandedPanel, accessibility
+- **History/** - NetworkHistoryPanel, FilterBar, CodeDisplay (CodeBox/CodeSnippet/CopyButton), Tabs, Signals
+- **Request/** - Request editors (AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, RequestHeader)
+- **Response/** - ResponseViewer, StatusBadge
+- **Console/** - ConsolePanel (includes ConsoleToolbar)
+- **UI/** - Base UI components (Button, Input, Select, Checkbox, etc.)
+- **Layout/** - MainLayout, Sidebar, DockablePanel, StatusBar, TitleBar
 
 ## Coverage
 
-All 62+ story files include play functions that test:
+All story files use controls for state variations and include play functions that test:
 
-- ✅ **UI Components** (15 files) - Button, Input, Select, Checkbox, Card, Toast, etc.
-- ✅ **Layout Components** (5 files) - MainLayout, Sidebar, DockablePanel, StatusBar, TitleBar
-- ✅ **Request Components** (5 files) - AuthEditor, BodyEditor, HeaderEditor, ParamsEditor, RequestHeader
-- ✅ **Response Components** (2 files) - ResponseViewer, StatusBadge
-- ✅ **History Components** (6 files) - NetworkHistoryPanel, FilterBar, CopyButton, LanguageTabs, etc.
-- ✅ **Console Components** (2 files) - ConsolePanel, ConsoleToolbar
-- ✅ **DataGrid Components** (10+ files) - VirtualDataGrid, columns, tabs, accessibility stories
+- ✅ **UI Components** - Button, Input, Select, Checkbox, Card, Toast, etc.
+- ✅ **Layout Components** - MainLayout, Sidebar, DockablePanel, StatusBar, TitleBar
+- ✅ **Request Components** - Request editors
+- ✅ **Response Components** - ResponseViewer, StatusBadge
+- ✅ **History Components** - NetworkHistoryPanel, FilterBar, CodeDisplay, Tabs, Signals
+- ✅ **Console Components** - ConsolePanel (includes ConsoleToolbar)
+- ✅ **DataGrid Components** - VirtualDataGrid, columns, ExpandedPanel, accessibility
 
 ## Related Documentation
 

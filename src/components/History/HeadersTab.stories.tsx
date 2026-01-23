@@ -13,7 +13,7 @@ import { HeadersTab } from './HeadersTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 const meta: Meta<typeof HeadersTab> = {
-  title: 'History/HeadersTab',
+  title: 'History/Tabs/HeadersTab',
   component: HeadersTab,
   parameters: {
     layout: 'padded',

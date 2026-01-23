@@ -30,7 +30,7 @@ const StoreSeed = ({
 };
 
 const meta = {
-  title: 'Components/Request/HeaderEditor',
+  title: 'Request/HeaderEditor',
   component: HeaderEditor,
   parameters: {
     layout: 'fullscreen',

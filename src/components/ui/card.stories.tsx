@@ -10,7 +10,7 @@ import { Button } from './button';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
-  title: 'Components/UI/Card',
+  title: 'UI/Card',
   component: Card,
   parameters: {
     layout: 'centered',

@@ -11,7 +11,7 @@ import { RequestHeader } from './RequestHeader';
 import type { HttpMethod } from '@/utils/http-colors';
 
 const meta = {
-  title: 'Components/Request/RequestHeader',
+  title: 'Request/RequestHeader',
   component: RequestHeader,
   parameters: {
     layout: 'centered',

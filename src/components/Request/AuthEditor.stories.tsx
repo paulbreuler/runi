@@ -16,7 +16,7 @@ const seedStore = (headers: Record<string, string>): void => {
 };
 
 const meta = {
-  title: 'Components/Request/AuthEditor',
+  title: 'Request/AuthEditor',
   component: AuthEditor,
   parameters: {
     layout: 'fullscreen',

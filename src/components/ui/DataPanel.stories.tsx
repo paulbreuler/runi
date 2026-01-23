@@ -44,7 +44,7 @@ const levelIcons = {
 };
 
 const meta = {
-  title: 'Components/UI/DataPanel',
+  title: 'UI/DataPanel',
   component: DataPanel,
   parameters: {
     layout: 'padded',

@@ -10,7 +10,7 @@ import { Mail, Download, Trash2, ArrowRight } from 'lucide-react';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
-  title: 'Components/UI/Button',
+  title: 'UI/Button',
   component: Button,
   parameters: {
     layout: 'centered',

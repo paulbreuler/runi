@@ -22,7 +22,7 @@ const ToastStoryWrapper = ({ children }: { children?: React.ReactNode }): React.
 );
 
 const meta = {
-  title: 'Components/UI/Toast',
+  title: 'UI/Toast',
   component: Toast,
   decorators: [
     (Story): React.JSX.Element => (

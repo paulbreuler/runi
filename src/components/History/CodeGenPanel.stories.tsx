@@ -13,7 +13,7 @@ import { CodeGenPanel } from './CodeGenPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 const meta: Meta<typeof CodeGenPanel> = {
-  title: 'History/CodeGenPanel',
+  title: 'History/Tabs/CodeGenPanel',
   component: CodeGenPanel,
   parameters: {
     layout: 'padded',

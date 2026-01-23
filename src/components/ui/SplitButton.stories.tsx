@@ -9,7 +9,7 @@ import { Download, Copy, Trash2, Save, FolderOpen, FileUp, Share } from 'lucide-
 import { SplitButton } from './SplitButton';
 
 const meta = {
-  title: 'Components/UI/SplitButton',
+  title: 'UI/SplitButton',
   component: SplitButton,
   parameters: {
     layout: 'centered',

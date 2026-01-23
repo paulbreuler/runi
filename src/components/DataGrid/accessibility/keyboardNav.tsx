@@ -19,6 +19,8 @@
 
 import * as React from 'react';
 
+import { focusWithVisibility } from '@/utils/focusVisibility';
+
 /**
  * Finds the next interactive element in the same column (for arrow navigation)
  */
@@ -119,7 +121,7 @@ export function useKeyboardNavInteractive(): {
         e.stopPropagation();
         const nextElement = findNextInteractiveInColumn(e.currentTarget, 'down');
         if (nextElement !== null) {
-          nextElement.focus();
+          focusWithVisibility(nextElement);
         }
         break;
       }
@@ -129,7 +131,7 @@ export function useKeyboardNavInteractive(): {
         e.stopPropagation();
         const prevElement = findNextInteractiveInColumn(e.currentTarget, 'up');
         if (prevElement !== null) {
-          prevElement.focus();
+          focusWithVisibility(prevElement);
         }
         break;
       }
@@ -139,7 +141,7 @@ export function useKeyboardNavInteractive(): {
         e.stopPropagation();
         const nextElement = findNextInteractiveInRow(e.currentTarget, 'right');
         if (nextElement !== null) {
-          nextElement.focus();
+          focusWithVisibility(nextElement);
         }
         break;
       }
@@ -149,7 +151,7 @@ export function useKeyboardNavInteractive(): {
         e.stopPropagation();
         const prevElement = findNextInteractiveInRow(e.currentTarget, 'left');
         if (prevElement !== null) {
-          prevElement.focus();
+          focusWithVisibility(prevElement);
         }
         break;
       }

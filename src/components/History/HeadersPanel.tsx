@@ -8,9 +8,10 @@
  * @description Panel with tabs for Request Headers and Response Headers
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { focusWithVisibility } from '@/utils/focusVisibility';
 import { CodeSnippet } from './CodeSnippet';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -51,6 +52,8 @@ export const HeadersPanel = ({
   containerRef,
 }: HeadersPanelProps): React.ReactElement => {
   const [activeTab, setActiveTab] = useState<TabType>('response');
+  const responseTabRef = useRef<HTMLButtonElement>(null);
+  const requestTabRef = useRef<HTMLButtonElement>(null);
 
   const currentHeaders = activeTab === 'response' ? responseHeaders : requestHeaders;
   const headerEntries = Object.entries(currentHeaders);
@@ -62,16 +65,64 @@ export const HeadersPanel = ({
       .join('\n');
   }, [currentHeaders]);
 
+  /**
+   * Internal keyboard navigation for secondary tabs.
+   * Handles ArrowLeft/ArrowRight to navigate between tabs.
+   * Uses focusWithVisibility to ensure focus ring appears.
+   */
+  const handleInternalKeyDown = useCallback(
+    (e: React.KeyboardEvent): void => {
+      // First, let parent handler process the event (for ArrowUp to return to top-level)
+      onKeyDown?.(e);
+
+      // If parent handled it, don't process further
+      if (e.defaultPrevented) {
+        return;
+      }
+
+      const { key } = e;
+
+      // Navigate between secondary tabs with Arrow keys
+      if (key === 'ArrowRight' || key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const tabs = [responseTabRef.current, requestTabRef.current];
+        const currentFocusedIndex = tabs.findIndex((tab) => tab === document.activeElement);
+
+        if (currentFocusedIndex === -1) {
+          return;
+        }
+
+        let nextIndex: number;
+        if (key === 'ArrowRight') {
+          nextIndex = (currentFocusedIndex + 1) % tabs.length;
+        } else {
+          nextIndex = currentFocusedIndex === 0 ? tabs.length - 1 : currentFocusedIndex - 1;
+        }
+
+        const nextTab = tabs[nextIndex];
+        if (nextTab !== undefined && nextTab !== null) {
+          focusWithVisibility(nextTab);
+          // Activate the tab
+          setActiveTab(nextIndex === 0 ? 'response' : 'request');
+        }
+      }
+    },
+    [onKeyDown]
+  );
+
   return (
     <div
       ref={containerRef}
       data-testid="headers-panel"
       className={cn('flex flex-col', className)}
-      onKeyDown={onKeyDown}
+      onKeyDown={handleInternalKeyDown}
     >
       {/* Tab navigation */}
       <div className="flex gap-1 border-b border-border-default mb-3">
         <button
+          ref={responseTabRef}
           type="button"
           role="tab"
           aria-selected={activeTab === 'response'}
@@ -91,6 +142,7 @@ export const HeadersPanel = ({
           Response Headers
         </button>
         <button
+          ref={requestTabRef}
           type="button"
           role="tab"
           aria-selected={activeTab === 'request'}

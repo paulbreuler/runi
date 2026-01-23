@@ -10,7 +10,7 @@ import { NetworkHistoryPanel } from './NetworkHistoryPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 const meta = {
-  title: 'Components/History/NetworkHistoryPanel',
+  title: 'History/NetworkHistoryPanel',
   component: NetworkHistoryPanel,
   parameters: {
     layout: 'fullscreen',

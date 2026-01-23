@@ -3,24 +3,103 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @file IntelligenceSignals Storybook stories
+ * @description Consolidated story using Storybook 10 controls
+ */
+
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { IntelligenceSignals } from './IntelligenceSignals';
 import type { IntelligenceInfo } from '@/types/history';
 
 const meta = {
-  title: 'Components/History/IntelligenceSignals',
+  title: 'History/Signals/IntelligenceSignals',
   component: IntelligenceSignals,
   parameters: {
     layout: 'centered',
-    test: {
-      skip: true, // Display-only component, no interactive elements to test
+    docs: {
+      description: {
+        component:
+          'Intelligence signals component showing verified, drift, AI-generated, and bound-to-spec states. Use controls to explore different intelligence configurations.',
+      },
     },
   },
   tags: ['autodocs'],
+  argTypes: {
+    signalType: {
+      control: 'select',
+      options: ['none', 'verified', 'drift', 'ai-generated', 'bound', 'multiple'],
+      description: 'Type of intelligence signal to display',
+    },
+  },
+  args: {
+    signalType: 'verified',
+  },
 } satisfies Meta<typeof IntelligenceSignals>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+const createIntelligence = (type: string): IntelligenceInfo => {
+  switch (type) {
+    case 'verified':
+      return {
+        boundToSpec: true,
+        specOperation: 'getUsers',
+        drift: null,
+        aiGenerated: false,
+        verified: true,
+      };
+    case 'drift':
+      return {
+        boundToSpec: true,
+        specOperation: 'createUser',
+        drift: {
+          type: 'response',
+          fields: ['body.email'],
+          message: 'Required field "email" missing in response',
+        },
+        aiGenerated: false,
+        verified: false,
+      };
+    case 'ai-generated':
+      return {
+        boundToSpec: false,
+        specOperation: null,
+        drift: null,
+        aiGenerated: true,
+        verified: false,
+      };
+    case 'bound':
+      return {
+        boundToSpec: true,
+        specOperation: 'updateUser',
+        drift: null,
+        aiGenerated: false,
+        verified: false,
+      };
+    case 'multiple':
+      return {
+        boundToSpec: true,
+        specOperation: 'getUsers',
+        drift: {
+          type: 'response',
+          fields: ['body.email'],
+          message: 'Field type mismatch',
+        },
+        aiGenerated: true,
+        verified: false,
+      };
+    default:
+      return {
+        boundToSpec: false,
+        specOperation: null,
+        drift: null,
+        aiGenerated: false,
+        verified: false,
+      };
+  }
+};
 
 const wrapper = (children: React.ReactNode): React.JSX.Element => (
   <div className="bg-bg-surface p-4 rounded flex items-center gap-2">
@@ -30,125 +109,19 @@ const wrapper = (children: React.ReactNode): React.JSX.Element => (
 );
 
 /**
- * No intelligence signals - empty state.
+ * Playground with controls for all IntelligenceSignals states.
  */
-export const NoSignals: Story = {
-  args: {
-    intelligence: {
-      boundToSpec: false,
-      specOperation: null,
-      drift: null,
-      aiGenerated: false,
-      verified: false,
-    },
+export const Playground: Story = {
+  render: (args) => {
+    const intelligence = createIntelligence(args.signalType as string);
+    return wrapper(<IntelligenceSignals intelligence={intelligence} />);
   },
-  render: (args) => wrapper(<IntelligenceSignals {...args} />),
-};
-
-/**
- * Verified response - all clear, green signal.
- */
-export const Verified: Story = {
-  args: {
-    intelligence: {
-      boundToSpec: true,
-      specOperation: 'getUsers',
-      drift: null,
-      aiGenerated: false,
-      verified: true,
-    },
-  },
-  render: (args) => wrapper(<IntelligenceSignals {...args} />),
-};
-
-/**
- * Drift detected - amber pulsing signal.
- */
-export const DriftDetected: Story = {
-  args: {
-    intelligence: {
-      boundToSpec: true,
-      specOperation: 'createUser',
-      drift: {
-        type: 'response',
-        fields: ['body.email'],
-        message: 'Required field "email" missing in response',
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Interactive playground for IntelligenceSignals. Use the Controls panel to explore different signal types: verified, drift, AI-generated, bound, or multiple signals.',
       },
-      aiGenerated: false,
-      verified: false,
     },
   },
-  render: (args) => wrapper(<IntelligenceSignals {...args} />),
-};
-
-/**
- * AI-generated request - purple signal.
- */
-export const AIGenerated: Story = {
-  args: {
-    intelligence: {
-      boundToSpec: false,
-      specOperation: null,
-      drift: null,
-      aiGenerated: true,
-      verified: false,
-    },
-  },
-  render: (args) => wrapper(<IntelligenceSignals {...args} />),
-};
-
-/**
- * Bound to spec but not yet verified - blue signal only.
- */
-export const BoundOnly: Story = {
-  args: {
-    intelligence: {
-      boundToSpec: true,
-      specOperation: 'deleteUser',
-      drift: null,
-      aiGenerated: false,
-      verified: false,
-    },
-  },
-  render: (args) => wrapper(<IntelligenceSignals {...args} />),
-};
-
-/**
- * AI-generated with drift - needs attention.
- */
-export const AIWithDrift: Story = {
-  args: {
-    intelligence: {
-      boundToSpec: true,
-      specOperation: 'updateUser',
-      drift: {
-        type: 'request',
-        fields: ['body.id'],
-        message: 'Unexpected field "id" in request body',
-      },
-      aiGenerated: true,
-      verified: false,
-    },
-  },
-  render: (args) => wrapper(<IntelligenceSignals {...args} />),
-};
-
-/**
- * All signals active (unusual but possible during debugging).
- */
-export const AllSignals: Story = {
-  args: {
-    intelligence: {
-      boundToSpec: true,
-      specOperation: 'testOperation',
-      drift: {
-        type: 'response',
-        fields: ['status'],
-        message: 'Status 404 not in spec',
-      },
-      aiGenerated: true,
-      verified: true,
-    } as IntelligenceInfo,
-  },
-  render: (args) => wrapper(<IntelligenceSignals {...args} />),
 };

@@ -8,7 +8,7 @@ import { TimingTab } from './TimingTab';
 import type { TimingWaterfallSegments } from '@/types/history';
 
 const meta: Meta<typeof TimingTab> = {
-  title: 'History/TimingTab',
+  title: 'History/Tabs/TimingTab',
   component: TimingTab,
   parameters: {
     layout: 'centered',

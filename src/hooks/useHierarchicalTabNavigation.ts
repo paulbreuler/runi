@@ -16,6 +16,8 @@
 
 import { useCallback, useState } from 'react';
 
+import { focusWithVisibility } from '@/utils/focusVisibility';
+
 export interface HierarchicalTabNavigationOptions {
   /** Top-level tab container element ref */
   topLevelContainerRef: React.RefObject<HTMLElement | null>;
@@ -129,10 +131,9 @@ export function useHierarchicalTabNavigation(
 
       const targetTab = tabs[targetIndex];
       if (targetTab !== undefined) {
-        // Focus the tab - this should trigger focus-visible if the browser
-        // recognizes it as keyboard-initiated (which it should since we're
-        // handling a keyboard event)
-        targetTab.focus();
+        // Focus the tab with visibility to ensure focus ring appears
+        // even when programmatically focused during arrow key navigation
+        focusWithVisibility(targetTab);
 
         // Activate the tab if it's not already active
         // Check both Radix data-state and aria-selected attributes
@@ -155,15 +156,21 @@ export function useHierarchicalTabNavigation(
       const { key } = e;
 
       // Arrow Down: Move to secondary tabs if available
-      if (key === 'ArrowDown' && hasSecondaryTabs && secondaryContainerRef?.current !== null) {
+      const secondaryContainer = secondaryContainerRef?.current;
+      if (
+        key === 'ArrowDown' &&
+        hasSecondaryTabs &&
+        secondaryContainer !== null &&
+        secondaryContainer !== undefined
+      ) {
         e.preventDefault();
         e.stopPropagation();
-        const secondaryTabs = getTabs(secondaryContainerRef.current);
+        const secondaryTabs = getTabs(secondaryContainer);
         if (secondaryTabs.length > 0) {
           setIsSecondaryFocused(true);
           const firstTab = secondaryTabs[0];
           if (firstTab !== undefined) {
-            firstTab.focus();
+            focusWithVisibility(firstTab);
             // Activate if not already active
             const isActive =
               firstTab.getAttribute('data-state') === 'active' ||
@@ -227,7 +234,7 @@ export function useHierarchicalTabNavigation(
               tab.getAttribute('data-state') === 'active' ||
               tab.getAttribute('aria-selected') === 'true'
           );
-          (activeTab ?? topLevelTabs[0])?.focus();
+          focusWithVisibility(activeTab ?? topLevelTabs[0] ?? null);
           onMoveToTopLevel?.();
         }
         return;

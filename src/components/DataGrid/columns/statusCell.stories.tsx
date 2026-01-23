@@ -12,7 +12,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { StatusCell } from './statusCell';
 
 const meta: Meta<typeof StatusCell> = {
-  title: 'Components/DataGrid/StatusCell',
+  title: 'DataGrid/Columns/StatusCell',
   component: StatusCell,
   parameters: {
     layout: 'padded',

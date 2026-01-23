@@ -9,7 +9,7 @@ import { Input } from './input';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
-  title: 'Components/UI/Input',
+  title: 'UI/Input',
   component: Input,
   parameters: {
     layout: 'centered',

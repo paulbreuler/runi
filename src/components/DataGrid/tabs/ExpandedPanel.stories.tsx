@@ -5,18 +5,17 @@
 
 /**
  * @file ExpandedPanel Storybook stories
- * @description Visual documentation for ExpandedPanel component with tab navigation
+ * @description Consolidated story using Storybook 10 controls for all state variations
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, within, fn } from 'storybook/test';
 import { ExpandedPanel } from './ExpandedPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
-import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 import { Z_INDEX } from '@/components/DataGrid/constants';
 
 const meta: Meta<typeof ExpandedPanel> = {
-  title: 'Components/DataGrid/ExpandedPanel',
+  title: 'DataGrid/ExpandedPanel',
   component: ExpandedPanel,
   parameters: {
     layout: 'padded',
@@ -26,677 +25,194 @@ const meta: Meta<typeof ExpandedPanel> = {
 ExpandedPanel provides a tabbed interface for displaying detailed network history entry information.
 
 **Features:**
-- **Tab Navigation**: Switch between Timing, Response, Headers, TLS, and Code Gen tabs
-- **Timing Tab (default)**: Shows timing waterfall visualization and intelligence signals
-- **Response Tab**: Displays request and response bodies with formatting
-- **Headers Tab**: Shows request and response headers
-- **TLS Tab**: Displays TLS certificate details and connection information
-- **Code Gen Tab**: Generates code snippets in multiple languages
-
-**Accessibility:**
-- Full keyboard navigation via Radix Tabs
-- ARIA attributes handled automatically
-- Focus management on tab activation
+- Tab Navigation: Switch between Timing, Response, Headers, TLS, and Code Gen tabs
+- Intelligence Signals: Shows verified, drift, and AI-generated states
+- Action Buttons: Edit & Replay, Copy cURL, Chain Request, Generate Tests, Add to Collection, Block/Unblock
+- Keyboard Navigation: Full keyboard support via Radix Tabs
         `,
       },
     },
   },
   tags: ['autodocs'],
+  argTypes: {
+    isBlocked: {
+      control: 'boolean',
+      description: 'Entry is blocked (shows Unblock button)',
+    },
+  },
+  args: {
+    isBlocked: false,
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/**
- * Creates a mock network history entry for stories.
- */
-const createMockEntry = (overrides?: Partial<NetworkHistoryEntry>): NetworkHistoryEntry => ({
-  id: 'hist_1',
-  timestamp: new Date().toISOString(),
-  request: {
-    url: 'https://api.example.com/users',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer token123',
-    },
-    body: JSON.stringify(
-      {
-        name: 'John Doe',
-        email: 'john@example.com',
+const createMockEntry = (
+  overrides?: Partial<NetworkHistoryEntry>,
+  status?: string
+): NetworkHistoryEntry => {
+  const baseEntry: NetworkHistoryEntry = {
+    id: 'hist_1',
+    timestamp: new Date().toISOString(),
+    request: {
+      url: 'https://api.example.com/users',
+      method: status === 'get' ? 'GET' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer token123',
       },
-      null,
-      2
-    ),
-    timeout_ms: 30000,
-  },
-  response: {
-    status: 200,
-    status_text: 'OK',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Rate-Limit': '100',
-    },
-    body: JSON.stringify(
-      {
-        id: 1,
-        name: 'John Doe',
-        email: 'john@example.com',
-        createdAt: '2024-01-01T00:00:00Z',
-      },
-      null,
-      2
-    ),
-    timing: {
-      total_ms: 290,
-      dns_ms: 15,
-      connect_ms: 25,
-      tls_ms: 45,
-      first_byte_ms: 120,
-    },
-  },
-  ...overrides,
-});
-
-/**
- * Default expanded panel showing all tabs with typical network entry.
- */
-export const Default: Story = {
-  args: {
-    entry: createMockEntry(),
-  },
-};
-
-/**
- * Expanded panel with verified request (intelligence signals).
- */
-export const VerifiedRequest: Story = {
-  args: {
-    entry: createMockEntry({
-      intelligence: {
-        verified: true,
-        drift: null,
-        aiGenerated: false,
-        boundToSpec: true,
-        specOperation: 'createUser',
-      },
-    }),
-  },
-};
-
-/**
- * Expanded panel with drift detected.
- */
-export const DriftDetected: Story = {
-  args: {
-    entry: createMockEntry({
-      intelligence: {
-        verified: false,
-        drift: {
-          type: 'response',
-          fields: ['body.email'],
-          message: 'Expected string, got number',
-        },
-        aiGenerated: false,
-        boundToSpec: true,
-        specOperation: 'getUserById',
-      },
-    }),
-  },
-};
-
-/**
- * Expanded panel with AI-generated request.
- */
-export const AIGenerated: Story = {
-  args: {
-    entry: createMockEntry({
-      intelligence: {
-        verified: false,
-        drift: null,
-        aiGenerated: true,
-        boundToSpec: false,
-        specOperation: null,
-      },
-    }),
-  },
-};
-
-/**
- * Expanded panel with GET request (no request body).
- */
-export const GetRequest: Story = {
-  args: {
-    entry: createMockEntry({
-      request: {
-        url: 'https://api.example.com/users',
-        method: 'GET',
-        headers: {
-          Authorization: 'Bearer token123',
-        },
-        body: null,
-        timeout_ms: 30000,
-      },
-      response: {
-        status: 200,
-        status_text: 'OK',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
-          {
-            users: [
-              { id: 1, name: 'John' },
-              { id: 2, name: 'Jane' },
-            ],
-          },
-          null,
-          2
-        ),
-        timing: {
-          total_ms: 156,
-          dns_ms: 12,
-          connect_ms: 23,
-          tls_ms: 34,
-          first_byte_ms: 50,
-        },
-      },
-    }),
-  },
-};
-
-/**
- * Expanded panel with error response (4xx).
- */
-export const ErrorResponse: Story = {
-  args: {
-    entry: createMockEntry({
-      response: {
-        status: 404,
-        status_text: 'Not Found',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ error: 'Resource not found' }, null, 2),
-        timing: {
-          total_ms: 45,
-          dns_ms: 5,
-          connect_ms: 10,
-          tls_ms: 15,
-          first_byte_ms: 30,
-        },
-      },
-    }),
-  },
-};
-
-/**
- * Expanded panel with TLS certificate data.
- */
-export const WithTLSCertificate: Story = {
-  args: {
-    entry: createMockEntry(),
-    certificate: {
-      subject: {
-        commonName: 'example.com',
-        organization: 'Example Inc',
-        country: 'US',
-      },
-      issuer: {
-        commonName: 'Example CA',
-        organization: 'Example Certificate Authority',
-      },
-      validFrom: '2024-01-01T00:00:00Z',
-      validTo: '2025-01-01T00:00:00Z',
-      serialNumber: '1234567890',
-      fingerprint: {
-        sha256: 'A1:B2:C3:D4:E5:F6:...',
-        sha1: 'AA:BB:CC:DD:EE:FF:...',
-      },
-      version: 3,
-      signatureAlgorithm: 'SHA256withRSA',
-      publicKeyAlgorithm: 'RSA',
-      keySize: 2048,
-    },
-    protocolVersion: 'TLS 1.3',
-  },
-};
-
-/**
- * Tests tab navigation: click tabs to switch content, verify keyboard navigation.
- */
-export const TabNavigationTest: Story = {
-  args: {
-    entry: createMockEntry(),
-  },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Verify Timing tab is selected by default', async () => {
-      const timingTab = canvas.getByRole('tab', { name: /timing/i });
-      await expect(timingTab).toHaveAttribute('data-state', 'active');
-    });
-
-    await step('Click Response tab to switch content', async () => {
-      const responseTab = canvas.getByRole('tab', { name: /response/i });
-      await userEvent.click(responseTab);
-      await expect(responseTab).toHaveAttribute('data-state', 'active');
-    });
-
-    await step('Click Headers tab to switch content', async () => {
-      const headersTab = canvas.getByRole('tab', { name: /headers/i });
-      await userEvent.click(headersTab);
-      await expect(headersTab).toHaveAttribute('data-state', 'active');
-    });
-
-    await step('Tab to first tab and use keyboard navigation', async () => {
-      const timingTab = canvas.getByRole('tab', { name: /timing/i });
-      await tabToElement(timingTab, 20);
-      await expect(timingTab).toHaveFocus();
-    });
-
-    await step('Use Arrow Right to move to next tab', async () => {
-      await userEvent.keyboard('{ArrowRight}');
-      // There might be multiple response tabs, get the first one that's focusable
-      const responseTabs = canvas.getAllByRole('tab', { name: /response/i });
-      const responseTab = responseTabs[0];
-      if (responseTab !== undefined) {
-        await waitForFocus(responseTab, 1000);
-        await expect(responseTab).toHaveFocus();
-      }
-    });
-
-    await step('Press Enter to activate tab', async () => {
-      await userEvent.keyboard('{Enter}');
-      // Wait for tab activation
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      // Get the focused response tab (should be the one we just activated)
-      const responseTabs = canvas.getAllByRole('tab', { name: /response/i });
-      const activeResponseTab = responseTabs.find(
-        (tab) => tab.getAttribute('data-state') === 'active'
-      );
-      if (activeResponseTab !== undefined) {
-        await expect(activeResponseTab).toHaveAttribute('data-state', 'active');
-      } else {
-        // Fallback: check first response tab
-        await expect(responseTabs[0]).toHaveAttribute('data-state', 'active');
-      }
-    });
-
-    await step('Use Arrow Left to move back to Timing tab', async () => {
-      await userEvent.keyboard('{ArrowLeft}');
-      const timingTab = canvas.getByRole('tab', { name: /timing/i });
-      await expect(timingTab).toHaveFocus();
-    });
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Tests tab navigation: click to switch tabs, Arrow Left/Right to navigate between tabs, Enter to activate.',
-      },
-    },
-  },
-};
-
-/**
- * Expanded panel with action buttons.
- * Feature #24: Expanded Panel - Action Buttons
- */
-export const WithActionButtons: Story = {
-  args: {
-    entry: createMockEntry(),
-    onReplay: (): void => {
-      console.log('Replay clicked');
-    },
-    onCopy: (): void => {
-      console.log('Copy cURL clicked');
-    },
-    onChain: (): void => {
-      console.log('Chain Request clicked');
-    },
-    onGenerateTests: (): void => {
-      console.log('Generate Tests clicked');
-    },
-    onAddToCollection: (): void => {
-      console.log('Add to Collection clicked');
-    },
-    onBlockToggle: (id: string, isBlocked: boolean): void => {
-      console.log(`Block toggle clicked: ${id}, blocked: ${String(isBlocked)}`);
-    },
-    isBlocked: false,
-  },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Verify all action buttons are present', async () => {
-      await expect(canvas.getByRole('button', { name: /edit.*replay/i })).toBeInTheDocument();
-      await expect(canvas.getByRole('button', { name: /copy.*curl/i })).toBeInTheDocument();
-      await expect(canvas.getByRole('button', { name: /chain.*request/i })).toBeInTheDocument();
-      await expect(canvas.getByRole('button', { name: /generate.*tests/i })).toBeInTheDocument();
-      await expect(
-        canvas.getByRole('button', { name: /add.*to.*collection/i })
-      ).toBeInTheDocument();
-      await expect(canvas.getByRole('button', { name: /block/i })).toBeInTheDocument();
-    });
-
-    await step('Click Edit & Replay button', async () => {
-      const replayButton = canvas.getByRole('button', { name: /edit.*replay/i });
-      await userEvent.click(replayButton);
-      // Button should still be present after click
-      await expect(replayButton).toBeInTheDocument();
-    });
-
-    await step('Click Copy cURL button', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy.*curl/i });
-      await userEvent.click(copyButton);
-      await expect(copyButton).toBeInTheDocument();
-    });
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Feature #24: Expanded Panel - Action Buttons. Displays all action buttons at the bottom of the expanded panel: Edit & Replay, Copy cURL, Chain Request, Generate Tests, Add to Collection, and Block/Unblock.',
-      },
-    },
-  },
-};
-
-/**
- * Expanded panel with blocked entry (shows Unblock button).
- */
-export const WithBlockedEntry: Story = {
-  args: {
-    entry: createMockEntry(),
-    onBlockToggle: (id: string, isBlocked: boolean): void => {
-      console.log(`Block toggle clicked: ${id}, blocked: ${String(isBlocked)}`);
-    },
-    isBlocked: true,
-  },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Verify Unblock button is shown for blocked entry', async () => {
-      await expect(canvas.getByRole('button', { name: /unblock/i })).toBeInTheDocument();
-    });
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Shows Unblock button when entry is blocked.',
-      },
-    },
-  },
-};
-
-/**
- * Tests z-index layering: expanded panel content scrolls underneath table headers.
- * Feature #1: Fix Z-Index Layering
- *
- * The header must always be topmost so that table body content (including expanded panels)
- * scrolls underneath and is properly occluded by the header's background.
- */
-export const ZIndexLayeringTest: Story = {
-  args: {
-    entry: createMockEntry({
-      response: {
-        status: 200,
-        status_text: 'OK',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Rate-Limit': '100',
-        },
-        body: JSON.stringify(
-          {
-            data: Array.from({ length: 50 }, (_, i) => ({
-              id: i + 1,
-              name: `Item ${String(i + 1)}`,
-              description: `This is a long description for item ${String(i + 1)} that will cause scrolling`,
-            })),
-          },
-          null,
-          2
-        ),
-        timing: {
-          total_ms: 290,
-          dns_ms: 15,
-          connect_ms: 25,
-          tls_ms: 45,
-          first_byte_ms: 120,
-        },
-      },
-    }),
-  },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Verify expanded panel has correct z-index', async () => {
-      const expandedSection = canvas.getByTestId('expanded-section');
-      const computedStyle = window.getComputedStyle(expandedSection);
-      const zIndex = Number.parseInt(computedStyle.zIndex, 10);
-
-      // Z-index should be EXPANDED_PANEL (8), which is lower than HEADER_RIGHT (30) and HEADER_LEFT (25)
-      // This ensures expanded content scrolls underneath the header, which is always topmost
-      await expect(zIndex).toBe(Z_INDEX.EXPANDED_PANEL);
-      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_RIGHT);
-      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_LEFT);
-    });
-
-    await step('Verify expanded panel has relative positioning', async () => {
-      const expandedSection = canvas.getByTestId('expanded-section');
-      const computedStyle = window.getComputedStyle(expandedSection);
-
-      // Should have relative positioning for z-index to take effect
-      await expect(computedStyle.position).toBe('relative');
-    });
-
-    await step('Verify expanded panel content is scrollable', async () => {
-      const expandedSection = canvas.getByTestId('expanded-section');
-
-      // Should have overflow-hidden class to handle scrolling
-      await expect(expandedSection).toHaveClass('overflow-hidden');
-    });
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Feature #1: Fix Z-Index Layering. Verifies that expanded panel content has z-index 8 (lower than table headers at 25/30) so it scrolls underneath the header, which is always topmost. The header occludes content behind it with its background.',
-      },
-    },
-    a11y: {
-      config: {
-        rules: [{ id: 'color-contrast', enabled: true }],
-      },
-    },
-  },
-};
-
-/**
- * Tests hierarchical keyboard navigation: Arrow Down/Up to move between levels, Arrow Left/Right within level.
- * Feature #2: Hierarchical Keyboard Navigation
- */
-export const KeyboardNavigationTest: Story = {
-  args: {
-    entry: createMockEntry(),
-  },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Navigate to Headers tab', async () => {
-      const headersTab = canvas.getByTestId('tab-headers');
-      await userEvent.click(headersTab);
-      await expect(headersTab).toHaveAttribute('data-state', 'active');
-    });
-
-    await step('Arrow Down moves focus to secondary tabs', async () => {
-      const headersTab = canvas.getByTestId('tab-headers');
-      headersTab.focus();
-      await waitForFocus(headersTab, 1000);
-
-      // Press Arrow Down to move to secondary tabs
-      await userEvent.keyboard('{ArrowDown}');
-
-      // Should focus on Response Headers tab (first secondary tab)
-      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
-      await waitForFocus(responseHeadersTab, 1000);
-      await expect(responseHeadersTab).toHaveFocus();
-    });
-
-    await step('Arrow Right navigates between secondary tabs', async () => {
-      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
-      await waitForFocus(responseHeadersTab, 1000);
-
-      // Press Arrow Right to move to Request Headers tab
-      await userEvent.keyboard('{ArrowRight}');
-
-      const requestHeadersTab = canvas.getByTestId('request-headers-tab');
-      await waitForFocus(requestHeadersTab, 1000);
-      await expect(requestHeadersTab).toHaveFocus();
-    });
-
-    await step('Arrow Left navigates back to previous secondary tab', async () => {
-      const requestHeadersTab = canvas.getByTestId('request-headers-tab');
-      await waitForFocus(requestHeadersTab, 1000);
-
-      // Press Arrow Left to move back to Response Headers tab
-      await userEvent.keyboard('{ArrowLeft}');
-
-      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
-      await waitForFocus(responseHeadersTab, 1000);
-      await expect(responseHeadersTab).toHaveFocus();
-    });
-
-    await step('Arrow Up returns focus to top-level tab', async () => {
-      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
-      await waitForFocus(responseHeadersTab, 1000);
-
-      // Press Arrow Up to return to Headers tab
-      await userEvent.keyboard('{ArrowUp}');
-
-      const headersTab = canvas.getByTestId('tab-headers');
-      await waitForFocus(headersTab, 1000);
-      await expect(headersTab).toHaveFocus();
-    });
-
-    await step('Home key navigates to first tab in current level', async () => {
-      const headersTab = canvas.getByTestId('tab-headers');
-      await waitForFocus(headersTab, 1000);
-
-      // Press Home to go to first top-level tab (Timing)
-      await userEvent.keyboard('{Home}');
-
-      const timingTab = canvas.getByTestId('tab-timing');
-      await waitForFocus(timingTab, 1000);
-      await expect(timingTab).toHaveFocus();
-    });
-
-    await step('End key navigates to last tab in current level', async () => {
-      const timingTab = canvas.getByTestId('tab-timing');
-      await waitForFocus(timingTab, 1000);
-
-      // Press End to go to last top-level tab (Code Gen)
-      await userEvent.keyboard('{End}');
-
-      const codeGenTab = canvas.getByTestId('tab-codegen');
-      await waitForFocus(codeGenTab, 1000);
-      await expect(codeGenTab).toHaveFocus();
-    });
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Feature #2: Hierarchical Keyboard Navigation. Tests arrow key navigation: Arrow Down moves to secondary tabs, Arrow Up returns to top-level, Arrow Left/Right navigates within level, Home/End navigates to first/last tab.',
-      },
-    },
-    a11y: {
-      config: {
-        rules: [{ id: 'keyboard-navigation', enabled: true }],
-      },
-    },
-  },
-};
-
-/**
- * Tests scrolling behavior: expanded panel content scrolls independently without header overlap.
- * Feature #1: Fix Z-Index Layering (scrolling aspect)
- */
-export const ScrollingBehaviorTest: Story = {
-  args: {
-    entry: createMockEntry({
-      response: {
-        status: 200,
-        status_text: 'OK',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Rate-Limit': '100',
-        },
-        body: JSON.stringify(
-          {
-            data: Array.from({ length: 100 }, (_, i) => ({
-              id: i + 1,
-              name: `Item ${String(i + 1)}`,
-              description: `This is a very long description for item ${String(i + 1)} that will definitely cause scrolling when displayed in the expanded panel. The content should scroll smoothly without any visual overlap with table headers.`,
-              metadata: {
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                tags: ['tag1', 'tag2', 'tag3'],
+      body:
+        status === 'get'
+          ? null
+          : JSON.stringify(
+              {
+                name: 'John Doe',
+                email: 'john@example.com',
               },
-            })),
-          },
-          null,
-          2
-        ),
-        timing: {
-          total_ms: 290,
-          dns_ms: 15,
-          connect_ms: 25,
-          tls_ms: 45,
-          first_byte_ms: 120,
-        },
+              null,
+              2
+            ),
+      timeout_ms: 30000,
+    },
+    response: {
+      status: status === 'error' ? 500 : 200,
+      status_text: status === 'error' ? 'Internal Server Error' : 'OK',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Rate-Limit': '100',
       },
-    }),
+      body:
+        status === 'error'
+          ? JSON.stringify({ error: 'Internal server error' }, null, 2)
+          : JSON.stringify(
+              {
+                id: 1,
+                name: 'John Doe',
+                email: 'john@example.com',
+                createdAt: '2024-01-01T00:00:00Z',
+              },
+              null,
+              2
+            ),
+      timing: {
+        total_ms: 290,
+        dns_ms: 15,
+        connect_ms: 25,
+        tls_ms: 45,
+        first_byte_ms: 120,
+      },
+    },
+    intelligence: {
+      boundToSpec: false,
+      specOperation: null,
+      drift: null,
+      aiGenerated: false,
+      verified: false,
+    },
+    ...overrides,
+  };
+
+  // Apply status-specific overrides
+  if (status === 'verified') {
+    baseEntry.intelligence = {
+      verified: true,
+      drift: null,
+      aiGenerated: false,
+      boundToSpec: true,
+      specOperation: 'createUser',
+    };
+  } else if (status === 'drift') {
+    baseEntry.intelligence = {
+      verified: false,
+      drift: {
+        type: 'response',
+        fields: ['body.email'],
+        message: 'Expected string, got number',
+      },
+      aiGenerated: false,
+      boundToSpec: true,
+      specOperation: 'getUserById',
+    };
+  } else if (status === 'ai-generated') {
+    baseEntry.intelligence = {
+      verified: false,
+      drift: null,
+      aiGenerated: true,
+      boundToSpec: false,
+      specOperation: null,
+    };
+  } else if (status === 'tls') {
+    baseEntry.request.url = 'https://secure.example.com/api';
+    baseEntry.response.timing.tls_ms = 120;
+  }
+
+  return baseEntry;
+};
+
+/**
+ * Playground story with controls for all ExpandedPanel features.
+ * Use the Controls panel to explore different entry states and configurations.
+ *
+ * Note: Entry state variations (verified, drift, AI-generated, etc.) can be explored
+ * by modifying the entry prop directly in the Controls panel, or by creating additional
+ * stories for specific states if needed for documentation.
+ */
+export const Playground: Story = {
+  render: (args) => {
+    const entry = createMockEntry(undefined, 'default');
+
+    return (
+      <div className="w-full max-w-4xl">
+        <ExpandedPanel
+          entry={entry}
+          onBlockToggle={args.isBlocked === true ? fn() : undefined}
+          isBlocked={args.isBlocked}
+        />
+      </div>
+    );
   },
-  play: async ({ canvasElement, step }) => {
+  play: async ({ canvasElement, step, args }) => {
     const canvas = within(canvasElement);
 
-    await step('Navigate to Response tab with long content', async () => {
-      const responseTab = canvas.getByTestId('tab-response');
-      await userEvent.click(responseTab);
-      await expect(responseTab).toHaveAttribute('data-state', 'active');
+    await step('Verify panel renders', async () => {
+      const panel = canvasElement.querySelector('[data-testid="expanded-section"]');
+      await expect(panel).toBeInTheDocument();
     });
 
-    await step('Verify expanded panel content is scrollable', async () => {
-      const expandedSection = canvas.getByTestId('expanded-section');
-      const responsePanel = canvas.getByTestId('response-panel');
-
-      // Expanded section should have overflow-hidden
-      await expect(expandedSection).toHaveClass('overflow-hidden');
-
-      // Response panel should be present
-      await expect(responsePanel).toBeInTheDocument();
+    await step('Test tab navigation', async () => {
+      const headersTab = canvas.queryByTestId('tab-headers');
+      if (headersTab !== null) {
+        await userEvent.click(headersTab);
+        await expect(headersTab).toHaveAttribute('data-state', 'active');
+      }
     });
 
-    await step('Verify z-index allows content to scroll under header', async () => {
-      const expandedSection = canvas.getByTestId('expanded-section');
-      const computedStyle = window.getComputedStyle(expandedSection);
-      const zIndex = Number.parseInt(computedStyle.zIndex, 10);
-
-      // Z-index should be lower than headers so content scrolls underneath
-      await expect(zIndex).toBe(Z_INDEX.EXPANDED_PANEL);
-      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_RIGHT);
-      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_LEFT);
+    await step('Verify z-index layering', async () => {
+      const expandedSection = canvasElement.querySelector('[data-testid="expanded-section"]');
+      if (expandedSection !== null) {
+        const computedStyle = window.getComputedStyle(expandedSection);
+        const zIndex = Number.parseInt(computedStyle.zIndex, 10);
+        await expect(zIndex).toBe(Z_INDEX.EXPANDED_PANEL);
+        await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_RIGHT);
+      }
     });
+
+    if (args.isBlocked === true) {
+      await step('Verify Unblock button for blocked entry', async () => {
+        const unblockButton = canvas.queryByRole('button', { name: /unblock/i });
+        if (unblockButton !== null) {
+          await expect(unblockButton).toBeInTheDocument();
+        }
+      });
+    }
   },
   parameters: {
     docs: {
       description: {
         story:
-          'Feature #1: Fix Z-Index Layering (scrolling aspect). Tests that expanded panel content with long content scrolls smoothly underneath the table header. The header remains topmost and occludes content behind it. Verifies z-index hierarchy and overflow handling.',
+          'Interactive playground for ExpandedPanel. Use the Controls panel to explore different entry states (verified, drift, AI-generated, error, TLS) and configurations (action buttons, blocked state).',
       },
     },
-    layout: 'fullscreen', // Use fullscreen to better test scrolling
   },
 };

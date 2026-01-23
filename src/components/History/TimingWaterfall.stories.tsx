@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TimingWaterfall } from './TimingWaterfall';
 
 const meta = {
-  title: 'Components/History/TimingWaterfall',
+  title: 'History/TimingWaterfall',
   component: TimingWaterfall,
   parameters: {
     layout: 'centered',

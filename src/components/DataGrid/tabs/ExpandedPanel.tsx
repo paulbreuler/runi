@@ -96,12 +96,16 @@ export const ExpandedPanel = ({
 
   // Determine which secondary container to use based on active tab
   const hasSecondaryTabs = activeTab === 'headers' || activeTab === 'response';
-  const secondaryContainerRef =
-    activeTab === 'headers'
-      ? headersPanelRef
-      : activeTab === 'response'
-        ? responsePanelRef
-        : undefined;
+  const getSecondaryContainerRef = (): React.RefObject<HTMLDivElement | null> | undefined => {
+    if (activeTab === 'headers') {
+      return headersPanelRef;
+    }
+    if (activeTab === 'response') {
+      return responsePanelRef;
+    }
+    return undefined;
+  };
+  const secondaryContainerRef = getSecondaryContainerRef();
 
   // Set up hierarchical keyboard navigation
   const { handleTopLevelKeyDown, handleSecondaryKeyDown } = useHierarchicalTabNavigation({

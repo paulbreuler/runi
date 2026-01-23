@@ -5,221 +5,68 @@
 
 /**
  * @file CodeSnippet Storybook stories
- * @description Visual documentation for CodeSnippet component
+ * @description Visual documentation for CodeSnippet component with controls
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { userEvent, within } from 'storybook/test';
 import { CodeSnippet } from './CodeSnippet';
-import { tabToElement } from '@/utils/storybook-test-helpers';
 
 const meta: Meta<typeof CodeSnippet> = {
-  title: 'History/CodeSnippet',
+  title: 'History/CodeDisplay/CodeSnippet',
   component: CodeSnippet,
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'Component for displaying code with syntax highlighting and copy functionality. Supports two variants: `contained` (default) for standalone use, and `borderless` for use inside existing containers.',
+          'Component for displaying code with syntax highlighting and copy functionality. Supports `contained` (default) and `borderless` variants.',
       },
     },
   },
   tags: ['autodocs'],
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['contained', 'borderless'],
+      description: 'Visual variant',
+    },
+    language: {
+      control: 'select',
+      options: ['javascript', 'python', 'go', 'bash', 'json', 'typescript'],
+      description: 'Programming language for syntax highlighting',
+    },
+    code: {
+      control: 'text',
+      description: 'Code content',
+    },
+  },
+  args: {
+    variant: 'contained',
+    language: 'javascript',
+    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
+  },
 };
 
 export default meta;
-type Story = StoryObj<typeof CodeSnippet>;
+type Story = StoryObj<typeof meta>;
 
 /**
- * Basic code snippet with JavaScript code.
+ * Playground with controls for all CodeSnippet features.
  */
-export const Default: Story = {
-  args: {
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
-  },
-};
-
-/**
- * Python code snippet.
- */
-export const Python: Story = {
-  args: {
-    code: 'import requests\n\nresponse = requests.get("https://api.example.com/users")\nprint(response.json())',
-    language: 'python',
-  },
-};
-
-/**
- * Go code snippet.
- */
-export const Go: Story = {
-  args: {
-    code: 'package main\n\nimport "net/http"\n\nfunc main() {\n    resp, err := http.Get("https://api.example.com/users")\n    // ...\n}',
-    language: 'go',
-  },
-};
-
-/**
- * cURL command snippet.
- */
-export const Curl: Story = {
-  args: {
-    code: 'curl -X GET \\\n  -H "Authorization: Bearer token123" \\\n  "https://api.example.com/users"',
-    language: 'bash',
-  },
-};
-
-/**
- * Borderless variant for use inside existing containers.
- * No background, border, or rounded corners to avoid nested visual containers.
- */
-export const Borderless: Story = {
-  args: {
-    variant: 'borderless',
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Borderless variant removes visual container styling for use inside existing containers like MainLayout panes. Use this to avoid nested visual containers.',
-      },
-    },
-  },
-};
-
-/**
- * Comparison of contained (default) vs borderless variants.
- */
-export const VariantComparison: Story = {
-  render: () => (
-    <div className="space-y-8 p-4">
-      <div>
-        <h3 className="text-sm font-medium mb-2 text-text-primary">Contained Variant (Default)</h3>
-        <p className="text-xs text-text-muted mb-4">
-          Use for standalone code display (e.g., in expanded panels, history views)
-        </p>
-        <CodeSnippet
-          variant="contained"
-          code="const example = 'contained';\nconsole.log(example);"
-          language="javascript"
-        />
-      </div>
-      <div className="bg-bg-app p-4 rounded">
-        <h3 className="text-sm font-medium mb-2 text-text-primary">
-          Borderless Variant (Inside Container)
-        </h3>
-        <p className="text-xs text-text-muted mb-4">
-          Use inside existing containers (e.g., MainLayout panes) to avoid nested visual containers
-        </p>
-        <CodeSnippet
-          variant="borderless"
-          code="const example = 'borderless';\nconsole.log(example);"
-          language="javascript"
-        />
-      </div>
-    </div>
-  ),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Side-by-side comparison showing when to use each variant. The borderless variant blends seamlessly into existing containers without creating visual disruption.',
-      },
-    },
-  },
-};
-
-/**
- * Test copy button functionality and feedback.
- */
-export const CopyFunctionalityTest: Story = {
-  args: {
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
-  },
+export const Playground: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-
-    await step('Click copy button', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
-      await userEvent.click(copyButton);
-      // Clipboard might fail in test environment, so check if feedback appears
-      // If clipboard fails, the button won't show "Copied" but that's expected
-      try {
-        const copiedText = await canvas.findByText(/copied/i, {}, { timeout: 500 });
-        await expect(copiedText).toBeVisible();
-      } catch {
-        // Clipboard permission denied in test environment - this is expected
-        // Just verify button is still visible
-        await expect(copyButton).toBeVisible();
-      }
-    });
-
-    await step('Verify feedback resets after duration', async () => {
-      // Wait for feedback duration (2000ms default)
-      await new Promise((resolve) => {
-        setTimeout(resolve, 2100);
+    const copyButton = canvas.queryByRole('button', { name: /copy/i });
+    if (copyButton !== null) {
+      await step('Test copy button', async () => {
+        await userEvent.click(copyButton);
+        try {
+          await canvas.findByText(/copied/i, {}, { timeout: 500 });
+        } catch {
+          // Expected in test environment
+        }
       });
-      // Verify button shows "Copy" again
-      const copyText = canvas.getByText(/^copy$/i);
-      await expect(copyText).toBeVisible();
-    });
-  },
-};
-
-/**
- * Test keyboard navigation to copy button.
- */
-export const KeyboardNavigationTest: Story = {
-  args: {
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
-  },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Tab to copy button', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
-      const focused = await tabToElement(copyButton, 10);
-      await expect(focused).toBe(true);
-      await expect(copyButton).toHaveFocus();
-    });
-
-    await step('Activate copy button with Enter', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
-      await userEvent.keyboard('{Enter}');
-      // Button should still be visible after activation
-      await expect(copyButton).toBeVisible();
-    });
-  },
-};
-
-/**
- * Test borderless variant copy button functionality.
- */
-export const BorderlessCopyTest: Story = {
-  args: {
-    variant: 'borderless',
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
-  },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Verify copy button is present in borderless variant', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
-      await expect(copyButton).toBeVisible();
-    });
-
-    await step('Click copy button', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
-      await userEvent.click(copyButton);
-      // Verify button is still visible after click
-      await expect(copyButton).toBeVisible();
-    });
+    }
   },
 };

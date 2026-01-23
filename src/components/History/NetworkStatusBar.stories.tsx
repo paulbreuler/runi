@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NetworkStatusBar } from './NetworkStatusBar';
 
 const meta = {
-  title: 'Components/History/NetworkStatusBar',
+  title: 'History/NetworkStatusBar',
   component: NetworkStatusBar,
   parameters: {
     layout: 'padded',

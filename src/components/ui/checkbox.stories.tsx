@@ -10,7 +10,7 @@ import { Checkbox } from './checkbox';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
-  title: 'Components/UI/Checkbox',
+  title: 'UI/Checkbox',
   component: Checkbox,
   parameters: {
     layout: 'centered',

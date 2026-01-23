@@ -27,7 +27,7 @@ import { ActionBarCompositeButton } from './ActionBarCompositeButton';
 import { Button } from '../ui/button';
 
 const meta = {
-  title: 'Components/ActionBar',
+  title: 'ActionBar/ActionBar',
   component: ActionBar,
   parameters: {
     layout: 'padded',

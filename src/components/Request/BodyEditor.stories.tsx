@@ -11,7 +11,7 @@ import { BodyEditor } from './BodyEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 
 const meta = {
-  title: 'Components/Request/BodyEditor',
+  title: 'Request/BodyEditor',
   component: BodyEditor,
   parameters: {
     layout: 'fullscreen',

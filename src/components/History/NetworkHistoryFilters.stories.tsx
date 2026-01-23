@@ -12,7 +12,7 @@ import { ActionBar } from '@/components/ActionBar';
 import { tabToElement } from '@/utils/storybook-test-helpers';
 
 const meta = {
-  title: 'Components/History/NetworkHistoryFilters',
+  title: 'History/NetworkHistoryFilters',
   component: NetworkHistoryFilters,
   parameters: {
     layout: 'padded',

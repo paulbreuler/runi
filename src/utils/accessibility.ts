@@ -24,15 +24,36 @@ import * as React from 'react';
  * - 2px offset for better visibility on dark backgrounds
  * - Uses :focus-visible (only shows on keyboard focus, not mouse clicks)
  *
+ * Supports BOTH:
+ * - Native :focus-visible (Tab key, some programmatic focus)
+ * - Programmatic focus via [data-focus-visible-added] attribute
+ *
+ * This ensures arrow key navigation shows the same focus ring as Tab navigation.
+ * Use `focusWithVisibility()` from `@/utils/focusVisibility` for programmatic focus.
+ *
  * @example
  * ```tsx
  * <button className={cn(focusRingClasses, 'px-4 py-2')}>
  *   Click me
  * </button>
  * ```
+ *
+ * @see focusWithVisibility - Use this when calling .focus() programmatically
  */
-export const focusRingClasses =
-  'outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app';
+export const focusRingClasses = [
+  'outline-none',
+  // Native :focus-visible (Tab key, some browsers handle programmatic focus)
+  'focus-visible:ring-2',
+  'focus-visible:ring-accent-blue',
+  'focus-visible:ring-offset-2',
+  'focus-visible:ring-offset-bg-app',
+  // Programmatic focus visibility (arrow key navigation)
+  // Uses attribute selector with :focus to ensure element is actually focused
+  '[&[data-focus-visible-added]:focus]:ring-2',
+  '[&[data-focus-visible-added]:focus]:ring-accent-blue',
+  '[&[data-focus-visible-added]:focus]:ring-offset-2',
+  '[&[data-focus-visible-added]:focus]:ring-offset-bg-app',
+].join(' ');
 
 /**
  * Hook for hover-only elements that need to show on focus.

@@ -13,7 +13,7 @@ import { CodeGenTab } from './CodeGenTab';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 const meta: Meta<typeof CodeGenTab> = {
-  title: 'History/CodeGenTab',
+  title: 'History/Tabs/CodeGenTab',
   component: CodeGenTab,
   parameters: {
     layout: 'padded',

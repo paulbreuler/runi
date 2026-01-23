@@ -14,6 +14,7 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { VirtualDataGrid } from '../VirtualDataGrid';
 import { createNetworkColumns } from '../columns/networkColumns';
+import { Z_INDEX } from '../constants';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 /** Deep partial type for nested overrides */
@@ -536,9 +537,14 @@ describe('Features #41-43: Sticky Columns', () => {
         expect(zIndex).toBeGreaterThanOrEqual(15);
       });
 
-      // The thead itself should also have z-index class
+      // The thead itself should have z-index inline style
       const thead = container.querySelector('thead');
-      expect(thead).toHaveClass('z-10');
+      if (thead !== null) {
+        const theadStyle = window.getComputedStyle(thead);
+        const theadZIndex = Number.parseInt(theadStyle.zIndex, 10);
+        // Header z-index should be HEADER_RIGHT (30) - topmost
+        expect(theadZIndex).toBe(Z_INDEX.HEADER_RIGHT);
+      }
     });
   });
 });

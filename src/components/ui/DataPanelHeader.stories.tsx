@@ -12,7 +12,7 @@ import { Download } from 'lucide-react';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta = {
-  title: 'Components/UI/DataPanelHeader',
+  title: 'UI/DataPanelHeader',
   component: DataPanelHeader,
   parameters: {
     layout: 'padded',

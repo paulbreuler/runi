@@ -30,7 +30,7 @@ const StoreSeed = ({
 };
 
 const meta = {
-  title: 'Components/Request/ParamsEditor',
+  title: 'Request/ParamsEditor',
   component: ParamsEditor,
   parameters: {
     layout: 'fullscreen',

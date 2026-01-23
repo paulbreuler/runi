@@ -260,7 +260,7 @@ const DemoTable = ({ initialExpanded = {} }: DemoTableProps): React.ReactElement
 };
 
 const meta: Meta<typeof DemoTable> = {
-  title: 'Components/DataGrid/Columns/ExpanderColumn',
+  title: 'DataGrid/Columns/ExpanderColumn',
   component: DemoTable,
   parameters: {
     layout: 'padded',

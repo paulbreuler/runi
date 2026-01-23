@@ -9,10 +9,12 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { ResponsePanel } from './ResponsePanel';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 
 const meta: Meta<typeof ResponsePanel> = {
-  title: 'History/ResponsePanel',
+  title: 'History/Tabs/ResponsePanel',
   component: ResponsePanel,
   parameters: {
     docs: {
@@ -105,5 +107,96 @@ export const LargeBodies: Story = {
       null,
       2
     ),
+  },
+};
+
+/**
+ * Tests keyboard navigation between secondary tabs.
+ * Feature #2: Hierarchical Keyboard Navigation (secondary tabs)
+ *
+ * Verifies:
+ * - Tab focuses first secondary tab
+ * - ArrowRight moves to next secondary tab
+ * - ArrowLeft moves to previous secondary tab
+ * - Arrow navigation adds data-focus-visible-added attribute
+ */
+export const SecondaryTabNavigationTest: Story = {
+  args: {
+    requestBody: JSON.stringify(
+      {
+        name: 'John Doe',
+        email: 'john@example.com',
+      },
+      null,
+      2
+    ),
+    responseBody: JSON.stringify(
+      {
+        id: 1,
+        name: 'John Doe',
+        email: 'john@example.com',
+      },
+      null,
+      2
+    ),
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab focuses first secondary tab (Response Body)', async () => {
+      await userEvent.tab();
+
+      const responseBodyTab = canvas.getByTestId('response-body-tab');
+      await waitForFocus(responseBodyTab, 1000);
+      await expect(responseBodyTab).toHaveFocus();
+    });
+
+    await step('ArrowRight moves to Request Body tab with focus ring', async () => {
+      await userEvent.keyboard('{ArrowRight}');
+
+      // Wait for focus to settle
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const requestBodyTab = canvas.getByTestId('request-body-tab');
+      await expect(requestBodyTab).toHaveFocus();
+
+      // Arrow navigation should add data-focus-visible-added for focus ring visibility
+      await expect(requestBodyTab).toHaveAttribute('data-focus-visible-added');
+    });
+
+    await step('ArrowLeft moves back to Response Body tab', async () => {
+      await userEvent.keyboard('{ArrowLeft}');
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const responseBodyTab = canvas.getByTestId('response-body-tab');
+      await expect(responseBodyTab).toHaveFocus();
+      await expect(responseBodyTab).toHaveAttribute('data-focus-visible-added');
+
+      // Previous tab should no longer have the attribute
+      const requestBodyTab = canvas.getByTestId('request-body-tab');
+      await expect(requestBodyTab).not.toHaveAttribute('data-focus-visible-added');
+    });
+
+    await step('ArrowRight wraps from last to first tab', async () => {
+      // We're on Response Body, go to Request Body
+      await userEvent.keyboard('{ArrowRight}');
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Now press ArrowRight again - should wrap to Response Body
+      await userEvent.keyboard('{ArrowRight}');
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const responseBodyTab = canvas.getByTestId('response-body-tab');
+      await expect(responseBodyTab).toHaveFocus();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #2: Tests keyboard navigation within ResponsePanel secondary tabs. Arrow keys navigate between tabs and show focus ring via data-focus-visible-added attribute.',
+      },
+    },
   },
 };
