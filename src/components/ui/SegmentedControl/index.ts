@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * SegmentedControl - Public API
  *
  * This module exports the SegmentedControl component and its public types.

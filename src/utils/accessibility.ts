@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Accessibility utilities
  * @description Reusable utilities for consistent accessibility patterns across custom components
  *

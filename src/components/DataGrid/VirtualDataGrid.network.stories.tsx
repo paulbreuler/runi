@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file VirtualDataGrid Network History Stories
  * @description Visual documentation for VirtualDataGrid with NetworkHistoryEntry data
  *

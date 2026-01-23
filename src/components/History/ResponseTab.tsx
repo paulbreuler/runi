@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ResponseTab component
  * @description Main response tab component for expanded panel
  */

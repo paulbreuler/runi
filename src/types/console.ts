@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Console types shared between console service and components.
  *
  * Extracted to avoid circular dependencies between service and component layers.

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file VirtualDataGrid component
  * @description Virtualized data grid combining TanStack Table + TanStack Virtual
  *

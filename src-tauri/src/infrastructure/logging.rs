@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 //! Structured logging infrastructure with correlation ID support.
 //!
 //! Provides tracing integration with log level configuration and correlation ID

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { useState, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { cn } from '@/utils/cn';

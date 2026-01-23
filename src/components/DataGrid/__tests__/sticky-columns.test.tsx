@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Sticky columns tests
  * @description Tests for Features #41-43: Sticky Columns (left, right, header)
  *

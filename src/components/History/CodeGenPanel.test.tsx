@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file CodeGenPanel component tests
  * @description Tests for the CodeGenPanel component
  */

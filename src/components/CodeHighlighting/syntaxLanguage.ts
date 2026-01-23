@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 export type SyntaxLanguage = 'json' | 'xml' | 'html' | 'css' | 'javascript' | 'yaml' | 'text';
 
 export interface SyntaxDetectionInput {

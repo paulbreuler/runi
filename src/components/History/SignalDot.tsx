@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import type { SignalType } from '@/types/history';

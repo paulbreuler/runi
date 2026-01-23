@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 //! Runi - An intelligent API development partner.
 //!
 //! This crate provides the Tauri backend for the runi desktop application,

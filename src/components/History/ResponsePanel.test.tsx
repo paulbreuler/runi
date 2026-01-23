@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ResponsePanel component tests
  * @description Tests for the ResponsePanel component with request/response body tabs
  */

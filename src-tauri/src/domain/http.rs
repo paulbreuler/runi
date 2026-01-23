@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // HTTP domain models for request/response handling
 
 use serde::{Deserialize, Serialize};

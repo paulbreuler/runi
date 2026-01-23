@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Expander column helper
  * @description Creates an expander column for TanStack Table with Motion animation
  *

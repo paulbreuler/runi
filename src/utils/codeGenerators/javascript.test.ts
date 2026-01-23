@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { describe, it, expect } from 'vitest';
 import { generateJavaScriptCode } from './javascript';
 import type { NetworkHistoryEntry } from '@/types/history';

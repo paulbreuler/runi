@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Energy effect components for SegmentedControl power-level animations.
  *
  * These components create the visual effects that appear during the

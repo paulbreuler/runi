@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Accessibility Storybook stories
  * @description Visual documentation for accessibility features in DataGrid
  *

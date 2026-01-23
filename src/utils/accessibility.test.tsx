@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Accessibility utilities tests
  * @description Tests for focus ring classes and useFocusVisible hook
  */

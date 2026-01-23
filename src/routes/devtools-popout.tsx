@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import React, { useEffect, useCallback } from 'react';
 import { NetworkHistoryPanel } from '@/components/History/NetworkHistoryPanel';
 import { useHistoryStore } from '@/stores/useHistoryStore';

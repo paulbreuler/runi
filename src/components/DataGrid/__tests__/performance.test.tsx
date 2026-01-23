@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file DataGrid performance tests
  * @description Performance benchmarks for VirtualDataGrid with large datasets
  *

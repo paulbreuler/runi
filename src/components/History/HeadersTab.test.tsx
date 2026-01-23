@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file HeadersTab component tests
  * @description Tests for the HeadersTab component - main headers tab for expanded panel
  */

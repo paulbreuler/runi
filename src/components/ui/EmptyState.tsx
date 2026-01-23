@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import React from 'react';
 import { motion, type Variant, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';

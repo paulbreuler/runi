@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file TanStack Table setup test
  * @description RED phase: Verify that @tanstack/react-table is properly installed
  *

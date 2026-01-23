@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file useDataGrid hook tests
  * @description Tests for the base useDataGrid hook that wraps TanStack Table
  *

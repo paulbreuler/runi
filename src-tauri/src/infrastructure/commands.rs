@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // Tauri command handlers
 
 use crate::application::proxy_service::ProxyService;

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file CopyButton component
  * @description Button that copies text to clipboard and shows "✓ Copied" feedback
  */

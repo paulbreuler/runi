@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 // ActionBar component system - unified, composable action bars
 export { ActionBar } from './ActionBar';
 export {

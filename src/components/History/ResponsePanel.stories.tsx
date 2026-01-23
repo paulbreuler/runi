@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ResponsePanel Storybook stories
  * @description Visual documentation for ResponsePanel component
  */

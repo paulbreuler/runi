@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import React, { useCallback, useRef, useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';

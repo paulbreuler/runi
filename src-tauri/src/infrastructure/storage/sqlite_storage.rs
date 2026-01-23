@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 //! `SQLite` storage backend for history entries.
 //!
 //! This module provides a persistent SQLite-based storage implementation

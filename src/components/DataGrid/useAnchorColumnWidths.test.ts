@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file useAnchorColumnWidths hook tests
  * @description Unit tests for the useAnchorColumnWidths hook
  *

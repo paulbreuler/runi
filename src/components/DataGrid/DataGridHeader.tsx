@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file DataGridHeader component
  * @description Maps TanStack Table headers to DataPanelHeader for consistent UI
  *

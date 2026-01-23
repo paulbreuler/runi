@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ConsolePanel migration tests
  * @description RED phase: Tests for ConsolePanel migrated to use VirtualDataGrid
  *

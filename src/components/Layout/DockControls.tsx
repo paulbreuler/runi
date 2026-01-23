@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import React, { useRef, useEffect } from 'react';
 import { PanelBottom, PanelLeft, PanelRight, ExternalLink } from 'lucide-react';
 import { usePanelStore, type PanelPosition } from '@/stores/usePanelStore';

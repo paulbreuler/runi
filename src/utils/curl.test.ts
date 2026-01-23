@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { describe, it, expect } from 'vitest';
 import { generateCurlCommand } from './curl';
 import type { NetworkHistoryEntry } from '@/types/history';

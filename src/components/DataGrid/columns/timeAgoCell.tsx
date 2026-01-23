@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file TimeAgoCell component
  * @description Renders relative time (e.g., "5 mins ago") with periodic updates
  */

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { describe, it, expect } from 'vitest';
 import { generateCode, LANGUAGE_NAMES, LANGUAGE_SYNTAX, type CodeLanguage } from './index';
 import type { NetworkHistoryEntry } from '@/types/history';

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 //! Database migration framework for `SQLite`.
 //!
 //! This module provides a version-controlled migration system for `SQLite` databases.

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Command registry for extensible command system.
  *
  * Inspired by VS Code's command system, this registry allows

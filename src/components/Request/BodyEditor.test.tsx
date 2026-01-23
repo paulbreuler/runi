@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { render, screen, cleanup, act, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, afterEach } from 'vitest';
 import { BodyEditor } from './BodyEditor';

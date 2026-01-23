@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file TLSTab component tests
  * @description Tests for the TLSTab component - TLS tab for expanded panel
  */

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file useWindowedHistory hook
  * @description Hook for windowed history data fetching with pagination
  *

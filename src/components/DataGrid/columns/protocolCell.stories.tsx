@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ProtocolCell Storybook stories
  * @description Visual documentation for HTTP protocol version cell component
  */

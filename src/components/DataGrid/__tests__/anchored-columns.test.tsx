@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Anchored columns tests
  * @description Tests for Features #38-40: Anchored Columns (fixed/flexible width system)
  *

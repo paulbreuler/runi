@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TimingTab } from './TimingTab';
 import type { TimingWaterfallSegments } from '@/types/history';

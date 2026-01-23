@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import type { HistoryFilters } from '@/types/history';
 import { ActionBar, type ActionBarVariant } from '@/components/ActionBar';
 import { NetworkHistoryFilters } from './NetworkHistoryFilters';

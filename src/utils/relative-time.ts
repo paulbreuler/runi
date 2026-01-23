@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Format a timestamp as a relative time string.
  *
  * @param timestamp - ISO timestamp string

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // In-memory history storage (session-only, Burp Suite behavior)
 //
 // History lives only for the session duration. This is more secure as

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Event bus for loose coupling between components.
  *
  * Provides a publish-subscribe pattern for component communication.
