@@ -38,6 +38,8 @@ BodyEditor (Special case - Editor pattern)
 | ResponsePanel             | `src/components/History/ResponsePanel.tsx`   | `contained`  | Auto-detected        | 139  |
 | CodeGenPanel              | `src/components/History/CodeGenPanel.tsx`    | `contained`  | From LANGUAGE_SYNTAX | 77   |
 | HeadersPanel              | `src/components/History/HeadersPanel.tsx`    | `contained`  | `http`               | 111  |
+| ConsolePanel (grouped)    | `src/components/Console/ConsolePanel.tsx`    | `borderless` | Auto-detected        | 786  |
+| ConsolePanel (individual) | `src/components/Console/ConsolePanel.tsx`    | `borderless` | Auto-detected        | 861  |
 
 **Status**: ✅ **Primary component - Use this everywhere code is displayed**
 

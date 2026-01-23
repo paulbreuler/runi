@@ -1074,9 +1074,12 @@ describe('ConsolePanel', () => {
       expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
-    // Verify args are displayed
-    expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
-    expect(screen.getByText(/"code":\s*500/i)).toBeInTheDocument();
+    // Verify args are displayed - text is now in CodeSnippet with syntax highlighting
+    // Check text content in code-box containers
+    const codeBoxes = screen.getAllByTestId('code-box');
+    const allText = codeBoxes.map((box) => box.textContent || '').join(' ');
+    expect(allText).toMatch(/connection timeout/i);
+    expect(allText).toMatch(/"code":\s*500/i);
   });
 
   it('collapses expanded args when chevron is clicked again', async () => {

@@ -16,6 +16,8 @@ import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColum
 import { ExpandedContent } from '@/components/DataGrid/ExpandedContent';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Row } from '@tanstack/react-table';
+import { CodeSnippet } from '@/components/History/CodeSnippet';
+import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 
 export type { LogLevel, ConsoleLog } from '@/types/console';
 
@@ -78,6 +80,36 @@ function serializeArgs(args: unknown[]): string {
     // Fallback if serialization fails
     return String(args);
   }
+}
+
+/**
+ * Format log arguments for display and detect language for syntax highlighting.
+ * Combines all args into a single code block for consistent display.
+ */
+function formatLogArgs(args: unknown[]): { code: string; language: string } {
+  if (args.length === 0) {
+    return { code: '', language: 'text' };
+  }
+
+  // If single arg, format it directly
+  if (args.length === 1) {
+    const arg = args[0];
+    const code = typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2);
+    const language = typeof arg === 'string' ? detectSyntaxLanguage({ body: code }) : 'json';
+    return { code, language };
+  }
+
+  // Multiple args: combine them (typically all JSON or all strings)
+  // Format each arg and join with newlines
+  const formattedArgs = args.map((arg) => {
+    return typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2);
+  });
+
+  const code = formattedArgs.join('\n\n');
+  // Detect language from first arg, default to json if any arg is an object
+  const hasObjects = args.some((arg) => typeof arg !== 'string');
+  const language = hasObjects ? 'json' : detectSyntaxLanguage({ body: code });
+  return { code, language };
 }
 
 /**
@@ -747,6 +779,15 @@ export const ConsolePanel = ({
         }
       };
 
+      // Format args for display (combine all args into single CodeSnippet)
+      const formattedArgs = isGrouped
+        ? originalLog.sampleLog.args.length > 0
+          ? formatLogArgs(originalLog.sampleLog.args)
+          : null
+        : entry.args.length > 0
+          ? formatLogArgs(entry.args)
+          : null;
+
       return (
         <>
           <tr
@@ -780,19 +821,15 @@ export const ConsolePanel = ({
                   {isGrouped ? (
                     <>
                       {/* Args content (grouped logs show args once) */}
-                      {originalLog.sampleLog.args.length > 0 && (
+                      {formattedArgs !== null && (
                         <div className="mb-2">
                           <div className="pl-2 border-l border-border-default">
-                            {originalLog.sampleLog.args.map((arg: unknown, index: number) => (
-                              <div
-                                key={`${originalLog.id}-arg-${String(index)}`}
-                                className="mb-1 text-xs font-mono text-text-secondary"
-                              >
-                                <pre className="whitespace-pre-wrap break-words overflow-x-auto">
-                                  {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
-                                </pre>
-                              </div>
-                            ))}
+                            <CodeSnippet
+                              code={formattedArgs.code}
+                              language={formattedArgs.language}
+                              variant="borderless"
+                              className="text-xs"
+                            />
                           </div>
                         </div>
                       )}
@@ -856,18 +893,14 @@ export const ConsolePanel = ({
                     </>
                   ) : (
                     /* Individual log args */
-                    entry.args.length > 0 && (
+                    formattedArgs !== null && (
                       <div className="pl-2 border-l border-border-default">
-                        {entry.args.map((arg: unknown, index: number) => (
-                          <div
-                            key={`${entry.id}-arg-${String(index)}`}
-                            className="mb-1 text-xs font-mono text-text-secondary"
-                          >
-                            <pre className="whitespace-pre-wrap break-words overflow-x-auto">
-                              {typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2)}
-                            </pre>
-                          </div>
-                        ))}
+                        <CodeSnippet
+                          code={formattedArgs.code}
+                          language={formattedArgs.language}
+                          variant="borderless"
+                          className="text-xs"
+                        />
                       </div>
                     )
                   )}
