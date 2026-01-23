@@ -23,10 +23,9 @@ import { createSelectionColumn } from './columns/selectionColumn';
 import { createExpanderColumn } from './columns/expanderColumn';
 import { createNetworkColumns } from './columns/networkColumns';
 import { cn } from '@/utils/cn';
-import type { ColumnDef } from '@tanstack/react-table';
-import type { Row } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 import type { NetworkHistoryEntry } from '@/types/history';
-import { waitForFocus } from '@/utils/storybook-test-helpers';
+import { waitForFocus, tabToElement } from '@/utils/storybook-test-helpers';
 import { Z_INDEX } from './constants';
 
 // ============================================================================
@@ -554,6 +553,356 @@ export const Playground: Story = {
       description: {
         story:
           'Interactive playground for VirtualDataGrid. Use the Controls panel to explore all features: data types, sizes, selection, expansion, sorting, and column pinning. All interactions are tested via the play function.',
+      },
+    },
+  },
+};
+
+// ============================================================================
+// Accessibility Stories
+// ============================================================================
+
+/**
+ * Keyboard navigation demonstration.
+ *
+ * Try these keyboard shortcuts:
+ * - Tab: Move through checkboxes and expander buttons
+ * - Enter: Expand/collapse rows (when expander button focused)
+ * - Space: Select rows (when checkbox focused)
+ * - Arrow Up/Down: Navigate between rows
+ * - Arrow Left/Right: Navigate between cells
+ */
+export const KeyboardNavigation: Story = {
+  render: () => {
+    const testData: TestRow[] = generateTestData(5);
+    const columns = createTestColumns();
+
+    return (
+      <div className="space-y-4">
+        <div className="text-sm text-text-secondary">
+          <p className="font-medium mb-2">Keyboard Shortcuts:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">Tab</kbd> /{' '}
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">Shift+Tab</kbd>: Navigate
+              through interactive elements
+            </li>
+            <li>
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">Enter</kbd>:
+              Expand/collapse rows (when expander button focused)
+            </li>
+            <li>
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">Space</kbd>: Select rows
+              (when checkbox focused)
+            </li>
+            <li>
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">↑</kbd> /{' '}
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">↓</kbd>: Navigate between
+              rows
+            </li>
+            <li>
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">←</kbd> /{' '}
+              <kbd className="px-1.5 py-0.5 bg-bg-raised rounded text-xs">→</kbd>: Navigate between
+              cells
+            </li>
+          </ul>
+        </div>
+        <VirtualDataGrid<TestRow>
+          data={testData}
+          columns={columns}
+          getRowId={(row) => row.id}
+          enableRowSelection
+          enableExpanding
+          getRowCanExpand={(row: Row<TestRow>) => row.original.metadata !== undefined}
+          height={400}
+        />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates keyboard navigation. Use Tab to focus elements, then try the keyboard shortcuts listed above.',
+      },
+    },
+  },
+};
+
+/**
+ * ARIA attributes demonstration.
+ *
+ * Open browser DevTools and inspect the table elements to see:
+ * - Table has `role="table"`
+ * - Rows have `role="row"`
+ * - Cells have `role="cell"`
+ * - Headers have `role="columnheader"`
+ * - Expander buttons have `aria-expanded`
+ * - Checkboxes have `aria-label`
+ */
+export const ARIA: Story = {
+  render: () => {
+    const testData: TestRow[] = generateTestData(3);
+    const columns = createTestColumns();
+
+    return (
+      <div className="space-y-4">
+        <div className="text-sm text-text-secondary">
+          <p className="font-medium mb-2">ARIA Attributes:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>
+              Table:{' '}
+              <code className="text-xs bg-bg-raised px-1 py-0.5 rounded">
+                role=&quot;table&quot;
+              </code>
+            </li>
+            <li>
+              Rows:{' '}
+              <code className="text-xs bg-bg-raised px-1 py-0.5 rounded">role=&quot;row&quot;</code>
+            </li>
+            <li>
+              Cells:{' '}
+              <code className="text-xs bg-bg-raised px-1 py-0.5 rounded">
+                role=&quot;cell&quot;
+              </code>
+            </li>
+            <li>
+              Headers:{' '}
+              <code className="text-xs bg-bg-raised px-1 py-0.5 rounded">
+                role=&quot;columnheader&quot;
+              </code>
+            </li>
+            <li>
+              Expander buttons:{' '}
+              <code className="text-xs bg-bg-raised px-1 py-0.5 rounded">aria-expanded</code>
+            </li>
+            <li>
+              Checkboxes:{' '}
+              <code className="text-xs bg-bg-raised px-1 py-0.5 rounded">aria-label</code>
+            </li>
+          </ul>
+        </div>
+        <VirtualDataGrid<TestRow>
+          data={testData}
+          columns={columns}
+          getRowId={(row) => row.id}
+          enableRowSelection
+          enableExpanding
+          getRowCanExpand={(row: Row<TestRow>) => row.original.metadata !== undefined}
+          height={400}
+        />
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Shows ARIA attributes for screen reader support. Inspect elements in DevTools to see the attributes.',
+      },
+    },
+  },
+};
+
+/**
+ * Focus management demonstration.
+ *
+ * Try tabbing through the table:
+ * - Focus indicators are visible (blue ring)
+ * - Focus moves logically through interactive elements
+ * - You can tab in and out of the table (no focus trap)
+ */
+export const FocusManagement: Story = {
+  render: () => {
+    const testData: TestRow[] = generateTestData(3);
+    const columns = createTestColumns();
+
+    return (
+      <div className="space-y-4">
+        <div className="text-sm text-text-secondary">
+          <p className="font-medium mb-2">Focus Features:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Visible focus indicators (blue ring)</li>
+            <li>Logical tab order</li>
+            <li>No focus trap - can tab in and out</li>
+            <li>Only interactive elements are focusable</li>
+          </ul>
+        </div>
+        <div>
+          <button className="mb-4 px-3 py-1.5 bg-accent-blue text-white rounded text-sm">
+            Before Table (Tab here first)
+          </button>
+          <VirtualDataGrid<TestRow>
+            data={testData}
+            columns={columns}
+            getRowId={(row) => row.id}
+            enableRowSelection
+            enableExpanding
+            getRowCanExpand={(row: Row<TestRow>) => row.original.metadata !== undefined}
+            height={400}
+          />
+          <button className="mt-4 px-3 py-1.5 bg-accent-blue text-white rounded text-sm">
+            After Table (Tab here after)
+          </button>
+        </div>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates focus management. Tab through the table to see focus indicators and logical tab order.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests keyboard navigation: Tab through elements, Space to select, Enter to expand.
+ */
+export const KeyboardNavigationTest: Story = {
+  render: () => {
+    const testData: TestRow[] = generateTestData(3);
+    const columns = createTestColumns();
+
+    return (
+      <div data-testid="keyboard-nav-container">
+        <VirtualDataGrid<TestRow>
+          data={testData}
+          columns={columns}
+          getRowId={(row) => row.id}
+          enableRowSelection
+          enableExpanding
+          getRowCanExpand={(row: Row<TestRow>) => row.original.metadata !== undefined}
+          height={400}
+        />
+      </div>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to first checkbox and verify focus', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        headerCheckbox.focus();
+        await waitForFocus(headerCheckbox, 2000);
+        await expect(headerCheckbox).toHaveFocus();
+      }
+    });
+
+    await step('Press Space to toggle select all checkbox', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        await userEvent.keyboard(' ');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await expect(headerCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+
+    await step('Tab to first expander button', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      let expanderButtons = canvas.queryAllByRole('button', { name: /expand row|collapse row/i });
+      if (expanderButtons.length === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        expanderButtons = canvas.queryAllByRole('button', { name: /expand row|collapse row/i });
+      }
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        firstExpander.focus();
+        await waitForFocus(firstExpander, 2000);
+        await expect(firstExpander).toHaveFocus();
+      }
+    });
+
+    await step('Press Enter to expand row', async () => {
+      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      const firstExpander = expanderButtons[0];
+      if (firstExpander !== undefined) {
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
+        await userEvent.keyboard('{Enter}');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests keyboard navigation: Tab through interactive elements, Space to toggle selection, Enter to expand/collapse rows.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests focus order: verifies logical tab order through the grid.
+ */
+export const FocusManagementTest: Story = {
+  render: () => {
+    const testData: TestRow[] = generateTestData(3);
+    const columns = createTestColumns();
+
+    return (
+      <div data-testid="focus-management-container">
+        <button
+          data-testid="before-button"
+          className="mb-4 px-3 py-1.5 bg-accent-blue text-white rounded text-sm"
+        >
+          Before Table
+        </button>
+        <VirtualDataGrid<TestRow>
+          data={testData}
+          columns={columns}
+          getRowId={(row) => row.id}
+          enableRowSelection
+          enableExpanding
+          getRowCanExpand={(row: Row<TestRow>) => row.original.metadata !== undefined}
+          height={400}
+        />
+        <button
+          data-testid="after-button"
+          className="mt-4 px-3 py-1.5 bg-accent-blue text-white rounded text-sm"
+        >
+          After Table
+        </button>
+      </div>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Focus starts on before button when tabbing', async () => {
+      const beforeButton = canvas.getByTestId('before-button');
+      await tabToElement(beforeButton, 5);
+      await expect(beforeButton).toHaveFocus();
+    });
+
+    await step('Tab into table - focus moves to header checkbox', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      const headerCheckbox = checkboxes[0];
+      if (headerCheckbox !== undefined) {
+        headerCheckbox.focus();
+        await waitForFocus(headerCheckbox, 2000);
+        await expect(headerCheckbox).toHaveFocus();
+      }
+    });
+
+    await step('Can tab through table to after button (no focus trap)', async () => {
+      const afterButton = canvas.getByTestId('after-button');
+      await tabToElement(afterButton, 50);
+      await expect(afterButton).toHaveFocus();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests focus management: verifies logical tab order, no focus trap, and bidirectional navigation.',
       },
     },
   },

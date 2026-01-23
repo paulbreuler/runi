@@ -21,7 +21,7 @@ import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 /** Estimated row height for virtualization */
 const ESTIMATED_ROW_HEIGHT = 48;
 
-interface NetworkHistoryPanelProps {
+export interface NetworkHistoryPanelProps {
   /** History entries to display (optional - uses store by default) */
   entries?: NetworkHistoryEntry[];
   /** Callback when user wants to replay a request */
