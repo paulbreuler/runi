@@ -155,47 +155,10 @@ export const NetworkHistoryPanel = ({
 
   const handleSelect = useCallback(
     (id: string): void => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'NetworkHistoryPanel.tsx:157',
-          message: 'handleSelect called',
-          data: {
-            entryId: id,
-            currentlySelected: selectedIds.has(id),
-            selectedIdsSize: selectedIds.size,
-          },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'run1',
-          hypothesisId: 'B',
-        }),
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-      }).catch(() => {});
-      // #endregion
       // Use toggleSelection for multi-select support (maintains backward compatibility)
       toggleSelection(id);
-      // #region agent log
-
-      fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'NetworkHistoryPanel.tsx:161',
-          message: 'handleSelect after toggleSelection',
-          data: { entryId: id },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'run1',
-          hypothesisId: 'B',
-        }),
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-      }).catch(() => {});
-      // #endregion
     },
-    [toggleSelection, selectedIds]
+    [toggleSelection]
   );
 
   const handleCompareResponses = (): void => {
@@ -344,6 +307,15 @@ export const NetworkHistoryPanel = ({
   // Timeout ref to debounce selection toggle (cancel if double-click detected)
   const selectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return (): void => {
+      if (selectionTimeoutRef.current !== null) {
+        clearTimeout(selectionTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle when VirtualDataGrid is ready with setRowSelection
   const handleSetRowSelectionReady = useCallback(
     (setRowSelectionFn: (selection: Record<string, boolean>) => void): void => {
@@ -371,49 +343,8 @@ export const NetworkHistoryPanel = ({
 
       // Handle row click for selection
       const handleRowClick = (e: React.MouseEvent): void => {
-        // #region agent log
-
-        fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            location: 'NetworkHistoryPanel.tsx:340',
-            message: 'handleRowClick entry',
-            data: {
-              entryId: entry.id,
-              isSelected,
-              flagState: isDoubleClickRef.current,
-              lastClick: lastClickRef.current,
-              timestamp: Date.now(),
-            },
-            timestamp: Date.now(),
-            sessionId: 'debug-session',
-            runId: 'run1',
-            hypothesisId: 'A',
-          }),
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-        }).catch(() => {});
-        // #endregion
-
         // Skip if this is part of a double-click (prevents selection toggle on double-click)
         if (isDoubleClickRef.current) {
-          // #region agent log
-
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'NetworkHistoryPanel.tsx:346',
-              message: 'handleRowClick skipped - flag set',
-              data: { entryId: entry.id },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'A',
-            }),
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-          }).catch(() => {});
-          // #endregion
           return;
         }
 
@@ -425,24 +356,6 @@ export const NetworkHistoryPanel = ({
           lastClick.entryId === entry.id &&
           now - lastClick.timestamp < 300
         ) {
-          // #region agent log
-
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'NetworkHistoryPanel.tsx:355',
-              message:
-                'handleRowClick skipped - rapid second click detected, canceling pending selection',
-              data: { entryId: entry.id, timeSinceLastClick: now - lastClick.timestamp },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'A',
-            }),
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-          }).catch(() => {});
-          // #endregion
           // This is likely part of a double-click - cancel any pending selection toggle
           if (selectionTimeoutRef.current !== null) {
             clearTimeout(selectionTimeoutRef.current);
@@ -460,23 +373,6 @@ export const NetworkHistoryPanel = ({
           target.closest('[role="checkbox"]') !== null ||
           target.closest('input') !== null
         ) {
-          // #region agent log
-
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'NetworkHistoryPanel.tsx:372',
-              message: 'handleRowClick skipped - clicked on button/checkbox',
-              data: { entryId: entry.id },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'A',
-            }),
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-          }).catch(() => {});
-          // #endregion
           return;
         }
 
@@ -492,43 +388,8 @@ export const NetworkHistoryPanel = ({
         // Debounce selection toggle - wait 250ms to see if a second click comes
         // If a second click comes within 250ms, it's a double-click and we'll cancel this
         selectionTimeoutRef.current = setTimeout(() => {
-          // #region agent log
-
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'NetworkHistoryPanel.tsx:390',
-              message: 'handleRowClick debounced selection toggle executing',
-              data: { entryId: entry.id, isSelectedBefore: isSelected },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'B',
-            }),
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-          }).catch(() => {});
-          // #endregion
-
           // Check if double-click flag was set (double-click handler ran)
           if (isDoubleClickRef.current) {
-            // #region agent log
-
-            fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                location: 'NetworkHistoryPanel.tsx:395',
-                message: 'handleRowClick debounced selection canceled - double-click detected',
-                data: { entryId: entry.id },
-                timestamp: Date.now(),
-                sessionId: 'debug-session',
-                runId: 'run1',
-                hypothesisId: 'A',
-              }),
-              // eslint-disable-next-line @typescript-eslint/no-empty-function
-            }).catch(() => {});
-            // #endregion
             selectionTimeoutRef.current = null;
             return;
           }
@@ -543,27 +404,6 @@ export const NetworkHistoryPanel = ({
             } else {
               newSelection[entry.id] = true;
             }
-            // #region agent log
-
-            fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                location: 'NetworkHistoryPanel.tsx:408',
-                message: 'handleRowClick updating TanStack selection',
-                data: {
-                  entryId: entry.id,
-                  newSelectionState: !isSelected,
-                  selectionKeys: Object.keys(newSelection),
-                },
-                timestamp: Date.now(),
-                sessionId: 'debug-session',
-                runId: 'run1',
-                hypothesisId: 'D',
-              }),
-              // eslint-disable-next-line @typescript-eslint/no-empty-function
-            }).catch(() => {});
-            // #endregion
             setRowSelectionRef.current(newSelection);
           }
           selectionTimeoutRef.current = null;
@@ -572,30 +412,6 @@ export const NetworkHistoryPanel = ({
 
       // Handle double-click for expansion
       const handleRowDoubleClick = (e: React.MouseEvent): void => {
-        // #region agent log
-
-        fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            location: 'NetworkHistoryPanel.tsx:420',
-            message: 'handleRowDoubleClick entry',
-            data: {
-              entryId: entry.id,
-              isExpanded,
-              isSelected,
-              lastClick: lastClickRef.current,
-              timestamp: Date.now(),
-            },
-            timestamp: Date.now(),
-            sessionId: 'debug-session',
-            runId: 'run1',
-            hypothesisId: 'A',
-          }),
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-        }).catch(() => {});
-        // #endregion
-
         // Don't toggle if clicking on buttons or checkboxes
         const target = e.target as HTMLElement;
         if (
@@ -603,45 +419,11 @@ export const NetworkHistoryPanel = ({
           target.closest('[role="checkbox"]') !== null ||
           target.closest('input') !== null
         ) {
-          // #region agent log
-
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'NetworkHistoryPanel.tsx:430',
-              message: 'handleRowDoubleClick skipped - clicked on button/checkbox',
-              data: { entryId: entry.id },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'A',
-            }),
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-          }).catch(() => {});
-          // #endregion
           return;
         }
 
         // Cancel any pending selection toggle from the first click
         if (selectionTimeoutRef.current !== null) {
-          // #region agent log
-
-          fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              location: 'NetworkHistoryPanel.tsx:438',
-              message: 'handleRowDoubleClick canceling pending selection toggle',
-              data: { entryId: entry.id },
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'run1',
-              hypothesisId: 'A',
-            }),
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-          }).catch(() => {});
-          // #endregion
           clearTimeout(selectionTimeoutRef.current);
           selectionTimeoutRef.current = null;
         }
@@ -655,24 +437,6 @@ export const NetworkHistoryPanel = ({
         setTimeout(() => {
           isDoubleClickRef.current = false;
         }, 300);
-
-        // #region agent log
-
-        fetch('http://127.0.0.1:7243/ingest/03cf5ddc-da7a-4a6c-9ad4-5db59fd986a0', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            location: 'NetworkHistoryPanel.tsx:451',
-            message: 'handleRowDoubleClick calling handleToggleExpand',
-            data: { entryId: entry.id, isExpandedBefore: isExpanded },
-            timestamp: Date.now(),
-            sessionId: 'debug-session',
-            runId: 'run1',
-            hypothesisId: 'A',
-          }),
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-        }).catch(() => {});
-        // #endregion
 
         // Update both store and TanStack Table
         handleToggleExpand(entry.id);

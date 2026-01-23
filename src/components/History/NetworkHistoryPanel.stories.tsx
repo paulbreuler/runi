@@ -351,9 +351,9 @@ export const DoubleClickBehaviorTest: Story = {
         <div className="text-sm text-text-muted">
           <p className="font-medium mb-1">Expected Behavior:</p>
           <ul className="list-disc list-inside space-y-1 text-xs">
-            <li>Single click on row → selects row (blue highlight)</li>
+            <li>Single click on row → selects row (subtle gray highlight)</li>
             <li>Double-click on row → expands row (selection should remain, NOT toggle)</li>
-            <li>Row highlight should stay blue when double-clicking a selected row</li>
+            <li>Row highlight should stay visible when double-clicking a selected row</li>
           </ul>
         </div>
         <NetworkHistoryPanel {...args} />
@@ -370,7 +370,7 @@ export const DoubleClickBehaviorTest: Story = {
         await userEvent.click(firstRow);
         // Wait for selection state to update
         await new Promise((resolve) => setTimeout(resolve, 100));
-        // Row should be selected (have blue highlight class)
+        // Row should be selected (have subtle lightened background)
         await expect(firstRow).toHaveClass('bg-bg-raised/30');
       }
     });
@@ -414,7 +414,7 @@ export const DoubleClickBehaviorTest: Story = {
     docs: {
       description: {
         story:
-          'Visual test for double-click behavior. Verifies that double-clicking a row expands it without toggling selection. The row should remain selected (blue highlight) after double-click, matching Console tab behavior.',
+          'Visual test for double-click behavior. Verifies that double-clicking a row expands it without toggling selection. The row should remain selected (subtle gray highlight) after double-click, matching Console tab behavior.',
       },
     },
   },

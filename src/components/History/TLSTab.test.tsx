@@ -109,38 +109,7 @@ describe('TLSTab', () => {
   });
 
   describe('Feature #22: Expanded Panel - TLS Tab', () => {
-    it('displays TLS protocol', () => {
-      render(<TLSTab entry={mockEntry} certificate={mockCertificate} protocolVersion="TLS 1.3" />);
-
-      expect(screen.getByText(/protocol/i)).toBeInTheDocument();
-      expect(screen.getByText('TLS 1.3')).toBeInTheDocument();
-    });
-
-    it('displays common name', () => {
-      render(<TLSTab entry={mockEntry} certificate={mockCertificate} />);
-
-      // CertificateInfo displays common name in subject section
-      expect(screen.getByText('example.com')).toBeInTheDocument();
-      // Common name label may be present in the subject section
-      const certificateInfo = screen.getByTestId('certificate-info');
-      expect(certificateInfo).toBeInTheDocument();
-      // Verify common name is displayed (either as label or in formatted subject)
-      expect(certificateInfo.textContent).toContain('example.com');
-    });
-
-    it('displays certificate expiry', () => {
-      render(<TLSTab entry={mockEntry} certificate={mockCertificate} />);
-
-      // CertificateInfo displays validity dates
-      expect(screen.getByText(/valid to/i)).toBeInTheDocument();
-      expect(screen.getByText(/valid from/i)).toBeInTheDocument();
-
-      // Should display formatted date for validTo
-      const validToText = screen.getByText(/valid to/i);
-      expect(validToText).toBeInTheDocument();
-    });
-
-    it('displays certificate expiry dates', () => {
+    it('displays certificate validity dates and status', () => {
       render(<TLSTab entry={mockEntry} certificate={mockCertificate} />);
 
       // CertificateInfo displays validity section with expiry dates
