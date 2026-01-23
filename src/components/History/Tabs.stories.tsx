@@ -20,6 +20,7 @@ import { ResponseTab } from './ResponseTab';
 import { HeadersTab } from './HeadersTab';
 import { TimingTab } from './TimingTab';
 import { CodeGenTab } from './CodeGenTab';
+import { CodeGenPanel } from './CodeGenPanel';
 import { HeadersPanel } from './HeadersPanel';
 import { TimingWaterfall } from './TimingWaterfall';
 import type { NetworkHistoryEntry } from '@/types/history';
@@ -564,11 +565,11 @@ export const CodeGenTabPostRequest: Story = {
  * Code generation tab with custom language subset.
  */
 export const CodeGenTabCustomLanguages: Story = {
-  render: () => <CodeGenTab entry={createMockEntry()} languages={['javascript', 'python']} />,
+  render: () => <CodeGenPanel entry={createMockEntry()} languages={['javascript', 'python']} />,
   parameters: {
     docs: {
       description: {
-        story: 'Code generation tab with custom language subset (only JavaScript and Python).',
+        story: 'Code generation panel with custom language subset (only JavaScript and Python).',
       },
     },
   },

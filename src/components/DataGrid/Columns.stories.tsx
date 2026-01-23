@@ -89,34 +89,66 @@ function createMockConsoleLog(overrides: Partial<ConsoleLog> = {}): ConsoleLog {
 
 const sampleNetworkEntries: NetworkHistoryEntry[] = [
   createMockNetworkEntry({
-    request: { method: 'GET', url: 'https://api.example.com/users' },
+    request: {
+      method: 'GET',
+      url: 'https://api.example.com/users',
+      headers: {},
+      body: null,
+      timeout_ms: 30000,
+    },
     response: {
       status: 200,
       status_text: 'OK',
+      headers: {},
+      body: '[]',
       timing: { total_ms: 120, dns_ms: 5, connect_ms: 10, tls_ms: 15, first_byte_ms: 80 },
     },
   }),
   createMockNetworkEntry({
-    request: { method: 'POST', url: 'https://api.example.com/users' },
+    request: {
+      method: 'POST',
+      url: 'https://api.example.com/users',
+      headers: {},
+      body: '{"name":"test"}',
+      timeout_ms: 30000,
+    },
     response: {
       status: 201,
       status_text: 'Created',
+      headers: {},
+      body: '{"id":1}',
       timing: { total_ms: 250, dns_ms: 8, connect_ms: 15, tls_ms: 20, first_byte_ms: 180 },
     },
   }),
   createMockNetworkEntry({
-    request: { method: 'GET', url: 'https://api.example.com/users/999' },
+    request: {
+      method: 'GET',
+      url: 'https://api.example.com/users/999',
+      headers: {},
+      body: null,
+      timeout_ms: 30000,
+    },
     response: {
       status: 404,
       status_text: 'Not Found',
+      headers: {},
+      body: '{"error":"Not found"}',
       timing: { total_ms: 45, dns_ms: 3, connect_ms: 8, tls_ms: 10, first_byte_ms: 35 },
     },
   }),
   createMockNetworkEntry({
-    request: { method: 'DELETE', url: 'https://api.example.com/users/1' },
+    request: {
+      method: 'DELETE',
+      url: 'https://api.example.com/users/1',
+      headers: {},
+      body: null,
+      timeout_ms: 30000,
+    },
     response: {
       status: 500,
       status_text: 'Internal Server Error',
+      headers: {},
+      body: '{"error":"Server error"}',
       timing: { total_ms: 5000, dns_ms: 5, connect_ms: 10, tls_ms: 15, first_byte_ms: 4900 },
     },
   }),
