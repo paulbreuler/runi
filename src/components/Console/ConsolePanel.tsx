@@ -780,13 +780,14 @@ export const ConsolePanel = ({
       };
 
       // Format args for display (combine all args into single CodeSnippet)
-      const formattedArgs = isGrouped
-        ? originalLog.sampleLog.args.length > 0
-          ? formatLogArgs(originalLog.sampleLog.args)
-          : null
-        : entry.args.length > 0
-          ? formatLogArgs(entry.args)
-          : null;
+      let formattedArgs: { code: string; language: string } | null = null;
+      if (isGrouped) {
+        if (originalLog.sampleLog.args.length > 0) {
+          formattedArgs = formatLogArgs(originalLog.sampleLog.args);
+        }
+      } else if (entry.args.length > 0) {
+        formattedArgs = formatLogArgs(entry.args);
+      }
 
       return (
         <>
