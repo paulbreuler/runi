@@ -21,7 +21,7 @@ import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLangua
 
 export type { LogLevel, ConsoleLog } from '@/types/console';
 
-interface ConsolePanelProps {
+export interface ConsolePanelProps {
   /** Maximum number of logs to keep (default: 1000) */
   maxLogs?: number;
   /** Maximum size in bytes for log storage (default: 4MB) */

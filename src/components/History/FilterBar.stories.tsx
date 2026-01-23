@@ -13,11 +13,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { fn } from 'storybook/test';
-import { FilterBar } from './FilterBar';
+import { FilterBar, type FilterBarProps } from './FilterBar';
 import { NetworkHistoryFilters } from './NetworkHistoryFilters';
 import { ActionBar } from '@/components/ActionBar';
-import { DEFAULT_HISTORY_FILTERS } from '@/types/history';
+import { DEFAULT_HISTORY_FILTERS, type HistoryFilters } from '@/types/history';
+import type { HttpMethod } from '@/utils/http-colors';
 import { tabToElement } from '@/utils/storybook-test-helpers';
+
+// Custom args for story controls (not part of component props)
+interface FilterBarStoryArgs {
+  methodFilter?: 'all' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  statusFilter?: 'all' | '2xx' | '3xx' | '4xx' | '5xx';
+}
 
 const meta = {
   title: 'History/FilterBar',
@@ -69,10 +76,10 @@ Use controls to explore different states and configurations.
     statusFilter: 'all',
     isSaveSelectionDisabled: false,
   },
-} satisfies Meta<typeof FilterBar>;
+} satisfies Meta<FilterBarProps & FilterBarStoryArgs>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<FilterBarProps & FilterBarStoryArgs>;
 
 const noop = fn();
 const noopAsync = fn().mockResolvedValue(undefined);
@@ -81,11 +88,13 @@ const noopAsync = fn().mockResolvedValue(undefined);
  * Playground with controls for all FilterBar features.
  */
 export const Playground: Story = {
-  render: (args) => {
-    const filters = {
+  render: (args: FilterBarProps & FilterBarStoryArgs) => {
+    const methodFilter = args.methodFilter ?? 'all';
+    const statusFilter = args.statusFilter ?? 'all';
+    const filters: HistoryFilters = {
       ...DEFAULT_HISTORY_FILTERS,
-      method: args.methodFilter === 'all' ? undefined : args.methodFilter,
-      status: args.statusFilter === 'all' ? undefined : args.statusFilter,
+      method: methodFilter === 'all' ? 'ALL' : (methodFilter as HttpMethod),
+      status: statusFilter === 'all' ? 'All' : statusFilter,
     };
 
     return (

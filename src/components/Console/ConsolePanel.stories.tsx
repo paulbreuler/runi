@@ -13,9 +13,16 @@
 import { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { ConsolePanel } from './ConsolePanel';
+import { ConsolePanel, type ConsolePanelProps } from './ConsolePanel';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
+
+// Custom args for story controls (not part of component props)
+interface ConsolePanelStoryArgs {
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'all';
+  logCount?: 'few' | 'many' | 'grouped';
+  autoScroll?: boolean;
+}
 
 const meta = {
   title: 'Console/ConsolePanel',
@@ -64,10 +71,10 @@ Use the Controls panel to explore different log configurations.
     logCount: 'few',
     autoScroll: true,
   },
-} satisfies Meta<typeof ConsolePanel>;
+} satisfies Meta<ConsolePanelProps & ConsolePanelStoryArgs>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<ConsolePanelProps & ConsolePanelStoryArgs>;
 
 function createMockLog(
   level: LogLevel,
@@ -94,8 +101,11 @@ export const Playground: Story = {
       useEffect(() => {
         const service = getConsoleService();
         service.clear();
-        const minLevel = context.args.logLevel === 'all' ? 'debug' : context.args.logLevel;
-        service.setMinLogLevel(minLevel as LogLevel);
+        const logLevelArg = context.args.logLevel ?? 'all';
+        const minLevel = logLevelArg === 'all' ? 'debug' : logLevelArg;
+        if (minLevel !== 'all') {
+          service.setMinLogLevel(minLevel as LogLevel);
+        }
 
         let count: number;
         if (context.args.logCount === 'few') {

@@ -11,9 +11,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { useEffect } from 'react';
-import { MainLayout } from './MainLayout';
+import { MainLayout, type MainLayoutProps } from './MainLayout';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+
+// Custom args for story controls (not part of component props - controls store state)
+interface MainLayoutStoryArgs {
+  sidebarCollapsed?: boolean;
+  devToolsPosition?: 'bottom' | 'left' | 'right' | 'hidden';
+  devToolsCollapsed?: boolean;
+}
 
 const meta = {
   title: 'Layout/MainLayout',
@@ -56,10 +63,10 @@ Use controls to explore different configurations.
     devToolsPosition: 'bottom',
     devToolsCollapsed: false,
   },
-} satisfies Meta<typeof MainLayout>;
+} satisfies Meta<MainLayoutProps & MainLayoutStoryArgs>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<MainLayoutProps & MainLayoutStoryArgs>;
 
 /**
  * Playground with controls for all MainLayout features.
@@ -68,21 +75,22 @@ export const Playground: Story = {
   decorators: [
     (Story, context) => {
       useEffect(() => {
+        const storyArgs = context.args as MainLayoutStoryArgs;
+        const sidebarCollapsed = storyArgs.sidebarCollapsed ?? false;
+        const devToolsPosition = storyArgs.devToolsPosition ?? 'bottom';
+        const devToolsCollapsed = storyArgs.devToolsCollapsed ?? false;
+
         useSettingsStore.setState({
-          sidebarCollapsed: context.args.sidebarCollapsed as boolean,
+          sidebarVisible: !sidebarCollapsed,
         });
-        const position = context.args.devToolsPosition as 'bottom' | 'left' | 'right' | 'hidden';
-        if (position !== 'hidden') {
+
+        if (devToolsPosition !== 'hidden') {
           usePanelStore.setState({
-            devToolsPosition: position,
-            devToolsCollapsed: context.args.devToolsCollapsed as boolean,
+            position: devToolsPosition,
+            isCollapsed: devToolsCollapsed,
           });
         }
-      }, [
-        context.args.sidebarCollapsed,
-        context.args.devToolsPosition,
-        context.args.devToolsCollapsed,
-      ]);
+      }, [context.args]);
 
       return (
         <div className="h-screen">

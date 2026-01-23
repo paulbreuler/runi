@@ -634,7 +634,7 @@ export function VirtualDataGrid<TData>({
     <div className={cn('flex flex-col min-h-0', className)} data-testid="virtual-datagrid">
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-auto"
+        className="flex-1 overflow-auto bg-bg-app"
         style={{ height }}
         data-testid="virtual-scroll-container"
       >

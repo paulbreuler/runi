@@ -18,7 +18,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn, expect, userEvent, within } from 'storybook/test';
-import { VirtualDataGrid } from './VirtualDataGrid';
+import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createSelectionColumn } from './columns/selectionColumn';
 import { createExpanderColumn } from './columns/expanderColumn';
 import { createNetworkColumns } from './columns/networkColumns';
@@ -244,6 +244,14 @@ const networkColumns = createNetworkColumns({
 // Storybook Meta
 // ============================================================================
 
+// Custom args for story controls (not part of component props)
+interface VirtualDataGridStoryArgs {
+  dataType?: 'test' | 'network';
+  dataSize?: 'empty' | 'small' | 'medium' | 'large';
+  pinLeft?: boolean;
+  pinRight?: boolean;
+}
+
 const meta = {
   title: 'DataGrid/VirtualDataGrid',
   component: VirtualDataGrid,
@@ -300,11 +308,11 @@ const meta = {
     pinRight: true,
     height: 400,
   },
-} satisfies Meta<typeof VirtualDataGrid>;
+} satisfies Meta<VirtualDataGridProps<unknown> & VirtualDataGridStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<VirtualDataGridProps<unknown> & VirtualDataGridStoryArgs>;
 
 // ============================================================================
 // Story
@@ -324,8 +332,8 @@ export const Playground: Story = {
       large: 1000,
     };
 
-    const dataSize = args.dataSize as keyof typeof dataSizeMap;
-    const count = dataSizeMap[dataSize];
+    const dataSizeKey = args.dataSize ?? 'medium';
+    const count = dataSizeMap[dataSizeKey];
     const data =
       args.dataType === 'network' ? generateNetworkEntries(count) : generateTestData(count);
 
@@ -407,8 +415,41 @@ export const Playground: Story = {
           }
         : undefined;
 
-    const getRowId =
-      args.dataType === 'network' ? (row: NetworkHistoryEntry) => row.id : (row: TestRow) => row.id;
+    // Type-safe rendering based on data type
+    if (args.dataType === 'network') {
+      const networkData = data as NetworkHistoryEntry[];
+      const networkCols = columns as typeof networkColumns;
+      const networkGetRowId = (row: NetworkHistoryEntry) => row.id;
+
+      return (
+        <div className="h-[600px] bg-bg-app" data-testid="virtual-datagrid-container">
+          <div className="mb-2 text-xs text-text-secondary">
+            Use the Controls panel to explore different configurations: data type, size, features,
+            and column pinning.
+          </div>
+          <VirtualDataGrid<NetworkHistoryEntry>
+            data={networkData}
+            columns={networkCols}
+            getRowId={networkGetRowId}
+            height={args.height}
+            enableRowSelection={args.enableRowSelection === true}
+            enableExpanding={args.enableExpanding === true}
+            getRowCanExpand={args.enableExpanding === true ? () => true : undefined}
+            enableSorting={args.enableSorting === true}
+            initialColumnPinning={pinning}
+            onRowSelectionChange={noop}
+            onExpandedChange={noop}
+            onSortingChange={args.enableSorting === true ? noop : undefined}
+            emptyMessage={args.dataSize === 'empty' ? 'No data available' : undefined}
+          />
+        </div>
+      );
+    }
+
+    // Test data type
+    const testData = data as TestRow[];
+    const testCols = columns as ReturnType<typeof createTestColumns>;
+    const testGetRowId = (row: TestRow) => row.id;
 
     return (
       <div className="h-[600px] bg-bg-app" data-testid="virtual-datagrid-container">
@@ -416,10 +457,10 @@ export const Playground: Story = {
           Use the Controls panel to explore different configurations: data type, size, features, and
           column pinning.
         </div>
-        <VirtualDataGrid
-          data={data}
-          columns={columns}
-          getRowId={getRowId}
+        <VirtualDataGrid<TestRow>
+          data={testData}
+          columns={testCols}
+          getRowId={testGetRowId}
           height={args.height}
           enableRowSelection={args.enableRowSelection === true}
           enableExpanding={args.enableExpanding === true}

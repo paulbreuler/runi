@@ -10,8 +10,14 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
-import { DockablePanel } from './DockablePanel';
+import { DockablePanel, type DockablePanelProps } from './DockablePanel';
 import { usePanelStore } from '@/stores/usePanelStore';
+
+// Custom args for story controls (not part of component props - controls store state)
+interface DockablePanelStoryArgs {
+  position?: 'bottom' | 'left' | 'right';
+  collapsed?: boolean;
+}
 
 const meta = {
   title: 'Layout/DockablePanel',
@@ -41,10 +47,10 @@ const meta = {
     position: 'bottom',
     collapsed: false,
   },
-} satisfies Meta<typeof DockablePanel>;
+} satisfies Meta<DockablePanelProps & DockablePanelStoryArgs>;
 
 export default meta;
-type Story = StoryObj<typeof DockablePanel>;
+type Story = StoryObj<DockablePanelProps & DockablePanelStoryArgs>;
 
 /**
  * Playground with controls for DockablePanel features.
@@ -53,9 +59,11 @@ export const Playground: Story = {
   decorators: [
     (Story, context) => {
       useEffect(() => {
+        const position = context.args.position ?? 'bottom';
+        const collapsed = context.args.collapsed ?? false;
         usePanelStore.setState({
-          devToolsPosition: context.args.position as 'bottom' | 'left' | 'right',
-          devToolsCollapsed: context.args.collapsed as boolean,
+          position,
+          isCollapsed: collapsed,
         });
       }, [context.args.position, context.args.collapsed]);
 
@@ -69,13 +77,8 @@ export const Playground: Story = {
       );
     },
   ],
-  render: (args) => (
-    <DockablePanel
-      title="DevTools"
-      headerContent={<div className="text-xs">Panel Tabs</div>}
-      position={args.position as 'bottom' | 'left' | 'right'}
-      collapsed={args.collapsed as boolean}
-    >
+  render: () => (
+    <DockablePanel title="DevTools" headerContent={<div className="text-xs">Panel Tabs</div>}>
       <div className="p-4">Panel content</div>
     </DockablePanel>
   ),

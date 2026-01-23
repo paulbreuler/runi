@@ -10,7 +10,7 @@ import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores
 import { DockControls } from './DockControls';
 import { cn } from '@/utils/cn';
 
-interface DockablePanelProps {
+export interface DockablePanelProps {
   /** Panel title */
   title: string;
   /** Panel content */

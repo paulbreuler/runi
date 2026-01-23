@@ -10,8 +10,14 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { ResponseViewer } from './ResponseViewer';
+import { ResponseViewer, type ResponseViewerProps } from './ResponseViewer';
 import type { HttpResponse } from '@/types/http';
+
+// Custom args for story controls (not part of component props)
+interface ResponseViewerStoryArgs {
+  responseStatus?: 'success' | 'error' | 'redirect' | 'client-error' | 'server-error';
+  responseSize?: 'small' | 'medium' | 'large';
+}
 
 const meta = {
   title: 'Response/ResponseViewer',
@@ -42,10 +48,10 @@ const meta = {
     responseStatus: 'success',
     responseSize: 'medium',
   },
-} satisfies Meta<typeof ResponseViewer>;
+} satisfies Meta<ResponseViewerProps & ResponseViewerStoryArgs>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<ResponseViewerProps & ResponseViewerStoryArgs>;
 
 const createMockResponse = (
   status: number,
@@ -95,7 +101,7 @@ const createMockResponse = (
  * Playground with controls for all ResponseViewer features.
  */
 export const Playground: Story = {
-  render: (args) => {
+  render: (args: ResponseViewerProps & ResponseViewerStoryArgs) => {
     const statusMap = {
       success: { status: 200, text: 'OK' },
       error: { status: 500, text: 'Internal Server Error' },
@@ -104,14 +110,10 @@ export const Playground: Story = {
       'server-error': { status: 500, text: 'Internal Server Error' },
     };
 
-    const responseStatusKey = args.responseStatus as keyof typeof statusMap;
+    const responseStatusKey = args.responseStatus ?? 'success';
     const statusEntry = statusMap[responseStatusKey];
     const { status, text } = statusEntry;
-    const response = createMockResponse(
-      status,
-      text,
-      args.responseSize as 'small' | 'medium' | 'large'
-    );
+    const response = createMockResponse(status, text, args.responseSize ?? 'medium');
 
     return (
       <div className="h-screen border border-border-default bg-bg-app">

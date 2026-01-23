@@ -9,8 +9,13 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { IntelligenceSignals } from './IntelligenceSignals';
+import { IntelligenceSignals, type IntelligenceSignalsProps } from './IntelligenceSignals';
 import type { IntelligenceInfo } from '@/types/history';
+
+// Custom args for story controls (not part of component props)
+interface IntelligenceSignalsStoryArgs {
+  signalType?: 'none' | 'verified' | 'drift' | 'ai-generated' | 'bound' | 'multiple';
+}
 
 const meta = {
   title: 'History/Signals/IntelligenceSignals',
@@ -35,10 +40,10 @@ const meta = {
   args: {
     signalType: 'verified',
   },
-} satisfies Meta<typeof IntelligenceSignals>;
+} satisfies Meta<IntelligenceSignalsProps & IntelligenceSignalsStoryArgs>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<IntelligenceSignalsProps & IntelligenceSignalsStoryArgs>;
 
 const createIntelligence = (type: string): IntelligenceInfo => {
   switch (type) {

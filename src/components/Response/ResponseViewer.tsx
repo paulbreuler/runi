@@ -9,7 +9,7 @@ import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLangua
 import { motion, useReducedMotion } from 'motion/react';
 import { CodeSnippet } from '@/components/History/CodeSnippet';
 
-interface ResponseViewerProps {
+export interface ResponseViewerProps {
   response: HttpResponse;
 }
 

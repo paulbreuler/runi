@@ -31,7 +31,7 @@ import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 
-interface MainLayoutProps {
+export interface MainLayoutProps {
   headerContent?: React.ReactNode;
   requestContent?: React.ReactNode;
   responseContent?: React.ReactNode;
