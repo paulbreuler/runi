@@ -6,6 +6,10 @@
       "headers": {
         "X-MCP-Toolsets": "dev,docs"
       }
+    },
+    "runi-Planning": {
+      "command": "node",
+      "args": ["/Users/paul/Documents/GitHub/runi-planning-docs/.mcp/server/dist/index.js"]
     }
   }
 }
