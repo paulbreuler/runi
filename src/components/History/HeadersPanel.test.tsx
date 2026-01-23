@@ -31,9 +31,14 @@ describe('HeadersPanel', () => {
     );
 
     expect(screen.getByText('Response Headers')).toBeInTheDocument();
-    // Headers are displayed as formatted text in CodeBox
-    expect(screen.getByText(/Content-Type: application\/json/i)).toBeInTheDocument();
-    expect(screen.getByText(/X-Rate-Limit: 100/i)).toBeInTheDocument();
+    // Headers are displayed with syntax highlighting via CodeSnippet
+    // Text is split across multiple spans due to syntax highlighting, so check textContent
+    const codeBox = screen.getByTestId('code-box');
+    const headersText = codeBox.textContent || '';
+    expect(headersText).toContain('Content-Type');
+    expect(headersText).toContain('application/json');
+    expect(headersText).toContain('X-Rate-Limit');
+    expect(headersText).toContain('100');
   });
 
   it('switches to request headers tab', async () => {
@@ -45,9 +50,14 @@ describe('HeadersPanel', () => {
     const requestTab = screen.getByRole('tab', { name: /request headers/i });
     await user.click(requestTab);
 
-    // Headers are displayed as formatted text in CodeBox
-    expect(screen.getByText(/Authorization: Bearer token123/i)).toBeInTheDocument();
-    expect(screen.getByText(/Content-Type: application\/json/i)).toBeInTheDocument();
+    // Headers are displayed with syntax highlighting via CodeSnippet
+    // Text is split across multiple spans due to syntax highlighting, so check textContent
+    const codeBox = screen.getByTestId('code-box');
+    const headersText = codeBox.textContent || '';
+    expect(headersText).toContain('Authorization');
+    expect(headersText).toContain('Bearer token123');
+    expect(headersText).toContain('Content-Type');
+    expect(headersText).toContain('application/json');
   });
 
   it('displays empty state when no response headers', () => {
@@ -82,18 +92,33 @@ describe('HeadersPanel', () => {
     expect(screen.queryByRole('button', { name: /copy/i })).not.toBeInTheDocument();
   });
 
-  it('renders all headers as formatted text', () => {
+  it('uses CodeSnippet with http language for syntax highlighting', () => {
     render(
       <HeadersPanel requestHeaders={mockRequestHeaders} responseHeaders={mockResponseHeaders} />
     );
 
-    // Headers should be displayed as formatted text in CodeBox
-    const headersContent = screen.getByTestId('headers-content');
-    expect(headersContent).toBeInTheDocument();
+    // CodeSnippet should be rendered
+    const codeSnippet = screen.getByTestId('code-snippet');
+    expect(codeSnippet).toBeInTheDocument();
+
+    // CodeBox should have http language attribute
+    const codeBox = screen.getByTestId('code-box');
+    expect(codeBox.querySelector('[data-language="http"]')).toBeInTheDocument();
+  });
+
+  it('renders all headers with syntax highlighting via CodeSnippet', () => {
+    render(
+      <HeadersPanel requestHeaders={mockRequestHeaders} responseHeaders={mockResponseHeaders} />
+    );
+
+    // Headers should be displayed with syntax highlighting via CodeSnippet
+    const codeSnippet = screen.getByTestId('code-snippet');
+    expect(codeSnippet).toBeInTheDocument();
 
     // Check that all response headers are present in the formatted text
+    const codeBox = screen.getByTestId('code-box');
     Object.entries(mockResponseHeaders).forEach(([key, value]) => {
-      expect(headersContent).toHaveTextContent(`${key}: ${value}`);
+      expect(codeBox).toHaveTextContent(`${key}: ${value}`);
     });
   });
 });

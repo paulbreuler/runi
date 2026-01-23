@@ -10,7 +10,7 @@
 
 import { useState, useMemo } from 'react';
 import { cn } from '@/utils/cn';
-import { CodeBox } from './CodeBox';
+import { CodeSnippet } from './CodeSnippet';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 export interface HeadersPanelProps {
@@ -108,15 +108,7 @@ export const HeadersPanel = ({
             }
           />
         ) : (
-          <CodeBox
-            copyText={headersText}
-            copyButtonLabel="Copy headers"
-            data-testid="headers-content"
-          >
-            <pre className="text-text-primary">
-              <code>{headersText}</code>
-            </pre>
-          </CodeBox>
+          <CodeSnippet code={headersText} language="http" variant="contained" className="flex-1" />
         )}
       </div>
     </div>
