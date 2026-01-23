@@ -102,10 +102,8 @@ export const Playground: Story = {
         const service = getConsoleService();
         service.clear();
         const logLevelArg = context.args.logLevel ?? 'all';
-        const minLevel = logLevelArg === 'all' ? 'debug' : logLevelArg;
-        if (minLevel !== 'all') {
-          service.setMinLogLevel(minLevel as LogLevel);
-        }
+        const minLevel: LogLevel = logLevelArg === 'all' ? 'debug' : (logLevelArg as LogLevel);
+        service.setMinLogLevel(minLevel);
 
         let count: number;
         if (context.args.logCount === 'few') {
