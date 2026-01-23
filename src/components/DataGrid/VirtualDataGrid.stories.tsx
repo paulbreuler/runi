@@ -197,7 +197,7 @@ export const WithExpansion: Story = {
             key={row.id}
             className={cn(
               'border-b border-border-default hover:bg-bg-raised/50 transition-colors cursor-pointer',
-              row.getIsSelected() && 'bg-accent-blue/10'
+              row.getIsSelected() && 'bg-bg-raised/30'
             )}
             onClick={() => {
               row.toggleSelected();

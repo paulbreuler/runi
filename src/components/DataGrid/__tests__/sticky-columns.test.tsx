@@ -226,12 +226,11 @@ describe('Features #41-43: Sticky Columns', () => {
         const htmlCell = cell as HTMLElement;
         const style = htmlCell.style;
         const hasSticky = style.position === 'sticky' && style.left !== '';
-        // Sticky columns use bg-bg-app for non-selected, bg-accent-blue/15 for selected
-        const hasBgClass =
-          htmlCell.classList.contains('bg-bg-app') ||
-          htmlCell.classList.contains('bg-accent-blue/15') ||
-          htmlCell.classList.contains('bg-accent-blue/10'); // Keep for backward compatibility
-        return hasSticky && hasBgClass;
+        // Sticky columns use bg-bg-app for non-selected, or inline style #101010 for selected
+        const hasBgClass = htmlCell.classList.contains('bg-bg-app');
+        const hasBgStyle =
+          style.backgroundColor === 'rgb(16, 16, 16)' || style.backgroundColor === '#101010';
+        return hasSticky && (hasBgClass || hasBgStyle);
       });
 
       // Left sticky cells should have background classes
@@ -400,10 +399,11 @@ describe('Features #41-43: Sticky Columns', () => {
         const htmlCell = cell as HTMLElement;
         const style = htmlCell.style;
         const hasSticky = style.position === 'sticky' && style.right !== '';
-        const hasBgClass =
-          htmlCell.classList.contains('bg-bg-app') ||
-          htmlCell.classList.contains('bg-accent-blue/15');
-        return hasSticky && hasBgClass;
+        // Sticky columns use bg-bg-app for non-selected, or inline style #101010 for selected
+        const hasBgClass = htmlCell.classList.contains('bg-bg-app');
+        const hasBgStyle =
+          style.backgroundColor === 'rgb(16, 16, 16)' || style.backgroundColor === '#101010';
+        return hasSticky && (hasBgClass || hasBgStyle);
       });
 
       // Right sticky cells should have background classes when sticky

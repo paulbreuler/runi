@@ -383,14 +383,14 @@ export function VirtualDataGrid<TData>({
       if (isPinned && (pinSide === 'left' || (pinSide === 'right' && hasHorizontalOverflow))) {
         // Sticky columns must match row background exactly
         // When selected: use fully opaque background that matches row's visual appearance
-        // The row uses bg-accent-blue/10 (semi-transparent), but sticky columns need to be
+        // The row uses bg-bg-raised/30 (semi-transparent), but sticky columns need to be
         // fully opaque to prevent text from showing through from scrolling content behind
         if (isSelected) {
-          // Calculate a fully opaque color that matches bg-accent-blue/10 over bg-bg-app
-          // accent-blue: oklch(0.623 0.214 259.1), bg-app: #0a0a0a
-          // Blend: 10% blue + 90% bg-app = solid color that matches visual appearance
-          // Using a slightly more opaque version (15%) to ensure no bleed-through while matching
-          bgClass = 'bg-accent-blue/15'; // Slightly more opaque to prevent text bleed-through
+          // Calculate fully opaque color that matches bg-bg-raised/30 over bg-bg-app
+          // bg-bg-raised: #1e1e1e (RGB: 30, 30, 30), bg-app: #0a0a0a (RGB: 10, 10, 10)
+          // Alpha blend: (30 * 0.3) + (10 * 0.7) = 9 + 7 = 16
+          // Result: #101010 (fully opaque, matches visual appearance of bg-bg-raised/30)
+          bgStyle = { backgroundColor: '#101010' };
         } else {
           // When not selected, rows are transparent
           // Sticky columns need background only to cover scrolling content underneath
@@ -489,7 +489,7 @@ export function VirtualDataGrid<TData>({
         role="row"
         className={cn(
           'group border-b border-border-default hover:bg-bg-raised transition-colors',
-          row.getIsSelected() && 'bg-accent-blue/10',
+          row.getIsSelected() && 'bg-bg-raised/30',
           (hookOptions.enableRowSelection === true ||
             (hookOptions.enableExpanding === true && row.getCanExpand())) &&
             'cursor-pointer'
