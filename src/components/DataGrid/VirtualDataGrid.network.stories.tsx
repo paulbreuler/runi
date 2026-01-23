@@ -790,10 +790,12 @@ export const NetworkLeftSticky: Story = {
         const htmlCell = cell as HTMLElement;
         const style = htmlCell.style;
         const hasSticky = style.position === 'sticky' && style.left !== '';
-        const hasBgClass =
-          htmlCell.classList.contains('bg-bg-app') ||
-          htmlCell.classList.contains('bg-accent-blue/15');
-        return hasSticky && hasBgClass;
+        // Sticky columns use bg-bg-app for non-selected, or inline style #101010 for selected
+        const hasBgClass = htmlCell.classList.contains('bg-bg-app');
+        const hasBgStyle =
+          style.backgroundColor === 'rgb(16, 16, 16)' || style.backgroundColor === '#101010';
+        const hasBackground = hasBgClass || hasBgStyle;
+        return hasSticky && hasBackground;
       });
 
       void expect(leftStickyCells.length).toBeGreaterThan(0);

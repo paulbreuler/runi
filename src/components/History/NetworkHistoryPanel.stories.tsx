@@ -334,3 +334,88 @@ export const StateManagementTest: Story = {
     });
   },
 };
+
+/**
+ * Visual test for double-click behavior - demonstrates that double-click expands without toggling selection.
+ * This story helps visualize the expected behavior: single click selects, double-click expands (selection remains).
+ */
+export const DoubleClickBehaviorTest: Story = {
+  args: {
+    entries: mockEntries.slice(0, 3), // Use 3 entries for clarity
+    onReplay: noop,
+    onCopyCurl: noop,
+  },
+  render: (args) => (
+    <div className="h-[700px] bg-bg-app">
+      <div className="p-4 space-y-2">
+        <div className="text-sm text-text-muted">
+          <p className="font-medium mb-1">Expected Behavior:</p>
+          <ul className="list-disc list-inside space-y-1 text-xs">
+            <li>Single click on row → selects row (subtle gray highlight)</li>
+            <li>Double-click on row → expands row (selection should remain, NOT toggle)</li>
+            <li>Row highlight should stay visible when double-clicking a selected row</li>
+          </ul>
+        </div>
+        <NetworkHistoryPanel {...args} />
+      </div>
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click once to select row', async () => {
+      const rows = canvas.getAllByTestId('history-row');
+      const firstRow = rows[0];
+      if (firstRow !== undefined) {
+        await userEvent.click(firstRow);
+        // Wait for selection state to update
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Row should be selected (have subtle lightened background)
+        await expect(firstRow).toHaveClass('bg-bg-raised/30');
+      }
+    });
+
+    await step('Double-click to expand (selection should remain)', async () => {
+      const rows = canvas.getAllByTestId('history-row');
+      const firstRow = rows[0];
+      if (firstRow !== undefined) {
+        // Double-click the row
+        await userEvent.dblClick(firstRow);
+        // Wait for expansion animation
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
+        // Verify expanded content is visible
+        const expandedSection = canvas.queryByTestId('expanded-section');
+        await expect(expandedSection).toBeInTheDocument();
+
+        // Verify row is still selected (should still have highlight)
+        await expect(firstRow).toHaveClass('bg-bg-raised/30');
+      }
+    });
+
+    await step('Verify selection checkbox is still checked after double-click', async () => {
+      const checkboxes = canvas.getAllByRole('checkbox');
+      // Find the checkbox for the first row (skip header checkbox)
+      const rowCheckbox = checkboxes.find((cb): boolean => {
+        const label = cb.getAttribute('aria-label');
+        if (label === null) {
+          return false;
+        }
+        return label.includes('Select') && label.includes('hist_1');
+      });
+
+      if (rowCheckbox !== undefined) {
+        // Checkbox should still be checked after double-click
+        await expect(rowCheckbox).toHaveAttribute('aria-checked', 'true');
+      }
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Visual test for double-click behavior. Verifies that double-clicking a row expands it without toggling selection. The row should remain selected (subtle gray highlight) after double-click, matching Console tab behavior.',
+      },
+    },
+  },
+};

@@ -164,12 +164,15 @@ describe('NetworkHistoryPanel', () => {
     });
   });
 
-  it('selects row when clicked', () => {
+  it('selects row when clicked', async () => {
     render(<NetworkHistoryPanel {...defaultProps} />);
     const row = screen.getAllByTestId('history-row')[0]!;
     fireEvent.click(row);
 
-    expect(row).toHaveClass('bg-bg-raised');
+    // Wait for selection state to update and class to be applied
+    await waitFor(() => {
+      expect(row).toHaveClass('bg-bg-raised/30');
+    });
   });
 
   it('calls onReplay when replay button is clicked', () => {
@@ -366,9 +369,32 @@ describe('NetworkHistoryPanel', () => {
         expect(screen.queryByTestId('expanded-section')).not.toBeInTheDocument();
       }
     });
+
+    it('does not toggle selection when double-clicking row', () => {
+      render(<NetworkHistoryPanel {...defaultProps} />);
+
+      const row = screen.getAllByTestId('history-row')[0]!;
+      const checkboxes = screen.getAllByRole('checkbox');
+      const rowCheckbox = checkboxes.find((cb) => {
+        const label = cb.getAttribute('aria-label');
+        return label?.includes('Select') ?? false;
+      });
+
+      if (rowCheckbox) {
+        // Initially unchecked
+        expect(rowCheckbox).toHaveAttribute('aria-checked', 'false');
+
+        // Double-click should expand, not toggle selection
+        fireEvent.doubleClick(row);
+        expect(screen.getByTestId('expanded-section')).toBeInTheDocument();
+        // Selection should remain unchanged
+        expect(rowCheckbox).toHaveAttribute('aria-checked', 'false');
+      }
+    });
   });
 
   describe('Save functionality', () => {
+    // Note: Selection has 250ms debounce, so we need to wait for it to propagate
     it('saves only selected rows when Save button is clicked with selection', async () => {
       mockSave.mockResolvedValue('/test/path/network-history-selected.json');
       mockWriteTextFile.mockResolvedValue(undefined);
@@ -378,6 +404,14 @@ describe('NetworkHistoryPanel', () => {
       // Select the first row
       const row = screen.getAllByTestId('history-row')[0]!;
       fireEvent.click(row);
+
+      // Wait for selection state to propagate (250ms debounce + buffer)
+      await waitFor(
+        () => {
+          expect(row).toHaveClass('bg-bg-raised/30');
+        },
+        { timeout: 500 }
+      );
 
       // Click the Save button (should save selection since we have a selection)
       const saveButton = screen.getByRole('button', { name: /^save$/i });

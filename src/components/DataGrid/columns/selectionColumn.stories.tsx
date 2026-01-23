@@ -122,7 +122,7 @@ const DemoTable = ({
               key={row.id}
               className={cn(
                 'border-b border-border-default hover:bg-bg-raised transition-colors',
-                row.getIsSelected() && 'bg-accent-blue/10'
+                row.getIsSelected() && 'bg-bg-raised/30'
               )}
             >
               {row.getVisibleCells().map((cell) => (

@@ -300,6 +300,21 @@ export const NetworkHistoryPanel = ({
   // Refs to store setRowSelection and setExpanded functions from VirtualDataGrid
   const setRowSelectionRef = useRef<((selection: Record<string, boolean>) => void) | null>(null);
   const setExpandedRef = useRef<((expanded: Record<string, boolean>) => void) | null>(null);
+  // Ref to prevent click handler from running when double-click occurs
+  const isDoubleClickRef = useRef<boolean>(false);
+  // Track last click time and entry ID to detect double-clicks
+  const lastClickRef = useRef<{ entryId: string; timestamp: number } | null>(null);
+  // Timeout ref to debounce selection toggle (cancel if double-click detected)
+  const selectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return (): void => {
+      if (selectionTimeoutRef.current !== null) {
+        clearTimeout(selectionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Handle when VirtualDataGrid is ready with setRowSelection
   const handleSetRowSelectionReady = useCallback(
@@ -328,6 +343,29 @@ export const NetworkHistoryPanel = ({
 
       // Handle row click for selection
       const handleRowClick = (e: React.MouseEvent): void => {
+        // Skip if this is part of a double-click (prevents selection toggle on double-click)
+        if (isDoubleClickRef.current) {
+          return;
+        }
+
+        // Check if this is a rapid second click (double-click detection)
+        const now = Date.now();
+        const lastClick = lastClickRef.current;
+        if (
+          lastClick !== null &&
+          lastClick.entryId === entry.id &&
+          now - lastClick.timestamp < 300
+        ) {
+          // This is likely part of a double-click - cancel any pending selection toggle
+          if (selectionTimeoutRef.current !== null) {
+            clearTimeout(selectionTimeoutRef.current);
+            selectionTimeoutRef.current = null;
+          }
+          // Clear last click tracking
+          lastClickRef.current = null;
+          return;
+        }
+
         // Don't toggle if clicking on buttons or checkboxes
         const target = e.target as HTMLElement;
         if (
@@ -337,18 +375,39 @@ export const NetworkHistoryPanel = ({
         ) {
           return;
         }
-        // Update both store and TanStack Table
-        handleSelect(entry.id);
-        if (setRowSelectionRef.current !== null) {
-          const newSelection = { ...initialRowSelection };
-          if (isSelected) {
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- ID is from row data, safe
-            delete newSelection[entry.id];
-          } else {
-            newSelection[entry.id] = true;
-          }
-          setRowSelectionRef.current(newSelection);
+
+        // Cancel any pending selection toggle from previous click
+        if (selectionTimeoutRef.current !== null) {
+          clearTimeout(selectionTimeoutRef.current);
+          selectionTimeoutRef.current = null;
         }
+
+        // Store this click for double-click detection
+        lastClickRef.current = { entryId: entry.id, timestamp: now };
+
+        // Debounce selection toggle - wait 250ms to see if a second click comes
+        // If a second click comes within 250ms, it's a double-click and we'll cancel this
+        selectionTimeoutRef.current = setTimeout(() => {
+          // Check if double-click flag was set (double-click handler ran)
+          if (isDoubleClickRef.current) {
+            selectionTimeoutRef.current = null;
+            return;
+          }
+
+          // Update both store and TanStack Table
+          handleSelect(entry.id);
+          if (setRowSelectionRef.current !== null) {
+            const newSelection = { ...initialRowSelection };
+            if (isSelected) {
+              // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- ID is from row data, safe
+              delete newSelection[entry.id];
+            } else {
+              newSelection[entry.id] = true;
+            }
+            setRowSelectionRef.current(newSelection);
+          }
+          selectionTimeoutRef.current = null;
+        }, 250);
       };
 
       // Handle double-click for expansion
@@ -362,6 +421,23 @@ export const NetworkHistoryPanel = ({
         ) {
           return;
         }
+
+        // Cancel any pending selection toggle from the first click
+        if (selectionTimeoutRef.current !== null) {
+          clearTimeout(selectionTimeoutRef.current);
+          selectionTimeoutRef.current = null;
+        }
+
+        // Clear last click tracking (double-click detected)
+        lastClickRef.current = null;
+
+        // Set flag to prevent any future click handlers from running
+        isDoubleClickRef.current = true;
+        // Clear flag after a short delay (allows any queued click events to be ignored)
+        setTimeout(() => {
+          isDoubleClickRef.current = false;
+        }, 300);
+
         // Update both store and TanStack Table
         handleToggleExpand(entry.id);
         if (setExpandedRef.current !== null) {
@@ -379,7 +455,7 @@ export const NetworkHistoryPanel = ({
             key={row.id}
             className={cn(
               'group border-b border-border-default hover:bg-bg-raised/50 transition-colors cursor-pointer',
-              isSelected && 'bg-bg-raised'
+              isSelected && 'bg-bg-raised/30'
             )}
             data-row-id={row.id}
             data-testid="history-row"

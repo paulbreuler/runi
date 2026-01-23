@@ -360,6 +360,7 @@ export const SizeCells: Story = {
 
 /**
  * Action buttons for row operations.
+ * Feature #12: Actions Column - displays action buttons
  */
 export const ActionButtons: Story = {
   render: () => {
@@ -386,6 +387,232 @@ export const ActionButtons: Story = {
         </div>
       </div>
     );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify all action buttons are present', async () => {
+      await expect(canvas.getByTestId('replay-button')).toBeInTheDocument();
+      await expect(canvas.getByTestId('copy-curl-button')).toBeInTheDocument();
+      await expect(canvas.getByTestId('delete-button')).toBeInTheDocument();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #12: Actions Column - Action buttons are hidden by default and appear on row hover. Buttons include Replay, Copy cURL, and Delete.',
+      },
+    },
+  },
+};
+
+/**
+ * Feature #44: Hover Action Visibility - demonstrates actions appearing on hover with smooth fade transition.
+ */
+export const HoverActions: Story = {
+  render: () => {
+    const entry = sampleEntries[0];
+    if (entry === undefined) {
+      return <div>No data</div>;
+    }
+    return (
+      <div className="bg-bg-surface p-4 rounded-lg space-y-4">
+        <div className="text-sm text-text-muted">
+          <p className="mb-2">Hover over the row below to see actions fade in smoothly:</p>
+        </div>
+        <div
+          data-test-id="hover-actions-row"
+          className="group bg-bg-raised p-4 rounded border border-border-subtle hover:border-border-default transition-colors"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">GET /api/users</p>
+              <p className="text-xs text-text-muted">200 OK • 120ms</p>
+            </div>
+            <ActionsCell
+              entry={entry}
+              onReplay={(): void => {
+                /* Storybook action */
+              }}
+              onCopy={(): void => {
+                /* Storybook action */
+              }}
+              onDelete={(): void => {
+                /* Storybook action */
+              }}
+            />
+          </div>
+        </div>
+        <div className="text-xs text-text-muted">
+          <p>
+            Actions are hidden by default (opacity-0) and fade in on hover
+            (group-hover:opacity-100).
+          </p>
+          <p className="mt-1">They also remain visible when focused via keyboard navigation.</p>
+        </div>
+      </div>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify actions are present but hidden by default', async () => {
+      const replayButton = canvas.getByTestId('replay-button');
+      await expect(replayButton).toBeInTheDocument();
+      // Actions container should have opacity-0 class
+      const container = replayButton.closest('div[class*="opacity"]');
+      await expect(container).toHaveClass('opacity-0');
+    });
+
+    await step('Hover over row to show actions', async () => {
+      const row = canvas.getByTestId('hover-actions-row');
+      await userEvent.hover(row);
+      // Actions should be visible on hover (CSS handles the transition)
+      const replayButton = canvas.getByTestId('replay-button');
+      await expect(replayButton).toBeInTheDocument();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #44: Hover Action Visibility - Actions are hidden by default and fade in smoothly on row hover. Also supports touch tap on mobile devices.',
+      },
+    },
+  },
+};
+
+/**
+ * Feature #45: Hover Action Buttons - displays all action buttons with their functionality.
+ */
+export const HoverActionButtons: Story = {
+  render: () => {
+    const entry = sampleEntries[0];
+    if (entry === undefined) {
+      return <div>No data</div>;
+    }
+    return (
+      <div className="bg-bg-surface p-4 rounded-lg space-y-4">
+        <div className="text-sm text-text-muted">
+          <p className="mb-2">All action buttons available on row hover:</p>
+        </div>
+        <div className="group bg-bg-raised p-4 rounded border border-border-subtle">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">GET /api/users</p>
+              <p className="text-xs text-text-muted">200 OK • 120ms</p>
+            </div>
+            <ActionsCell
+              entry={entry}
+              onReplay={(): void => {
+                /* Storybook action */
+              }}
+              onCopy={(): void => {
+                /* Storybook action */
+              }}
+              onDelete={(): void => {
+                /* Storybook action */
+              }}
+            />
+          </div>
+        </div>
+        <div className="text-xs text-text-muted space-y-1">
+          <p>• Replay (↻) - Replays the request</p>
+          <p>• Copy cURL (❐) - Copies request as cURL command</p>
+          <p>• Delete (🗑) - Deletes the entry</p>
+        </div>
+      </div>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify all action buttons are present', async () => {
+      await expect(canvas.getByTestId('replay-button')).toBeInTheDocument();
+      await expect(canvas.getByTestId('copy-curl-button')).toBeInTheDocument();
+      await expect(canvas.getByTestId('delete-button')).toBeInTheDocument();
+    });
+
+    await step('Verify button labels and accessibility', async () => {
+      const replayButton = canvas.getByRole('button', { name: /replay/i });
+      const copyButton = canvas.getByRole('button', { name: /copy.*curl/i });
+      const deleteButton = canvas.getByRole('button', { name: /delete/i });
+
+      await expect(replayButton).toHaveAttribute('aria-label', 'Replay request');
+      await expect(copyButton).toHaveAttribute('aria-label', 'Copy as cURL');
+      await expect(deleteButton).toHaveAttribute('aria-label', 'Delete entry');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #45: Hover Action Buttons - All action buttons (Replay, Copy cURL, Delete) are displayed on row hover. Each button has proper accessibility labels and triggers appropriate callbacks.',
+      },
+    },
+  },
+};
+
+/**
+ * Feature #12: Actions Column - demonstrates sticky actions column on horizontal scroll.
+ * Note: Full sticky behavior is tested in VirtualDataGrid stories with actual scrolling.
+ */
+export const StickyActions: Story = {
+  render: () => {
+    const entry = sampleEntries[0];
+    if (entry === undefined) {
+      return <div>No data</div>;
+    }
+    return (
+      <div className="bg-bg-surface p-4 rounded-lg space-y-4">
+        <div className="text-sm text-text-muted">
+          <p className="mb-2">
+            Actions column is pinned to the right and remains visible during horizontal scroll:
+          </p>
+        </div>
+        <div className="overflow-x-auto border border-border-subtle rounded">
+          <div className="flex gap-4 p-4 min-w-[800px]">
+            <div className="w-64 bg-bg-raised p-2 rounded text-xs text-text-muted">
+              Method Column
+            </div>
+            <div className="w-96 bg-bg-raised p-2 rounded text-xs text-text-muted">
+              URL Column (scrollable)
+            </div>
+            <div className="w-32 bg-bg-raised p-2 rounded text-xs text-text-muted">
+              Status Column
+            </div>
+            <div className="w-32 bg-bg-raised p-2 rounded text-xs text-text-muted">
+              Timing Column
+            </div>
+            <div className="w-32 bg-bg-raised p-2 rounded text-xs text-text-muted">Size Column</div>
+            <div className="w-32 bg-bg-raised p-2 rounded text-xs text-text-muted">
+              Time Ago Column
+            </div>
+            <div className="w-32 bg-bg-raised p-2 rounded text-xs text-text-muted">
+              Protocol Column
+            </div>
+            <div className="w-[104px] bg-accent-blue/10 p-2 rounded text-xs text-accent-blue border border-accent-blue/20">
+              Actions Column (Sticky)
+            </div>
+          </div>
+        </div>
+        <div className="text-xs text-text-muted">
+          <p>
+            The actions column has enablePinning: true and is pinned to the right. It remains
+            visible when scrolling horizontally through other columns.
+          </p>
+        </div>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #12: Actions Column - The actions column is pinned to the right and remains sticky during horizontal scroll, ensuring actions are always accessible.',
+      },
+    },
   },
 };
 
