@@ -164,12 +164,15 @@ describe('NetworkHistoryPanel', () => {
     });
   });
 
-  it('selects row when clicked', () => {
+  it('selects row when clicked', async () => {
     render(<NetworkHistoryPanel {...defaultProps} />);
     const row = screen.getAllByTestId('history-row')[0]!;
     fireEvent.click(row);
 
-    expect(row).toHaveClass('bg-bg-raised/30');
+    // Wait for selection state to update and class to be applied
+    await waitFor(() => {
+      expect(row).toHaveClass('bg-bg-raised/30');
+    });
   });
 
   it('calls onReplay when replay button is clicked', () => {
