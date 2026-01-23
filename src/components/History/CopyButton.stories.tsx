@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file CopyButton Storybook stories
  * @description Visual documentation for CopyButton component
  */

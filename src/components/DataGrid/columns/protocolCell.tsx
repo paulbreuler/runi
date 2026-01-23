@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ProtocolCell component
  * @description Renders HTTP protocol version badges with color coding
  */

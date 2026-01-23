@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SplitButton } from '@/components/ui/SplitButton';

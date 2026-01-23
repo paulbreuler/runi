@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Keyboard navigation utilities
  * @description Keyboard navigation handlers for DataGrid interactive elements
  *

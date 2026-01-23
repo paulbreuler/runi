@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file TimingCell component
  * @description Renders request timing with slow request highlighting and special state handling
  */

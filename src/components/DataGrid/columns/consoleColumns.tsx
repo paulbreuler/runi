@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Console column definitions for TanStack Table
  * @description Column definitions for the Console Panel using TanStack Table
  */

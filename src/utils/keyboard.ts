@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Keyboard shortcut utilities.
  *
  * Provides hooks and utilities for handling keyboard shortcuts

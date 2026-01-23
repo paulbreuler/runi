@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file DataGridHeader integration tests
  * @description Tests for mapping TanStack Table headers to DataPanelHeader
  *

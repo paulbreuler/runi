@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * BadgeCount component for SegmentedControl.
  *
  * Displays badge counts with tier-aware styling based on count thresholds.

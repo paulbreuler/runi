@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Correlation ID utilities for tracing requests across React and Rust boundaries.
  *
  * Uses AsyncLocalStorage pattern for context isolation in async operations.

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 interface NetworkStatusBarProps {
   /** Total number of history entries */
   totalCount: number;

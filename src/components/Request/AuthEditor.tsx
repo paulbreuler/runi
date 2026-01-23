@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Key, Eye, EyeOff } from 'lucide-react';

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ExpandedContent Storybook stories
  * @description Visual documentation for ExpandedContent component with animation and alignment
  *

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ExpandedPanel component
  * @description Expanded panel with tab navigation for network history entries
  */

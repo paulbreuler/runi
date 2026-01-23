@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // Proxy service - initial interception stub
 // This will be expanded with HTTP proxy functionality
 

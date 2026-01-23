@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ResponsePanel component
  * @description Panel with tabs for Request Body and Response Body
  */

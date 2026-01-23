@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // Storage infrastructure for pluggable storage backends
 
 pub mod encryption;

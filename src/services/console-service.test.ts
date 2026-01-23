@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { initializeConsoleService, getConsoleService, type ConsoleLog } from './console-service';
 

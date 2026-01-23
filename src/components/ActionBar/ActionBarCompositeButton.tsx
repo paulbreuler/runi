@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { Button } from '@/components/ui/button';
 import { SplitButton } from '@/components/ui/SplitButton';
 import { useOptionalActionBarContext, type ActionBarVariant } from './ActionBarContext';

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file TLSPanel component tests
  * @description Tests for the TLSPanel component that displays TLS certificate information
  */

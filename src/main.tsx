@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { initializeConsoleService, getConsoleService } from '@/services/console-service';

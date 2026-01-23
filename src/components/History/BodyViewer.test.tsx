@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file BodyViewer component tests
  * @description Tests for the BodyViewer component that displays formatted JSON
  */

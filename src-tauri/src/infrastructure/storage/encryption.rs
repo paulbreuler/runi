@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 //! Encryption utilities for sensitive data storage.
 //!
 //! This module provides AES-GCM encryption for sensitive values like:

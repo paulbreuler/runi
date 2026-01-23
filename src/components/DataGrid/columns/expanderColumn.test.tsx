@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Expander column helper tests
  * @description Tests for the expander column that integrates with TanStack Table
  *

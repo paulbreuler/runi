@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // HTTP execution command handler using curl for detailed timing
 
 use crate::domain::errors::{AppError, ToAppError};

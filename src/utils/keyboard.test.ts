@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { createKeyboardHandler, type KeyboardShortcut } from './keyboard';
 

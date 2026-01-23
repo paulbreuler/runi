@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file CertificateInfo component tests
  * @description Tests for the CertificateInfo component that displays TLS certificate details
  */

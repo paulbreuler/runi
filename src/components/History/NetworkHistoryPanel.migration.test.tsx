@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file NetworkHistoryPanel migration tests
  * @description RED phase: Tests for NetworkHistoryPanel migrated to use VirtualDataGrid
  *

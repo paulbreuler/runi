@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Platform detection utilities for Tauri desktop app.
  *
  * Uses Tauri's native OS APIs when available (desktop app),

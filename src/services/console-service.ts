@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Global console service singleton for capturing and managing console logs.
  *
  * Intercepts console methods before React mounts and stores logs in memory

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * Configuration and types for SegmentedControl power-level animations.
  *
  * This module contains the tier configuration system that powers the

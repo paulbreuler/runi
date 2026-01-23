@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Storybook test helper utilities
  * @description Reusable helpers for keyboard navigation, focus management, and async waits in play functions
  *

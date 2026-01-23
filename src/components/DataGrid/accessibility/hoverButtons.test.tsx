@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Hover-only buttons accessibility tests
  * @description Tests that hover-only buttons are accessible via keyboard
  *

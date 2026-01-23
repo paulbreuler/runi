@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file useHistoryStream hook
  * @description Hook for real-time history event streaming from Tauri backend
  *

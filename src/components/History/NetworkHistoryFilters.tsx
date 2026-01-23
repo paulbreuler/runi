@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { ArrowRightLeft, Code, CheckCircle, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { HistoryFilters } from '@/types/history';

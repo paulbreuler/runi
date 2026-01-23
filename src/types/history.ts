@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
  * History-specific types for the Network History Panel.
  *

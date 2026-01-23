@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Basic table rendering tests
  * @description Tests for Feature #1: Basic Table Rendering
  *

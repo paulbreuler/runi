@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file DataGrid layout constants
  * @description Reusable constants for DataGrid component alignment and spacing
  *

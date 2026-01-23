@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // Structured error types with correlation IDs for tracing errors across React and Rust boundaries.
 //
 // Enables loose coupling between frontend and backend by providing structured error information

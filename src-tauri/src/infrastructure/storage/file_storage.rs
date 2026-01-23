@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 //! File-based storage implementation for history.
 //!
 //! This module is retained for future "export history" feature.

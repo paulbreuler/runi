@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // Storage trait abstraction for pluggable storage backends
 
 use crate::infrastructure::storage::history::HistoryEntry;

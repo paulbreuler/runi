@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file ExpandedContent tests
  * @description Tests for ExpandedContent component with row expansion animation
  */

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import React from 'react';
 import { Terminal, Network } from 'lucide-react';
 import * as Tabs from '@radix-ui/react-tabs';

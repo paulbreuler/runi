@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * HTTP method and status code color utilities.
  *
  * Provides color classes for HTTP methods and status codes for visual consistency.

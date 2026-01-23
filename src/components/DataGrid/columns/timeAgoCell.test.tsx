@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file TimeAgoCell component tests
  * @description Tests for relative time display with periodic updates
  *

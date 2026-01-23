@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * SegmentedControl - A standalone segmented control component for mutually exclusive options.
  *
  * Features:

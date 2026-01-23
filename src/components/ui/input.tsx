@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import * as React from 'react';
 import { motion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 import { cn } from '@/utils/cn';

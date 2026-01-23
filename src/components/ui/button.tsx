@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import * as React from 'react';
 import { motion, type Variant } from 'motion/react';
 import { Slot } from '@radix-ui/react-slot';

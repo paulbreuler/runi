@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Keyboard navigation tests
  * @description Tests for keyboard navigation in DataGrid
  *

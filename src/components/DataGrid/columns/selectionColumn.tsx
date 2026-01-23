@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @file Selection column helper
  * @description Creates a selection column for TanStack Table using the existing Checkbox component
  *

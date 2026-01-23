@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
 import { useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { TimingWaterfall } from './TimingWaterfall';

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 BaseState LLC
+// SPDX-License-Identifier: MIT
+
 // History entry storage and management
 
 use crate::domain::http::{HttpResponse, RequestParams};
