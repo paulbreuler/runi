@@ -14,7 +14,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { fn } from 'storybook/test';
 import { FilterBar } from './FilterBar';
+import { NetworkHistoryFilters } from './NetworkHistoryFilters';
+import { ActionBar } from '@/components/ActionBar';
 import { DEFAULT_HISTORY_FILTERS } from '@/types/history';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 const meta = {
   title: 'History/FilterBar',
@@ -115,6 +118,200 @@ export const Playground: Story = {
       description: {
         story:
           'Interactive playground for FilterBar. Use the Controls panel to configure selection count, filters, and button states. FilterBarActions (Save/Delete buttons) are integrated.',
+      },
+    },
+  },
+};
+
+/**
+ * NetworkHistoryFilters component in isolation (used within FilterBar).
+ * Shows filter controls with ActionBar wrapper for responsive behavior.
+ */
+export const NetworkHistoryFiltersIsolated: Story = {
+  render: () => (
+    <ActionBar aria-label="Network history filters">
+      <NetworkHistoryFilters
+        filters={DEFAULT_HISTORY_FILTERS}
+        onFilterChange={noop}
+        selectedCount={0}
+      />
+    </ActionBar>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'NetworkHistoryFilters component shown in isolation. This is the component used within FilterBar for filter controls.',
+      },
+    },
+  },
+};
+
+/**
+ * NetworkHistoryFilters with active filters.
+ */
+export const NetworkHistoryFiltersWithActiveFilters: Story = {
+  render: () => (
+    <ActionBar aria-label="Network history filters">
+      <NetworkHistoryFilters
+        filters={{
+          search: 'users',
+          method: 'POST',
+          status: '4xx',
+          intelligence: 'Has Drift',
+        }}
+        onFilterChange={noop}
+        selectedCount={0}
+      />
+    </ActionBar>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'NetworkHistoryFilters with multiple active filters: search, method, status, and intelligence.',
+      },
+    },
+  },
+};
+
+/**
+ * NetworkHistoryFilters with 2 entries selected (shows Compare Selected button).
+ */
+export const NetworkHistoryFiltersReadyToCompare: Story = {
+  render: () => (
+    <ActionBar aria-label="Network history filters">
+      <NetworkHistoryFilters
+        filters={DEFAULT_HISTORY_FILTERS}
+        onFilterChange={noop}
+        selectedCount={2}
+        onCompareResponses={noop}
+      />
+    </ActionBar>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'NetworkHistoryFilters with 2 entries selected, showing Compare Selected button.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests filter interactions: changing search, method, status, and intelligence filters.
+ */
+export const FilterInteractionsTest: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded" style={{ width: 900 }}>
+      <FilterBar
+        filters={DEFAULT_HISTORY_FILTERS}
+        onFilterChange={noop}
+        selectedCount={0}
+        onSaveAll={noop}
+        onSaveSelection={noop}
+        onClearAll={noopAsync}
+        isSaveSelectionDisabled={false}
+      />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Change search filter', async () => {
+      const searchInput = canvas.getByLabelText(/filter history by url/i);
+      await userEvent.clear(searchInput);
+      await userEvent.type(searchInput, 'users');
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await expect(searchInput).toHaveValue('users');
+    });
+
+    await step('Change method filter to POST', async () => {
+      const methodFilter = canvas.getByTestId('method-filter');
+      await userEvent.click(methodFilter);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
+      await userEvent.click(postOption);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await expect(methodFilter).toHaveTextContent(/post/i);
+    });
+
+    await step('Change status filter to 4xx', async () => {
+      const statusFilter = canvas.getByTestId('status-filter');
+      await userEvent.click(statusFilter);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const statusOption = await canvas.findByRole('option', { name: /4xx/i }, { timeout: 2000 });
+      await userEvent.click(statusOption);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await expect(statusFilter).toHaveTextContent(/4xx/i);
+    });
+
+    await step('Change intelligence filter to Has Drift', async () => {
+      const intelligenceFilter = canvas.getByTestId('intelligence-filter');
+      await userEvent.click(intelligenceFilter);
+      const driftOption = canvas.getByRole('option', { name: /has drift/i });
+      await userEvent.click(driftOption);
+      await expect(intelligenceFilter).toHaveTextContent(/has drift/i);
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Tests filter interactions: changing search, method, status, and intelligence filters through the FilterBar.',
+      },
+    },
+  },
+};
+
+/**
+ * Tests keyboard navigation through filter controls.
+ */
+export const KeyboardNavigationTest: Story = {
+  render: () => (
+    <ActionBar aria-label="Network history filters">
+      <NetworkHistoryFilters
+        filters={DEFAULT_HISTORY_FILTERS}
+        onFilterChange={noop}
+        selectedCount={0}
+      />
+    </ActionBar>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to search input', async () => {
+      const searchInput = canvas.getByLabelText(/filter history by url/i);
+      const focused = await tabToElement(searchInput, 10);
+      await expect(focused).toBe(true);
+      await expect(searchInput).toHaveFocus();
+    });
+
+    await step('Tab to method filter', async () => {
+      const methodFilter = canvas.getByTestId('method-filter');
+      const focused = await tabToElement(methodFilter, 10);
+      await expect(focused).toBe(true);
+      await expect(methodFilter).toHaveFocus();
+    });
+
+    await step('Tab to status filter', async () => {
+      const statusFilter = canvas.getByTestId('status-filter');
+      const focused = await tabToElement(statusFilter, 10);
+      await expect(focused).toBe(true);
+      await expect(statusFilter).toHaveFocus();
+    });
+
+    await step('Tab to intelligence filter', async () => {
+      const intelligenceFilter = canvas.getByTestId('intelligence-filter');
+      const focused = await tabToElement(intelligenceFilter, 10);
+      await expect(focused).toBe(true);
+      await expect(intelligenceFilter).toHaveFocus();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Tests keyboard navigation through filter controls using Tab key.',
       },
     },
   },
