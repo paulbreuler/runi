@@ -22,9 +22,6 @@ const meta: Meta<typeof HeadersPanel> = {
           'Panel with tabs for Request Headers and Response Headers. Response Headers tab is active by default. Includes copy button for the currently active tab.',
       },
     },
-    test: {
-      skip: true, // Display-only component, no interactive elements to test
-    },
   },
   tags: ['autodocs'],
 };

@@ -8,7 +8,7 @@
  * @description Expanded panel with tab navigation for network history entries
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import { cn } from '@/utils/cn';
 import { TimingTab } from '@/components/History/TimingTab';
@@ -21,6 +21,7 @@ import type { CertificateData } from '@/types/certificate';
 import { calculateWaterfallSegments } from '@/types/history';
 import { TabNavigation } from './TabNavigation';
 import { ExpandedActionButtons } from './ExpandedActionButtons';
+import { useHierarchicalTabNavigation } from '@/hooks/useHierarchicalTabNavigation';
 
 export type ExpandedPanelTabType = 'timing' | 'response' | 'headers' | 'tls' | 'codegen';
 
@@ -88,14 +89,35 @@ export const ExpandedPanel = ({
   // Calculate timing segments using helper function (TimingTab handles undefined)
   const segments = calculateWaterfallSegments(entry.response.timing);
 
+  // Refs for keyboard navigation coordination
+  const topLevelContainerRef = useRef<HTMLDivElement>(null);
+  const headersPanelRef = useRef<HTMLDivElement>(null);
+  const responsePanelRef = useRef<HTMLDivElement>(null);
+
+  // Determine which secondary container to use based on active tab
+  const hasSecondaryTabs = activeTab === 'headers' || activeTab === 'response';
+  const secondaryContainerRef =
+    activeTab === 'headers'
+      ? headersPanelRef
+      : activeTab === 'response'
+        ? responsePanelRef
+        : undefined;
+
+  // Set up hierarchical keyboard navigation
+  const { handleTopLevelKeyDown, handleSecondaryKeyDown } = useHierarchicalTabNavigation({
+    topLevelContainerRef,
+    secondaryContainerRef,
+    hasSecondaryTabs,
+  });
+
   return (
     <Tabs.Root
       value={activeTab}
       onValueChange={setActiveTab as (value: string) => void}
       className={cn('flex flex-col', className)}
     >
-      <div data-testid="expanded-panel">
-        <TabNavigation activeTab={activeTab} />
+      <div data-testid="expanded-panel" ref={topLevelContainerRef}>
+        <TabNavigation activeTab={activeTab} onKeyDown={handleTopLevelKeyDown} />
 
         <Tabs.Content value="timing" className="px-4 py-3">
           <TimingTab
@@ -108,11 +130,19 @@ export const ExpandedPanel = ({
         </Tabs.Content>
 
         <Tabs.Content value="response" className="px-4 py-3">
-          <ResponseTab entry={entry} />
+          <ResponseTab
+            entry={entry}
+            onKeyDown={handleSecondaryKeyDown}
+            containerRef={responsePanelRef}
+          />
         </Tabs.Content>
 
         <Tabs.Content value="headers" className="px-4 py-3">
-          <HeadersTab entry={entry} />
+          <HeadersTab
+            entry={entry}
+            onKeyDown={handleSecondaryKeyDown}
+            containerRef={headersPanelRef}
+          />
         </Tabs.Content>
 
         <Tabs.Content value="tls" className="px-4 py-3">

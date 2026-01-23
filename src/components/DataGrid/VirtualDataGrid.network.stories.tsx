@@ -25,6 +25,7 @@ import { VirtualDataGrid, type VirtualDataGridProps } from './VirtualDataGrid';
 import { createNetworkColumns } from './columns/networkColumns';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { Z_INDEX } from './constants';
 
 // ============================================================================
 // Mock Data Generators
@@ -1055,13 +1056,54 @@ export const NetworkStickyHeader: Story = {
       headerCells.forEach((cell) => {
         const style = (cell as HTMLElement).style;
         const zIndex = Number.parseInt(style.zIndex, 10);
-        // Header z-index should be higher than body cells (15 for left, 20 for right)
-        void expect(zIndex).toBeGreaterThanOrEqual(15);
+        // Header z-index should be higher than body cells and expanded content
+        // HEADER_LEFT: 25, HEADER_RIGHT: 30 (topmost)
+        void expect(zIndex).toBeGreaterThanOrEqual(Z_INDEX.HEADER_LEFT);
       });
 
-      // The thead itself should also have z-index class
+      // The thead itself should have z-index matching HEADER_RIGHT (30)
       const thead = container.querySelector('thead');
-      void expect(thead).toHaveClass('z-10');
+      if (thead !== null) {
+        const theadStyle = window.getComputedStyle(thead);
+        const theadZIndex = Number.parseInt(theadStyle.zIndex, 10);
+        void expect(theadZIndex).toBe(Z_INDEX.HEADER_RIGHT);
+      }
+    });
+
+    await step('Verify expanded content scrolls underneath header', async () => {
+      // Find and click an expander button to expand a row
+      const expanderButtons = canvasElement.querySelectorAll('[data-testid^="expand-row-"]');
+      if (expanderButtons.length === 0) {
+        return; // No expandable rows in this story
+      }
+
+      const firstExpander = expanderButtons[0] as HTMLElement;
+      await userEvent.click(firstExpander);
+
+      // Wait for expansion animation
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Find expanded content
+      const expandedSection = canvasElement.querySelector('[data-testid="expanded-section"]');
+      if (expandedSection === null) {
+        return;
+      }
+
+      const expandedStyle = window.getComputedStyle(expandedSection);
+      const expandedZIndex = Number.parseInt(expandedStyle.zIndex, 10);
+
+      // Expanded content should have z-index lower than headers
+      void expect(expandedZIndex).toBe(Z_INDEX.EXPANDED_PANEL);
+      void expect(expandedZIndex).toBeLessThan(Z_INDEX.HEADER_LEFT);
+      void expect(expandedZIndex).toBeLessThan(Z_INDEX.HEADER_RIGHT);
+
+      // Verify header is still above expanded content
+      const thead = canvasElement.querySelector('thead');
+      if (thead !== null) {
+        const theadStyle = window.getComputedStyle(thead);
+        const theadZIndex = Number.parseInt(theadStyle.zIndex, 10);
+        void expect(theadZIndex).toBeGreaterThan(expandedZIndex);
+      }
     });
 
     await step('Test keyboard navigation to sortable headers', async () => {
@@ -1085,7 +1127,7 @@ export const NetworkStickyHeader: Story = {
     docs: {
       description: {
         story:
-          'Feature #43: Sticky header. Table header remains visible when scrolling vertically. Sticky header columns align with body columns. Tests sticky positioning, z-index, column alignment, and keyboard accessibility.',
+          'Feature #43: Sticky header. Table header remains visible when scrolling vertically. Sticky header columns align with body columns. Header is always topmost (z-index 30/25) so expanded content scrolls underneath and is occluded. Tests sticky positioning, z-index hierarchy, column alignment, and keyboard accessibility.',
       },
     },
   },

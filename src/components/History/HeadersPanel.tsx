@@ -10,6 +10,7 @@
 
 import { useState, useMemo } from 'react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import { CodeSnippet } from './CodeSnippet';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -20,6 +21,10 @@ export interface HeadersPanelProps {
   responseHeaders: Record<string, string>;
   /** Additional CSS classes */
   className?: string;
+  /** Optional keyboard handler for hierarchical navigation */
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  /** Optional ref for keyboard navigation coordination */
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 type TabType = 'response' | 'request';
@@ -42,6 +47,8 @@ export const HeadersPanel = ({
   requestHeaders,
   responseHeaders,
   className,
+  onKeyDown,
+  containerRef,
 }: HeadersPanelProps): React.ReactElement => {
   const [activeTab, setActiveTab] = useState<TabType>('response');
 
@@ -56,19 +63,26 @@ export const HeadersPanel = ({
   }, [currentHeaders]);
 
   return (
-    <div data-testid="headers-panel" className={cn('flex flex-col', className)}>
+    <div
+      ref={containerRef}
+      data-testid="headers-panel"
+      className={cn('flex flex-col', className)}
+      onKeyDown={onKeyDown}
+    >
       {/* Tab navigation */}
       <div className="flex gap-1 border-b border-border-default mb-3">
         <button
           type="button"
           role="tab"
           aria-selected={activeTab === 'response'}
+          data-testid="response-headers-tab"
           onClick={() => {
             setActiveTab('response');
           }}
           className={cn(
             'px-3 py-1.5 text-xs font-medium transition-colors',
             'border-b-2 -mb-px',
+            focusRingClasses,
             activeTab === 'response'
               ? 'text-text-primary border-accent-purple'
               : 'text-text-secondary border-transparent hover:text-text-primary'
@@ -80,12 +94,14 @@ export const HeadersPanel = ({
           type="button"
           role="tab"
           aria-selected={activeTab === 'request'}
+          data-testid="request-headers-tab"
           onClick={() => {
             setActiveTab('request');
           }}
           className={cn(
             'px-3 py-1.5 text-xs font-medium transition-colors',
             'border-b-2 -mb-px',
+            focusRingClasses,
             activeTab === 'request'
               ? 'text-text-primary border-accent-purple'
               : 'text-text-secondary border-transparent hover:text-text-primary'

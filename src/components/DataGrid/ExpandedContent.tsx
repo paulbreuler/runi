@@ -21,7 +21,7 @@
  */
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from './constants';
+import { EXPANDED_CONTENT_LEFT_MARGIN_PX, Z_INDEX } from './constants';
 
 export interface ExpandedContentProps {
   /** Content to display in expanded row */
@@ -60,6 +60,7 @@ export const ExpandedContent = ({
           exit={{ height: 0, opacity: 0 }}
           transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeInOut' }}
           className="overflow-hidden"
+          style={{ position: 'relative', zIndex: Z_INDEX.EXPANDED_PANEL }}
         >
           <div
             className={innerClassName}

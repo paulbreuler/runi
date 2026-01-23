@@ -10,6 +10,7 @@
 
 import { useState, useMemo } from 'react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import { CodeSnippet } from './CodeSnippet';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -21,6 +22,10 @@ export interface ResponsePanelProps {
   responseBody: string;
   /** Additional CSS classes */
   className?: string;
+  /** Optional keyboard handler for hierarchical navigation */
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  /** Optional ref for keyboard navigation coordination */
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 type TabType = 'response' | 'request';
@@ -56,21 +61,15 @@ export const ResponsePanel = ({
   requestBody,
   responseBody,
   className,
+  onKeyDown,
+  containerRef,
 }: ResponsePanelProps): React.ReactElement => {
   const [activeTab, setActiveTab] = useState<TabType>('response');
 
   const currentBody = activeTab === 'response' ? responseBody : requestBody;
   const currentBodyText = currentBody ?? '';
 
-  // Format body (JSON with 2-space indentation if valid JSON)
-  const formattedBody = useMemo(() => {
-    if (currentBodyText === '') {
-      return '';
-    }
-    return formatJson(currentBodyText);
-  }, [currentBodyText]);
-
-  // Detect language for syntax highlighting
+  // Detect language for syntax highlighting (matches ResponseViewer body tab)
   const language = useMemo(() => {
     if (currentBodyText === '') {
       return 'text';
@@ -78,20 +77,36 @@ export const ResponsePanel = ({
     return detectSyntaxLanguage({ body: currentBodyText });
   }, [currentBodyText]);
 
+  // Format body (only format JSON if language is detected as JSON, matches ResponseViewer body tab)
+  const formattedBody = useMemo(() => {
+    if (currentBodyText === '') {
+      return '';
+    }
+    // Only format JSON if language is detected as JSON, otherwise use body as-is
+    return language === 'json' ? formatJson(currentBodyText) : currentBodyText;
+  }, [currentBodyText, language]);
+
   return (
-    <div data-testid="response-panel" className={cn('flex flex-col', className)}>
+    <div
+      ref={containerRef}
+      data-testid="response-panel"
+      className={cn('flex flex-col', className)}
+      onKeyDown={onKeyDown}
+    >
       {/* Tab navigation */}
       <div className="flex gap-1 border-b border-border-default mb-3">
         <button
           type="button"
           role="tab"
           aria-selected={activeTab === 'response'}
+          data-testid="response-body-tab"
           onClick={(): void => {
             setActiveTab('response');
           }}
           className={cn(
             'px-3 py-1.5 text-xs font-medium transition-colors',
             'border-b-2 -mb-px',
+            focusRingClasses,
             activeTab === 'response'
               ? 'text-text-primary border-accent-purple'
               : 'text-text-secondary border-transparent hover:text-text-primary'
@@ -103,12 +118,14 @@ export const ResponsePanel = ({
           type="button"
           role="tab"
           aria-selected={activeTab === 'request'}
+          data-testid="request-body-tab"
           onClick={(): void => {
             setActiveTab('request');
           }}
           className={cn(
             'px-3 py-1.5 text-xs font-medium transition-colors',
             'border-b-2 -mb-px',
+            focusRingClasses,
             activeTab === 'request'
               ? 'text-text-primary border-accent-purple'
               : 'text-text-secondary border-transparent hover:text-text-primary'
@@ -137,7 +154,7 @@ export const ResponsePanel = ({
           <CodeSnippet
             code={formattedBody}
             language={language}
-            variant="contained"
+            variant="borderless"
             className="flex-1"
           />
         )}

@@ -13,6 +13,7 @@ import { expect, userEvent, within } from 'storybook/test';
 import { ExpandedPanel } from './ExpandedPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { Z_INDEX } from '@/components/DataGrid/constants';
 
 const meta: Meta<typeof ExpandedPanel> = {
   title: 'Components/DataGrid/ExpandedPanel',
@@ -426,5 +427,276 @@ export const WithBlockedEntry: Story = {
         story: 'Shows Unblock button when entry is blocked.',
       },
     },
+  },
+};
+
+/**
+ * Tests z-index layering: expanded panel content scrolls underneath table headers.
+ * Feature #1: Fix Z-Index Layering
+ *
+ * The header must always be topmost so that table body content (including expanded panels)
+ * scrolls underneath and is properly occluded by the header's background.
+ */
+export const ZIndexLayeringTest: Story = {
+  args: {
+    entry: createMockEntry({
+      response: {
+        status: 200,
+        status_text: 'OK',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Rate-Limit': '100',
+        },
+        body: JSON.stringify(
+          {
+            data: Array.from({ length: 50 }, (_, i) => ({
+              id: i + 1,
+              name: `Item ${String(i + 1)}`,
+              description: `This is a long description for item ${String(i + 1)} that will cause scrolling`,
+            })),
+          },
+          null,
+          2
+        ),
+        timing: {
+          total_ms: 290,
+          dns_ms: 15,
+          connect_ms: 25,
+          tls_ms: 45,
+          first_byte_ms: 120,
+        },
+      },
+    }),
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify expanded panel has correct z-index', async () => {
+      const expandedSection = canvas.getByTestId('expanded-section');
+      const computedStyle = window.getComputedStyle(expandedSection);
+      const zIndex = Number.parseInt(computedStyle.zIndex, 10);
+
+      // Z-index should be EXPANDED_PANEL (8), which is lower than HEADER_RIGHT (30) and HEADER_LEFT (25)
+      // This ensures expanded content scrolls underneath the header, which is always topmost
+      await expect(zIndex).toBe(Z_INDEX.EXPANDED_PANEL);
+      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_RIGHT);
+      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_LEFT);
+    });
+
+    await step('Verify expanded panel has relative positioning', async () => {
+      const expandedSection = canvas.getByTestId('expanded-section');
+      const computedStyle = window.getComputedStyle(expandedSection);
+
+      // Should have relative positioning for z-index to take effect
+      await expect(computedStyle.position).toBe('relative');
+    });
+
+    await step('Verify expanded panel content is scrollable', async () => {
+      const expandedSection = canvas.getByTestId('expanded-section');
+
+      // Should have overflow-hidden class to handle scrolling
+      await expect(expandedSection).toHaveClass('overflow-hidden');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #1: Fix Z-Index Layering. Verifies that expanded panel content has z-index 8 (lower than table headers at 25/30) so it scrolls underneath the header, which is always topmost. The header occludes content behind it with its background.',
+      },
+    },
+    a11y: {
+      config: {
+        rules: [{ id: 'color-contrast', enabled: true }],
+      },
+    },
+  },
+};
+
+/**
+ * Tests hierarchical keyboard navigation: Arrow Down/Up to move between levels, Arrow Left/Right within level.
+ * Feature #2: Hierarchical Keyboard Navigation
+ */
+export const KeyboardNavigationTest: Story = {
+  args: {
+    entry: createMockEntry(),
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Navigate to Headers tab', async () => {
+      const headersTab = canvas.getByTestId('tab-headers');
+      await userEvent.click(headersTab);
+      await expect(headersTab).toHaveAttribute('data-state', 'active');
+    });
+
+    await step('Arrow Down moves focus to secondary tabs', async () => {
+      const headersTab = canvas.getByTestId('tab-headers');
+      headersTab.focus();
+      await waitForFocus(headersTab, 1000);
+
+      // Press Arrow Down to move to secondary tabs
+      await userEvent.keyboard('{ArrowDown}');
+
+      // Should focus on Response Headers tab (first secondary tab)
+      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
+      await waitForFocus(responseHeadersTab, 1000);
+      await expect(responseHeadersTab).toHaveFocus();
+    });
+
+    await step('Arrow Right navigates between secondary tabs', async () => {
+      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
+      await waitForFocus(responseHeadersTab, 1000);
+
+      // Press Arrow Right to move to Request Headers tab
+      await userEvent.keyboard('{ArrowRight}');
+
+      const requestHeadersTab = canvas.getByTestId('request-headers-tab');
+      await waitForFocus(requestHeadersTab, 1000);
+      await expect(requestHeadersTab).toHaveFocus();
+    });
+
+    await step('Arrow Left navigates back to previous secondary tab', async () => {
+      const requestHeadersTab = canvas.getByTestId('request-headers-tab');
+      await waitForFocus(requestHeadersTab, 1000);
+
+      // Press Arrow Left to move back to Response Headers tab
+      await userEvent.keyboard('{ArrowLeft}');
+
+      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
+      await waitForFocus(responseHeadersTab, 1000);
+      await expect(responseHeadersTab).toHaveFocus();
+    });
+
+    await step('Arrow Up returns focus to top-level tab', async () => {
+      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
+      await waitForFocus(responseHeadersTab, 1000);
+
+      // Press Arrow Up to return to Headers tab
+      await userEvent.keyboard('{ArrowUp}');
+
+      const headersTab = canvas.getByTestId('tab-headers');
+      await waitForFocus(headersTab, 1000);
+      await expect(headersTab).toHaveFocus();
+    });
+
+    await step('Home key navigates to first tab in current level', async () => {
+      const headersTab = canvas.getByTestId('tab-headers');
+      await waitForFocus(headersTab, 1000);
+
+      // Press Home to go to first top-level tab (Timing)
+      await userEvent.keyboard('{Home}');
+
+      const timingTab = canvas.getByTestId('tab-timing');
+      await waitForFocus(timingTab, 1000);
+      await expect(timingTab).toHaveFocus();
+    });
+
+    await step('End key navigates to last tab in current level', async () => {
+      const timingTab = canvas.getByTestId('tab-timing');
+      await waitForFocus(timingTab, 1000);
+
+      // Press End to go to last top-level tab (Code Gen)
+      await userEvent.keyboard('{End}');
+
+      const codeGenTab = canvas.getByTestId('tab-codegen');
+      await waitForFocus(codeGenTab, 1000);
+      await expect(codeGenTab).toHaveFocus();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #2: Hierarchical Keyboard Navigation. Tests arrow key navigation: Arrow Down moves to secondary tabs, Arrow Up returns to top-level, Arrow Left/Right navigates within level, Home/End navigates to first/last tab.',
+      },
+    },
+    a11y: {
+      config: {
+        rules: [{ id: 'keyboard-navigation', enabled: true }],
+      },
+    },
+  },
+};
+
+/**
+ * Tests scrolling behavior: expanded panel content scrolls independently without header overlap.
+ * Feature #1: Fix Z-Index Layering (scrolling aspect)
+ */
+export const ScrollingBehaviorTest: Story = {
+  args: {
+    entry: createMockEntry({
+      response: {
+        status: 200,
+        status_text: 'OK',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Rate-Limit': '100',
+        },
+        body: JSON.stringify(
+          {
+            data: Array.from({ length: 100 }, (_, i) => ({
+              id: i + 1,
+              name: `Item ${String(i + 1)}`,
+              description: `This is a very long description for item ${String(i + 1)} that will definitely cause scrolling when displayed in the expanded panel. The content should scroll smoothly without any visual overlap with table headers.`,
+              metadata: {
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                tags: ['tag1', 'tag2', 'tag3'],
+              },
+            })),
+          },
+          null,
+          2
+        ),
+        timing: {
+          total_ms: 290,
+          dns_ms: 15,
+          connect_ms: 25,
+          tls_ms: 45,
+          first_byte_ms: 120,
+        },
+      },
+    }),
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Navigate to Response tab with long content', async () => {
+      const responseTab = canvas.getByTestId('tab-response');
+      await userEvent.click(responseTab);
+      await expect(responseTab).toHaveAttribute('data-state', 'active');
+    });
+
+    await step('Verify expanded panel content is scrollable', async () => {
+      const expandedSection = canvas.getByTestId('expanded-section');
+      const responsePanel = canvas.getByTestId('response-panel');
+
+      // Expanded section should have overflow-hidden
+      await expect(expandedSection).toHaveClass('overflow-hidden');
+
+      // Response panel should be present
+      await expect(responsePanel).toBeInTheDocument();
+    });
+
+    await step('Verify z-index allows content to scroll under header', async () => {
+      const expandedSection = canvas.getByTestId('expanded-section');
+      const computedStyle = window.getComputedStyle(expandedSection);
+      const zIndex = Number.parseInt(computedStyle.zIndex, 10);
+
+      // Z-index should be lower than headers so content scrolls underneath
+      await expect(zIndex).toBe(Z_INDEX.EXPANDED_PANEL);
+      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_RIGHT);
+      await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_LEFT);
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #1: Fix Z-Index Layering (scrolling aspect). Tests that expanded panel content with long content scrolls smoothly underneath the table header. The header remains topmost and occludes content behind it. Verifies z-index hierarchy and overflow handling.',
+      },
+    },
+    layout: 'fullscreen', // Use fullscreen to better test scrolling
   },
 };

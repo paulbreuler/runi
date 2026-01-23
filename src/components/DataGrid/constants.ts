@@ -58,3 +58,30 @@ export const CELL_PADDING = {
  */
 export const EXPANDED_CONTENT_LEFT_MARGIN_PX =
   COLUMN_WIDTHS.SELECTION + COLUMN_WIDTHS.EXPANDER + CELL_PADDING.REGULAR; // 32 + 16 + 6 = 54px
+
+/**
+ * Z-index hierarchy for DataGrid components.
+ * Higher values appear above lower values.
+ *
+ * Hierarchy:
+ * - HEADER_RIGHT (30): Table headers (right sticky columns) - topmost element
+ * - HEADER_LEFT (25): Table headers (left sticky columns) - second highest
+ * - CELL_RIGHT (10): Table body cells (right sticky columns)
+ * - EXPANDED_PANEL (8): Expanded panel content - part of table body, scrolls under header
+ * - CELL_LEFT (5): Table body cells (left sticky columns)
+ *
+ * The header must always be topmost so that table body content (including expanded panels)
+ * scrolls underneath and is properly occluded by the header's background.
+ */
+export const Z_INDEX = {
+  /** Table headers (right sticky columns) - topmost element, always above all content */
+  HEADER_RIGHT: 30,
+  /** Table headers (left sticky columns) - second highest, above all body content */
+  HEADER_LEFT: 25,
+  /** Table body cells (right sticky columns) */
+  CELL_RIGHT: 10,
+  /** Expanded panel content - part of table body, scrolls under header */
+  EXPANDED_PANEL: 8,
+  /** Table body cells (left sticky columns) */
+  CELL_LEFT: 5,
+} as const;

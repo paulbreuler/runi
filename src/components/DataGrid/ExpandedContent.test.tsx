@@ -11,6 +11,7 @@
 import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import { ExpandedContent } from './ExpandedContent';
+import { Z_INDEX } from './constants';
 
 // Mock useReducedMotion to control animation behavior in tests
 vi.mock('motion/react', async () => {
@@ -80,6 +81,40 @@ describe('ExpandedContent', () => {
       const expandedSection = screen.getByTestId('expanded-section');
       expect(expandedSection).toBeInTheDocument();
       expect(expandedSection).toHaveTextContent('Test content');
+    });
+  });
+
+  describe('Feature #1: Z-Index Layering', () => {
+    it('expanded panel has z-index lower than table headers', () => {
+      render(<ExpandedContent>{mockChildren}</ExpandedContent>);
+
+      const expandedSection = screen.getByTestId('expanded-section');
+      const computedStyle = window.getComputedStyle(expandedSection);
+
+      // Z-index should be EXPANDED_PANEL (8), which is lower than HEADER_RIGHT (30) and HEADER_LEFT (25)
+      // This ensures expanded content scrolls underneath the header, which is always topmost
+      expect(Number.parseInt(computedStyle.zIndex, 10)).toBe(Z_INDEX.EXPANDED_PANEL);
+      expect(Number.parseInt(computedStyle.zIndex, 10)).toBeLessThan(Z_INDEX.HEADER_RIGHT);
+      expect(Number.parseInt(computedStyle.zIndex, 10)).toBeLessThan(Z_INDEX.HEADER_LEFT);
+    });
+
+    it('expanded panel has relative positioning for z-index to work', () => {
+      render(<ExpandedContent>{mockChildren}</ExpandedContent>);
+
+      const expandedSection = screen.getByTestId('expanded-section');
+      const computedStyle = window.getComputedStyle(expandedSection);
+
+      // Should have relative positioning for z-index to take effect
+      expect(computedStyle.position).toBe('relative');
+    });
+
+    it('expanded panel content scrolls independently', () => {
+      render(<ExpandedContent>{mockChildren}</ExpandedContent>);
+
+      const expandedSection = screen.getByTestId('expanded-section');
+
+      // Should have overflow-hidden class to handle scrolling
+      expect(expandedSection).toHaveClass('overflow-hidden');
     });
   });
 });

@@ -113,14 +113,36 @@ describe('ResponsePanel', () => {
     expect(screen.getByText(/no response body/i)).toBeInTheDocument();
   });
 
-  it('uses contained variant for CodeSnippet', () => {
+  it('uses borderless variant for CodeSnippet to match ResponseViewer body tab', () => {
     render(<ResponsePanel requestBody={mockRequestBody} responseBody={mockResponseBody} />);
 
     const codeBox = screen.getByTestId('code-box');
     const innerBox =
       codeBox.querySelector('[data-language]') ?? codeBox.querySelector('div:last-child');
-    // Contained variant should have container styling
-    expect(innerBox).toHaveClass('bg-bg-raised');
-    expect(innerBox).toHaveClass('border');
+    // Borderless variant should not have container styling (matches ResponseViewer body tab)
+    expect(innerBox).not.toHaveClass('bg-bg-raised');
+    expect(innerBox).not.toHaveClass('border');
+  });
+
+  it('formats body the same way as ResponseViewer body tab (only format JSON if detected as JSON)', () => {
+    // Non-JSON body should not be formatted
+    const nonJsonBody = 'This is plain text';
+    render(<ResponsePanel requestBody={null} responseBody={nonJsonBody} />);
+
+    const codeBox = screen.getByTestId('code-box');
+    const textContent = codeBox.textContent || '';
+    // Should display as-is, not try to format as JSON
+    expect(textContent).toContain('This is plain text');
+  });
+
+  it('only formats JSON when language is detected as JSON', () => {
+    // HTML body should not be formatted as JSON
+    const htmlBody = '<html><body>Hello</body></html>';
+    render(<ResponsePanel requestBody={null} responseBody={htmlBody} />);
+
+    const codeBox = screen.getByTestId('code-box');
+    const textContent = codeBox.textContent || '';
+    // Should display HTML as-is, not try to format as JSON
+    expect(textContent).toContain('<html>');
   });
 });

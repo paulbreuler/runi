@@ -35,7 +35,7 @@ BodyEditor (Special case - Editor pattern)
 | ------------------------- | -------------------------------------------- | ------------ | -------------------- | ---- |
 | ResponseViewer (Body tab) | `src/components/Response/ResponseViewer.tsx` | `borderless` | Auto-detected        | 236  |
 | ResponseViewer (Raw tab)  | `src/components/Response/ResponseViewer.tsx` | `borderless` | `http`               | 269  |
-| ResponsePanel             | `src/components/History/ResponsePanel.tsx`   | `contained`  | Auto-detected        | 139  |
+| ResponsePanel             | `src/components/History/ResponsePanel.tsx`   | `borderless` | Auto-detected        | 151  |
 | CodeGenPanel              | `src/components/History/CodeGenPanel.tsx`    | `contained`  | From LANGUAGE_SYNTAX | 77   |
 | HeadersPanel              | `src/components/History/HeadersPanel.tsx`    | `contained`  | `http`               | 111  |
 | ConsolePanel (grouped)    | `src/components/Console/ConsolePanel.tsx`    | `borderless` | Auto-detected        | 786  |
