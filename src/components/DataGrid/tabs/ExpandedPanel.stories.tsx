@@ -184,6 +184,7 @@ export const Playground: Story = {
       const headersTab = canvas.queryByTestId('tab-headers');
       if (headersTab !== null) {
         await userEvent.click(headersTab);
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(headersTab).toHaveAttribute('data-state', 'active');
       }
     });
@@ -193,6 +194,7 @@ export const Playground: Story = {
       if (expandedSection !== null) {
         const computedStyle = window.getComputedStyle(expandedSection);
         const zIndex = Number.parseInt(computedStyle.zIndex, 10);
+        // Verify z-index is exactly EXPANDED_PANEL (8) and less than HEADER_RIGHT (30)
         await expect(zIndex).toBe(Z_INDEX.EXPANDED_PANEL);
         await expect(zIndex).toBeLessThan(Z_INDEX.HEADER_RIGHT);
       }

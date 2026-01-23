@@ -7,6 +7,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { fn } from 'storybook/test';
 import { NetworkHistoryPanel, type NetworkHistoryPanelProps } from './NetworkHistoryPanel';
+import { HeaderRow } from './HeaderRow';
+import { NetworkStatusBar } from './NetworkStatusBar';
 import type { NetworkHistoryEntry } from '@/types/history';
 
 // Custom args for story controls (not part of component props)
@@ -24,6 +26,11 @@ const meta = {
       description: {
         component: `Complete Network History Panel with filter bar, virtualized data grid, and status bar.
 
+**Components:**
+- **NetworkHistoryPanel** - Main panel with filter bar, data grid, and status bar
+- **HeaderRow** - Displays a single HTTP header key-value pair
+- **NetworkStatusBar** - Entry counts and intelligence signals
+
 **Features:**
 - FilterBar: Search, method/status/intelligence filters, compare mode
 - VirtualDataGrid: Virtualized rows with selection, expansion, sorting
@@ -31,7 +38,7 @@ const meta = {
 - NetworkStatusBar: Entry counts and intelligence signals
 - Intelligence signals: Verified, drift, AI-generated, bound-to-spec
 
-Use the Controls panel to explore different entry counts and states.`,
+This story file includes NetworkHistoryPanel, HeaderRow, and NetworkStatusBar stories. Use the Controls panel to explore different entry counts and states.`,
       },
     },
   },
@@ -276,10 +283,11 @@ export const FilterInteractionsTest: Story = {
     await step('Filter by method', async () => {
       const methodFilter = canvas.getByTestId('method-filter');
       await userEvent.click(methodFilter);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Radix Select renders options in a portal (document.body), search there
+      const postOption = await within(document.body).findByRole('option', { name: /^post$/i }, { timeout: 3000 });
       await userEvent.click(postOption);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       const rows = canvas.getAllByTestId('history-row');
       await expect(rows.length).toBeGreaterThan(0);
     });
@@ -327,7 +335,8 @@ export const DoubleClickBehaviorTest: Story = {
       const firstRow = rows[0];
       if (firstRow !== undefined) {
         await userEvent.click(firstRow);
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Wait longer for state update and class application
+        await new Promise((resolve) => setTimeout(resolve, 200));
         await expect(firstRow).toHaveClass('bg-bg-raised/30');
       }
     });
@@ -352,4 +361,109 @@ export const DoubleClickBehaviorTest: Story = {
       },
     },
   },
+};
+
+// ============================================================================
+// HeaderRow Stories
+// ============================================================================
+
+/**
+ * HeaderRow - standard header with typical key-value pair.
+ */
+export const HeaderRowDefault: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app">
+      <HeaderRow name="Content-Type" value="application/json" />
+    </div>
+  ),
+};
+
+/**
+ * HeaderRow - authorization header with bearer token.
+ */
+export const HeaderRowAuthorization: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app">
+      <HeaderRow
+        name="Authorization"
+        value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ"
+      />
+    </div>
+  ),
+};
+
+/**
+ * HeaderRow - long value that wraps.
+ */
+export const HeaderRowLongValue: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app w-64">
+      <HeaderRow
+        name="X-Custom-Header"
+        value="This is a very long header value that will wrap to multiple lines when the container width is constrained"
+      />
+    </div>
+  ),
+};
+
+/**
+ * HeaderRow - URL as value.
+ */
+export const HeaderRowUrlValue: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app">
+      <HeaderRow
+        name="Referer"
+        value="https://example.com/api/v1/users?page=1&limit=10&sort=name"
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// NetworkStatusBar Stories
+// ============================================================================
+
+/**
+ * NetworkStatusBar - empty state with no intelligence counts.
+ */
+export const NetworkStatusBarDefault: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={25} driftCount={0} aiCount={0} boundCount={0} />
+    </div>
+  ),
+};
+
+/**
+ * NetworkStatusBar - with all intelligence counts.
+ */
+export const NetworkStatusBarWithAllCounts: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={100} driftCount={5} aiCount={12} boundCount={78} />
+    </div>
+  ),
+};
+
+/**
+ * NetworkStatusBar - with drift issues detected.
+ */
+export const NetworkStatusBarWithDrift: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={50} driftCount={8} aiCount={0} boundCount={42} />
+    </div>
+  ),
+};
+
+/**
+ * NetworkStatusBar - single request (singular form).
+ */
+export const NetworkStatusBarSingleRequest: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={1} driftCount={0} aiCount={0} boundCount={1} />
+    </div>
+  ),
 };

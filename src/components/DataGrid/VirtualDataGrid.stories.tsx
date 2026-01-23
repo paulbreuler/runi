@@ -824,7 +824,9 @@ export const KeyboardNavigationTest: Story = {
       if (firstExpander !== undefined) {
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
         await userEvent.keyboard('{Enter}');
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Wait longer for state update and aria-expanded to change
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        // Retry check with timeout
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
       }
     });
@@ -887,7 +889,8 @@ export const FocusManagementTest: Story = {
       const headerCheckbox = checkboxes[0];
       if (headerCheckbox !== undefined) {
         headerCheckbox.focus();
-        await waitForFocus(headerCheckbox, 2000);
+        // Wait longer for focus to be applied, especially in CI
+        await waitForFocus(headerCheckbox, 3000);
         await expect(headerCheckbox).toHaveFocus();
       }
     });

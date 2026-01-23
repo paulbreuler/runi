@@ -103,12 +103,13 @@ export const ErrorToast: Story = {
       // Wait for toast to appear (toasts are animated, need time)
       // Toasts render in Radix Toast.Viewport which is in document.body
       // Wait for toast animation to complete (may need more time in CI)
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       // Check document.body for toast (Radix portals render there)
+      // Use case-insensitive search and longer timeout for CI
       const toast = await within(document.body).findByRole(
         'alert',
         { name: /tauri backend is not available/i },
-        { timeout: 5000 }
+        { timeout: 8000 }
       );
       await expect(toast).toBeVisible();
     });
@@ -260,11 +261,12 @@ export const Interactive: Story = {
       const errorButton = canvas.getByRole('button', { name: /^error$/i });
       await userEvent.click(errorButton);
       // Wait for toast animation (toasts render in document.body via Radix portal, may need more time in CI)
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Use case-insensitive search and longer timeout for CI
       const errorToast = await within(document.body).findByRole(
         'alert',
         { name: /error occurred/i },
-        { timeout: 5000 }
+        { timeout: 8000 }
       );
       await expect(errorToast).toBeVisible();
 

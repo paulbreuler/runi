@@ -10,6 +10,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { IntelligenceSignals, type IntelligenceSignalsProps } from './IntelligenceSignals';
+import { SignalDot } from './SignalDot';
 import type { IntelligenceInfo } from '@/types/history';
 
 // Custom args for story controls (not part of component props)
@@ -24,8 +25,13 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component:
-          'Intelligence signals component showing verified, drift, AI-generated, and bound-to-spec states. Use controls to explore different intelligence configurations.',
+        component: `Intelligence signals components showing verified, drift, AI-generated, and bound-to-spec states. Use controls to explore different intelligence configurations.
+
+**Components:**
+- **IntelligenceSignals** - Multiple signal indicators for a request
+- **SignalDot** - Individual signal dot component with types and sizes
+
+This story file includes both IntelligenceSignals and SignalDot stories.`,
       },
     },
   },
@@ -126,6 +132,53 @@ export const Playground: Story = {
       description: {
         story:
           'Interactive playground for IntelligenceSignals. Use the Controls panel to explore different signal types: verified, drift, AI-generated, bound, or multiple signals.',
+      },
+    },
+  },
+};
+
+// ============================================================================
+// SignalDot Stories
+// ============================================================================
+
+/**
+ * SignalDot - playground with controls for all features.
+ */
+export const SignalDotPlayground: Story = {
+  render: (args) => {
+    // Map signalType to SignalDot type (SignalDot doesn't support 'none', 'ai-generated', 'multiple')
+    const signalDotType: 'verified' | 'drift' | 'ai' | 'bound' =
+      args.signalType === 'ai-generated' ? 'ai' : (args.signalType as 'verified' | 'drift' | 'bound') || 'verified';
+    
+    return (
+      <div className="bg-bg-surface p-6 rounded flex flex-col gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <SignalDot
+              type={signalDotType}
+              size="md"
+              tooltip={`${args.signalType ?? 'verified'} signal`}
+            />
+            <span className="text-sm text-text-secondary">{args.signalType ?? 'verified'}</span>
+          </div>
+        </div>
+        <div className="border-t border-border-subtle pt-4">
+          <p className="text-xs text-text-muted mb-2">All signal types:</p>
+          <div className="flex items-center gap-4">
+            <SignalDot type="verified" tooltip="Verified" />
+            <SignalDot type="drift" tooltip="Drift" />
+            <SignalDot type="ai" tooltip="AI Generated" />
+            <SignalDot type="bound" tooltip="Bound to Spec" />
+          </div>
+        </div>
+      </div>
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Interactive playground for SignalDot. Use the Controls panel to explore different signal types (verified, drift, AI, bound) and sizes (sm, md, lg).',
       },
     },
   },

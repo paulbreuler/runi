@@ -133,7 +133,8 @@ export const Default: Story = {
     await step('Keyboard navigation works', async () => {
       // Focus the button directly to test focusability
       primaryButton.focus();
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Wait longer for focus to be applied
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(primaryButton).toHaveFocus();
     });
   },

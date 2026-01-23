@@ -16,6 +16,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
+import { useState } from 'react';
 import { ResponseTab } from './ResponseTab';
 import { HeadersTab } from './HeadersTab';
 import { TimingTab } from './TimingTab';
@@ -23,8 +24,10 @@ import { CodeGenTab } from './CodeGenTab';
 import { CodeGenPanel } from './CodeGenPanel';
 import { HeadersPanel } from './HeadersPanel';
 import { TimingWaterfall } from './TimingWaterfall';
+import { LanguageTabs } from './LanguageTabs';
 import type { NetworkHistoryEntry } from '@/types/history';
-import { waitForFocus } from '@/utils/storybook-test-helpers';
+import type { CodeLanguage } from '@/utils/codeGenerators';
+import { waitForFocus, tabToElement } from '@/utils/storybook-test-helpers';
 
 // ============================================================================
 // Mock Data
@@ -107,6 +110,7 @@ const meta = {
 - **HeadersTab** - Request and response headers display
 - **TimingTab** - Request timing visualization with waterfall chart
 - **CodeGenTab** - Code generation with multiple language options
+- **LanguageTabs** - Tab navigation for switching between code generation languages
 
 **Features:**
 - Tab navigation with keyboard support
@@ -572,5 +576,102 @@ export const CodeGenTabCustomLanguages: Story = {
         story: 'Code generation panel with custom language subset (only JavaScript and Python).',
       },
     },
+  },
+};
+
+// ============================================================================
+// LanguageTabs Stories
+// ============================================================================
+
+/**
+ * LanguageTabs - default with all available languages.
+ */
+export const LanguageTabsDefault: Story = {
+  render: () => {
+    const [activeLanguage, setActiveLanguage] = useState<CodeLanguage>('javascript');
+
+    return (
+      <LanguageTabs
+        languages={['javascript', 'python', 'go', 'ruby', 'curl']}
+        activeLanguage={activeLanguage}
+        onLanguageChange={setActiveLanguage}
+      />
+    );
+  },
+};
+
+/**
+ * LanguageTabs - with subset of languages.
+ */
+export const LanguageTabsSubset: Story = {
+  render: () => {
+    const [activeLanguage, setActiveLanguage] = useState<CodeLanguage>('python');
+
+    return (
+      <LanguageTabs
+        languages={['javascript', 'python']}
+        activeLanguage={activeLanguage}
+        onLanguageChange={setActiveLanguage}
+      />
+    );
+  },
+};
+
+/**
+ * LanguageTabs - tab interactions test.
+ */
+export const LanguageTabsTabInteractionsTest: Story = {
+  render: () => {
+    const [activeLanguage, setActiveLanguage] = useState<CodeLanguage>('javascript');
+
+    return (
+      <LanguageTabs
+        languages={['javascript', 'python', 'go', 'ruby', 'curl']}
+        activeLanguage={activeLanguage}
+        onLanguageChange={setActiveLanguage}
+      />
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Click Python tab', async () => {
+      const pythonTab = canvas.getByRole('tab', { name: /python/i });
+      await userEvent.click(pythonTab);
+      await expect(pythonTab).toHaveAttribute('aria-selected', 'true');
+    });
+
+    await step('Click Go tab', async () => {
+      const goTab = canvas.getByRole('tab', { name: /^go$/i });
+      await userEvent.click(goTab);
+      await expect(goTab).toHaveAttribute('aria-selected', 'true');
+    });
+  },
+};
+
+/**
+ * LanguageTabs - keyboard navigation test.
+ */
+export const LanguageTabsKeyboardNavigationTest: Story = {
+  render: () => {
+    const [activeLanguage, setActiveLanguage] = useState<CodeLanguage>('javascript');
+
+    return (
+      <LanguageTabs
+        languages={['javascript', 'python', 'go']}
+        activeLanguage={activeLanguage}
+        onLanguageChange={setActiveLanguage}
+      />
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Tab to Python tab', async () => {
+      const pythonTab = canvas.getByRole('tab', { name: /python/i });
+      const focused = await tabToElement(pythonTab, 10);
+      await expect(focused).toBe(true);
+      await expect(pythonTab).toHaveFocus();
+    });
   },
 };

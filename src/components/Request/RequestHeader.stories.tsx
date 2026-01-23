@@ -94,12 +94,12 @@ export const FormInteractionsTest: Story = {
       const methodSelect = canvas.getByTestId('method-select');
       await userEvent.click(methodSelect);
       // Wait for select to open
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      // Find option by role
-      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Radix Select renders options in a portal (document.body), search there
+      const postOption = await within(document.body).findByRole('option', { name: /^post$/i }, { timeout: 3000 });
       await userEvent.click(postOption);
       // Wait for select to close and update
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(methodSelect).toHaveTextContent('POST');
     });
 

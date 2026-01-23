@@ -7,11 +7,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { useState } from 'react';
 import { DataPanel } from './DataPanel';
+import { DataPanelHeader } from './DataPanelHeader';
 import { Checkbox } from './checkbox';
 import { EmptyState } from './EmptyState';
-import { AlertCircle, Info, Bug, Check } from 'lucide-react';
+import { Button } from './button';
+import { AlertCircle, Info, Bug, Check, Download } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { waitForFocus } from '@/utils/storybook-test-helpers';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 
 interface LogItem {
   id: string;
@@ -52,11 +54,15 @@ const meta = {
       description: {
         component: `A generic, reusable panel component for displaying lists of data with an optional header.
 
+**Components:**
+- **DataPanel** - Generic panel for displaying lists of data
+- **DataPanelHeader** - Reusable header component with select all functionality
+
 ## Features
 
 - **Generic Type Support**: Works with any item type via TypeScript generics
 - **Pluggable Row Renderer**: Pass a render function for complete control over row rendering
-- **Configurable Header**: Optional header with select all functionality
+- **Configurable Header**: Optional header with select all functionality (uses DataPanelHeader)
 - **Empty State**: Built-in support for empty state rendering
 - **Scroll Container**: Includes scrollable container with ref forwarding
 
@@ -343,4 +349,203 @@ export const DifferentRowType: Story = {
       />
     </div>
   ),
+};
+
+// ============================================================================
+// DataPanelHeader Stories
+// ============================================================================
+
+const consoleColumns = [
+  { label: 'Level', className: 'text-xs text-text-muted' },
+  { label: 'Message', className: 'flex-1 text-xs text-text-muted' },
+  { label: 'Time', className: 'w-24 text-right text-xs text-text-muted' },
+];
+
+const networkColumns = [
+  { label: '', width: 'w-4' }, // Checkbox space
+  { label: '', width: 'w-5' }, // Chevron space
+  { label: 'Method', width: 'w-14', className: 'text-xs text-text-muted' },
+  { label: 'URL', className: 'flex-1 text-xs text-text-muted' },
+  { label: 'Status', width: 'w-12', className: 'text-right text-xs text-text-muted' },
+  { label: 'Time', width: 'w-14', className: 'text-right text-xs text-text-muted' },
+  { label: 'Size', width: 'w-16', className: 'text-right text-xs text-text-muted' },
+];
+
+/**
+ * DataPanelHeader - default state with select all checkbox.
+ */
+export const DataPanelHeaderDefault: Story = {
+  render: () => (
+    <div className="bg-bg-app rounded-lg border border-border-default overflow-hidden">
+      <DataPanelHeader
+        columns={consoleColumns}
+        allSelected={false}
+        showSelectAll={true}
+        onSelectAllChange={(checked) => {
+          console.log('Select all:', checked);
+        }}
+      />
+    </div>
+  ),
+};
+
+/**
+ * DataPanelHeader - all items selected.
+ */
+export const DataPanelHeaderAllSelected: Story = {
+  render: () => (
+    <div className="bg-bg-app rounded-lg border border-border-default overflow-hidden">
+      <DataPanelHeader
+        columns={consoleColumns}
+        allSelected={true}
+        showSelectAll={true}
+        onSelectAllChange={(checked) => {
+          console.log('Select all:', checked);
+        }}
+      />
+    </div>
+  ),
+};
+
+/**
+ * DataPanelHeader - indeterminate state (some items selected).
+ */
+export const DataPanelHeaderIndeterminate: Story = {
+  render: () => (
+    <div className="bg-bg-app rounded-lg border border-border-default overflow-hidden">
+      <DataPanelHeader
+        columns={consoleColumns}
+        allSelected={false}
+        someSelected={true}
+        showSelectAll={true}
+        onSelectAllChange={(checked) => {
+          console.log('Select all:', checked);
+        }}
+      />
+    </div>
+  ),
+};
+
+/**
+ * DataPanelHeader - without select all checkbox.
+ */
+export const DataPanelHeaderWithoutSelectAll: Story = {
+  render: () => (
+    <div className="bg-bg-app rounded-lg border border-border-default overflow-hidden">
+      <DataPanelHeader
+        columns={consoleColumns}
+        showSelectAll={false}
+        allSelected={false}
+        onSelectAllChange={(): void => {
+          /* noop for story */
+        }}
+      />
+    </div>
+  ),
+};
+
+/**
+ * DataPanelHeader - network panel style with more columns.
+ */
+export const DataPanelHeaderNetworkStyle: Story = {
+  render: () => (
+    <div className="bg-bg-app rounded-lg border border-border-default overflow-hidden">
+      <DataPanelHeader
+        columns={networkColumns}
+        allSelected={false}
+        showSelectAll={true}
+        onSelectAllChange={(checked) => {
+          console.log('Select all:', checked);
+        }}
+      />
+    </div>
+  ),
+};
+
+/**
+ * DataPanelHeader - with extra content (export button).
+ */
+export const DataPanelHeaderWithExtraContent: Story = {
+  render: () => (
+    <div className="bg-bg-app rounded-lg border border-border-default overflow-hidden">
+      <DataPanelHeader
+        columns={consoleColumns}
+        allSelected={false}
+        showSelectAll={true}
+        onSelectAllChange={(checked) => {
+          console.log('Select all:', checked);
+        }}
+      >
+        <Button size="xs" variant="ghost" className="ml-auto">
+          <Download className="mr-1" size={12} />
+          Export
+        </Button>
+      </DataPanelHeader>
+    </div>
+  ),
+};
+
+/**
+ * DataPanelHeader - interactive example demonstrating select all functionality.
+ */
+export const DataPanelHeaderInteractive: Story = {
+  render: function DataPanelHeaderInteractiveStory() {
+    const [items, setItems] = useState([
+      { id: 1, selected: false },
+      { id: 2, selected: true },
+      { id: 3, selected: false },
+      { id: 4, selected: false },
+    ]);
+
+    const allSelected = items.every((item) => item.selected);
+    const someSelected = items.some((item) => item.selected);
+
+    const handleSelectAll = (checked: boolean): void => {
+      setItems((prev) => prev.map((item) => ({ ...item, selected: checked })));
+    };
+
+    return (
+      <div className="bg-bg-app rounded-lg border border-border-default overflow-hidden">
+        <DataPanelHeader
+          columns={consoleColumns}
+          allSelected={allSelected}
+          someSelected={someSelected && !allSelected}
+          onSelectAllChange={handleSelectAll}
+        />
+        <div className="p-4 text-sm text-text-secondary">
+          <p>
+            Selected: {items.filter((i) => i.selected).length} / {items.length}
+          </p>
+          <p className="text-xs text-text-muted mt-2">
+            Click the checkbox to toggle select all.
+            {someSelected && !allSelected && ' (Currently in indeterminate state)'}
+          </p>
+        </div>
+      </div>
+    );
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const selectAllCheckbox = canvas.getByRole('checkbox', { name: /select all/i });
+
+    await step('Select all starts in indeterminate state', async () => {
+      await expect(selectAllCheckbox).toBeVisible();
+      await expect(selectAllCheckbox).toHaveAttribute('aria-checked', 'mixed');
+      const statusText = canvas.getByText(/selected: 1 \/ 4/i);
+      await expect(statusText).toBeVisible();
+    });
+
+    await step('Select all selects all items', async () => {
+      await userEvent.click(selectAllCheckbox);
+      await expect(selectAllCheckbox).toBeChecked();
+      const statusText = canvas.getByText(/selected: 4 \/ 4/i);
+      await expect(statusText).toBeVisible();
+    });
+
+    await step('Keyboard navigation works', async () => {
+      await tabToElement(selectAllCheckbox);
+      await waitForFocus(selectAllCheckbox);
+      await expect(selectAllCheckbox).toHaveFocus();
+    });
+  },
 };

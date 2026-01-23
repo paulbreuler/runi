@@ -16,26 +16,21 @@ const config: StorybookConfig = {
 
   stories: ['../src/components/**/*.stories.@(tsx|ts|jsx|js)', '../src/components/**/*.mdx'],
 
-  addons: [
-    '@storybook/addon-a11y',
-    {
-      name: '@storybook/addon-vitest',
-      options: {
-        // Let the addon auto-discover the workspace and project
-        // It will use the configDir from the storybookTest plugin
+  addons: ['@storybook/addon-a11y', {
+    name: '@storybook/addon-vitest',
+    options: {
+      // Let the addon auto-discover the workspace and project
+      // It will use the configDir from the storybookTest plugin
+    },
+  }, '@storybook/addon-docs', {
+    name: '@storybook/addon-mcp',
+    options: {
+      toolsets: {
+        dev: true, // Tools for story URL retrieval and UI building instructions
+        docs: true, // Tools for component manifest and documentation
       },
     },
-    '@storybook/addon-docs',
-    {
-      name: '@storybook/addon-mcp',
-      options: {
-        toolsets: {
-          dev: true, // Tools for story URL retrieval and UI building instructions
-          docs: true, // Tools for component manifest and documentation
-        },
-      },
-    },
-  ],
+  }, '@chromatic-com/storybook'],
 
   // Enable experimental component manifest for docs toolset
   features: {

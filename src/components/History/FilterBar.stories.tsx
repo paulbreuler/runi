@@ -117,7 +117,9 @@ export const Playground: Story = {
     await step('Test filter interaction', async () => {
       const searchInput = canvas.queryByLabelText(/filter history by url/i);
       if (searchInput !== null) {
+        await userEvent.clear(searchInput);
         await userEvent.type(searchInput, 'test');
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await expect(searchInput).toHaveValue('test');
       }
     });
@@ -230,36 +232,42 @@ export const FilterInteractionsTest: Story = {
     await step('Change search filter', async () => {
       const searchInput = canvas.getByLabelText(/filter history by url/i);
       await userEvent.clear(searchInput);
+      await new Promise((resolve) => setTimeout(resolve, 50));
       await userEvent.type(searchInput, 'users');
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await expect(searchInput).toHaveValue('users');
     });
 
     await step('Change method filter to POST', async () => {
       const methodFilter = canvas.getByTestId('method-filter');
       await userEvent.click(methodFilter);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Radix Select renders options in a portal (document.body), search there
+      const postOption = await within(document.body).findByRole('option', { name: /^post$/i }, { timeout: 3000 });
       await userEvent.click(postOption);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(methodFilter).toHaveTextContent(/post/i);
     });
 
     await step('Change status filter to 4xx', async () => {
       const statusFilter = canvas.getByTestId('status-filter');
       await userEvent.click(statusFilter);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const statusOption = await canvas.findByRole('option', { name: /4xx/i }, { timeout: 2000 });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Radix Select renders options in a portal (document.body), search there
+      const statusOption = await within(document.body).findByRole('option', { name: /4xx/i }, { timeout: 3000 });
       await userEvent.click(statusOption);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(statusFilter).toHaveTextContent(/4xx/i);
     });
 
     await step('Change intelligence filter to Has Drift', async () => {
       const intelligenceFilter = canvas.getByTestId('intelligence-filter');
       await userEvent.click(intelligenceFilter);
-      const driftOption = canvas.getByRole('option', { name: /has drift/i });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Radix Select renders options in a portal (document.body), search there
+      const driftOption = await within(document.body).findByRole('option', { name: /has drift/i }, { timeout: 3000 });
       await userEvent.click(driftOption);
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(intelligenceFilter).toHaveTextContent(/has drift/i);
     });
   },

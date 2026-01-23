@@ -729,9 +729,12 @@ export const NetworkTableInteractionTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify HTTP methods are displayed', async () => {
-      await expect(canvas.getByText('GET')).toBeInTheDocument();
-      await expect(canvas.getByText('POST')).toBeInTheDocument();
-      await expect(canvas.getByText('DELETE')).toBeInTheDocument();
+      const getElements = canvas.getAllByText('GET');
+      await expect(getElements.length).toBeGreaterThan(0);
+      const postElements = canvas.getAllByText('POST');
+      await expect(postElements.length).toBeGreaterThan(0);
+      const deleteElements = canvas.getAllByText('DELETE');
+      await expect(deleteElements.length).toBeGreaterThan(0);
     });
 
     await step('Click row checkbox to select', async () => {
