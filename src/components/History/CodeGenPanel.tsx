@@ -64,7 +64,7 @@ export const CodeGenPanel = ({
         languages={languages}
         activeLanguage={activeLanguage}
         onLanguageChange={setActiveLanguage}
-        className="mb-1"
+        className="mb-3"
       />
 
       {/* Code content */}

@@ -169,10 +169,10 @@ export const ResponseTabFeaturesTest: Story = {
     });
 
     await step('Verify JSON is formatted', async () => {
-      const viewer = canvas.getByTestId('body-viewer');
-      await expect(viewer).toBeInTheDocument();
+      const codeSnippet = canvas.getByTestId('code-snippet');
+      await expect(codeSnippet).toBeInTheDocument();
       // Should contain formatted JSON (with proper structure)
-      await expect(viewer).toHaveTextContent('John');
+      await expect(codeSnippet).toHaveTextContent('John');
     });
 
     await step('Verify copy button is present', async () => {
@@ -187,10 +187,10 @@ export const ResponseTabFeaturesTest: Story = {
     });
 
     await step('Verify Request Body content is displayed', async () => {
-      const viewer = canvas.getByTestId('body-viewer');
-      await expect(viewer).toBeInTheDocument();
+      const codeSnippet = canvas.getByTestId('code-snippet');
+      await expect(codeSnippet).toBeInTheDocument();
       // Request body should contain the request data
-      await expect(viewer).toHaveTextContent('John Doe');
+      await expect(codeSnippet).toHaveTextContent('John Doe');
     });
   },
   parameters: {

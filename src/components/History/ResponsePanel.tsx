@@ -8,10 +8,11 @@
  * @description Panel with tabs for Request Body and Response Body
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { cn } from '@/utils/cn';
-import { BodyViewer } from './BodyViewer';
-import { CopyButton } from './CopyButton';
+import { CodeSnippet } from './CodeSnippet';
+import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export interface ResponsePanelProps {
   /** Request body content */
@@ -38,6 +39,19 @@ type TabType = 'response' | 'request';
  * />
  * ```
  */
+/**
+ * Format JSON with 2-space indentation if valid JSON, otherwise return as-is
+ */
+function formatJson(body: string): string {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    // Not valid JSON, return as-is
+    return body;
+  }
+}
+
 export const ResponsePanel = ({
   requestBody,
   responseBody,
@@ -47,6 +61,22 @@ export const ResponsePanel = ({
 
   const currentBody = activeTab === 'response' ? responseBody : requestBody;
   const currentBodyText = currentBody ?? '';
+
+  // Format body (JSON with 2-space indentation if valid JSON)
+  const formattedBody = useMemo(() => {
+    if (currentBodyText === '') {
+      return '';
+    }
+    return formatJson(currentBodyText);
+  }, [currentBodyText]);
+
+  // Detect language for syntax highlighting
+  const language = useMemo(() => {
+    if (currentBodyText === '') {
+      return 'text';
+    }
+    return detectSyntaxLanguage({ body: currentBodyText });
+  }, [currentBodyText]);
 
   return (
     <div data-testid="response-panel" className={cn('flex flex-col', className)}>
@@ -93,18 +123,24 @@ export const ResponsePanel = ({
         id={activeTab === 'response' ? 'response-body-panel' : 'request-body-panel'}
         role="tabpanel"
         aria-labelledby={activeTab === 'response' ? 'response-body-tab' : 'request-body-tab'}
-        className="flex-1 flex flex-col gap-2"
+        className="flex-1 flex flex-col"
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <BodyViewer body={currentBody} />
-          </div>
-          {currentBodyText !== '' && (
-            <div className="shrink-0">
-              <CopyButton text={currentBodyText} />
-            </div>
-          )}
-        </div>
+        {currentBodyText === '' ? (
+          <EmptyState
+            variant="muted"
+            title={`No ${activeTab} body`}
+            description={
+              activeTab === 'response' ? 'This response has no body' : 'This request has no body'
+            }
+          />
+        ) : (
+          <CodeSnippet
+            code={formattedBody}
+            language={language}
+            variant="contained"
+            className="flex-1"
+          />
+        )}
       </div>
     </div>
   );

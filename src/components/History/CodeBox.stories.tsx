@@ -4,24 +4,23 @@
  */
 
 /**
- * @file CodeSnippet Storybook stories
- * @description Visual documentation for CodeSnippet component
+ * @file CodeBox Storybook stories
+ * @description Visual documentation for CodeBox component
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { CodeSnippet } from './CodeSnippet';
+import { CodeBox } from './CodeBox';
 import { tabToElement } from '@/utils/storybook-test-helpers';
 
-const meta: Meta<typeof CodeSnippet> = {
-  title: 'History/CodeSnippet',
-  component: CodeSnippet,
+const meta: Meta<typeof CodeBox> = {
+  title: 'History/CodeBox',
+  component: CodeBox,
   parameters: {
-    layout: 'padded',
     docs: {
       description: {
         component:
-          'Component for displaying code with syntax highlighting and copy functionality. Supports two variants: `contained` (default) for standalone use, and `borderless` for use inside existing containers.',
+          'Reusable code box container with consistent styling and copy button positioning. Supports two variants: `contained` (default) for standalone use with full visual container, and `borderless` for use inside existing containers to avoid nested visual containers.',
       },
     },
   },
@@ -29,45 +28,79 @@ const meta: Meta<typeof CodeSnippet> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof CodeSnippet>;
+type Story = StoryObj<typeof CodeBox>;
 
 /**
- * Basic code snippet with JavaScript code.
+ * Basic code box with simple content.
  */
 export const Default: Story = {
   args: {
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
+    children: (
+      <pre>
+        <code>const x = 1;</code>
+      </pre>
+    ),
   },
 };
 
 /**
- * Python code snippet.
+ * Code box with copy button enabled.
  */
-export const Python: Story = {
+export const WithCopyButton: Story = {
   args: {
-    code: 'import requests\n\nresponse = requests.get("https://api.example.com/users")\nprint(response.json())',
-    language: 'python',
+    copyText: 'const x = 1;\nconst y = 2;',
+    copyButtonLabel: 'Copy code',
+    children: (
+      <pre>
+        <code>
+          {`const x = 1;
+const y = 2;`}
+        </code>
+      </pre>
+    ),
   },
 };
 
 /**
- * Go code snippet.
+ * Code box with JSON content.
  */
-export const Go: Story = {
+export const WithJSON: Story = {
   args: {
-    code: 'package main\n\nimport "net/http"\n\nfunc main() {\n    resp, err := http.Get("https://api.example.com/users")\n    // ...\n}',
-    language: 'go',
+    copyText: JSON.stringify({ name: 'John', age: 30 }, null, 2),
+    copyButtonLabel: 'Copy JSON',
+    children: (
+      <pre>
+        <code>{JSON.stringify({ name: 'John', age: 30 }, null, 2)}</code>
+      </pre>
+    ),
   },
 };
 
 /**
- * cURL command snippet.
+ * Code box with long content (scrollable).
  */
-export const Curl: Story = {
+export const LongContent: Story = {
   args: {
-    code: 'curl -X GET \\\n  -H "Authorization: Bearer token123" \\\n  "https://api.example.com/users"',
-    language: 'bash',
+    copyText: Array.from({ length: 50 }, (_, i) => `Line ${String(i + 1)}`).join('\n'),
+    copyButtonLabel: 'Copy all lines',
+    children: (
+      <pre>
+        <code>{Array.from({ length: 50 }, (_, i) => `Line ${String(i + 1)}`).join('\n')}</code>
+      </pre>
+    ),
+  },
+};
+
+/**
+ * Code box without copy button.
+ */
+export const WithoutCopyButton: Story = {
+  args: {
+    children: (
+      <pre>
+        <code>This code box does not have a copy button</code>
+      </pre>
+    ),
   },
 };
 
@@ -78,14 +111,22 @@ export const Curl: Story = {
 export const Borderless: Story = {
   args: {
     variant: 'borderless',
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
+    copyText: 'const x = 1;\nconst y = 2;',
+    copyButtonLabel: 'Copy code',
+    children: (
+      <pre>
+        <code>
+          {`const x = 1;
+const y = 2;`}
+        </code>
+      </pre>
+    ),
   },
   parameters: {
     docs: {
       description: {
         story:
-          'Borderless variant removes visual container styling for use inside existing containers like MainLayout panes. Use this to avoid nested visual containers.',
+          'Borderless variant removes visual container styling (background, border, rounded corners) for use inside existing containers like MainLayout panes. Use this to avoid nested visual containers.',
       },
     },
   },
@@ -102,11 +143,15 @@ export const VariantComparison: Story = {
         <p className="text-xs text-text-muted mb-4">
           Use for standalone code display (e.g., in expanded panels, history views)
         </p>
-        <CodeSnippet
+        <CodeBox
           variant="contained"
-          code="const example = 'contained';\nconsole.log(example);"
-          language="javascript"
-        />
+          copyText="const example = 'contained';"
+          copyButtonLabel="Copy code"
+        >
+          <pre>
+            <code>const example = &apos;contained&apos;;</code>
+          </pre>
+        </CodeBox>
       </div>
       <div className="bg-bg-app p-4 rounded">
         <h3 className="text-sm font-medium mb-2 text-text-primary">
@@ -115,11 +160,15 @@ export const VariantComparison: Story = {
         <p className="text-xs text-text-muted mb-4">
           Use inside existing containers (e.g., MainLayout panes) to avoid nested visual containers
         </p>
-        <CodeSnippet
+        <CodeBox
           variant="borderless"
-          code="const example = 'borderless';\nconsole.log(example);"
-          language="javascript"
-        />
+          copyText="const example = 'borderless';"
+          copyButtonLabel="Copy code"
+        >
+          <pre>
+            <code>const example = &apos;borderless&apos;;</code>
+          </pre>
+        </CodeBox>
       </div>
     </div>
   ),
@@ -138,14 +187,22 @@ export const VariantComparison: Story = {
  */
 export const CopyFunctionalityTest: Story = {
   args: {
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
+    copyText: 'const x = 1;\nconst y = 2;',
+    copyButtonLabel: 'Copy code',
+    children: (
+      <pre>
+        <code>
+          {`const x = 1;
+const y = 2;`}
+        </code>
+      </pre>
+    ),
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
     await step('Click copy button', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
+      const copyButton = canvas.getByRole('button', { name: /copy code/i });
       await userEvent.click(copyButton);
       // Clipboard might fail in test environment, so check if feedback appears
       // If clipboard fails, the button won't show "Copied" but that's expected
@@ -176,21 +233,29 @@ export const CopyFunctionalityTest: Story = {
  */
 export const KeyboardNavigationTest: Story = {
   args: {
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
+    copyText: 'const x = 1;\nconst y = 2;',
+    copyButtonLabel: 'Copy code',
+    children: (
+      <pre>
+        <code>
+          {`const x = 1;
+const y = 2;`}
+        </code>
+      </pre>
+    ),
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
     await step('Tab to copy button', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
+      const copyButton = canvas.getByRole('button', { name: /copy code/i });
       const focused = await tabToElement(copyButton, 10);
       await expect(focused).toBe(true);
       await expect(copyButton).toHaveFocus();
     });
 
     await step('Activate copy button with Enter', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
+      const copyButton = canvas.getByRole('button', { name: /copy code/i });
       await userEvent.keyboard('{Enter}');
       // Button should still be visible after activation
       await expect(copyButton).toBeVisible();
@@ -204,19 +269,27 @@ export const KeyboardNavigationTest: Story = {
 export const BorderlessCopyTest: Story = {
   args: {
     variant: 'borderless',
-    code: 'const response = await fetch("https://api.example.com/users");\nconst data = await response.json();',
-    language: 'javascript',
+    copyText: 'const x = 1;\nconst y = 2;',
+    copyButtonLabel: 'Copy code',
+    children: (
+      <pre>
+        <code>
+          {`const x = 1;
+const y = 2;`}
+        </code>
+      </pre>
+    ),
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
     await step('Verify copy button is present in borderless variant', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
+      const copyButton = canvas.getByRole('button', { name: /copy code/i });
       await expect(copyButton).toBeVisible();
     });
 
     await step('Click copy button', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy javascript code/i });
+      const copyButton = canvas.getByRole('button', { name: /copy code/i });
       await userEvent.click(copyButton);
       // Verify button is still visible after click
       await expect(copyButton).toBeVisible();

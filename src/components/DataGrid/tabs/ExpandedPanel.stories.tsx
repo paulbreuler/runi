@@ -337,3 +337,94 @@ export const TabNavigationTest: Story = {
     },
   },
 };
+
+/**
+ * Expanded panel with action buttons.
+ * Feature #24: Expanded Panel - Action Buttons
+ */
+export const WithActionButtons: Story = {
+  args: {
+    entry: createMockEntry(),
+    onReplay: (): void => {
+      console.log('Replay clicked');
+    },
+    onCopy: (): void => {
+      console.log('Copy cURL clicked');
+    },
+    onChain: (): void => {
+      console.log('Chain Request clicked');
+    },
+    onGenerateTests: (): void => {
+      console.log('Generate Tests clicked');
+    },
+    onAddToCollection: (): void => {
+      console.log('Add to Collection clicked');
+    },
+    onBlockToggle: (id: string, isBlocked: boolean): void => {
+      console.log(`Block toggle clicked: ${id}, blocked: ${String(isBlocked)}`);
+    },
+    isBlocked: false,
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify all action buttons are present', async () => {
+      await expect(canvas.getByRole('button', { name: /edit.*replay/i })).toBeInTheDocument();
+      await expect(canvas.getByRole('button', { name: /copy.*curl/i })).toBeInTheDocument();
+      await expect(canvas.getByRole('button', { name: /chain.*request/i })).toBeInTheDocument();
+      await expect(canvas.getByRole('button', { name: /generate.*tests/i })).toBeInTheDocument();
+      await expect(
+        canvas.getByRole('button', { name: /add.*to.*collection/i })
+      ).toBeInTheDocument();
+      await expect(canvas.getByRole('button', { name: /block/i })).toBeInTheDocument();
+    });
+
+    await step('Click Edit & Replay button', async () => {
+      const replayButton = canvas.getByRole('button', { name: /edit.*replay/i });
+      await userEvent.click(replayButton);
+      // Button should still be present after click
+      await expect(replayButton).toBeInTheDocument();
+    });
+
+    await step('Click Copy cURL button', async () => {
+      const copyButton = canvas.getByRole('button', { name: /copy.*curl/i });
+      await userEvent.click(copyButton);
+      await expect(copyButton).toBeInTheDocument();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Feature #24: Expanded Panel - Action Buttons. Displays all action buttons at the bottom of the expanded panel: Edit & Replay, Copy cURL, Chain Request, Generate Tests, Add to Collection, and Block/Unblock.',
+      },
+    },
+  },
+};
+
+/**
+ * Expanded panel with blocked entry (shows Unblock button).
+ */
+export const WithBlockedEntry: Story = {
+  args: {
+    entry: createMockEntry(),
+    onBlockToggle: (id: string, isBlocked: boolean): void => {
+      console.log(`Block toggle clicked: ${id}, blocked: ${String(isBlocked)}`);
+    },
+    isBlocked: true,
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify Unblock button is shown for blocked entry', async () => {
+      await expect(canvas.getByRole('button', { name: /unblock/i })).toBeInTheDocument();
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows Unblock button when entry is blocked.',
+      },
+    },
+  },
+};

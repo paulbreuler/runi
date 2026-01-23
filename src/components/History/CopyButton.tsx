@@ -59,7 +59,8 @@ export const CopyButton = ({
       onClick={handleCopy}
       className={cn(
         'flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary',
-        'hover:text-text-primary transition-colors',
+        'bg-bg-raised/90 backdrop-blur-sm shadow-sm',
+        'hover:text-text-primary hover:bg-bg-raised transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-1 rounded',
         className
       )}

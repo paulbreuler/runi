@@ -180,6 +180,8 @@ Feature Subissues: #37, #38, #39 (closed by this PR)
 - [ ] Performance tests pass (if data-heavy feature, include thresholds)
 - [ ] **Test selectors**: Components include `data-test-id` attributes on interactive elements
 - [ ] **Test queries**: Tests use `getByTestId` for element selection (resilient to UI changes)
+- [ ] **Design Principles**: Components follow DESIGN-PRINCIPLES.md criteria (see `mcp_runi_Planning_read_doc({ path: 'plans/0018-component-design-principles-audit/plan.md' })` for audit methodology)
+- [ ] **Design Principles (RLM)**: For component-specific compliance, use `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName')).flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })` to check audit status
 - [ ] Manual testing completed
 - [ ] Coverage: [percentage]% (target: ≥85%)
 
@@ -463,6 +465,88 @@ Continue with PR creation anyway? (y/n)
 - `just ci` - Run CI checks before PR
 - `git commit` - Commit changes before creating PR
 
+## RLM Query Optimizations
+
+### Agent Status Validation (Alternative to Bash Scripts)
+
+When MCP tools are available, use RLM queries to validate agent status instead of bash scripts:
+
+```javascript
+// Validate agent status before PR creation
+mcp_runi_Planning_rlm_query({
+  path: 'plans/datagrid_overhaul_4a5b9879/agents/0_agent_accessibility_foundation_early.agent.md',
+  code: `
+    const features = extractFeatures(doc.content);
+    return {
+      agentName: extractFrontmatter(d.content).meta.name,
+      allPass: features.every(f => f.status === 'PASS'),
+      passCount: features.filter(f => f.status === 'PASS').length,
+      gapCount: features.filter(f => f.status === 'GAP').length,
+      wipCount: features.filter(f => f.status === 'WIP').length,
+      features: features.map(f => ({
+        number: f.number,
+        name: f.name,
+        status: f.status,
+        tldr: f.tldr
+      }))
+    };
+  `,
+});
+```
+
+**Benefits:**
+
+- Faster than bash script parsing
+- Programmatic access to feature status
+- Can be used to auto-populate PR description
+
+### Component Design Principles Compliance
+
+For PRs that modify components, check design principles compliance:
+
+```javascript
+// Check design principles compliance for modified components
+mcp_runi_Planning_rlm_query({
+  path: 'plans/0018-component-design-principles-audit/plan.md',
+  code: `
+    const modifiedComponents = ['Component1', 'Component2']; // from git diff
+    const auditResults = extractSections(doc.content)
+      .filter(s => modifiedComponents.some(c => s.title.includes(c)))
+      .map(s => ({
+        component: s.title,
+        compliance: extractFeatures(s.content).every(f => f.status === 'PASS'),
+        issues: extractFeatures(s.content).filter(f => f.status === 'GAP')
+      }));
+    return auditResults;
+  `,
+});
+```
+
+Include compliance status in PR description under "Testing" section.
+
+### Multi-Agent Status Check
+
+For plans with multiple agents, use RLM multi-query to check all agent statuses:
+
+```javascript
+// Get all agents with their feature status
+mcp_runi_Planning_rlm_multi_query({
+  pattern: 'plans/datagrid_overhaul_4a5b9879/agents/*.agent.md',
+  code: `
+    docs.map(d => {
+      const features = extractFeatures(d.content);
+      return {
+        agentName: extractFrontmatter(d.content).meta.name,
+        totalFeatures: features.length,
+        passCount: features.filter(f => f.status === 'PASS').length,
+        gapCount: features.filter(f => f.status === 'GAP').length,
+        allPass: features.every(f => f.status === 'PASS')
+      };
+    })
+  `,
+});
+```
+
 ## Notes
 
 - **No Files Created:** Description is generated in memory and passed directly to GitHub CLI
@@ -476,3 +560,4 @@ Continue with PR creation anyway? (y/n)
 - **Review Checklist:** Helps maintainers review efficiently
 - **GitHub CLI Required:** This command uses `gh pr create` to actually create the PR
 - **Graceful Fallback:** Works correctly even when no agent is detected (for non-agent work)
+- **RLM Queries:** Use RLM queries for targeted planning document access (faster than reading full documents)

@@ -260,3 +260,51 @@ aside[data-testid='sidebar'] {
   -ms-user-select: none;
   pointer-events: none;
 }
+
+/* ============================================
+   Code Snippet - Line Number Left Spacing
+   ============================================ */
+
+/* Remove left padding from container when it contains line numbers */
+/* This overrides the px-2 padding on borderless variant */
+[data-language]:has(.code-snippet-wrapper .react-syntax-highlighter-line-number),
+[data-language]:has(.code-snippet-wrapper span[class*='linenumber']) {
+  padding-left: 0 !important;
+}
+
+/* Remove left padding from ResponseViewer body container when it contains line numbers */
+[data-testid='response-body']:has(.code-snippet-wrapper .react-syntax-highlighter-line-number),
+[data-testid='response-body']:has(.code-snippet-wrapper span[class*='linenumber']) {
+  padding-left: 0 !important;
+}
+
+/* Remove left padding/margin from react-syntax-highlighter line number containers */
+/* Target all possible structures: table-based and span-based line numbers */
+.code-snippet-wrapper table[class*='react-syntax-highlighter'],
+.code-snippet-wrapper table[class*='react-syntax-highlighter'] td:first-child,
+.code-snippet-wrapper span[class*='react-syntax-highlighter-line-number'],
+.code-snippet-wrapper span[class*='linenumber'],
+.code-snippet-wrapper .react-syntax-highlighter-line-number,
+/* Also apply to BodyEditor and other direct SyntaxHighlighter usage */
+[data-testid='body-syntax-layer'] table[class*='react-syntax-highlighter'],
+[data-testid='body-syntax-layer'] table[class*='react-syntax-highlighter'] td:first-child,
+[data-testid='body-syntax-layer'] span[class*='react-syntax-highlighter-line-number'],
+[data-testid='body-syntax-layer'] span[class*='linenumber'],
+[data-testid='body-syntax-layer'] .react-syntax-highlighter-line-number,
+/* General selectors for any SyntaxHighlighter usage */
+span[class*='react-syntax-highlighter-line-number'],
+span[class*='linenumber'],
+.react-syntax-highlighter-line-number {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Also target the pre/code containers that might have default padding */
+.code-snippet-wrapper pre[class*='language-'],
+.code-snippet-wrapper code[class*='language-'],
+.code-snippet-wrapper div[class*='language-'],
+[data-testid='body-syntax-layer'] pre[class*='language-'],
+[data-testid='body-syntax-layer'] code[class*='language-'],
+[data-testid='body-syntax-layer'] div[class*='language-'] {
+  padding-left: 0;
+}

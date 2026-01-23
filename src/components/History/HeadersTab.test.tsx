@@ -55,9 +55,14 @@ describe('HeadersTab', () => {
   it('displays response headers by default', () => {
     render(<HeadersTab entry={mockEntry} />);
 
-    // Response headers should be visible
-    expect(screen.getByText('X-Rate-Limit')).toBeInTheDocument();
-    expect(screen.getByText('100')).toBeInTheDocument();
+    // Response headers should be visible - check via headers content container
+    const headersContent = screen.getByTestId('headers-content');
+    const headersText = headersContent.textContent || '';
+
+    expect(headersText).toContain('X-Rate-Limit');
+    expect(headersText).toContain('100');
+    expect(headersText).toContain('Content-Type');
+    expect(headersText).toContain('application/json');
   });
 
   it('includes copy button', () => {

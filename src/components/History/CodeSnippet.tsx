@@ -9,7 +9,6 @@
  */
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { CopyButton } from './CopyButton';
 import {
   syntaxHighlightBaseStyle,
   syntaxHighlightCodeTagStyle,
@@ -17,12 +16,15 @@ import {
   syntaxHighlightTheme,
 } from '@/components/CodeHighlighting/syntaxHighlighting';
 import { cn } from '@/utils/cn';
+import { CodeBox } from './CodeBox';
 
 export interface CodeSnippetProps {
   /** Code content to display */
   code: string;
   /** Language for syntax highlighting */
   language: string;
+  /** Visual variant: 'contained' for standalone use with border/background, 'borderless' for use inside existing containers */
+  variant?: 'contained' | 'borderless';
   /** Additional CSS classes */
   className?: string;
 }
@@ -31,42 +33,51 @@ export interface CodeSnippetProps {
  * CodeSnippet component for displaying code with syntax highlighting.
  *
  * Includes copy button and proper formatting for code display.
+ * Supports both contained (default) and borderless variants via CodeBox.
  *
  * @example
  * ```tsx
+ * // Contained variant (default) - for standalone use
  * <CodeSnippet code="const x = 1;" language="javascript" />
+ *
+ * // Borderless variant - for use inside containers
+ * <CodeSnippet code="const x = 1;" language="javascript" variant="borderless" />
  * ```
  */
-export const CodeSnippet = ({ code, language, className }: CodeSnippetProps): React.JSX.Element => {
+export const CodeSnippet = ({
+  code,
+  language,
+  variant = 'contained',
+  className,
+}: CodeSnippetProps): React.JSX.Element => {
   return (
     <div data-testid="code-snippet" className={cn('flex flex-col', className)}>
-      {/* Header with copy button */}
-      <div className="flex items-center justify-end mb-1">
-        <CopyButton text={code} aria-label={`Copy ${language} code`} />
-      </div>
-
-      {/* Code content */}
-      <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
-        <div className="pt-1 px-4 pb-4" data-language={language}>
-          <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
-            <div className="code-snippet-wrapper">
-              <SyntaxHighlighter
-                language={language}
-                style={syntaxHighlightTheme}
-                customStyle={syntaxHighlightBaseStyle}
-                showLineNumbers
-                lineNumberStyle={syntaxHighlightLineNumberStyle}
-                PreTag="div"
-                codeTagProps={{
-                  style: syntaxHighlightCodeTagStyle,
-                }}
-              >
-                {code}
-              </SyntaxHighlighter>
-            </div>
+      <CodeBox
+        copyText={code}
+        copyButtonLabel={`Copy ${language} code`}
+        variant={variant}
+        containerClassName="flex-1"
+        data-language={language}
+      >
+        {/* Syntax highlighted code */}
+        <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
+          <div className="code-snippet-wrapper">
+            <SyntaxHighlighter
+              language={language}
+              style={syntaxHighlightTheme}
+              customStyle={syntaxHighlightBaseStyle}
+              showLineNumbers
+              lineNumberStyle={syntaxHighlightLineNumberStyle}
+              PreTag="div"
+              codeTagProps={{
+                style: syntaxHighlightCodeTagStyle,
+              }}
+            >
+              {code}
+            </SyntaxHighlighter>
           </div>
         </div>
-      </div>
+      </CodeBox>
     </div>
   );
 };

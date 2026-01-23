@@ -59,5 +59,5 @@ nursery = { level = "warn", priority = -1 }
 
 # Specific overrides (document why each is allowed)
 module_name_repetitions = "allow"  # Common in API design
-missing_errors_doc = "allow"       # Tauri commands use String errors
+missing_errors_doc = "allow"
 missing_panics_doc = "allow"       # We avoid panics

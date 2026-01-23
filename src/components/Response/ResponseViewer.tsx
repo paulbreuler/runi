@@ -4,16 +4,10 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import type { HttpResponse } from '@/types/http';
-import {
-  syntaxHighlightBaseStyle,
-  syntaxHighlightCodeTagStyle,
-  syntaxHighlightLineNumberStyle,
-  syntaxHighlightTheme,
-} from '@/components/CodeHighlighting/syntaxHighlighting';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { motion, useReducedMotion } from 'motion/react';
+import { CodeSnippet } from '@/components/History/CodeSnippet';
 
 interface ResponseViewerProps {
   response: HttpResponse;
@@ -205,7 +199,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
 
         {showOverflowCue && canScrollLeft && (
           <motion.div
-            className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
+            className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
             data-testid="response-tabs-overflow-left"
             initial={false}
             animate={getOverflowAnimation('left')}
@@ -214,7 +208,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         )}
         {showOverflowCue && canScrollRight && (
           <motion.div
-            className="pointer-events-none absolute inset-y-0 right-20 w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
+            className="pointer-events-none absolute inset-y-0 right-20 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
             data-testid="response-tabs-overflow-right"
             initial={false}
             animate={getOverflowAnimation('right')}
@@ -235,29 +229,16 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         style={{ scrollbarGutter: 'stable' }}
       >
         {activeTab === 'body' && (
-          <div className="p-4" data-testid="response-body" data-language={language}>
+          <div className="p-4" data-testid="response-body">
             <span className="sr-only" data-testid="response-body-raw">
               {formattedBody}
             </span>
-            <div
-              className="overflow-x-auto"
-              style={{ scrollbarGutter: 'stable' }}
-              data-language={language}
-            >
-              <SyntaxHighlighter
-                language={language}
-                style={syntaxHighlightTheme}
-                customStyle={syntaxHighlightBaseStyle}
-                showLineNumbers
-                lineNumberStyle={syntaxHighlightLineNumberStyle}
-                PreTag="div"
-                codeTagProps={{
-                  style: syntaxHighlightCodeTagStyle,
-                }}
-              >
-                {formattedBody}
-              </SyntaxHighlighter>
-            </div>
+            <CodeSnippet
+              code={formattedBody}
+              language={language}
+              variant="borderless"
+              className="h-full"
+            />
           </div>
         )}
 
@@ -286,29 +267,16 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         )}
 
         {activeTab === 'raw' && (
-          <div className="p-4" data-testid="response-raw" data-language="http">
+          <div className="p-4" data-testid="response-raw">
             <span className="sr-only" data-testid="response-raw-text">
               {formatRawHttp(response)}
             </span>
-            <div
-              className="overflow-x-auto"
-              style={{ scrollbarGutter: 'stable' }}
-              data-language="http"
-            >
-              <SyntaxHighlighter
-                language="http"
-                style={syntaxHighlightTheme}
-                customStyle={syntaxHighlightBaseStyle}
-                showLineNumbers
-                lineNumberStyle={syntaxHighlightLineNumberStyle}
-                PreTag="div"
-                codeTagProps={{
-                  style: syntaxHighlightCodeTagStyle,
-                }}
-              >
-                {formatRawHttp(response)}
-              </SyntaxHighlighter>
-            </div>
+            <CodeSnippet
+              code={formatRawHttp(response)}
+              language="http"
+              variant="borderless"
+              className="h-full"
+            />
           </div>
         )}
       </div>

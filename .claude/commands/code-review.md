@@ -43,17 +43,21 @@ Perform a comprehensive code review following runi's quality standards and best 
    - ✅ TDD workflow followed (tests written first)
    - ✅ **Test selectors**: Components include `data-test-id` attributes on interactive elements and test targets
    - ✅ **Test queries**: Tests use `getByTestId` for element selection (not `getByText`, `getByRole`, or `getByLabel` for component identification)
-   - ✅ Zustand for global state (not Redux, not Context for shared state)
-   - ✅ Motion 12 for animations (import from `motion/react`)
 
-   **General Standards:**
-   - ✅ Test-Driven Development (TDD) - tests written before implementation
-   - ✅ All tests passing (100% pass rate required)
-   - ✅ Storybook stories for React components (where applicable)
-   - ✅ Conventional commit messages (feat, fix, test, refactor, docs, style, chore)
-   - ✅ No warnings in CI
-   - ✅ Security considerations (OWASP-inspired for API requests)
-   - ✅ Privacy-first (no telemetry, local-first data storage)
+- ✅ Zustand for global state (not Redux, not Context for shared state)
+- ✅ Motion 12 for animations (import from `motion/react`)
+- ✅ **Design Principles**: Components follow DESIGN-PRINCIPLES.md criteria (see `mcp_runi_Planning_read_doc({ path: 'plans/0018-component-design-principles-audit/plan.md' })` for audit methodology)
+- ✅ **Design Principles (RLM)**: For component-specific audit findings, use `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName')).flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })` to get targeted findings
+
+**General Standards:**
+
+- ✅ Test-Driven Development (TDD) - tests written before implementation
+- ✅ All tests passing (100% pass rate required)
+- ✅ Storybook stories for React components (where applicable)
+- ✅ Conventional commit messages (feat, fix, test, refactor, docs, style, chore)
+- ✅ No warnings in CI
+- ✅ Security considerations (OWASP-inspired for API requests)
+- ✅ Privacy-first (no telemetry, local-first data storage)
 
 4. **Provide structured feedback** organized by category:
    - **Critical Issues** (must fix before merge)
@@ -119,6 +123,7 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **Test Selectors**: Components include `data-test-id` attributes on interactive elements and test targets
 - [ ] **Test Queries**: Tests use `getByTestId` for element selection (not generic selectors for component identification)
 - [ ] **Storybook**: Component stories created (for UI components)
+- [ ] **Design Principles (RLM)**: For reviewed components, query audit findings using RLM: `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName')).flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })`
 
 ### Architecture & Patterns
 
@@ -320,6 +325,64 @@ Reviews all changes compared to main branch.
 - **eslint.config.js** - TypeScript/React linting rules
 - **tsconfig.json** - TypeScript strict mode config
 - **.prettierrc** - Prettier formatting rules
+
+## RLM Query Optimizations
+
+### Component-Specific Design Principles Audit
+
+When reviewing a specific component, use RLM queries to fetch targeted audit findings instead of reading the entire audit plan:
+
+```javascript
+// Get audit findings for a specific component
+mcp_runi_Planning_rlm_query({
+  path: 'plans/0018-component-design-principles-audit/plan.md',
+  code: `
+    const componentName = 'ComponentName'; // Extract from reviewed files
+    const findings = extractSections(doc.content)
+      .filter(s => s.title.includes(componentName))
+      .flatMap(s => extractFeatures(s.content))
+      .filter(f => f.status === 'GAP' || f.status === 'WIP');
+    return {
+      component: componentName,
+      criticalIssues: findings.filter(f => f.category === 'critical'),
+      qualityIssues: findings.filter(f => f.category === 'quality'),
+      architecturalIssues: findings.filter(f => f.category === 'architectural')
+    };
+  `,
+});
+```
+
+**Benefits:**
+
+- Faster than reading entire audit document
+- Targeted information for reviewed component
+- Can be included in review output under "Architectural Improvements"
+
+### Cross-Component Compliance Check
+
+For reviews that touch multiple components, use RLM to check compliance across all:
+
+```javascript
+// Check design principles compliance for multiple components
+mcp_runi_Planning_rlm_query({
+  path: 'plans/0018-component-design-principles-audit/plan.md',
+  code: `
+    const modifiedComponents = ['Component1', 'Component2']; // from git diff
+    const auditResults = extractSections(doc.content)
+      .filter(s => modifiedComponents.some(c => s.title.includes(c)))
+      .map(s => ({
+        component: s.title,
+        compliance: {
+          componentDriven: extractFeatures(s.content).filter(f => f.category === 'component-driven').every(f => f.status === 'PASS'),
+          designPrinciples: extractFeatures(s.content).filter(f => f.category === 'design-principles').every(f => f.status === 'PASS'),
+          implementation: extractFeatures(s.content).filter(f => f.category === 'implementation').every(f => f.status === 'PASS')
+        },
+        issues: extractFeatures(s.content).filter(f => f.status !== 'PASS')
+      }));
+    return auditResults;
+  `,
+});
+```
 
 ## Important Notes
 

@@ -31,9 +31,9 @@ describe('HeadersPanel', () => {
     );
 
     expect(screen.getByText('Response Headers')).toBeInTheDocument();
-    expect(screen.getByText('Content-Type')).toBeInTheDocument();
-    expect(screen.getByText('X-Rate-Limit')).toBeInTheDocument();
-    expect(screen.getByText('100')).toBeInTheDocument();
+    // Headers are displayed as formatted text in CodeBox
+    expect(screen.getByText(/Content-Type: application\/json/i)).toBeInTheDocument();
+    expect(screen.getByText(/X-Rate-Limit: 100/i)).toBeInTheDocument();
   });
 
   it('switches to request headers tab', async () => {
@@ -45,8 +45,9 @@ describe('HeadersPanel', () => {
     const requestTab = screen.getByRole('tab', { name: /request headers/i });
     await user.click(requestTab);
 
-    expect(screen.getByText('Authorization')).toBeInTheDocument();
-    expect(screen.getByText('Bearer token123')).toBeInTheDocument();
+    // Headers are displayed as formatted text in CodeBox
+    expect(screen.getByText(/Authorization: Bearer token123/i)).toBeInTheDocument();
+    expect(screen.getByText(/Content-Type: application\/json/i)).toBeInTheDocument();
   });
 
   it('displays empty state when no response headers', () => {
@@ -81,13 +82,18 @@ describe('HeadersPanel', () => {
     expect(screen.queryByRole('button', { name: /copy/i })).not.toBeInTheDocument();
   });
 
-  it('renders all header rows', () => {
+  it('renders all headers as formatted text', () => {
     render(
       <HeadersPanel requestHeaders={mockRequestHeaders} responseHeaders={mockResponseHeaders} />
     );
 
-    // Should render all response headers
-    const headerRows = screen.getAllByTestId('header-row');
-    expect(headerRows).toHaveLength(Object.keys(mockResponseHeaders).length);
+    // Headers should be displayed as formatted text in CodeBox
+    const headersContent = screen.getByTestId('headers-content');
+    expect(headersContent).toBeInTheDocument();
+
+    // Check that all response headers are present in the formatted text
+    Object.entries(mockResponseHeaders).forEach(([key, value]) => {
+      expect(headersContent).toHaveTextContent(`${key}: ${value}`);
+    });
   });
 });

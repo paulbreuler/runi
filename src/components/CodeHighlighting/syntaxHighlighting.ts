@@ -21,6 +21,13 @@ export const syntaxHighlightTheme = {
     padding: 0,
     margin: 0,
   },
+  'div[class*="language-"]': {
+    ...oneDark['pre[class*="language-"]'],
+    background: 'transparent',
+    padding: 0,
+    margin: 0,
+    paddingLeft: '0',
+  },
 };
 
 export const syntaxHighlightBaseStyle = {
@@ -33,7 +40,8 @@ export const syntaxHighlightBaseStyle = {
 
 export const syntaxHighlightLineNumberStyle = {
   minWidth: '2.5em',
-  paddingRight: '1em',
+  paddingLeft: '0',
+  paddingRight: '2ch',
   color: 'var(--color-text-muted)',
   opacity: 0.5,
   userSelect: 'none' as const,

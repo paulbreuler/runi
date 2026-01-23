@@ -10,8 +10,7 @@
 
 import { useState, useMemo } from 'react';
 import { cn } from '@/utils/cn';
-import { HeaderRow } from './HeaderRow';
-import { CopyButton } from './CopyButton';
+import { CodeBox } from './CodeBox';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 export interface HeadersPanelProps {
@@ -49,7 +48,7 @@ export const HeadersPanel = ({
   const currentHeaders = activeTab === 'response' ? responseHeaders : requestHeaders;
   const headerEntries = Object.entries(currentHeaders);
 
-  // Format headers as text for copying (key: value format)
+  // Format headers as text for display and copying (key: value format)
   const headersText = useMemo(() => {
     return Object.entries(currentHeaders)
       .map(([key, value]) => `${key}: ${value}`)
@@ -97,33 +96,28 @@ export const HeadersPanel = ({
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            {headerEntries.length === 0 ? (
-              <EmptyState
-                variant="muted"
-                title={`No ${activeTab} headers`}
-                description={
-                  activeTab === 'response'
-                    ? 'This response has no headers'
-                    : 'This request has no headers'
-                }
-              />
-            ) : (
-              <div className="space-y-0.5">
-                {headerEntries.map(([key, value]) => (
-                  <HeaderRow key={key} name={key} value={value} />
-                ))}
-              </div>
-            )}
-          </div>
-          {headerEntries.length > 0 && (
-            <div className="flex-shrink-0">
-              <CopyButton text={headersText} aria-label="Copy headers" />
-            </div>
-          )}
-        </div>
+      <div className="flex-1 flex flex-col">
+        {headerEntries.length === 0 ? (
+          <EmptyState
+            variant="muted"
+            title={`No ${activeTab} headers`}
+            description={
+              activeTab === 'response'
+                ? 'This response has no headers'
+                : 'This request has no headers'
+            }
+          />
+        ) : (
+          <CodeBox
+            copyText={headersText}
+            copyButtonLabel="Copy headers"
+            data-testid="headers-content"
+          >
+            <pre className="text-text-primary">
+              <code>{headersText}</code>
+            </pre>
+          </CodeBox>
+        )}
       </div>
     </div>
   );
