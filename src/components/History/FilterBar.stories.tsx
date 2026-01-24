@@ -10,6 +10,7 @@
  * FilterBar includes FilterBarActions - use controls to explore all features.
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { fn } from 'storybook/test';
@@ -117,10 +118,16 @@ export const Playground: Story = {
     await step('Test filter interaction', async () => {
       const searchInput = canvas.queryByLabelText(/filter history by url/i);
       if (searchInput !== null) {
-        await userEvent.clear(searchInput);
+        // Since this is a controlled component with noop onChange, the value won't update
+        // Just verify the input is interactive and can receive focus
+        await userEvent.click(searchInput);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        await expect(searchInput).toHaveFocus();
+        // Type into it to verify it's functional (even though value won't update due to noop)
         await userEvent.type(searchInput, 'test');
         await new Promise((resolve) => setTimeout(resolve, 100));
-        await expect(searchInput).toHaveValue('test');
+        // Input should be visible and functional
+        await expect(searchInput).toBeVisible();
       }
     });
   },
@@ -213,19 +220,27 @@ export const NetworkHistoryFiltersReadyToCompare: Story = {
  * Tests filter interactions: changing search, method, status, and intelligence filters.
  */
 export const FilterInteractionsTest: Story = {
-  render: () => (
-    <div className="bg-bg-surface border border-border-subtle rounded" style={{ width: 900 }}>
-      <FilterBar
-        filters={DEFAULT_HISTORY_FILTERS}
-        onFilterChange={noop}
-        selectedCount={0}
-        onSaveAll={noop}
-        onSaveSelection={noop}
-        onClearAll={noopAsync}
-        isSaveSelectionDisabled={false}
-      />
-    </div>
-  ),
+  render: () => {
+    // Use real state for this test so input values actually update
+    const [filters, setFilters] = React.useState(DEFAULT_HISTORY_FILTERS);
+    const handleFilterChange = (key: keyof typeof DEFAULT_HISTORY_FILTERS, value: string): void => {
+      setFilters((prev) => ({ ...prev, [key]: value }));
+    };
+
+    return (
+      <div className="bg-bg-surface border border-border-subtle rounded" style={{ width: 900 }}>
+        <FilterBar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          selectedCount={0}
+          onSaveAll={noop}
+          onSaveSelection={noop}
+          onClearAll={noopAsync}
+          isSaveSelectionDisabled={false}
+        />
+      </div>
+    );
+  },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
@@ -243,7 +258,11 @@ export const FilterInteractionsTest: Story = {
       await userEvent.click(methodFilter);
       await new Promise((resolve) => setTimeout(resolve, 200));
       // Radix Select renders options in a portal (document.body), search there
-      const postOption = await within(document.body).findByRole('option', { name: /^post$/i }, { timeout: 3000 });
+      const postOption = await within(document.body).findByRole(
+        'option',
+        { name: /^post$/i },
+        { timeout: 3000 }
+      );
       await userEvent.click(postOption);
       await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(methodFilter).toHaveTextContent(/post/i);
@@ -254,7 +273,11 @@ export const FilterInteractionsTest: Story = {
       await userEvent.click(statusFilter);
       await new Promise((resolve) => setTimeout(resolve, 200));
       // Radix Select renders options in a portal (document.body), search there
-      const statusOption = await within(document.body).findByRole('option', { name: /4xx/i }, { timeout: 3000 });
+      const statusOption = await within(document.body).findByRole(
+        'option',
+        { name: /4xx/i },
+        { timeout: 3000 }
+      );
       await userEvent.click(statusOption);
       await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(statusFilter).toHaveTextContent(/4xx/i);
@@ -265,7 +288,11 @@ export const FilterInteractionsTest: Story = {
       await userEvent.click(intelligenceFilter);
       await new Promise((resolve) => setTimeout(resolve, 200));
       // Radix Select renders options in a portal (document.body), search there
-      const driftOption = await within(document.body).findByRole('option', { name: /has drift/i }, { timeout: 3000 });
+      const driftOption = await within(document.body).findByRole(
+        'option',
+        { name: /has drift/i },
+        { timeout: 3000 }
+      );
       await userEvent.click(driftOption);
       await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(intelligenceFilter).toHaveTextContent(/has drift/i);

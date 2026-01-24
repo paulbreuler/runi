@@ -148,8 +148,9 @@ export const Playground: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     await step('Verify console panel renders', async () => {
-      const panel = canvasElement.querySelector('[data-testid="console-panel"]');
-      await expect(panel).toBeInTheDocument();
+      // ConsolePanel doesn't have a root data-testid, check for console-logs instead
+      const logsContainer = await canvas.findByTestId('console-logs', {}, { timeout: 3000 });
+      await expect(logsContainer).toBeInTheDocument();
     });
     await step('Test filter interaction', async () => {
       // Try both singular and plural forms of "error" button

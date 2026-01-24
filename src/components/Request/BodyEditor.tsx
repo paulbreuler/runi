@@ -135,12 +135,17 @@ export const BodyEditor = (): React.JSX.Element => {
           onKeyDown={(e) => {
             if (e.key === 'Tab') {
               e.preventDefault();
-              const start = e.currentTarget.selectionStart;
-              const end = e.currentTarget.selectionEnd;
+              const textarea = e.currentTarget;
+              const start = textarea.selectionStart;
+              const end = textarea.selectionEnd;
               const newValue = body.substring(0, start) + '  ' + body.substring(end);
               setBody(newValue);
               setTimeout(() => {
-                e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 2;
+                // Check if textarea still exists and is mounted before setting selection
+                if (textareaRef.current !== null && textareaRef.current === textarea) {
+                  textarea.selectionStart = start + 2;
+                  textarea.selectionEnd = start + 2;
+                }
               }, 0);
             }
           }}

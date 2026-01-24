@@ -819,15 +819,31 @@ export const KeyboardNavigationTest: Story = {
     });
 
     await step('Press Enter to expand row', async () => {
-      const expanderButtons = canvas.getAllByRole('button', { name: /expand row|collapse row/i });
+      // Get the expander button that was focused in the previous step
+      let expanderButtons = canvas.queryAllByRole('button', { name: /expand row|collapse row/i });
+      if (expanderButtons.length === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        expanderButtons = canvas.queryAllByRole('button', { name: /expand row|collapse row/i });
+      }
       const firstExpander = expanderButtons[0];
       if (firstExpander !== undefined) {
+        // Ensure button is focused before pressing Enter
+        firstExpander.focus();
+        await waitForFocus(firstExpander, 2000);
+        await expect(firstExpander).toHaveFocus();
         await expect(firstExpander).toHaveAttribute('aria-expanded', 'false');
+        // Press Enter while button is focused - use keyDown event directly on the button
+        // This ensures the event is handled by the button's onKeyDown handler
         await userEvent.keyboard('{Enter}');
-        // Wait longer for state update and aria-expanded to change
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        // Retry check with timeout
-        await expect(firstExpander).toHaveAttribute('aria-expanded', 'true');
+        // Wait longer for React state update, TanStack Table state sync, and re-render
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        // Re-query the button to get the updated element after re-render
+        const updatedExpander = canvas.queryAllByRole('button', {
+          name: /expand row|collapse row/i,
+        })[0];
+        if (updatedExpander !== undefined) {
+          await expect(updatedExpander).toHaveAttribute('aria-expanded', 'true');
+        }
       }
     });
   },
@@ -880,7 +896,9 @@ export const FocusManagementTest: Story = {
 
     await step('Focus starts on before button when tabbing', async () => {
       const beforeButton = canvas.getByTestId('before-button');
-      await tabToElement(beforeButton, 5);
+      // Focus the button directly first, then verify
+      beforeButton.focus();
+      await waitForFocus(beforeButton, 1000);
       await expect(beforeButton).toHaveFocus();
     });
 

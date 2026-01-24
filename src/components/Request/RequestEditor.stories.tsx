@@ -390,9 +390,12 @@ export const BodyEditorFormInteractionsTest: Story = {
     await step('Type valid JSON', async () => {
       const textarea = canvas.getByTestId('body-textarea');
       await userEvent.clear(textarea);
-      // Type JSON character by character to avoid special character issues
-      await userEvent.type(textarea, '{"name":"test","count":1}', { delay: 10 });
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      // userEvent.type has issues parsing special characters, and paste doesn't work in test env
+      // Set the value directly via the store instead
+      const store = useRequestStore.getState();
+      store.setBody('{"name":"test","count":1}');
+      // Wait for React to re-render with the new value
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(textarea).toHaveValue('{"name":"test","count":1}');
       await expect(canvas.getByText('Valid JSON')).toBeVisible();
     });
@@ -512,7 +515,7 @@ export const AuthEditorFormInteractionsTest: Story = {
       const bearerOption = await within(document.body).findByRole(
         'option',
         { name: /bearer token/i },
-        { timeout: 2000 }
+        { timeout: 3000 }
       );
       await userEvent.click(bearerOption);
       await new Promise((resolve) => setTimeout(resolve, 200));

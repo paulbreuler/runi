@@ -46,6 +46,11 @@ export interface ExpandedActionButtonsProps {
  * - Add to Collection: Add request to collection
  * - Block/Unblock: Toggle blocking state
  *
+ * Features:
+ * - Horizontal scroll: Buttons maintain their size and scroll left-to-right on smaller screens
+ * - Touch/swipe gesture support for mobile devices
+ * - Hidden scrollbars for clean appearance
+ *
  * @example
  * ```tsx
  * <ExpandedActionButtons
@@ -98,79 +103,84 @@ export const ExpandedActionButtons = ({
   return (
     <div
       data-testid="expanded-action-buttons"
-      className={cn('flex items-center gap-2 border-t border-border-subtle px-4 py-3', className)}
+      className={cn('border-t border-border-subtle py-3', className)}
     >
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleReplay}
-        aria-label="Edit & Replay"
-        title="Edit & Replay"
-        data-testid="replay-button"
-      >
-        <Play size={14} />
-        <span>Edit & Replay</span>
-      </Button>
+      {/* Scrollable content container */}
+      <div className="w-full min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x">
+        <div className="flex items-center gap-2 min-w-max px-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleReplay}
+            aria-label="Edit & Replay"
+            title="Edit & Replay"
+            data-testid="replay-button"
+          >
+            <Play size={14} />
+            <span>Edit & Replay</span>
+          </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleCopy}
-        aria-label="Copy as cURL"
-        title="Copy as cURL"
-        data-testid="copy-curl-button"
-      >
-        <Copy size={14} />
-        <span>Copy cURL</span>
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopy}
+            aria-label="Copy as cURL"
+            title="Copy as cURL"
+            data-testid="copy-curl-button"
+          >
+            <Copy size={14} />
+            <span>Copy cURL</span>
+          </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleChain}
-        aria-label="Chain Request"
-        title="Chain Request"
-        data-testid="chain-button"
-      >
-        <Link2 size={14} />
-        <span>Chain Request</span>
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleChain}
+            aria-label="Chain Request"
+            title="Chain Request"
+            data-testid="chain-button"
+          >
+            <Link2 size={14} />
+            <span>Chain Request</span>
+          </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleGenerateTests}
-        aria-label="Generate Tests"
-        title="Generate Tests"
-        data-testid="generate-tests-button"
-      >
-        <TestTube size={14} />
-        <span>Generate Tests</span>
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleGenerateTests}
+            aria-label="Generate Tests"
+            title="Generate Tests"
+            data-testid="generate-tests-button"
+          >
+            <TestTube size={14} />
+            <span>Generate Tests</span>
+          </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleAddToCollection}
-        aria-label="Add to Collection"
-        title="Add to Collection"
-        data-testid="add-to-collection-button"
-      >
-        <FolderPlus size={14} />
-        <span>Add to Collection</span>
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAddToCollection}
+            aria-label="Add to Collection"
+            title="Add to Collection"
+            data-testid="add-to-collection-button"
+          >
+            <FolderPlus size={14} />
+            <span>Add to Collection</span>
+          </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleBlockToggle}
-        aria-label={isBlocked ? 'Unblock' : 'Block'}
-        title={isBlocked ? 'Unblock' : 'Block'}
-        data-testid="block-toggle-button"
-      >
-        {isBlocked ? <Unlock size={14} /> : <Ban size={14} />}
-        <span>{isBlocked ? 'Unblock' : 'Block'}</span>
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBlockToggle}
+            aria-label={isBlocked ? 'Unblock' : 'Block'}
+            title={isBlocked ? 'Unblock' : 'Block'}
+            data-testid="block-toggle-button"
+          >
+            {isBlocked ? <Unlock size={14} /> : <Ban size={14} />}
+            <span>{isBlocked ? 'Unblock' : 'Block'}</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

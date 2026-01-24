@@ -285,7 +285,11 @@ export const FilterInteractionsTest: Story = {
       await userEvent.click(methodFilter);
       await new Promise((resolve) => setTimeout(resolve, 200));
       // Radix Select renders options in a portal (document.body), search there
-      const postOption = await within(document.body).findByRole('option', { name: /^post$/i }, { timeout: 3000 });
+      const postOption = await within(document.body).findByRole(
+        'option',
+        { name: /^post$/i },
+        { timeout: 3000 }
+      );
       await userEvent.click(postOption);
       await new Promise((resolve) => setTimeout(resolve, 200));
       const rows = canvas.getAllByTestId('history-row');
@@ -335,8 +339,9 @@ export const DoubleClickBehaviorTest: Story = {
       const firstRow = rows[0];
       if (firstRow !== undefined) {
         await userEvent.click(firstRow);
-        // Wait longer for state update and class application
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        // NetworkHistoryPanel uses a timeout for selection, wait longer for state update
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        // Wait for the class to be applied (React state update + re-render)
         await expect(firstRow).toHaveClass('bg-bg-raised/30');
       }
     });
