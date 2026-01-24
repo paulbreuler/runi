@@ -826,8 +826,11 @@ mod tests {
 
         // Calculate averages manually
         let count = parsed_entries.len();
+        // Precision loss is acceptable for count (max 3 entries)
+        #[allow(clippy::cast_precision_loss)]
         let avg_total = parsed_entries.iter().map(|e| e.timing.total).sum::<f64>() / count as f64;
-        assert_eq!(avg_total, 200.0);
+        // Use approximate equality for float comparisons (clippy::float_cmp)
+        assert!((avg_total - 200.0).abs() < f64::EPSILON);
 
         // Test last 3 logic
         let last_3: Vec<StartupTimingEntry> = parsed_entries
@@ -840,8 +843,9 @@ mod tests {
             .rev()
             .collect();
         assert_eq!(last_3.len(), 3);
-        assert_eq!(last_3[0].timing.total, 100.0);
-        assert_eq!(last_3[2].timing.total, 300.0);
+        // Use approximate equality for float comparisons (clippy::float_cmp)
+        assert!((last_3[0].timing.total - 100.0).abs() < f64::EPSILON);
+        assert!((last_3[2].timing.total - 300.0).abs() < f64::EPSILON);
     }
 
     /// Create a test request with a unique URL to ensure test isolation.
