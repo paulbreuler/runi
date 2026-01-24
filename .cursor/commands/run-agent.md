@@ -90,7 +90,34 @@ Assesses all agents in the plan for completion status and file organization.
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
-2. **GitHub Issue Creation:**
+2. **Claim Task (CRITICAL - Do this first):**
+   - After determining which agent file will be opened, **immediately claim the task** using MCP `claim_task` tool
+   - **Extract plan name** from agent file path: `plans/<plan-name>/agents/...` → `<plan-name>` (e.g., `0023-memory-metrics-ui`)
+   - **Extract feature number(s)** from agent file content: Look for `### Feature #<number>:` patterns (e.g., `#1`, `#2`)
+   - **Construct taskId**: Format is `<plan-name>#<feature-number>` (e.g., `0023-memory-metrics-ui#1`)
+   - **Extract agentId** from agent file name: `<agent-file-name>` (e.g., `000_agent_memory_warning.agent.md`)
+   - **For agents with multiple features**: Claim each feature separately, or claim the first/primary feature
+   - Call: `call_mcp_tool` with server `mcp-planning-server`, tool `claim_task`, arguments:
+     ```json
+     {
+       "taskId": "<plan-name>#<feature-number>",
+       "agentId": "<agent-file-name>",
+       "persona": "coder"
+     }
+     ```
+   - **Example**: For agent file `plans/0023-memory-metrics-ui/agents/000_agent_memory_warning.agent.md` with Feature #1:
+     ```json
+     {
+       "taskId": "0023-memory-metrics-ui#1",
+       "agentId": "000_agent_memory_warning.agent.md",
+       "persona": "coder"
+     }
+     ```
+   - **This must happen BEFORE opening the file or starting work** to prevent conflicts
+   - **Note**: Server name changed from `user-runi Planning` to `mcp-planning-server` (new location: `../mcp-planning-server`)
+   - **Note**: The server expects taskId format `<plan-name>#<feature-number>`, not the agent file path
+
+3. **GitHub Issue Creation:**
    - The script automatically creates GitHub issues when an agent file is opened (if issues don't exist)
    - **Agent Issue (parent)**: Created first, represents the agent work
    - **Feature Subissues (children)**: Created for each feature using `gh sub-issue create --parent <agent-issue>`
@@ -101,13 +128,13 @@ Assesses all agents in the plan for completion status and file organization.
    - Agent issue remains open (parent issue, not closed by PR)
    - If GitHub CLI or `gh sub-issue` extension is not available, issue creation is skipped (non-blocking)
 
-3. **Display output:**
+4. **Display output:**
    - Show task selection results (if applicable)
    - Show agent status assessment
    - Show context and instructions
    - Display clickable file links
 
-4. **Provide guidance:**
+5. **Provide guidance:**
    - Explain next steps for the agent
    - Reference related commands (`just close-feature-agent`, `just assess-agents`, `just work`, `just heal`)
    - Show how to verify completion

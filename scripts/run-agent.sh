@@ -37,6 +37,36 @@ get_absolute_path() {
     fi
 }
 
+# Function to resolve plan number to directory name
+resolve_plan_number() {
+    local plan_input="$1"
+    local PLANS_DIR="../runi-planning-docs/plans"
+    
+    # If it's already in N-descriptive-name format, return as-is
+    if [[ "$plan_input" =~ ^[0-9]+- ]]; then
+        echo "$plan_input"
+        return 0
+    fi
+    
+    # If it's just a number, find the directory that starts with N-
+    if [[ "$plan_input" =~ ^[0-9]+$ ]]; then
+        local found=$(find "$PLANS_DIR" -maxdepth 1 -type d -name "${plan_input}-*" ! -name "plans" ! -name "templates" 2>/dev/null | head -1)
+        if [ -n "$found" ]; then
+            echo "$(basename "$found")"
+            return 0
+        fi
+        # Fallback: try N-plan for backward compatibility
+        if [ -d "$PLANS_DIR/${plan_input}-plan" ]; then
+            echo "${plan_input}-plan"
+            return 0
+        fi
+    fi
+    
+    # Otherwise, return as-is (for backward compatibility with old names)
+    echo "$plan_input"
+    return 0
+}
+
 # Function to create clickable hyperlink
 create_hyperlink() {
     local full_path="$1"

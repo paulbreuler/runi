@@ -199,6 +199,75 @@ class ConsoleService {
   }
 
   /**
+   * Add a new log entry or update an existing one if ID matches.
+   *
+   * If a log with the same `id` already exists and has `isUpdating: true`,
+   * the existing log is updated in place. Otherwise, a new log is added.
+   *
+   * @param log - Log entry with required `id` field
+   *
+   * @example
+   * ```typescript
+   * // Create or update memory metrics log
+   * service.addOrUpdateLog({
+   *   id: 'memory-metrics',
+   *   level: 'info',
+   *   message: 'Memory Usage',
+   *   args: [{ current: 245.5, average: 220.3 }],
+   *   isUpdating: true,
+   * });
+   * ```
+   */
+  public addOrUpdateLog(log: Partial<ConsoleLog> & { id: string }): void {
+    // Check if log with same ID exists and is marked as updating
+    const existingIndex = this.logs.findIndex((l) => l.id === log.id);
+    if (existingIndex !== -1) {
+      const existingLog = this.logs[existingIndex];
+      if (existingLog?.isUpdating === true) {
+        // Update existing log in place
+        const oldSize = existingLog.sizeBytes ?? 0;
+        const updatedLog: ConsoleLog = {
+          ...existingLog,
+          ...log,
+          id: log.id, // Ensure ID is preserved
+          timestamp: log.timestamp ?? existingLog.timestamp, // Preserve original timestamp or use new one
+          isUpdating: log.isUpdating ?? existingLog.isUpdating, // Preserve isUpdating flag
+        };
+
+        // Re-estimate size
+        const newSize = this.estimateLogSize(updatedLog);
+        updatedLog.sizeBytes = newSize;
+
+        // Update size tracking
+        this.currentSizeBytes = this.currentSizeBytes - oldSize + newSize;
+
+        // Replace log in array
+        this.logs[existingIndex] = updatedLog;
+
+        // Notify subscribers (unless suppressed for Storybook isolation)
+        if (!this.notificationsSuppressed) {
+          this.subscribers.forEach((handler) => {
+            try {
+              handler(updatedLog);
+            } catch (error) {
+              // Ignore subscriber errors
+              this.originalConsole?.error('Console service subscriber error:', error);
+            }
+          });
+
+          // Emit event via event bus
+          globalEventBus.emit(LOG_LEVEL_EVENTS[updatedLog.level], updatedLog);
+        }
+
+        return;
+      }
+    }
+
+    // No existing updating log found - add as new log (with isUpdating flag preserved)
+    this.addLog(log);
+  }
+
+  /**
    * Add a log entry.
    *
    * Logs are filtered based on the minimum log level setting.
@@ -213,6 +282,7 @@ class ConsoleService {
       timestamp: log.timestamp ?? Date.now(),
       source: log.source,
       correlationId: log.correlationId,
+      isUpdating: log.isUpdating,
     };
 
     // Filter based on minimum log level

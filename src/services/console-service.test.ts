@@ -347,4 +347,208 @@ describe('console-service', () => {
       expect(handler).toHaveBeenCalledTimes(1); // Still 1, not 2
     });
   });
+
+  describe('addOrUpdateLog', () => {
+    it('creates new log when ID does not exist', () => {
+      const service = getConsoleService();
+      service.clear();
+
+      service.addOrUpdateLog({
+        id: 'test-id-1',
+        level: 'info',
+        message: 'Test message',
+        args: [],
+        isUpdating: true,
+      });
+
+      const logs = service.getLogs();
+      expect(logs.length).toBe(1);
+      expect(logs[0]?.id).toBe('test-id-1');
+      expect(logs[0]?.message).toBe('Test message');
+    });
+
+    it('updates existing log when ID matches and isUpdating is true', () => {
+      const service = getConsoleService();
+      service.clear();
+
+      // Create initial log
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Initial message',
+        args: [],
+        isUpdating: true,
+      });
+
+      const initialLogs = service.getLogs();
+      expect(initialLogs.length).toBe(1);
+
+      // Update the log
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Updated message',
+        args: [{ data: 'new data' }],
+        isUpdating: true,
+      });
+
+      const updatedLogs = service.getLogs();
+      expect(updatedLogs.length).toBe(1); // Still only one log
+      expect(updatedLogs[0]?.id).toBe('updating-log');
+      expect(updatedLogs[0]?.message).toBe('Updated message');
+      expect(updatedLogs[0]?.args).toEqual([{ data: 'new data' }]);
+    });
+
+    it('creates new log when ID matches but existing log is not updating', () => {
+      const service = getConsoleService();
+      service.clear();
+
+      // Create initial log without isUpdating
+      service.addLog({
+        id: 'regular-log',
+        level: 'info',
+        message: 'Initial message',
+        args: [],
+      });
+
+      const initialLogs = service.getLogs();
+      expect(initialLogs.length).toBe(1);
+
+      // Try to update - should create new log instead
+      service.addOrUpdateLog({
+        id: 'regular-log',
+        level: 'info',
+        message: 'Updated message',
+        args: [],
+        isUpdating: true,
+      });
+
+      const updatedLogs = service.getLogs();
+      expect(updatedLogs.length).toBe(2); // Two logs now
+      expect(updatedLogs[0]?.message).toBe('Initial message');
+      expect(updatedLogs[1]?.message).toBe('Updated message');
+    });
+
+    it('preserves original timestamp when updating', () => {
+      const service = getConsoleService();
+      service.clear();
+
+      const originalTimestamp = Date.now() - 1000; // 1 second ago
+
+      // Create initial log
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Initial message',
+        args: [],
+        timestamp: originalTimestamp,
+        isUpdating: true,
+      });
+
+      // Update without providing timestamp
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Updated message',
+        args: [],
+        isUpdating: true,
+      });
+
+      const logs = service.getLogs();
+      expect(logs.length).toBe(1);
+      expect(logs[0]?.timestamp).toBe(originalTimestamp);
+    });
+
+    it('updates timestamp when explicitly provided', () => {
+      const service = getConsoleService();
+      service.clear();
+
+      const originalTimestamp = Date.now() - 1000;
+      const newTimestamp = Date.now();
+
+      // Create initial log
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Initial message',
+        args: [],
+        timestamp: originalTimestamp,
+        isUpdating: true,
+      });
+
+      // Update with new timestamp
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Updated message',
+        args: [],
+        timestamp: newTimestamp,
+        isUpdating: true,
+      });
+
+      const logs = service.getLogs();
+      expect(logs.length).toBe(1);
+      expect(logs[0]?.timestamp).toBe(newTimestamp);
+    });
+
+    it('emits event when updating existing log', () => {
+      const service = getConsoleService();
+      service.clear();
+
+      const handler = vi.fn();
+      service.subscribe(handler);
+
+      // Create initial log
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Initial message',
+        args: [],
+        isUpdating: true,
+      });
+
+      expect(handler).toHaveBeenCalledTimes(1);
+
+      // Update the log
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Updated message',
+        args: [],
+        isUpdating: true,
+      });
+
+      expect(handler).toHaveBeenCalledTimes(2);
+      expect(handler.mock.calls[1]?.[0]?.message).toBe('Updated message');
+    });
+
+    it('updates size tracking when log is updated', () => {
+      const service = getConsoleService();
+      service.clear();
+
+      // Create initial log
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'Short message',
+        args: [],
+        isUpdating: true,
+      });
+
+      const initialSize = service.getCurrentSizeBytes();
+      expect(initialSize).toBeGreaterThan(0);
+
+      // Update with longer message
+      service.addOrUpdateLog({
+        id: 'updating-log',
+        level: 'info',
+        message: 'This is a much longer message that should increase the size',
+        args: [{ large: 'data object with more content' }],
+        isUpdating: true,
+      });
+
+      const updatedSize = service.getCurrentSizeBytes();
+      expect(updatedSize).toBeGreaterThan(initialSize);
+    });
+  });
 });

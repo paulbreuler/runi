@@ -32,7 +32,7 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 > **Planning Documents:** Access design and planning documents via MCP tools (separate repository at `../runi-planning-docs/`):
 >
-> **Use `mcp_runi_Planning_read_doc` to read:**
+> **Use MCP server `mcp-planning-server` (located at `../mcp-planning-server`) with tool `read_doc` to read:**
 >
 > - `VISION.md` — North star document
 > - `runi-design-vision-v8.1.md` — Complete design specification

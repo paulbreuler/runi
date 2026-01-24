@@ -34,4 +34,16 @@ export interface ConsoleLog {
   correlationId?: string;
   /** Approximate size in bytes (internal use for memory limiting) */
   sizeBytes?: number;
+  /** If true, this log can be updated in place (for metrics/logs that change over time) */
+  isUpdating?: boolean;
+}
+
+/**
+ * Type guard to check if a log is an updating log.
+ *
+ * @param log - Console log to check
+ * @returns True if log is marked as updating
+ */
+export function isUpdatingLog(log: ConsoleLog): boolean {
+  return log.isUpdating === true;
 }

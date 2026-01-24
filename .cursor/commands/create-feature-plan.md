@@ -12,12 +12,16 @@ Generate a TDD plan with verbose planning docs and minimal agent execution files
 
 This command uses MCP planning tools for document management:
 
-- `mcp_runi_Planning_create_plan` - Create the plan structure
-- `mcp_runi_Planning_create_doc` - Create planning documents (plan.md, interfaces.md, README.md, gotchas.md)
-- `mcp_runi_Planning_list_docs` - List existing plans to determine next plan number
-- `mcp_runi_Planning_read_doc` - Read existing documents for reference
-- `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
-- `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
+- **Server**: `mcp-planning-server` (located at `../mcp-planning-server`)
+- **Tools**:
+  - `create_plan` - Create the plan structure
+  - `create_doc` - Create planning documents (plan.md, interfaces.md, README.md, gotchas.md)
+  - `list_docs` - List existing plans to determine next plan number
+  - `read_doc` - Read existing documents for reference
+  - `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
+  - `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
+
+**Usage**: Call tools via `call_mcp_tool` with `server: "mcp-planning-server"` and the tool name (e.g., `create_plan`, `create_doc`, etc.)
 
 ## Skills Integration
 
@@ -47,17 +51,17 @@ Ask user for:
 
 **Use MCP tools for document creation:**
 
-1. **Determine next plan number** using `mcp_runi_Planning_list_docs`:
+1. **Determine next plan number** using `list_docs` (server: `mcp-planning-server`):
    - List all plans in `../runi-planning-docs/plans/`
    - Extract numeric prefixes from directory names
    - Find maximum plan number (handle both padded and unpadded formats)
    - Next plan number = max + 1
 
-2. **Create plan structure** using `mcp_runi_Planning_create_plan`:
+2. **Create plan structure** using `create_plan` (server: `mcp-planning-server`):
    - Plan name: `NNNN-descriptive-name` (zero-padded to 4 digits)
    - Description: Brief overview of the plan
 
-3. **Create planning documents** using `mcp_runi_Planning_create_doc`:
+3. **Create planning documents** using `create_doc` (server: `mcp-planning-server`):
    - Use template `none` for plan.md, interfaces.md, README.md
    - Use template `addendum` for gotchas.md (if template available)
    - Path format: `plans/NNNN-descriptive-name/filename.md`
@@ -95,7 +99,7 @@ Ask user for:
 **4. gotchas.md** - Empty, ready for discoveries
 
 - Template with format
-- Created using `mcp_runi_Planning_create_doc` with appropriate template
+  - Created using `create_doc` (server: `mcp-planning-server`) with appropriate template
 
 ### Phase 3: Assign Features to Agents
 
@@ -119,7 +123,7 @@ Each agent should have:
 
 **Use MCP tools for agent file creation:**
 
-- Create agent files using `mcp_runi_Planning_create_doc`
+- Create agent files using `create_doc` (server: `mcp-planning-server`)
 - Path format: `plans/NNNN-descriptive-name/agents/NNN_agent_descriptive-name.agent.md`
 - Use template `none` (agent files are code, not documentation)
 
@@ -364,47 +368,75 @@ Review README.md status matrix
 
 ```typescript
 // 1. List existing plans to find next number
-const plans = await mcp_runi_Planning_list_docs({ path: 'plans' });
+const plans = await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'list_docs',
+  arguments: { path: 'plans' },
+});
 
 // 2. Create plan structure
-await mcp_runi_Planning_create_plan({
-  name: '0008-storybook-testing-overhaul',
-  description: 'Overhaul Storybook testing infrastructure with templates and utilities',
+await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'create_plan',
+  arguments: {
+    name: '0008-storybook-testing-overhaul',
+    description: 'Overhaul Storybook testing infrastructure with templates and utilities',
+  },
 });
 
 // 3. Create plan.md
-await mcp_runi_Planning_create_doc({
-  path: 'plans/0008-storybook-testing-overhaul/plan.md',
-  content: '...', // Full verbose specs
-  template: 'none',
+await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'create_doc',
+  arguments: {
+    path: 'plans/0008-storybook-testing-overhaul/plan.md',
+    content: '...', // Full verbose specs
+    template: 'none',
+  },
 });
 
 // 4. Create interfaces.md
-await mcp_runi_Planning_create_doc({
-  path: 'plans/0008-storybook-testing-overhaul/interfaces.md',
-  content: '...', // Contract definitions
-  template: 'none',
+await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'create_doc',
+  arguments: {
+    path: 'plans/0008-storybook-testing-overhaul/interfaces.md',
+    content: '...', // Contract definitions
+    template: 'none',
+  },
 });
 
 // 5. Create README.md
-await mcp_runi_Planning_create_doc({
-  path: 'plans/0008-storybook-testing-overhaul/README.md',
-  content: '...', // Index with dependency graph
-  template: 'none',
+await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'create_doc',
+  arguments: {
+    path: 'plans/0008-storybook-testing-overhaul/README.md',
+    content: '...', // Index with dependency graph
+    template: 'none',
+  },
 });
 
 // 6. Create gotchas.md
-await mcp_runi_Planning_create_doc({
-  path: 'plans/0008-storybook-testing-overhaul/gotchas.md',
-  content: '...', // Empty template
-  template: 'addendum', // or 'none' if addendum template not available
+await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'create_doc',
+  arguments: {
+    path: 'plans/0008-storybook-testing-overhaul/gotchas.md',
+    content: '...', // Empty template
+    template: 'addendum', // or 'none' if addendum template not available
+  },
 });
 
 // 7. Create agent files
-await mcp_runi_Planning_create_doc({
-  path: 'plans/0008-storybook-testing-overhaul/agents/000_agent_infrastructure.agent.md',
-  content: '...', // Distilled agent context
-  template: 'none',
+await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'create_doc',
+  arguments: {
+    path: 'plans/0008-storybook-testing-overhaul/agents/000_agent_infrastructure.agent.md',
+    content: '...', // Distilled agent context
+    template: 'none',
+  },
 });
 ```
 
@@ -412,14 +444,22 @@ await mcp_runi_Planning_create_doc({
 
 ```typescript
 // Read existing plan for reference
-const existingPlan = await mcp_runi_Planning_read_doc({
-  path: 'plans/0005-storybook-testing-overhaul/plan.md',
+const existingPlan = await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'read_doc',
+  arguments: {
+    path: 'plans/0005-storybook-testing-overhaul/plan.md',
+  },
 });
 
 // Read specific lines
-const interfaces = await mcp_runi_Planning_read_doc({
-  path: 'plans/0005-storybook-testing-overhaul/interfaces.md',
-  lines: [1, 50], // Read lines 1-50
+const interfaces = await call_mcp_tool({
+  server: 'mcp-planning-server',
+  toolName: 'read_doc',
+  arguments: {
+    path: 'plans/0005-storybook-testing-overhaul/interfaces.md',
+    lines: [1, 50], // Read lines 1-50
+  },
 });
 ```
 
