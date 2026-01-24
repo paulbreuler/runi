@@ -106,7 +106,17 @@ export const ExpandedActionButtons = ({
       className={cn('border-t border-border-subtle py-3', className)}
     >
       {/* Scrollable content container */}
-      <div className="w-full min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x">
+      {/*
+        Note: scrollbar-hidden is used for horizontal scrolling of action buttons.
+        The overflow-x-auto ensures content is scrollable. ARIA attributes (role="region"
+        and aria-label) provide accessibility context. Consider adding visible scroll
+        indicators or styled scrollbars for better accessibility if needed.
+      */}
+      <div
+        className="w-full min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
+        role="region"
+        aria-label="Action buttons"
+      >
         <div className="flex items-center gap-2 min-w-max px-4">
           <Button
             variant="ghost"

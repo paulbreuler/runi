@@ -8,8 +8,9 @@
  * @description Consolidated story using Storybook 10 controls
  */
 
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { IntelligenceSignals, type IntelligenceSignalsProps } from './IntelligenceSignals';
+import { IntelligenceSignals } from './IntelligenceSignals';
 import { SignalDot } from './SignalDot';
 import type { IntelligenceInfo } from '@/types/history';
 
@@ -20,7 +21,7 @@ interface IntelligenceSignalsStoryArgs {
 
 const meta = {
   title: 'History/Signals/IntelligenceSignals',
-  component: IntelligenceSignals,
+  component: IntelligenceSignals as React.ComponentType<IntelligenceSignalsStoryArgs>,
   parameters: {
     layout: 'centered',
     docs: {
@@ -46,12 +47,12 @@ This story file includes both IntelligenceSignals and SignalDot stories.`,
   args: {
     signalType: 'verified',
   },
-} satisfies Meta<IntelligenceSignalsProps & IntelligenceSignalsStoryArgs>;
+} satisfies Meta<IntelligenceSignalsStoryArgs>;
 
 export default meta;
-type Story = StoryObj<IntelligenceSignalsProps & IntelligenceSignalsStoryArgs>;
+type Story = StoryObj<IntelligenceSignalsStoryArgs>;
 
-const createIntelligence = (type: string): IntelligenceInfo => {
+const createIntelligence = (type: IntelligenceSignalsStoryArgs['signalType']): IntelligenceInfo => {
   switch (type) {
     case 'verified':
       return {
@@ -124,7 +125,7 @@ const wrapper = (children: React.ReactNode): React.JSX.Element => (
  */
 export const Playground: Story = {
   render: (args) => {
-    const intelligence = createIntelligence(args.signalType as string);
+    const intelligence = createIntelligence(args.signalType ?? 'verified');
     return wrapper(<IntelligenceSignals intelligence={intelligence} />);
   },
   parameters: {

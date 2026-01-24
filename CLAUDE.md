@@ -421,7 +421,8 @@ Stories are **visual documentation** and **interactive test cases**. All 62+ sto
 
 **Do:**
 
-- Create stories that showcase component states and variations
+- **Use controls for state variations** instead of separate stories - One Playground story per component with controls covers most cases
+- Create stories that showcase component states and variations (via controls, not separate stories)
 - Use `play` functions for interaction testing (keyboard navigation, user flows, state changes)
 - Keep stories minimal and focused (1 concept per story)
 - Add brief JSDoc comments explaining each story's purpose
@@ -432,10 +433,11 @@ Stories are **visual documentation** and **interactive test cases**. All 62+ sto
 
 **Don't:**
 
+- **Create separate stories for every prop combination** - Use controls instead (we consolidated from 500+ stories to 50-75 by using controls)
 - Put performance tests in stories (use `*.test.tsx` files instead)
 - Create stories with complex automated test logic (loops, timing, etc.)
 - Duplicate unit test coverage in stories
-- Add more than 6-8 stories per component
+- Add more than 1-3 stories per component (use controls for variations)
 - Use `getByText()` or `getByRole()` for component identification (use `getByTestId()` instead)
 
 **Story Naming:**
@@ -446,13 +448,20 @@ Stories are **visual documentation** and **interactive test cases**. All 62+ sto
 - `FullIntegration` - component with real child components
 - `[Feature]Test` - stories with `play` functions for automated testing
 
-**Example with Play Function:**
+**Example with Controls and Play Function:**
 
 ```tsx
 import { expect, userEvent, within } from 'storybook/test';
 import { tabToElement } from '@/utils/storybook-test-helpers';
 
-export const KeyboardNavigationTest: Story = {
+// Use controls for state variations, not separate stories
+export const Playground: Story = {
+  args: { variant: 'default', size: 'default', disabled: false },
+  argTypes: {
+    variant: { control: 'select', options: ['default', 'destructive', 'outline'] },
+    size: { control: 'select', options: ['sm', 'default', 'lg'] },
+    disabled: { control: 'boolean' },
+  },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByTestId('submit-button');

@@ -18,7 +18,17 @@ test.describe('MainLayout', () => {
     // Verify main layout is present
     await expect(page.getByTestId('main-layout')).toBeVisible();
 
-    // Verify sidebar is visible by default
+    // Sidebar is collapsed by default, so open it first
+    const isMac = await page.evaluate(() => {
+      return (
+        navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+        (navigator.userAgentData as { platform?: string } | undefined)?.platform === 'macOS'
+      );
+    });
+    const modifier = isMac ? 'Meta' : 'Control';
+    await page.keyboard.press(`${modifier}+b`);
+
+    // Verify sidebar is now visible
     await expect(page.getByTestId('sidebar')).toBeVisible();
 
     // Verify request and response panes are visible
@@ -42,20 +52,20 @@ test.describe('MainLayout', () => {
 
     await page.goto('/');
 
-    // Verify sidebar is visible initially
-    await expect(page.getByTestId('sidebar')).toBeVisible();
-
-    // Press ⌘B (Meta+B on Mac)
-    await page.keyboard.press('Meta+b');
-
-    // Sidebar should be hidden
+    // Verify sidebar is collapsed by default
     await expect(page.getByTestId('sidebar')).not.toBeVisible();
 
-    // Press ⌘B again
+    // Press ⌘B (Meta+B on Mac) to open sidebar
     await page.keyboard.press('Meta+b');
 
-    // Sidebar should be visible again
+    // Sidebar should now be visible
     await expect(page.getByTestId('sidebar')).toBeVisible();
+
+    // Press ⌘B again to close
+    await page.keyboard.press('Meta+b');
+
+    // Sidebar should be hidden again
+    await expect(page.getByTestId('sidebar')).not.toBeVisible();
   });
 
   test('keyboard shortcut toggles sidebar (Windows/Linux)', async ({ page }) => {
@@ -71,13 +81,19 @@ test.describe('MainLayout', () => {
 
     await page.goto('/');
 
-    // Verify sidebar is visible initially
-    await expect(page.getByTestId('sidebar')).toBeVisible();
+    // Verify sidebar is collapsed by default
+    await expect(page.getByTestId('sidebar')).not.toBeVisible();
 
-    // Press Ctrl+B on Windows/Linux
+    // Press Ctrl+B on Windows/Linux to open sidebar
     await page.keyboard.press('Control+b');
 
-    // Sidebar should be hidden
+    // Sidebar should now be visible
+    await expect(page.getByTestId('sidebar')).toBeVisible();
+
+    // Press Ctrl+B again to close
+    await page.keyboard.press('Control+b');
+
+    // Sidebar should be hidden again
     await expect(page.getByTestId('sidebar')).not.toBeVisible();
   });
 

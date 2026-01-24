@@ -32,7 +32,11 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{js,jsx,json,md,css,html}": [
+    "*.{js,jsx,json,css,html}": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint --fix",
       "prettier --write"
     ],
     "src-tauri/**/*.rs": [
@@ -99,6 +103,7 @@
     "husky": "^9.1.7",
     "jsdom": "^27.4.0",
     "lint-staged": "^16.2.7",
+    "markdownlint-cli": "^0.47.0",
     "postcss": "^8.5.6",
     "prettier": "^3.8.0",
     "storybook": "^10.2.0",

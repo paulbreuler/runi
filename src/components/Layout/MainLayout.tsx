@@ -90,7 +90,7 @@ export const MainLayout = ({
   headerContent,
   requestContent,
   responseContent,
-  initialSidebarVisible = true,
+  initialSidebarVisible = false, // Default collapsed since collections aren't supported yet
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const {

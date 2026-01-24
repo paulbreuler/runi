@@ -88,7 +88,7 @@ fmt-frontend:
 # ============================================================================
 
 # Run all linters (same as CI)
-lint: lint-rust lint-frontend
+lint: lint-rust lint-frontend lint-markdown
 
 # Lint Rust with pedantic clippy (requires frontend build for Tauri context)
 lint-rust: build-frontend
@@ -97,6 +97,12 @@ lint-rust: build-frontend
 # Lint TypeScript/React
 lint-frontend:
     npm run lint
+
+# Lint Markdown files (exclude files/directories in .gitignore)
+# TODO: Remove || true once existing markdown files are fixed in a separate PR
+# Currently non-blocking due to pre-existing lint errors in documentation files
+lint-markdown:
+    npx markdownlint "**/*.md" --ignore "node_modules" --ignore "test-results" --ignore "playwright-report" --ignore "coverage" --ignore "html" --ignore "build" --ignore "dist" --ignore "storybook-static" --ignore ".cursor/code-review-report.md" --ignore ".cursor/plans" --ignore ".tmp" --ignore "target" --ignore ".planning-docs" || true
 
 # ============================================================================
 # ✅ Code Quality: Type Checking
@@ -167,8 +173,8 @@ ci: fmt-check lint check test docs-check
 ci-no-test: fmt-check lint check docs-check
     @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"
 
-# Pre-commit hook: fast checks only
-pre-commit: fmt-check-rust fmt-check-frontend check-frontend
+# Pre-commit hook: fast checks including type checking and linting
+pre-commit: fmt-check-rust fmt-check-frontend lint-frontend lint-markdown check-frontend
     @echo "✅ Pre-commit checks passed!"
 
 # ============================================================================

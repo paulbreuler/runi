@@ -52,7 +52,7 @@ describe('ResponsePanel', () => {
     render(<ResponsePanel requestBody={mockRequestBody} responseBody={mockResponseBody} />);
 
     // CodeSnippet should be rendered
-    expect(screen.getByTestId('code-snippet')).toBeInTheDocument();
+    expect(screen.getByTestId('code-editor')).toBeInTheDocument();
     // Response body content should be visible
     expect(screen.getByText(/John/)).toBeInTheDocument();
   });
@@ -65,7 +65,7 @@ describe('ResponsePanel', () => {
     await user.click(requestTab);
 
     // CodeSnippet should be rendered
-    expect(screen.getByTestId('code-snippet')).toBeInTheDocument();
+    expect(screen.getByTestId('code-editor')).toBeInTheDocument();
     // Request body content should be visible
     expect(screen.getByText(/john@example.com/)).toBeInTheDocument();
   });
@@ -74,7 +74,7 @@ describe('ResponsePanel', () => {
     render(<ResponsePanel requestBody={mockRequestBody} responseBody={mockResponseBody} />);
 
     // CodeSnippet should format JSON with proper indentation
-    const codeSnippet = screen.getByTestId('code-snippet');
+    const codeSnippet = screen.getByTestId('code-editor');
     // The formatted JSON should have newlines and spaces (syntax highlighter renders it)
     expect(codeSnippet).toBeInTheDocument();
   });

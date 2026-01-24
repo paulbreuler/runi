@@ -98,7 +98,7 @@ describe('HeadersPanel', () => {
     );
 
     // CodeSnippet should be rendered
-    const codeSnippet = screen.getByTestId('code-snippet');
+    const codeSnippet = screen.getByTestId('code-editor');
     expect(codeSnippet).toBeInTheDocument();
 
     // CodeBox should have http language attribute
@@ -112,7 +112,7 @@ describe('HeadersPanel', () => {
     );
 
     // Headers should be displayed with syntax highlighting via CodeSnippet
-    const codeSnippet = screen.getByTestId('code-snippet');
+    const codeSnippet = screen.getByTestId('code-editor');
     expect(codeSnippet).toBeInTheDocument();
 
     // Check that all response headers are present in the formatted text

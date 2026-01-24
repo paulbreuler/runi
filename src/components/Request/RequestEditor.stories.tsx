@@ -5,23 +5,25 @@
 
 /**
  * @file Request Editor Components Storybook stories
- * @description Consolidated stories for Request editor components: ParamsEditor, HeaderEditor, BodyEditor, AuthEditor
+ * @description Consolidated stories for Request editor components: ParamsEditor, HeaderEditor, AuthEditor
+ *
+ * Note: BodyEditor has been replaced by CodeEditor mode="edit".
+ * See CodeHighlighting/CodeEditor.stories.tsx for the unified component.
  *
  * This file consolidates stories from:
  * - ParamsEditor.stories.tsx
  * - HeaderEditor.stories.tsx
- * - BodyEditor.stories.tsx
  * - AuthEditor.stories.tsx
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { ParamsEditor } from './ParamsEditor';
 import { HeaderEditor } from './HeaderEditor';
-import { BodyEditor } from './BodyEditor';
 import { AuthEditor } from './AuthEditor';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { useRequestStore } from '@/stores/useRequestStore';
 
 // Custom args for story controls (not part of component props)
@@ -40,7 +42,7 @@ const meta = {
 **Editor Types:**
 - **ParamsEditor** - Query parameter editor with key/value inputs
 - **HeaderEditor** - Header editor with inline editing for key/value pairs
-- **BodyEditor** - Request body editor with JSON validation and formatting
+- **Body Editor** - Uses \`CodeEditor mode="edit"\` with JSON validation and formatting
 - **AuthEditor** - Authentication editor for Bearer tokens, Basic auth, and custom headers
 
 All editors use \`useRequestStore\` for state management and support glass styling for consistent focus and hover treatments.`,
@@ -319,11 +321,43 @@ export const HeaderEditorKeyboardNavigationTest: Story = {
 };
 
 // ============================================================================
-// BodyEditor Stories
+// Body Editor Stories (using CodeEditor mode="edit")
 // ============================================================================
 
 /**
- * BodyEditor - empty state.
+ * Controlled body editor component that syncs with store.
+ */
+const BodyEditorWrapper = ({ initialBody = '' }: { initialBody?: string }): React.JSX.Element => {
+  const { setBody } = useRequestStore();
+  const [localBody, setLocalBody] = useState(initialBody);
+
+  useEffect(() => {
+    setBody(initialBody);
+    setLocalBody(initialBody);
+    return () => {
+      useRequestStore.getState().reset();
+    };
+  }, [initialBody, setBody]);
+
+  const handleChange = (value: string): void => {
+    setLocalBody(value);
+    setBody(value);
+  };
+
+  return (
+    <CodeEditor
+      mode="edit"
+      code={localBody}
+      onChange={handleChange}
+      enableJsonValidation
+      enableJsonFormatting
+      placeholder="Enter request body (JSON, XML, text, etc.)"
+    />
+  );
+};
+
+/**
+ * Body Editor - empty state.
  */
 export const BodyEditorEmpty: Story = {
   args: {
@@ -331,15 +365,13 @@ export const BodyEditorEmpty: Story = {
   },
   render: () => (
     <div className="h-64 border border-border-default bg-bg-app">
-      <StoreSeed body="">
-        <BodyEditor />
-      </StoreSeed>
+      <BodyEditorWrapper initialBody="" />
     </div>
   ),
 };
 
 /**
- * BodyEditor - valid JSON.
+ * Body Editor - valid JSON.
  */
 export const BodyEditorValidJson: Story = {
   args: {
@@ -347,15 +379,13 @@ export const BodyEditorValidJson: Story = {
   },
   render: () => (
     <div className="h-64 border border-border-default bg-bg-app">
-      <StoreSeed body='{"name":"Runi","count":3}'>
-        <BodyEditor />
-      </StoreSeed>
+      <BodyEditorWrapper initialBody='{"name":"Runi","count":3}' />
     </div>
   ),
 };
 
 /**
- * BodyEditor - invalid JSON.
+ * Body Editor - invalid JSON.
  */
 export const BodyEditorInvalidJson: Story = {
   args: {
@@ -363,15 +393,13 @@ export const BodyEditorInvalidJson: Story = {
   },
   render: () => (
     <div className="h-64 border border-border-default bg-bg-app">
-      <StoreSeed body='{"name":"Runi",}'>
-        <BodyEditor />
-      </StoreSeed>
+      <BodyEditorWrapper initialBody='{"name":"Runi",}' />
     </div>
   ),
 };
 
 /**
- * BodyEditor - form interactions test.
+ * Body Editor - form interactions test.
  */
 export const BodyEditorFormInteractionsTest: Story = {
   args: {
@@ -379,16 +407,14 @@ export const BodyEditorFormInteractionsTest: Story = {
   },
   render: () => (
     <div className="h-64 border border-border-default bg-bg-app">
-      <StoreSeed body="">
-        <BodyEditor />
-      </StoreSeed>
+      <BodyEditorWrapper initialBody="" />
     </div>
   ),
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
     await step('Type valid JSON', async () => {
-      const textarea = canvas.getByTestId('body-textarea');
+      const textarea = canvas.getByTestId('code-editor-textarea');
       await userEvent.clear(textarea);
       // userEvent.type has issues parsing special characters, and paste doesn't work in test env
       // Set the value directly via the store instead
@@ -404,14 +430,14 @@ export const BodyEditorFormInteractionsTest: Story = {
       const formatButton = canvas.getByTestId('format-json-button');
       await userEvent.click(formatButton);
       await new Promise((resolve) => setTimeout(resolve, 150));
-      const textarea = canvas.getByTestId('body-textarea');
+      const textarea = canvas.getByTestId('code-editor-textarea');
       await expect(textarea).toHaveValue('{\n  "name": "test",\n  "count": 1\n}');
     });
   },
 };
 
 /**
- * BodyEditor - keyboard navigation test.
+ * Body Editor - keyboard navigation test.
  */
 export const BodyEditorKeyboardNavigationTest: Story = {
   args: {
@@ -419,23 +445,21 @@ export const BodyEditorKeyboardNavigationTest: Story = {
   },
   render: () => (
     <div className="h-64 border border-border-default bg-bg-app">
-      <StoreSeed body="">
-        <BodyEditor />
-      </StoreSeed>
+      <BodyEditorWrapper initialBody="" />
     </div>
   ),
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
     await step('Tab to textarea', async () => {
-      const textarea = canvas.getByTestId('body-textarea');
+      const textarea = canvas.getByTestId('code-editor-textarea');
       textarea.focus();
       await waitForFocus(textarea, 1000);
       await expect(textarea).toHaveFocus();
     });
 
     await step('Tab key inserts 2 spaces', async () => {
-      const textarea = canvas.getByTestId('body-textarea');
+      const textarea = canvas.getByTestId('code-editor-textarea');
       await userEvent.clear(textarea);
       await userEvent.type(textarea, 'test');
       // Tab key may be handled by browser, use keyboard event with preventDefault simulation

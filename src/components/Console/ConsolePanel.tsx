@@ -16,7 +16,7 @@ import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColum
 import { ExpandedContent } from '@/components/DataGrid/ExpandedContent';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Row } from '@tanstack/react-table';
-import { CodeSnippet } from '@/components/History/CodeSnippet';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 
 export type { LogLevel, ConsoleLog } from '@/types/console';
@@ -83,10 +83,18 @@ function serializeArgs(args: unknown[]): string {
 }
 
 /**
+ * Formatted log arguments with code and detected language
+ */
+interface FormattedLogArgs {
+  code: string;
+  language: string;
+}
+
+/**
  * Format log arguments for display and detect language for syntax highlighting.
  * Combines all args into a single code block for consistent display.
  */
-function formatLogArgs(args: unknown[]): { code: string; language: string } {
+function formatLogArgs(args: unknown[]): FormattedLogArgs {
   if (args.length === 0) {
     return { code: '', language: 'text' };
   }
@@ -779,7 +787,7 @@ export const ConsolePanel = ({
         }
       };
 
-      // Format args for display (combine all args into single CodeSnippet)
+      // Format args for display (combine all args into single CodeEditor)
       let formattedArgs: { code: string; language: string } | null = null;
       if (isGrouped) {
         if (originalLog.sampleLog.args.length > 0) {
@@ -825,7 +833,8 @@ export const ConsolePanel = ({
                       {formattedArgs !== null && (
                         <div className="mb-2">
                           <div className="pl-2 border-l border-border-default">
-                            <CodeSnippet
+                            <CodeEditor
+                              mode="display"
                               code={formattedArgs.code}
                               language={formattedArgs.language}
                               variant="borderless"
@@ -896,7 +905,8 @@ export const ConsolePanel = ({
                     /* Individual log args */
                     formattedArgs !== null && (
                       <div className="pl-2 border-l border-border-default">
-                        <CodeSnippet
+                        <CodeEditor
+                          mode="display"
                           code={formattedArgs.code}
                           language={formattedArgs.language}
                           variant="borderless"

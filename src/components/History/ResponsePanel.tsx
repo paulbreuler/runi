@@ -12,7 +12,7 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
-import { CodeSnippet } from './CodeSnippet';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -48,7 +48,7 @@ type TabType = 'response' | 'request';
 /**
  * Format JSON with 2-space indentation if valid JSON, otherwise return as-is
  */
-function formatJson(body: string): string {
+function formatJsonBody(body: string): string {
   try {
     const parsed: unknown = JSON.parse(body);
     return JSON.stringify(parsed, null, 2);
@@ -86,7 +86,7 @@ export const ResponsePanel = ({
       return '';
     }
     // Only format JSON if language is detected as JSON, otherwise use body as-is
-    return language === 'json' ? formatJson(currentBodyText) : currentBodyText;
+    return language === 'json' ? formatJsonBody(currentBodyText) : currentBodyText;
   }, [currentBodyText, language]);
 
   /**
@@ -203,7 +203,8 @@ export const ResponsePanel = ({
             }
           />
         ) : (
-          <CodeSnippet
+          <CodeEditor
+            mode="display"
             code={formattedBody}
             language={language}
             variant="borderless"

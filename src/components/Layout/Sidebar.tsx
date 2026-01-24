@@ -63,11 +63,11 @@ const DrawerSection = ({
 export const Sidebar = (): React.JSX.Element => {
   return (
     <aside className="w-full h-full bg-bg-surface flex flex-col" data-testid="sidebar-content">
-      {/* Collections Drawer */}
+      {/* Collections Drawer - Default collapsed since collections aren't supported yet */}
       <DrawerSection
         title="Collections"
         icon={<Folder size={14} />}
-        defaultOpen={true}
+        defaultOpen={false}
         testId="collections-drawer"
       >
         <EmptyState variant="muted" size="sm" title="No collections yet" />
