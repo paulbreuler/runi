@@ -793,6 +793,8 @@ mod tests {
     #[test]
     fn test_timing_data_serialization() {
         let entry = create_test_timing_entry("2026-01-24T12:00:00Z", 100.0);
+        // Clone needed because entry is used later in the test
+        #[allow(clippy::redundant_clone)]
         let parsed: StartupTimingEntry = serde_json::from_value(entry.clone()).unwrap();
         // Use approximate equality for float comparisons (clippy::float_cmp)
         assert!((parsed.timing.total - 100.0).abs() < f64::EPSILON);
@@ -821,7 +823,11 @@ mod tests {
 
         let parsed_entries: Vec<StartupTimingEntry> = entries
             .iter()
-            .map(|e| serde_json::from_value(e).unwrap())
+            .map(|e| {
+                // Clone needed because entries array is used later
+                #[allow(clippy::redundant_clone)]
+                serde_json::from_value(e.clone()).unwrap()
+            })
             .collect();
 
         // Calculate averages manually
