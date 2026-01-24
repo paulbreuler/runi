@@ -768,7 +768,18 @@ mod tests {
             "timestamp": timestamp,
             "platform": "darwin",
             "architecture": "arm64",
+            "buildMode": "dev",
+            "systemSpecs": {
+                "cpuModel": "Test CPU",
+                "cpuCores": 4,
+                "totalMemoryGb": 8.0,
+                "platform": "darwin",
+                "architecture": "arm64",
+                "buildMode": "dev",
+                "bundleSizeMb": 10.0
+            },
             "timing": {
+                "processStartup": total * 0.1,
                 "domContentLoaded": total * 0.3,
                 "windowLoaded": total * 0.6,
                 "reactMounted": total * 0.9,
