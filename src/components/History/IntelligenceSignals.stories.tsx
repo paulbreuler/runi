@@ -148,8 +148,14 @@ export const SignalDotPlayground: Story = {
   render: (args) => {
     // Map signalType to SignalDot type (SignalDot doesn't support 'none', 'ai-generated', 'multiple')
     const signalDotType: 'verified' | 'drift' | 'ai' | 'bound' =
-      args.signalType === 'ai-generated' ? 'ai' : (args.signalType as 'verified' | 'drift' | 'bound') || 'verified';
-    
+      args.signalType === 'ai-generated'
+        ? 'ai'
+        : args.signalType === 'verified' ||
+            args.signalType === 'drift' ||
+            args.signalType === 'bound'
+          ? args.signalType
+          : 'verified';
+
     return (
       <div className="bg-bg-surface p-6 rounded flex flex-col gap-4">
         <div className="flex items-center gap-6">
