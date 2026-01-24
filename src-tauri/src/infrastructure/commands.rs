@@ -794,8 +794,9 @@ mod tests {
     fn test_timing_data_serialization() {
         let entry = create_test_timing_entry("2026-01-24T12:00:00Z", 100.0);
         let parsed: StartupTimingEntry = serde_json::from_value(entry.clone()).unwrap();
-        assert_eq!(parsed.timing.total, 100.0);
-        assert_eq!(parsed.timing.dom_content_loaded, 30.0);
+        // Use approximate equality for float comparisons (clippy::float_cmp)
+        assert!((parsed.timing.total - 100.0).abs() < f64::EPSILON);
+        assert!((parsed.timing.dom_content_loaded - 30.0).abs() < f64::EPSILON);
 
         // Test that it serializes back with camelCase
         let serialized = serde_json::to_value(&parsed).unwrap();
@@ -812,7 +813,7 @@ mod tests {
     /// Test that aggregates calculate correctly.
     #[test]
     fn test_timing_aggregates_calculation() {
-        let entries = vec![
+        let entries = [
             create_test_timing_entry("2026-01-24T12:00:00Z", 100.0),
             create_test_timing_entry("2026-01-24T13:00:00Z", 200.0),
             create_test_timing_entry("2026-01-24T14:00:00Z", 300.0),
