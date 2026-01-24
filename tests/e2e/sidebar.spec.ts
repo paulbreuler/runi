@@ -33,8 +33,10 @@ test.describe('Sidebar', () => {
     const modifier = isMac ? 'Meta' : 'Control';
     await page.keyboard.press(`${modifier}+b`);
 
-    // Wait for sidebar to be visible
+    // Wait for sidebar to be visible and animation to complete
     await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 10000 });
+    // Wait for sidebar animation to complete before running tests
+    await page.waitForTimeout(500);
   });
 
   test('renders Collections section', async ({ page }) => {
@@ -43,8 +45,18 @@ test.describe('Sidebar', () => {
     // Verify sidebar is visible
     await expect(sidebar).toBeVisible();
 
-    // Verify Collections section
+    // Verify Collections section header is visible
     await expect(page.getByText('Collections', { exact: true })).toBeVisible();
+
+    // Collections drawer is collapsed by default, so expand it first
+    const collectionsDrawer = page.getByTestId('collections-drawer');
+    const toggleButton = collectionsDrawer.locator('button').first();
+    await toggleButton.click();
+
+    // Wait for drawer to expand
+    await page.waitForTimeout(300);
+
+    // Now verify the content is visible
     await expect(page.getByText('No collections yet')).toBeVisible();
 
     // History section was removed - it's now in Network History Panel instead
@@ -55,11 +67,22 @@ test.describe('Sidebar', () => {
 
     await expect(sidebar).toBeVisible();
 
-    // Verify computed width is approximately 256px (default sidebar width)
+    // Wait for sidebar to reach its full width (animation completes)
+    // Sidebar should be approximately 256px when fully expanded
+    await expect(async () => {
+      const boundingBox = await sidebar.boundingBox();
+      expect(boundingBox).not.toBeNull();
+      if (boundingBox) {
+        // Allow small tolerance for browser rendering
+        expect(boundingBox.width).toBeGreaterThan(250);
+        expect(boundingBox.width).toBeLessThan(270);
+      }
+    }).toPass({ timeout: 5000 });
+
+    // Verify final width
     const boundingBox = await sidebar.boundingBox();
     expect(boundingBox).not.toBeNull();
     if (boundingBox) {
-      // Allow small tolerance for browser rendering
       expect(boundingBox.width).toBeGreaterThan(250);
       expect(boundingBox.width).toBeLessThan(270);
     }
@@ -96,11 +119,16 @@ test.describe('Sidebar', () => {
   });
 
   test('sidebar sections have hover effects', async ({ page }) => {
-    const collectionsItem = page
-      .getByText('Collections')
-      .locator('..')
-      .locator('..')
-      .getByText('No collections yet');
+    // Collections drawer is collapsed by default, so expand it first
+    const collectionsDrawer = page.getByTestId('collections-drawer');
+    const toggleButton = collectionsDrawer.locator('button').first();
+    await toggleButton.click();
+
+    // Wait for drawer to expand
+    await page.waitForTimeout(300);
+
+    // Now find the collections item
+    const collectionsItem = page.getByText('No collections yet');
 
     // Hover over the collections item
     await collectionsItem.hover();
