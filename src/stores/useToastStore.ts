@@ -30,6 +30,8 @@ export interface ToastItem {
   duration?: number;
   /** Number of duplicate occurrences (default: 1) */
   count: number;
+  /** Optional test ID for testing purposes */
+  testId?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
