@@ -15,33 +15,33 @@ vi.mock('@tauri-apps/api/core', () => ({
 describe('useSettingsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset store to initial state
-    const { result } = renderHook(() => useSettingsStore());
-    act(() => {
-      result.current.setSidebarVisible(true);
-    });
-    useSettingsStore.setState({ logLevel: 'info' });
+    // Reset store to initial state (sidebar collapsed by default)
+    useSettingsStore.setState({ sidebarVisible: false, logLevel: 'info' });
   });
 
-  it('initializes with sidebar visible', () => {
+  it('initializes with sidebar collapsed', () => {
     const { result } = renderHook(() => useSettingsStore());
-    expect(result.current.sidebarVisible).toBe(true);
+    expect(result.current.sidebarVisible).toBe(false);
   });
 
   it('toggles sidebar visibility', () => {
     const { result } = renderHook(() => useSettingsStore());
-
-    act(() => {
-      result.current.toggleSidebar();
-    });
-
+    // Starts collapsed (false)
     expect(result.current.sidebarVisible).toBe(false);
 
     act(() => {
       result.current.toggleSidebar();
     });
 
+    // After toggle, should be visible (true)
     expect(result.current.sidebarVisible).toBe(true);
+
+    act(() => {
+      result.current.toggleSidebar();
+    });
+
+    // After second toggle, should be collapsed again (false)
+    expect(result.current.sidebarVisible).toBe(false);
   });
 
   it('sets sidebar visibility explicitly', () => {

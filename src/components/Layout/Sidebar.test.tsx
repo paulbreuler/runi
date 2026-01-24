@@ -25,28 +25,43 @@ describe('Sidebar', () => {
   it('drawer sections are collapsible', () => {
     render(<Sidebar />);
 
-    // Collections drawer should be open by default
-    expect(screen.getByText('No collections yet')).toBeInTheDocument();
+    // Collections drawer should be closed by default (collections not yet supported)
+    const collectionsButton = screen.getByText('Collections').closest('button');
+    if (collectionsButton === null) {
+      throw new Error('Collections button not found');
+    }
+    expect(collectionsButton).toHaveAttribute('aria-expanded', 'false');
 
-    // Click to collapse
+    // Click to expand
+    fireEvent.click(collectionsButton);
+
+    // Content should be visible - check aria-expanded
+    expect(collectionsButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('No collections yet')).toBeInTheDocument();
+  });
+
+  it('displays empty states for collections when expanded', () => {
+    render(<Sidebar />);
+
+    // Expand the drawer first (it's collapsed by default)
     const collectionsButton = screen.getByText('Collections').closest('button');
     if (collectionsButton === null) {
       throw new Error('Collections button not found');
     }
     fireEvent.click(collectionsButton);
 
-    // Content should be hidden - check aria-expanded
-    expect(collectionsButton).toHaveAttribute('aria-expanded', 'false');
-  });
-
-  it('displays empty states for collections', () => {
-    render(<Sidebar />);
-
     expect(screen.getByText('No collections yet')).toBeInTheDocument();
   });
 
   it('uses EmptyState component with muted variant for collections', () => {
     const { container } = render(<Sidebar />);
+
+    // Expand the drawer first (it's collapsed by default)
+    const collectionsButton = screen.getByText('Collections').closest('button');
+    if (collectionsButton === null) {
+      throw new Error('Collections button not found');
+    }
+    fireEvent.click(collectionsButton);
 
     // Verify EmptyState is used (muted variant renders with text-text-muted/50 class)
     const emptyStateContent = container.querySelector('.text-text-muted\\/50');

@@ -144,7 +144,9 @@ describe('MainLayout', () => {
       expect(screen.getByTestId('pane-resizer')).toBeInTheDocument();
     });
 
-    it('renders sidebar by default', () => {
+    it('renders sidebar when visible', () => {
+      // Set sidebar to visible for this test
+      useSettingsStore.setState({ sidebarVisible: true });
       render(<MainLayout />);
       // Sidebar wrapper (motion.aside) has the test ID
       const sidebars = screen.getAllByTestId('sidebar');

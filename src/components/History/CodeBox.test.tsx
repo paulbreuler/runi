@@ -130,12 +130,14 @@ describe('CodeBox', () => {
     );
 
     const codeBox = screen.getByTestId('code-box');
-    const innerBox =
+    // Container styles are on the outer element
+    expect(codeBox).toHaveClass('bg-bg-raised');
+    expect(codeBox).toHaveClass('border');
+    expect(codeBox).toHaveClass('rounded');
+    // Content padding is on the inner element
+    const contentBox =
       codeBox.querySelector('div[data-language]') ?? codeBox.querySelector('div:last-child');
-    expect(innerBox).toHaveClass('bg-bg-raised');
-    expect(innerBox).toHaveClass('border');
-    expect(innerBox).toHaveClass('rounded');
-    expect(innerBox).toHaveClass('p-3');
+    expect(contentBox).toHaveClass('px-3');
   });
 
   it('applies contained variant styles when explicitly set', () => {
@@ -148,12 +150,14 @@ describe('CodeBox', () => {
     );
 
     const codeBox = screen.getByTestId('code-box');
-    const innerBox =
+    // Container styles are on the outer element
+    expect(codeBox).toHaveClass('bg-bg-raised');
+    expect(codeBox).toHaveClass('border');
+    expect(codeBox).toHaveClass('rounded');
+    // Content padding is on the inner element
+    const contentBox =
       codeBox.querySelector('div[data-language]') ?? codeBox.querySelector('div:last-child');
-    expect(innerBox).toHaveClass('bg-bg-raised');
-    expect(innerBox).toHaveClass('border');
-    expect(innerBox).toHaveClass('rounded');
-    expect(innerBox).toHaveClass('p-3');
+    expect(contentBox).toHaveClass('px-3');
   });
 
   it('applies borderless variant styles when set', () => {
@@ -166,14 +170,14 @@ describe('CodeBox', () => {
     );
 
     const codeBox = screen.getByTestId('code-box');
-    const innerBox =
+    // No container styles on outer element for borderless
+    expect(codeBox).not.toHaveClass('bg-bg-raised');
+    expect(codeBox).not.toHaveClass('border');
+    expect(codeBox).not.toHaveClass('rounded');
+    // Content has minimal padding
+    const contentBox =
       codeBox.querySelector('div[data-language]') ?? codeBox.querySelector('div:last-child');
-    expect(innerBox).not.toHaveClass('bg-bg-raised');
-    expect(innerBox).not.toHaveClass('border');
-    expect(innerBox).not.toHaveClass('rounded');
-    expect(innerBox).not.toHaveClass('p-3');
-    // Should still have minimal padding for copy button clearance
-    expect(innerBox).toHaveClass('px-2');
+    expect(contentBox).toHaveClass('px-2');
   });
 
   it('copy button works in borderless variant', () => {

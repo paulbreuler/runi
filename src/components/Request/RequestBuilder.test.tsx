@@ -57,7 +57,7 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByText('Body');
     await user.click(bodyTab);
 
-    expect(await screen.findByTestId('body-editor')).toBeInTheDocument();
+    expect(await screen.findByTestId('code-editor')).toBeInTheDocument();
   });
 
   it('switches to Params tab when clicked', async () => {
@@ -138,11 +138,11 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByText('Body');
     await user.click(bodyTab);
 
-    const bodyEditor = await screen.findByTestId('body-editor');
+    const bodyEditor = await screen.findByTestId('code-editor');
     expect(bodyEditor).toBeInTheDocument();
-    expect(await screen.findByTestId('body-syntax-layer')).toBeInTheDocument();
+    expect(await screen.findByTestId('code-editor-syntax-layer')).toBeInTheDocument();
     expect(
-      screen.getByTestId('body-syntax-layer').querySelector('[data-language="json"]')
+      screen.getByTestId('code-editor-syntax-layer').querySelector('[data-language="json"]')
     ).toBeTruthy();
   });
 
@@ -154,7 +154,7 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByText('Body');
     await user.click(bodyTab);
 
-    const bodyTextarea = await screen.findByTestId('body-textarea');
+    const bodyTextarea = await screen.findByTestId('code-editor-textarea');
     act(() => {
       fireEvent.change(bodyTextarea, { target: { value: '{"test": true}' } });
     });
@@ -219,7 +219,7 @@ describe('RequestBuilder', () => {
       const bodyTab = screen.getByText('Body');
       await user.click(bodyTab);
 
-      const bodyTextarea = await screen.findByTestId('body-textarea');
+      const bodyTextarea = await screen.findByTestId('code-editor-textarea');
       act(() => {
         fireEvent.change(bodyTextarea, { target: { value: '{"newKey": "newValue"}' } });
       });

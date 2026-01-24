@@ -11,7 +11,7 @@
 import { useState, useMemo } from 'react';
 import { cn } from '@/utils/cn';
 import { LanguageTabs } from './LanguageTabs';
-import { CodeSnippet } from './CodeSnippet';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { generateCode, LANGUAGE_SYNTAX, type CodeLanguage } from '@/utils/codeGenerators';
 
@@ -74,7 +74,7 @@ export const CodeGenPanel = ({
         aria-labelledby={`language-tab-${activeLanguage}`}
         className="flex-1 flex flex-col min-h-0"
       >
-        <CodeSnippet code={code} language={syntaxLanguage} className="flex-1" />
+        <CodeEditor mode="display" code={code} language={syntaxLanguage} className="flex-1" />
       </div>
     </div>
   );

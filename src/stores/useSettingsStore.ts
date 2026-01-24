@@ -17,7 +17,7 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-  sidebarVisible: true,
+  sidebarVisible: false, // Default collapsed since collections aren't supported yet
   logLevel: 'info',
   toggleSidebar: (): void => {
     set((state) => ({ sidebarVisible: !state.sidebarVisible }));

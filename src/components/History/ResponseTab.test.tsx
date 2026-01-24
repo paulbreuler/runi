@@ -62,7 +62,7 @@ describe('ResponseTab', () => {
       render(<ResponseTab entry={mockEntry} />);
 
       // CodeSnippet should be rendered
-      const codeSnippet = screen.getByTestId('code-snippet');
+      const codeSnippet = screen.getByTestId('code-editor');
       expect(codeSnippet).toBeInTheDocument();
 
       // CodeSnippet should format JSON with 2-space indentation

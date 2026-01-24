@@ -58,7 +58,7 @@ describe('CodeGenPanel', () => {
     const entry = createMockEntry();
     render(<CodeGenPanel entry={entry} />);
 
-    expect(screen.getByTestId('code-snippet')).toBeInTheDocument();
+    expect(screen.getByTestId('code-editor')).toBeInTheDocument();
   });
 
   it('defaults to JavaScript language', () => {

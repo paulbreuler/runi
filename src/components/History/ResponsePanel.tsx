@@ -12,7 +12,7 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
-import { CodeSnippet } from './CodeSnippet';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -203,7 +203,8 @@ export const ResponsePanel = ({
             }
           />
         ) : (
-          <CodeSnippet
+          <CodeEditor
+            mode="display"
             code={formattedBody}
             language={language}
             variant="borderless"

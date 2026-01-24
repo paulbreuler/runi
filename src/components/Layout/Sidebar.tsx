@@ -24,7 +24,8 @@ const DrawerSection = ({
   testId,
 }: DrawerSectionProps): React.JSX.Element => {
   // icon parameter is kept for API consistency but not currently used in the UI
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  // Use a function initializer to ensure defaultOpen is respected on mount
+  const [isOpen, setIsOpen] = useState(() => defaultOpen);
 
   return (
     <div className="border-b border-border-subtle last:border-b-0" data-testid={testId}>
@@ -63,11 +64,12 @@ const DrawerSection = ({
 export const Sidebar = (): React.JSX.Element => {
   return (
     <aside className="w-full h-full bg-bg-surface flex flex-col" data-testid="sidebar-content">
-      {/* Collections Drawer */}
+      {/* Collections Drawer - Default collapsed since collections aren't supported yet */}
       <DrawerSection
+        key="collections-drawer-v2"
         title="Collections"
         icon={<Folder size={14} />}
-        defaultOpen={true}
+        defaultOpen={false}
         testId="collections-drawer"
       >
         <EmptyState variant="muted" size="sm" title="No collections yet" />

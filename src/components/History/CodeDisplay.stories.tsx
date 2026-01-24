@@ -5,17 +5,18 @@
 
 /**
  * @file Code Display Components Storybook stories
- * @description Consolidated stories for code display components: CodeSnippet, CodeBox, CopyButton
+ * @description Consolidated stories for code display components: CodeBox, CopyButton
+ *
+ * Note: CodeSnippet has been replaced by CodeEditor mode="display".
+ * See CodeHighlighting/CodeEditor.stories.tsx for the unified component.
  *
  * This file consolidates stories from:
- * - CodeSnippet.stories.tsx
  * - CodeBox.stories.tsx
  * - CopyButton.stories.tsx
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { CodeSnippet } from './CodeSnippet';
 import { CodeBox } from './CodeBox';
 import { CopyButton } from './CopyButton';
 
@@ -28,9 +29,11 @@ const meta = {
         component: `Consolidated documentation for code display components.
 
 **Components:**
-- **CodeSnippet** - Component for displaying code with syntax highlighting and copy functionality
 - **CodeBox** - Reusable code box container with consistent styling and copy button positioning
 - **CopyButton** - Button that copies text to clipboard and shows feedback
+
+Note: CodeSnippet has been replaced by \`CodeEditor mode="display"\`.
+See \`CodeHighlighting/CodeEditor\` for the unified component.
 
 All components support contained (default) and borderless variants.`,
       },
@@ -41,50 +44,6 @@ All components support contained (default) and borderless variants.`,
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-// ============================================================================
-// CodeSnippet Stories
-// ============================================================================
-
-/**
- * CodeSnippet - playground with controls for all features.
- */
-export const CodeSnippetPlayground: Story = {
-  render: () => (
-    <CodeSnippet
-      variant="contained"
-      language="javascript"
-      code='const response = await fetch("https://api.example.com/users");\nconst data = await response.json();'
-    />
-  ),
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-    const copyButton = canvas.queryByRole('button', { name: /copy/i });
-    if (copyButton !== null) {
-      await step('Test copy button', async () => {
-        await userEvent.click(copyButton);
-        try {
-          await canvas.findByText(/copied/i, {}, { timeout: 500 });
-        } catch {
-          // Expected in test environment
-        }
-      });
-    }
-  },
-};
-
-/**
- * CodeSnippet - borderless variant.
- */
-export const CodeSnippetBorderless: Story = {
-  render: () => (
-    <CodeSnippet
-      variant="borderless"
-      language="json"
-      code='{\n  "name": "runi",\n  "version": "1.0.0"\n}'
-    />
-  ),
-};
 
 // ============================================================================
 // CodeBox Stories

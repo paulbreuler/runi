@@ -6,9 +6,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { HeaderEditor } from './HeaderEditor';
-import { BodyEditor } from './BodyEditor';
 import { ParamsEditor } from './ParamsEditor';
 import { AuthEditor } from './AuthEditor';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
+import { useRequestStore } from '@/stores/useRequestStore';
 import { cn } from '@/utils/cn';
 
 type TabId = 'headers' | 'body' | 'params' | 'auth';
@@ -32,6 +33,7 @@ const tabs: Tab[] = [
 export const RequestBuilder = (): React.JSX.Element => {
   const [activeTab, setActiveTab] = useState<TabId>('headers');
   const prefersReducedMotion = useReducedMotion() === true;
+  const { body, setBody } = useRequestStore();
   const tabScrollRef = useRef<HTMLDivElement>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -185,7 +187,14 @@ export const RequestBuilder = (): React.JSX.Element => {
               className="h-full overflow-auto"
               style={{ scrollbarGutter: 'stable' }}
             >
-              <BodyEditor />
+              <CodeEditor
+                mode="edit"
+                code={body}
+                onChange={setBody}
+                enableJsonValidation
+                enableJsonFormatting
+                placeholder="Enter request body (JSON, XML, text, etc.)"
+              />
             </motion.div>
           )}
 

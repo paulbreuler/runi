@@ -16,7 +16,7 @@ import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColum
 import { ExpandedContent } from '@/components/DataGrid/ExpandedContent';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Row } from '@tanstack/react-table';
-import { CodeSnippet } from '@/components/History/CodeSnippet';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 
 export type { LogLevel, ConsoleLog } from '@/types/console';
@@ -779,7 +779,7 @@ export const ConsolePanel = ({
         }
       };
 
-      // Format args for display (combine all args into single CodeSnippet)
+      // Format args for display (combine all args into single CodeEditor)
       let formattedArgs: { code: string; language: string } | null = null;
       if (isGrouped) {
         if (originalLog.sampleLog.args.length > 0) {
@@ -825,7 +825,8 @@ export const ConsolePanel = ({
                       {formattedArgs !== null && (
                         <div className="mb-2">
                           <div className="pl-2 border-l border-border-default">
-                            <CodeSnippet
+                            <CodeEditor
+                              mode="display"
                               code={formattedArgs.code}
                               language={formattedArgs.language}
                               variant="borderless"
@@ -896,7 +897,8 @@ export const ConsolePanel = ({
                     /* Individual log args */
                     formattedArgs !== null && (
                       <div className="pl-2 border-l border-border-default">
-                        <CodeSnippet
+                        <CodeEditor
+                          mode="display"
                           code={formattedArgs.code}
                           language={formattedArgs.language}
                           variant="borderless"

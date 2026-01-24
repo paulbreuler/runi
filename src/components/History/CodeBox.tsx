@@ -41,7 +41,7 @@ export interface CodeBoxProps {
  * - `borderless`: Minimal styling without background, border, or rounded corners.
  *   Use inside existing containers (e.g., MainLayout panes) to avoid nested visual containers.
  *
- * Handles copy button positioning in the top-right corner when copyText is provided.
+ * Places copy button in a row above the content when copyText is provided.
  *
  * @example
  * ```tsx
@@ -67,33 +67,38 @@ export const CodeBox = ({
   'data-testid': dataTestId = 'code-box',
 }: CodeBoxProps): React.ReactElement => {
   const isContained = variant === 'contained';
+  const hasCopyButton = copyText !== undefined && copyText !== '';
 
   return (
     <div
       data-testid={dataTestId}
-      className={cn('flex-1 overflow-auto relative', containerClassName)}
+      className={cn(
+        'flex flex-col flex-1 overflow-auto',
+        // Contained variant: full visual container
+        isContained && 'bg-bg-raised rounded border border-border-default',
+        containerClassName
+      )}
       style={{ scrollbarGutter: 'stable' }}
     >
+      {/* Copy button row above content */}
+      {hasCopyButton && (
+        <div className="flex justify-end px-1 pt-1">
+          <CopyButton text={copyText} aria-label={copyButtonLabel} />
+        </div>
+      )}
+
+      {/* Content */}
       <div
         className={cn(
-          'text-xs font-mono overflow-x-auto relative',
-          // Contained variant: full visual container
-          isContained && 'bg-bg-raised p-3 rounded border border-border-default',
-          // Borderless variant: minimal styling, just padding for copy button clearance
+          'text-xs font-mono overflow-x-auto',
+          // Padding based on variant
+          isContained && 'px-3 pb-3',
+          isContained && !hasCopyButton && 'pt-3',
           !isContained && 'px-2 py-1',
-          copyText !== undefined && copyText !== '' && isContained && 'pr-20', // Add right padding to prevent horizontal overlap with copy button
           className
         )}
         data-language={dataLanguage}
       >
-        {/* Copy button positioned absolutely in top right, overlays content */}
-        {copyText !== undefined && copyText !== '' && (
-          <div className="absolute top-2 right-2 z-50 pointer-events-auto">
-            <CopyButton text={copyText} aria-label={copyButtonLabel} />
-          </div>
-        )}
-
-        {/* Content */}
         {children}
       </div>
     </div>

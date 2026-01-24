@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { HttpResponse } from '@/types/http';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { motion, useReducedMotion } from 'motion/react';
-import { CodeSnippet } from '@/components/History/CodeSnippet';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 
 export interface ResponseViewerProps {
   response: HttpResponse;
@@ -233,7 +233,8 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             <span className="sr-only" data-testid="response-body-raw">
               {formattedBody}
             </span>
-            <CodeSnippet
+            <CodeEditor
+              mode="display"
               code={formattedBody}
               language={language}
               variant="borderless"
@@ -271,7 +272,8 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             <span className="sr-only" data-testid="response-raw-text">
               {formatRawHttp(response)}
             </span>
-            <CodeSnippet
+            <CodeEditor
+              mode="display"
               code={formatRawHttp(response)}
               language="http"
               variant="borderless"

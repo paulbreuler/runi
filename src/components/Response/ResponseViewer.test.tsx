@@ -160,8 +160,8 @@ describe('ResponseViewer', () => {
   it('uses CodeSnippet component in body tab', () => {
     render(<ResponseViewer response={mockResponse} />);
 
-    // CodeSnippet should be rendered (has code-snippet test id)
-    expect(screen.getByTestId('code-snippet')).toBeInTheDocument();
+    // CodeSnippet should be rendered (has code-editor test id)
+    expect(screen.getByTestId('code-editor')).toBeInTheDocument();
   });
 
   it('uses CodeSnippet component in raw tab', async () => {
@@ -173,7 +173,7 @@ describe('ResponseViewer', () => {
     await user.click(rawTab);
 
     // CodeSnippet should be rendered
-    expect(screen.getByTestId('code-snippet')).toBeInTheDocument();
+    expect(screen.getByTestId('code-editor')).toBeInTheDocument();
   });
 
   it('uses borderless variant in body tab', () => {

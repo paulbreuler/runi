@@ -12,7 +12,7 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
-import { CodeSnippet } from './CodeSnippet';
+import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 export interface HeadersPanelProps {
@@ -176,7 +176,13 @@ export const HeadersPanel = ({
             }
           />
         ) : (
-          <CodeSnippet code={headersText} language="http" variant="contained" className="flex-1" />
+          <CodeEditor
+            mode="display"
+            code={headersText}
+            language="http"
+            variant="contained"
+            className="flex-1"
+          />
         )}
       </div>
     </div>
