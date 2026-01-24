@@ -181,7 +181,7 @@ Feature Subissues: #37, #38, #39 (closed by this PR)
 - [ ] **Test selectors**: Components include `data-test-id` attributes on interactive elements
 - [ ] **Test queries**: Tests use `getByTestId` for element selection (resilient to UI changes)
 - [ ] **Design Principles**: Components follow DESIGN-PRINCIPLES.md criteria (see `mcp_runi_Planning_read_doc({ path: 'plans/0018-component-design-principles-audit/plan.md' })` for audit methodology)
-- [ ] **Design Principles (RLM)**: For component-specific compliance, use `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName')).flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })` to check audit status
+- [ ] **Design Principles (RLM)**: For component-specific compliance, use `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName')).flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })` to check audit status (replace `'ComponentName'` with the actual component name being reviewed)
 - [ ] Manual testing completed
 - [ ] Coverage: [percentage]% (target: ≥85%)
 

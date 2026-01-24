@@ -142,7 +142,11 @@ export const BodyEditor = (): React.JSX.Element => {
               setBody(newValue);
               setTimeout(() => {
                 // Check if textarea still exists and is mounted before setting selection
-                if (textareaRef.current !== null && textareaRef.current === textarea) {
+                if (
+                  textareaRef.current !== null &&
+                  textareaRef.current === textarea &&
+                  document.contains(textarea)
+                ) {
                   textarea.selectionStart = start + 2;
                   textarea.selectionEnd = start + 2;
                 }

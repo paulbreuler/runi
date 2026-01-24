@@ -4,7 +4,7 @@ Complete guide to testing with Storybook in the runi project.
 
 ## Overview
 
-Storybook serves as both a **documentation tool** and a **comprehensive testing platform** for runi components. Stories use **Storybook 10 controls** to explore state variations instead of creating separate stories for every prop combination. All stories include play functions that test component interactions, accessibility, and visual states.
+Storybook serves as both a **documentation tool** and a **comprehensive testing platform** for runi components. Stories use **Storybook 10 controls** to explore state variations instead of creating separate stories for every prop combination. All consolidated stories include play functions for interaction testing, covering component interactions, accessibility, and visual states.
 
 **Organization**: Stories are organized by domain (DataGrid/, History/, Request/, Response/, Console/, UI/, Layout/) for easy discovery.
 

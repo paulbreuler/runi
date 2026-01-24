@@ -86,7 +86,7 @@ describe('ExpandedContent', () => {
   });
 
   describe('Feature #1: Z-Index Layering', () => {
-    it('expanded panel has z-index lower than table headers', () => {
+    it('expanded panel has Z-index lower than table headers', () => {
       render(<ExpandedContent>{mockChildren}</ExpandedContent>);
 
       const expandedSection = screen.getByTestId('expanded-section');

@@ -15,7 +15,7 @@ import type { IntelligenceInfo } from '@/types/history';
 
 // Custom args for story controls (not part of component props)
 interface IntelligenceSignalsStoryArgs {
-  signalType?: 'none' | 'verified' | 'drift' | 'ai-generated' | 'bound' | 'multiple';
+  signalType?: 'none' | 'verified' | 'drift' | 'aiGenerated' | 'bound' | 'multiple';
 }
 
 const meta = {
@@ -39,7 +39,7 @@ This story file includes both IntelligenceSignals and SignalDot stories.`,
   argTypes: {
     signalType: {
       control: 'select',
-      options: ['none', 'verified', 'drift', 'ai-generated', 'bound', 'multiple'],
+      options: ['none', 'verified', 'drift', 'aiGenerated', 'bound', 'multiple'],
       description: 'Type of intelligence signal to display',
     },
   },
@@ -73,7 +73,7 @@ const createIntelligence = (type: string): IntelligenceInfo => {
         aiGenerated: false,
         verified: false,
       };
-    case 'ai-generated':
+    case 'aiGenerated':
       return {
         boundToSpec: false,
         specOperation: null,
@@ -146,9 +146,9 @@ export const Playground: Story = {
  */
 export const SignalDotPlayground: Story = {
   render: (args) => {
-    // Map signalType to SignalDot type (SignalDot doesn't support 'none', 'ai-generated', 'multiple')
+    // Map signalType to SignalDot type (SignalDot doesn't support 'none', 'aiGenerated', 'multiple')
     let signalDotType: 'verified' | 'drift' | 'ai' | 'bound' = 'verified';
-    if (args.signalType === 'ai-generated') {
+    if (args.signalType === 'aiGenerated') {
       signalDotType = 'ai';
     } else if (
       args.signalType === 'verified' ||

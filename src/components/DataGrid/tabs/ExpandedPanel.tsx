@@ -23,6 +23,9 @@ import { TabNavigation } from './TabNavigation';
 import { ExpandedActionButtons } from './ExpandedActionButtons';
 import { useHierarchicalTabNavigation } from '@/hooks/useHierarchicalTabNavigation';
 
+// Module-level constants for fallback functions to avoid creating new instances on every render
+const noop = (): void => undefined;
+
 export type ExpandedPanelTabType = 'timing' | 'response' | 'headers' | 'tls' | 'codegen';
 
 export interface ExpandedPanelProps {
@@ -167,12 +170,12 @@ export const ExpandedPanel = ({
         onBlockToggle !== undefined) && (
         <ExpandedActionButtons
           entry={entry}
-          onReplay={onReplay ?? ((): void => undefined)}
-          onCopy={onCopy ?? ((): void => undefined)}
-          onChain={onChain ?? ((): void => undefined)}
-          onGenerateTests={onGenerateTests ?? ((): void => undefined)}
-          onAddToCollection={onAddToCollection ?? ((): void => undefined)}
-          onBlockToggle={onBlockToggle ?? ((): void => undefined)}
+          onReplay={onReplay ?? noop}
+          onCopy={onCopy ?? noop}
+          onChain={onChain ?? noop}
+          onGenerateTests={onGenerateTests ?? noop}
+          onAddToCollection={onAddToCollection ?? noop}
+          onBlockToggle={onBlockToggle ?? noop}
           isBlocked={isBlocked}
         />
       )}
