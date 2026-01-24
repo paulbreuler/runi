@@ -98,9 +98,9 @@ lint-rust: build-frontend
 lint-frontend:
     npm run lint
 
-# Lint Markdown files (exclude auto-generated, command docs, and test results)
+# Lint Markdown files (exclude files/directories in .gitignore)
 lint-markdown:
-    npx markdownlint "**/*.md" "docs/**/*.md" ".storybook/**/*.md" --ignore "node_modules" --ignore ".cursor/**" --ignore ".claude/**" --ignore "test-results/**" --ignore "plans/**" || true
+    npx markdownlint "**/*.md" --ignore "node_modules" --ignore "test-results" --ignore "playwright-report" --ignore "coverage" --ignore "html" --ignore "build" --ignore "dist" --ignore "storybook-static" --ignore ".cursor/code-review-report.md" --ignore ".cursor/plans" --ignore ".tmp" --ignore "target" --ignore ".planning-docs" || true
 
 # ============================================================================
 # ✅ Code Quality: Type Checking
