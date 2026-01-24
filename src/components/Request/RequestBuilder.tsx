@@ -125,7 +125,7 @@ export const RequestBuilder = (): React.JSX.Element => {
                     setActiveTab(tab.id);
                   }}
                   className={cn(
-                    'px-3 py-1.5 text-sm rounded-lg transition-colors duration-200 font-medium',
+                    'px-3 h-7 text-sm rounded-lg transition-colors duration-200 font-medium',
                     isActive
                       ? 'bg-bg-raised text-text-primary'
                       : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
