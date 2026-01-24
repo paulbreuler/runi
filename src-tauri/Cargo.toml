@@ -62,3 +62,4 @@ nursery = { level = "warn", priority = -1 }
 module_name_repetitions = "allow"  # Common in API design
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"       # We avoid panics
+cast_precision_loss = "allow"      # Acceptable for memory/file size measurements (u64/usize to f64)

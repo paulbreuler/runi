@@ -134,7 +134,7 @@ fn get_current_memory_usage(total_ram_gb: f64) -> (f64, f64) {
 ///
 /// * `app` - Tauri app handle for emitting events
 /// * `total_ram_gb` - Total system RAM in GB
-pub fn start_memory_monitor(app: AppHandle, total_ram_gb: f64) {
+pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
     let state = Arc::new(Mutex::new(MemoryMonitorState::new(total_ram_gb)));
     let state_for_task = Arc::clone(&state);
     let app_clone = app.clone();
@@ -162,29 +162,38 @@ pub fn start_memory_monitor(app: AppHandle, total_ram_gb: f64) {
             };
 
             // Update state and check for threshold
-            let should_alert = {
-                let mut state_guard = state.lock().unwrap();
-                let was_exceeded = state_guard.threshold_exceeded;
-                state_guard.add_sample(&sample);
-                let current_stats = state_guard.get_stats();
-
-                // Alert if threshold just exceeded (not if already exceeded)
-                !was_exceeded && current_stats.threshold_exceeded
+            // Extract needed values while holding the lock, then drop before async operations
+            let was_exceeded_before = {
+                let guard = state.lock().unwrap();
+                guard.threshold_exceeded
+            };
+            // Drop guard explicitly before next lock acquisition
+            let (should_alert, alert_stats_if_needed) = {
+                let mut guard = state.lock().unwrap();
+                guard.add_sample(&sample);
+                let stats_after_update = guard.get_stats();
+                let alert = !was_exceeded_before && stats_after_update.threshold_exceeded;
+                // Clone stats before dropping guard (needed for async emit)
+                let stats_for_alert = if alert {
+                    Some(stats_after_update.clone())
+                } else {
+                    None
+                };
+                drop(guard); // Explicitly drop before returning
+                (alert, stats_for_alert)
             };
 
             // Emit event if threshold exceeded
             if should_alert {
-                let alert_stats = {
-                    let state_guard = state.lock().unwrap();
-                    state_guard.get_stats()
-                };
+                let threshold_stats =
+                    alert_stats_if_needed.expect("should_alert is true but stats are None");
 
                 let _ = app_clone.emit(
                     "memory:threshold-exceeded",
                     serde_json::json!({
-                        "current": alert_stats.current,
-                        "threshold": alert_stats.threshold_mb,
-                        "thresholdPercent": alert_stats.threshold_percent,
+                        "current": threshold_stats.current,
+                        "threshold": threshold_stats.threshold_mb,
+                        "thresholdPercent": threshold_stats.threshold_percent,
                         "totalRamGb": total_ram_gb,
                     }),
                 );
@@ -245,6 +254,7 @@ async fn write_ram_metrics_to_file(app: &AppHandle, stats: &RamStats) -> Result<
 ///
 /// Current RAM statistics including average, peak, and threshold status.
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri command API requires State to be passed by value, not reference
 pub fn get_ram_stats(
     state: tauri::State<'_, Arc<Mutex<MemoryMonitorState>>>,
 ) -> Result<RamStats, String> {

@@ -79,7 +79,7 @@ pub fn get_platform() -> Result<String, String> {
 /// - Rust process initialization
 /// - Tauri framework initialization
 /// - Plugin initialization
-/// - WebView creation
+/// - `WebView` creation
 ///
 /// Note: This does NOT include HTML/JS bundle loading time or JavaScript execution time,
 /// which are measured separately in the frontend. The total startup time is:
@@ -93,6 +93,7 @@ pub fn get_platform() -> Result<String, String> {
 ///
 /// The process startup time in milliseconds (from process start to Tauri setup completion).
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // Tauri command API requires State to be passed by value, not reference
 pub fn get_process_startup_time(
     process_startup_time: tauri::State<'_, std::sync::Mutex<f64>>,
 ) -> Result<f64, String> {
@@ -123,7 +124,15 @@ pub struct SystemSpecs {
 /// # Returns
 ///
 /// System specifications including CPU model, RAM, and build mode.
+///
+/// # Errors
+///
+/// Returns an error if system information cannot be retrieved.
+///
+/// Note: This function is infallible in practice, but returns `Result` for consistency
+/// with other Tauri commands and potential future error cases.
 #[tauri::command]
+#[allow(clippy::unnecessary_wraps)] // Result return type is for consistency with Tauri command pattern
 pub fn get_system_specs() -> Result<SystemSpecs, String> {
     use sysinfo::System;
 
@@ -131,15 +140,17 @@ pub fn get_system_specs() -> Result<SystemSpecs, String> {
     system.refresh_all();
 
     // Get CPU information
-    let cpu_model = if !system.cpus().is_empty() {
-        system.cpus()[0].name().to_string()
-    } else {
+    let cpu_model = if system.cpus().is_empty() {
         "Unknown".to_string()
+    } else {
+        system.cpus()[0].name().to_string()
     };
     let cpu_cores = system.cpus().len();
 
     // Get total memory in GB
     let total_memory_bytes = system.total_memory();
+    // Precision loss is acceptable for memory measurements in GB
+    #[allow(clippy::cast_precision_loss)]
     let total_memory_gb = total_memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
 
     // Get platform
@@ -164,14 +175,12 @@ pub fn get_system_specs() -> Result<SystemSpecs, String> {
     };
 
     // Get bundle size (executable size)
+    // Precision loss is acceptable for file size measurements in MB
+    #[allow(clippy::cast_precision_loss)]
     let bundle_size_mb = std::env::current_exe()
         .ok()
-        .and_then(|exe_path| {
-            std::fs::metadata(&exe_path)
-                .ok()
-                .map(|metadata| metadata.len() as f64 / (1024.0 * 1024.0))
-        })
-        .unwrap_or(0.0);
+        .and_then(|exe_path| std::fs::metadata(&exe_path).ok())
+        .map_or(0.0, |metadata| metadata.len() as f64 / (1024.0 * 1024.0));
 
     Ok(SystemSpecs {
         cpu_model,
@@ -383,7 +392,7 @@ struct StartupTimingData {
 
 /// Write startup timing metrics to a file in the app data directory.
 ///
-/// This command writes startup timing data (Process Startup, DOMContentLoaded, Window Load, React Mounted, Total)
+/// This command writes startup timing data (Process Startup, `DOMContentLoaded`, Window Load, React Mounted, Total)
 /// to `startup-timing.json` in the app's data directory. The file maintains:
 /// - The latest startup timing entry
 /// - The last 3 startup entries (for recent history)
@@ -392,7 +401,7 @@ struct StartupTimingData {
 ///
 /// Timing breakdown:
 /// - `processStartup`: Time from process start (Rust main) until Tauri setup completes
-/// - `domContentLoaded`: Time from JS execution start until DOMContentLoaded event
+/// - `domContentLoaded`: Time from JS execution start until `DOMContentLoaded` event
 /// - `windowLoaded`: Time from JS execution start until window load event
 /// - `reactMounted`: Time from JS execution start until React first render
 /// - `total`: Complete startup time from process start to React mount (processStartup + reactMounted)
@@ -461,7 +470,13 @@ struct StartupTimingData {
 ///
 /// Returns an error if the app data directory cannot be determined or the file cannot be written.
 /// Errors are silently ignored in production to avoid breaking the app if file write fails.
+///
+/// # Note
+///
+/// This function exceeds 100 lines to handle complex backward compatibility with old file formats
+/// and cumulative average calculations. The complexity is necessary for maintaining data integrity.
 #[tauri::command]
+#[allow(clippy::too_many_lines)] // Complex backward compatibility logic requires longer function
 pub async fn write_startup_timing(
     app: tauri::AppHandle,
     timing: serde_json::Value,
@@ -483,6 +498,8 @@ pub async fn write_startup_timing(
 
     // Read existing data if file exists
     let timing_file = app_data_dir.join("startup-timing.json");
+    // Complex nested parsing for backward compatibility - using match for clarity over map_or
+    #[allow(clippy::option_if_let_else)]
     let (previous_count, mut running_totals) = if timing_file.exists() {
         match tokio::fs::read_to_string(&timing_file).await {
             Ok(content) => {
@@ -492,49 +509,51 @@ pub async fn write_startup_timing(
                         // Use previous count and calculate running totals from average * count
                         let count = data.aggregates.count;
                         let avg = &data.aggregates.average;
+                        // Precision loss is acceptable for count (max ~2^52 startups before precision issues)
+                        // Casting usize to f64 directly (platform-dependent, but acceptable for startup counts)
+                        #[allow(clippy::cast_precision_loss)]
+                        let count_f64 = count as f64;
                         let totals = TimingMetrics {
-                            process_startup: avg.process_startup * count as f64,
-                            dom_content_loaded: avg.dom_content_loaded * count as f64,
-                            window_loaded: avg.window_loaded * count as f64,
-                            react_mounted: avg.react_mounted * count as f64,
-                            total: avg.total * count as f64,
+                            process_startup: avg.process_startup * count_f64,
+                            dom_content_loaded: avg.dom_content_loaded * count_f64,
+                            window_loaded: avg.window_loaded * count_f64,
+                            react_mounted: avg.react_mounted * count_f64,
+                            total: avg.total * count_f64,
                         };
                         (count, totals)
                     }
                     Err(_) => {
                         // Try old format (single entry) - treat as 1 startup
                         // Old format may not have processStartup, buildMode, or systemSpecs
+                        // Complex nested parsing for backward compatibility - using match for clarity
+                        #[allow(clippy::option_if_let_else)]
                         match serde_json::from_str::<serde_json::Value>(&content) {
                             Ok(json_value) => {
                                 // Try to extract timing from old format
-                                let timing_obj = json_value.get("timing").or_else(|| {
-                                    if json_value.is_object() {
-                                        Some(&json_value)
-                                    } else {
-                                        None
-                                    }
-                                });
+                                let timing_obj = json_value
+                                    .get("timing")
+                                    .or_else(|| json_value.is_object().then_some(&json_value));
                                 if let Some(timing_obj) = timing_obj {
                                     let totals = TimingMetrics {
                                         process_startup: timing_obj
                                             .get("processStartup")
-                                            .and_then(|v| v.as_f64())
+                                            .and_then(serde_json::Value::as_f64)
                                             .unwrap_or(0.0),
                                         dom_content_loaded: timing_obj
                                             .get("domContentLoaded")
-                                            .and_then(|v| v.as_f64())
+                                            .and_then(serde_json::Value::as_f64)
                                             .unwrap_or(0.0),
                                         window_loaded: timing_obj
                                             .get("windowLoaded")
-                                            .and_then(|v| v.as_f64())
+                                            .and_then(serde_json::Value::as_f64)
                                             .unwrap_or(0.0),
                                         react_mounted: timing_obj
                                             .get("reactMounted")
-                                            .and_then(|v| v.as_f64())
+                                            .and_then(serde_json::Value::as_f64)
                                             .unwrap_or(0.0),
                                         total: timing_obj
                                             .get("total")
-                                            .and_then(|v| v.as_f64())
+                                            .and_then(serde_json::Value::as_f64)
                                             .unwrap_or(0.0),
                                     };
                                     (1, totals)
@@ -590,6 +609,8 @@ pub async fn write_startup_timing(
     };
 
     // Get last 3 entries from previous data (if available)
+    // Complex nested parsing for backward compatibility - using match for clarity
+    #[allow(clippy::option_if_let_else)]
     let mut last_3: Vec<StartupTimingEntry> = if timing_file.exists() {
         match tokio::fs::read_to_string(&timing_file).await {
             Ok(content) => {
@@ -601,9 +622,13 @@ pub async fn write_startup_timing(
                     }
                     Err(_) => {
                         // Try to parse as old format (may be missing new fields)
+                        // Complex nested parsing for backward compatibility - using match for clarity
+                        #[allow(clippy::option_if_let_else)]
                         match serde_json::from_str::<serde_json::Value>(&content) {
                             Ok(json_value) => {
                                 // Try to parse as StartupTimingEntry (with defaults for missing fields)
+                                // Complex backward compatibility logic - using if let for clarity
+                                #[allow(clippy::option_if_let_else)]
                                 if let Ok(entry) =
                                     serde_json::from_value::<StartupTimingEntry>(json_value.clone())
                                 {
@@ -614,23 +639,23 @@ pub async fn write_startup_timing(
                                         let timing = TimingMetrics {
                                             process_startup: timing_obj
                                                 .get("processStartup")
-                                                .and_then(|v| v.as_f64())
+                                                .and_then(serde_json::Value::as_f64)
                                                 .unwrap_or(0.0),
                                             dom_content_loaded: timing_obj
                                                 .get("domContentLoaded")
-                                                .and_then(|v| v.as_f64())
+                                                .and_then(serde_json::Value::as_f64)
                                                 .unwrap_or(0.0),
                                             window_loaded: timing_obj
                                                 .get("windowLoaded")
-                                                .and_then(|v| v.as_f64())
+                                                .and_then(serde_json::Value::as_f64)
                                                 .unwrap_or(0.0),
                                             react_mounted: timing_obj
                                                 .get("reactMounted")
-                                                .and_then(|v| v.as_f64())
+                                                .and_then(serde_json::Value::as_f64)
                                                 .unwrap_or(0.0),
                                             total: timing_obj
                                                 .get("total")
-                                                .and_then(|v| v.as_f64())
+                                                .and_then(serde_json::Value::as_f64)
                                                 .unwrap_or(0.0),
                                         };
                                         vec![StartupTimingEntry {

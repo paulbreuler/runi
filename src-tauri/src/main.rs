@@ -18,6 +18,7 @@ use infrastructure::commands::{
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
 use infrastructure::memory_monitor::{get_ram_stats, start_memory_monitor};
+use sysinfo::System;
 use tauri::Manager;
 
 /// Initialize and run the Tauri application.
@@ -54,13 +55,12 @@ pub fn run() {
             app.manage(std::sync::Mutex::new(process_startup_ms));
 
             // Get system RAM for memory monitoring
-            use sysinfo::System;
             let mut system = System::new();
             system.refresh_memory();
             let total_ram_gb = system.total_memory() as f64 / (1024.0 * 1024.0 * 1024.0);
 
             // Start memory monitoring service (heartbeat sampling)
-            start_memory_monitor(app.handle().clone(), total_ram_gb);
+            start_memory_monitor(app.handle(), total_ram_gb);
 
             Ok(())
         })
