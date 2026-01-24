@@ -821,7 +821,7 @@ mod tests {
 
         let parsed_entries: Vec<StartupTimingEntry> = entries
             .iter()
-            .map(|e| serde_json::from_value(e.clone()).unwrap())
+            .map(|e| serde_json::from_value(e).unwrap())
             .collect();
 
         // Calculate averages manually
