@@ -21,7 +21,9 @@
  */
 
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { EXPANDED_CONTENT_LEFT_MARGIN_PX } from './constants';
+import { useCallback, useRef } from 'react';
+import { focusWithVisibility } from '@/utils/focusVisibility';
+import { EXPANDED_CONTENT_LEFT_MARGIN_PX, Z_INDEX } from './constants';
 
 export interface ExpandedContentProps {
   /** Content to display in expanded row */
@@ -49,17 +51,35 @@ export const ExpandedContent = ({
   innerClassName = 'bg-bg-elevated border-t border-border-subtle',
 }: ExpandedContentProps): React.JSX.Element => {
   const shouldReduceMotion = useReducedMotion() === true;
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Auto-focus on row expansion (Feature #4).
+   * When the expansion animation completes and the panel is visible,
+   * focus the first tab element to enable immediate keyboard navigation.
+   */
+  const handleAnimationComplete = useCallback(() => {
+    if (isVisible) {
+      const firstTab = contentRef.current?.querySelector<HTMLElement>('[role="tab"]');
+      if (firstTab !== null && firstTab !== undefined) {
+        focusWithVisibility(firstTab);
+      }
+    }
+  }, [isVisible]);
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
+          ref={contentRef}
           data-testid="expanded-section"
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeInOut' }}
           className="overflow-hidden"
+          style={{ position: 'relative', zIndex: Z_INDEX.EXPANDED_PANEL }}
+          onAnimationComplete={handleAnimationComplete}
         >
           <div
             className={innerClassName}

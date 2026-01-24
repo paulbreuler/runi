@@ -11,6 +11,7 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import type { ExpandedPanelTabType } from './ExpandedPanel';
 
 /**
@@ -33,9 +34,11 @@ import type { ExpandedPanelTabType } from './ExpandedPanel';
 export interface TabNavigationProps {
   /** Active tab */
   activeTab: ExpandedPanelTabType;
+  /** Optional keyboard handler for hierarchical navigation */
+  onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
-export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Element => {
+export const TabNavigation = ({ activeTab, onKeyDown }: TabNavigationProps): React.JSX.Element => {
   const prefersReducedMotion = useReducedMotion() === true;
 
   const tabs: Array<{ id: ExpandedPanelTabType; label: string }> = [
@@ -51,6 +54,7 @@ export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Elem
       <Tabs.List
         className="flex items-center gap-1 border-b border-border-default px-4 pt-2 relative"
         data-testid="expanded-tabs-list"
+        onKeyDown={onKeyDown}
       >
         {tabs.map((tab) => (
           <Tabs.Trigger key={tab.id} value={tab.id} asChild>
@@ -61,6 +65,7 @@ export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Elem
               aria-selected={activeTab === tab.id}
               className={cn(
                 'px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative',
+                focusRingClasses,
                 activeTab === tab.id
                   ? 'text-text-primary'
                   : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'

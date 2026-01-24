@@ -6,7 +6,7 @@
 import type { IntelligenceInfo } from '@/types/history';
 import { SignalDot } from './SignalDot';
 
-interface IntelligenceSignalsProps {
+export interface IntelligenceSignalsProps {
   /** Intelligence info for the history entry (optional) */
   intelligence?: IntelligenceInfo;
 }

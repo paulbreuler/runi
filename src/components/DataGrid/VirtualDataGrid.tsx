@@ -19,6 +19,7 @@ import { useDataGrid, type UseDataGridOptions } from './useDataGrid';
 import { cn } from '@/utils/cn';
 import { useAnchorColumnWidths, type AnchorColumnDef } from './useAnchorColumnWidths';
 import { SortIndicator, type SortDirection } from './columns/SortIndicator';
+import { Z_INDEX } from './constants';
 // Keyboard navigation is handled at the interactive element level (checkboxes, buttons)
 // Rows and cells are NOT focusable to prevent page scrolling
 
@@ -370,12 +371,12 @@ export function VirtualDataGrid<TData>({
       if (isPinned && pinSide === 'left') {
         cellStyle.position = 'sticky';
         cellStyle.left = leftOffsets.get(columnId) ?? 0;
-        cellStyle.zIndex = 5;
+        cellStyle.zIndex = Z_INDEX.CELL_LEFT;
       } else if (isPinned && pinSide === 'right' && hasHorizontalOverflow) {
         // Right-pinned (actions) only sticky when table overflows horizontally
         cellStyle.position = 'sticky';
         cellStyle.right = rightOffsets.get(columnId) ?? 0;
-        cellStyle.zIndex = 10; // Higher z-index to appear above scrolling content
+        cellStyle.zIndex = Z_INDEX.CELL_RIGHT; // Higher z-index to appear above scrolling content
       }
 
       const paddingClass = getCellPaddingClass(columnId);
@@ -633,7 +634,7 @@ export function VirtualDataGrid<TData>({
     <div className={cn('flex flex-col min-h-0', className)} data-testid="virtual-datagrid">
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-auto"
+        className="flex-1 overflow-auto bg-bg-app"
         style={{ height }}
         data-testid="virtual-scroll-container"
       >
@@ -653,7 +654,7 @@ export function VirtualDataGrid<TData>({
               })}
             </colgroup>
           )}
-          <thead className="sticky top-0 bg-bg-app z-10">
+          <thead className="sticky top-0 bg-bg-app" style={{ zIndex: Z_INDEX.HEADER_RIGHT }}>
             {renderHeader !== undefined
               ? renderHeader()
               : table.getHeaderGroups().map((headerGroup) => {
@@ -746,12 +747,12 @@ export function VirtualDataGrid<TData>({
                     if (isPinned && pinSide === 'left') {
                       headerStyle.position = 'sticky';
                       headerStyle.left = leftOffsets.get(header.column.id) ?? 0;
-                      headerStyle.zIndex = 15; // Higher than body cells
+                      headerStyle.zIndex = Z_INDEX.HEADER_LEFT; // Higher than body cells and expanded content
                     } else if (isPinned && pinSide === 'right' && hasHorizontalOverflow) {
                       // Right-pinned (actions) only sticky when table overflows horizontally
                       headerStyle.position = 'sticky';
                       headerStyle.right = rightOffsets.get(header.column.id) ?? 0;
-                      headerStyle.zIndex = 20; // Higher than everything to appear above scrolling content
+                      headerStyle.zIndex = Z_INDEX.HEADER_RIGHT; // Topmost - appears above all scrolling content
                     }
 
                     // Headers all use the same background color (bg-bg-app)

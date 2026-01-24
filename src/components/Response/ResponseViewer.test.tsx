@@ -137,4 +137,71 @@ describe('ResponseViewer', () => {
 
     expect(screen.getByTestId('response-tabs-overflow-left')).toBeInTheDocument();
   });
+
+  it('displays copy button in body tab', () => {
+    render(<ResponseViewer response={mockResponse} />);
+
+    // Body tab is active by default
+    expect(screen.getByLabelText('Copy json code')).toBeInTheDocument();
+  });
+
+  it('displays copy button in raw tab', async () => {
+    const user = userEvent.setup();
+    render(<ResponseViewer response={mockResponse} />);
+
+    // Click raw tab
+    const rawTab = screen.getByText('Raw');
+    await user.click(rawTab);
+
+    // Copy button should be visible with http language label
+    expect(screen.getByLabelText('Copy http code')).toBeInTheDocument();
+  });
+
+  it('uses CodeSnippet component in body tab', () => {
+    render(<ResponseViewer response={mockResponse} />);
+
+    // CodeSnippet should be rendered (has code-snippet test id)
+    expect(screen.getByTestId('code-snippet')).toBeInTheDocument();
+  });
+
+  it('uses CodeSnippet component in raw tab', async () => {
+    const user = userEvent.setup();
+    render(<ResponseViewer response={mockResponse} />);
+
+    // Click raw tab
+    const rawTab = screen.getByText('Raw');
+    await user.click(rawTab);
+
+    // CodeSnippet should be rendered
+    expect(screen.getByTestId('code-snippet')).toBeInTheDocument();
+  });
+
+  it('uses borderless variant in body tab', () => {
+    render(<ResponseViewer response={mockResponse} />);
+
+    const codeBox = screen.getByTestId('code-box');
+    const innerBox =
+      codeBox.querySelector('div[data-language]') ?? codeBox.querySelector('div:last-child');
+    // Borderless variant should not have container styling
+    expect(innerBox).not.toHaveClass('bg-bg-raised');
+    expect(innerBox).not.toHaveClass('border');
+    expect(innerBox).not.toHaveClass('rounded');
+  });
+
+  it('uses borderless variant in raw tab', async () => {
+    const user = userEvent.setup();
+    render(<ResponseViewer response={mockResponse} />);
+
+    // Click raw tab
+    const rawTab = screen.getByText('Raw');
+    await user.click(rawTab);
+
+    const codeBox = screen.getByTestId('code-box');
+    const innerBox =
+      codeBox.querySelector('div[data-language]') ?? codeBox.querySelector('div:last-child');
+    // Borderless variant should not have container styling
+    expect(innerBox).not.toHaveClass('bg-bg-raised');
+    expect(innerBox).not.toHaveClass('border');
+    expect(innerBox).not.toHaveClass('rounded');
+  });
 });

@@ -9,7 +9,7 @@ import { PanelTabs, type PanelTabType } from './PanelTabs';
 import { AnimatePresence, motion } from 'motion/react';
 
 const meta: Meta<typeof PanelTabs> = {
-  title: 'Components/PanelTabs',
+  title: 'UI/PanelTabs',
   component: PanelTabs,
   parameters: {
     layout: 'centered',

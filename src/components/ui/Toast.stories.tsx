@@ -22,7 +22,7 @@ const ToastStoryWrapper = ({ children }: { children?: React.ReactNode }): React.
 );
 
 const meta = {
-  title: 'Components/UI/Toast',
+  title: 'UI/Toast',
   component: Toast,
   decorators: [
     (Story): React.JSX.Element => (
@@ -103,26 +103,32 @@ export const ErrorToast: Story = {
       // Wait for toast to appear (toasts are animated, need time)
       // Toasts render in Radix Toast.Viewport which is in document.body
       // Wait for toast animation to complete (may need more time in CI)
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      // Check document.body for toast (Radix portals render there)
-      const toast = await within(document.body).findByRole(
-        'alert',
-        { name: /tauri backend is not available/i },
-        { timeout: 5000 }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Toast uses role="status" with aria-live, not role="alert"
+      // Search by text content instead
+      const toast = await within(document.body).findByText(
+        /tauri backend is not available/i,
+        {},
+        { timeout: 10000 }
       );
       await expect(toast).toBeVisible();
     });
 
     await step('Error toast has dismiss button', async () => {
       // Toast is in document.body (Radix portal)
-      const toast = within(document.body).getByRole('alert', {
-        name: /tauri backend is not available/i,
+      // Find by text since it uses role="status" not role="alert"
+      const toast = await within(document.body).findByText(
+        /tauri backend is not available/i,
+        {},
+        { timeout: 5000 }
+      );
+      const dismissButton = within(toast.closest('[role="status"]') ?? toast).getByRole('button', {
+        name: /dismiss notification/i,
       });
-      const dismissButton = within(toast).getByRole('button', { name: /dismiss notification/i });
       await expect(dismissButton).toBeVisible();
       await userEvent.click(dismissButton);
       // Wait for toast to be removed (exit animation)
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await expect(toast).not.toBeInTheDocument();
     });
   },
@@ -260,22 +266,24 @@ export const Interactive: Story = {
       const errorButton = canvas.getByRole('button', { name: /^error$/i });
       await userEvent.click(errorButton);
       // Wait for toast animation (toasts render in document.body via Radix portal, may need more time in CI)
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      const errorToast = await within(document.body).findByRole(
-        'alert',
-        { name: /error occurred/i },
-        { timeout: 5000 }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Toast uses role="status" not role="alert", search by text instead
+      const errorToast = await within(document.body).findByText(
+        /error occurred/i,
+        {},
+        { timeout: 10000 }
       );
       await expect(errorToast).toBeVisible();
 
       const successButton = canvas.getByRole('button', { name: /^success$/i });
       await userEvent.click(successButton);
       // Wait for toast animation
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      const successToast = await within(document.body).findByRole(
-        'alert',
-        { name: /success message/i },
-        { timeout: 5000 }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Toast uses role="status" not role="alert", search by text instead
+      const successToast = await within(document.body).findByText(
+        /success message/i,
+        {},
+        { timeout: 10000 }
       );
       await expect(successToast).toBeVisible();
     });
@@ -284,9 +292,10 @@ export const Interactive: Story = {
       const clearButton = canvas.getByRole('button', { name: /clear all/i });
       await userEvent.click(clearButton);
       // Wait for toasts to be removed (exit animations)
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, 600));
       // Check document.body for toasts (Radix portal)
-      const toasts = within(document.body).queryAllByRole('alert');
+      // Toast uses role="status" not role="alert"
+      const toasts = within(document.body).queryAllByRole('status');
       await expect(toasts).toHaveLength(0);
     });
   },

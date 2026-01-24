@@ -27,6 +27,31 @@ describe('accessibility utilities', () => {
       expect(focusRingClasses).toContain('accent-blue');
       expect(focusRingClasses).not.toContain('accent-purple');
     });
+
+    it('contains data-focus-visible-added selectors for programmatic focus', () => {
+      // These selectors ensure arrow key navigation shows the same focus ring as Tab
+      expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-2');
+      expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-accent-blue');
+      expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-offset-2');
+      expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-offset-bg-app');
+    });
+
+    it('has matching selectors for both focus-visible and data-focus-visible-added', () => {
+      // Verify both selector types have the same ring properties
+      const hasFocusVisibleRing2 = focusRingClasses.includes('focus-visible:ring-2');
+      const hasDataAttrRing2 = focusRingClasses.includes(
+        '[&[data-focus-visible-added]:focus]:ring-2'
+      );
+      expect(hasFocusVisibleRing2).toBe(true);
+      expect(hasDataAttrRing2).toBe(true);
+
+      const hasFocusVisibleColor = focusRingClasses.includes('focus-visible:ring-accent-blue');
+      const hasDataAttrColor = focusRingClasses.includes(
+        '[&[data-focus-visible-added]:focus]:ring-accent-blue'
+      );
+      expect(hasFocusVisibleColor).toBe(true);
+      expect(hasDataAttrColor).toBe(true);
+    });
   });
 
   describe('useFocusVisible', () => {

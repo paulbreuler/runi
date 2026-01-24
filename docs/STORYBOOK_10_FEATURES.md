@@ -11,6 +11,7 @@ Storybook 10 introduced several key improvements:
 - **CSF Factories** (Preview) for better type safety
 - **Tag filtering exclusion** for sidebar management
 - **UI editing optimizations** (QR codes, open in editor)
+- **Controls for state variations** - Use controls instead of separate stories for every prop combination
 
 ## Tag Filtering Exclusion
 

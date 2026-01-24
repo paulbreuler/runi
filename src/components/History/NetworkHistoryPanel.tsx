@@ -21,13 +21,21 @@ import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 /** Estimated row height for virtualization */
 const ESTIMATED_ROW_HEIGHT = 48;
 
-interface NetworkHistoryPanelProps {
+export interface NetworkHistoryPanelProps {
   /** History entries to display (optional - uses store by default) */
   entries?: NetworkHistoryEntry[];
   /** Callback when user wants to replay a request */
   onReplay: (entry: NetworkHistoryEntry) => void;
   /** Callback when user wants to copy as cURL */
   onCopyCurl: (entry: NetworkHistoryEntry) => void;
+  /** Callback when user wants to chain a request (optional) */
+  onChain?: (entry: NetworkHistoryEntry) => void;
+  /** Callback when user wants to generate tests (optional) */
+  onGenerateTests?: (entry: NetworkHistoryEntry) => void;
+  /** Callback when user wants to add to collection (optional) */
+  onAddToCollection?: (entry: NetworkHistoryEntry) => void;
+  /** Callback when user wants to block/unblock a request (optional) */
+  onBlockToggle?: (id: string, isBlocked: boolean) => void;
 }
 
 /**
@@ -43,6 +51,10 @@ export const NetworkHistoryPanel = ({
   entries: entriesProp,
   onReplay,
   onCopyCurl,
+  onChain,
+  onGenerateTests,
+  onAddToCollection,
+  onBlockToggle,
 }: NetworkHistoryPanelProps): React.JSX.Element => {
   // Use store state
   const {
@@ -474,7 +486,15 @@ export const NetworkHistoryPanel = ({
             <tr key={`${row.id}-expanded`}>
               <td colSpan={columns.length} className="p-0">
                 <ExpandedContent>
-                  <ExpandedPanel entry={entry} />
+                  <ExpandedPanel
+                    entry={entry}
+                    onReplay={onReplay}
+                    onCopy={onCopyCurl}
+                    onChain={onChain}
+                    onGenerateTests={onGenerateTests}
+                    onAddToCollection={onAddToCollection}
+                    onBlockToggle={onBlockToggle}
+                  />
                 </ExpandedContent>
               </td>
             </tr>
@@ -488,6 +508,12 @@ export const NetworkHistoryPanel = ({
       handleSelect,
       handleToggleExpand,
       initialRowSelection,
+      onReplay,
+      onCopyCurl,
+      onChain,
+      onGenerateTests,
+      onAddToCollection,
+      onBlockToggle,
       // setRowSelectionRef and setExpandedRef are refs, don't need to be in deps
     ]
   );

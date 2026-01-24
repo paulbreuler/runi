@@ -13,7 +13,7 @@ import { waitForFocus } from '@/utils/storybook-test-helpers';
 type Story = StoryObj<typeof meta>;
 
 const meta = {
-  title: 'Components/UI/EmptyState',
+  title: 'UI/EmptyState',
   component: EmptyState,
   parameters: {
     layout: 'centered',

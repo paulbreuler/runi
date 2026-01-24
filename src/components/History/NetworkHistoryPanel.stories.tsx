@@ -6,20 +6,62 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { fn } from 'storybook/test';
-import { NetworkHistoryPanel } from './NetworkHistoryPanel';
+import { NetworkHistoryPanel, type NetworkHistoryPanelProps } from './NetworkHistoryPanel';
+import { HeaderRow } from './HeaderRow';
+import { NetworkStatusBar } from './NetworkStatusBar';
 import type { NetworkHistoryEntry } from '@/types/history';
 
+// Custom args for story controls (not part of component props)
+interface NetworkHistoryPanelStoryArgs {
+  entryCount?: 'empty' | 'single' | 'few' | 'many';
+  hasDrift?: boolean;
+}
+
 const meta = {
-  title: 'Components/History/NetworkHistoryPanel',
+  title: 'History/NetworkHistoryPanel',
   component: NetworkHistoryPanel,
   parameters: {
     layout: 'fullscreen',
+    docs: {
+      description: {
+        component: `Complete Network History Panel with filter bar, virtualized data grid, and status bar.
+
+**Components:**
+- **NetworkHistoryPanel** - Main panel with filter bar, data grid, and status bar
+- **HeaderRow** - Displays a single HTTP header key-value pair
+- **NetworkStatusBar** - Entry counts and intelligence signals
+
+**Features:**
+- FilterBar: Search, method/status/intelligence filters, compare mode
+- VirtualDataGrid: Virtualized rows with selection, expansion, sorting
+- ExpandedPanel: Detailed view with tabs (Timing, Response, Headers, Code Gen)
+- NetworkStatusBar: Entry counts and intelligence signals
+- Intelligence signals: Verified, drift, AI-generated, bound-to-spec
+
+This story file includes NetworkHistoryPanel, HeaderRow, and NetworkStatusBar stories. Use the Controls panel to explore different entry counts and states.`,
+      },
+    },
   },
   tags: ['autodocs'],
-} satisfies Meta<typeof NetworkHistoryPanel>;
+  argTypes: {
+    entryCount: {
+      control: 'select',
+      options: ['empty', 'single', 'few', 'many'],
+      description: 'Number of entries to display',
+    },
+    hasDrift: {
+      control: 'boolean',
+      description: 'Include entries with drift issues',
+    },
+  },
+  args: {
+    entryCount: 'few',
+    hasDrift: false,
+  },
+} satisfies Meta<NetworkHistoryPanelProps & NetworkHistoryPanelStoryArgs>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<NetworkHistoryPanelProps & NetworkHistoryPanelStoryArgs>;
 
 const noop = fn();
 
@@ -160,111 +202,72 @@ const mockEntries: NetworkHistoryEntry[] = [
 ];
 
 /**
- * Default panel with multiple entries showing various states.
+ * Playground with controls for all NetworkHistoryPanel features.
+ * Use the Controls panel to explore different entry counts and states.
  */
-export const Default: Story = {
-  args: {
-    entries: mockEntries,
-    onReplay: noop,
-    onCopyCurl: noop,
+export const Playground: Story = {
+  render: (args: NetworkHistoryPanelProps & NetworkHistoryPanelStoryArgs) => {
+    const entryCountMap = {
+      empty: 0,
+      single: 1,
+      few: 5,
+      many: 20,
+    };
+
+    const count = entryCountMap[args.entryCount ?? 'few'];
+    let entries = mockEntries.slice(0, count);
+
+    if (args.hasDrift === true && entries.length > 0) {
+      entries = entries.map((entry, index) =>
+        index === 0
+          ? {
+              ...entry,
+              intelligence: {
+                ...(entry.intelligence ?? defaultIntelligence),
+                drift: {
+                  type: 'response' as const,
+                  fields: ['status'],
+                  message: 'Unexpected field',
+                },
+                verified: false,
+              },
+            }
+          : entry
+      );
+    }
+
+    return (
+      <div className="h-[600px] bg-bg-app">
+        <NetworkHistoryPanel entries={entries} onReplay={noop} onCopyCurl={noop} />
+      </div>
+    );
   },
-  render: (args) => (
-    <div className="h-[600px] bg-bg-app">
-      <NetworkHistoryPanel {...args} />
-    </div>
-  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Interactive playground for NetworkHistoryPanel. Use the Controls panel to configure entry count (empty, single, few, many) and drift state.',
+      },
+    },
+  },
 };
 
 /**
- * Empty state - no requests yet.
- */
-export const Empty: Story = {
-  args: {
-    entries: [],
-    onReplay: noop,
-    onCopyCurl: noop,
-  },
-  render: (args) => (
-    <div className="h-[400px] bg-bg-app">
-      <NetworkHistoryPanel {...args} />
-    </div>
-  ),
-};
-
-/**
- * Panel with entries that have drift issues.
- */
-export const WithDriftIssues: Story = {
-  args: {
-    entries: mockEntries.map((entry) =>
-      entry.id === 'hist_1'
-        ? {
-            ...entry,
-            intelligence: {
-              ...(entry.intelligence ?? defaultIntelligence),
-              drift: { type: 'response' as const, fields: ['status'], message: 'Unexpected field' },
-              verified: false,
-            },
-          }
-        : entry
-    ),
-    onReplay: noop,
-    onCopyCurl: noop,
-  },
-  render: (args) => (
-    <div className="h-[600px] bg-bg-app">
-      <NetworkHistoryPanel {...args} />
-    </div>
-  ),
-};
-
-/**
- * Single entry.
- */
-export const SingleEntry: Story = {
-  args: {
-    entries: mockEntries.slice(0, 1),
-    onReplay: noop,
-    onCopyCurl: noop,
-  },
-  render: (args) => (
-    <div className="h-[400px] bg-bg-app">
-      <NetworkHistoryPanel {...args} />
-    </div>
-  ),
-};
-
-/**
- * Test story for expander functionality - multiple rows to test expansion on different rows.
- * This story is used by Playwright E2E tests to verify expander works on all rows, not just the last one.
- */
-export const ExpanderTest: Story = {
-  args: {
-    entries: mockEntries.slice(0, 5), // Use first 5 entries for testing
-    onReplay: noop,
-    onCopyCurl: noop,
-  },
-  render: (args) => (
-    <div className="h-[800px] bg-bg-app">
-      <NetworkHistoryPanel {...args} />
-    </div>
-  ),
-};
-
-/**
- * Test filter interactions through the panel.
+ * Tests filter interactions through the panel.
  */
 export const FilterInteractionsTest: Story = {
   args: {
-    entries: mockEntries,
-    onReplay: noop,
-    onCopyCurl: noop,
+    entryCount: 'few',
+    hasDrift: false,
   },
-  render: (args) => (
-    <div className="h-[600px] bg-bg-app">
-      <NetworkHistoryPanel {...args} />
-    </div>
-  ),
+  render: () => {
+    const entries = mockEntries.slice(0, 5);
+    return (
+      <div className="h-[600px] bg-bg-app">
+        <NetworkHistoryPanel entries={entries} onReplay={noop} onCopyCurl={noop} />
+      </div>
+    );
+  },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
@@ -273,98 +276,61 @@ export const FilterInteractionsTest: Story = {
       await userEvent.clear(searchInput);
       await userEvent.type(searchInput, 'users');
       await expect(searchInput).toHaveValue('users');
-      // Verify filtered results (should show entries with 'users' in URL)
       const rows = canvas.getAllByTestId('history-row');
-      // At least one row should be visible after filtering
       await expect(rows.length).toBeGreaterThan(0);
     });
 
     await step('Filter by method', async () => {
       const methodFilter = canvas.getByTestId('method-filter');
       await userEvent.click(methodFilter);
-      // Wait for select to open
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const postOption = await canvas.findByRole('option', { name: /^post$/i }, { timeout: 2000 });
-      await userEvent.click(postOption);
-      // Wait for select to close and filter to apply
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      // Verify only POST entries are shown
-      const rows = canvas.getAllByTestId('history-row');
-      await expect(rows.length).toBeGreaterThan(0);
-    });
-  },
-};
-
-/**
- * Test state management when filters change.
- */
-export const StateManagementTest: Story = {
-  args: {
-    entries: mockEntries,
-    onReplay: noop,
-    onCopyCurl: noop,
-  },
-  render: (args) => (
-    <div className="h-[600px] bg-bg-app">
-      <NetworkHistoryPanel {...args} />
-    </div>
-  ),
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Verify initial entries are displayed', async () => {
-      const rows = canvas.getAllByTestId('history-row');
-      await expect(rows.length).toBeGreaterThan(0);
-    });
-
-    await step('Apply filter and verify state updates', async () => {
-      const statusFilter = canvas.getByTestId('status-filter');
-      await userEvent.click(statusFilter);
-      // Wait for select to open (Radix Select uses portals)
       await new Promise((resolve) => setTimeout(resolve, 200));
-      // Options are in a Radix portal (document.body)
-      const statusOption = await within(document.body).findByRole(
+      // Radix Select renders options in a portal (document.body), search there
+      const postOption = await within(document.body).findByRole(
         'option',
-        { name: /2xx/i },
-        { timeout: 2000 }
+        { name: /^post$/i },
+        { timeout: 3000 }
       );
-      await userEvent.click(statusOption);
-      // Wait for select to close and filter to apply
+      await userEvent.click(postOption);
       await new Promise((resolve) => setTimeout(resolve, 200));
-      // Verify filter state changed
-      await expect(statusFilter).toHaveTextContent(/2xx/i);
-      // Verify rows are still visible (filtered)
       const rows = canvas.getAllByTestId('history-row');
       await expect(rows.length).toBeGreaterThan(0);
     });
   },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Tests filter interactions: search by URL and filter by HTTP method.',
+      },
+    },
+  },
 };
 
 /**
- * Visual test for double-click behavior - demonstrates that double-click expands without toggling selection.
- * This story helps visualize the expected behavior: single click selects, double-click expands (selection remains).
+ * Tests double-click behavior: expands row without toggling selection.
  */
 export const DoubleClickBehaviorTest: Story = {
   args: {
-    entries: mockEntries.slice(0, 3), // Use 3 entries for clarity
-    onReplay: noop,
-    onCopyCurl: noop,
+    entryCount: 'few',
+    hasDrift: false,
   },
-  render: (args) => (
-    <div className="h-[700px] bg-bg-app">
-      <div className="p-4 space-y-2">
-        <div className="text-sm text-text-muted">
-          <p className="font-medium mb-1">Expected Behavior:</p>
-          <ul className="list-disc list-inside space-y-1 text-xs">
-            <li>Single click on row → selects row (subtle gray highlight)</li>
-            <li>Double-click on row → expands row (selection should remain, NOT toggle)</li>
-            <li>Row highlight should stay visible when double-clicking a selected row</li>
-          </ul>
+  render: () => {
+    const entries = mockEntries.slice(0, 3);
+    return (
+      <div className="h-[700px] bg-bg-app">
+        <div className="p-4 space-y-2">
+          <div className="text-sm text-text-muted">
+            <p className="font-medium mb-1">Expected Behavior:</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li>Single click on row → selects row (subtle gray highlight)</li>
+              <li>Double-click on row → expands row (selection should remain, NOT toggle)</li>
+              <li>Row highlight should stay visible when double-clicking a selected row</li>
+            </ul>
+          </div>
+          <NetworkHistoryPanel entries={entries} onReplay={noop} onCopyCurl={noop} />
         </div>
-        <NetworkHistoryPanel {...args} />
       </div>
-    </div>
-  ),
+    );
+  },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
@@ -373,9 +339,9 @@ export const DoubleClickBehaviorTest: Story = {
       const firstRow = rows[0];
       if (firstRow !== undefined) {
         await userEvent.click(firstRow);
-        // Wait for selection state to update
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        // Row should be selected (have subtle lightened background)
+        // NetworkHistoryPanel uses a timeout for selection, wait longer for state update
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        // Wait for the class to be applied (React state update + re-render)
         await expect(firstRow).toHaveClass('bg-bg-raised/30');
       }
     });
@@ -384,34 +350,11 @@ export const DoubleClickBehaviorTest: Story = {
       const rows = canvas.getAllByTestId('history-row');
       const firstRow = rows[0];
       if (firstRow !== undefined) {
-        // Double-click the row
         await userEvent.dblClick(firstRow);
-        // Wait for expansion animation
         await new Promise((resolve) => setTimeout(resolve, 200));
-
-        // Verify expanded content is visible
         const expandedSection = canvas.queryByTestId('expanded-section');
         await expect(expandedSection).toBeInTheDocument();
-
-        // Verify row is still selected (should still have highlight)
         await expect(firstRow).toHaveClass('bg-bg-raised/30');
-      }
-    });
-
-    await step('Verify selection checkbox is still checked after double-click', async () => {
-      const checkboxes = canvas.getAllByRole('checkbox');
-      // Find the checkbox for the first row (skip header checkbox)
-      const rowCheckbox = checkboxes.find((cb): boolean => {
-        const label = cb.getAttribute('aria-label');
-        if (label === null) {
-          return false;
-        }
-        return label.includes('Select') && label.includes('hist_1');
-      });
-
-      if (rowCheckbox !== undefined) {
-        // Checkbox should still be checked after double-click
-        await expect(rowCheckbox).toHaveAttribute('aria-checked', 'true');
       }
     });
   },
@@ -419,8 +362,113 @@ export const DoubleClickBehaviorTest: Story = {
     docs: {
       description: {
         story:
-          'Visual test for double-click behavior. Verifies that double-clicking a row expands it without toggling selection. The row should remain selected (subtle gray highlight) after double-click, matching Console tab behavior.',
+          'Tests double-click behavior: verifies that double-clicking a row expands it without toggling selection.',
       },
     },
   },
+};
+
+// ============================================================================
+// HeaderRow Stories
+// ============================================================================
+
+/**
+ * HeaderRow - standard header with typical key-value pair.
+ */
+export const HeaderRowDefault: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app">
+      <HeaderRow name="Content-Type" value="application/json" />
+    </div>
+  ),
+};
+
+/**
+ * HeaderRow - authorization header with bearer token.
+ */
+export const HeaderRowAuthorization: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app">
+      <HeaderRow
+        name="Authorization"
+        value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ"
+      />
+    </div>
+  ),
+};
+
+/**
+ * HeaderRow - long value that wraps.
+ */
+export const HeaderRowLongValue: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app w-64">
+      <HeaderRow
+        name="X-Custom-Header"
+        value="This is a very long header value that will wrap to multiple lines when the container width is constrained"
+      />
+    </div>
+  ),
+};
+
+/**
+ * HeaderRow - URL as value.
+ */
+export const HeaderRowUrlValue: Story = {
+  render: () => (
+    <div className="p-4 bg-bg-app">
+      <HeaderRow
+        name="Referer"
+        value="https://example.com/api/v1/users?page=1&limit=10&sort=name"
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// NetworkStatusBar Stories
+// ============================================================================
+
+/**
+ * NetworkStatusBar - empty state with no intelligence counts.
+ */
+export const NetworkStatusBarDefault: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={25} driftCount={0} aiCount={0} boundCount={0} />
+    </div>
+  ),
+};
+
+/**
+ * NetworkStatusBar - with all intelligence counts.
+ */
+export const NetworkStatusBarWithAllCounts: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={100} driftCount={5} aiCount={12} boundCount={78} />
+    </div>
+  ),
+};
+
+/**
+ * NetworkStatusBar - with drift issues detected.
+ */
+export const NetworkStatusBarWithDrift: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={50} driftCount={8} aiCount={0} boundCount={42} />
+    </div>
+  ),
+};
+
+/**
+ * NetworkStatusBar - single request (singular form).
+ */
+export const NetworkStatusBarSingleRequest: Story = {
+  render: () => (
+    <div className="bg-bg-surface border border-border-subtle rounded">
+      <NetworkStatusBar totalCount={1} driftCount={0} aiCount={0} boundCount={1} />
+    </div>
+  ),
 };

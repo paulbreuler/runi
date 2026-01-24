@@ -35,6 +35,7 @@ const config: StorybookConfig = {
         },
       },
     },
+    '@chromatic-com/storybook',
   ],
 
   // Enable experimental component manifest for docs toolset

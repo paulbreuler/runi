@@ -26,12 +26,12 @@ import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
 import { ConsolePanel } from '../Console/ConsolePanel';
 import { PanelTabs, type PanelTabType } from '@/components/PanelTabs';
 import { PanelContent } from '@/components/PanelContent';
-import { globalEventBus } from '@/events/bus';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 
-interface MainLayoutProps {
+export interface MainLayoutProps {
   headerContent?: React.ReactNode;
   requestContent?: React.ReactNode;
   responseContent?: React.ReactNode;
@@ -372,13 +372,58 @@ export const MainLayout = ({
     await navigator.clipboard.writeText(curl);
   }, []);
 
+  // Placeholder handlers for action buttons (to be implemented)
+  const handleChainRequest = useCallback((entry: NetworkHistoryEntry): void => {
+    globalEventBus.emit('toast.show', {
+      type: 'info',
+      message: 'Chain Request',
+      details: `Chaining request to ${entry.request.url} - Feature coming soon`,
+    } satisfies ToastEventPayload);
+  }, []);
+
+  const handleGenerateTests = useCallback((entry: NetworkHistoryEntry): void => {
+    globalEventBus.emit('toast.show', {
+      type: 'info',
+      message: 'Generate Tests',
+      details: `Generating tests for ${entry.request.method} ${entry.request.url} - Feature coming soon`,
+    } satisfies ToastEventPayload);
+  }, []);
+
+  const handleAddToCollection = useCallback((entry: NetworkHistoryEntry): void => {
+    globalEventBus.emit('toast.show', {
+      type: 'info',
+      message: 'Add to Collection',
+      details: `Adding ${entry.request.method} ${entry.request.url} to collection - Feature coming soon`,
+    } satisfies ToastEventPayload);
+  }, []);
+
+  const handleBlockToggle = useCallback((id: string, isBlocked: boolean): void => {
+    const action = isBlocked ? 'Blocked' : 'Unblocked';
+    globalEventBus.emit('toast.show', {
+      type: isBlocked ? 'warning' : 'success',
+      message: `Request ${action}`,
+      details: `Request ${id} has been ${action.toLowerCase()} - Feature coming soon`,
+    } satisfies ToastEventPayload);
+  }, []);
+
   // Memoize the history panel callbacks to avoid unnecessary re-renders
   const historyPanelProps = useMemo(
     () => ({
       onReplay: handleReplay,
       onCopyCurl: handleCopyCurl,
+      onChain: handleChainRequest,
+      onGenerateTests: handleGenerateTests,
+      onAddToCollection: handleAddToCollection,
+      onBlockToggle: handleBlockToggle,
     }),
-    [handleReplay, handleCopyCurl]
+    [
+      handleReplay,
+      handleCopyCurl,
+      handleChainRequest,
+      handleGenerateTests,
+      handleAddToCollection,
+      handleBlockToggle,
+    ]
   );
 
   const isSidebarOverlay = sidebarVisible && isCompact;

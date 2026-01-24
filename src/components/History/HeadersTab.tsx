@@ -16,6 +16,10 @@ export interface HeadersTabProps {
   entry: NetworkHistoryEntry;
   /** Additional CSS classes */
   className?: string;
+  /** Optional keyboard handler for hierarchical navigation */
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  /** Optional ref for keyboard navigation coordination */
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -30,12 +34,19 @@ export interface HeadersTabProps {
  * <HeadersTab entry={networkHistoryEntry} />
  * ```
  */
-export const HeadersTab = ({ entry, className }: HeadersTabProps): React.ReactElement => {
+export const HeadersTab = ({
+  entry,
+  className,
+  onKeyDown,
+  containerRef,
+}: HeadersTabProps): React.ReactElement => {
   return (
     <div data-testid="headers-tab" className={className}>
       <HeadersPanel
         requestHeaders={entry.request.headers}
         responseHeaders={entry.response.headers}
+        onKeyDown={onKeyDown}
+        containerRef={containerRef}
       />
     </div>
   );

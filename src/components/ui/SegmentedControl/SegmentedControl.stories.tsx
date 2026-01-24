@@ -10,7 +10,7 @@ import { AlertCircle, AlertTriangle, Info, Terminal, CheckCircle, XCircle } from
 import { SegmentedControl, SAIYAN_TIERS } from '.';
 
 const meta = {
-  title: 'Components/UI/SegmentedControl',
+  title: 'UI/SegmentedControl',
   component: SegmentedControl,
   parameters: {
     layout: 'centered',

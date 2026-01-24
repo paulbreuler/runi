@@ -43,6 +43,7 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 > - `next-frontier-in-api.md` — Research on API landscape, knowledge graphs, visualization, security, and AI-native patterns
 > - `research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
 > - `MANIFEST.md` — Complete document hierarchy
+> - `plans/0018-component-design-principles-audit/plan.md` — Component design principles audit (systematic analysis of all components for DESIGN-PRINCIPLES.md compliance)
 >
 > **Use RLM query tools for advanced queries:**
 >
@@ -255,14 +256,11 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 
 ## Common Gotchas
 
-1. **Tauri v2 API:** Use `@tauri-apps/api/core` not `@tauri-apps/api/tauri`
-2. **Async Tauri commands:** All I/O commands must be `async`
-3. **CORS:** Tauri bypasses browser CORS — requests go through Rust
-4. **Clippy pedantic:** Some lints intentionally allowed (see `Cargo.toml`)
-5. **Test isolation:** Each test must clean up its own state
-6. **Type generation:** Rust type changes require `just generate-types` before frontend can use them
-7. **Frontend build required:** Rust lint/check/test require `just build-frontend` first (Tauri context)
-8. **Motion imports:** Use `motion/react` not `framer-motion`
+1. **CORS:** Tauri bypasses browser CORS — requests go through Rust
+2. **Clippy pedantic:** Some lints intentionally allowed (see `Cargo.toml`)
+3. **Test isolation:** Each test must clean up its own state
+4. **Frontend build required:** Rust lint/check/test require `just build-frontend` first (Tauri context)
+5. **Motion imports:** Use `motion/react` not `framer-motion`
 
 ---
 
@@ -547,59 +545,11 @@ test(auth): add bearer token validation tests
 
 ### Creating Pull Requests
 
-Use `/pr` command to create pull requests with comprehensive descriptions. See `.claude/commands/pr.md` for full details.
-
-**PR Description Template:**
-
-```markdown
-## Summary
-
-Brief description of what this PR does and why.
-
-## Changes
-
-- [File/Component] - Description of change
-- [File/Component] - Description of change
-
-## Testing
-
-- [ ] Unit tests added/updated
-- [ ] Integration tests pass
-- [ ] E2E tests pass (if user-facing feature or complex interactions)
-- [ ] Migration tests pass (if overhaul with data structure changes)
-- [ ] Performance tests pass (if data-heavy feature, include thresholds)
-- [ ] Manual testing completed
-- [ ] Coverage: [percentage]% (target: ≥85%)
-
-## Breaking Changes
-
-None (or description of breaking changes with migration guide)
-
-**For Overhauls:** Must include:
-
-- Explicit migration guide
-- Backward compatibility considerations
-- Migration test results
-- Data integrity validation
-
-## Related Issues
-
-Closes #123
-Related to #456
-
-## Checklist
-
-- [ ] Code follows runi's style guidelines
-- [ ] Tests added/updated (TDD workflow)
-- [ ] Documentation updated (if needed)
-- [ ] `just ci` passes locally
-- [ ] No warnings in CI
-- [ ] CLAUDE.md decision log updated (if applicable)
-```
+Use `/pr` command to create pull requests with comprehensive descriptions. See `.claude/commands/pr.md` for full details including PR description template, title format, and agent detection.
 
 ### Fixing PR Check Failures
 
-Use `/pr-check-fixes` to systematically fix failing CI checks. See `CLAUDE.md` PR Workflow section for full details.
+Use `/pr-check-fixes` to systematically fix failing CI checks. See `.claude/commands/pr-check-fixes.md` for full details.
 
 **Process:**
 
@@ -665,110 +615,7 @@ Use `/pr-check-fixes` to systematically fix failing CI checks. See `CLAUDE.md` P
 
 ### Managing PR Comments
 
-Use `/pr-comments` to fetch, review, address, and resolve PR comments.
-
-**CRITICAL: Use TodoWrite to track progress through each comment systematically.**
-
-**Process:**
-
-1. **Fetch PR information:**
-
-   ```bash
-   # Get PR number and branch name
-   gh pr view --json number,headRefName
-
-   # Get repository owner and name (IMPORTANT: use this, not headRepository)
-   gh repo view --json owner,name
-
-   # Get PR-level comments
-   gh api /repos/{owner}/{repo}/issues/{number}/comments
-
-   # Get review comments (inline code comments)
-   gh api /repos/{owner}/{repo}/pulls/{number}/comments
-   ```
-
-2. **Create todos for all comments** using TodoWrite with this format:
-
-   ```text
-   [File:line] Brief description of the issue
-   ```
-
-   Example todos:
-   - `helpers.ts:219 - Fix memory leak in waitForRemount`
-   - `main.ts:30 - Remove experimentalFormat option`
-   - `stories.tsx:724 - Add comment explaining manual focus`
-
-3. **Triage each comment** (update todo status as you go):
-
-   | Triage            | Todo Status                 | Action                        |
-   | ----------------- | --------------------------- | ----------------------------- |
-   | Needs code change | `in_progress` → `completed` | Fix code, reply with citation |
-   | Already fixed     | `completed`                 | Reply citing prior fix        |
-   | Won't fix         | `completed`                 | Reply with rationale          |
-   | Invalid/incorrect | `completed`                 | Reply explaining why          |
-
-4. **Address feedback** (mark todo `in_progress` before starting each):
-   - Make necessary code changes
-   - Note file and line numbers of fix
-   - Prepare reply citing the fix
-
-5. **Reply to comments:**
-
-   ```bash
-   # Reply to review comment with resolution
-   gh api /repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
-     -f body="Fixed in \`file.ts:42-45\` - [description of change]"
-   ```
-
-6. **Resolve threads using GraphQL API:**
-
-   ```bash
-   # Get thread IDs
-   gh api graphql -f query='
-   query {
-     repository(owner: "OWNER", name: "REPO") {
-       pullRequest(number: PR_NUMBER) {
-         reviewThreads(first: 50) {
-           nodes { id isResolved comments(first: 1) { nodes { body } } }
-         }
-       }
-     }
-   }'
-
-   # Resolve a thread
-   gh api graphql -f query='
-   mutation {
-     resolveReviewThread(input: { threadId: "THREAD_ID" }) {
-       thread { isResolved }
-     }
-   }'
-   ```
-
-7. **Mark todo as completed** after resolving each thread
-
-**Reply format examples:**
-
-- Code fix: `"Fixed in \`src/components/Button.tsx:23\` - removed unused import"`
-- Multiple lines: `"Fixed in \`src/utils/api.ts:15-22\` - added error handling"`
-- Already fixed: `"This was addressed in commit f9c0ed2 - see \`src/App.tsx:10\`"`
-- Won't fix: `"Intentionally kept as-is because [reason]. See CLAUDE.md for rationale."`
-
-**Acceptance Criteria:**
-
-- [ ] All comments have corresponding todos
-- [ ] Each todo tracked through completion
-- [ ] Code changes made for actionable feedback
-- [ ] Each addressed comment has reply with file:line citation
-- [ ] Threads resolved via GraphQL API (not just replied to)
-- [ ] Any "won't fix" items have clear explanations
-
-**Notes:**
-
-- Always use `gh repo view --json owner,name` to get correct repository owner
-- Comment threading: Review comments have `in_reply_to_id` for replies
-- Citations matter: Always cite specific file:line references
-- GitHub CLI required: Requires `gh` CLI tool installed and authenticated
-- **GraphQL for resolution**: REST API can reply but GraphQL is required to mark threads as resolved
+Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `.claude/commands/pr-comments.md` for full details including process, reply formats, and acceptance criteria.
 
 ---
 
@@ -864,7 +711,5 @@ Intelligence communicates through consistent visual signals:
 - [ts-rs](https://github.com/Aleph-Alpha/ts-rs)
 
 **Internal Docs:**
-
-Planning documents are accessed via MCP tools. See the "Planning Documents" section above (Product Context) for the complete list and MCP usage instructions.
 
 - `docs/DECISIONS.md` — Historical architectural decisions

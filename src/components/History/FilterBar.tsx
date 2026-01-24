@@ -11,7 +11,7 @@ import { FilterBarActions } from './FilterBarActions';
 // Re-export for backward compatibility
 export type FilterBarVariant = ActionBarVariant;
 
-interface FilterBarProps {
+export interface FilterBarProps {
   /** Current filter state */
   filters: HistoryFilters;
   /** Update a filter value */

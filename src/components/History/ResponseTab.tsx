@@ -16,6 +16,10 @@ export interface ResponseTabProps {
   entry: NetworkHistoryEntry;
   /** Additional CSS classes */
   className?: string;
+  /** Optional keyboard handler for hierarchical navigation */
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  /** Optional ref for keyboard navigation coordination */
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -30,10 +34,20 @@ export interface ResponseTabProps {
  * <ResponseTab entry={networkHistoryEntry} />
  * ```
  */
-export const ResponseTab = ({ entry, className }: ResponseTabProps): React.ReactElement => {
+export const ResponseTab = ({
+  entry,
+  className,
+  onKeyDown,
+  containerRef,
+}: ResponseTabProps): React.ReactElement => {
   return (
     <div data-testid="response-tab" className={className}>
-      <ResponsePanel requestBody={entry.request.body} responseBody={entry.response.body} />
+      <ResponsePanel
+        requestBody={entry.request.body}
+        responseBody={entry.response.body}
+        onKeyDown={onKeyDown}
+        containerRef={containerRef}
+      />
     </div>
   );
 };

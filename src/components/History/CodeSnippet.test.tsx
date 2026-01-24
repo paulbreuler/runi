@@ -39,4 +39,24 @@ describe('CodeSnippet', () => {
 
     expect(screen.getByTestId('code-snippet')).toHaveClass('custom-class');
   });
+
+  it('passes contained variant to CodeBox by default', () => {
+    render(<CodeSnippet code="const x = 1;" language="javascript" />);
+
+    const codeBox = screen.getByTestId('code-box');
+    const innerBox =
+      codeBox.querySelector('div[data-language]') ?? codeBox.querySelector('div:last-child');
+    expect(innerBox).toHaveClass('bg-bg-raised');
+    expect(innerBox).toHaveClass('border');
+  });
+
+  it('passes borderless variant to CodeBox when set', () => {
+    render(<CodeSnippet code="const x = 1;" language="javascript" variant="borderless" />);
+
+    const codeBox = screen.getByTestId('code-box');
+    const innerBox =
+      codeBox.querySelector('div[data-language]') ?? codeBox.querySelector('div:last-child');
+    expect(innerBox).not.toHaveClass('bg-bg-raised');
+    expect(innerBox).not.toHaveClass('border');
+  });
 });
