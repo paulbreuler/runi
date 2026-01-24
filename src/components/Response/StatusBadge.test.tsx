@@ -21,7 +21,7 @@ describe('StatusBadge', () => {
 
     const badge = screen.getByTestId('status-badge');
     expect(badge).toHaveClass('px-3');
-    expect(badge).toHaveClass('py-1.5');
+    expect(badge).toHaveClass('py-1');
   });
 
   it('has rounded-lg for polish', () => {

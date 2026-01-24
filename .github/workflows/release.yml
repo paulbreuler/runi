@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*' # Semantic version tags (e.g., v1.2.3)
+  release:
+    types:
+      - created # Triggered when release-please creates a GitHub release
 
 env:
   CARGO_TERM_COLOR: always
@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Install just
         uses: extractions/setup-just@v2
@@ -89,15 +91,10 @@ jobs:
           retention-days: 7
 
   release:
-    name: Create Release
+    name: Attach Artifacts to Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required for release notes generation
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -105,15 +102,11 @@ jobs:
           merge-multiple: true
           path: release-artifacts
 
-      - name: Create GitHub Release
+      - name: Attach artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          generate_release_notes: true
+          tag_name: ${{ github.event.release.tag_name }}
           files: |
             release-artifacts/*
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -20,6 +20,7 @@ import { cn } from '@/utils/cn';
 import { useAnchorColumnWidths, type AnchorColumnDef } from './useAnchorColumnWidths';
 import { SortIndicator, type SortDirection } from './columns/SortIndicator';
 import { Z_INDEX } from './constants';
+import { EmptyState } from '@/components/ui/EmptyState';
 // Keyboard navigation is handled at the interactive element level (checkboxes, buttons)
 // Rows and cells are NOT focusable to prevent page scrolling
 
@@ -526,8 +527,8 @@ export function VirtualDataGrid<TData>({
     if (rows.length === 0) {
       return (
         <tr key="empty-state">
-          <td colSpan={columns.length} className="px-3 py-8 text-center text-text-secondary">
-            {emptyMessage}
+          <td colSpan={columns.length} className="p-0">
+            <EmptyState variant="muted" title={emptyMessage} />
           </td>
         </tr>
       );
