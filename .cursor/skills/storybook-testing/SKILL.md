@@ -16,6 +16,62 @@ This skill guides creation of Storybook stories with consistent testing patterns
 - Creating visual regression test stories
 - Ensuring WCAG 2.1 AA compliance in stories
 
+## Controls-First Approach
+
+**CRITICAL**: Use Storybook 10 controls for state variations instead of creating separate stories for every prop combination.
+
+### The Problem
+
+We consolidated from **64+ story files** and **500+ story exports** down to **15-20 files** and **50-75 stories** (85% reduction). The root cause: creating separate stories for every prop combination instead of using controls.
+
+### The Solution
+
+**One Playground story per component with controls covers most cases.**
+
+**Bad (Anti-Pattern - Before Consolidation):**
+
+```tsx
+export const Default: Story = { args: { variant: 'default' } };
+export const Destructive: Story = { args: { variant: 'destructive' } };
+export const Outline: Story = { args: { variant: 'outline' } };
+export const Disabled: Story = { args: { disabled: true } };
+export const Small: Story = { args: { size: 'sm' } };
+export const Large: Story = { args: { size: 'lg' } };
+```
+
+**Good (Correct Pattern - After Consolidation):**
+
+```tsx
+export const Playground: Story = {
+  args: { variant: 'default', size: 'default', disabled: false },
+  argTypes: {
+    variant: { control: 'select', options: ['default', 'destructive', 'outline'] },
+    size: { control: 'select', options: ['sm', 'default', 'lg'] },
+    disabled: { control: 'boolean' },
+  },
+  play: async ({ canvasElement, step }) => {
+    // Test interactions that work across all state variations
+  },
+};
+```
+
+### Key Principles
+
+1. **Use controls for state variations** - Don't create separate stories for every prop combination
+2. **One Playground story per component** - Use controls to explore all features
+3. **Limit to 1-3 stories per component** - Most components need only one Playground story with controls
+4. **Test via play functions** - One comprehensive play function can test interactions across all state variations
+
+### When to Create Separate Stories
+
+Create separate stories **ONLY** for:
+
+1. **Complex interactions** that need dedicated play functions (e.g., keyboard navigation tests that require specific setup)
+2. **Real-world examples** (e.g., NetworkHistoryPanel with real network data vs generic DataGrid)
+3. **Documentation purposes** (named examples like "Empty State" or "Loading State", but still use controls within those stories)
+
+**Rule of thumb**: If you're creating a story just to show a different prop value, use controls instead.
+
 ## Story Templates
 
 Templates are located in `.storybook/templates/` and provide reusable patterns for common story types.
@@ -223,7 +279,8 @@ Follow these naming patterns:
 - Add brief JSDoc comments explaining each story's purpose
 - Use `storybook/test` utilities (`expect`, `userEvent`, `within`) for assertions
 - Don't duplicate unit test coverage in stories
-- Limit to 6-8 stories per component
+- **Limit to 1-3 stories per component** - Use controls for state variations instead of separate stories
+- **One Playground story with controls** covers most cases
 
 ## Example Stories
 
