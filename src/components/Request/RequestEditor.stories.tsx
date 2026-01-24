@@ -442,7 +442,7 @@ export const BodyEditorKeyboardNavigationTest: Story = {
       await userEvent.keyboard('{Tab}');
       await new Promise((resolve) => setTimeout(resolve, 100));
       // Check that value contains 'test' and has been modified (Tab may insert spaces or move focus)
-      const value = textarea.value;
+      const value = (textarea as HTMLTextAreaElement).value;
       await expect(value).toContain('test');
       // Tab might move focus away, so we check if textarea still has focus or if value was updated
       if (textarea === document.activeElement) {
