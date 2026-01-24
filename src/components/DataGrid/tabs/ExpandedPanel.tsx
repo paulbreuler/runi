@@ -23,8 +23,9 @@ import { TabNavigation } from './TabNavigation';
 import { ExpandedActionButtons } from './ExpandedActionButtons';
 import { useHierarchicalTabNavigation } from '@/hooks/useHierarchicalTabNavigation';
 
+import { noop } from '@/utils/functions';
+
 // Module-level constants for fallback functions to avoid creating new instances on every render
-const noop = (): void => undefined;
 
 export type ExpandedPanelTabType = 'timing' | 'response' | 'headers' | 'tls' | 'codegen';
 

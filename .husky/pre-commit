@@ -1,1 +1,5 @@
+# Run lint-staged to auto-fix formatting and linting on staged files
 npx lint-staged
+
+# Run full type checking and linting to catch all errors
+just pre-commit

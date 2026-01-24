@@ -83,10 +83,18 @@ function serializeArgs(args: unknown[]): string {
 }
 
 /**
+ * Formatted log arguments with code and detected language
+ */
+interface FormattedLogArgs {
+  code: string;
+  language: string;
+}
+
+/**
  * Format log arguments for display and detect language for syntax highlighting.
  * Combines all args into a single code block for consistent display.
  */
-function formatLogArgs(args: unknown[]): { code: string; language: string } {
+function formatLogArgs(args: unknown[]): FormattedLogArgs {
   if (args.length === 0) {
     return { code: '', language: 'text' };
   }

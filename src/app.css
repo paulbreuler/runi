@@ -267,6 +267,12 @@ aside[data-testid='sidebar'] {
 
 /* Remove left padding from container when it contains line numbers */
 /* This overrides the px-2 padding on borderless variant */
+/* 
+ * Note: !important is necessary here because we need to override Tailwind's utility classes
+ * (px-2) when line numbers are present. The :has() selector provides specificity but
+ * Tailwind's utility classes have high specificity, so !important is required to ensure
+ * the override takes effect. This is a targeted override for a specific UI state.
+ */
 [data-language]:has(.code-snippet-wrapper .react-syntax-highlighter-line-number),
 [data-language]:has(.code-snippet-wrapper span[class*='linenumber']) {
   padding-left: 0 !important;
