@@ -21,6 +21,18 @@ test.describe('Sidebar', () => {
 
     // Wait for React app to render and history to load
     await page.waitForLoadState('networkidle');
+
+    // Sidebar is collapsed by default, so we need to open it first
+    // Use keyboard shortcut to toggle sidebar open (Cmd+B on Mac, Ctrl+B on Windows/Linux)
+    const isMac = await page.evaluate(() => {
+      return (
+        navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+        (navigator.userAgentData as { platform?: string } | undefined)?.platform === 'macOS'
+      );
+    });
+    const modifier = isMac ? 'Meta' : 'Control';
+    await page.keyboard.press(`${modifier}+b`);
+
     // Wait for sidebar to be visible
     await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 10000 });
   });

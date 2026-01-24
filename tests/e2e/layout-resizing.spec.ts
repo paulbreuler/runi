@@ -28,8 +28,10 @@ test.describe('Layout Resizing', () => {
     const modifier = isMac ? 'Meta' : 'Control';
     await page.keyboard.press(`${modifier}+b`);
 
-    // Wait for sidebar to be visible
+    // Wait for sidebar to be visible and animation to complete
     await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 10000 });
+    // Wait for sidebar animation to complete before running tests
+    await page.waitForTimeout(500);
   });
 
   test.describe('Sidebar Resizing', () => {
@@ -213,16 +215,20 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(
-        resizerBox!.x + resizerBox!.width / 2,
-        resizerBox!.y + resizerBox!.height / 2
-      );
+      // Get the center of the resizer
+      const centerX = resizerBox!.x + resizerBox!.width / 2;
+      const centerY = resizerBox!.y + resizerBox!.height / 2;
+
+      // Move to resizer and start drag
+      await page.mouse.move(centerX, centerY);
       await page.mouse.down();
-      await page.mouse.move(resizerBox!.x + 100, resizerBox!.y + resizerBox!.height / 2);
+
+      // Drag to the right (increase request pane width)
+      await page.mouse.move(centerX + 100, centerY, { steps: 10 });
       await page.mouse.up();
 
-      // Wait for resize to complete
-      await page.waitForTimeout(300);
+      // Wait for resize animation to complete
+      await page.waitForTimeout(500);
 
       // Verify request pane width increased
       const newRequestBox = await requestPane.boundingBox();
@@ -244,19 +250,16 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(
-        resizerBox!.x + resizerBox!.width / 2,
-        resizerBox!.y + resizerBox!.height / 2
-      );
+      const centerX = resizerBox!.x + resizerBox!.width / 2;
+      const centerY = resizerBox!.y + resizerBox!.height / 2;
+
+      await page.mouse.move(centerX, centerY);
       await page.mouse.down();
       // Drag far to the left
-      await page.mouse.move(
-        resizerBox!.x - containerWidth * 0.5,
-        resizerBox!.y + resizerBox!.height / 2
-      );
+      await page.mouse.move(centerX - containerWidth * 0.5, centerY, { steps: 10 });
       await page.mouse.up();
 
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       // Verify request pane is at least 20% of container
       const newRequestBox = await requestPane.boundingBox();
@@ -279,19 +282,16 @@ test.describe('Layout Resizing', () => {
       const resizerBox = await resizer.boundingBox();
       expect(resizerBox).not.toBeNull();
 
-      await page.mouse.move(
-        resizerBox!.x + resizerBox!.width / 2,
-        resizerBox!.y + resizerBox!.height / 2
-      );
+      const centerX = resizerBox!.x + resizerBox!.width / 2;
+      const centerY = resizerBox!.y + resizerBox!.height / 2;
+
+      await page.mouse.move(centerX, centerY);
       await page.mouse.down();
       // Drag far to the right
-      await page.mouse.move(
-        resizerBox!.x + containerWidth * 0.5,
-        resizerBox!.y + resizerBox!.height / 2
-      );
+      await page.mouse.move(centerX + containerWidth * 0.5, centerY, { steps: 10 });
       await page.mouse.up();
 
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       // Verify request pane is at most 80% of container
       const newRequestBox = await requestPane.boundingBox();
@@ -401,11 +401,12 @@ test.describe('Layout Resizing', () => {
 
       // Test 1: Drag all the way LEFT (minimum - 20%)
       const minX = containerBox!.x + containerWidth * 0.2;
-      await page.mouse.move(resizerBox!.x + resizerBox!.width / 2, centerY);
+      const startX = resizerBox!.x + resizerBox!.width / 2;
+      await page.mouse.move(startX, centerY);
       await page.mouse.down();
-      await page.mouse.move(minX, centerY);
+      await page.mouse.move(minX, centerY, { steps: 10 });
       await page.mouse.up();
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(500);
 
       // Verify minimum constraint
       const requestBoxAfterMin = await requestPane.boundingBox();
@@ -416,11 +417,12 @@ test.describe('Layout Resizing', () => {
       // Test 2: Drag all the way RIGHT (maximum - 80%)
       const maxX = containerBox!.x + containerWidth * 0.8;
       const resizerBoxAfterMin = await resizer.boundingBox();
-      await page.mouse.move(resizerBoxAfterMin!.x + resizerBoxAfterMin!.width / 2, centerY);
+      const startX2 = resizerBoxAfterMin!.x + resizerBoxAfterMin!.width / 2;
+      await page.mouse.move(startX2, centerY);
       await page.mouse.down();
-      await page.mouse.move(maxX, centerY);
+      await page.mouse.move(maxX, centerY, { steps: 10 });
       await page.mouse.up();
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(500);
 
       // Verify maximum constraint
       const requestBoxAfterMax = await requestPane.boundingBox();
@@ -438,13 +440,14 @@ test.describe('Layout Resizing', () => {
         const jitterX = centerX + jitterOffset;
 
         const currentResizerBox = await resizer.boundingBox();
-        await page.mouse.move(currentResizerBox!.x + currentResizerBox!.width / 2, centerY);
+        const jitterStartX = currentResizerBox!.x + currentResizerBox!.width / 2;
+        await page.mouse.move(jitterStartX, centerY);
         await page.mouse.down();
-        await page.mouse.move(jitterX, centerY);
+        await page.mouse.move(jitterX, centerY, { steps: 5 });
         await page.mouse.up();
 
-        // Very small delay for rapid jittering
-        await page.waitForTimeout(10);
+        // Small delay for rapid jittering
+        await page.waitForTimeout(50);
 
         // Verify perfect sync after each jitter
         const requestBox = await requestPane.boundingBox();
