@@ -379,7 +379,6 @@ export const MainLayout = ({
       message: 'Chain Request',
       details: `Chaining request to ${entry.request.url} - Feature coming soon`,
     } satisfies ToastEventPayload);
-    console.log('[Placeholder] Chain Request:', entry);
   }, []);
 
   const handleGenerateTests = useCallback((entry: NetworkHistoryEntry): void => {
@@ -388,7 +387,6 @@ export const MainLayout = ({
       message: 'Generate Tests',
       details: `Generating tests for ${entry.request.method} ${entry.request.url} - Feature coming soon`,
     } satisfies ToastEventPayload);
-    console.log('[Placeholder] Generate Tests:', entry);
   }, []);
 
   const handleAddToCollection = useCallback((entry: NetworkHistoryEntry): void => {
@@ -397,7 +395,6 @@ export const MainLayout = ({
       message: 'Add to Collection',
       details: `Adding ${entry.request.method} ${entry.request.url} to collection - Feature coming soon`,
     } satisfies ToastEventPayload);
-    console.log('[Placeholder] Add to Collection:', entry);
   }, []);
 
   const handleBlockToggle = useCallback((id: string, isBlocked: boolean): void => {
@@ -407,7 +404,6 @@ export const MainLayout = ({
       message: `Request ${action}`,
       details: `Request ${id} has been ${action.toLowerCase()} - Feature coming soon`,
     } satisfies ToastEventPayload);
-    console.log(`[Placeholder] ${action} request:`, id);
   }, []);
 
   // Memoize the history panel callbacks to avoid unnecessary re-renders

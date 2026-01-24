@@ -508,6 +508,12 @@ export const NetworkHistoryPanel = ({
       handleSelect,
       handleToggleExpand,
       initialRowSelection,
+      onReplay,
+      onCopyCurl,
+      onChain,
+      onGenerateTests,
+      onAddToCollection,
+      onBlockToggle,
       // setRowSelectionRef and setExpandedRef are refs, don't need to be in deps
     ]
   );
