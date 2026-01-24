@@ -24,6 +24,9 @@ This command uses MCP planning tools for document management:
 When creating plans that involve Storybook stories or testing:
 
 - **Automatically use `storybook-testing` skill** - For features that require Storybook stories, play functions, accessibility tests, or visual regression
+- **Controls-first approach is mandatory** - Use Storybook 10 controls for state variations instead of creating separate stories for every prop combination
+- **Limit to 1-3 stories per component** - One Playground story with controls covers most cases (we consolidated from 500+ stories to 50-75 by using controls)
+- **Separate stories only for** - Complex interactions that need dedicated play functions, real-world examples, or documentation purposes
 - Reference story templates from `.storybook/templates/` when planning story creation
 - Use testing utilities from `@/utils/storybook-test-helpers` in test specifications
 
@@ -67,7 +70,12 @@ Ask user for:
 - Detailed TDD cycles with test code
 - Component design rationale
 - Full gotcha descriptions
-- **Storybook story specifications** - If features require Storybook stories, include story requirements, play function specifications, and accessibility test requirements
+- **Storybook story specifications** - If features require Storybook stories, follow controls-first approach:
+  - Plan for 1-3 stories per component maximum (use controls for state variations, not separate stories)
+  - One Playground story with controls covers most cases
+  - Separate stories only for: complex interactions, real-world examples, documentation
+  - Include play function specifications and accessibility test requirements
+  - Reference consolidation metrics: 500+ stories → 50-75 stories (85% reduction) while maintaining full test coverage
 - This is the source material
 
 **2. interfaces.md** - Contract source of truth
@@ -96,7 +104,7 @@ Group features by:
 - File ownership (minimize conflicts)
 - Dependency chains (dependent features same agent when possible)
 - Parallelism (maximize independent work)
-- **Storybook story creation** - Features that create Storybook stories should be grouped together when possible
+- **Storybook story creation** - Features that create Storybook stories should be grouped together when possible. Note that controls-first approach means most components need only 1 Playground story with controls, not multiple stories for different prop combinations
 
 Each agent should have:
 
@@ -162,7 +170,11 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
 - Test IDs
 - TDD cycles as one-liners: `test name → impl → refactor note`
 - Relevant gotchas (brief)
-- **Storybook story requirements** - If agent creates stories, specify story types and templates to use
+- **Storybook story requirements** - If agent creates stories, follow controls-first approach:
+  - Specify 1-3 stories per component maximum (use controls for variations)
+  - One Playground story with controls covers most cases
+  - Separate stories only for complex interactions, real-world examples, or documentation
+  - Specify story types and templates to use
 - **Skill references** - Note which skills to use (e.g., `storybook-testing` for Storybook stories)
 - Done checklist
 
@@ -301,11 +313,15 @@ Gotchas:
 - Emphasize: integration points
 - Agent files include: dependency status clearly marked
 - Extra in plan.md: user stories, acceptance criteria
-- **Storybook stories**: If features include Storybook stories, specify:
+- **Storybook stories**: If features include Storybook stories, follow controls-first approach:
+  - **Limit to 1-3 stories per component** - Use controls for state variations, not separate stories
+  - **One Playground story with controls** covers most cases
+  - **Separate stories only for**: Complex interactions, real-world examples, documentation
   - Story types needed (interaction, accessibility, visual)
   - Play function requirements
   - Testing utilities to use
-  - Reference `storybook-testing` skill in agent files
+  - Reference `storybook-testing` skill in agent files (contains full controls-first guidance)
+  - **Anti-pattern**: Don't plan 6-8 stories per component for different prop combinations - use controls instead
 
 ## Validation Checklist
 
@@ -442,4 +458,4 @@ const planSummary = await rlm_multi_query({
 - **MCP tools handle file operations** - No need to manually create directories or files
 - **Templates available** - Use `addendum`, `research`, `example`, or `none` templates when creating docs
 - **Path format** - Always use relative paths from planning docs root: `plans/NNNN-name/filename.md`
-- **Storybook skill** - Automatically activated when features involve Storybook stories; reference templates and utilities in agent files
+- **Storybook skill** - Automatically activated when features involve Storybook stories; reference templates and utilities in agent files. **Critical**: Follow controls-first approach (1-3 stories per component, use controls for variations) - see `storybook-testing` skill for full guidance

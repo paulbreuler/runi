@@ -242,3 +242,13 @@ See `workflow.md` for complete workflow documentation including:
 4. **Interfaces are boundaries** - Clear contracts enable parallelism
 5. **One agent, one file** - Coherent context, no mental merging
 6. **Close the loop** - Verify completion before moving on
+
+## Storybook Story Planning
+
+When planning features that include Storybook stories:
+
+- **Follow controls-first approach** - Use Storybook 10 controls for state variations instead of creating separate stories for every prop combination
+- **Limit to 1-3 stories per component** - One Playground story with controls covers most cases (we consolidated from 500+ stories to 50-75 by using controls)
+- **Separate stories only for** - Complex interactions that need dedicated play functions, real-world examples, or documentation purposes
+- **Reference `storybook-testing` skill** - Contains full controls-first guidance, anti-pattern examples, and when to create separate stories
+- **Plan for controls, not multiple stories** - When specifying Storybook story requirements in plan.md, emphasize controls configuration rather than planning 6-8 separate stories per component
