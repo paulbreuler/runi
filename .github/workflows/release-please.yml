@@ -211,7 +211,7 @@ jobs:
             # Find and rename Linux AppImage files
             find src-tauri/target/release/bundle -name "*.AppImage" -type f | while read -r appimage; do
               ARCH=$(detect_arch "$appimage" "x86_64")
-              NEW_NAME="runi-${VERSION}-linux-${ARCH}.AppImage"
+              NEW_NAME="runi-${VERSION}-linux-${ARCH}-portable.AppImage"
               cp "$appimage" "release-artifacts/${NEW_NAME}"
               echo "Renamed: $(basename "$appimage") -> ${NEW_NAME}"
             done
