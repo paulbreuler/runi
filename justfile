@@ -57,11 +57,14 @@ generate-types:
 # ============================================================================
 
 # Ensure dependencies are installed (check and install if needed)
-# Checks if node_modules exists - if missing, warns user
-# Note: Full install requires MOTION_PLUS_TOKEN via 'just install'
-# Commands use npx fallback if dependencies are incomplete
+# Checks if node_modules exists - if missing, attempts full install via 'just install'
+# Uses the existing token injection system (setup-motion-plus.js) which:
+# - Reads MOTION_PLUS_TOKEN from .env or environment
+# - Injects token into package.json (never committed)
+# - Runs npm ci to install dependencies
+# Note: If token not available, individual commands use npx fallback for tools that don't need motion-plus
 ensure-deps:
-    @bash -c 'if [ ! -d "node_modules" ]; then echo "⚠️  node_modules missing - dependencies will be installed on-demand via npx"; fi'
+    @bash -c 'if [ ! -d "node_modules" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then source .env && just install; elif [ -n "$$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
 
 # Update all dependencies
 update:
@@ -82,9 +85,9 @@ fmt-check-rust:
 # Check frontend formatting
 # Note: CI excludes release-please managed files (src-tauri/tauri.conf.json, package.json)
 # Local checks all files including release-please files (intentional - catch issues before commit)
-# Uses npx as fallback if dependencies aren't fully installed
+# Uses npx as fallback if prettier isn't available (doesn't require motion-plus)
 fmt-check-frontend:
-    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format:check; else echo "📦 Dependencies incomplete, using npx..."; npx prettier --check .; fi'
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format:check; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --check .; fi'
 
 # Fix all formatting
 fmt: fmt-rust fmt-frontend
@@ -94,9 +97,9 @@ fmt-rust:
     cd src-tauri && cargo fmt
 
 # Fix frontend formatting
-# Uses npx as fallback if dependencies aren't fully installed
+# Uses npx as fallback if prettier isn't available (doesn't require motion-plus)
 fmt-frontend:
-    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format; else echo "📦 Using npx prettier..."; npx prettier --write .; fi'
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --write .; fi'
 
 # ============================================================================
 # 🔍 Code Quality: Linting
