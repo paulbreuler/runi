@@ -27,7 +27,7 @@ Create a pull request on GitHub with a comprehensive description from staged cha
      - **Extract GitHub issue numbers** (NOT local feature numbers):
        - Agent issue number: From `**GitHub Issue**: #36` in agent file header
        - Feature subissue numbers: From `**GitHub Subissue**: #37` in each feature section
-     - **DO NOT include local feature numbers** (#13, #14, #15) in PR body - these are planning references only, not GitHub issues
+     - **DO NOT include local feature numbers** (#13, #14, #15) in PR body - these are planning references only, not GitHub issues (see note below)
      - Use agent context for PR title and description
      - **Use GitHub issues in PR**: Include `Closes #37, #38, #39` in PR description "Related Issues" section (feature subissues only, not agent issue)
    - If no agent detected:
@@ -68,7 +68,7 @@ Create a pull request on GitHub with a comprehensive description from staged cha
      - Agent GitHub Issue: #36 (parent issue - for context, not closed by PR)
      - Feature Subissues: #37, #38, #39 (closed by PR)
      - Brief description from agent file TL;DR
-     - **DO NOT include local feature numbers** (#13, #14, #15) - these are planning references, not GitHub issues
+     - **DO NOT include local feature numbers** (#13, #14, #15) - these are planning references, not GitHub issues (see note below)
    - Review checklist
    - Use markdown formatting
    - Include code references where helpful
@@ -159,7 +159,7 @@ Feature Subissues: #37, #38, #39 (closed by this PR)
 
 [Brief description from agent file TL;DR]
 
-**Note**: Local feature numbers (#13, #14, #15) are planning references and are not included in PR body. Only GitHub issues (agent issue and feature subissues) are referenced.
+**Note**: Local feature numbers (#13, #14, #15) are planning references and are **never** included in PR body. Only GitHub issues (agent issue and feature subissues) are referenced. This applies throughout the PR description.
 
 ## Changes
 
@@ -298,7 +298,7 @@ The command analyzes:
 /pr
 ```
 
-Uses `npx limps next-task` to detect agent from git context, then generates PR description with agent context.
+Uses `npx limps next-task` to detect agent from git context (branch name, commit messages, modified files), then generates PR description with agent context.
 
 **Example Output:**
 
@@ -311,7 +311,7 @@ Uses `npx limps next-task` to detect agent from git context, then generates PR d
 /pr --commits HEAD~3..HEAD
 ```
 
-Uses `npx limps next-task` to detect agent from commit context, then generates PR description.
+Same as above - uses `npx limps next-task` to detect agent from commit context.
 
 ### PR Comparing Branches
 
@@ -319,40 +319,21 @@ Uses `npx limps next-task` to detect agent from commit context, then generates P
 /pr --base main
 ```
 
-Uses `npx limps next-task` to detect agent from branch context, then generates PR description.
+Same as above - uses `npx limps next-task` to detect agent from branch context.
 
 ### Agent Detection Examples
 
-Agent detection is handled by `npx limps next-task`, which uses git context (branch name, commit messages, modified files) to identify the current plan and agent:
+Agent detection examples:
 
-- Branch: `feat/datagrid/agent_0_accessibility` → Limps detects plan and agent from branch name
-- Commit: `feat(agent_2): add status column` → Limps detects agent from commit messages
-- Modified files: Changes to agent files → Limps detects agent from file paths
+- Branch: `feat/datagrid/agent_0_accessibility` → Detects plan and agent from branch name
+- Commit: `feat(agent_2): add status column` → Detects agent from commit messages
+- Modified files: Changes to agent files → Detects agent from file paths
 
 ### Agent Status Validation Example
 
 **Scenario:** Agent 0 has all features complete but hasn't been closed
 
-```text
-/pr
-```
-
-**Output:**
-
-```
-ℹ️  Agent Status Info
-
-Agent "Accessibility Foundation (Early)" has all features complete (4 PASS, 0 GAP)
-but hasn't been moved to completed/ directory.
-
-Note: Consider running `/close-feature-agent` after PR creation to:
-  - Verify completion
-  - Sync status to README.md
-  - Move agent to completed/
-
-Creating PR automatically...
-[PR created successfully]
-```
+When `/pr` is run, it displays an informational message (see [Agent Status Validation Info](#agent-status-validation-info) in Error Handling section) and proceeds automatically with PR creation.
 
 ## Integration with Code Review
 
@@ -396,7 +377,7 @@ If no commits exist since base branch:
 
 ### Agent Detection Fails
 
-If `npx limps next-task` doesn't detect an agent (no agent found):
+If agent detection fails (no agent found):
 
 - Continue with standard PR generation
 - Use conventional commit format for title
@@ -521,7 +502,7 @@ mcp_runi_Planning_rlm_multi_query({
 ## Notes
 
 - **No Files Created:** Description is generated in memory and passed directly to GitHub CLI
-- **Agent Detection:** Uses `npx limps next-task` to automatically detect agent/feature context when working on feature plans
+- **Agent Detection:** Uses `npx limps next-task` to automatically detect agent/feature context from git (branch, commits, files) when working on feature plans
 - **PR Title:** Matches feature being worked on when agent detected, falls back to conventional commit format
 - **Conventional Commits:** PR title follows conventional commit format (with agent context when available)
 - **Test Coverage:** PR includes coverage information (unit, integration, E2E, migration if applicable, performance if applicable)
