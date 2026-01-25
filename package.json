@@ -38,7 +38,7 @@
     ],
     "*.md": [
       "bash -c 'if [ \"$1\" != \"CHANGELOG.md\" ]; then markdownlint --fix \"$1\"; fi' --",
-      "bash -c 'if [ \"$1\" != \"CHANGELOG.md\" ]; then prettier --write \"$1\"; fi' --"
+      "prettier --write"
     ],
     "src-tauri/**/*.rs": [
       "rustfmt"
