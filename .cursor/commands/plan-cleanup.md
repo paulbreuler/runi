@@ -63,7 +63,7 @@ Skips confirmation prompt and automatically moves completed agents.
 
 3. **Provide guidance:**
    - Explain what was moved
-   - Suggest running `/work` to reassess status
+   - Suggest running `npx limps status <plan-name>` to reassess status
    - Reference `/run-agent` to start next task
 
 ## When to Use
@@ -74,7 +74,7 @@ Skips confirmation prompt and automatically moves completed agents.
 - You want to clean up before starting work
 - You want a simple, focused command
 
-**Use `/work` instead when:**
+**Use `npx limps next-task` instead when:**
 
 - You want to see overall plan status first
 - You're unsure if cleanup is needed
@@ -85,7 +85,7 @@ Skips confirmation prompt and automatically moves completed agents.
 This is a wrapper around `/heal` that provides a simpler entry point. It's equivalent to:
 
 ```
-/work → /heal
+`npx limps next-task` → `/heal`
 ```
 
 But skips the status overview and goes straight to cleanup.
@@ -112,4 +112,4 @@ y
 - Completed agents are identified by having all features marked PASS
 - Agents are moved to `agents/completed/` directory
 - This helps keep the active agents directory clean
-- After cleanup, run `/work` to reassess status and get next task recommendations
+- After cleanup, run `npx limps next-task <plan-name>` to get next task recommendations

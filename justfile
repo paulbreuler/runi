@@ -255,10 +255,6 @@ docs:
 list-plans:
     @npx limps list-plans
 
-# Smart orchestration - detects plan from last PR and suggests actions
-work:
-    @bash scripts/work.sh
-
 # Auto-heal plan with auto-detection
 heal:
     @bash scripts/heal-plan.sh --auto
@@ -343,7 +339,6 @@ help:
     @echo ""
     @echo "Planning:"
     @echo "  just list-plans    - List all TDD plans in runi-planning-docs"
-    @echo "  just work          - Smart orchestration (detects plan, suggests actions)"
     @echo "  just run <plan>    - Select and run next best agent task"
     @echo "  just next-task <plan> - Select next task (no run)"
     @echo "  just list-agents <plan> - List all agents in a plan with status"

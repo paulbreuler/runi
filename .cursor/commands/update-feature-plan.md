@@ -28,16 +28,16 @@ Agent files are **distilled**, not copied. When plan changes, affected agent fil
 8. Regenerate affected agent files (distill, don't copy)
 9. Verify consistency
 10. Commit
-11. Assess status: /work --plan <plan-name> (optional, see next task)
+11. Assess status: `npx limps next-task <plan-name>` (optional, see next task)
 ```
 
 ## After Update
 
 After updating a plan and regenerating agent files:
 
-1. **Assess plan status**: Run `/work --plan <plan-name>` to see overall plan status, identify cleanup needs, and find the next best task
+1. **Assess plan status**: Run `npx limps status <plan-name>` to see overall plan status and identify cleanup needs
 2. **Auto-cleanup if needed**: If cleanup is needed, run `/heal --plan <plan-name>` to auto-fix completed agents
-3. **Start next work**: Use `/work` recommendations or `/run-agent --plan <plan-name>` to start the next task
+3. **Start next work**: Use `npx limps next-task <plan-name>` to get the next task, then use `/run-agent --plan <plan-name>` to start it
 
 This helps ensure the plan is in a good state after updates and ready for continued work.
 

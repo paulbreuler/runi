@@ -351,7 +351,7 @@ Agent implements
 ```
 
 **Optional: Assess initial status**:
-After creating a plan, you can use `/work --plan <plan-number>` (e.g., `/work --plan 1`) to assess the initial plan status and see the first recommended task. This is optional but can help verify the plan structure is correct.
+After creating a plan, you can use `npx limps next-task <plan-number>` (e.g., `npx limps next-task 1`) to see the first recommended task. This is optional but can help verify the plan structure is correct.
 
 **Update plan**:
 

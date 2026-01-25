@@ -151,7 +151,7 @@ Next Steps
 
 - Agent columns work complete
 - Agent rows can continue (was blocked on #2)
-- Run /work to assess overall plan status
+- Run `npx limps status <plan-name>` to assess overall plan status
 - Run /heal if cleanup is needed
 ```
 
@@ -224,15 +224,15 @@ close-feature-agent
 
 After closing an agent, use these commands to continue work:
 
-1. **Assess overall plan status**: Run `/work` to auto-detect the plan from the last merged PR, assess all agent statuses, identify cleanup needs, and see the next best task
-2. **Auto-cleanup if needed**: If `/work` shows completed agents that need cleanup, run `/heal` or `just heal` to automatically move completed agents to `completed/` directory
-3. **Start next task**: Use `/work` recommendations or `/run-agent --auto` to start the next best task
+1. **Assess overall plan status**: Run `npx limps status <plan-name>` to assess all agent statuses and identify cleanup needs
+2. **Auto-cleanup if needed**: If status shows completed agents that need cleanup, run `/heal` or `just heal` to automatically move completed agents to `completed/` directory
+3. **Start next task**: Use `npx limps next-task <plan-name>` to get the next best task, then use `/run-agent --auto` to start it
 
 ### Recommended Post-Close Workflow
 
 ```
 1. Close agent: /close-feature-agent [agent-path]
-2. Assess status: /work (auto-detects plan, shows cleanup needs, suggests next task)
+2. Assess status: `npx limps next-task` (auto-detects plan, suggests next task)
 3. Cleanup if needed: /heal (auto-fixes completed agents)
 4. Start next task: /run-agent --auto (uses detected plan)
 ```
