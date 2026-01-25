@@ -788,6 +788,9 @@ main() {
         # Resolve plan number (1 → 1-plan)
         local resolved_plan=$(resolve_plan_number "$plan_name")
         # Get next task
+        # Note: limps next-task outputs the agent file path as the last line.
+        # All other output (status messages, warnings) appears before the path.
+        # Error indicators (❌, ✅) in the output indicate no task available.
         local next_task_output=$(npx limps next-task "$resolved_plan" 2>&1)
         local agent_file=$(echo "$next_task_output" | tail -1)
         
@@ -809,7 +812,12 @@ main() {
         echo -e "${DIM}Verifying agent status...${RESET}"
         local plan_dir=$(dirname "$(dirname "$agent_file")")
         local plan_basename=$(basename "$plan_dir")
-        # Note: limps status doesn't support --agent flag, using plan status instead
+        # Note: limps status operates at the plan level only (no per-agent status check).
+        # This shows the status for the entire plan containing the selected agent,
+        # which is less focused than checking just this agent's status, but provides
+        # overall plan context. The original per-agent status check capability was
+        # lost in the migration to limps CLI.
+        echo -e "${DIM}Note: showing plan-level status for '${plan_basename}' (containing agent: $(basename "$agent_file")).${RESET}"
         npx limps status "$plan_basename" 2>&1 | grep -v "^$" || true
         
         echo ""

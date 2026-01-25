@@ -261,6 +261,9 @@ jobs:
       needs.frontend.result == 'success' &&
       needs.rust.result == 'success' &&
       needs.e2e.result == 'success' &&
+      # Note: storybook-visual has continue-on-error: true, so it can "succeed" even if tests fail.
+      # We check != 'failure' to allow release when visual tests are informational/in-progress,
+      # but block release if the job itself fails (e.g., setup errors).
       needs.storybook-visual.result != 'failure'
     steps:
       - name: Release status

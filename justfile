@@ -256,6 +256,8 @@ docs:
     cd src-tauri && cargo doc --no-deps --open
 
 # List all TDD plans in runi-planning-docs repository
+# Note: limps is an npm package installed on-demand via npx
+# See: https://github.com/paulbreuler/limps for documentation
 list-plans:
     @npx limps list-plans
 
