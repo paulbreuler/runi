@@ -22,12 +22,6 @@ runs:
         node-version: ${{ inputs.node-version }}
         cache: 'npm'
 
-    - name: Setup Motion+ token
-      shell: bash
-      run: node scripts/setup-motion-plus.js
-      env:
-        MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
     - name: Install dependencies
       shell: bash
-      run: npm ci --legacy-peer-deps
+      run: just install

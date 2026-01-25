@@ -16,8 +16,12 @@ list:
 # ============================================================================
 
 # Install all development dependencies
+# Note: Requires MOTION_PLUS_TOKEN environment variable
+# Usage: source .env && just install
+# Or: MOTION_PLUS_TOKEN=your_token just install
 install:
-    npm install
+    node scripts/setup-motion-plus.js
+    npm ci --legacy-peer-deps
     cd src-tauri && cargo fetch
 
 # Start development server

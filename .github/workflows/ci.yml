@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
 
 jobs:
   check-changes:
