@@ -37,14 +37,29 @@ describe('AppMetricsContainer', () => {
     vi.clearAllMocks();
 
     // Setup default store mocks
-    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      metricsVisible: false,
-      setMetricsVisible: mockSetMetricsVisible,
-    });
+    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        selector: (state: {
+          metricsVisible: boolean;
+          setMetricsVisible: ReturnType<typeof vi.fn>;
+        }) => unknown
+      ) => {
+        const state = {
+          metricsVisible: false,
+          setMetricsVisible: mockSetMetricsVisible,
+        };
+        return selector(state);
+      }
+    );
 
-    (useMetricsStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      setMetrics: mockSetMetricsStore,
-    });
+    (useMetricsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (selector: (state: { setMetrics: ReturnType<typeof vi.fn> }) => unknown) => {
+        const state = {
+          setMetrics: mockSetMetricsStore,
+        };
+        return selector(state);
+      }
+    );
 
     // Mock window.__TAURI__
     (window as { __TAURI__?: unknown }).__TAURI__ = {};
@@ -55,10 +70,20 @@ describe('AppMetricsContainer', () => {
   });
 
   it('disables monitoring when metricsVisible is false', async () => {
-    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      metricsVisible: false,
-      setMetricsVisible: mockSetMetricsVisible,
-    });
+    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        selector: (state: {
+          metricsVisible: boolean;
+          setMetricsVisible: ReturnType<typeof vi.fn>;
+        }) => unknown
+      ) => {
+        const state = {
+          metricsVisible: false,
+          setMetricsVisible: mockSetMetricsVisible,
+        };
+        return selector(state);
+      }
+    );
 
     render(<AppMetricsContainer />);
 
@@ -70,10 +95,20 @@ describe('AppMetricsContainer', () => {
   });
 
   it('enables monitoring when metricsVisible is true', async () => {
-    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      metricsVisible: true,
-      setMetricsVisible: mockSetMetricsVisible,
-    });
+    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        selector: (state: {
+          metricsVisible: boolean;
+          setMetricsVisible: ReturnType<typeof vi.fn>;
+        }) => unknown
+      ) => {
+        const state = {
+          metricsVisible: true,
+          setMetricsVisible: mockSetMetricsVisible,
+        };
+        return selector(state);
+      }
+    );
 
     vi.mocked(tauriApi.invoke).mockResolvedValue({
       current: 100,
@@ -98,10 +133,20 @@ describe('AppMetricsContainer', () => {
   });
 
   it('calls collect_ram_sample when metrics are enabled', async () => {
-    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      metricsVisible: true,
-      setMetricsVisible: mockSetMetricsVisible,
-    });
+    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        selector: (state: {
+          metricsVisible: boolean;
+          setMetricsVisible: ReturnType<typeof vi.fn>;
+        }) => unknown
+      ) => {
+        const state = {
+          metricsVisible: true,
+          setMetricsVisible: mockSetMetricsVisible,
+        };
+        return selector(state);
+      }
+    );
 
     vi.mocked(tauriApi.invoke).mockImplementation((cmd) => {
       if (cmd === 'set_memory_monitoring_enabled') {
@@ -132,10 +177,20 @@ describe('AppMetricsContainer', () => {
   });
 
   it('sets up event listener when metrics are enabled', async () => {
-    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      metricsVisible: true,
-      setMetricsVisible: mockSetMetricsVisible,
-    });
+    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        selector: (state: {
+          metricsVisible: boolean;
+          setMetricsVisible: ReturnType<typeof vi.fn>;
+        }) => unknown
+      ) => {
+        const state = {
+          metricsVisible: true,
+          setMetricsVisible: mockSetMetricsVisible,
+        };
+        return selector(state);
+      }
+    );
 
     vi.mocked(tauriApi.invoke).mockResolvedValue({
       current: 100,
@@ -165,10 +220,20 @@ describe('AppMetricsContainer', () => {
   });
 
   it('calls set_memory_monitoring_enabled(false) on cleanup when monitoring was enabled', async () => {
-    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      metricsVisible: true,
-      setMetricsVisible: mockSetMetricsVisible,
-    });
+    (useSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        selector: (state: {
+          metricsVisible: boolean;
+          setMetricsVisible: ReturnType<typeof vi.fn>;
+        }) => unknown
+      ) => {
+        const state = {
+          metricsVisible: true,
+          setMetricsVisible: mockSetMetricsVisible,
+        };
+        return selector(state);
+      }
+    );
 
     vi.mocked(tauriApi.invoke).mockImplementation((cmd) => {
       if (cmd === 'set_memory_monitoring_enabled') {

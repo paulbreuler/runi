@@ -14,7 +14,7 @@ import { useMetricsStore } from '@/stores/useMetricsStore';
 import { cn } from '@/utils/cn';
 
 export const StatusBar = (): React.JSX.Element => {
-  const metricsVisible = useSettingsStore((state) => state.metricsVisible);
+  const metricsVisible = useSettingsStore<boolean>((state) => state.metricsVisible);
   const { metrics, timestamp, isLive } = useMetricsStore();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -66,7 +66,7 @@ export const StatusBar = (): React.JSX.Element => {
             aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}
           >
             <PulsingGlow state={pulsingState} data-testid="metrics-pulsing-glow">
-              <Activity className="!w-2.5 !h-2.5" />
+              <Activity className="w-2.5! h-2.5!" />
             </PulsingGlow>
             <span>Metrics</span>
           </Button>
