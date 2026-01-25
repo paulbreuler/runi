@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import type { AppMetrics, MemoryMetrics } from '@/types/metrics';
@@ -85,6 +86,44 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
     let unlistenFn: UnlistenFn | null = null;
 
     const setupListener = async (): Promise<void> => {
+      // Fetch immediate stats when metrics are enabled (don't wait for next 30s interval)
+      const fetchImmediateStats = async (): Promise<void> => {
+        try {
+          const stats = await invoke<{
+            current: number;
+            average: number;
+            peak: number;
+            samplesCount: number;
+            thresholdExceeded: boolean;
+            thresholdMb: number;
+            thresholdPercent: number;
+          }>('get_ram_stats');
+
+          const memoryMetrics: MemoryMetrics = {
+            current: stats.current,
+            average: stats.average,
+            peak: stats.peak,
+            threshold: stats.thresholdMb,
+            thresholdPercent: stats.thresholdPercent,
+            samplesCount: stats.samplesCount,
+          };
+
+          const newMetrics: AppMetrics = { memory: memoryMetrics };
+          const newTimestamp = Date.now();
+          setMetrics(newMetrics);
+          setTimestamp(newTimestamp);
+
+          // Update global metrics store for other components (StatusBar, MetricsPanel)
+          setMetricsStore(newMetrics, newTimestamp, true);
+        } catch (error) {
+          // Silently fail - will get stats from next event update
+          console.error('Failed to fetch immediate stats:', error);
+        }
+      };
+
+      // Fetch immediate stats first
+      await fetchImmediateStats();
+
       // Listen for memory update events
       unlistenFn = await listen<RamStats>('memory:update', (event) => {
         const stats = event.payload;

@@ -16,7 +16,7 @@ export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> 
 /**
  * Label component for form inputs and controls.
  *
- * Use with ToggleSwitch, Input, Checkbox, and other form controls.
+ * Use with Switch, Input, Checkbox, and other form controls.
  * Associates label with control via htmlFor/id for accessibility.
  */
 export const Label: React.FC<LabelProps> = ({

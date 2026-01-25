@@ -68,9 +68,7 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
           </div>
         </div>
       ) : (
-        <div className="text-xs text-text-muted" data-testid="metrics-loading">
-          Waiting for first sample...
-        </div>
+        <div data-testid="metrics-loading" />
       )}
     </div>
   );

@@ -31,11 +31,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
   'data-testid': testId = 'metrics-grid',
 }) => {
   if (metrics.memory === undefined) {
-    return (
-      <div className="text-xs text-text-muted" data-testid={`${testId}-empty`}>
-        Waiting for first sample...
-      </div>
-    );
+    return <div data-testid={`${testId}-empty`} />;
   }
 
   const { memory } = metrics;

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
+import { Switch } from '@/components/ui/Switch';
 import { Label } from '@/components/ui/Label';
 import { cn } from '@/utils/cn';
 
@@ -20,9 +20,9 @@ export interface MetricsToggleProps {
 }
 
 /**
- * Metrics toggle component that pairs Label with ToggleSwitch.
+ * Metrics toggle component that pairs Label with Switch.
  *
- * Prevents dialog close when toggled (stopPropagation handled by ToggleSwitch).
+ * Prevents dialog close when toggled (stopPropagation handled by Switch).
  * Used within DialogHeader actions, not in content.
  */
 export const MetricsToggle: React.FC<MetricsToggleProps> = ({
@@ -44,12 +44,7 @@ export const MetricsToggle: React.FC<MetricsToggleProps> = ({
       >
         {label}
       </Label>
-      <ToggleSwitch
-        id={toggleId}
-        checked={checked}
-        onCheckedChange={onChange}
-        data-testid="toggle-switch"
-      />
+      <Switch id={toggleId} checked={checked} onCheckedChange={onChange} data-testid="switch" />
     </div>
   );
 };

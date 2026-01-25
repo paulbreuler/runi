@@ -22,7 +22,7 @@ describe('MetricsToggle', () => {
     const user = userEvent.setup();
     render(<MetricsToggle checked={false} onChange={mockOnChange} label="Enable metrics" />);
 
-    const toggle = screen.getByTestId('toggle-switch');
+    const toggle = screen.getByTestId('switch');
     await user.click(toggle);
 
     expect(mockOnChange).toHaveBeenCalledWith(true);
@@ -38,10 +38,10 @@ describe('MetricsToggle', () => {
       </div>
     );
 
-    const toggle = screen.getByTestId('toggle-switch');
+    const toggle = screen.getByTestId('switch');
     await user.click(toggle);
 
-    // ToggleSwitch already handles stopPropagation internally
+    // Switch already handles stopPropagation internally
     expect(mockOnChange).toHaveBeenCalled();
   });
 });
