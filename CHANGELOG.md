@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/paulbreuler/runi/compare/runi-v0.2.0...runi-v0.2.1) (2026-01-25)
+
+
+### Chores
+
+* **format:** exclude CHANGELOG.md from format checks (auto-generated) ([#65](https://github.com/paulbreuler/runi/issues/65)) ([ad60600](https://github.com/paulbreuler/runi/commit/ad6060092be6a4013bc35a892d01d04e7576e3fd))
+
 ## [0.2.0](https://github.com/paulbreuler/runi/compare/runi-v0.1.0...runi-v0.2.0) (2026-01-25)
 
 ### Features
