@@ -152,16 +152,84 @@ jobs:
           # Create artifacts directory for this platform
           mkdir -p release-artifacts
 
-          # Copy all bundle files (DMG, AppImage, deb, etc.)
+          # Get version from package.json
+          VERSION=$(node -p "require('./package.json').version")
+
+          # Copy and rename bundle files with descriptive names
+          # Format: runi-{version}-{platform}-{architecture}.{ext}
           if [ -d "src-tauri/target/release/bundle" ]; then
-            find src-tauri/target/release/bundle -type f \( -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \) -exec cp {} release-artifacts/ \;
+            # Find and rename macOS DMG files
+            find src-tauri/target/release/bundle -name "*.dmg" -type f | while read -r dmg; do
+              # Detect architecture from filename
+              if echo "$dmg" | grep -qiE "aarch64|arm64"; then
+                ARCH="aarch64"
+              elif echo "$dmg" | grep -qiE "x86_64|amd64"; then
+                ARCH="x86_64"
+              else
+                # Fallback: detect from system (macOS runner)
+                ARCH=$(uname -m)
+              fi
+              NEW_NAME="runi-${VERSION}-macos-${ARCH}.dmg"
+              cp "$dmg" "release-artifacts/${NEW_NAME}"
+              echo "Renamed: $(basename "$dmg") -> ${NEW_NAME}"
+            done
+
+            # Find and rename Linux DEB files
+            find src-tauri/target/release/bundle -name "*.deb" -type f | while read -r deb; do
+              # Detect architecture from filename
+              if echo "$deb" | grep -qiE "aarch64|arm64"; then
+                ARCH="aarch64"
+              elif echo "$deb" | grep -qiE "x86_64|amd64"; then
+                ARCH="x86_64"
+              else
+                ARCH="x86_64"  # Default for Linux
+              fi
+              NEW_NAME="runi-${VERSION}-linux-${ARCH}.deb"
+              cp "$deb" "release-artifacts/${NEW_NAME}"
+              echo "Renamed: $(basename "$deb") -> ${NEW_NAME}"
+            done
+
+            # Find and rename Linux RPM files
+            find src-tauri/target/release/bundle -name "*.rpm" -type f | while read -r rpm; do
+              # Detect architecture from filename
+              if echo "$rpm" | grep -qiE "aarch64|arm64"; then
+                ARCH="aarch64"
+              elif echo "$rpm" | grep -qiE "x86_64|amd64"; then
+                ARCH="x86_64"
+              else
+                ARCH="x86_64"  # Default for Linux
+              fi
+              NEW_NAME="runi-${VERSION}-linux-${ARCH}.rpm"
+              cp "$rpm" "release-artifacts/${NEW_NAME}"
+              echo "Renamed: $(basename "$rpm") -> ${NEW_NAME}"
+            done
+
+            # Find and rename Linux AppImage files
+            find src-tauri/target/release/bundle -name "*.AppImage" -type f | while read -r appimage; do
+              # Detect architecture from filename
+              if echo "$appimage" | grep -qiE "aarch64|arm64"; then
+                ARCH="aarch64"
+              elif echo "$appimage" | grep -qiE "x86_64|amd64"; then
+                ARCH="x86_64"
+              else
+                ARCH="x86_64"  # Default for Linux
+              fi
+              NEW_NAME="runi-${VERSION}-linux-${ARCH}.AppImage"
+              cp "$appimage" "release-artifacts/${NEW_NAME}"
+              echo "Renamed: $(basename "$appimage") -> ${NEW_NAME}"
+            done
+
+            # List all renamed artifacts
+            echo "Release artifacts prepared:"
+            ls -lh release-artifacts/ || true
           fi
         shell: bash
 
       - name: Check for artifacts
         id: check-artifacts
         run: |
-          if ls release-artifacts/*.dmg release-artifacts/*.AppImage release-artifacts/*.deb release-artifacts/*.rpm 2>/dev/null | grep -q .; then
+          # Check for renamed artifacts with new naming pattern
+          if ls release-artifacts/runi-*.dmg release-artifacts/runi-*.AppImage release-artifacts/runi-*.deb release-artifacts/runi-*.rpm 2>/dev/null | grep -q .; then
             echo "found=true" >> $GITHUB_OUTPUT
           else
             echo "found=false" >> $GITHUB_OUTPUT
