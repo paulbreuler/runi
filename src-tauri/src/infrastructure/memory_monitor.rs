@@ -118,10 +118,10 @@ fn get_current_memory_usage(total_ram_gb: f64) -> (f64, f64) {
     let pid = Pid::from(std::process::id() as usize);
 
     system.process(pid).map_or((0.0, 0.0), |process| {
-        let memory_kib = process.memory();
-        // Convert KiB (from sysinfo) to MiB; precision loss is acceptable for memory measurements in MB
+        let memory_bytes = process.memory();
+        // Convert bytes (from sysinfo 0.31) to MiB; precision loss is acceptable for memory measurements in MB
         #[allow(clippy::cast_precision_loss)]
-        let process_memory_mb = memory_kib as f64 / 1024.0;
+        let process_memory_mb = memory_bytes as f64 / (1024.0 * 1024.0);
         let system_ram_mb = total_ram_gb * 1024.0;
         let memory_percent = (process_memory_mb / system_ram_mb) * 100.0;
         (process_memory_mb, memory_percent)
