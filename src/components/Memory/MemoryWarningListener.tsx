@@ -112,7 +112,16 @@ export const MemoryWarningListener: React.FC<MemoryWarningListenerProps> = () =>
         }
       } catch (error) {
         // Log error in development, but don't break the app
-        if (process.env.NODE_ENV === 'development') {
+        // Skip logging in test/E2E environments to avoid interfering with tests
+        // The error is non-critical - memory monitoring is optional
+        const isTestEnv =
+          typeof process !== 'undefined' &&
+          (process.env.VITEST !== undefined ||
+            process.env.CI !== undefined ||
+            process.env.PLAYWRIGHT !== undefined);
+
+        // Only log in development, not in test/E2E environments
+        if (process.env.NODE_ENV === 'development' && !isTestEnv) {
           console.error('Failed to set up memory warning listener:', error);
         }
       }
