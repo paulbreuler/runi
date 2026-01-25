@@ -112,7 +112,14 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Check formatting
-        run: just fmt-check-frontend
+        # Exclude release-please managed files (they're auto-formatted by release-please)
+        # These files are still checked in pre-commit hooks for local development
+        run: |
+          echo "src-tauri/tauri.conf.json" >> .prettierignore.ci
+          echo "package.json" >> .prettierignore.ci
+          cat .prettierignore >> .prettierignore.ci
+          prettier --check . --ignore-path .prettierignore.ci || (rm -f .prettierignore.ci && exit 1)
+          rm -f .prettierignore.ci
 
       - name: Lint
         run: just lint-frontend
