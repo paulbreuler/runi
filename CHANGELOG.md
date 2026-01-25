@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/paulbreuler/runi/compare/runi-v0.2.3...runi-v0.2.4) (2026-01-25)
+
+
+### Chores
+
+* **release:** improve release artifact naming ([#71](https://github.com/paulbreuler/runi/issues/71)) ([a82f75e](https://github.com/paulbreuler/runi/commit/a82f75e1848fe5cb2aa66788f05828f64bb07065))
+
 ## [0.2.3](https://github.com/paulbreuler/runi/compare/runi-v0.2.2...runi-v0.2.3) (2026-01-25)
 
 
