@@ -155,12 +155,11 @@ pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
             interval.tick().await;
 
             // Check if monitoring is enabled before collecting samples
-            let is_enabled = match state.lock() {
-                Ok(guard) => guard.enabled,
-                Err(_) => {
-                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
-                    break; // Exit loop if mutex is poisoned
-                }
+            let is_enabled = if let Ok(guard) = state.lock() {
+                guard.enabled
+            } else {
+                tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                break; // Exit loop if mutex is poisoned
             };
 
             if !is_enabled {
@@ -181,32 +180,28 @@ pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
 
             // Update state and check for threshold
             // Extract needed values while holding the lock, then drop before async operations
-            let was_exceeded_before = match state.lock() {
-                Ok(guard) => guard.threshold_exceeded,
-                Err(_) => {
-                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
-                    break; // Exit loop if mutex is poisoned
-                }
+            let was_exceeded_before = if let Ok(guard) = state.lock() {
+                guard.threshold_exceeded
+            } else {
+                tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                break; // Exit loop if mutex is poisoned
             };
             // Drop guard explicitly before next lock acquisition
-            let (should_alert, alert_stats_if_needed) = match state.lock() {
-                Ok(mut guard) => {
-                    guard.add_sample(&sample);
-                    let stats_after_update = guard.get_stats();
-                    let alert = !was_exceeded_before && stats_after_update.threshold_exceeded;
-                    // Clone stats before dropping guard (needed for async emit)
-                    let stats_for_alert = if alert {
-                        Some(stats_after_update.clone())
-                    } else {
-                        None
-                    };
-                    drop(guard); // Explicitly drop before returning
-                    (alert, stats_for_alert)
-                }
-                Err(_) => {
-                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
-                    break; // Exit loop if mutex is poisoned
-                }
+            let (should_alert, alert_stats_if_needed) = if let Ok(mut guard) = state.lock() {
+                guard.add_sample(&sample);
+                let stats_after_update = guard.get_stats();
+                let alert = !was_exceeded_before && stats_after_update.threshold_exceeded;
+                // Clone stats before dropping guard (needed for async emit)
+                let stats_for_alert = if alert {
+                    Some(stats_after_update.clone())
+                } else {
+                    None
+                };
+                drop(guard); // Explicitly drop before returning
+                (alert, stats_for_alert)
+            } else {
+                tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                break; // Exit loop if mutex is poisoned
             };
 
             // Emit event if threshold exceeded
@@ -226,29 +221,25 @@ pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
             }
 
             // Emit periodic update (for UI display, if needed)
-            let update_stats = match state.lock() {
-                Ok(state_guard) => state_guard.get_stats(),
-                Err(_) => {
-                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
-                    break; // Exit loop if mutex is poisoned
-                }
+            let update_stats = if let Ok(state_guard) = state.lock() {
+                state_guard.get_stats()
+            } else {
+                tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                break; // Exit loop if mutex is poisoned
             };
 
             let _ = app_clone.emit("memory:update", &update_stats);
 
             // Write metrics to file periodically (every 10 samples = ~5 minutes)
             // Use separate write_counter to avoid issues when samples_count is capped
-            let should_write = match state.lock() {
-                Ok(mut guard) => {
-                    guard.write_counter += 1;
-                    let counter = guard.write_counter;
-                    drop(guard);
-                    counter > 0 && counter % 10 == 0
-                }
-                Err(_) => {
-                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
-                    break; // Exit loop if mutex is poisoned
-                }
+            let should_write = if let Ok(mut guard) = state.lock() {
+                guard.write_counter += 1;
+                let counter = guard.write_counter;
+                drop(guard);
+                counter > 0 && counter % 10 == 0
+            } else {
+                tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                break; // Exit loop if mutex is poisoned
             };
             if should_write {
                 if let Err(e) = write_ram_metrics_to_file(&app_clone, &update_stats).await {

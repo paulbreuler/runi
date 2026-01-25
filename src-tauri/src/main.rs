@@ -64,7 +64,7 @@ pub fn run() {
 
             // Start memory monitoring service (heartbeat sampling)
             let app_handle = app.handle();
-            start_memory_monitor(&app_handle, total_ram_gb);
+            start_memory_monitor(app_handle, total_ram_gb);
 
             Ok(())
         })
