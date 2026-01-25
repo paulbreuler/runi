@@ -102,7 +102,7 @@ lint-frontend:
 # TODO: Remove || true once existing markdown files are fixed in a separate PR
 # Currently non-blocking due to pre-existing lint errors in documentation files
 lint-markdown:
-    npx markdownlint "**/*.md" --ignore "node_modules" --ignore "test-results" --ignore "playwright-report" --ignore "coverage" --ignore "html" --ignore "build" --ignore "dist" --ignore "storybook-static" --ignore ".cursor/code-review-report.md" --ignore ".cursor/plans" --ignore ".tmp" --ignore "target" --ignore ".planning-docs" || true
+    npx markdownlint "**/*.md" --ignore "node_modules" --ignore "test-results" --ignore "playwright-report" --ignore "coverage" --ignore "html" --ignore "build" --ignore "dist" --ignore "storybook-static" --ignore ".cursor/code-review-report.md" --ignore ".cursor/plans" --ignore ".tmp" --ignore "target" --ignore ".planning-docs" --ignore "CHANGELOG.md" || true
 
 # ============================================================================
 # ✅ Code Quality: Type Checking

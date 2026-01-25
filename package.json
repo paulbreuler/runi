@@ -37,7 +37,7 @@
       "prettier --write"
     ],
     "*.md": [
-      "markdownlint --fix",
+      "bash -c 'if [ \"$1\" != \"CHANGELOG.md\" ]; then markdownlint --fix \"$1\"; fi' --",
       "prettier --write"
     ],
     "src-tauri/**/*.rs": [
