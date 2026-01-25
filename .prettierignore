@@ -19,8 +19,17 @@ pnpm-lock.yaml
 .vscode/
 .idea/
 
-# Templates (contain placeholder syntax)
-.cursor/templates/
+# Cursor files (plans, reports, etc.)
+# Note: .cursor/**/*.md files are explicitly included in docs-review job
+# Only ignore non-markdown files and specific subdirectories
+.cursor/**/*
+!.cursor/**/*.md
+
+# Temporary files
+.tmp/
+
+# Storybook build output
+storybook-static/
 
 # Ralph
 logs/

@@ -69,6 +69,8 @@ fmt-check-rust:
     cd src-tauri && cargo fmt -- --check
 
 # Check frontend formatting
+# Note: CI excludes release-please managed files (src-tauri/tauri.conf.json, package.json)
+# Local checks all files including release-please files (intentional - catch issues before commit)
 fmt-check-frontend:
     npm run format:check
 
