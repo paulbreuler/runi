@@ -56,6 +56,8 @@ export interface ToastEventPayload {
   correlationId?: string;
   /** Auto-dismiss duration in milliseconds (default: 5000ms, errors: never) */
   duration?: number;
+  /** Optional test ID for testing purposes */
+  testId?: string;
 }
 
 /**

@@ -174,7 +174,8 @@ ci-no-test: fmt-check lint check docs-check
     @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"
 
 # Pre-commit hook: fast checks including type checking and linting
-pre-commit: fmt-check-rust fmt-check-frontend lint-frontend lint-markdown check-frontend
+# Note: Rust checks require frontend build for Tauri context
+pre-commit: build-frontend fmt-check-rust fmt-check-frontend lint-rust lint-frontend lint-markdown check-rust check-frontend
     @echo "✅ Pre-commit checks passed!"
 
 # ============================================================================

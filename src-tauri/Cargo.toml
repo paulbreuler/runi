@@ -28,6 +28,7 @@ async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "ansi"] }
 rusqlite = { version = "0.33", features = ["bundled"] }
+sysinfo = "0.31"
 # Encryption (Phase 10)
 aes-gcm = "0.10.3"
 base64 = "0.22.1"
@@ -61,3 +62,4 @@ nursery = { level = "warn", priority = -1 }
 module_name_repetitions = "allow"  # Common in API design
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"       # We avoid panics
+cast_precision_loss = "allow"      # Acceptable for memory/file size measurements (u64/usize to f64)

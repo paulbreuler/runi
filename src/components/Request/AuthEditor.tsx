@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Key, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -246,8 +246,7 @@ export const AuthEditor = (): React.JSX.Element => {
           {/* Empty state */}
           {authType === 'none' && (
             <EmptyState
-              variant="prominent"
-              icon={<Key className="text-text-muted/25" strokeWidth={1} />}
+              variant="muted"
               title="No authentication configured"
               description="Select an authentication type above to get started"
             />

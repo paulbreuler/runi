@@ -6,4 +6,5 @@
 pub mod commands;
 pub mod http;
 pub mod logging;
+pub mod memory_monitor;
 pub mod storage;

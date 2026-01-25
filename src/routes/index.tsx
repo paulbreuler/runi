@@ -215,7 +215,7 @@ export const HomePage = (): React.JSX.Element => {
                 className="flex-1 flex flex-col overflow-hidden"
               >
                 {/* Status bar */}
-                <div className="flex justify-between items-center px-4 py-2 border-b border-border-subtle bg-bg-surface">
+                <div className="relative flex items-center px-6 py-2 border-b border-border-subtle bg-bg-surface">
                   <StatusBadge status={response.status} statusText={response.status_text} />
                 </div>
 

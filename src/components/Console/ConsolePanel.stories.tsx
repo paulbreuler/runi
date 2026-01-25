@@ -174,3 +174,77 @@ export const Playground: Story = {
     },
   },
 };
+
+/**
+ * Demonstrates updating logs with the spinning indicator.
+ * Shows how logs with `isUpdating: true` display a RefreshCw icon that spins.
+ */
+export const UpdatingLogs: Story = {
+  decorators: [
+    (Story) => {
+      useEffect(() => {
+        const service = getConsoleService();
+        service.clear();
+
+        // Create a regular log
+        service.addLog(createMockLog('info', 'Regular log entry', [{ data: 'static' }]));
+
+        // Create an updating log (simulates metrics that change over time)
+        service.addOrUpdateLog({
+          id: 'memory-metrics',
+          level: 'info',
+          message: 'Memory Usage: 245.5 MB',
+          args: [{ current: 245.5, average: 220.3, peak: 280.1 }],
+          isUpdating: true,
+        });
+
+        // Simulate updates to the updating log
+        let updateCount = 0;
+        const interval = setInterval(() => {
+          updateCount += 1;
+          service.addOrUpdateLog({
+            id: 'memory-metrics',
+            level: 'info',
+            message: `Memory Usage: ${String(245.5 + updateCount * 5)} MB`,
+            args: [
+              {
+                current: 245.5 + updateCount * 5,
+                average: 220.3 + updateCount * 2,
+                peak: 280.1 + updateCount * 3,
+              },
+            ],
+            isUpdating: true,
+          });
+        }, 2000); // Update every 2 seconds
+
+        return () => {
+          clearInterval(interval);
+          service.clear();
+        };
+      }, []);
+
+      return (
+        <div className="h-screen">
+          <Story />
+        </div>
+      );
+    },
+  ],
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    await step('Verify updating log indicator is visible', async () => {
+      const indicator = await canvas.findByTestId('updating-log-indicator', {}, { timeout: 3000 });
+      await expect(indicator).toBeInTheDocument();
+      // Verify it has the spinning animation class
+      await expect(indicator).toHaveClass('animate-spin');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates updating logs with the spinning RefreshCw indicator. The log with `isUpdating: true` shows a spinning icon and updates in place every 2 seconds, simulating real-time metrics updates.',
+      },
+    },
+  },
+};

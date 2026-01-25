@@ -1,0 +1,31 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+import React from 'react';
+import { cn } from '@/utils/cn';
+
+export interface DialogContentProps {
+  /** Content children */
+  children: React.ReactNode;
+  /** Optional test ID */
+  'data-testid'?: string;
+}
+
+/**
+ * Dialog content container component.
+ *
+ * Simple wrapper with padding only (no grid layout).
+ * Used for metrics grid, notifications list, or any dialog content.
+ */
+export const DialogContent: React.FC<DialogContentProps> = ({
+  children,
+  'data-testid': testId = 'dialog-content',
+}) => {
+  return (
+    <div className={cn('p-2.5')} data-testid={testId}>
+      {children}
+    </div>
+  );
+};

@@ -16,12 +16,12 @@ describe('StatusBadge', () => {
     expect(badge).toHaveTextContent('OK');
   });
 
-  it('has proper padding for professional look', () => {
+  it('has proper padding and height for professional look', () => {
     render(<StatusBadge status={200} statusText="OK" />);
 
     const badge = screen.getByTestId('status-badge');
     expect(badge).toHaveClass('px-3');
-    expect(badge).toHaveClass('py-1.5');
+    expect(badge).toHaveClass('h-7');
   });
 
   it('has rounded-lg for polish', () => {

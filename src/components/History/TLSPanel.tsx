@@ -11,6 +11,7 @@
 import { cn } from '@/utils/cn';
 import { CertificateInfo } from './CertificateInfo';
 import type { CertificateData } from '@/types/certificate';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export interface TLSPanelProps {
   /** TLS certificate data (null if not available or HTTP connection) */
@@ -74,13 +75,12 @@ export const TLSPanel = ({
           <CertificateInfo certificate={certificate} />
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center">
-            <p className="text-sm text-text-muted">No TLS certificate information available</p>
-            <p className="text-xs text-text-muted mt-2">
-              This may be an HTTP connection or certificate data was not captured
-            </p>
-          </div>
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            variant="muted"
+            title="No TLS certificate information available"
+            description="This may be an HTTP connection or certificate data was not captured"
+          />
         </div>
       )}
     </div>

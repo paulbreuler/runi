@@ -167,6 +167,7 @@ const ToastItem = ({ toast }: { toast: ToastItem }): React.JSX.Element => {
         layoutId={toast.id}
         role="status"
         aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+        data-test-id={toast.testId}
         className={cn(
           'relative rounded-[8px] border border-l-2 p-[12px] overflow-hidden',
           'shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px]',
@@ -207,6 +208,9 @@ const ToastItem = ({ toast }: { toast: ToastItem }): React.JSX.Element => {
                 e.stopPropagation();
                 dismiss(toast.id);
               }}
+              data-test-id={
+                toast.correlationId === 'memory-warning' ? 'memory-warning-dismiss' : undefined
+              }
               className="shrink-0 rounded p-1.5 hover:bg-bg-raised/50 transition-colors text-text-muted hover:text-text-secondary z-10"
               aria-label="Dismiss notification"
             >

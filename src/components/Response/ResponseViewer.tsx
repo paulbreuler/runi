@@ -168,7 +168,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
   return (
     <div className="h-full flex flex-col" data-testid="response-viewer">
       {/* Tab bar */}
-      <div className="relative flex items-center gap-2 px-4 py-2 border-b border-border-subtle bg-bg-surface">
+      <div className="relative flex items-center gap-2 px-6 py-2 border-b border-border-subtle bg-bg-surface">
         <div
           ref={tabScrollRef}
           className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
@@ -181,7 +181,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                 onClick={() => {
                   setActiveTab(tab.id);
                 }}
-                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                className={`px-3 h-7 text-sm rounded-lg transition-colors ${
                   activeTab === tab.id
                     ? 'bg-bg-raised text-text-primary font-medium'
                     : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'

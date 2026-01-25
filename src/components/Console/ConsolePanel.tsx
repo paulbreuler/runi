@@ -162,6 +162,18 @@ export const ConsolePanel = ({
     const handler = (log: ConsoleLog): void => {
       // Use functional update to ensure we get latest state
       setLogs((prev) => {
+        // Check if this is an update to an existing updating log
+        if (log.isUpdating === true) {
+          const existingIndex = prev.findIndex((l) => l.id === log.id);
+          if (existingIndex !== -1) {
+            // Update existing log in place
+            const updated = [...prev];
+            updated[existingIndex] = log;
+            return updated;
+          }
+        }
+
+        // New log - add to end
         const updated = [...prev, log];
         // Limit to maxLogs (size limit is handled by service)
         if (updated.length > maxLogs) {

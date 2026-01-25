@@ -10,10 +10,11 @@
 
 import * as React from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { Copy, Trash2, Info, AlertTriangle, XCircle, Bug } from 'lucide-react';
+import { Copy, Trash2, Info, AlertTriangle, XCircle, Bug, RefreshCw } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useFocusVisible } from '@/utils/accessibility';
 import type { ConsoleLog, LogLevel } from '@/types/console';
+import { isUpdatingLog } from '@/types/console';
 import { Button } from '@/components/ui/button';
 import { createSelectionColumn } from './selectionColumn';
 import { createExpanderColumn } from './expanderColumn';
@@ -90,19 +91,32 @@ function truncateMessage(message: string, maxLength = 250): string {
 interface MessageCellProps {
   message: string;
   count?: number;
+  isUpdating?: boolean;
 }
 
 /**
- * Renders a log message with optional repeat count badge.
+ * Renders a log message with optional repeat count badge and updating indicator.
  * Message is truncated to 250 characters max, even when row is expanded.
  * Full message is available via tooltip (title attribute).
  */
-export const MessageCell = ({ message, count }: MessageCellProps): React.ReactElement => {
+export const MessageCell = ({
+  message,
+  count,
+  isUpdating,
+}: MessageCellProps): React.ReactElement => {
   const truncatedMessage = truncateMessage(message);
   const isTruncated = message.length > 250;
 
   return (
     <div className="flex items-center gap-2 min-w-0">
+      {isUpdating === true && (
+        <RefreshCw
+          size={12}
+          className="shrink-0 text-text-muted animate-spin"
+          aria-label="Updating log"
+          data-testid="updating-log-indicator"
+        />
+      )}
       <span
         className="text-sm text-text-primary truncate"
         title={isTruncated ? message : undefined}
@@ -268,6 +282,7 @@ export function createConsoleColumns(
         <MessageCell
           message={row.original.message}
           count={(row.original as { _groupCount?: number })._groupCount}
+          isUpdating={isUpdatingLog(row.original)}
         />
       ),
       size: 300, // Starting width (increased from 200), will grow to fill available space
