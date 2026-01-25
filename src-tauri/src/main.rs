@@ -59,10 +59,12 @@ pub fn run() {
             // Get system RAM for memory monitoring
             let mut system = System::new();
             system.refresh_memory();
-            let total_ram_gb = system.total_memory() as f64 / (1024.0 * 1024.0 * 1024.0);
+            // sysinfo::System::total_memory() returns KiB; convert KiB -> GiB by dividing by 1024^2
+            let total_ram_gb = system.total_memory() as f64 / (1024.0 * 1024.0);
 
             // Start memory monitoring service (heartbeat sampling)
-            start_memory_monitor(app.handle(), total_ram_gb);
+            let app_handle = app.handle();
+            start_memory_monitor(&app_handle, total_ram_gb);
 
             Ok(())
         })

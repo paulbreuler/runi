@@ -471,7 +471,12 @@ This subissue tracks Feature #${feature_num} from ${agent_name}. See parent issu
     if [ -n "$repo_owner" ] && [ -n "$repo_name" ]; then
         echo ""
         echo "=== CREATE WITH: ==="
-        echo "gh issue create --title \"${issue_title}\" --body-file /tmp/agent-issue-body.md --label \"agent-work,plan-${plan_name}\" --repo ${repo_owner}/${repo_name}"
+        # Shell-escape user-controlled values to prevent command injection
+        local escaped_issue_title escaped_label escaped_repo
+        escaped_issue_title=$(printf '%q' "$issue_title")
+        escaped_label=$(printf '%q' "agent-work,plan-${plan_name}")
+        escaped_repo=$(printf '%q' "${repo_owner}/${repo_name}")
+        echo "gh issue create --title ${escaped_issue_title} --body-file /tmp/agent-issue-body.md --label ${escaped_label} --repo ${escaped_repo}"
     fi
 }
 

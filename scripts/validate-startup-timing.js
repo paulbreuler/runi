@@ -7,9 +7,9 @@
  * Checks that the file exists, has correct structure, and contains valid data.
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
 
 /**
  * Get the app data directory path based on platform.

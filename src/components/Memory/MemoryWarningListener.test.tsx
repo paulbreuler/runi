@@ -77,12 +77,16 @@ describe('MemoryWarningListener', () => {
 
     // Track toast events
     toastEmittedEvents = [];
-    const originalEmit = globalEventBus.emit.bind(globalEventBus);
-    vi.spyOn(globalEventBus, 'emit').mockImplementation((type, payload) => {
+    // Get original emit method from the class prototype before spying
+    const EventBusPrototype = Object.getPrototypeOf(globalEventBus);
+    const originalEmit = EventBusPrototype.emit.bind(globalEventBus);
+    // Spy on emit to track toast events, but call through for all events
+    vi.spyOn(globalEventBus, 'emit').mockImplementation((type, payload, source) => {
       if (type === 'toast.show') {
         toastEmittedEvents.push({ type, payload });
       }
-      return originalEmit(type, payload);
+      // Call original implementation from prototype to avoid recursion
+      return originalEmit(type, payload, source);
     });
   });
 

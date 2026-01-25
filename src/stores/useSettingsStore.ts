@@ -41,7 +41,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   toggleMetrics: (): void => {
     set((state) => ({ metricsVisible: !state.metricsVisible }));
   },
-  setMetricsVisible: (visible): void => {
+  setMetricsVisible: (visible: boolean): void => {
     set({ metricsVisible: visible });
   },
 }));

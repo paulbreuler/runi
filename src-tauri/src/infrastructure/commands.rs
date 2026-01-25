@@ -147,11 +147,11 @@ pub fn get_system_specs() -> Result<SystemSpecs, String> {
     };
     let cpu_cores = system.cpus().len();
 
-    // Get total memory in GB
-    let total_memory_bytes = system.total_memory();
+    // Get total memory in GB (sysinfo returns memory in KiB)
+    let total_memory_kib = system.total_memory();
     // Precision loss is acceptable for memory measurements in GB
     #[allow(clippy::cast_precision_loss)]
-    let total_memory_gb = total_memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
+    let total_memory_gb = total_memory_kib as f64 / (1024.0 * 1024.0);
 
     // Get platform
     let platform = if cfg!(target_os = "macos") {
@@ -617,7 +617,15 @@ pub async fn write_startup_timing(
                 match serde_json::from_str::<StartupTimingData>(&content) {
                     Ok(data) => {
                         let mut entries = data.aggregates.last_3.clone();
-                        entries.push(data.latest);
+                        // Only add latest if it's not already in last_3 (avoid duplication)
+                        // Check by timestamp to avoid duplicates
+                        let latest_timestamp = &data.latest.timestamp;
+                        let is_duplicate = entries
+                            .iter()
+                            .any(|entry| entry.timestamp == *latest_timestamp);
+                        if !is_duplicate {
+                            entries.push(data.latest);
+                        }
                         entries
                     }
                     Err(_) => {

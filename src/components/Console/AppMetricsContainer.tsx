@@ -111,22 +111,69 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
     })();
 
     let unlistenFn: UnlistenFn | null = null;
+    let isMounted = true;
 
     const setupListener = async (): Promise<void> => {
-      // Collect immediate sample when metrics are enabled (don't wait for next 30s interval)
-      const fetchImmediateStats = async (): Promise<void> => {
-        try {
-          // Use collect_ram_sample to trigger immediate sample collection instead of just getting stats
-          const stats = await invoke<{
-            current: number;
-            average: number;
-            peak: number;
-            samplesCount: number;
-            thresholdExceeded: boolean;
-            thresholdMb: number;
-            thresholdPercent: number;
-          }>('collect_ram_sample');
+      try {
+        // Collect immediate sample when metrics are enabled (don't wait for next 30s interval)
+        const fetchImmediateStats = async (): Promise<void> => {
+          try {
+            // Use collect_ram_sample to trigger immediate sample collection instead of just getting stats
+            const stats = await invoke<{
+              current: number;
+              average: number;
+              peak: number;
+              samplesCount: number;
+              thresholdExceeded: boolean;
+              thresholdMb: number;
+              thresholdPercent: number;
+            }>('collect_ram_sample');
 
+            // Only update state if component is still mounted
+            if (!isMounted) {
+              return;
+            }
+
+            const memoryMetrics: MemoryMetrics = {
+              current: stats.current,
+              average: stats.average,
+              peak: stats.peak,
+              threshold: stats.thresholdMb,
+              thresholdPercent: stats.thresholdPercent,
+              samplesCount: stats.samplesCount,
+            };
+
+            const newMetrics: AppMetrics = { memory: memoryMetrics };
+            const newTimestamp = Date.now();
+            setMetrics(newMetrics);
+            setTimestamp(newTimestamp);
+
+            // Update global metrics store for other components (StatusBar, MetricsPanel)
+            setMetricsStore(newMetrics, newTimestamp, true);
+          } catch (error) {
+            // Silently fail - will get stats from next event update
+            console.error('Failed to fetch immediate stats:', error);
+          }
+        };
+
+        // Fetch immediate stats first
+        await fetchImmediateStats();
+
+        // Only set up listener if component is still mounted
+        if (!isMounted) {
+          return;
+        }
+
+        // Listen for memory update events
+        const fn = await listen<RamStats>('memory:update', (event) => {
+          // Only process events if component is still mounted
+          if (!isMounted) {
+            return;
+          }
+
+          const stats = event.payload;
+
+          // Transform Rust RamStats to MemoryMetrics
           const memoryMetrics: MemoryMetrics = {
             current: stats.current,
             average: stats.average,
@@ -136,51 +183,37 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
             samplesCount: stats.samplesCount,
           };
 
-          const newMetrics: AppMetrics = { memory: memoryMetrics };
+          // Update local state for rendering
+          const newMetrics = { memory: memoryMetrics };
           const newTimestamp = Date.now();
           setMetrics(newMetrics);
           setTimestamp(newTimestamp);
 
           // Update global metrics store for other components (StatusBar, MetricsPanel)
           setMetricsStore(newMetrics, newTimestamp, true);
-        } catch (error) {
-          // Silently fail - will get stats from next event update
-          console.error('Failed to fetch immediate stats:', error);
+        });
+
+        // Only store unlistenFn if component is still mounted
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (isMounted) {
+          unlistenFn = fn;
+        } else {
+          // Component unmounted before listener was set up, clean up immediately
+          fn();
         }
-      };
-
-      // Fetch immediate stats first
-      await fetchImmediateStats();
-
-      // Listen for memory update events
-      unlistenFn = await listen<RamStats>('memory:update', (event) => {
-        const stats = event.payload;
-
-        // Transform Rust RamStats to MemoryMetrics
-        const memoryMetrics: MemoryMetrics = {
-          current: stats.current,
-          average: stats.average,
-          peak: stats.peak,
-          threshold: stats.thresholdMb,
-          thresholdPercent: stats.thresholdPercent,
-          samplesCount: stats.samplesCount,
-        };
-
-        // Update local state for rendering
-        const newMetrics = { memory: memoryMetrics };
-        const newTimestamp = Date.now();
-        setMetrics(newMetrics);
-        setTimestamp(newTimestamp);
-
-        // Update global metrics store for other components (StatusBar, MetricsPanel)
-        setMetricsStore(newMetrics, newTimestamp, true);
-      });
+      } catch (error) {
+        // Log error in development, but don't break the app
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to set up memory metrics listener:', error);
+        }
+      }
     };
 
     void setupListener();
 
     // Cleanup function - disable monitoring when component unmounts or metrics are disabled
     return (): void => {
+      isMounted = false;
       if (unlistenFn !== null) {
         unlistenFn();
       }

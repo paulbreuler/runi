@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MetricsGrid } from './MetricsGrid';
+import { TooltipProvider } from '@/components/ui/Tooltip';
 import type { AppMetrics } from '@/types/metrics';
 
 describe('MetricsGrid', () => {
@@ -21,7 +22,11 @@ describe('MetricsGrid', () => {
   };
 
   it('renders 2-column grid with labels left, values right', () => {
-    render(<MetricsGrid metrics={mockMetrics} />);
+    render(
+      <TooltipProvider>
+        <MetricsGrid metrics={mockMetrics} />
+      </TooltipProvider>
+    );
 
     const grid = screen.getByTestId('metrics-grid');
     expect(grid).toHaveClass('grid');
@@ -29,28 +34,44 @@ describe('MetricsGrid', () => {
   });
 
   it('renders Current row with MetricCell', () => {
-    render(<MetricsGrid metrics={mockMetrics} />);
+    render(
+      <TooltipProvider>
+        <MetricsGrid metrics={mockMetrics} />
+      </TooltipProvider>
+    );
 
     expect(screen.getByTestId('metrics-grid-label-current')).toBeInTheDocument();
     expect(screen.getByTestId('metrics-grid-value-current')).toBeInTheDocument();
   });
 
   it('renders Average row with MetricCell', () => {
-    render(<MetricsGrid metrics={mockMetrics} />);
+    render(
+      <TooltipProvider>
+        <MetricsGrid metrics={mockMetrics} />
+      </TooltipProvider>
+    );
 
     expect(screen.getByTestId('metrics-grid-label-average')).toBeInTheDocument();
     expect(screen.getByTestId('metrics-grid-value-average')).toBeInTheDocument();
   });
 
   it('renders Peak row with MetricCell', () => {
-    render(<MetricsGrid metrics={mockMetrics} />);
+    render(
+      <TooltipProvider>
+        <MetricsGrid metrics={mockMetrics} />
+      </TooltipProvider>
+    );
 
     expect(screen.getByTestId('metrics-grid-label-peak')).toBeInTheDocument();
     expect(screen.getByTestId('metrics-grid-value-peak')).toBeInTheDocument();
   });
 
   it('renders Threshold row with muted text (not MetricCell)', () => {
-    render(<MetricsGrid metrics={mockMetrics} />);
+    render(
+      <TooltipProvider>
+        <MetricsGrid metrics={mockMetrics} />
+      </TooltipProvider>
+    );
 
     expect(screen.getByTestId('metrics-grid-label-threshold')).toBeInTheDocument();
     expect(screen.getByTestId('metrics-grid-value-threshold')).toBeInTheDocument();

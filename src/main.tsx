@@ -101,17 +101,7 @@ if (rootElement !== null) {
         try {
           const { invoke } = await import('@tauri-apps/api/core');
 
-          // Get platform info (always use Tauri command in Tauri environment)
-          let platform = 'unknown';
-          try {
-            const tauriPlatform = await invoke<string>('get_platform');
-            platform = tauriPlatform;
-          } catch {
-            // If Tauri command fails, use 'unknown' (we're in Tauri env, so this shouldn't happen)
-            platform = 'unknown';
-          }
-
-          // Get system specs from Rust (includes CPU model, RAM, architecture, build mode)
+          // Get system specs from Rust (includes CPU model, RAM, architecture, build mode, platform)
           let systemSpecs;
           try {
             systemSpecs = await invoke<{
@@ -146,6 +136,15 @@ if (rootElement !== null) {
               }
             }
             const hardwareConcurrency = navigator.hardwareConcurrency;
+            // Get platform info (always use Tauri command in Tauri environment)
+            let platform = 'unknown';
+            try {
+              const tauriPlatform = await invoke<string>('get_platform');
+              platform = tauriPlatform;
+            } catch {
+              // If Tauri command fails, use 'unknown' (we're in Tauri env, so this shouldn't happen)
+              platform = 'unknown';
+            }
             systemSpecs = {
               cpuModel: 'Unknown',
               cpuCores: hardwareConcurrency > 0 ? hardwareConcurrency : 0,
@@ -158,29 +157,27 @@ if (rootElement !== null) {
           }
 
           await invoke('write_startup_timing', {
-            timing: {
-              timestamp: new Date().toISOString(),
+            timestamp: new Date().toISOString(),
+            platform: systemSpecs.platform,
+            architecture: systemSpecs.architecture,
+            buildMode: systemSpecs.buildMode,
+            systemSpecs: {
+              cpuModel: systemSpecs.cpuModel,
+              cpuCores: systemSpecs.cpuCores,
+              totalMemoryGb: systemSpecs.totalMemoryGb,
               platform: systemSpecs.platform,
               architecture: systemSpecs.architecture,
               buildMode: systemSpecs.buildMode,
-              systemSpecs: {
-                cpuModel: systemSpecs.cpuModel,
-                cpuCores: systemSpecs.cpuCores,
-                totalMemoryGb: systemSpecs.totalMemoryGb,
-                platform: systemSpecs.platform,
-                architecture: systemSpecs.architecture,
-                buildMode: systemSpecs.buildMode,
-                bundleSizeMb: systemSpecs.bundleSizeMb,
-              },
-              timing: {
-                processStartup: startupTiming.processStartup,
-                domContentLoaded: startupTiming.domContentLoaded,
-                windowLoaded: startupTiming.windowLoaded,
-                reactMounted: startupTiming.reactMounted,
-                total: startupTiming.total,
-              },
-              unit: 'ms',
+              bundleSizeMb: systemSpecs.bundleSizeMb,
             },
+            timing: {
+              processStartup: startupTiming.processStartup,
+              domContentLoaded: startupTiming.domContentLoaded,
+              windowLoaded: startupTiming.windowLoaded,
+              reactMounted: startupTiming.reactMounted,
+              total: startupTiming.total,
+            },
+            unit: 'ms',
           });
         } catch (error) {
           // Silently fail - don't break the app if file write fails

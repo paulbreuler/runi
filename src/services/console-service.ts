@@ -244,6 +244,23 @@ class ConsoleService {
         // Replace log in array
         this.logs[existingIndex] = updatedLog;
 
+        // Re-apply trimming logic after update (in case log grew and exceeded limits)
+        // Trim by count limit
+        if (this.logs.length > this.maxLogs) {
+          const removed = this.logs.splice(0, this.logs.length - this.maxLogs);
+          for (const removedLog of removed) {
+            this.currentSizeBytes -= removedLog.sizeBytes ?? 0;
+          }
+        }
+
+        // Trim by size limit
+        while (this.currentSizeBytes > this.maxSizeBytes && this.logs.length > 0) {
+          const removed = this.logs.shift();
+          if (removed !== undefined) {
+            this.currentSizeBytes -= removed.sizeBytes ?? 0;
+          }
+        }
+
         // Notify subscribers (unless suppressed for Storybook isolation)
         if (!this.notificationsSuppressed) {
           this.subscribers.forEach((handler) => {

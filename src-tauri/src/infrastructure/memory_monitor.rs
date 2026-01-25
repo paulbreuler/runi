@@ -41,7 +41,8 @@ pub struct MemoryMonitorState {
     threshold_percent: f64,
     peak_mb: f64,
     threshold_exceeded: bool,
-    enabled: bool, // Whether monitoring is currently enabled
+    enabled: bool,        // Whether monitoring is currently enabled
+    write_counter: usize, // Separate counter for periodic file writes (monotonically increasing)
 }
 
 impl MemoryMonitorState {
@@ -60,6 +61,7 @@ impl MemoryMonitorState {
             peak_mb: 0.0,
             threshold_exceeded: false,
             enabled: false, // Start disabled - will be enabled when user toggles metrics on
+            write_counter: 0, // Track write cadence separately from sample count
         }
     }
 
@@ -74,8 +76,8 @@ impl MemoryMonitorState {
             self.peak_mb = sample.memory_mb;
         }
 
-        // Check threshold
-        let exceeded = sample.memory_mb > self.threshold_mb;
+        // Check threshold (trigger when at or above threshold)
+        let exceeded = sample.memory_mb >= self.threshold_mb;
         if exceeded && !self.threshold_exceeded {
             self.threshold_exceeded = true;
         }
@@ -111,14 +113,15 @@ impl MemoryMonitorState {
 /// Returns memory usage in MB and as percentage of total system RAM.
 fn get_current_memory_usage(total_ram_gb: f64) -> (f64, f64) {
     let mut system = System::new();
-    system.refresh_all();
+    // Only refresh processes, not all system info (more efficient)
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All);
     let pid = Pid::from(std::process::id() as usize);
 
     system.process(pid).map_or((0.0, 0.0), |process| {
-        let memory_bytes = process.memory();
-        // Convert u64 to f64 (precision loss is acceptable for memory measurements in MB)
+        let memory_kib = process.memory();
+        // Convert KiB (from sysinfo) to MiB; precision loss is acceptable for memory measurements in MB
         #[allow(clippy::cast_precision_loss)]
-        let process_memory_mb = memory_bytes as f64 / (1024.0 * 1024.0);
+        let process_memory_mb = memory_kib as f64 / 1024.0;
         let system_ram_mb = total_ram_gb * 1024.0;
         let memory_percent = (process_memory_mb / system_ram_mb) * 100.0;
         (process_memory_mb, memory_percent)
@@ -152,9 +155,12 @@ pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
             interval.tick().await;
 
             // Check if monitoring is enabled before collecting samples
-            let is_enabled = {
-                let guard = state.lock().unwrap();
-                guard.enabled
+            let is_enabled = match state.lock() {
+                Ok(guard) => guard.enabled,
+                Err(_) => {
+                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                    break; // Exit loop if mutex is poisoned
+                }
             };
 
             if !is_enabled {
@@ -175,24 +181,32 @@ pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
 
             // Update state and check for threshold
             // Extract needed values while holding the lock, then drop before async operations
-            let was_exceeded_before = {
-                let guard = state.lock().unwrap();
-                guard.threshold_exceeded
+            let was_exceeded_before = match state.lock() {
+                Ok(guard) => guard.threshold_exceeded,
+                Err(_) => {
+                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                    break; // Exit loop if mutex is poisoned
+                }
             };
             // Drop guard explicitly before next lock acquisition
-            let (should_alert, alert_stats_if_needed) = {
-                let mut guard = state.lock().unwrap();
-                guard.add_sample(&sample);
-                let stats_after_update = guard.get_stats();
-                let alert = !was_exceeded_before && stats_after_update.threshold_exceeded;
-                // Clone stats before dropping guard (needed for async emit)
-                let stats_for_alert = if alert {
-                    Some(stats_after_update.clone())
-                } else {
-                    None
-                };
-                drop(guard); // Explicitly drop before returning
-                (alert, stats_for_alert)
+            let (should_alert, alert_stats_if_needed) = match state.lock() {
+                Ok(mut guard) => {
+                    guard.add_sample(&sample);
+                    let stats_after_update = guard.get_stats();
+                    let alert = !was_exceeded_before && stats_after_update.threshold_exceeded;
+                    // Clone stats before dropping guard (needed for async emit)
+                    let stats_for_alert = if alert {
+                        Some(stats_after_update.clone())
+                    } else {
+                        None
+                    };
+                    drop(guard); // Explicitly drop before returning
+                    (alert, stats_for_alert)
+                }
+                Err(_) => {
+                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                    break; // Exit loop if mutex is poisoned
+                }
             };
 
             // Emit event if threshold exceeded
@@ -212,15 +226,31 @@ pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
             }
 
             // Emit periodic update (for UI display, if needed)
-            let update_stats = {
-                let state_guard = state.lock().unwrap();
-                state_guard.get_stats()
+            let update_stats = match state.lock() {
+                Ok(state_guard) => state_guard.get_stats(),
+                Err(_) => {
+                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                    break; // Exit loop if mutex is poisoned
+                }
             };
 
             let _ = app_clone.emit("memory:update", &update_stats);
 
             // Write metrics to file periodically (every 10 samples = ~5 minutes)
-            if update_stats.samples_count > 0 && update_stats.samples_count % 10 == 0 {
+            // Use separate write_counter to avoid issues when samples_count is capped
+            let should_write = match state.lock() {
+                Ok(mut guard) => {
+                    guard.write_counter += 1;
+                    let counter = guard.write_counter;
+                    drop(guard);
+                    counter > 0 && counter % 10 == 0
+                }
+                Err(_) => {
+                    tracing::error!("Mutex poisoned in memory monitor, stopping monitoring");
+                    break; // Exit loop if mutex is poisoned
+                }
+            };
+            if should_write {
                 if let Err(e) = write_ram_metrics_to_file(&app_clone, &update_stats).await {
                     tracing::warn!("Failed to write RAM metrics: {}", e);
                 }

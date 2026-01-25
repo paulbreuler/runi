@@ -114,7 +114,7 @@ export const MessageCell = ({
           size={12}
           className="shrink-0 text-text-muted animate-spin"
           aria-label="Updating log"
-          data-test-id="updating-log-indicator"
+          data-testid="updating-log-indicator"
         />
       )}
       <span

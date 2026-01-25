@@ -28,12 +28,16 @@ export const StatusBar = (): React.JSX.Element => {
     if (!metricsVisible) {
       return 'idle';
     }
+    // Strong "init" pulse before any metrics have been collected
     if (metrics.memory === undefined) {
       return 'init';
     }
-    // Show tracking pulse when metrics are enabled and metrics exist (even if zero/initial state)
-    // This indicates metrics are running/active
-    return 'tracking';
+    // When metrics exist, only show tracking pulse while the stream is live
+    if (isLive) {
+      return 'tracking';
+    }
+    // Metrics exist but we're not live anymore, so no pulse
+    return 'idle';
   };
 
   const pulsingState = getPulsingState();
@@ -86,10 +90,7 @@ export const StatusBar = (): React.JSX.Element => {
         <div className="flex items-center gap-4 opacity-60 hover:opacity-100 transition-opacity">
           <span className="flex items-center gap-1.5 text-text-muted">
             <span className="text-text-muted">Version:</span>
-            <span className="font-mono text-text-secondary">
-              {/* @ts-expect-error - Injected by Vite define */}
-              {__APP_VERSION__}
-            </span>
+            <span className="font-mono text-text-secondary">{__APP_VERSION__}</span>
           </span>
         </div>
       </div>
