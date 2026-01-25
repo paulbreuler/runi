@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-import { getConsoleService } from '@/services/console-service';
+import { useMetricsStore } from '@/stores/useMetricsStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import type { AppMetrics, MemoryMetrics } from '@/types/metrics';
 import { AppMetricsLog } from './AppMetricsLog';
@@ -27,11 +27,14 @@ interface RamStats {
 /**
  * Container component for app metrics that:
  * - Listens to Tauri memory:update events
- * - Updates console log with metrics
+ * - Updates global metrics store for other components
  * - Renders AppMetricsLog presentational component
  *
- * This component handles side effects (Tauri events, console service)
+ * This component handles side effects (Tauri events, metrics store)
  * while AppMetricsLog is pure and receives data via props.
+ *
+ * Note: Console log integration has been removed - metrics are now
+ * displayed in a dialog popup via MetricsPanel.
  */
 export interface AppMetricsContainerProps {
   /** Compact mode for status bar display */
@@ -41,36 +44,20 @@ export interface AppMetricsContainerProps {
 export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compact = false }) => {
   const [metrics, setMetrics] = useState<AppMetrics>({});
   const [timestamp, setTimestamp] = useState<number>(Date.now());
-  const [runNumber, setRunNumber] = useState<number>(1);
   const [isLive, setIsLive] = useState<boolean>(false);
+  const setMetricsStore = useMetricsStore((state) => state.setMetrics);
   const metricsVisible = useSettingsStore((state) => state.metricsVisible);
-  const previousMetricsVisibleRef = useRef<boolean>(metricsVisible);
-  const isFirstMountRef = useRef<boolean>(true);
-
-  // Track when metricsVisible changes from false to true to increment run number
-  useEffect(() => {
-    // Skip on first mount - we want first run to be run-1
-    if (isFirstMountRef.current) {
-      isFirstMountRef.current = false;
-      previousMetricsVisibleRef.current = metricsVisible;
-      return;
-    }
-
-    const wasVisible = previousMetricsVisibleRef.current;
-    if (!wasVisible && metricsVisible) {
-      // Metrics were just enabled - increment run number for new log entry
-      // First toggle: 1 -> 2 (run-2), second toggle: 2 -> 3 (run-3), etc.
-      setRunNumber((prev) => prev + 1);
-    }
-    previousMetricsVisibleRef.current = metricsVisible;
-  }, [metricsVisible]);
 
   // Update isLive state based on timestamp (updated within last 35 seconds)
   useEffect(() => {
     const checkIsLive = (): void => {
       const now = Date.now();
       const timeSinceUpdate = now - timestamp;
-      setIsLive(timeSinceUpdate < 35000); // 35 seconds
+      const newIsLive = timeSinceUpdate < 35000; // 35 seconds
+      setIsLive(newIsLive);
+
+      // Update global metrics store with live status
+      setMetricsStore(metrics, timestamp, newIsLive);
     };
 
     checkIsLive();
@@ -79,19 +66,25 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
     return (): void => {
       clearInterval(interval);
     };
-  }, [timestamp]);
+  }, [timestamp, metrics, setMetricsStore]);
 
   useEffect(() => {
-    // Only set up listener in Tauri environment
+    // Only set up listener in Tauri environment and when metrics are enabled
     if (typeof window === 'undefined' || !('__TAURI__' in (window as { __TAURI__?: unknown }))) {
+      return;
+    }
+
+    // If metrics are disabled, clear state and stop listening
+    if (!metricsVisible) {
+      setMetrics({});
+      setMetricsStore({}, Date.now(), false);
+      setIsLive(false);
       return;
     }
 
     let unlistenFn: UnlistenFn | null = null;
 
     const setupListener = async (): Promise<void> => {
-      const service = getConsoleService();
-
       // Listen for memory update events
       unlistenFn = await listen<RamStats>('memory:update', (event) => {
         const stats = event.payload;
@@ -106,34 +99,14 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
           samplesCount: stats.samplesCount,
         };
 
-        // Determine log level based on threshold
-        // info: normal operation (current < threshold)
-        // warn: threshold exceeded (current >= threshold)
-        // error: critically high (current >= threshold * 1.5)
-        let logLevel: 'info' | 'warn' | 'error' = 'info';
-        if (stats.current >= stats.thresholdMb * 1.5) {
-          logLevel = 'error';
-        } else if (stats.current >= stats.thresholdMb) {
-          logLevel = 'warn';
-        }
+        // Update local state for rendering
+        const newMetrics = { memory: memoryMetrics };
+        const newTimestamp = Date.now();
+        setMetrics(newMetrics);
+        setTimestamp(newTimestamp);
 
-        // Update state for rendering (always update, even if console log is disabled)
-        setMetrics({ memory: memoryMetrics });
-        setTimestamp(Date.now());
-
-        // Only update console log if metrics are visible
-        if (metricsVisible) {
-          const runNumberStr = String(runNumber);
-          const logId = `memory-metrics-run-${runNumberStr}`;
-          service.addOrUpdateLog({
-            id: logId,
-            level: logLevel,
-            message: 'App Metrics',
-            args: [{ memory: memoryMetrics }],
-            timestamp: Date.now(),
-            isUpdating: true,
-          });
-        }
+        // Update global metrics store for other components (StatusBar, MetricsPanel)
+        setMetricsStore(newMetrics, newTimestamp, true);
       });
     };
 
@@ -145,7 +118,7 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
         unlistenFn();
       }
     };
-  }, [metricsVisible, runNumber]);
+  }, [setMetricsStore, metricsVisible]);
 
   // Always render when visible, even if metrics haven't arrived yet (shows init animation)
   return (

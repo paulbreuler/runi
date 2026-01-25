@@ -5,9 +5,8 @@
 
 import React from 'react';
 import { Activity, MemoryStick } from 'lucide-react';
-import { cn } from '@/utils/cn';
 import type { AppMetrics } from '@/types/metrics';
-import { formatMemoryMetrics } from '@/utils/metrics-formatting';
+import { formatMemoryValue } from '@/utils/metrics-formatting';
 
 export interface AppMetricsLogProps {
   /** Application metrics to display */
@@ -33,64 +32,44 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
   compact = false,
 }) => {
   if (compact) {
-    // Compact inline version for status bar - Unreal Engine style
-    const isInitializing = metrics.memory === undefined;
+    // Compact inline version for status bar - simplified (no init text/spin)
+    // Only show icons + value when metrics are available
+    if (metrics.memory === undefined) {
+      return null;
+    }
 
     return (
       <div
         data-testid="app-metrics-log"
         data-live={isLive}
-        data-initializing={isInitializing}
         className="flex items-center gap-1.5 font-mono text-xs"
       >
-        {isInitializing ? (
-          // Init animation: spinning Activity icon
-          <>
-            <Activity
-              className="w-3 h-3 text-text-muted animate-spin"
-              data-testid="activity-indicator"
-            />
-            <MemoryStick className="w-3 h-3 text-text-muted opacity-50" />
-            <span className="text-text-muted text-[10px]">init</span>
-          </>
-        ) : // Normal display with metrics
-        metrics.memory !== undefined ? (
-          <>
-            <Activity
-              className={cn('w-3 h-3 text-text-muted', isLive && 'animate-spin')}
-              data-testid="activity-indicator"
-            />
-            <MemoryStick className="w-3 h-3 text-text-muted" />
-            <span className="text-text-secondary">{metrics.memory.current.toFixed(1)} MB</span>
-          </>
-        ) : null}
+        <Activity className="w-3 h-3 text-text-muted" data-testid="activity-indicator" />
+        <MemoryStick className="w-3 h-3 text-text-muted" />
+        <span className="text-text-secondary">{metrics.memory.current.toFixed(1)} MB</span>
       </div>
     );
   }
 
-  // Full version for console
+  // Full version for console (compact for dialog panel)
   return (
-    <div
-      data-testid="app-metrics-log"
-      data-live={isLive}
-      className={cn('app-metrics-log', isLive && 'is-updating')}
-    >
-      <div className="app-metrics-header">
-        <span className="app-metrics-title">App Metrics</span>
-        {isLive && (
-          <span className="app-metrics-updating-indicator" data-testid="updating-indicator">
-            (updating)
-          </span>
-        )}
-      </div>
-
+    <div data-testid="app-metrics-log" data-live={isLive} className="text-xs">
       {metrics.memory !== undefined ? (
-        <div data-testid="memory-metrics-display" className="memory-metrics">
-          {formatMemoryMetrics(metrics.memory)}
+        <div
+          data-testid="memory-metrics-display"
+          className="text-xs font-mono text-text-secondary space-y-0.5"
+        >
+          <div>Current: {formatMemoryValue(metrics.memory.current)}</div>
+          <div>Average: {formatMemoryValue(metrics.memory.average)}</div>
+          <div>Peak: {formatMemoryValue(metrics.memory.peak)}</div>
+          <div className="text-text-muted text-[10px]">
+            Threshold: {formatMemoryValue(metrics.memory.threshold)} (
+            {(metrics.memory.thresholdPercent * 100).toFixed(0)}%)
+          </div>
         </div>
       ) : (
-        <div className="app-metrics-loading" data-testid="metrics-loading">
-          Initializing metrics...
+        <div className="text-xs text-text-muted" data-testid="metrics-loading">
+          Waiting for first sample...
         </div>
       )}
     </div>
