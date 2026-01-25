@@ -6,9 +6,9 @@ List all available TDD plans in the runi-planning-docs repository with their wor
 
 **When this command is invoked, you must:**
 
-1. **Run the list-plans script:**
-   - Execute: `just list-plans` or `bash scripts/list-plans.sh`
-   - The script will display all plans in `../runi-planning-docs/plans/`
+1. **Run the list-plans command:**
+   - Execute: `just list-plans` or `npx limps list-plans`
+   - The command will display all plans in `../runi-planning-docs/plans/`
 
 2. **Display the output:**
    - Show the formatted list of plans
@@ -33,7 +33,7 @@ just list-plans
 Or directly:
 
 ```bash
-bash scripts/list-plans.sh
+npx limps list-plans
 ```
 
 ## Output Format

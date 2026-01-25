@@ -253,7 +253,7 @@ docs:
 
 # List all TDD plans in runi-planning-docs repository
 list-plans:
-    @bash scripts/list-plans.sh
+    @npx limps list-plans
 
 # Smart orchestration - detects plan from last PR and suggests actions
 work:
@@ -273,11 +273,11 @@ run plan-name:
 
 # Select next task without running (shows selection only)
 next-task plan-name:
-    @bash scripts/next-task.sh --plan "{{plan-name}}"
+    @npx limps next-task "{{plan-name}}"
 
 # Assess agent completion status for a plan
 assess-agents plan-name:
-    @bash scripts/assess-agent-status.sh --plan "{{plan-name}}" --all
+    @npx limps status "{{plan-name}}"
 
 # Run specific agent file
 run-agent agent-path:
@@ -285,11 +285,11 @@ run-agent agent-path:
 
 # List all agents in a plan (non-AI, direct execution)
 list-agents plan-name:
-    @bash scripts/list-agents.sh --plan "{{plan-name}}"
+    @npx limps list-agents "{{plan-name}}"
 
 # List agents with auto-detection (non-AI, direct execution)
 list-agents-auto:
-    @bash scripts/list-agents.sh --auto
+    @npx limps list-agents
 
 # ============================================================================
 # 📖 Help

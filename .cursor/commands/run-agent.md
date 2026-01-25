@@ -86,7 +86,7 @@ Assesses all agents in the plan for completion status and file organization.
    - If `--auto` provided: Call `bash scripts/run-agent.sh --auto` (auto-detects plan from last PR)
    - If `--plan` or plan name provided: Call `just run <plan-name>` or `bash scripts/run-agent.sh --plan <plan-name>`
    - If `--agent` provided: Call `just run-agent <agent-path>` or `bash scripts/run-agent.sh --agent <agent-path>`
-   - If `--assess` provided: Call `just assess-agents <plan-name>` or `bash scripts/assess-agent-status.sh --plan <plan-name> --all`
+   - If `--assess` provided: Call `just assess-agents <plan-name>` or `npx limps status <plan-name>`
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 

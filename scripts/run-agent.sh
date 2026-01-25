@@ -756,7 +756,7 @@ main() {
         fi
         # Resolve plan number (1 → 1-plan)
         local resolved_plan=$(resolve_plan_number "$plan_name")
-        bash "$SCRIPT_DIR/assess-agent-status.sh" --plan "$resolved_plan" --all
+        npx limps status "$resolved_plan"
         return
     fi
     
@@ -788,7 +788,7 @@ main() {
         # Resolve plan number (1 → 1-plan)
         local resolved_plan=$(resolve_plan_number "$plan_name")
         # Get next task
-        local next_task_output=$(bash "$SCRIPT_DIR/next-task.sh" --plan "$resolved_plan" 2>&1)
+        local next_task_output=$(npx limps next-task "$resolved_plan" 2>&1)
         local agent_file=$(echo "$next_task_output" | tail -1)
         
         if [ -z "$agent_file" ] || [[ "$agent_file" == *"❌"* ]] || [[ "$agent_file" == *"✅"* ]]; then
@@ -809,7 +809,8 @@ main() {
         echo -e "${DIM}Verifying agent status...${RESET}"
         local plan_dir=$(dirname "$(dirname "$agent_file")")
         local plan_basename=$(basename "$plan_dir")
-        bash "$SCRIPT_DIR/assess-agent-status.sh" --agent "$agent_file" --plan "$plan_basename" 2>&1 | grep -v "^$" || true
+        # Note: limps status doesn't support --agent flag, using plan status instead
+        npx limps status "$plan_basename" 2>&1 | grep -v "^$" || true
         
         echo ""
         open_agent_file "$agent_file"

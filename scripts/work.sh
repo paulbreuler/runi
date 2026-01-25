@@ -125,7 +125,7 @@ main() {
         if [ -z "$detection_info" ] || echo "$detection_info" | grep -q '"error"'; then
             echo -e "${YELLOW}⚠️  Could not auto-detect plan from PR${RESET}" >&2
             echo -e "${DIM}Available plans:${RESET}" >&2
-            bash "$SCRIPT_DIR/../list-plans.sh" 2>&1 | head -20 >&2
+            npx limps list-plans 2>&1 | head -20 >&2
             echo "" >&2
             echo -e "Usage: ${CYAN}just work --plan <plan-name>${RESET}" >&2
             exit 1
@@ -167,7 +167,7 @@ main() {
     
     # Assess agent status (do this first to determine quick decision)
     echo -e "${DIM}Assessing agent status...${RESET}" >&2
-    local assessment_output=$(bash "$SCRIPT_DIR/assess-agent-status.sh" --plan "$plan_name" --all 2>&1)
+    local assessment_output=$(npx limps status "$plan_name" 2>&1)
     
     # Parse assessment for cleanup needs
     local cleanup_needed=()
@@ -215,7 +215,7 @@ main() {
     
     # Get next best task (needed for quick decision)
     echo -e "${DIM}Determining next best task...${RESET}" >&2
-    local next_task_output=$(bash "$SCRIPT_DIR/next-task.sh" --plan "$plan_name" 2>&1)
+    local next_task_output=$(npx limps next-task "$plan_name" 2>&1)
     local next_task_exit=$?
     local agent_file=""
     
