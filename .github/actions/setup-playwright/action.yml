@@ -1,0 +1,13 @@
+name: 'Setup Playwright'
+description: 'Composite action to install Playwright browsers consistently across all jobs'
+inputs:
+  browser:
+    description: 'Browser to install (chromium, firefox, webkit, or all)'
+    required: false
+    default: 'chromium'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Playwright browsers
+      shell: bash
+      run: npx playwright install ${{ inputs.browser }}

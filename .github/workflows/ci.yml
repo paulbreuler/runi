@@ -67,19 +67,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+          install-just: 'false'
 
       - name: Check Markdown formatting
         # Prettier handles: formatting, trailing whitespace, line endings
@@ -94,22 +85,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
       - name: Check formatting
         # Exclude release-please managed files (they're auto-formatted by release-please)
@@ -134,8 +111,8 @@ jobs:
       - name: Build Storybook
         run: npm run build-storybook
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
 
       - name: Run Storybook tests
         # NOTE: Storybook play function tests are currently flaky in CI due to timing issues
@@ -168,28 +145,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
-
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install npm dependencies
-        run: npm ci --legacy-peer-deps
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -228,25 +191,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Install Playwright browsers
-        run: just test-e2e-install
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
 
       - name: Run E2E tests
         run: just test-e2e
@@ -258,25 +207,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
 
       - name: Run visual tests
         # Note: continue-on-error is intentional during initial setup phase.
