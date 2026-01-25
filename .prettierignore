@@ -20,7 +20,10 @@ pnpm-lock.yaml
 .idea/
 
 # Cursor files (plans, reports, etc.)
-.cursor/
+# Note: .cursor/**/*.md files are explicitly included in docs-review job
+# Only ignore non-markdown files and specific subdirectories
+.cursor/**/*
+!.cursor/**/*.md
 
 # Temporary files
 .tmp/

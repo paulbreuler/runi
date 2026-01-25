@@ -113,7 +113,8 @@ jobs:
 
       - name: Check formatting
         # Exclude release-please managed files (they're auto-formatted by release-please)
-        # These files are still checked in pre-commit hooks for local development
+        # Note: Local `just fmt-check-frontend` checks all files (intentional - catch issues before commit)
+        # CI excludes these files to avoid failures on release-please PRs
         run: |
           echo "src-tauri/tauri.conf.json" >> .prettierignore.ci
           echo "package.json" >> .prettierignore.ci

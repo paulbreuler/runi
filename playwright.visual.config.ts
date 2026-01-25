@@ -63,7 +63,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run storybook -- --no-open',
     url: 'http://localhost:6006',
-    reuseExistingServer: !process.env.CI, // Reuse if Storybook is already running (local dev)
+    reuseExistingServer: true, // Reuse Storybook server if already running (CI & local)
     timeout: 120 * 1000, // 2 minutes to start
     stdout: 'ignore',
     stderr: 'pipe',
