@@ -57,8 +57,11 @@ generate-types:
 # ============================================================================
 
 # Ensure dependencies are installed (check and install if needed)
+# Checks if node_modules exists - if missing, warns user
+# Note: Full install requires MOTION_PLUS_TOKEN via 'just install'
+# Commands use npx fallback if dependencies are incomplete
 ensure-deps:
-    @bash -c 'if [ ! -d "node_modules" ]; then echo "📦 Installing dependencies..."; just install; fi'
+    @bash -c 'if [ ! -d "node_modules" ]; then echo "⚠️  node_modules missing - dependencies will be installed on-demand via npx"; fi'
 
 # Update all dependencies
 update:
@@ -79,8 +82,9 @@ fmt-check-rust:
 # Check frontend formatting
 # Note: CI excludes release-please managed files (src-tauri/tauri.conf.json, package.json)
 # Local checks all files including release-please files (intentional - catch issues before commit)
-fmt-check-frontend: ensure-deps
-    npm run format:check
+# Uses npx as fallback if dependencies aren't fully installed
+fmt-check-frontend:
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format:check; else echo "📦 Dependencies incomplete, using npx..."; npx prettier --check .; fi'
 
 # Fix all formatting
 fmt: fmt-rust fmt-frontend
@@ -90,8 +94,9 @@ fmt-rust:
     cd src-tauri && cargo fmt
 
 # Fix frontend formatting
-fmt-frontend: ensure-deps
-    npm run format
+# Uses npx as fallback if dependencies aren't fully installed
+fmt-frontend:
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format; else echo "📦 Using npx prettier..."; npx prettier --write .; fi'
 
 # ============================================================================
 # 🔍 Code Quality: Linting
