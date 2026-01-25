@@ -19,8 +19,14 @@ pnpm-lock.yaml
 .vscode/
 .idea/
 
-# Templates (contain placeholder syntax)
-.cursor/templates/
+# Cursor files (plans, reports, etc.)
+.cursor/
+
+# Temporary files
+.tmp/
+
+# Storybook build output
+storybook-static/
 
 # Ralph
 logs/
