@@ -326,7 +326,7 @@ Same as above - uses `npx limps next-task` to detect agent from branch context.
 Agent detection examples:
 
 - Branch: `feat/datagrid/agent_0_accessibility` → Detects plan and agent from branch name
-- Commit: `feat(agent_2): add status column` → Detects agent from commit messages
+- Commit: `feat(datagrid): add status column` → Detects agent from commit context and modified files
 - Modified files: Changes to agent files → Detects agent from file paths
 
 ### Agent Status Validation Example
@@ -446,11 +446,7 @@ mcp_runi_Planning_rlm_query({
 });
 ```
 
-**Benefits:**
-
-- Programmatic access to feature status
-- Can be used to auto-populate PR description
-- Alternative to limps CLI when MCP tools are available
+**Use when:** MCP tools are available and you need programmatic access to feature status for PR description auto-population.
 
 ### Component Design Principles Compliance
 
