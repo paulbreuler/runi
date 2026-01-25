@@ -11,7 +11,6 @@ import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
 import { ConsoleContextMenu } from './ConsoleContextMenu';
 import { ConsoleToolbar } from './ConsoleToolbar';
-import { AppMetricsContainer } from './AppMetricsContainer';
 import { VirtualDataGrid } from '@/components/DataGrid/VirtualDataGrid';
 import { createConsoleColumns } from '@/components/DataGrid/columns/consoleColumns';
 import { ExpandedContent } from '@/components/DataGrid/ExpandedContent';
@@ -961,9 +960,6 @@ export const ConsolePanel = ({
 
   return (
     <div className="flex flex-col h-full bg-bg-surface">
-      {/* App Metrics Container - displays memory metrics */}
-      <AppMetricsContainer />
-
       {/* Toolbar - now using ConsoleToolbar component */}
       <ConsoleToolbar
         filter={filter}

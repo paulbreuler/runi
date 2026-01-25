@@ -44,17 +44,17 @@ describe('AppMetricsLog', () => {
     expect(screen.queryByTestId('memory-metrics-display')).not.toBeInTheDocument();
   });
 
-  it('shows updating indicator when isUpdating is true', () => {
-    render(<AppMetricsLog metrics={mockMetrics} timestamp={Date.now()} isUpdating={true} />);
+  it('shows live indicator when isLive is true', () => {
+    render(<AppMetricsLog metrics={mockMetrics} timestamp={Date.now()} isLive={true} />);
 
     const log = screen.getByTestId('app-metrics-log');
-    expect(log).toHaveAttribute('data-updating', 'true');
+    expect(log).toHaveAttribute('data-live', 'true');
   });
 
-  it('does not show updating indicator when isUpdating is false', () => {
-    render(<AppMetricsLog metrics={mockMetrics} timestamp={Date.now()} isUpdating={false} />);
+  it('does not show live indicator when isLive is false', () => {
+    render(<AppMetricsLog metrics={mockMetrics} timestamp={Date.now()} isLive={false} />);
 
     const log = screen.getByTestId('app-metrics-log');
-    expect(log).toHaveAttribute('data-updating', 'false');
+    expect(log).toHaveAttribute('data-live', 'false');
   });
 });

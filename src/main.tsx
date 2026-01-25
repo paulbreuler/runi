@@ -167,6 +167,10 @@ if (rootElement !== null) {
                 cpuModel: systemSpecs.cpuModel,
                 cpuCores: systemSpecs.cpuCores,
                 totalMemoryGb: systemSpecs.totalMemoryGb,
+                platform: systemSpecs.platform,
+                architecture: systemSpecs.architecture,
+                buildMode: systemSpecs.buildMode,
+                bundleSizeMb: systemSpecs.bundleSizeMb,
               },
               timing: {
                 processStartup: startupTiming.processStartup,

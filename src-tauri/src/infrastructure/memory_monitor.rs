@@ -142,8 +142,8 @@ pub fn start_memory_monitor(app: &AppHandle, total_ram_gb: f64) {
     // Store state in app for commands to access (before spawning task)
     app.manage(state);
 
-    // Spawn background task for periodic sampling
-    tokio::spawn(async move {
+    // Spawn background task for periodic sampling using Tauri's async runtime
+    tauri::async_runtime::spawn(async move {
         let state = state_for_task;
         let mut interval = interval(Duration::from_secs(30)); // Sample every 30 seconds
         interval.tick().await; // Skip first immediate tick
