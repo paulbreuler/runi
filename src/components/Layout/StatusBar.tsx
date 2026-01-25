@@ -66,7 +66,7 @@ export const StatusBar = (): React.JSX.Element => {
             aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}
           >
             <PulsingGlow state={pulsingState} data-testid="metrics-pulsing-glow">
-              <Activity className="w-3 h-3" />
+              <Activity className="!w-2.5 !h-2.5" />
             </PulsingGlow>
             <span>Metrics</span>
           </Button>
