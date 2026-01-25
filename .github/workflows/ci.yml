@@ -330,4 +330,9 @@ jobs:
       - name: Release status
         run: |
           echo "✅ All CI checks passed. Release Please workflow will run automatically after this workflow completes."
-          echo "📦 Check the 'Release Please' workflow for release creation and artifact building."
+          echo ""
+          echo "📦 Release Flow:"
+          echo "  1. Release Please workflow creates/updates a release PR"
+          echo "  2. When release PR is merged → CI runs (validations/tests)"
+          echo "  3. After CI passes → Release is created and artifacts are built/published"
+          echo "  4. Artifacts are only published after all validations pass"

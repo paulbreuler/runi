@@ -78,8 +78,8 @@ jobs:
     needs: check-ci-status
     if: needs.check-ci-status.outputs.ci-passed == 'true'
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
+      release_created: ${{ steps.final-outputs.outputs.release_created }}
+      tag_name: ${{ steps.final-outputs.outputs.tag_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,15 +88,24 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: googleapis/release-please-action@v4
+      - name: Run release-please
+        uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
 
+      - name: Set outputs
+        id: final-outputs
+        run: |
+          echo "release_created=${{ steps.release.outputs.release_created }}" >> $GITHUB_OUTPUT
+          echo "tag_name=${{ steps.release.outputs.tag_name }}" >> $GITHUB_OUTPUT
+
   build:
     name: Build ${{ matrix.os }}
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    needs: [check-ci-status, release-please]
+    if: |
+      needs.release-please.outputs.release_created == 'true' &&
+      needs.check-ci-status.outputs.ci-passed == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -243,8 +252,11 @@ jobs:
 
   attach-artifacts:
     name: Attach Artifacts to Release
-    needs: [release-please, build]
-    if: always() && needs.release-please.outputs.release_created == 'true'
+    needs: [check-ci-status, release-please, build]
+    if: |
+      always() &&
+      needs.release-please.outputs.release_created == 'true' &&
+      needs.check-ci-status.outputs.ci-passed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
