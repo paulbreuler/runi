@@ -179,7 +179,7 @@ jobs:
   attach-artifacts:
     name: Attach Artifacts to Release
     needs: [release-please, build]
-    if: needs.release-please.outputs.release_created == 'true'
+    if: always() && needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
