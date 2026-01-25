@@ -19,6 +19,8 @@ export interface DialogProps {
   header: React.ReactNode;
   /** Content component (DialogContent) */
   content: React.ReactNode;
+  /** Optional footer component (DialogFooter) */
+  footer?: React.ReactNode;
   /** Optional test ID */
   'data-testid'?: string;
 }
@@ -44,6 +46,7 @@ export const Dialog: React.FC<DialogProps> = ({
   buttonRef,
   header,
   content,
+  footer,
   'data-testid': testId = 'dialog',
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -129,6 +132,9 @@ export const Dialog: React.FC<DialogProps> = ({
 
             {/* Content */}
             {content}
+
+            {/* Footer */}
+            {footer}
           </motion.div>
         </div>
       )}

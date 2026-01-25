@@ -34,17 +34,25 @@ export const MetricsToggle: React.FC<MetricsToggleProps> = ({
   const toggleId = `${testId}-toggle`;
 
   return (
-    <div className={cn('flex items-center gap-2')} data-testid={testId}>
-      <Label
-        htmlFor={toggleId}
-        onClick={(e): void => {
-          e.stopPropagation();
-          onChange(!checked);
-        }}
-      >
-        {label}
-      </Label>
-      <Switch id={toggleId} checked={checked} onCheckedChange={onChange} data-testid="switch" />
+    <div className={cn('flex items-center')} data-testid={testId}>
+      {label !== '' ? (
+        <Label
+          htmlFor={toggleId}
+          onClick={(e): void => {
+            e.stopPropagation();
+            onChange(!checked);
+          }}
+        >
+          {label}
+        </Label>
+      ) : null}
+      <Switch
+        id={toggleId}
+        checked={checked}
+        onCheckedChange={onChange}
+        data-testid="switch"
+        aria-label={label !== '' ? label : 'Toggle metrics'}
+      />
     </div>
   );
 };

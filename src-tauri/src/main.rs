@@ -17,7 +17,9 @@ use infrastructure::commands::{
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
-use infrastructure::memory_monitor::{get_ram_stats, start_memory_monitor};
+use infrastructure::memory_monitor::{
+    collect_ram_sample, get_ram_stats, set_memory_monitoring_enabled, start_memory_monitor,
+};
 use sysinfo::System;
 use tauri::Manager;
 
@@ -72,6 +74,8 @@ pub fn run() {
             get_process_startup_time,
             get_system_specs,
             get_ram_stats,
+            collect_ram_sample,
+            set_memory_monitoring_enabled,
             save_request_history,
             load_request_history,
             delete_history_entry,

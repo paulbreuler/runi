@@ -7,11 +7,11 @@ import React, { useRef, useState } from 'react';
 import { Activity } from 'lucide-react';
 import { MetricsPanel } from '@/components/Metrics/MetricsPanel';
 import { PulsingGlow } from '@/components/ui/PulsingGlow';
+import { Button } from '@/components/ui/button';
 import { AppMetricsContainer } from '@/components/Console/AppMetricsContainer';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
 
 export const StatusBar = (): React.JSX.Element => {
   const metricsVisible = useSettingsStore((state) => state.metricsVisible);
@@ -31,10 +31,9 @@ export const StatusBar = (): React.JSX.Element => {
     if (metrics.memory === undefined) {
       return 'init';
     }
-    if (isLive) {
-      return 'tracking'; // Pulse when active/live
-    }
-    return 'idle';
+    // Show tracking pulse when metrics are enabled and metrics exist (even if zero/initial state)
+    // This indicates metrics are running/active
+    return 'tracking';
   };
 
   const pulsingState = getPulsingState();
@@ -55,19 +54,14 @@ export const StatusBar = (): React.JSX.Element => {
             <span className="font-mono text-text-secondary">default</span>
           </span>
           {/* Metrics toggle button with pulsing glow */}
-          <button
+          <Button
             ref={buttonRef}
-            type="button"
+            variant="ghost"
+            size="xs"
             onClick={(): void => {
               setIsPanelOpen(!isPanelOpen);
             }}
-            className={cn(
-              'flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors',
-              isPanelOpen
-                ? 'bg-bg-raised text-text-primary'
-                : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised',
-              focusRingClasses
-            )}
+            className={cn('gap-1.5', isPanelOpen && 'bg-bg-raised text-text-primary')}
             data-testid="status-bar-metrics-button"
             aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}
           >
@@ -75,10 +69,16 @@ export const StatusBar = (): React.JSX.Element => {
               <Activity className="w-3 h-3" />
             </PulsingGlow>
             <span>Metrics</span>
-          </button>
+          </Button>
           {/* Compact metrics display - show when metrics feature is enabled and metrics exist */}
           {shouldShowMetrics && (
             <div className="flex items-center" data-testid="status-bar-metrics">
+              <AppMetricsContainer compact={true} />
+            </div>
+          )}
+          {/* Always mount AppMetricsContainer when metricsVisible is true to ensure it can fetch metrics */}
+          {metricsVisible && !shouldShowMetrics && (
+            <div className="hidden" data-testid="status-bar-metrics-hidden">
               <AppMetricsContainer compact={true} />
             </div>
           )}

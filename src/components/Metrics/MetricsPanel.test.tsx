@@ -15,7 +15,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 // Mock stores
 const mockSetMetrics = vi.fn();
-const mockMetricsVisible = true;
+let mockMetricsVisible = true;
 const mockSetMetricsVisible = vi.fn();
 
 vi.mock('@/stores/useMetricsStore', () => ({
@@ -55,6 +55,7 @@ describe('MetricsPanel', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockMetricsVisible = true; // Reset to default
     mockButtonRef.current.getBoundingClientRect = vi.fn(() => ({
       left: 100,
       top: 0,
@@ -85,7 +86,7 @@ describe('MetricsPanel', () => {
     expect(screen.getByTestId('metrics-grid')).toBeInTheDocument();
   });
 
-  it('renders DialogHeader with title and MetricsToggle in actions', () => {
+  it('renders DialogHeader with title and Switch in actions', () => {
     render(
       <MetricsPanel
         isOpen={true}
@@ -98,7 +99,7 @@ describe('MetricsPanel', () => {
     );
 
     expect(screen.getByText('App Metrics')).toBeInTheDocument();
-    expect(screen.getByTestId('metrics-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('metrics-switch')).toBeInTheDocument();
   });
 
   it('renders MetricsGrid with metrics data', () => {
@@ -117,7 +118,7 @@ describe('MetricsPanel', () => {
     expect(screen.getByTestId('metrics-grid-value-current')).toBeInTheDocument();
   });
 
-  it('fetches immediate stats on open', async () => {
+  it('fetches immediate stats on open when metricsVisible is true', async () => {
     const { invoke } = await import('@tauri-apps/api/core');
 
     // Mock Tauri environment
@@ -149,10 +150,127 @@ describe('MetricsPanel', () => {
 
     await waitFor(
       () => {
-        expect(invoke).toHaveBeenCalledWith('get_ram_stats');
+        expect(invoke).toHaveBeenCalledWith('collect_ram_sample');
       },
       { timeout: 2000 }
     );
+  });
+
+  it('does not fetch stats when metricsVisible is false', async () => {
+    const { invoke } = await import('@tauri-apps/api/core');
+
+    // Mock Tauri environment
+    Object.defineProperty(window, '__TAURI__', {
+      value: {},
+      writable: true,
+    });
+
+    // Override mock to return false for metricsVisible
+    mockMetricsVisible = false;
+
+    render(
+      <MetricsPanel
+        isOpen={true}
+        onClose={mockOnClose}
+        buttonRef={mockButtonRef}
+        metrics={mockMetrics}
+        timestamp={Date.now()}
+        isLive={true}
+      />
+    );
+
+    // Wait a bit to ensure no call is made
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+
+    expect(invoke).not.toHaveBeenCalledWith('collect_ram_sample');
+
+    // Reset for other tests
+    mockMetricsVisible = true;
+  });
+
+  it('calls setMetricsVisible when switch is toggled', async () => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    const user = userEvent.setup();
+
+    render(
+      <MetricsPanel
+        isOpen={true}
+        onClose={mockOnClose}
+        buttonRef={mockButtonRef}
+        metrics={mockMetrics}
+        timestamp={Date.now()}
+        isLive={true}
+      />
+    );
+
+    const switchElement = screen.getByTestId('metrics-switch');
+    await user.click(switchElement);
+
+    expect(mockSetMetricsVisible).toHaveBeenCalledWith(false);
+  });
+
+  it('shows countdown when metricsVisible and isLive are true', () => {
+    const recentTimestamp = Date.now() - 5000; // 5 seconds ago
+
+    render(
+      <MetricsPanel
+        isOpen={true}
+        onClose={mockOnClose}
+        buttonRef={mockButtonRef}
+        metrics={mockMetrics}
+        timestamp={recentTimestamp}
+        isLive={true}
+      />
+    );
+
+    const countdown = screen.getByTestId('next-sample-countdown');
+    expect(countdown).toBeInTheDocument();
+    // Should show a number (not "—")
+    expect(countdown.textContent).not.toBe('—');
+  });
+
+  it('shows dash when metricsVisible is false', () => {
+    // Override mock to return false for metricsVisible
+    mockMetricsVisible = false;
+
+    const recentTimestamp = Date.now() - 5000; // 5 seconds ago
+
+    render(
+      <MetricsPanel
+        isOpen={true}
+        onClose={mockOnClose}
+        buttonRef={mockButtonRef}
+        metrics={mockMetrics}
+        timestamp={recentTimestamp}
+        isLive={true}
+      />
+    );
+
+    const countdown = screen.getByTestId('next-sample-countdown');
+    expect(countdown.textContent).toBe('—');
+
+    // Reset for other tests
+    mockMetricsVisible = true;
+  });
+
+  it('shows dash when isLive is false', () => {
+    const recentTimestamp = Date.now() - 5000; // 5 seconds ago
+
+    render(
+      <MetricsPanel
+        isOpen={true}
+        onClose={mockOnClose}
+        buttonRef={mockButtonRef}
+        metrics={mockMetrics}
+        timestamp={recentTimestamp}
+        isLive={false}
+      />
+    );
+
+    const countdown = screen.getByTestId('next-sample-countdown');
+    expect(countdown.textContent).toBe('—');
   });
 
   it('does not render when isOpen is false', () => {

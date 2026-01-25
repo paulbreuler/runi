@@ -48,16 +48,23 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
   const [isLive, setIsLive] = useState<boolean>(false);
   const setMetricsStore = useMetricsStore((state) => state.setMetrics);
   const metricsVisible = useSettingsStore((state) => state.metricsVisible);
+  // Track if we enabled monitoring (to only disable in cleanup if we enabled it)
+  const monitoringEnabledRef = React.useRef<boolean>(false);
 
   // Update isLive state based on timestamp (updated within last 35 seconds)
   useEffect(() => {
+    // Only update isLive if metrics exist (don't clear store when metrics are empty)
+    if (metrics.memory === undefined) {
+      return;
+    }
+
     const checkIsLive = (): void => {
       const now = Date.now();
       const timeSinceUpdate = now - timestamp;
       const newIsLive = timeSinceUpdate < 35000; // 35 seconds
       setIsLive(newIsLive);
 
-      // Update global metrics store with live status
+      // Update global metrics store with live status (only if metrics exist)
       setMetricsStore(metrics, timestamp, newIsLive);
     };
 
@@ -75,20 +82,41 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
       return;
     }
 
-    // If metrics are disabled, clear state and stop listening
+    // If metrics are disabled, clear state, stop listening, and disable monitoring service
     if (!metricsVisible) {
       setMetrics({});
       setMetricsStore({}, Date.now(), false);
       setIsLive(false);
+
+      // Disable monitoring service in Rust backend
+      void (async (): Promise<void> => {
+        try {
+          await invoke('set_memory_monitoring_enabled', { enabled: false });
+        } catch (error) {
+          console.error('Failed to disable memory monitoring:', error);
+        }
+      })();
+
       return;
     }
+
+    // Enable monitoring service when metrics are enabled (before setting up listener)
+    void (async (): Promise<void> => {
+      try {
+        await invoke('set_memory_monitoring_enabled', { enabled: true });
+        monitoringEnabledRef.current = true; // Mark that we enabled monitoring
+      } catch (error) {
+        console.error('Failed to enable memory monitoring:', error);
+      }
+    })();
 
     let unlistenFn: UnlistenFn | null = null;
 
     const setupListener = async (): Promise<void> => {
-      // Fetch immediate stats when metrics are enabled (don't wait for next 30s interval)
+      // Collect immediate sample when metrics are enabled (don't wait for next 30s interval)
       const fetchImmediateStats = async (): Promise<void> => {
         try {
+          // Use collect_ram_sample to trigger immediate sample collection instead of just getting stats
           const stats = await invoke<{
             current: number;
             average: number;
@@ -97,7 +125,7 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
             thresholdExceeded: boolean;
             thresholdMb: number;
             thresholdPercent: number;
-          }>('get_ram_stats');
+          }>('collect_ram_sample');
 
           const memoryMetrics: MemoryMetrics = {
             current: stats.current,
@@ -151,10 +179,22 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
 
     void setupListener();
 
-    // Cleanup function
+    // Cleanup function - disable monitoring when component unmounts or metrics are disabled
     return (): void => {
       if (unlistenFn !== null) {
         unlistenFn();
+      }
+
+      // Only disable if we actually enabled monitoring (to avoid disabling when just re-enabling)
+      if (monitoringEnabledRef.current) {
+        void (async (): Promise<void> => {
+          try {
+            await invoke('set_memory_monitoring_enabled', { enabled: false });
+            monitoringEnabledRef.current = false; // Reset flag
+          } catch (error) {
+            console.error('Failed to disable memory monitoring in cleanup:', error);
+          }
+        })();
       }
     };
   }, [setMetricsStore, metricsVisible]);

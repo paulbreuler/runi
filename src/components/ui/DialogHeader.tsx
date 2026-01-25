@@ -38,7 +38,7 @@ export const DialogHeader: React.FC<DialogHeaderProps> = ({
   return (
     <div
       className={cn(
-        'grid grid-cols-[1fr_auto_auto] items-center gap-2 p-2.5',
+        'grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2.5 py-1.5',
         'border-b border-border-subtle'
       )}
       data-testid={testId}

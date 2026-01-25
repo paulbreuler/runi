@@ -38,6 +38,10 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
       return null;
     }
 
+    // Show muted text when no samples collected yet (initial state)
+    const isInitialState = metrics.memory.samplesCount === 0;
+    const valueClass = isInitialState ? 'text-text-muted' : 'text-text-secondary';
+
     return (
       <div
         data-testid="app-metrics-log"
@@ -46,7 +50,7 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
       >
         <Activity className="w-3 h-3 text-text-muted" data-testid="activity-indicator" />
         <MemoryStick className="w-3 h-3 text-text-muted" />
-        <span className="text-text-secondary">{metrics.memory.current.toFixed(1)} MB</span>
+        <span className={valueClass}>{metrics.memory.current.toFixed(1)} MB</span>
       </div>
     );
   }
@@ -55,13 +59,31 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
   return (
     <div data-testid="app-metrics-log" data-live={isLive} className="text-xs">
       {metrics.memory !== undefined ? (
-        <div
-          data-testid="memory-metrics-display"
-          className="text-xs font-mono text-text-secondary space-y-0.5"
-        >
-          <div>Current: {formatMemoryValue(metrics.memory.current)}</div>
-          <div>Average: {formatMemoryValue(metrics.memory.average)}</div>
-          <div>Peak: {formatMemoryValue(metrics.memory.peak)}</div>
+        <div data-testid="memory-metrics-display" className="text-xs font-mono space-y-0.5">
+          {/* Show muted text when no samples collected yet (initial state) */}
+          {metrics.memory.samplesCount === 0 ? (
+            <>
+              <div className="text-text-muted">
+                Current: {formatMemoryValue(metrics.memory.current)}
+              </div>
+              <div className="text-text-muted">
+                Average: {formatMemoryValue(metrics.memory.average)}
+              </div>
+              <div className="text-text-muted">Peak: {formatMemoryValue(metrics.memory.peak)}</div>
+            </>
+          ) : (
+            <>
+              <div className="text-text-secondary">
+                Current: {formatMemoryValue(metrics.memory.current)}
+              </div>
+              <div className="text-text-secondary">
+                Average: {formatMemoryValue(metrics.memory.average)}
+              </div>
+              <div className="text-text-secondary">
+                Peak: {formatMemoryValue(metrics.memory.peak)}
+              </div>
+            </>
+          )}
           <div className="text-text-muted text-[10px]">
             Threshold: {formatMemoryValue(metrics.memory.threshold)} (
             {(metrics.memory.thresholdPercent * 100).toFixed(0)}%)
