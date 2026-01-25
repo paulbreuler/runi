@@ -37,7 +37,7 @@ build:
     npm run tauri build
 
 # Build frontend only (required for Rust compilation)
-build-frontend:
+build-frontend: ensure-deps
     npm run build
 
 # Measure startup time of release bundle
@@ -55,6 +55,10 @@ generate-types:
 # ============================================================================
 # 📦 Dependencies
 # ============================================================================
+
+# Ensure dependencies are installed (check and install if needed)
+ensure-deps:
+    @bash -c 'if [ ! -d "node_modules" ]; then echo "📦 Installing dependencies..."; just install; fi'
 
 # Update all dependencies
 update:
@@ -75,7 +79,7 @@ fmt-check-rust:
 # Check frontend formatting
 # Note: CI excludes release-please managed files (src-tauri/tauri.conf.json, package.json)
 # Local checks all files including release-please files (intentional - catch issues before commit)
-fmt-check-frontend:
+fmt-check-frontend: ensure-deps
     npm run format:check
 
 # Fix all formatting
@@ -86,7 +90,7 @@ fmt-rust:
     cd src-tauri && cargo fmt
 
 # Fix frontend formatting
-fmt-frontend:
+fmt-frontend: ensure-deps
     npm run format
 
 # ============================================================================
@@ -101,7 +105,7 @@ lint-rust: build-frontend
     cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 # Lint TypeScript/React
-lint-frontend:
+lint-frontend: ensure-deps
     npm run lint
 
 # Lint Markdown files (exclude files/directories in .gitignore)
@@ -122,7 +126,7 @@ check-rust: build-frontend
     cd src-tauri && cargo check --workspace --all-targets
 
 # Type check TypeScript/React
-check-frontend:
+check-frontend: ensure-deps
     npm run check
 
 # ============================================================================
@@ -137,7 +141,7 @@ test-rust: build-frontend
     cd src-tauri && cargo test --workspace
 
 # Run frontend tests
-test-frontend:
+test-frontend: ensure-deps
     npm run test -- --run
 
 # Run E2E tests (Playwright)
