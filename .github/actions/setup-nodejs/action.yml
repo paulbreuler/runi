@@ -24,4 +24,10 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: just install
+      run: |
+        if command -v just &> /dev/null; then
+          just install
+        else
+          node scripts/setup-motion-plus.js
+          npm ci --legacy-peer-deps
+        fi
