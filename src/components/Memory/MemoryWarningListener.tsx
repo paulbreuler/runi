@@ -110,20 +110,11 @@ export const MemoryWarningListener: React.FC<MemoryWarningListenerProps> = () =>
           // Component unmounted before listener was set up, clean up immediately
           fn();
         }
-      } catch (error) {
-        // Log error in development, but don't break the app
-        // Skip logging in test/E2E environments to avoid interfering with tests
-        // The error is non-critical - memory monitoring is optional
-        const isTestEnv =
-          typeof process !== 'undefined' &&
-          (process.env.VITEST !== undefined ||
-            process.env.CI !== undefined ||
-            process.env.PLAYWRIGHT !== undefined);
-
-        // Only log in development, not in test/E2E environments
-        if (process.env.NODE_ENV === 'development' && !isTestEnv) {
-          console.error('Failed to set up memory warning listener:', error);
-        }
+      } catch (_error) {
+        // Silently fail - memory monitoring is optional and non-critical
+        // Don't log errors to avoid interfering with E2E tests and console output
+        // The error typically occurs when Tauri is not fully available (e.g., in E2E test environments)
+        // No action needed - the app continues to function without memory monitoring
       }
     };
 
