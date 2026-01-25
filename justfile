@@ -258,6 +258,8 @@ docs:
 # List all TDD plans in runi-planning-docs repository
 # Note: limps is an npm package installed on-demand via npx
 # See: https://github.com/paulbreuler/limps for documentation
+# Security: limps is installed via npx without version pinning. If limps is published to npm,
+# consider pinning the version (e.g., npx limps@<version>) to reduce supply-chain risk.
 list-plans:
     @npx limps list-plans
 

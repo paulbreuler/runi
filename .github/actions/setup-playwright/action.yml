@@ -10,4 +10,4 @@ runs:
   steps:
     - name: Install Playwright browsers
       shell: bash
-      run: npx playwright install ${{ inputs.browser }}
+      run: npx playwright install --with-deps ${{ inputs.browser }}

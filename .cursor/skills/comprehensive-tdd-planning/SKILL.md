@@ -214,7 +214,7 @@ See `workflow.md` for complete workflow documentation including:
 
 **Primary Entry Point**:
 
-- `/work` - After PR merge, starting work session, need status overview
+- `npx limps status <plan>` and `npx limps next-task <plan>` - After PR merge, starting work session, need status overview (replaces removed `/work` command)
 
 **Focused Entry Points**:
 

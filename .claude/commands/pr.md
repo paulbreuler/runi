@@ -19,6 +19,7 @@ Create a pull request on GitHub with a comprehensive description from staged cha
      - Falls back to recent file modifications if PR detection fails
    - Use `npx limps next-task <plan-id>` to get current task/agent file path
    - Note: `limps next-task` outputs the agent file path as the last line of output
+   - Security note: If limps is published to npm, consider pinning the version (e.g., `npx limps@<version>`) to reduce supply-chain risk
    - If agent detected:
      - Extract agent file path and info from limps output
      - **Validate/Create GitHub issues** (CRITICAL - must exist before PR creation):
