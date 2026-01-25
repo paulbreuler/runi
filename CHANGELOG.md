@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.2](https://github.com/paulbreuler/runi/compare/runi-v0.2.1...runi-v0.2.2) (2026-01-25)
+
+
+### Bug Fixes
+
+* **ci:** run build/publish directly after release-please creates release ([#64](https://github.com/paulbreuler/runi/issues/64)) ([9c645c2](https://github.com/paulbreuler/runi/commit/9c645c2ba982b70d17201e7730fb4ebc7e6975ee))
+
+
+### Chores
+
+* remove duplicate release.yml workflow ([#67](https://github.com/paulbreuler/runi/issues/67)) ([ee35051](https://github.com/paulbreuler/runi/commit/ee3505198de9e52d8863d298ae92dcb81b352c89))
+
 ## [0.2.1](https://github.com/paulbreuler/runi/compare/runi-v0.2.0...runi-v0.2.1) (2026-01-25)
 
 
