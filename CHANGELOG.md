@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/paulbreuler/runi/compare/runi-v0.2.2...runi-v0.2.3) (2026-01-25)
+
+
+### Chores
+
+* **ci:** exclude release-please files from formatting checks and fix Storybook visual tests ([#69](https://github.com/paulbreuler/runi/issues/69)) ([9ab2630](https://github.com/paulbreuler/runi/commit/9ab2630299305c0d50894e529e67b9234d83e438))
+
 ## [0.2.2](https://github.com/paulbreuler/runi/compare/runi-v0.2.1...runi-v0.2.2) (2026-01-25)
 
 
