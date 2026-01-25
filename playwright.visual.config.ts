@@ -19,7 +19,7 @@ export default defineConfig({
   /* Visual comparison settings */
   expect: {
     toHaveScreenshot: {
-      threshold: 0.2, // 20% pixel difference threshold
+      threshold: 0.2, // Per-pixel color difference tolerance (0–1 scale)
       mode: 'strict', // Strict comparison mode
     },
   },
