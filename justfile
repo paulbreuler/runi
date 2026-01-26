@@ -58,14 +58,15 @@ generate-types:
 # ============================================================================
 
 # Ensure dependencies are installed (check and install if needed)
-# Checks if node_modules exists - if missing, attempts full install via 'just install'
+# Checks if node_modules exists and key dependencies are present
+# If missing or incomplete, attempts full install via 'just install' using token injection
 # Uses the existing token injection system (setup-motion-plus.js) which:
 # - Reads MOTION_PLUS_TOKEN from .env or environment
 # - Injects token into package.json (never committed)
 # - Runs npm ci to install dependencies
 # Note: If token not available, individual commands use npx fallback for tools that don't need motion-plus
 ensure-deps:
-    @bash -c 'if [ ! -d "node_modules" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then source .env && just install; elif [ -n "$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
+    @bash -c 'if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/vite" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then source .env && just install; elif [ -n "$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
 
 # Update all dependencies
 update:
