@@ -182,11 +182,11 @@ Use `just heal` to:
 - Identify dependency bottlenecks
 - Learn from patterns and suggest improvements
 
-All commands support `--auto` flag to auto-detect plan from last PR:
+Use limps CLI directly for all planning operations:
 
-- `just next-task --auto`
-- `just assess-agents --auto`
-- `just run-agent --auto`
+- `npx limps next-task <plan-name>` - Get next best task
+- `npx limps status <plan-name>` - Assess agent status
+- `npx limps list-agents <plan-name>` - List all agents
 
 ### close-feature-agent
 

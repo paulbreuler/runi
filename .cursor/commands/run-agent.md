@@ -48,10 +48,10 @@ replaced with minimal wrapper scripts.
 /run-agent 0004-datagrid-overhaul
 ```
 
-Or use justfile directly:
+Or use limps directly:
 
 ```bash
-just run 0004-datagrid-overhaul
+npx limps next-task 0004-datagrid-overhaul
 ```
 
 This will:
@@ -76,16 +76,15 @@ This is useful when resuming work after a PR merge.
 /run-agent --agent ../runi-planning-docs/plans/0004-datagrid-overhaul/agents/004_agent_selection__expander_columns.agent.md
 ```
 
-Or use justfile:
+Or open directly with cursor:
 
 ```bash
-just run-agent ../runi-planning-docs/plans/0004-datagrid-overhaul/agents/004_agent_selection__expander_columns.agent.md
+cursor ../runi-planning-docs/plans/0004-datagrid-overhaul/agents/004_agent_selection__expander_columns.agent.md
 ```
 
 Opens the specified agent file directly in Cursor.
 
-**To find agents**: Use `just list-agents <plan-number>` or `npx limps list-agents <plan-number>` to
-see all available agents, then use `just run-agent [path]` to run the specific one you want.
+**To find agents**: Use `npx limps list-agents <plan-number>` to see all available agents, then open the specific one with `cursor [path]`.
 
 ### Assess Agent Status
 
@@ -93,13 +92,7 @@ see all available agents, then use `just run-agent [path]` to run the specific o
 /run-agent --assess 0004-datagrid-overhaul
 ```
 
-Or use justfile:
-
-```bash
-just assess-agents 0004-datagrid-overhaul
-```
-
-Or use limps directly:
+Use limps directly:
 
 ```bash
 npx limps status 0004-datagrid-overhaul
@@ -112,13 +105,12 @@ Assesses all agents in the plan for completion status and file organization.
 **When this command is invoked, you must:**
 
 1. **Parse arguments:**
-   - If `--auto` provided: Auto-detect plan from last PR, then call `just run <plan-name>` (uses limps CLI)
-   - If `--plan` or plan name provided: Call `just run <plan-name>` (uses `npx limps next-task` + opens file)
-   - If `--agent` provided: Call `just run-agent <agent-path>` (opens specific agent file)
-   - If `--assess` provided: Call `just assess-agents <plan-name>` or `npx limps status <plan-name>`
+   - If `--auto` provided: Auto-detect plan from last PR, then use `npx limps next-task <plan-name>` to get next task
+   - If `--plan` or plan name provided: Use `npx limps next-task <plan-name>` to get next task, then open the agent file with `cursor`
+   - If `--agent` provided: Open the specified agent file directly with `cursor <agent-path>`
+   - If `--assess` provided: Use `npx limps status <plan-name>` to assess agent status
 
-**Note**: The workflow now uses `limps` CLI directly. The old `run-agent.sh` script has been
-replaced with a minimal `open-agent-file.sh` helper.
+**Note**: The workflow now uses `limps` CLI directly. All justfile wrapper commands have been removed.
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
@@ -174,21 +166,17 @@ replaced with a minimal `open-agent-file.sh` helper.
 
 4. **Provide guidance:**
    - Explain next steps for the agent
-   - Reference related commands (`just close-feature-agent`, `just assess-agents`, `just next-task`, `just heal`)
+   - Reference related commands (`/close-feature-agent`, `npx limps status`, `npx limps next-task`, `just heal`)
    - Show how to verify completion
 
 ## Integration with Other Commands
 
-- **next-task**: Use `just next-task <plan-name>` or `npx limps next-task <plan-name>` to get the
-  next best task. Then use `just run <plan-name>` to start work
-- **plan-list-agents**: Use `just list-agents <plan-name>` or `npx limps list-agents <plan-name>`
-  to find and see all agents in a plan, then use `just run-agent <path>` to run a specific one
+- **next-task**: Use `npx limps next-task <plan-name>` to get the next best task, then open the agent file with `cursor`
+- **plan-list-agents**: Use `npx limps list-agents <plan-name>` to find and see all agents in a plan, then open the specific one with `cursor <path>`
 - **heal**: After completing work, use `/heal` or `just heal` to auto-cleanup completed agents
-- **list-feature-plans**: Use to discover plans, then use `just run <plan-name>`
-- **close-feature-agent**: After closing, use `just assess-agents <plan-name>` or
-  `npx limps status <plan-name>` to assess overall status
-- **update-feature-plan**: After updating, use `just next-task <plan-name>` or
-  `npx limps next-task <plan-name>` to get next task
+- **list-feature-plans**: Use to discover plans, then use `npx limps next-task <plan-name>` to get next task
+- **close-feature-agent**: After closing, use `npx limps status <plan-name>` to assess overall status
+- **update-feature-plan**: After updating, use `npx limps next-task <plan-name>` to get next task
 
 ## Workflow
 
@@ -206,15 +194,15 @@ replaced with a minimal `open-agent-file.sh` helper.
 ### Smart Orchestration Workflow (Recommended)
 
 ```bash
-1. After PR merged: `just next-task` or `npx limps next-task` (auto-detects plan, suggests next task)
+1. After PR merged: `npx limps next-task <plan-name>` (suggests next task)
 2. If cleanup needed: `just heal` (auto-fixes completed agents)
-3. Start next task: `just run <plan-name>` (uses limps CLI to get task and opens file)
+3. Start next task: `npx limps next-task <plan-name>` then open agent file with `cursor`
 4. Agent implements work
 5. Verify completion: /close-feature-agent <agent-path>
 6. Repeat from step 1
 ```
 
-The workflow (`just next-task` → `just heal` → `just run`) uses limps CLI directly for task selection and file opening.
+The workflow uses limps CLI directly for task selection, then opens files with `cursor`.
 
 ## Output Format
 
@@ -266,8 +254,8 @@ Instructions:
 1. Agent file opened in Cursor
 2. Copy agent file content to Cursor Agent Chat
 3. Agent implements features per spec
-4. Run: just assess-agents 0004-datagrid-overhaul when done
-5. Run: just close-feature-agent [agent-path] to verify completion
+4. Run: npx limps status 0004-datagrid-overhaul when done
+5. Run: /close-feature-agent [agent-path] to verify completion
 ```
 
 ## Error Handling

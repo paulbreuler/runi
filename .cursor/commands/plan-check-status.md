@@ -88,7 +88,7 @@ This command provides a simple way to check plan status. Use `npx limps next-tas
 🎯 QUICK DECISION: What should you do next?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  → Ready to work: Run /run-agent or just run datagrid_overhaul_4a5b9879
+  → Ready to work: Run /run-agent or use npx limps next-task datagrid_overhaul_4a5b9879
      (Next best task identified and ready)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -112,9 +112,9 @@ Score: 78/100
 🎬 RECOMMENDED ACTIONS (in order)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  1. Run: just run datagrid_overhaul_4a5b9879 (start next task)
-  2. Run: just assess-agents datagrid_overhaul_4a5b9879 (detailed status)
-  3. Run: just list-plans (view all plans)
+  1. Run: npx limps next-task datagrid_overhaul_4a5b9879 (get next task, then open with cursor)
+  2. Run: npx limps status datagrid_overhaul_4a5b9879 (detailed status)
+  3. Run: npx limps list-plans (view all plans)
 
 Quick Links:
   plan.md

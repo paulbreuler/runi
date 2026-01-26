@@ -250,14 +250,6 @@ docs-fix:
 docs:
     cd src-tauri && cargo doc --no-deps --open
 
-# List all TDD plans in runi-planning-docs repository
-# Note: limps is an npm package installed on-demand via npx
-# See: https://github.com/paulbreuler/limps for documentation
-# Security: limps is installed via npx without version pinning. If limps is published to npm,
-# consider pinning the version (e.g., npx limps@<version>) to reduce supply-chain risk.
-list-plans:
-    @npx limps list-plans
-
 # Auto-heal plan with auto-detection
 heal:
     @bash scripts/heal-plan.sh --auto
@@ -265,31 +257,6 @@ heal:
 # Auto-heal specific plan
 heal-plan plan-name:
     @bash scripts/heal-plan.sh --plan "{{plan-name}}"
-
-# Select and run next best agent task from a plan
-# Uses limps CLI to get next task, then opens the agent file
-run plan-name:
-    @bash scripts/run-next-task.sh "{{plan-name}}" true
-
-# Select next task without running (shows selection only)
-next-task plan-name:
-    @npx limps next-task "{{plan-name}}"
-
-# Assess agent completion status for a plan
-assess-agents plan-name:
-    @npx limps status "{{plan-name}}"
-
-# Open specific agent file in Cursor (optionally create GitHub issues)
-run-agent agent-path:
-    @bash scripts/open-agent-file.sh "{{agent-path}}" true
-
-# List all agents in a plan (non-AI, direct execution)
-list-agents plan-name:
-    @npx limps list-agents "{{plan-name}}"
-
-# List agents with auto-detection (non-AI, direct execution)
-list-agents-auto:
-    @npx limps list-agents
 
 # ============================================================================
 # 📖 Help
@@ -340,13 +307,6 @@ help:
     @echo "  just docs-fix      - Fix documentation formatting issues"
     @echo ""
     @echo "Planning:"
-    @echo "  just list-plans    - List all TDD plans in runi-planning-docs"
-    @echo "  just run <plan>    - Select and run next best agent task"
-    @echo "  just next-task <plan> - Select next task (no run)"
-    @echo "  just list-agents <plan> - List all agents in a plan with status"
-    @echo "  just list-agents-auto - List agents with auto-detection"
-    @echo "  just assess-agents <plan> - Assess agent completion status"
-    @echo "  just run-agent <path> - Run specific agent file"
     @echo "  just heal          - Auto-heal plan (auto-detects from PR)"
     @echo "  just heal-plan <plan> - Auto-heal specific plan"
     @echo ""
