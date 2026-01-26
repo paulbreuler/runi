@@ -54,6 +54,7 @@
     "longDescription": "Runi - An open-source desktop application for API testing and development",
     "macOS": {
       "dmg": {
+        "background": "icons/dmg-background.png",
         "windowSize": {
           "width": 660,
           "height": 400
