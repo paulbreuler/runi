@@ -203,7 +203,7 @@ describe('NetworkHistoryPanel (Migrated to VirtualDataGrid)', () => {
 
   it('maintains status bar with correct counts', () => {
     render(<NetworkHistoryPanel {...defaultProps} />);
-    expect(screen.getByText('2 requests')).toBeInTheDocument();
+    // NetworkStatusBar only shows intelligence counts (drift, AI, bound) - not total requests
     expect(screen.getByText('1 with drift')).toBeInTheDocument();
     expect(screen.getByText('1 AI-generated')).toBeInTheDocument();
     expect(screen.getByText('2 spec-bound')).toBeInTheDocument();

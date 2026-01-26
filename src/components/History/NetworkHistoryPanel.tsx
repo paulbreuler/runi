@@ -561,14 +561,9 @@ export const NetworkHistoryPanel = ({
         </div>
       </div>
 
-      {/* Status bar - fixed, no scroll */}
+      {/* Status bar - fixed, no scroll (only renders when there are intelligence counts) */}
       <div className="shrink-0">
-        <NetworkStatusBar
-          totalCount={entries.length}
-          driftCount={counts.drift}
-          aiCount={counts.ai}
-          boundCount={counts.bound}
-        />
+        <NetworkStatusBar driftCount={counts.drift} aiCount={counts.ai} boundCount={counts.bound} />
       </div>
     </div>
   );

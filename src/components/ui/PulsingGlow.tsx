@@ -33,7 +33,7 @@ export interface PulsingGlowProps {
  */
 export const PulsingGlow: React.FC<PulsingGlowProps> = ({
   state,
-  color = '#3b82f6', // accent-blue
+  color, // Default handled below to use CSS variable
   intensity = 1,
   size = 8,
   children,
@@ -42,6 +42,9 @@ export const PulsingGlow: React.FC<PulsingGlowProps> = ({
   // Check for reduced motion preference
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Use CSS variable for default color (semantic token)
+  const glowColor = color ?? 'var(--color-accent-blue)';
 
   // If idle or reduced motion, no animation
   if (state === 'idle' || prefersReducedMotion) {
@@ -60,15 +63,15 @@ export const PulsingGlow: React.FC<PulsingGlowProps> = ({
   const configs = {
     init: {
       opacity: [0.6, 1.0, 0.6],
-      scale: [0.98, 1.02, 0.98],
-      duration: 1.5,
-      glowSize: size * intensity * 1.5, // Stronger glow for init
+      scale: [0.95, 1.05, 0.95],
+      duration: 1.2,
+      glowSize: size * intensity * 2.0, // Strong glow for init
     },
     tracking: {
-      opacity: [0.85, 0.95, 0.85],
-      scale: [0.99, 1.01, 0.99],
-      duration: 3.0,
-      glowSize: size * intensity * 0.6, // Fainter glow for tracking
+      opacity: [0.5, 1.0, 0.5],
+      scale: [0.97, 1.03, 0.97],
+      duration: 1.5, // Faster pulse (was 2.5s)
+      glowSize: size * intensity * 1.5, // Brighter glow (was 1.0)
     },
   };
 
@@ -86,7 +89,7 @@ export const PulsingGlow: React.FC<PulsingGlowProps> = ({
       <motion.div
         className="absolute inset-0 rounded-full pointer-events-none"
         style={{
-          boxShadow: `0 0 ${String(config.glowSize)}px ${color}, inset 0 0 ${String(config.glowSize * 0.5)}px ${color}40`,
+          boxShadow: `0 0 ${String(config.glowSize)}px ${glowColor}, inset 0 0 ${String(config.glowSize * 0.5)}px ${glowColor}`,
         }}
         animate={{
           opacity: config.opacity,

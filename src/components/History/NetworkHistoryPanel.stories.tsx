@@ -430,23 +430,12 @@ export const HeaderRowUrlValue: Story = {
 // ============================================================================
 
 /**
- * NetworkStatusBar - empty state with no intelligence counts.
- */
-export const NetworkStatusBarDefault: Story = {
-  render: () => (
-    <div className="bg-bg-surface border border-border-subtle rounded">
-      <NetworkStatusBar totalCount={25} driftCount={0} aiCount={0} boundCount={0} />
-    </div>
-  ),
-};
-
-/**
  * NetworkStatusBar - with all intelligence counts.
  */
 export const NetworkStatusBarWithAllCounts: Story = {
   render: () => (
     <div className="bg-bg-surface border border-border-subtle rounded">
-      <NetworkStatusBar totalCount={100} driftCount={5} aiCount={12} boundCount={78} />
+      <NetworkStatusBar driftCount={5} aiCount={12} boundCount={78} />
     </div>
   ),
 };
@@ -457,18 +446,18 @@ export const NetworkStatusBarWithAllCounts: Story = {
 export const NetworkStatusBarWithDrift: Story = {
   render: () => (
     <div className="bg-bg-surface border border-border-subtle rounded">
-      <NetworkStatusBar totalCount={50} driftCount={8} aiCount={0} boundCount={42} />
+      <NetworkStatusBar driftCount={8} aiCount={0} boundCount={42} />
     </div>
   ),
 };
 
 /**
- * NetworkStatusBar - single request (singular form).
+ * NetworkStatusBar - with only spec-bound count.
  */
-export const NetworkStatusBarSingleRequest: Story = {
+export const NetworkStatusBarSpecBoundOnly: Story = {
   render: () => (
     <div className="bg-bg-surface border border-border-subtle rounded">
-      <NetworkStatusBar totalCount={1} driftCount={0} aiCount={0} boundCount={1} />
+      <NetworkStatusBar driftCount={0} aiCount={0} boundCount={15} />
     </div>
   ),
 };

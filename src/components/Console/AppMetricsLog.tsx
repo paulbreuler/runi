@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Activity, MemoryStick } from 'lucide-react';
+import { MemoryStick } from 'lucide-react';
 import type { AppMetrics } from '@/types/metrics';
 import { formatMemoryValue } from '@/utils/metrics-formatting';
 
@@ -48,7 +48,6 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
         data-live={isLive}
         className="flex items-center gap-1.5 font-mono text-xs"
       >
-        <Activity className="w-3 h-3 text-text-muted" data-testid="activity-indicator" />
         <MemoryStick className="w-3 h-3 text-text-muted" />
         <span className={valueClass}>{metrics.memory.current.toFixed(1)} MB</span>
       </div>
