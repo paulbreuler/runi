@@ -28,6 +28,9 @@ pnpm-lock.yaml
 # Temporary files
 .tmp/
 
+# Audit scripts output (moved to external glimps extension)
+scripts/audit/
+
 # Storybook build output
 storybook-static/
 
