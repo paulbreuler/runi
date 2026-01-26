@@ -5,7 +5,7 @@
 
 /**
  * @file Design Principles Evaluation Tests
- * @description TDD tests for evaluating components against 10 "Made to Be" design principles
+ * @description TDD tests for evaluating components against 11 "Made to Be" design principles
  * @vitest-environment node
  */
 
@@ -26,11 +26,11 @@ describe('evaluate-principles', () => {
     }
   });
 
-  describe('should evaluate against all 10 principles', () => {
-    it('should return evaluations for all 10 design principles', async () => {
+  describe('should evaluate against all 11 principles', () => {
+    it('should return evaluations for all 11 design principles', async () => {
       const result = await evaluatePrinciples(testComponentPath);
 
-      expect(result.principles).toHaveLength(10);
+      expect(result.principles).toHaveLength(11);
 
       const expectedPrinciples: DesignPrinciple[] = [
         'grayscale-foundation',
@@ -43,6 +43,7 @@ describe('evaluate-principles', () => {
         'dark-mode-compatible',
         'motion-animations',
         'zen-aesthetic',
+        'radix-compliance',
       ];
 
       const actualPrinciples = result.principles.map((p) => p.principle);
@@ -167,13 +168,13 @@ describe('evaluate-principles', () => {
     it('should have valid summary statistics', async () => {
       const result = await evaluatePrinciples(testComponentPath);
 
-      expect(result.summary.totalPrinciples).toBe(10);
+      expect(result.summary.totalPrinciples).toBe(11);
       expect(
         result.summary.passed +
           result.summary.partial +
           result.summary.failed +
           result.summary.notApplicable
-      ).toBe(10);
+      ).toBe(11);
     });
   });
 

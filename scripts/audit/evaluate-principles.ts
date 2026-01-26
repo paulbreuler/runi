@@ -269,6 +269,11 @@ function evaluateStrategicColor(content: string, lines: string[]): PrincipleEval
   const status: ComplianceStatus =
     violations.length === 0 ? 'pass' : violations.length < 3 ? 'partial' : 'fail';
 
+  // Add default evidence for passing components
+  if (violations.length === 0 && evidence.length === 0) {
+    evidence.push('No prohibited color class patterns detected');
+  }
+
   return {
     principle: 'strategic-color',
     status,
@@ -343,6 +348,11 @@ function evaluateSemanticTokens(content: string, lines: string[]): PrincipleEval
 
   if (violations.length > 0) {
     recommendations.push('Replace hardcoded colors with semantic tokens');
+  }
+
+  // Add default evidence for passing components
+  if (violations.length === 0 && evidence.length === 0) {
+    evidence.push('No hardcoded colors detected');
   }
 
   return {
@@ -493,6 +503,11 @@ function evaluateSubtleDepth(content: string, lines: string[]): PrincipleEvaluat
   const status: ComplianceStatus =
     heavyShadows === 0 ? 'pass' : heavyShadows < subtleShadows ? 'partial' : 'fail';
 
+  // Add default evidence for passing components
+  if (heavyShadows === 0 && evidence.length === 0) {
+    evidence.push('No heavy shadows detected');
+  }
+
   return {
     principle: 'subtle-depth',
     status,
@@ -585,6 +600,11 @@ function evaluateDarkModeCompatible(content: string, lines: string[]): Principle
   const score = violations.length === 0 ? 100 : Math.max(0, 100 - violations.length * 20);
   const status: ComplianceStatus =
     violations.length === 0 ? 'pass' : violations.length < 3 ? 'partial' : 'fail';
+
+  // Add default evidence for passing components
+  if (violations.length === 0 && evidence.length === 0) {
+    evidence.push('No light-mode only color patterns detected');
+  }
 
   return {
     principle: 'dark-mode-compatible',
@@ -722,6 +742,11 @@ function evaluateZenAesthetic(content: string, lines: string[]): PrincipleEvalua
       : Math.max(0, 100 - violations.length * 15);
   const status: ComplianceStatus =
     violations.length === 0 ? 'pass' : violations.length < 2 ? 'partial' : 'fail';
+
+  // Add default evidence for passing components
+  if (violations.length === 0 && evidence.length === 0) {
+    evidence.push('No flashy or distracting patterns detected');
+  }
 
   return {
     principle: 'zen-aesthetic',
@@ -889,6 +914,11 @@ function evaluateRadixCompliance(
   if (violations.length > 0) {
     recommendations.push('Migrate legacy tokens to Radix-idiomatic names');
     recommendations.push('Replace hardcoded colors with semantic tokens');
+  }
+
+  // Add default evidence for passing components
+  if (violations.length === 0 && evidence.length === 0) {
+    evidence.push('No legacy tokens or hardcoded colors detected');
   }
 
   return {

@@ -4,16 +4,18 @@
  *
  * Radix UI Color Scales
  * Based on Radix Themes 3 color architecture
- * 12-step scales with alpha variants for both dark and light themes
+ * 12-step scales with alpha variants
+ *
+ * Dark theme at :root (default), light theme overrides with .light class
  *
  * @see https://www.radix-ui.com/themes/docs/theme/color
  */
 
 /* ============================================
-   Blue Scale - Dark Theme
+   Dark Theme (default at :root)
    ============================================ */
-.dark,
-.dark-theme {
+:root {
+  /* Blue Scale */
   --blue-1: #070e11;
   --blue-2: #11191e;
   --blue-3: #142933;
@@ -42,13 +44,8 @@
   --blue-surface: #17252f80;
   --blue-indicator: #6eb1d1;
   --blue-track: #6eb1d1;
-}
 
-/* ============================================
-   Gray Scale - Dark Theme
-   ============================================ */
-.dark,
-.dark-theme {
+  /* Gray Scale */
   --gray-1: #0c0c0e;
   --gray-2: #18181a;
   --gray-3: #212225;
@@ -84,8 +81,7 @@
    ============================================ */
 @supports (color: color(display-p3 1 1 1)) {
   @media (color-gamut: p3) {
-    .dark,
-    .dark-theme {
+    :root {
       /* Blue Scale - P3 */
       --blue-1: oklch(15.7% 0.0132 230);
       --blue-2: oklch(20.9% 0.015 230);
@@ -150,11 +146,11 @@
 }
 
 /* ============================================
-   Blue Scale - Light Theme
+   Light Theme Overrides
    ============================================ */
-:root,
 .light,
 .light-theme {
+  /* Blue Scale */
   --blue-1: #fafdff;
   --blue-2: #f3fafd;
   --blue-3: #e5f5fd;
@@ -183,14 +179,8 @@
   --blue-surface: #f0f9fdcc;
   --blue-indicator: #6eb1d1;
   --blue-track: #6eb1d1;
-}
 
-/* ============================================
-   Gray Scale - Light Theme
-   ============================================ */
-:root,
-.light,
-.light-theme {
+  /* Gray Scale */
   --gray-1: #fcfcfd;
   --gray-2: #f9f9fb;
   --gray-3: #eff0f3;
@@ -226,7 +216,6 @@
    ============================================ */
 @supports (color: color(display-p3 1 1 1)) {
   @media (color-gamut: p3) {
-    :root,
     .light,
     .light-theme {
       /* Blue Scale - P3 */
