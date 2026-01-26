@@ -97,6 +97,7 @@ jobs:
 
       - name: Extract changelog for release
         id: changelog
+        if: steps.release.outputs.release_created == 'true'
         run: |
           if [ -f "CHANGELOG.md" ]; then
             # Extract the latest changelog entry (from first ## header to next ## or end of file)
@@ -132,10 +133,11 @@ jobs:
     env:
       CARGO_TERM_COLOR: always
     steps:
-      - name: Checkout code
+      - name: Checkout tagged release
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          # Use the tag created by release-please to ensure we build the exact tagged commit
+          ref: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Install just
         uses: extractions/setup-just@v2
@@ -293,8 +295,32 @@ jobs:
             echo "⚠️ No artifacts found" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Verify release tag exists
+        id: check-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
+          echo "Checking for tag: $TAG_NAME"
+
+          # Wait for the tag to become available (handles potential race with release-please)
+          for i in {1..10}; do
+            if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
+              echo "Tag '$TAG_NAME' found."
+              echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Tag '$TAG_NAME' not yet available, retrying... ($i/10)"
+            sleep 5
+          done
+
+          echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Tag '$TAG_NAME' was not found after waiting." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Create GitHub Release with artifacts
-        if: steps.check-artifacts.outputs.found == 'true'
+        if: |
+          steps.check-artifacts.outputs.found == 'true' &&
+          steps.check-tag.outputs.tag_exists == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
@@ -307,8 +333,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Warn if no artifacts
-        if: steps.check-artifacts.outputs.found == 'false'
+      - name: Warn if release skipped
+        if: |
+          steps.check-artifacts.outputs.found == 'false' ||
+          steps.check-tag.outputs.tag_exists == 'false'
         run: |
-          echo "⚠️ Release would be created but no artifacts were built. Skipping release creation."
-          exit 1
+          if [ "${{ steps.check-tag.outputs.tag_exists }}" == "false" ]; then
+            echo "⚠️ Release skipped: Tag '${{ needs.release-please.outputs.tag_name }}' was not found."
+            exit 1
+          fi
+          if [ "${{ steps.check-artifacts.outputs.found }}" == "false" ]; then
+            echo "⚠️ Release skipped: No artifacts were built."
+            exit 1
+          fi
