@@ -80,6 +80,7 @@ jobs:
     outputs:
       release_created: ${{ steps.final-outputs.outputs.release_created }}
       tag_name: ${{ steps.final-outputs.outputs.tag_name }}
+      changelog: ${{ steps.final-outputs.outputs.changelog }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,17 +89,33 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run release-please
+      - name: Run release-please (skip release creation - we'll create it after artifacts are built)
         uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
+          skip-release: true
+
+      - name: Extract changelog for release
+        id: changelog
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            # Extract the latest changelog entry (between first ## and next ## or end of file)
+            CHANGELOG=$(awk '/^## / {if (found) exit; found=1} found' CHANGELOG.md | sed '/^## /d' | sed '/^$/d' | head -n -1)
+            # Escape for multiline output
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set outputs
         id: final-outputs
         run: |
           echo "release_created=${{ steps.release.outputs.release_created }}" >> $GITHUB_OUTPUT
           echo "tag_name=${{ steps.release.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.changelog.outputs.changelog }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   build:
     name: Build ${{ matrix.os }}
@@ -250,11 +267,10 @@ jobs:
           path: release-artifacts/*
           retention-days: 7
 
-  attach-artifacts:
-    name: Attach Artifacts to Release
+  create-release:
+    name: Create Release with Artifacts
     needs: [check-ci-status, release-please, build]
     if: |
-      always() &&
       needs.release-please.outputs.release_created == 'true' &&
       needs.check-ci-status.outputs.ci-passed == 'true'
     runs-on: ubuntu-latest
@@ -274,16 +290,29 @@ jobs:
         run: |
           if [ -d "release-artifacts" ] && [ "$(ls -A release-artifacts 2>/dev/null)" ]; then
             echo "found=true" >> $GITHUB_OUTPUT
+            echo "Artifacts found:" >> $GITHUB_STEP_SUMMARY
+            ls -lh release-artifacts/ >> $GITHUB_STEP_SUMMARY
           else
             echo "found=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No artifacts found" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Attach artifacts to GitHub Release
+      - name: Create GitHub Release with artifacts
         if: steps.check-artifacts.outputs.found == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
+          name: Release ${{ needs.release-please.outputs.tag_name }}
+          body: ${{ needs.release-please.outputs.changelog }}
           files: |
             release-artifacts/*
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Warn if no artifacts
+        if: steps.check-artifacts.outputs.found == 'false'
+        run: |
+          echo "⚠️ Release would be created but no artifacts were built. Skipping release creation."
+          exit 1
