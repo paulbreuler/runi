@@ -118,7 +118,7 @@ body {
 
 @layer base {
   * {
-    @apply border-[var(--gray-6)] outline-[var(--focus-8)]/50;
+    @apply border-[color:var(--gray-6)] outline-[color:var(--focus-8)]/50;
   }
 }
 

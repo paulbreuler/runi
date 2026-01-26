@@ -5,7 +5,7 @@
 
 /**
  * @file ThemeProvider - Radix UI Themes-inspired theme context
- * @description Sets data attributes on root element following Radix Themes 3 pattern
+ * @description Sets theme class and data attributes on the ThemeProvider wrapper element for Radix-style theming
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/theme.tsx
  */
 
@@ -13,13 +13,15 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 /**
  * Available accent colors for the theme
+ * (currently only 'blue' is implemented in CSS)
  */
-export type AccentColor = 'blue' | 'green' | 'red' | 'amber' | 'purple';
+export type AccentColor = 'blue';
 
 /**
  * Available gray color scales
+ * (currently only 'gray' is implemented in CSS)
  */
-export type GrayColor = 'gray' | 'slate' | 'auto';
+export type GrayColor = 'gray';
 
 /**
  * Theme appearance (light/dark mode)
