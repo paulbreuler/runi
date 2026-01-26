@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-01-26T05:10:19.639Z",
+  "totalComponents": 98,
+  "overallScore": 60,
+  "issues": {
+    "critical": 62,
+    "high": 278,
+    "medium": 329,
+    "low": 331,
+    "total": 1000
+  },
+  "categoryScores": {
+    "Unknown": 45,
+    "Response": 86,
+    "Request": 57,
+    "Overlays": 65,
+    "Layout": 41,
+    "Intelligence": 76,
+    "Core": 53,
+    "accessibility": 0,
+    "motion": 0,
+    "design-principles": 0,
+    "performance": 0,
+    "unified-material": 0,
+    "storybook": 0
+  },
+  "reportFiles": {
+    "markdown": "/Users/paul/Documents/GitHub/runi/scripts/audit/output/AUDIT_REPORT.md",
+    "json": "/Users/paul/Documents/GitHub/runi/scripts/audit/output/audit-report.json"
+  }
+}

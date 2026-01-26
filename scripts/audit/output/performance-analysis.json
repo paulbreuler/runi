@@ -1,0 +1,1146 @@
+[
+  {
+    "path": "src/components/PanelTabs.tsx",
+    "name": "PanelTabs",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "inline-animation-values",
+        "message": "Using inline animation values in whileHover/whileTap. Consider extracting to variants for reusability and cleaner code.",
+        "severity": "info"
+      }
+    ],
+    "score": 95
+  },
+  {
+    "path": "src/components/PanelContent.tsx",
+    "name": "PanelContent",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Response/StatusBadge.tsx",
+    "name": "StatusBadge",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Response/ResponseViewer.tsx",
+    "name": "ResponseViewer",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": true,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Request/RequestHeader.tsx",
+    "name": "RequestHeader",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "full-layout-animation",
+        "message": "Using full layout animation. If only position changes, consider layout=\"position\" for better performance.",
+        "severity": "info"
+      }
+    ],
+    "score": 95
+  },
+  {
+    "path": "src/components/Request/RequestBuilder.tsx",
+    "name": "RequestBuilder",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": true,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "inline-animation-values",
+        "message": "Using inline animation values in whileHover/whileTap. Consider extracting to variants for reusability and cleaner code.",
+        "severity": "info"
+      }
+    ],
+    "score": 100
+  },
+  {
+    "path": "src/components/Request/ParamsEditor.tsx",
+    "name": "ParamsEditor",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Request/HeaderEditor.tsx",
+    "name": "HeaderEditor",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Request/AuthEditor.tsx",
+    "name": "AuthEditor",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Metrics/MetricsToggle.tsx",
+    "name": "MetricsToggle",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Metrics/MetricsPanel.tsx",
+    "name": "MetricsPanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Metrics/MetricsGrid.tsx",
+    "name": "MetricsGrid",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Metrics/MetricCell.tsx",
+    "name": "MetricCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Memory/MemoryWarningListener.tsx",
+    "name": "MemoryWarningListener",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Layout/TitleBar.tsx",
+    "name": "TitleBar",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Layout/StatusBar.tsx",
+    "name": "StatusBar",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Layout/Sidebar.tsx",
+    "name": "Sidebar",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "layout-thrashing",
+        "message": "Animating layout properties (height) causes layout recalculation. Consider using transform-based animations (x, y, scale).",
+        "severity": "critical"
+      }
+    ],
+    "score": 80
+  },
+  {
+    "path": "src/components/Layout/MainLayout.tsx",
+    "name": "MainLayout",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": true,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "full-layout-animation",
+        "message": "Using full layout animation. If only position changes, consider layout=\"position\" for better performance.",
+        "severity": "info"
+      }
+    ],
+    "score": 100
+  },
+  {
+    "path": "src/components/Layout/DockablePanel.tsx",
+    "name": "DockablePanel",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": true,
+    "usesResizeObserver": true,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Layout/DockControls.tsx",
+    "name": "DockControls",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/separator.tsx",
+    "name": "separator",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/select.tsx",
+    "name": "select",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/input.tsx",
+    "name": "input",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": true,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "inline-animation-values",
+        "message": "Using inline animation values in whileHover/whileTap. Consider extracting to variants for reusability and cleaner code.",
+        "severity": "info"
+      }
+    ],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/checkbox.tsx",
+    "name": "checkbox",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/card.tsx",
+    "name": "card",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/button.tsx",
+    "name": "button",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/Tooltip.tsx",
+    "name": "Tooltip",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/Toast.tsx",
+    "name": "Toast",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "full-layout-animation",
+        "message": "Using full layout animation. If only position changes, consider layout=\"position\" for better performance.",
+        "severity": "info"
+      }
+    ],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/Switch.tsx",
+    "name": "Switch",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "full-layout-animation",
+        "message": "Using full layout animation. If only position changes, consider layout=\"position\" for better performance.",
+        "severity": "info"
+      }
+    ],
+    "score": 95
+  },
+  {
+    "path": "src/components/ui/SplitButton.tsx",
+    "name": "SplitButton",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/PulsingGlow.tsx",
+    "name": "PulsingGlow",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/Label.tsx",
+    "name": "Label",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/EmptyState.tsx",
+    "name": "EmptyState",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/DialogHeader.tsx",
+    "name": "DialogHeader",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/DialogFooter.tsx",
+    "name": "DialogFooter",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/DialogContent.tsx",
+    "name": "DialogContent",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/Dialog.tsx",
+    "name": "Dialog",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/DataPanelHeader.tsx",
+    "name": "DataPanelHeader",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/DataPanel.tsx",
+    "name": "DataPanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/TimingWaterfall.tsx",
+    "name": "TimingWaterfall",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "layout-thrashing",
+        "message": "Animating layout properties (width) causes layout recalculation. Consider using transform-based animations (x, y, scale).",
+        "severity": "critical"
+      }
+    ],
+    "score": 75
+  },
+  {
+    "path": "src/components/History/TimingTab.tsx",
+    "name": "TimingTab",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/TLSTab.tsx",
+    "name": "TLSTab",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/TLSPanel.tsx",
+    "name": "TLSPanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/SignalDot.tsx",
+    "name": "SignalDot",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/ResponseTab.tsx",
+    "name": "ResponseTab",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/ResponsePanel.tsx",
+    "name": "ResponsePanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/NetworkStatusBar.tsx",
+    "name": "NetworkStatusBar",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/NetworkHistoryPanel.tsx",
+    "name": "NetworkHistoryPanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/NetworkHistoryFilters.tsx",
+    "name": "NetworkHistoryFilters",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/LanguageTabs.tsx",
+    "name": "LanguageTabs",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/IntelligenceSignals.tsx",
+    "name": "IntelligenceSignals",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/HeadersTab.tsx",
+    "name": "HeadersTab",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/HeadersPanel.tsx",
+    "name": "HeadersPanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/HeaderRow.tsx",
+    "name": "HeaderRow",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/FilterBarActions.tsx",
+    "name": "FilterBarActions",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/FilterBar.tsx",
+    "name": "FilterBar",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/CopyButton.tsx",
+    "name": "CopyButton",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/CodeGenTab.tsx",
+    "name": "CodeGenTab",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/CodeGenPanel.tsx",
+    "name": "CodeGenPanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/CodeBox.tsx",
+    "name": "CodeBox",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/History/CertificateInfo.tsx",
+    "name": "CertificateInfo",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/CodeHighlighting/CodeEditor.tsx",
+    "name": "CodeEditor",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": true,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/selectRenderers.tsx",
+    "name": "selectRenderers",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarSelect.tsx",
+    "name": "ActionBarSelect",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarSegment.tsx",
+    "name": "ActionBarSegment",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarSearch.tsx",
+    "name": "ActionBarSearch",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarGroup.tsx",
+    "name": "ActionBarGroup",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarContext.tsx",
+    "name": "ActionBarContext",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarCompositeButton.tsx",
+    "name": "ActionBarCompositeButton",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ActionBar/ActionBar.tsx",
+    "name": "ActionBar",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": true,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Console/ConsoleToolbar.tsx",
+    "name": "ConsoleToolbar",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Console/ConsolePanel.tsx",
+    "name": "ConsolePanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Console/ConsoleContextMenu.tsx",
+    "name": "ConsoleContextMenu",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Console/AppMetricsLog.tsx",
+    "name": "AppMetricsLog",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/Console/AppMetricsContainer.tsx",
+    "name": "AppMetricsContainer",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/VirtualDataGrid.tsx",
+    "name": "VirtualDataGrid",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/ExpandedContent.tsx",
+    "name": "ExpandedContent",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "layout-thrashing",
+        "message": "Animating layout properties (height) causes layout recalculation. Consider using transform-based animations (x, y, scale).",
+        "severity": "critical"
+      }
+    ],
+    "score": 80
+  },
+  {
+    "path": "src/components/DataGrid/DataGridHeader.tsx",
+    "name": "DataGridHeader",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/SegmentedControl/effects.tsx",
+    "name": "effects",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/SegmentedControl/SegmentedControl.tsx",
+    "name": "SegmentedControl",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/ui/SegmentedControl/BadgeCount.tsx",
+    "name": "BadgeCount",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/tabs/TabNavigation.tsx",
+    "name": "TabNavigation",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [
+      {
+        "type": "inline-animation-values",
+        "message": "Using inline animation values in whileHover/whileTap. Consider extracting to variants for reusability and cleaner code.",
+        "severity": "info"
+      }
+    ],
+    "score": 95
+  },
+  {
+    "path": "src/components/DataGrid/tabs/ExpandedPanel.tsx",
+    "name": "ExpandedPanel",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/tabs/ExpandedActionButtons.tsx",
+    "name": "ExpandedActionButtons",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/urlCell.tsx",
+    "name": "urlCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/timingCell.tsx",
+    "name": "timingCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/timeAgoCell.tsx",
+    "name": "timeAgoCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/tableHeaderRow.tsx",
+    "name": "tableHeaderRow",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/statusCell.tsx",
+    "name": "statusCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/sizeCell.tsx",
+    "name": "sizeCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/selectionColumn.tsx",
+    "name": "selectionColumn",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/protocolCell.tsx",
+    "name": "protocolCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/networkColumns.tsx",
+    "name": "networkColumns",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/methodCell.tsx",
+    "name": "methodCell",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/expanderColumn.tsx",
+    "name": "expanderColumn",
+    "usesHardwareAcceleration": true,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/consoleColumns.tsx",
+    "name": "consoleColumns",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/columns/SortIndicator.tsx",
+    "name": "SortIndicator",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  },
+  {
+    "path": "src/components/DataGrid/accessibility/keyboardNav.tsx",
+    "name": "keyboardNav",
+    "usesHardwareAcceleration": false,
+    "usesMotionValues": false,
+    "usesResizeObserver": false,
+    "usesLayoutPosition": false,
+    "usesWhileInView": false,
+    "issues": [],
+    "score": 100
+  }
+]

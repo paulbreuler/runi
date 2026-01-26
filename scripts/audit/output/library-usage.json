@@ -1,0 +1,1164 @@
+[
+  {
+    "componentPath": "src/components/PanelTabs.tsx",
+    "componentName": "PanelTabs",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-tabs",
+        "imports": [],
+        "line": 8
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/PanelContent.tsx",
+    "componentName": "PanelContent",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Response/StatusBadge.tsx",
+    "componentName": "StatusBadge",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Response/ResponseViewer.tsx",
+    "componentName": "ResponseViewer",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Request/RequestHeader.tsx",
+    "componentName": "RequestHeader",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Request/RequestBuilder.tsx",
+    "componentName": "RequestBuilder",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Request/ParamsEditor.tsx",
+    "componentName": "ParamsEditor",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Request/HeaderEditor.tsx",
+    "componentName": "HeaderEditor",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Request/AuthEditor.tsx",
+    "componentName": "AuthEditor",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/separator.tsx",
+    "componentName": "separator",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-separator",
+        "imports": [],
+        "line": 7
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/select.tsx",
+    "componentName": "select",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-select",
+        "imports": [],
+        "line": 7
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/input.tsx",
+    "componentName": "input",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/checkbox.tsx",
+    "componentName": "checkbox",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-checkbox",
+        "imports": [],
+        "line": 7
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/card.tsx",
+    "componentName": "card",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/button.tsx",
+    "componentName": "button",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-slot",
+        "imports": ["Slot"],
+        "line": 8
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/Tooltip.tsx",
+    "componentName": "TooltipProvider",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-tooltip",
+        "imports": [],
+        "line": 6
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/Toast.tsx",
+    "componentName": "ToastProvider",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-toast",
+        "imports": [],
+        "line": 8
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/Switch.tsx",
+    "componentName": "Switch",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-switch",
+        "imports": [],
+        "line": 7
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/SplitButton.tsx",
+    "componentName": "SplitButton",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-dropdown-menu",
+        "imports": [],
+        "line": 7
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/PulsingGlow.tsx",
+    "componentName": "PulsingGlow",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/Label.tsx",
+    "componentName": "Label",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/EmptyState.tsx",
+    "componentName": "EmptyState",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/DialogHeader.tsx",
+    "componentName": "DialogHeader",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/DialogFooter.tsx",
+    "componentName": "DialogFooter",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/DialogContent.tsx",
+    "componentName": "DialogContent",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/Dialog.tsx",
+    "componentName": "Dialog",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/DataPanelHeader.tsx",
+    "componentName": "DataPanelHeader",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/DataPanel.tsx",
+    "componentName": "DataPanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricsToggle.tsx",
+    "componentName": "MetricsToggle",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricsPanel.tsx",
+    "componentName": "MetricsPanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricsGrid.tsx",
+    "componentName": "MetricsGrid",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricCell.tsx",
+    "componentName": "MetricCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Memory/MemoryWarningListener.tsx",
+    "componentName": "MemoryWarningListener",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Layout/TitleBar.tsx",
+    "componentName": "TitleBar",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Layout/StatusBar.tsx",
+    "componentName": "StatusBar",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Layout/Sidebar.tsx",
+    "componentName": "Sidebar",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Layout/MainLayout.tsx",
+    "componentName": "MainLayout",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Layout/DockablePanel.tsx",
+    "componentName": "DockablePanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Layout/DockControls.tsx",
+    "componentName": "DockControls",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Console/ConsoleToolbar.tsx",
+    "componentName": "ConsoleToolbar",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Console/ConsolePanel.tsx",
+    "componentName": "ConsolePanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Console/ConsoleContextMenu.tsx",
+    "componentName": "ConsoleContextMenu",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Console/AppMetricsLog.tsx",
+    "componentName": "AppMetricsLog",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/Console/AppMetricsContainer.tsx",
+    "componentName": "AppMetricsContainer",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/TimingWaterfall.tsx",
+    "componentName": "TimingWaterfall",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/TimingTab.tsx",
+    "componentName": "TimingTab",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/TLSTab.tsx",
+    "componentName": "TLSTab",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/TLSPanel.tsx",
+    "componentName": "TLSPanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/SignalDot.tsx",
+    "componentName": "SignalDot",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/ResponseTab.tsx",
+    "componentName": "ResponseTab",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/ResponsePanel.tsx",
+    "componentName": "ResponsePanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/NetworkStatusBar.tsx",
+    "componentName": "NetworkStatusBar",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/NetworkHistoryPanel.tsx",
+    "componentName": "NetworkHistoryPanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/NetworkHistoryFilters.tsx",
+    "componentName": "NetworkHistoryFilters",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/LanguageTabs.tsx",
+    "componentName": "LanguageTabs",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/IntelligenceSignals.tsx",
+    "componentName": "IntelligenceSignals",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/HeadersTab.tsx",
+    "componentName": "HeadersTab",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/HeadersPanel.tsx",
+    "componentName": "HeadersPanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/HeaderRow.tsx",
+    "componentName": "HeaderRow",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/FilterBarActions.tsx",
+    "componentName": "FilterBarActions",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/FilterBar.tsx",
+    "componentName": "FilterBar",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/CopyButton.tsx",
+    "componentName": "CopyButton",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/CodeGenTab.tsx",
+    "componentName": "CodeGenTab",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/CodeGenPanel.tsx",
+    "componentName": "CodeGenPanel",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/CodeBox.tsx",
+    "componentName": "CodeBox",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/History/CertificateInfo.tsx",
+    "componentName": "CertificateInfo",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/CodeHighlighting/CodeEditor.tsx",
+    "componentName": "CodeEditor",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/selectRenderers.tsx",
+    "componentName": "renderMethodOption",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarSelect.tsx",
+    "componentName": "ActionBarSelect",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarSegment.tsx",
+    "componentName": "ActionBarSegment",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarSearch.tsx",
+    "componentName": "ActionBarSearch",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarGroup.tsx",
+    "componentName": "ActionBarGroup",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarContext.tsx",
+    "componentName": "useActionBarContext",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarCompositeButton.tsx",
+    "componentName": "ActionBarCompositeButton",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBar.tsx",
+    "componentName": "ActionBar",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/VirtualDataGrid.tsx",
+    "componentName": "VirtualDataGrid",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/ExpandedContent.tsx",
+    "componentName": "ExpandedContent",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/DataGridHeader.tsx",
+    "componentName": "DataGridHeader",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/SegmentedControl/effects.tsx",
+    "componentName": "EnergyEdge",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/SegmentedControl/SegmentedControl.tsx",
+    "componentName": "SegmentedControl",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/ui/SegmentedControl/BadgeCount.tsx",
+    "componentName": "BadgeCount",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/tabs/TabNavigation.tsx",
+    "componentName": "TabNavigation",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-tabs",
+        "imports": [],
+        "line": 11
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/tabs/ExpandedPanel.tsx",
+    "componentName": "ExpandedPanel",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-tabs",
+        "imports": [],
+        "line": 12
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/tabs/ExpandedActionButtons.tsx",
+    "componentName": "ExpandedActionButtons",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/urlCell.tsx",
+    "componentName": "UrlCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/timingCell.tsx",
+    "componentName": "TimingCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/timeAgoCell.tsx",
+    "componentName": "TimeAgoCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/tableHeaderRow.tsx",
+    "componentName": "TableHeaderCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/statusCell.tsx",
+    "componentName": "StatusCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/sizeCell.tsx",
+    "componentName": "SizeCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/selectionColumn.tsx",
+    "componentName": "createSelectionColumn",
+    "libraries": [
+      {
+        "library": "radix-ui",
+        "importPath": "@radix-ui/react-checkbox",
+        "imports": ["CheckedState"],
+        "line": 17
+      }
+    ],
+    "usesExternalLibrary": true,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/protocolCell.tsx",
+    "componentName": "ProtocolCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/networkColumns.tsx",
+    "componentName": "ActionsCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/methodCell.tsx",
+    "componentName": "MethodCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/expanderColumn.tsx",
+    "componentName": "createExpanderColumn",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/consoleColumns.tsx",
+    "componentName": "LevelCell",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/SortIndicator.tsx",
+    "componentName": "SortIndicator",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  },
+  {
+    "componentPath": "src/components/DataGrid/accessibility/keyboardNav.tsx",
+    "componentName": "useKeyboardNavInteractive",
+    "libraries": [],
+    "usesExternalLibrary": false,
+    "overrideCount": 0,
+    "overrides": [],
+    "fitsDesignSystem": true,
+    "shouldBeCustomBuilt": false,
+    "recommendation": "keep"
+  }
+]

@@ -1,0 +1,2804 @@
+[
+  {
+    "path": "src/components/PanelTabs.tsx",
+    "name": "PanelTabs",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": false,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": true,
+      "usesWhileTap": true,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/PanelContent.tsx",
+    "name": "PanelContent",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Response/StatusBadge.tsx",
+    "name": "StatusBadge",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 54,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Response/ResponseViewer.tsx",
+    "name": "ResponseViewer",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 184,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/separator.tsx",
+    "name": "separator",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/select.tsx",
+    "name": "select",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 38,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/input.tsx",
+    "name": "input",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": true,
+      "usesWhileTap": false,
+      "usesWhileFocus": true,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 69,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/checkbox.tsx",
+    "name": "checkbox",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": true,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 17,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 47,
+        "description": "CSS transition detected: \"transition: {...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 56,
+        "description": "CSS transition detected: \"transition: {...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/card.tsx",
+    "name": "card",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 29,
+        "description": "CSS transition detected: \"whileHover: hover ? { y: -4, transition: { duratio...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/button.tsx",
+    "name": "button",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": false,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": true,
+      "usesLayout": false,
+      "usesWhileHover": true,
+      "usesWhileTap": true,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 13,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 59,
+        "description": "CSS transition detected: \"transition: {...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 68,
+        "description": "CSS transition detected: \"transition: {...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 76,
+        "description": "CSS transition detected: \"transition: {...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/Tooltip.tsx",
+    "name": "Tooltip",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/Toast.tsx",
+    "name": "Toast",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": true,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": true
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 178,
+        "description": "CSS transition detected: \"animate={{ opacity: 1, y: 0, scale: 1, transition:...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 182,
+        "description": "CSS transition detected: \": { opacity: 0, scale: 0.5, transition: exitTransi...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 214,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 227,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 234,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/Switch.tsx",
+    "name": "Switch",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": true,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/SplitButton.tsx",
+    "name": "SplitButton",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": false,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": true,
+      "usesLayout": false,
+      "usesWhileHover": true,
+      "usesWhileTap": true,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 29,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 73,
+        "description": "CSS transition detected: \"transition: { type: 'spring', stiffness: 400, damp...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 77,
+        "description": "CSS transition detected: \"transition: { type: 'spring', stiffness: 400, damp...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 81,
+        "description": "CSS transition detected: \"transition: { type: 'spring', stiffness: 600, damp...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 206,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 220,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 245,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/PulsingGlow.tsx",
+    "name": "PulsingGlow",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/Label.tsx",
+    "name": "Label",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/EmptyState.tsx",
+    "name": "EmptyState",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": true,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 76,
+        "description": "CSS transition detected: \"transition: reducedMotion...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 95,
+        "description": "CSS transition detected: \"transition: reducedMotion...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      },
+      {
+        "type": "css-transition",
+        "line": 112,
+        "description": "CSS transition detected: \"transition: reducedMotion...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/DialogHeader.tsx",
+    "name": "DialogHeader",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 57,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/DialogFooter.tsx",
+    "name": "DialogFooter",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/DialogContent.tsx",
+    "name": "DialogContent",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/Dialog.tsx",
+    "name": "Dialog",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": true,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/DataPanelHeader.tsx",
+    "name": "DataPanelHeader",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/DataPanel.tsx",
+    "name": "DataPanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Memory/MemoryWarningListener.tsx",
+    "name": "MemoryWarningListener",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Layout/TitleBar.tsx",
+    "name": "TitleBar",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 131,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 140,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 149,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Layout/StatusBar.tsx",
+    "name": "StatusBar",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 90,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Layout/Sidebar.tsx",
+    "name": "Sidebar",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 33,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 39,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 42,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Layout/MainLayout.tsx",
+    "name": "MainLayout",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": true,
+      "usesLayout": true,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Layout/DockablePanel.tsx",
+    "name": "DockablePanel",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": true,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 720,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 730,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Layout/DockControls.tsx",
+    "name": "DockControls",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 43,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 226,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Request/RequestHeader.tsx",
+    "name": "RequestHeader",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": true,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": true,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 118,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 160,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Request/RequestBuilder.tsx",
+    "name": "RequestBuilder",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": true,
+      "usesWhileTap": true,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 128,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Request/ParamsEditor.tsx",
+    "name": "ParamsEditor",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 176,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 195,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Request/HeaderEditor.tsx",
+    "name": "HeaderEditor",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 147,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 164,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Request/AuthEditor.tsx",
+    "name": "AuthEditor",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Metrics/MetricsToggle.tsx",
+    "name": "MetricsToggle",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Metrics/MetricsPanel.tsx",
+    "name": "MetricsPanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 242,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Metrics/MetricsGrid.tsx",
+    "name": "MetricsGrid",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Metrics/MetricCell.tsx",
+    "name": "MetricCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/TimingWaterfall.tsx",
+    "name": "TimingWaterfall",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/TimingTab.tsx",
+    "name": "TimingTab",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/TLSTab.tsx",
+    "name": "TLSTab",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/TLSPanel.tsx",
+    "name": "TLSPanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/SignalDot.tsx",
+    "name": "SignalDot",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": true,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/ResponseTab.tsx",
+    "name": "ResponseTab",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/ResponsePanel.tsx",
+    "name": "ResponsePanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 158,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 178,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/NetworkStatusBar.tsx",
+    "name": "NetworkStatusBar",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/NetworkHistoryPanel.tsx",
+    "name": "NetworkHistoryPanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 474,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/NetworkHistoryFilters.tsx",
+    "name": "NetworkHistoryFilters",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/LanguageTabs.tsx",
+    "name": "LanguageTabs",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 96,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/IntelligenceSignals.tsx",
+    "name": "IntelligenceSignals",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/HeadersTab.tsx",
+    "name": "HeadersTab",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/HeadersPanel.tsx",
+    "name": "HeadersPanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 134,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 154,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/HeaderRow.tsx",
+    "name": "HeaderRow",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/FilterBarActions.tsx",
+    "name": "FilterBarActions",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/FilterBar.tsx",
+    "name": "FilterBar",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/CopyButton.tsx",
+    "name": "CopyButton",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 63,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/CodeGenTab.tsx",
+    "name": "CodeGenTab",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/CodeGenPanel.tsx",
+    "name": "CodeGenPanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/CodeBox.tsx",
+    "name": "CodeBox",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/History/CertificateInfo.tsx",
+    "name": "CertificateInfo",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/VirtualDataGrid.tsx",
+    "name": "VirtualDataGrid",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 498,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 769,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/ExpandedContent.tsx",
+    "name": "ExpandedContent",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/DataGridHeader.tsx",
+    "name": "DataGridHeader",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Console/ConsoleToolbar.tsx",
+    "name": "ConsoleToolbar",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Console/ConsolePanel.tsx",
+    "name": "ConsolePanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 817,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 876,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Console/ConsoleContextMenu.tsx",
+    "name": "ConsoleContextMenu",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 130,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 139,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 148,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Console/AppMetricsLog.tsx",
+    "name": "AppMetricsLog",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/Console/AppMetricsContainer.tsx",
+    "name": "AppMetricsContainer",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/CodeHighlighting/CodeEditor.tsx",
+    "name": "CodeEditor",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 301,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/selectRenderers.tsx",
+    "name": "selectRenderers",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarSelect.tsx",
+    "name": "ActionBarSelect",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarSegment.tsx",
+    "name": "ActionBarSegment",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarSearch.tsx",
+    "name": "ActionBarSearch",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 82,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      },
+      {
+        "type": "css-transition",
+        "line": 124,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarGroup.tsx",
+    "name": "ActionBarGroup",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarContext.tsx",
+    "name": "ActionBarContext",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/ActionBarCompositeButton.tsx",
+    "name": "ActionBarCompositeButton",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ActionBar/ActionBar.tsx",
+    "name": "ActionBar",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/SegmentedControl/effects.tsx",
+    "name": "effects",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 107,
+        "description": "CSS transition detected: \"transition: 'filter 0.4s ease-out',...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/SegmentedControl/SegmentedControl.tsx",
+    "name": "SegmentedControl",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/ui/SegmentedControl/BadgeCount.tsx",
+    "name": "BadgeCount",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": true,
+      "usesExit": true,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 197,
+        "description": "CSS transition detected: \"transition: { duration: 0.4, ease: 'easeOut' },...\"",
+        "suggestion": "Consider using Motion.dev animate prop or transition prop instead"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/tabs/TabNavigation.tsx",
+    "name": "TabNavigation",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": false,
+      "usesInitial": true,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": true,
+      "usesWhileTap": true,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/tabs/ExpandedPanel.tsx",
+    "name": "ExpandedPanel",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/tabs/ExpandedActionButtons.tsx",
+    "name": "ExpandedActionButtons",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/urlCell.tsx",
+    "name": "urlCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/timingCell.tsx",
+    "name": "timingCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/timeAgoCell.tsx",
+    "name": "timeAgoCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/tableHeaderRow.tsx",
+    "name": "tableHeaderRow",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/statusCell.tsx",
+    "name": "statusCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/sizeCell.tsx",
+    "name": "sizeCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/selectionColumn.tsx",
+    "name": "selectionColumn",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/protocolCell.tsx",
+    "name": "protocolCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/networkColumns.tsx",
+    "name": "networkColumns",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 73,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/methodCell.tsx",
+    "name": "methodCell",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/expanderColumn.tsx",
+    "name": "expanderColumn",
+    "hasMotionImport": true,
+    "animationLibrary": "motion",
+    "patterns": {
+      "usesMotionElements": true,
+      "usesAnimate": true,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": true,
+      "usesDrag": false
+    },
+    "usesReducedMotion": true,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 85,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/consoleColumns.tsx",
+    "name": "consoleColumns",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [
+      {
+        "type": "css-transition",
+        "line": 194,
+        "description": "Tailwind transition class detected",
+        "suggestion": "Consider using Motion.dev for complex animations; simple transitions may be acceptable"
+      }
+    ],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/columns/SortIndicator.tsx",
+    "name": "SortIndicator",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  },
+  {
+    "path": "src/components/DataGrid/accessibility/keyboardNav.tsx",
+    "name": "keyboardNav",
+    "hasMotionImport": false,
+    "animationLibrary": "none",
+    "patterns": {
+      "usesMotionElements": false,
+      "usesAnimate": false,
+      "usesInitial": false,
+      "usesExit": false,
+      "usesVariants": false,
+      "usesLayout": false,
+      "usesWhileHover": false,
+      "usesWhileTap": false,
+      "usesWhileFocus": false,
+      "usesWhileInView": false,
+      "usesTransition": false,
+      "usesDrag": false
+    },
+    "usesReducedMotion": false,
+    "usesHardwareAcceleration": false,
+    "violations": [],
+    "isCompliant": true
+  }
+]

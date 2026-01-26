@@ -1,0 +1,4132 @@
+[
+  {
+    "componentPath": "src/components/PanelTabs.tsx",
+    "componentName": "PanelTabs",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": true,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": true,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [89, 129]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": false,
+        "details": "Separate inner hover states detected - consider unified hover",
+        "lines": [82, 122]
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Subtle depth on hover detected (shadow/scale/glow)"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "separate-inner-hover"],
+    "score": 65
+  },
+  {
+    "componentPath": "src/components/PanelContent.tsx",
+    "componentName": "PanelContent",
+    "usesMotion": true,
+    "motionDivCount": 4,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 4 motion.div elements - consider consolidating",
+        "lines": [43, 52, 54, 63]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/Response/StatusBadge.tsx",
+    "componentName": "StatusBadge",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Response/ResponseViewer.tsx",
+    "componentName": "ResponseViewer",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [201, 210]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/Request/RequestHeader.tsx",
+    "componentName": "RequestHeader",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [101, 140]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/Request/RequestBuilder.tsx",
+    "componentName": "RequestBuilder",
+    "usesMotion": true,
+    "motionDivCount": 10,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": true,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 10 motion.div elements - consider consolidating",
+        "lines": [144, 153, 167, 177, 181, 198, 202, 212, 216, 226]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Subtle depth on hover detected (shadow/scale/glow)"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs"],
+    "score": 85
+  },
+  {
+    "componentPath": "src/components/Request/ParamsEditor.tsx",
+    "componentName": "ParamsEditor",
+    "usesMotion": true,
+    "motionDivCount": 4,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 4 motion.div elements - consider consolidating",
+        "lines": [120, 202, 206, 255]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/Request/HeaderEditor.tsx",
+    "componentName": "HeaderEditor",
+    "usesMotion": true,
+    "motionDivCount": 4,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 4 motion.div elements - consider consolidating",
+        "lines": [91, 171, 175, 224]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/Request/AuthEditor.tsx",
+    "componentName": "AuthEditor",
+    "usesMotion": true,
+    "motionDivCount": 6,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 6 motion.div elements - consider consolidating",
+        "lines": [148, 166, 171, 218, 223, 243]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/ui/separator.tsx",
+    "componentName": "separator",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/select.tsx",
+    "componentName": "select",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/input.tsx",
+    "componentName": "input",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": true,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Subtle depth on hover detected (shadow/scale/glow)"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/checkbox.tsx",
+    "componentName": "checkbox",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": true,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": false,
+        "details": "Uses variants but missing orchestration (staggerChildren/delayChildren)"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["missing-variant-orchestration", "no-depth-on-hover"],
+    "score": 80
+  },
+  {
+    "componentPath": "src/components/ui/card.tsx",
+    "componentName": "card",
+    "usesMotion": true,
+    "motionDivCount": 1,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "Single motion.div pattern followed",
+        "lines": [32]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["no-depth-on-hover"],
+    "score": 90
+  },
+  {
+    "componentPath": "src/components/ui/button.tsx",
+    "componentName": "button",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": true,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": true,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": false,
+        "details": "Uses variants but missing orchestration (staggerChildren/delayChildren)"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": false,
+        "details": "Separate inner hover states detected - consider unified hover",
+        "lines": [18, 20, 23, 26, 29, 31, 33, 66]
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["separate-inner-hover", "missing-variant-orchestration", "no-depth-on-hover"],
+    "score": 60
+  },
+  {
+    "componentPath": "src/components/ui/Tooltip.tsx",
+    "componentName": "TooltipProvider",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/Toast.tsx",
+    "componentName": "ToastProvider",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": true,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [165, 241]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": false,
+        "details": "Separate inner hover states detected - consider unified hover",
+        "lines": [214, 227, 234]
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "separate-inner-hover", "no-depth-on-hover"],
+    "score": 55
+  },
+  {
+    "componentPath": "src/components/ui/Switch.tsx",
+    "componentName": "Switch",
+    "usesMotion": true,
+    "motionDivCount": 1,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "Single motion.div pattern followed",
+        "lines": [64]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["no-depth-on-hover"],
+    "score": 90
+  },
+  {
+    "componentPath": "src/components/ui/SplitButton.tsx",
+    "componentName": "SplitButton",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": true,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": true,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": false,
+        "details": "Uses variants but missing orchestration (staggerChildren/delayChildren)"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": false,
+        "details": "Separate inner hover states detected - consider unified hover",
+        "lines": [33, 34, 36, 37, 75, 139, 141, 143, 145, 247, 248]
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["separate-inner-hover", "missing-variant-orchestration", "no-depth-on-hover"],
+    "score": 60
+  },
+  {
+    "componentPath": "src/components/ui/PulsingGlow.tsx",
+    "componentName": "PulsingGlow",
+    "usesMotion": true,
+    "motionDivCount": 1,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "Single motion.div pattern followed",
+        "lines": [86]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["no-depth-on-hover"],
+    "score": 90
+  },
+  {
+    "componentPath": "src/components/ui/Label.tsx",
+    "componentName": "Label",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/EmptyState.tsx",
+    "componentName": "EmptyState",
+    "usesMotion": true,
+    "motionDivCount": 18,
+    "usesVariants": true,
+    "hasVariantOrchestration": true,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 18 motion.div elements - consider consolidating",
+        "lines": [227, 235, 242, 249, 254, 256, 257, 263, 272, 277, 281, 291, 307, 310, 311]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "Proper variant orchestration detected"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/ui/DialogHeader.tsx",
+    "componentName": "DialogHeader",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/DialogFooter.tsx",
+    "componentName": "DialogFooter",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/DialogContent.tsx",
+    "componentName": "DialogContent",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/Dialog.tsx",
+    "componentName": "Dialog",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": true,
+    "hasVariantOrchestration": true,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [117, 138]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "Proper variant orchestration detected"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/ui/DataPanelHeader.tsx",
+    "componentName": "DataPanelHeader",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/DataPanel.tsx",
+    "componentName": "DataPanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricsToggle.tsx",
+    "componentName": "MetricsToggle",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricsPanel.tsx",
+    "componentName": "MetricsPanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricsGrid.tsx",
+    "componentName": "MetricsGrid",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Metrics/MetricCell.tsx",
+    "componentName": "MetricCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Memory/MemoryWarningListener.tsx",
+    "componentName": "MemoryWarningListener",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Layout/TitleBar.tsx",
+    "componentName": "TitleBar",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": true,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": false,
+        "details": "Separate inner hover states detected - consider unified hover",
+        "lines": [131, 140, 149]
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["separate-inner-hover"],
+    "score": 80
+  },
+  {
+    "componentPath": "src/components/Layout/StatusBar.tsx",
+    "componentName": "StatusBar",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Layout/Sidebar.tsx",
+    "componentName": "Sidebar",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [48, 56]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/Layout/MainLayout.tsx",
+    "componentName": "MainLayout",
+    "usesMotion": true,
+    "motionDivCount": 9,
+    "usesVariants": true,
+    "hasVariantOrchestration": true,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 9 motion.div elements - consider consolidating",
+        "lines": [447, 452, 555, 563, 582, 584, 603, 606, 624]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "Proper variant orchestration detected"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/Layout/DockablePanel.tsx",
+    "componentName": "DockablePanel",
+    "usesMotion": true,
+    "motionDivCount": 17,
+    "usesVariants": true,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": true,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 17 motion.div elements - consider consolidating",
+        "lines": [
+          470, 481, 531, 560, 569, 570, 575, 604, 618, 619, 624, 653, 667, 668, 694, 703, 745
+        ]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": false,
+        "details": "Uses variants but missing orchestration (staggerChildren/delayChildren)"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": false,
+        "details": "Separate inner hover states detected - consider unified hover",
+        "lines": [54, 73, 92, 107, 438, 720, 730]
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [
+      "multiple-motion-divs",
+      "separate-inner-hover",
+      "missing-variant-orchestration",
+      "no-depth-on-hover"
+    ],
+    "score": 45
+  },
+  {
+    "componentPath": "src/components/Layout/DockControls.tsx",
+    "componentName": "DockControls",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": true,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": false,
+        "details": "Separate inner hover states detected - consider unified hover",
+        "lines": [46, 226]
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["separate-inner-hover"],
+    "score": 80
+  },
+  {
+    "componentPath": "src/components/Console/ConsoleToolbar.tsx",
+    "componentName": "ConsoleToolbar",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Console/ConsolePanel.tsx",
+    "componentName": "ConsolePanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Console/ConsoleContextMenu.tsx",
+    "componentName": "ConsoleContextMenu",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Console/AppMetricsLog.tsx",
+    "componentName": "AppMetricsLog",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/Console/AppMetricsContainer.tsx",
+    "componentName": "AppMetricsContainer",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/TimingWaterfall.tsx",
+    "componentName": "TimingWaterfall",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [80, 102]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/History/TimingTab.tsx",
+    "componentName": "TimingTab",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["no-depth-on-hover"],
+    "score": 90
+  },
+  {
+    "componentPath": "src/components/History/TLSTab.tsx",
+    "componentName": "TLSTab",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/TLSPanel.tsx",
+    "componentName": "TLSPanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/SignalDot.tsx",
+    "componentName": "SignalDot",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": true,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Subtle depth on hover detected (shadow/scale/glow)"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/ResponseTab.tsx",
+    "componentName": "ResponseTab",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/ResponsePanel.tsx",
+    "componentName": "ResponsePanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/NetworkStatusBar.tsx",
+    "componentName": "NetworkStatusBar",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/NetworkHistoryPanel.tsx",
+    "componentName": "NetworkHistoryPanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/NetworkHistoryFilters.tsx",
+    "componentName": "NetworkHistoryFilters",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/LanguageTabs.tsx",
+    "componentName": "LanguageTabs",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/IntelligenceSignals.tsx",
+    "componentName": "IntelligenceSignals",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/HeadersTab.tsx",
+    "componentName": "HeadersTab",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/HeadersPanel.tsx",
+    "componentName": "HeadersPanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/HeaderRow.tsx",
+    "componentName": "HeaderRow",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/FilterBarActions.tsx",
+    "componentName": "FilterBarActions",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/FilterBar.tsx",
+    "componentName": "FilterBar",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/CopyButton.tsx",
+    "componentName": "CopyButton",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/CodeGenTab.tsx",
+    "componentName": "CodeGenTab",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/CodeGenPanel.tsx",
+    "componentName": "CodeGenPanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/History/CodeBox.tsx",
+    "componentName": "CodeBox",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": true,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": false,
+        "details": "Uses variants but missing orchestration (staggerChildren/delayChildren)"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["missing-variant-orchestration"],
+    "score": 90
+  },
+  {
+    "componentPath": "src/components/History/CertificateInfo.tsx",
+    "componentName": "CertificateInfo",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/CodeHighlighting/CodeEditor.tsx",
+    "componentName": "CodeEditor",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [276, 307]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/ActionBar/selectRenderers.tsx",
+    "componentName": "renderMethodOption",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarSelect.tsx",
+    "componentName": "ActionBarSelect",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarSegment.tsx",
+    "componentName": "ActionBarSegment",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarSearch.tsx",
+    "componentName": "ActionBarSearch",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarGroup.tsx",
+    "componentName": "ActionBarGroup",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarContext.tsx",
+    "componentName": "useActionBarContext",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBarCompositeButton.tsx",
+    "componentName": "ActionBarCompositeButton",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ActionBar/ActionBar.tsx",
+    "componentName": "ActionBar",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [176, 185]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/DataGrid/VirtualDataGrid.tsx",
+    "componentName": "VirtualDataGrid",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/ExpandedContent.tsx",
+    "componentName": "ExpandedContent",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [73, 90]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/DataGrid/DataGridHeader.tsx",
+    "componentName": "DataGridHeader",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/ui/SegmentedControl/effects.tsx",
+    "componentName": "EnergyEdge",
+    "usesMotion": true,
+    "motionDivCount": 6,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 6 motion.div elements - consider consolidating",
+        "lines": [249, 382, 448, 504, 599, 688]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "no-depth-on-hover"],
+    "score": 75
+  },
+  {
+    "componentPath": "src/components/ui/SegmentedControl/SegmentedControl.tsx",
+    "componentName": "SegmentedControl",
+    "usesMotion": true,
+    "motionDivCount": 2,
+    "usesVariants": true,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": true,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": false,
+        "details": "Found 2 motion.div elements - consider consolidating",
+        "lines": [294, 406]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": false,
+        "details": "Uses variants but missing orchestration (staggerChildren/delayChildren)"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["multiple-motion-divs", "missing-variant-orchestration", "no-depth-on-hover"],
+    "score": 65
+  },
+  {
+    "componentPath": "src/components/ui/SegmentedControl/BadgeCount.tsx",
+    "componentName": "BadgeCount",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["no-depth-on-hover"],
+    "score": 90
+  },
+  {
+    "componentPath": "src/components/DataGrid/tabs/TabNavigation.tsx",
+    "componentName": "TabNavigation",
+    "usesMotion": true,
+    "motionDivCount": 1,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": true,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "Single motion.div pattern followed",
+        "lines": [78]
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Subtle depth on hover detected (shadow/scale/glow)"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/tabs/ExpandedPanel.tsx",
+    "componentName": "ExpandedPanel",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/tabs/ExpandedActionButtons.tsx",
+    "componentName": "ExpandedActionButtons",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/urlCell.tsx",
+    "componentName": "UrlCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/timingCell.tsx",
+    "componentName": "TimingCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/timeAgoCell.tsx",
+    "componentName": "TimeAgoCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/tableHeaderRow.tsx",
+    "componentName": "TableHeaderCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/statusCell.tsx",
+    "componentName": "StatusCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/sizeCell.tsx",
+    "componentName": "SizeCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/selectionColumn.tsx",
+    "componentName": "createSelectionColumn",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/protocolCell.tsx",
+    "componentName": "ProtocolCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/networkColumns.tsx",
+    "componentName": "ActionsCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/methodCell.tsx",
+    "componentName": "MethodCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/expanderColumn.tsx",
+    "componentName": "createExpanderColumn",
+    "usesMotion": true,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": false,
+        "details": "Interactive component missing depth effect on hover"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": ["no-depth-on-hover"],
+    "score": 90
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/consoleColumns.tsx",
+    "componentName": "LevelCell",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/columns/SortIndicator.tsx",
+    "componentName": "SortIndicator",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  },
+  {
+    "componentPath": "src/components/DataGrid/accessibility/keyboardNav.tsx",
+    "componentName": "useKeyboardNavInteractive",
+    "usesMotion": false,
+    "motionDivCount": 0,
+    "usesVariants": false,
+    "hasVariantOrchestration": false,
+    "hasSeparateInnerHover": false,
+    "contentInheritsParentHover": false,
+    "hasDepthOnHover": false,
+    "usesClipPathHack": false,
+    "checks": [
+      {
+        "name": "single-motion-div",
+        "passed": true,
+        "details": "No motion.div elements found",
+        "lines": []
+      },
+      {
+        "name": "variant-orchestration",
+        "passed": true,
+        "details": "No variants used"
+      },
+      {
+        "name": "hover-state-analysis",
+        "passed": true,
+        "details": "Hover states appear unified or use group pattern"
+      },
+      {
+        "name": "depth-on-hover",
+        "passed": true,
+        "details": "Non-motion component - depth check skipped"
+      },
+      {
+        "name": "clip-path-check",
+        "passed": true,
+        "details": "No clip-path hacks detected"
+      }
+    ],
+    "violations": [],
+    "score": 100
+  }
+]
