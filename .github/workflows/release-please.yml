@@ -128,8 +128,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Only build for macOS since bundle targets are macOS-only (dmg, app)
-        os: [macos-latest]
+        os: [ubuntu-latest, macos-latest]
     env:
       CARGO_TERM_COLOR: always
     steps:
@@ -141,6 +140,12 @@ jobs:
 
       - name: Install just
         uses: extractions/setup-just@v2
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
