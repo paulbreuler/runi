@@ -29,6 +29,7 @@ export default defineConfig({
   test: {
     name: 'unit',
     include: ['src/**/*.{test,spec}.{js,ts,tsx}', 'scripts/**/*.{test,spec}.{js,ts,tsx}'],
+    exclude: ['**/node_modules/**', 'scripts/audit/**'],
     environment: 'jsdom', // Default to jsdom, scripts tests use @vitest-environment node comment
     globals: true,
     // setupFiles is applied to all tests, but vitest.setup.ts checks for window
