@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/paulbreuler/runi/compare/runi-v0.2.4...runi-v0.2.5) (2026-01-26)
+
+
+### Bug Fixes
+
+* **ci:** restore release job and migrate to limps CLI ([#73](https://github.com/paulbreuler/runi/issues/73)) ([b8c3a8a](https://github.com/paulbreuler/runi/commit/b8c3a8a5d121347873ab2738208dfb968900593c))
+
 ## [0.2.4](https://github.com/paulbreuler/runi/compare/runi-v0.2.3...runi-v0.2.4) (2026-01-25)
 
 

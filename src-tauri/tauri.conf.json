@@ -1,6 +1,6 @@
 {
   "productName": "Runi",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "identifier": "com.runi.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -12,7 +12,9 @@
     "withGlobalTauri": true,
     "security": {
       "csp": null,
-      "capabilities": ["default"]
+      "capabilities": [
+        "default"
+      ]
     },
     "windows": [
       {
