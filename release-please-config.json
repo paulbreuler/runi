@@ -7,6 +7,7 @@
       "changelog-path": "CHANGELOG.md",
       "extra-files": ["src-tauri/Cargo.toml", "src-tauri/tauri.conf.json"],
       "versioning-strategy": "default",
+      "skip-github-release": true,
       "changelog-sections": [
         {
           "type": "feat",

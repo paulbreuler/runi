@@ -94,7 +94,6 @@ jobs:
         id: release
         with:
           config-file: release-please-config.json
-          skip-release: true
 
       - name: Extract changelog for release
         id: changelog
