@@ -99,8 +99,9 @@ jobs:
         id: changelog
         run: |
           if [ -f "CHANGELOG.md" ]; then
-            # Extract the latest changelog entry (between first ## and next ## or end of file)
-            CHANGELOG=$(awk '/^## / {if (found) exit; found=1} found' CHANGELOG.md | sed '/^## /d' | sed '/^$/d' | head -n -1)
+            # Extract the latest changelog entry (from first ## header to next ## or end of file)
+            # Keep the version header and content, but stop at the next version section
+            CHANGELOG=$(awk 'BEGIN{in_section=0} /^## /{ if (in_section) exit; in_section=1 } in_section' CHANGELOG.md)
             # Escape for multiline output
             echo "changelog<<EOF" >> $GITHUB_OUTPUT
             echo "$CHANGELOG" >> $GITHUB_OUTPUT
@@ -126,7 +127,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # Only build for macOS since bundle targets are macOS-only (dmg, app)
+        os: [macos-latest]
     env:
       CARGO_TERM_COLOR: always
     steps:
@@ -137,12 +139,6 @@ jobs:
 
       - name: Install just
         uses: extractions/setup-just@v2
-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -271,7 +267,8 @@ jobs:
     needs: [check-ci-status, release-please, build]
     if: |
       needs.release-please.outputs.release_created == 'true' &&
-      needs.check-ci-status.outputs.ci-passed == 'true'
+      needs.check-ci-status.outputs.ci-passed == 'true' &&
+      needs.build.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write

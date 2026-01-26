@@ -50,7 +50,7 @@
     "resources": [],
     "copyright": "",
     "category": "DeveloperTool",
-    "shortDescription": "An open-source API tool for macOS and Linux",
+    "shortDescription": "An open-source API tool for macOS",
     "longDescription": "Runi - An open-source desktop application for API testing and development",
     "macOS": {
       "dmg": {
