@@ -132,10 +132,26 @@ jobs:
     env:
       CARGO_TERM_COLOR: always
     steps:
+      - name: Wait for tag to be available
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
+          echo "Waiting for tag: $TAG_NAME"
+          for i in {1..10}; do
+            if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
+              echo "Tag '$TAG_NAME' is available."
+              exit 0
+            fi
+            echo "Tag not yet available, waiting... ($i/10)"
+            sleep 5
+          done
+          echo "::error::Tag '$TAG_NAME' not available after 50 seconds"
+          exit 1
+
       - name: Checkout tagged release
         uses: actions/checkout@v4
         with:
-          # Use the tag created by release-please to ensure we build the exact tagged commit
           ref: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Install just
