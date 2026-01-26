@@ -37,8 +37,9 @@ build:
     npm run tauri build
 
 # Build frontend only (required for Rust compilation)
-build-frontend: ensure-deps
-    npm run build
+# Uses npx as fallback if vite isn't available (doesn't require motion-plus)
+build-frontend:
+    @bash -c 'if [ -f "node_modules/.bin/vite" ]; then npm run build; else echo "📦 Using npx vite (motion-plus not required)..."; npx vite build; fi'
 
 # Measure startup time of release bundle
 measure-startup:
@@ -83,8 +84,7 @@ fmt-check-rust:
     cd src-tauri && cargo fmt -- --check
 
 # Check frontend formatting
-# Note: CI excludes release-please managed files (src-tauri/tauri.conf.json, package.json)
-# Local checks all files including release-please files (intentional - catch issues before commit)
+# Note: Release-please managed files (src-tauri/tauri.conf.json, package.json) are excluded via .prettierignore
 # Uses npx as fallback if prettier isn't available (doesn't require motion-plus)
 fmt-check-frontend:
     @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format:check; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --check .; fi'
