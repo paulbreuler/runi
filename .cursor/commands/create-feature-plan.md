@@ -142,7 +142,7 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
 **Rationale**:
 
 - Zero-padding ensures proper lexicographical ordering (000, 001, 002, ... 010, 011, ... 017)
-- Numeric prefixes make execution order clear to humans, even though `next-task.sh` uses scoring algorithm
+- Numeric prefixes make execution order clear to humans, even though `npx limps next-task` uses scoring algorithm
 - This helps when manually selecting agents or understanding plan structure
 
 **Note**: Scripts support both padded (000, 001) and unpadded (0, 1) formats for backward compatibility, but new agents should use zero-padding.
@@ -351,7 +351,7 @@ Agent implements
 ```
 
 **Optional: Assess initial status**:
-After creating a plan, you can use `/work --plan <plan-number>` (e.g., `/work --plan 1`) to assess the initial plan status and see the first recommended task. This is optional but can help verify the plan structure is correct.
+After creating a plan, you can use `npx limps next-task <plan-number>` (e.g., `npx limps next-task 1`) to see the first recommended task. This is optional but can help verify the plan structure is correct.
 
 **Update plan**:
 

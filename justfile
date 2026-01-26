@@ -16,8 +16,12 @@ list:
 # ============================================================================
 
 # Install all development dependencies
+# Note: Requires MOTION_PLUS_TOKEN environment variable
+# Usage: source .env && just install
+# Or: MOTION_PLUS_TOKEN=your_token just install
 install:
-    npm install
+    node scripts/setup-motion-plus.js
+    npm ci --legacy-peer-deps
     cd src-tauri && cargo fetch
 
 # Start development server
@@ -33,8 +37,9 @@ build:
     npm run tauri build
 
 # Build frontend only (required for Rust compilation)
+# Uses npx as fallback if vite isn't available (doesn't require motion-plus)
 build-frontend:
-    npm run build
+    @bash -c 'if [ -f "node_modules/.bin/vite" ]; then npm run build; else echo "📦 Using npx vite (motion-plus not required)..."; npx vite build; fi'
 
 # Measure startup time of release bundle
 measure-startup:
@@ -51,6 +56,17 @@ generate-types:
 # ============================================================================
 # 📦 Dependencies
 # ============================================================================
+
+# Ensure dependencies are installed (check and install if needed)
+# Checks if node_modules exists and key dependencies are present
+# If missing or incomplete, attempts full install via 'just install' using token injection
+# Uses the existing token injection system (setup-motion-plus.js) which:
+# - Reads MOTION_PLUS_TOKEN from .env or environment
+# - Injects token into package.json (never committed)
+# - Runs npm ci to install dependencies
+# Note: If token not available, individual commands use npx fallback for tools that don't need motion-plus
+ensure-deps:
+    @bash -c 'if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/vite" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then export $(grep -v "^#" .env | xargs) && just install; elif [ -n "$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
 
 # Update all dependencies
 update:
@@ -69,10 +85,10 @@ fmt-check-rust:
     cd src-tauri && cargo fmt -- --check
 
 # Check frontend formatting
-# Note: CI excludes release-please managed files (src-tauri/tauri.conf.json, package.json)
-# Local checks all files including release-please files (intentional - catch issues before commit)
+# Note: Release-please managed files (src-tauri/tauri.conf.json, package.json) are excluded via .prettierignore
+# Uses npx as fallback if prettier isn't available (doesn't require motion-plus)
 fmt-check-frontend:
-    npm run format:check
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format:check; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --check .; fi'
 
 # Fix all formatting
 fmt: fmt-rust fmt-frontend
@@ -82,8 +98,9 @@ fmt-rust:
     cd src-tauri && cargo fmt
 
 # Fix frontend formatting
+# Uses npx as fallback if prettier isn't available (doesn't require motion-plus)
 fmt-frontend:
-    npm run format
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --write .; fi'
 
 # ============================================================================
 # 🔍 Code Quality: Linting
@@ -97,7 +114,7 @@ lint-rust: build-frontend
     cd src-tauri && cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 # Lint TypeScript/React
-lint-frontend:
+lint-frontend: ensure-deps
     npm run lint
 
 # Lint Markdown files (exclude files/directories in .gitignore)
@@ -118,7 +135,7 @@ check-rust: build-frontend
     cd src-tauri && cargo check --workspace --all-targets
 
 # Type check TypeScript/React
-check-frontend:
+check-frontend: ensure-deps
     npm run check
 
 # ============================================================================
@@ -133,7 +150,7 @@ test-rust: build-frontend
     cd src-tauri && cargo test --workspace
 
 # Run frontend tests
-test-frontend:
+test-frontend: ensure-deps
     npm run test -- --run
 
 # Run E2E tests (Playwright)
@@ -252,12 +269,12 @@ docs:
     cd src-tauri && cargo doc --no-deps --open
 
 # List all TDD plans in runi-planning-docs repository
+# Note: limps is an npm package installed on-demand via npx
+# See: https://github.com/paulbreuler/limps for documentation
+# Security: limps is installed via npx without version pinning. If limps is published to npm,
+# consider pinning the version (e.g., npx limps@<version>) to reduce supply-chain risk.
 list-plans:
-    @bash scripts/list-plans.sh
-
-# Smart orchestration - detects plan from last PR and suggests actions
-work:
-    @bash scripts/work.sh
+    @npx limps list-plans
 
 # Auto-heal plan with auto-detection
 heal:
@@ -273,11 +290,11 @@ run plan-name:
 
 # Select next task without running (shows selection only)
 next-task plan-name:
-    @bash scripts/next-task.sh --plan "{{plan-name}}"
+    @npx limps next-task "{{plan-name}}"
 
 # Assess agent completion status for a plan
 assess-agents plan-name:
-    @bash scripts/assess-agent-status.sh --plan "{{plan-name}}" --all
+    @npx limps status "{{plan-name}}"
 
 # Run specific agent file
 run-agent agent-path:
@@ -285,11 +302,11 @@ run-agent agent-path:
 
 # List all agents in a plan (non-AI, direct execution)
 list-agents plan-name:
-    @bash scripts/list-agents.sh --plan "{{plan-name}}"
+    @npx limps list-agents "{{plan-name}}"
 
 # List agents with auto-detection (non-AI, direct execution)
 list-agents-auto:
-    @bash scripts/list-agents.sh --auto
+    @npx limps list-agents
 
 # ============================================================================
 # 📖 Help
@@ -343,7 +360,6 @@ help:
     @echo ""
     @echo "Planning:"
     @echo "  just list-plans    - List all TDD plans in runi-planning-docs"
-    @echo "  just work          - Smart orchestration (detects plan, suggests actions)"
     @echo "  just run <plan>    - Select and run next best agent task"
     @echo "  just next-task <plan> - Select next task (no run)"
     @echo "  just list-agents <plan> - List all agents in a plan with status"

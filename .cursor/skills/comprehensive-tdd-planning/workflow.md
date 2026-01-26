@@ -47,7 +47,7 @@ The planning system has distinct states that determine what actions to take:
 - Status unknown or needs refresh
 - Next task unclear
 
-**Action**: Run `/work` to assess current state
+**Action**: Use `npx limps next-task <plan>` to get next task, or `npx limps status <plan>` to check status
 
 ### 2. Cleanup Needed State
 
@@ -110,13 +110,13 @@ Use this decision tree to choose the right command:
 ```
 After PR Merge or Starting Work
 │
-├─> /work
+├─> npx limps status <plan> (check status)
     │
     ├─> Cleanup needed?
     │   │
     │   └─> /heal or /heal-plan <plan>
     │       │
-    │       └─> /work (reassess)
+    │       └─> npx limps status <plan> (reassess)
     │
     └─> Task available?
         │
@@ -126,12 +126,12 @@ After PR Merge or Starting Work
                 │
                 └─> /close-feature-agent <agent-path>
                     │
-                    └─> /work (loop back)
+                    └─> npx limps next-task <plan> (loop back)
 ```
 
 ## Entry Points
 
-### Primary Entry Point: `/work`
+### Primary Entry Point: `npx limps status <plan>` and `npx limps next-task <plan>`
 
 **When to use**:
 
@@ -142,13 +142,10 @@ After PR Merge or Starting Work
 
 **What it does**:
 
-- Auto-detects plan from last PR
-- Assesses all agent status
-- Identifies cleanup needs
-- Determines next best task
-- Provides recommendations
+- `npx limps status <plan>`: Shows plan-level status (all agents, features, completion state)
+- `npx limps next-task <plan>`: Gets the next recommended agent task to work on
 
-**Output**: Quick decision guide, status summary, recommended actions
+**Note**: The `/work` command has been removed. Use `npx limps` commands directly or the focused entry points below.
 
 ### Focused Entry Points
 
@@ -156,7 +153,7 @@ After PR Merge or Starting Work
 
 - **When**: Ready to start working, want to auto-select next best agent
 - **What**: Selects next best agent task, opens agent file
-- **Use instead of**: `/work` when you just want to start working
+- **Use instead of**: `npx limps next-task` when you just want to start working
 
 **`/plan-list-agents <plan>`**
 
@@ -168,60 +165,60 @@ After PR Merge or Starting Work
 
 - **When**: Cleanup needed, want to auto-fix
 - **What**: Moves completed agents to `completed/` directory
-- **Use instead of**: `/work` when you know cleanup is needed
+- **Use instead of**: `npx limps status` when you know cleanup is needed
 
 **`/plan-check-status` or `/assess-agents <plan>`**
 
 - **When**: Need detailed status, troubleshooting
 - **What**: Shows detailed agent-by-agent status (or status overview)
-- **Use instead of**: `/work` when you need more detail or just want status
+- **Use instead of**: `npx limps status` when you need more detail or just want status
 
 **`/list-feature-plans`**
 
 - **When**: Need to find a plan, see all plans
 - **What**: Lists all available plans with overviews
-- **Use instead of**: `/work` when you don't know which plan
+- **Use instead of**: `npx limps list-plans` when you don't know which plan
 
 ## Common Patterns
 
 ### Pattern 1: After PR Merge (Recommended)
 
 ```
-1. /work                    # Assess status, get recommendations
-2. /heal                    # Cleanup if needed (auto-detects plan)
-3. /run-agent --auto       # Start next task (auto-detects plan)
+1. npx limps status <plan>    # Assess status, get recommendations
+2. /heal                       # Cleanup if needed (auto-detects plan)
+3. /run-agent --auto           # Start next task (auto-detects plan)
 4. [Implement work]
-5. /close-feature-agent     # Verify completion
+5. /close-feature-agent        # Verify completion
 6. Loop to step 1
 ```
 
 ### Pattern 2: Quick Start (When You Know the Plan)
 
 ```
-1. /run-agent <plan-number>  # Start next task directly
+1. /run-agent <plan-number>              # Start next task directly
 2. [Implement work]
-3. /close-feature-agent     # Verify completion
-4. /work --plan <plan-number> # Check status, get next task
+3. /close-feature-agent                   # Verify completion
+4. npx limps next-task <plan-number>     # Get next task
 ```
 
 ### Pattern 3: Status Check Only
 
 ```
-1. /work --plan <plan-number>  # Get status overview
-2. /assess-agents <plan-number> # Get detailed status if needed
+1. npx limps status <plan-number>        # Get status overview
+2. /assess-agents <plan-number>          # Get detailed status if needed
 ```
 
 ### Pattern 4: Cleanup First
 
 ```
-1. /heal --auto            # Auto-cleanup (auto-detects plan)
-2. /work                    # Reassess after cleanup
-3. /run-agent --auto       # Start next task
+1. /heal --auto                  # Auto-cleanup (auto-detects plan)
+2. npx limps status <plan>       # Reassess after cleanup
+3. /run-agent --auto             # Start next task
 ```
 
 ## Anti-Patterns
 
-**Don't**: Run `/work` multiple times without taking action
+**Don't**: Run `npx limps status` multiple times without taking action
 
 - **Instead**: Follow the recommendations, use focused entry points
 
@@ -233,15 +230,15 @@ After PR Merge or Starting Work
 
 - **Instead**: Always verify completion to sync status and unblock dependencies
 
-**Don't**: Use `/work` when you just want to start working
+**Don't**: Use `npx limps status` when you just want to start working
 
-- **Instead**: Use `/run-agent` directly if you know the plan
+- **Instead**: Use `/run-agent` directly if you know the plan, or `npx limps next-task` to get next task
 
 ## Troubleshooting
 
 ### "I don't know what to do"
 
-→ Run `/work` - it will show you the quick decision and recommendations
+→ Run `npx limps status <plan>` to see current state, then `npx limps next-task <plan>` to get next task
 
 ### "I want to start working"
 
@@ -280,4 +277,4 @@ The system can detect workflow state:
 - **All complete**: All agents completed, no work remaining
 - **Blocked**: Tasks available but dependencies not satisfied
 
-Use `/work` to see current state and recommendations.
+Use `npx limps status <plan>` to see current state and `npx limps next-task <plan>` to get recommendations.

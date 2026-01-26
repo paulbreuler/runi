@@ -48,10 +48,9 @@ Bypasses auto-detection and uses the specified plan.
 
 **When this command is invoked, you must:**
 
-1. **Run the list-agents script:**
-   - If `--plan` provided: `bash scripts/list-agents.sh --plan <plan-number>`
-   - If `--auto` provided: `bash scripts/list-agents.sh --auto`
-   - Otherwise: `bash scripts/list-agents.sh --auto` (auto-detects plan)
+1. **Run the list-agents command:**
+   - If `--plan` provided: `npx limps list-agents <plan-number>`
+   - Otherwise: `npx limps list-agents` (auto-detects plan)
 
 2. **Display the output:**
    - Show the formatted list of agents

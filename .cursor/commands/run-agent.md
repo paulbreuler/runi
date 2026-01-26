@@ -86,7 +86,7 @@ Assesses all agents in the plan for completion status and file organization.
    - If `--auto` provided: Call `bash scripts/run-agent.sh --auto` (auto-detects plan from last PR)
    - If `--plan` or plan name provided: Call `just run <plan-name>` or `bash scripts/run-agent.sh --plan <plan-name>`
    - If `--agent` provided: Call `just run-agent <agent-path>` or `bash scripts/run-agent.sh --agent <agent-path>`
-   - If `--assess` provided: Call `just assess-agents <plan-name>` or `bash scripts/assess-agent-status.sh --plan <plan-name> --all`
+   - If `--assess` provided: Call `just assess-agents <plan-name>` or `npx limps status <plan-name>`
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
@@ -136,17 +136,17 @@ Assesses all agents in the plan for completion status and file organization.
 
 5. **Provide guidance:**
    - Explain next steps for the agent
-   - Reference related commands (`just close-feature-agent`, `just assess-agents`, `just work`, `just heal`)
+   - Reference related commands (`just close-feature-agent`, `just assess-agents`, `just next-task`, `just heal`)
    - Show how to verify completion
 
 ## Integration with Other Commands
 
-- **work**: Use `/work` first to auto-detect plan, assess status, and see recommendations. Then use `/run-agent --auto` or `/run-agent <plan-name>` to start work
+- **next-task**: Use `npx limps next-task` to get the next best task. Then use `/run-agent --auto` or `/run-agent <plan-name>` to start work
 - **plan-list-agents**: Use to find and see all agents in a plan, then use `/run-agent --agent [path]` to run a specific one
 - **heal**: After completing work, use `/heal` or `just heal` to auto-cleanup completed agents
 - **list-feature-plans**: Use to discover plans, then use `/run-agent <plan-name>`
-- **close-feature-agent**: After closing, use `/work` to assess overall status or `/run-agent --assess <plan-name>` to check cleanup
-- **update-feature-plan**: After updating, use `/work --plan <plan-name>` to assess status and find next work
+- **close-feature-agent**: After closing, use `npx limps status <plan-name>` to assess overall status or `/run-agent --assess <plan-name>` to check cleanup
+- **update-feature-plan**: After updating, use `npx limps next-task <plan-name>` to get next task
 
 ## Workflow
 
@@ -164,7 +164,7 @@ Assesses all agents in the plan for completion status and file organization.
 ### Smart Orchestration Workflow (Recommended)
 
 ```
-1. After PR merged: /work (auto-detects plan, assesses status, suggests next task)
+1. After PR merged: `npx limps next-task` (auto-detects plan, suggests next task)
 2. If cleanup needed: /heal (auto-fixes completed agents)
 3. Start next task: /run-agent --auto (uses detected plan) or /run-agent <plan-name>
 4. Agent implements work
@@ -172,7 +172,7 @@ Assesses all agents in the plan for completion status and file organization.
 6. Repeat from step 1
 ```
 
-The smart orchestration workflow (`/work` → `/heal` → `/run-agent`) automatically detects which plan you're working on and suggests the best next action.
+The workflow (`npx limps next-task` → `/heal` → `/run-agent`) automatically detects which plan you're working on and suggests the best next action.
 
 ## Output Format
 
@@ -242,4 +242,4 @@ Instructions:
 - Status assessment checks both file organization and README.md status matrix
 - Scoring algorithm prioritizes unblocked tasks to maximize parallel work
 - The `--auto` flag auto-detects the active plan from the last merged PR (uses GitHub CLI to analyze PR title, branch, description, and files)
-- For best results, use `/work` first to get a complete status overview, then use `/run-agent --auto` to start the next task
+- For best results, use `npx limps next-task` first to get the next task, then use `/run-agent --auto` to start it

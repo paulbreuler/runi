@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
 
 jobs:
   check-changes:
@@ -67,19 +68,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+          install-just: 'false'
 
       - name: Check Markdown formatting
         # Prettier handles: formatting, trailing whitespace, line endings
@@ -94,22 +86,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
       - name: Check formatting
         # Exclude release-please managed files (they're auto-formatted by release-please)
@@ -134,8 +112,8 @@ jobs:
       - name: Build Storybook
         run: npm run build-storybook
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
 
       - name: Run Storybook tests
         # NOTE: Storybook play function tests are currently flaky in CI due to timing issues
@@ -168,28 +146,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
-
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install npm dependencies
-        run: npm ci --legacy-peer-deps
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -228,25 +192,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Install Playwright browsers
-        run: just test-e2e-install
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
 
       - name: Run E2E tests
         run: just test-e2e
@@ -258,25 +208,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install just
-        uses: extractions/setup-just@v2
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Setup Motion+ token
-        run: node scripts/setup-motion-plus.js
-        env:
-          MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Setup Playwright
+        uses: ./.github/actions/setup-playwright
 
       - name: Run visual tests
         # Note: continue-on-error is intentional during initial setup phase.
@@ -314,3 +250,28 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  release:
+    name: Release/Publish
+    runs-on: ubuntu-latest
+    needs: [frontend, rust, e2e, storybook-visual]
+    # Note: storybook-visual has continue-on-error: true, so it can "succeed" even if tests fail.
+    # We check != 'failure' to allow release when visual tests are informational/in-progress,
+    # but block release if the job itself fails (e.g., setup errors).
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.frontend.result == 'success' &&
+      needs.rust.result == 'success' &&
+      needs.e2e.result == 'success' &&
+      needs.storybook-visual.result != 'failure'
+    steps:
+      - name: Release status
+        run: |
+          echo "✅ All CI checks passed. Release Please workflow will run automatically after this workflow completes."
+          echo ""
+          echo "📦 Release Flow:"
+          echo "  1. Release Please workflow creates/updates a release PR"
+          echo "  2. When release PR is merged → CI runs (validations/tests)"
+          echo "  3. After CI passes → Release is created and artifacts are built/published"
+          echo "  4. Artifacts are only published after all validations pass"

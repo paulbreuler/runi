@@ -43,9 +43,9 @@ Bypasses auto-detection and uses the specified plan.
 
 **When this command is invoked, you must:**
 
-1. **Run the work script:**
-   - If `--plan` provided: `just work --plan <plan-name>` or `bash scripts/work.sh --plan <plan-name>`
-   - Otherwise: `just work` or `bash scripts/work.sh`
+1. **Check plan status:**
+   - If `--plan` provided: `npx limps status <plan-name>`
+   - Otherwise: Use `npx limps next-task` to auto-detect plan and get next task
 
 2. **Display the output:**
    - Show QUICK DECISION section
@@ -66,11 +66,10 @@ Bypasses auto-detection and uses the specified plan.
 - You need a status overview without full details
 - You want to check progress
 
-**Use `/work` instead when:**
+**Use `npx limps next-task` instead when:**
 
-- You want the full orchestration experience
-- You need detailed recommendations
-- You want to see cleanup needs and next task together
+- You want to get the next best task with scoring breakdown
+- You need detailed task recommendations
 
 **Use `/assess-agents <plan>` instead when:**
 
@@ -80,7 +79,7 @@ Bypasses auto-detection and uses the specified plan.
 
 ## Integration
 
-This is essentially the same as `/work` but with a simpler name that makes the intent clear. It's useful when you just want to "check status" without the full orchestration.
+This command provides a simple way to check plan status. Use `npx limps next-task` to get the next best task with detailed scoring.
 
 ## Example Output
 
@@ -127,6 +126,6 @@ Quick Links:
 ## Notes
 
 - This command provides a focused view of plan status
-- Less overwhelming than full `/work` output
+- Simple status overview
 - Good for quick status checks
 - For detailed status, use `/assess-agents <plan-name>`
