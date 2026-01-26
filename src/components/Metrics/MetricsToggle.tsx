@@ -22,8 +22,8 @@ export interface MetricsToggleProps {
 /**
  * Metrics toggle component that pairs Label with Switch.
  *
- * Prevents dialog close when toggled (stopPropagation handled by Switch).
- * Used within DialogHeader actions, not in content.
+ * Prevents tray close when toggled (stopPropagation handled by Switch).
+ * Used within NotificationTrayHeader actions, not in content.
  */
 export const MetricsToggle: React.FC<MetricsToggleProps> = ({
   checked,

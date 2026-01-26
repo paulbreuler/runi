@@ -23,10 +23,10 @@ const meta = {
 ## Features
 
 - **Environment Display**: Shows current environment name (default: "default")
-- **Metrics Button**: Opens/closes metrics panel dialog with pulsing glow indicator
+- **Metrics Button**: Opens/closes metrics panel tray with pulsing glow indicator
 - **Compact Metrics Display**: Shows live metrics inline when feature is enabled
 - **Version Display**: Displays application version from build-time define
-- **Metrics Panel Dialog**: Appears 36px above status bar when opened, aligned to Metrics button
+- **Metrics Panel Tray**: Appears 36px above status bar when opened, aligned to Metrics button
 
 ## Pulsing Glow States
 
@@ -40,22 +40,22 @@ The Metrics button includes a pulsing glow indicator with three states:
 
 - Uses \`useSettingsStore\` for \`metricsVisible\` toggle state
 - Uses \`useMetricsStore\` for metrics data, timestamp, and live status
-- Local state manages dialog open/close (\`isPanelOpen\`)
+- Local state manages panel open/close (\`isPanelOpen\`)
 
 ## Metrics Display Logic
 
 - Compact metrics display appears on the status bar when:
   - Metrics feature is enabled (\`metricsVisible === true\`)
   - Metrics data exists (\`metrics.memory !== undefined\`)
-- Metrics panel dialog shows full metrics grid with toggle controls
+- Metrics panel tray shows full metrics grid with toggle controls
 
 ## Accessibility
 
 - Full keyboard navigation support
 - Focus ring styling for Metrics button
 - ARIA labels for Metrics button states
-- Click outside to close dialog
-- Escape key closes dialog
+- Click outside to close tray
+- Escape key closes tray
 
 ## Usage
 
@@ -79,8 +79,8 @@ type Story = StoryObj<typeof meta>;
 /**
  * Interactive playground for StatusBar.
  *
- * - Click the "Metrics" button to open/close the metrics panel dialog
- * - The dialog appears 36px above the status bar, aligned to the Metrics button
+ * - Click the "Metrics" button to open/close the metrics panel tray
+ * - The tray appears 36px above the status bar, aligned to the Metrics button
  * - The pulsing glow indicator shows the current metrics state (init/tracking/idle)
  * - Compact metrics display appears when metrics are enabled and data exists
  * - Version and environment information are displayed on the right side
@@ -90,7 +90,7 @@ export const Playground: Story = {
     docs: {
       description: {
         story:
-          'Interactive example showing the StatusBar in its typical layout position. Click the Metrics button to see the dialog animation and metrics panel. The pulsing glow indicator reflects the current metrics state.',
+          'Interactive example showing the StatusBar in its typical layout position. Click the Metrics button to see the tray animation and metrics panel. The pulsing glow indicator reflects the current metrics state.',
       },
     },
   },

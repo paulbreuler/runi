@@ -82,11 +82,11 @@ describe('MetricsPanel', () => {
     );
 
     expect(screen.getByTestId('metrics-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('dialog-header')).toBeInTheDocument();
+    expect(screen.getByTestId('notification-tray-header')).toBeInTheDocument();
     expect(screen.getByTestId('metrics-grid')).toBeInTheDocument();
   });
 
-  it('renders DialogHeader with title and Switch in actions', () => {
+  it('renders NotificationTrayHeader with title and Switch in actions', () => {
     render(
       <MetricsPanel
         isOpen={true}

@@ -8,25 +8,30 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { cn } from '@/utils/cn';
 
-export interface DialogProps {
-  /** Whether the dialog is open */
+export interface NotificationTrayProps {
+  /** Whether the notification tray is open */
   isOpen: boolean;
-  /** Callback when dialog should close */
+  /** Callback when notification tray should close */
   onClose: () => void;
   /** Ref to button for alignment (left edge aligns with button) */
   buttonRef?: React.RefObject<HTMLElement | null>;
-  /** Header component (DialogHeader) */
+  /** Header component (NotificationTrayHeader) */
   header: React.ReactNode;
-  /** Content component (DialogContent) */
+  /** Content component (NotificationTrayContent) */
   content: React.ReactNode;
-  /** Optional footer component (DialogFooter) */
+  /** Optional footer component (NotificationTrayFooter) */
   footer?: React.ReactNode;
   /** Optional test ID */
   'data-testid'?: string;
 }
 
 /**
- * Reusable dialog component with composition pattern.
+ * NotificationTray - Slide-up panel for notifications and system status.
+ *
+ * Displays:
+ * - Notification history (past toasts)
+ * - Active notifications with dismiss actions
+ * - System status (background tasks, connection state)
  *
  * Features:
  * - Slides up from bottom (36px above status bar)
@@ -38,16 +43,16 @@ export interface DialogProps {
  * - Respects prefers-reduced-motion
  *
  * Uses composition pattern: accepts header and content as separate props.
- * Reusable for metrics panel, notifications panel, any slide-up dialog.
+ * Reusable for metrics panel, notifications panel, any slide-up tray.
  */
-export const Dialog: React.FC<DialogProps> = ({
+export const NotificationTray: React.FC<NotificationTrayProps> = ({
   isOpen,
   onClose,
   buttonRef,
   header,
   content,
   footer,
-  'data-testid': testId = 'dialog',
+  'data-testid': testId = 'notification-tray',
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion() ?? false;
