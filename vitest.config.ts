@@ -28,9 +28,11 @@ export default defineConfig({
   },
   test: {
     name: 'unit',
-    include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
-    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{js,ts,tsx}', 'scripts/**/*.{test,spec}.{js,ts,tsx}'],
+    environment: 'jsdom', // Default to jsdom, scripts tests use @vitest-environment node comment
     globals: true,
+    // setupFiles is applied to all tests, but vitest.setup.ts checks for window
+    // Scripts tests in node environment won't have window, so setup will be skipped
     setupFiles: ['./vitest.setup.ts'],
     testTimeout: 10000, // 10 seconds for async tests
     hookTimeout: 10000, // 10 seconds for setup/teardown

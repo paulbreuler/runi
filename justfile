@@ -217,9 +217,6 @@ validate-ralph:
     @grep -q "hover:bg-muted\|subtle.*interactions\|high contrast" @fix_plan.md || (echo "⚠️  @fix_plan.md missing design principles" && exit 1)
     @echo "✅ Basic validation passed"
 
-# Heal and improve Ralph files using a Claude-guided prompt
-heal-ralph *args:
-    @bash scripts/heal-ralph.sh {{ args }}
 
 # ============================================================================
 # 🧹 Cleanup
@@ -232,21 +229,6 @@ clean:
     rm -rf build
     rm -rf dist
 
-# Remove all ralph session files and reset circuit breaker
-clean-ralph:
-    rm -f .call_count
-    rm -f .circuit_breaker_history
-    rm -f .circuit_breaker_state
-    rm -f .claude_session_id
-    rm -f .exit_signals
-    rm -f .last_reset
-    rm -f .ralph_session
-    rm -f .ralph_session_history
-    rm -f .response_analysis
-    rm -f progress.json
-    rm -f status.json
-    @ralph --reset-circuit || true
-    @echo "✅ All ralph session files removed and circuit breaker reset"
 
 # ============================================================================
 # 📚 Documentation
@@ -348,8 +330,6 @@ help:
     @echo "Ralph/Claude:"
     @echo "  just normalize-ralph - Normalize Ralph documentation files"
     @echo "  just validate-ralph  - Validate Ralph file consistency"
-    @echo "  just heal-ralph      - Heal/improve Ralph files with prompt"
-    @echo "  just clean-ralph     - Remove all ralph session files"
     @echo ""
     @echo "Cleanup:"
     @echo "  just clean         - Clean build artifacts"
