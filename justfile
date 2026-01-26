@@ -285,8 +285,9 @@ heal-plan plan-name:
     @bash scripts/heal-plan.sh --plan "{{plan-name}}"
 
 # Select and run next best agent task from a plan
+# Uses limps CLI to get next task, then opens the agent file
 run plan-name:
-    @bash scripts/run-agent.sh --plan "{{plan-name}}"
+    @bash scripts/run-next-task.sh "{{plan-name}}" true
 
 # Select next task without running (shows selection only)
 next-task plan-name:
@@ -296,9 +297,9 @@ next-task plan-name:
 assess-agents plan-name:
     @npx limps status "{{plan-name}}"
 
-# Run specific agent file
+# Open specific agent file in Cursor (optionally create GitHub issues)
 run-agent agent-path:
-    @bash scripts/run-agent.sh --agent "{{agent-path}}"
+    @bash scripts/open-agent-file.sh "{{agent-path}}" true
 
 # List all agents in a plan (non-AI, direct execution)
 list-agents plan-name:
