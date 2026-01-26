@@ -12,14 +12,6 @@ just normalize-ralph
 
 # Validate consistency
 just validate-ralph
-
-# Heal files with prompt
-just heal-ralph "your healing prompt here"
-just heal-ralph --prompt-file prompts/heal-request.md
-just heal-ralph --dry-run "preview changes"
-
-# Clean session
-just clean-ralph
 ```
 
 ## File Discovery

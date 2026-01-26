@@ -217,9 +217,6 @@ validate-ralph:
     @grep -q "hover:bg-muted\|subtle.*interactions\|high contrast" @fix_plan.md || (echo "⚠️  @fix_plan.md missing design principles" && exit 1)
     @echo "✅ Basic validation passed"
 
-# Heal and improve Ralph files using a Claude-guided prompt
-heal-ralph *args:
-    @bash scripts/heal-ralph.sh {{ args }}
 
 # ============================================================================
 # 🧹 Cleanup
@@ -232,21 +229,6 @@ clean:
     rm -rf build
     rm -rf dist
 
-# Remove all ralph session files and reset circuit breaker
-clean-ralph:
-    rm -f .call_count
-    rm -f .circuit_breaker_history
-    rm -f .circuit_breaker_state
-    rm -f .claude_session_id
-    rm -f .exit_signals
-    rm -f .last_reset
-    rm -f .ralph_session
-    rm -f .ralph_session_history
-    rm -f .response_analysis
-    rm -f progress.json
-    rm -f status.json
-    @ralph --reset-circuit || true
-    @echo "✅ All ralph session files removed and circuit breaker reset"
 
 # ============================================================================
 # 📚 Documentation
@@ -268,14 +250,6 @@ docs-fix:
 docs:
     cd src-tauri && cargo doc --no-deps --open
 
-# List all TDD plans in runi-planning-docs repository
-# Note: limps is an npm package installed on-demand via npx
-# See: https://github.com/paulbreuler/limps for documentation
-# Security: limps is installed via npx without version pinning. If limps is published to npm,
-# consider pinning the version (e.g., npx limps@<version>) to reduce supply-chain risk.
-list-plans:
-    @npx limps list-plans
-
 # Auto-heal plan with auto-detection
 heal:
     @bash scripts/heal-plan.sh --auto
@@ -283,30 +257,6 @@ heal:
 # Auto-heal specific plan
 heal-plan plan-name:
     @bash scripts/heal-plan.sh --plan "{{plan-name}}"
-
-# Select and run next best agent task from a plan
-run plan-name:
-    @bash scripts/run-agent.sh --plan "{{plan-name}}"
-
-# Select next task without running (shows selection only)
-next-task plan-name:
-    @npx limps next-task "{{plan-name}}"
-
-# Assess agent completion status for a plan
-assess-agents plan-name:
-    @npx limps status "{{plan-name}}"
-
-# Run specific agent file
-run-agent agent-path:
-    @bash scripts/run-agent.sh --agent "{{agent-path}}"
-
-# List all agents in a plan (non-AI, direct execution)
-list-agents plan-name:
-    @npx limps list-agents "{{plan-name}}"
-
-# List agents with auto-detection (non-AI, direct execution)
-list-agents-auto:
-    @npx limps list-agents
 
 # ============================================================================
 # 📖 Help
@@ -347,8 +297,6 @@ help:
     @echo "Ralph/Claude:"
     @echo "  just normalize-ralph - Normalize Ralph documentation files"
     @echo "  just validate-ralph  - Validate Ralph file consistency"
-    @echo "  just heal-ralph      - Heal/improve Ralph files with prompt"
-    @echo "  just clean-ralph     - Remove all ralph session files"
     @echo ""
     @echo "Cleanup:"
     @echo "  just clean         - Clean build artifacts"
@@ -359,13 +307,6 @@ help:
     @echo "  just docs-fix      - Fix documentation formatting issues"
     @echo ""
     @echo "Planning:"
-    @echo "  just list-plans    - List all TDD plans in runi-planning-docs"
-    @echo "  just run <plan>    - Select and run next best agent task"
-    @echo "  just next-task <plan> - Select next task (no run)"
-    @echo "  just list-agents <plan> - List all agents in a plan with status"
-    @echo "  just list-agents-auto - List agents with auto-detection"
-    @echo "  just assess-agents <plan> - Assess agent completion status"
-    @echo "  just run-agent <path> - Run specific agent file"
     @echo "  just heal          - Auto-heal plan (auto-detects from PR)"
     @echo "  just heal-plan <plan> - Auto-heal specific plan"
     @echo ""

@@ -80,6 +80,7 @@ jobs:
     outputs:
       release_created: ${{ steps.final-outputs.outputs.release_created }}
       tag_name: ${{ steps.final-outputs.outputs.tag_name }}
+      changelog: ${{ steps.final-outputs.outputs.changelog }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,17 +89,34 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run release-please
+      - name: Run release-please (skip release creation - we'll create it after artifacts are built)
         uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
+
+      - name: Extract changelog for release
+        id: changelog
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            # Extract the latest changelog entry (from first ## header to next ## or end of file)
+            # Keep the version header and content, but stop at the next version section
+            CHANGELOG=$(awk 'BEGIN{in_section=0} /^## /{ if (in_section) exit; in_section=1 } in_section' CHANGELOG.md)
+            # Escape for multiline output
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set outputs
         id: final-outputs
         run: |
           echo "release_created=${{ steps.release.outputs.release_created }}" >> $GITHUB_OUTPUT
           echo "tag_name=${{ steps.release.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.changelog.outputs.changelog }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   build:
     name: Build ${{ matrix.os }}
@@ -114,7 +132,24 @@ jobs:
     env:
       CARGO_TERM_COLOR: always
     steps:
-      - name: Checkout code
+      - name: Wait for tag to be available
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
+          echo "Waiting for tag: $TAG_NAME"
+          for i in {1..10}; do
+            if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
+              echo "Tag '$TAG_NAME' is available."
+              exit 0
+            fi
+            echo "Tag not yet available, waiting... ($i/10)"
+            sleep 5
+          done
+          echo "::error::Tag '$TAG_NAME' not available after 50 seconds"
+          exit 1
+
+      - name: Checkout tagged release
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
@@ -250,13 +285,13 @@ jobs:
           path: release-artifacts/*
           retention-days: 7
 
-  attach-artifacts:
-    name: Attach Artifacts to Release
+  create-release:
+    name: Create Release with Artifacts
     needs: [check-ci-status, release-please, build]
     if: |
-      always() &&
       needs.release-please.outputs.release_created == 'true' &&
-      needs.check-ci-status.outputs.ci-passed == 'true'
+      needs.check-ci-status.outputs.ci-passed == 'true' &&
+      needs.build.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -274,16 +309,61 @@ jobs:
         run: |
           if [ -d "release-artifacts" ] && [ "$(ls -A release-artifacts 2>/dev/null)" ]; then
             echo "found=true" >> $GITHUB_OUTPUT
+            echo "Artifacts found:" >> $GITHUB_STEP_SUMMARY
+            ls -lh release-artifacts/ >> $GITHUB_STEP_SUMMARY
           else
             echo "found=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No artifacts found" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Attach artifacts to GitHub Release
-        if: steps.check-artifacts.outputs.found == 'true'
+      - name: Verify release tag exists
+        id: check-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
+          echo "Checking for tag: $TAG_NAME"
+
+          # Wait for the tag to become available (handles potential race with release-please)
+          for i in {1..10}; do
+            if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
+              echo "Tag '$TAG_NAME' found."
+              echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Tag '$TAG_NAME' not yet available, retrying... ($i/10)"
+            sleep 5
+          done
+
+          echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Tag '$TAG_NAME' was not found after waiting." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create GitHub Release with artifacts
+        if: |
+          steps.check-artifacts.outputs.found == 'true' &&
+          steps.check-tag.outputs.tag_exists == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
+          name: Release ${{ needs.release-please.outputs.tag_name }}
+          body: ${{ needs.release-please.outputs.changelog }}
           files: |
             release-artifacts/*
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Warn if release skipped
+        if: |
+          steps.check-artifacts.outputs.found == 'false' ||
+          steps.check-tag.outputs.tag_exists == 'false'
+        run: |
+          if [ "${{ steps.check-tag.outputs.tag_exists }}" == "false" ]; then
+            echo "⚠️ Release skipped: Tag '${{ needs.release-please.outputs.tag_name }}' was not found."
+            exit 1
+          fi
+          if [ "${{ steps.check-artifacts.outputs.found }}" == "false" ]; then
+            echo "⚠️ Release skipped: No artifacts were built."
+            exit 1
+          fi

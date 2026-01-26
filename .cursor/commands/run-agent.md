@@ -2,9 +2,12 @@
 
 Select the next best agent task from a plan and open it in Cursor, or run a specific agent file.
 
+**Note**: This command now uses `limps` CLI directly. The old `run-agent.sh` script has been
+replaced with minimal wrapper scripts.
+
 ## Invocation
 
-```
+```bash
 /run-agent [plan-number]
 /run-agent --auto
 /run-agent --agent [agent-path]
@@ -13,7 +16,8 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
 
 ## What This Command Does
 
-1. **Selects next best task** (if plan name provided) - Uses scoring algorithm based on:
+1. **Selects next best task** (if plan name provided) - Uses `npx limps next-task` which
+   implements scoring algorithm based on:
    - Dependencies (40%): Features with all dependencies PASS get highest score
    - Workload balance (30%): Agents with fewer remaining tasks get higher score
    - Priority (30%): Lower feature IDs (earlier in plan) get higher score
@@ -30,7 +34,7 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
    - **Stores issue numbers**: Agent issue number and feature subissue numbers stored in agent file
    - **Relationship**: Agent issue is parent, feature subissues are children; local agent file is source of truth
 
-3. **Assesses agent status** - Checks completion state and file organization
+3. **Assesses agent status** - Uses `npx limps status` to check completion state and file organization
 
 4. **Opens agent file in Cursor** - Opens the selected or specified agent file with context
 
@@ -40,40 +44,58 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
 
 ### Select and Run Next Task
 
-```
+```bash
 /run-agent 0004-datagrid-overhaul
+```
+
+Or use limps directly:
+
+```bash
+npx limps next-task 0004-datagrid-overhaul
 ```
 
 This will:
 
-- Analyze the plan to find the next best agent task
-- Display selection with score breakdown
-- Verify agent status
+- Use `npx limps next-task` to find the next best agent task
+- Display selection with score breakdown from limps
 - Open the agent file in Cursor
-- Show context and instructions
+- Optionally create GitHub issues in the background
 
 ### Auto-Detect Plan from Last PR
 
-```
+```bash
 /run-agent --auto
 ```
 
-Automatically detects the active plan from the last merged PR and runs the next best task. This is useful when resuming work after a PR merge.
+Automatically detects the active plan from the last merged PR and runs the next best task.
+This is useful when resuming work after a PR merge.
 
 ### Run Specific Agent File
 
-```
+```bash
 /run-agent --agent ../runi-planning-docs/plans/0004-datagrid-overhaul/agents/004_agent_selection__expander_columns.agent.md
+```
+
+Or open directly with cursor:
+
+```bash
+cursor ../runi-planning-docs/plans/0004-datagrid-overhaul/agents/004_agent_selection__expander_columns.agent.md
 ```
 
 Opens the specified agent file directly in Cursor.
 
-**To find agents**: Use `/plan-list-agents <plan-number>` to see all available agents with clickable links, then use `/run-agent --agent [path]` to run the specific one you want.
+**To find agents**: Use `npx limps list-agents <plan-number>` to see all available agents, then open the specific one with `cursor [path]`.
 
 ### Assess Agent Status
 
-```
+```bash
 /run-agent --assess 0004-datagrid-overhaul
+```
+
+Use limps directly:
+
+```bash
+npx limps status 0004-datagrid-overhaul
 ```
 
 Assesses all agents in the plan for completion status and file organization.
@@ -83,21 +105,26 @@ Assesses all agents in the plan for completion status and file organization.
 **When this command is invoked, you must:**
 
 1. **Parse arguments:**
-   - If `--auto` provided: Call `bash scripts/run-agent.sh --auto` (auto-detects plan from last PR)
-   - If `--plan` or plan name provided: Call `just run <plan-name>` or `bash scripts/run-agent.sh --plan <plan-name>`
-   - If `--agent` provided: Call `just run-agent <agent-path>` or `bash scripts/run-agent.sh --agent <agent-path>`
-   - If `--assess` provided: Call `just assess-agents <plan-name>` or `npx limps status <plan-name>`
+   - If `--auto` provided: Auto-detect plan from last PR, then use `npx limps next-task <plan-name>` to get next task
+   - If `--plan` or plan name provided: Use `npx limps next-task <plan-name>` to get next task, then open the agent file with `cursor`
+   - If `--agent` provided: Open the specified agent file directly with `cursor <agent-path>`
+   - If `--assess` provided: Use `npx limps status <plan-name>` to assess agent status
+
+**Note**: The workflow now uses `limps` CLI directly. All justfile wrapper commands have been removed.
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
-2. **Claim Task (CRITICAL - Do this first):**
-   - After determining which agent file will be opened, **immediately claim the task** using MCP `claim_task` tool
+1. **Claim Task (CRITICAL - Do this first):**
+   - After determining which agent file will be opened, **immediately claim the task** using MCP
+     `claim_task` tool
    - **Extract plan name** from agent file path: `plans/<plan-name>/agents/...` → `<plan-name>` (e.g., `0023-memory-metrics-ui`)
    - **Extract feature number(s)** from agent file content: Look for `### Feature #<number>:` patterns (e.g., `#1`, `#2`)
-   - **Construct taskId**: Format is `<plan-name>#<feature-number>` (e.g., `0023-memory-metrics-ui#1`)
+   - **Construct taskId**: Format is `<plan-name>#<feature-number>` (e.g.,
+     `0023-memory-metrics-ui#1`)
    - **Extract agentId** from agent file name: `<agent-file-name>` (e.g., `000_agent_memory_warning.agent.md`)
    - **For agents with multiple features**: Claim each feature separately, or claim the first/primary feature
    - Call: `call_mcp_tool` with server `mcp-planning-server`, tool `claim_task`, arguments:
+
      ```json
      {
        "taskId": "<plan-name>#<feature-number>",
@@ -105,7 +132,9 @@ Assesses all agents in the plan for completion status and file organization.
        "persona": "coder"
      }
      ```
+
    - **Example**: For agent file `plans/0023-memory-metrics-ui/agents/000_agent_memory_warning.agent.md` with Feature #1:
+
      ```json
      {
        "taskId": "0023-memory-metrics-ui#1",
@@ -113,11 +142,12 @@ Assesses all agents in the plan for completion status and file organization.
        "persona": "coder"
      }
      ```
+
    - **This must happen BEFORE opening the file or starting work** to prevent conflicts
    - **Note**: Server name changed from `user-runi Planning` to `mcp-planning-server` (new location: `../mcp-planning-server`)
    - **Note**: The server expects taskId format `<plan-name>#<feature-number>`, not the agent file path
 
-3. **GitHub Issue Creation:**
+2. **GitHub Issue Creation:**
    - The script automatically creates GitHub issues when an agent file is opened (if issues don't exist)
    - **Agent Issue (parent)**: Created first, represents the agent work
    - **Feature Subissues (children)**: Created for each feature using `gh sub-issue create --parent <agent-issue>`
@@ -128,31 +158,31 @@ Assesses all agents in the plan for completion status and file organization.
    - Agent issue remains open (parent issue, not closed by PR)
    - If GitHub CLI or `gh sub-issue` extension is not available, issue creation is skipped (non-blocking)
 
-4. **Display output:**
+3. **Display output:**
    - Show task selection results (if applicable)
    - Show agent status assessment
    - Show context and instructions
    - Display clickable file links
 
-5. **Provide guidance:**
+4. **Provide guidance:**
    - Explain next steps for the agent
-   - Reference related commands (`just close-feature-agent`, `just assess-agents`, `just next-task`, `just heal`)
+   - Reference related commands (`/close-feature-agent`, `npx limps status`, `npx limps next-task`, `just heal`)
    - Show how to verify completion
 
 ## Integration with Other Commands
 
-- **next-task**: Use `npx limps next-task` to get the next best task. Then use `/run-agent --auto` or `/run-agent <plan-name>` to start work
-- **plan-list-agents**: Use to find and see all agents in a plan, then use `/run-agent --agent [path]` to run a specific one
+- **next-task**: Use `npx limps next-task <plan-name>` to get the next best task, then open the agent file with `cursor`
+- **plan-list-agents**: Use `npx limps list-agents <plan-name>` to find and see all agents in a plan, then open the specific one with `cursor <path>`
 - **heal**: After completing work, use `/heal` or `just heal` to auto-cleanup completed agents
-- **list-feature-plans**: Use to discover plans, then use `/run-agent <plan-name>`
-- **close-feature-agent**: After closing, use `npx limps status <plan-name>` to assess overall status or `/run-agent --assess <plan-name>` to check cleanup
+- **list-feature-plans**: Use to discover plans, then use `npx limps next-task <plan-name>` to get next task
+- **close-feature-agent**: After closing, use `npx limps status <plan-name>` to assess overall status
 - **update-feature-plan**: After updating, use `npx limps next-task <plan-name>` to get next task
 
 ## Workflow
 
 ### Basic Workflow
 
-```
+```bash
 1. List plans: /list-feature-plans
 2. Select next task: /run-agent <plan-name>
 3. Agent implements work
@@ -163,16 +193,16 @@ Assesses all agents in the plan for completion status and file organization.
 
 ### Smart Orchestration Workflow (Recommended)
 
-```
-1. After PR merged: `npx limps next-task` (auto-detects plan, suggests next task)
-2. If cleanup needed: /heal (auto-fixes completed agents)
-3. Start next task: /run-agent --auto (uses detected plan) or /run-agent <plan-name>
+```bash
+1. After PR merged: `npx limps next-task <plan-name>` (suggests next task)
+2. If cleanup needed: `just heal` (auto-fixes completed agents)
+3. Start next task: `npx limps next-task <plan-name>` then open agent file with `cursor`
 4. Agent implements work
 5. Verify completion: /close-feature-agent <agent-path>
 6. Repeat from step 1
 ```
 
-The workflow (`npx limps next-task` → `/heal` → `/run-agent`) automatically detects which plan you're working on and suggests the best next action.
+The workflow uses limps CLI directly for task selection, then opens files with `cursor`.
 
 ## Output Format
 
@@ -197,7 +227,7 @@ The command outputs:
 
 ## Example Output
 
-```
+```text
 Next Best Task: 004_agent_selection__expander_columns.agent.md
 
 Agent: Selection & Expander Columns
@@ -224,8 +254,8 @@ Instructions:
 1. Agent file opened in Cursor
 2. Copy agent file content to Cursor Agent Chat
 3. Agent implements features per spec
-4. Run: just assess-agents 0004-datagrid-overhaul when done
-5. Run: just close-feature-agent [agent-path] to verify completion
+4. Run: npx limps status 0004-datagrid-overhaul when done
+5. Run: /close-feature-agent [agent-path] to verify completion
 ```
 
 ## Error Handling
@@ -241,5 +271,7 @@ Instructions:
 - Agent files are opened with `cursor -r` to reuse current window (if `window.openFilesInNewWindow` is set to `off`)
 - Status assessment checks both file organization and README.md status matrix
 - Scoring algorithm prioritizes unblocked tasks to maximize parallel work
-- The `--auto` flag auto-detects the active plan from the last merged PR (uses GitHub CLI to analyze PR title, branch, description, and files)
-- For best results, use `npx limps next-task` first to get the next task, then use `/run-agent --auto` to start it
+- The `--auto` flag auto-detects the active plan from the last merged PR (uses GitHub CLI to
+  analyze PR title, branch, description, and files)
+- For best results, use `npx limps next-task` first to get the next task, then use
+  `/run-agent --auto` to start it

@@ -1,5 +1,5 @@
 {
-  "productName": "Runi",
+  "productName": "runi",
   "version": "0.2.5",
   "identifier": "com.runi.app",
   "build": {
@@ -51,7 +51,18 @@
     "copyright": "",
     "category": "DeveloperTool",
     "shortDescription": "An open-source API tool for macOS and Linux",
-    "longDescription": "Runi - An open-source desktop application for API testing and development"
+    "longDescription": "Runi - An open-source desktop application for API testing and development",
+    "macOS": {
+      "dmg": {
+        "background": "icons/dmg-background.png",
+        "windowSize": {
+          "width": 660,
+          "height": 370
+        },
+        "appPosition": { "x": 180, "y": 185 },
+        "applicationFolderPosition": { "x": 480, "y": 185 }
+      }
+    }
   },
   "plugins": {}
 }

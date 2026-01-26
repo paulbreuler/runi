@@ -5,8 +5,20 @@
       "release-type": "node",
       "package-name": "runi",
       "changelog-path": "CHANGELOG.md",
-      "extra-files": ["src-tauri/Cargo.toml", "src-tauri/tauri.conf.json"],
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "src-tauri/Cargo.toml",
+          "jsonpath": "$.package.version"
+        },
+        {
+          "type": "json",
+          "path": "src-tauri/tauri.conf.json",
+          "jsonpath": "$.version"
+        }
+      ],
       "versioning-strategy": "default",
+      "skip-github-release": true,
       "changelog-sections": [
         {
           "type": "feat",
