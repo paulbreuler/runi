@@ -178,6 +178,7 @@ fn configure_method(
 }
 
 /// Extract timing information from completed curl handle.
+#[allow(clippy::too_many_lines)]
 fn extract_timing(easy: &Easy2<ResponseCollector>) -> RequestTiming {
     // Get timing results - use .ok() to convert Err to None (distinguishing "error" from "zero duration")
     // This way, if curl can't provide timing, we get None (null in JSON) vs Some(0) (measured as zero)
@@ -258,6 +259,7 @@ fn extract_timing(easy: &Easy2<ResponseCollector>) -> RequestTiming {
     // Try to get starttransfer_time, with fallback estimation if unavailable
     let first_byte_ms = match easy.starttransfer_time() {
         Ok(duration) => Some(duration_to_ms(duration)),
+        #[allow(unused_variables)]
         Err(e) => {
             #[cfg(debug_assertions)]
             debug!(

@@ -1,20 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="400" viewBox="0 0 660 400">
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="370" viewBox="0 0 660 370">
   <defs>
-    <!-- Subtle gradient for depth -->
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#141414"/>
-      <stop offset="50%" style="stop-color:#0f0f0f"/>
-      <stop offset="100%" style="stop-color:#1a1a1a"/>
+      <stop offset="0%" style="stop-color:#f8f8f8"/>
+      <stop offset="50%" style="stop-color:#f0f0f0"/>
+      <stop offset="100%" style="stop-color:#e8e8e8"/>
     </linearGradient>
 
-    <!-- Golden accent gradient matching the dog -->
-    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#b8860b;stop-opacity:0.15"/>
-      <stop offset="50%" style="stop-color:#d4a843;stop-opacity:0.08"/>
-      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:0.15"/>
-    </linearGradient>
-
-    <!-- Subtle glow for arrow -->
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge>
@@ -25,53 +16,47 @@
   </defs>
 
   <!-- Background -->
-  <rect width="660" height="400" fill="url(#bgGradient)"/>
+  <rect width="660" height="370" fill="url(#bgGradient)"/>
 
-  <!-- Subtle geometric pattern (low-poly inspired) -->
-  <g opacity="0.03" fill="#d4a843">
+  <!-- Geometric pattern -->
+  <g opacity="0.06" fill="#333333">
     <!-- Top left triangles -->
     <polygon points="0,0 80,0 40,60"/>
     <polygon points="80,0 160,0 120,60"/>
     <polygon points="40,60 120,60 80,120"/>
 
     <!-- Bottom right triangles -->
-    <polygon points="580,340 660,340 620,400"/>
-    <polygon points="500,340 580,340 540,400"/>
-    <polygon points="540,280 620,280 580,340"/>
+    <polygon points="580,310 660,310 620,370"/>
+    <polygon points="500,310 580,310 540,370"/>
+    <polygon points="540,250 620,250 580,310"/>
 
     <!-- Scattered accent triangles -->
-    <polygon points="200,320 240,320 220,360"/>
+    <polygon points="200,290 240,290 220,330"/>
     <polygon points="420,40 460,40 440,80"/>
   </g>
 
-  <!-- Horizontal golden line (subtle connection between icons) -->
-  <line x1="220" y1="220" x2="440" y2="220"
-        stroke="url(#goldGradient)" stroke-width="1" opacity="0.4"/>
-
-  <!-- Subtle arrow indicator -->
-  <g filter="url(#glow)" opacity="0.5">
-    <!-- Arrow body -->
-    <line x1="280" y1="220" x2="370" y2="220"
-          stroke="#d4a843" stroke-width="2" stroke-linecap="round"/>
-    <!-- Arrow head -->
-    <polyline points="355,210 375,220 355,230"
-              fill="none" stroke="#d4a843" stroke-width="2"
+  <!-- Arrow indicator -->
+  <g filter="url(#glow)" opacity="0.7">
+    <line x1="280" y1="185" x2="370" y2="185"
+          stroke="#555555" stroke-width="2" stroke-linecap="round"/>
+    <polyline points="355,175 375,185 355,195"
+              fill="none" stroke="#555555" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
-  <!-- "runi" wordmark (subtle, bottom center) -->
-  <text x="330" y="375"
+  <!-- "runi" wordmark -->
+  <text x="330" y="345"
         font-family="system-ui, -apple-system, sans-serif"
         font-size="14" font-weight="300" letter-spacing="4"
-        fill="#d4a843" opacity="0.3" text-anchor="middle">
+        fill="#555555" opacity="0.6" text-anchor="middle">
     runi
   </text>
 
-  <!-- Tagline (very subtle) -->
-  <text x="330" y="392"
+  <!-- Tagline -->
+  <text x="330" y="362"
         font-family="system-ui, -apple-system, sans-serif"
         font-size="9" font-weight="300" letter-spacing="1"
-        fill="#666666" opacity="0.4" text-anchor="middle">
+        fill="#777777" opacity="0.6" text-anchor="middle">
     See the truth about your APIs
   </text>
 </svg>

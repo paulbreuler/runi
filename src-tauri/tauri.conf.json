@@ -1,5 +1,5 @@
 {
-  "productName": "Runi",
+  "productName": "runi",
   "version": "0.2.5",
   "identifier": "com.runi.app",
   "build": {
@@ -57,11 +57,10 @@
         "background": "icons/dmg-background.png",
         "windowSize": {
           "width": 660,
-          "height": 400
+          "height": 370
         },
-        "windowPosition": { "x": 400, "y": 400 },
-        "appPosition": { "x": 180, "y": 220 },
-        "applicationFolderPosition": { "x": 480, "y": 220 }
+        "appPosition": { "x": 180, "y": 185 },
+        "applicationFolderPosition": { "x": 480, "y": 185 }
       }
     }
   },
