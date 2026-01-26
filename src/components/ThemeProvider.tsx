@@ -5,11 +5,12 @@
 
 /**
  * @file ThemeProvider - Radix UI Themes-inspired theme context
- * @description Sets theme class and data attributes on the ThemeProvider wrapper element for Radix-style theming
+ * @description Applies theme class and data attributes to document.documentElement (html)
+ * for proper Radix-style theming that affects all global styles including body.
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/theme.tsx
  */
 
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useEffect, type ReactNode } from 'react';
 
 /**
  * Available accent colors for the theme
@@ -59,14 +60,15 @@ export interface ThemeProviderProps {
 }
 
 /**
- * ThemeProvider component that sets data attributes for Radix-style theming
+ * ThemeProvider component that applies theme to document.documentElement
  *
- * Sets the following data attributes on the wrapper div:
+ * Sets the following on <html> element:
+ * - Theme class (`.dark` or `.light`) for Tailwind dark mode
  * - `data-accent-color`: The current accent color
  * - `data-gray-color`: The current gray color scale
  * - `data-has-background`: Whether background is applied
  *
- * Also applies the appropriate theme class (`.dark` or `.light`)
+ * This ensures global styles (body background, text colors) respond to theme changes.
  *
  * @example
  * ```tsx
@@ -87,30 +89,37 @@ export const ThemeProvider = ({
     [appearance, accentColor, grayColor]
   );
 
-  const getThemeClass = (): string => {
-    if (appearance === 'dark') {
-      return 'dark';
-    }
-    if (appearance === 'light') {
-      return 'light';
-    }
-    return '';
-  };
-  const themeClass = getThemeClass();
+  // Apply theme class and data attributes to document.documentElement
+  useEffect(() => {
+    const root = document.documentElement;
 
-  return (
-    <ThemeContext.Provider value={contextValue}>
-      <div
-        className={themeClass}
-        data-accent-color={accentColor}
-        data-gray-color={grayColor}
-        data-has-background={hasBackground}
-        data-testid="theme-provider"
-      >
-        {children}
-      </div>
-    </ThemeContext.Provider>
-  );
+    // Apply theme class
+    if (appearance === 'dark') {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    } else if (appearance === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      // inherit - remove both
+      root.classList.remove('dark', 'light');
+    }
+
+    // Apply data attributes
+    root.setAttribute('data-accent-color', accentColor);
+    root.setAttribute('data-gray-color', grayColor);
+    root.setAttribute('data-has-background', String(hasBackground));
+
+    // Cleanup on unmount
+    return (): void => {
+      root.classList.remove('dark', 'light');
+      root.removeAttribute('data-accent-color');
+      root.removeAttribute('data-gray-color');
+      root.removeAttribute('data-has-background');
+    };
+  }, [appearance, accentColor, grayColor, hasBackground]);
+
+  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
 };
 
 /**

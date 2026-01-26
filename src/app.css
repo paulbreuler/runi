@@ -12,7 +12,7 @@
 @import './styles/radix-colors.css';
 
 /* ============================================
-   Theme Token Mappings (data attribute selectors)
+   Theme Token Mappings (:root / .light selectors)
    ============================================ */
 @import './styles/theme-tokens.css';
 
