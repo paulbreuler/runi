@@ -1,0 +1,120 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ *
+ * Theme Token Mappings
+ * Data attribute selectors that map raw Radix color scales to accent/semantic tokens
+ * Following Radix Themes 3 architecture
+ *
+ * @see https://www.radix-ui.com/themes/docs/theme/color
+ */
+
+/* ============================================
+   Accent Color Mapping via Data Attributes
+   (Radix Themes pattern)
+   ============================================ */
+
+/* Blue accent (default) */
+:where([data-accent-color='blue']) {
+  --accent-1: var(--blue-1);
+  --accent-2: var(--blue-2);
+  --accent-3: var(--blue-3);
+  --accent-4: var(--blue-4);
+  --accent-5: var(--blue-5);
+  --accent-6: var(--blue-6);
+  --accent-7: var(--blue-7);
+  --accent-8: var(--blue-8);
+  --accent-9: var(--blue-9);
+  --accent-10: var(--blue-10);
+  --accent-11: var(--blue-11);
+  --accent-12: var(--blue-12);
+  --accent-a1: var(--blue-a1);
+  --accent-a2: var(--blue-a2);
+  --accent-a3: var(--blue-a3);
+  --accent-a4: var(--blue-a4);
+  --accent-a5: var(--blue-a5);
+  --accent-a6: var(--blue-a6);
+  --accent-a7: var(--blue-a7);
+  --accent-a8: var(--blue-a8);
+  --accent-a9: var(--blue-a9);
+  --accent-a10: var(--blue-a10);
+  --accent-a11: var(--blue-a11);
+  --accent-a12: var(--blue-a12);
+  --accent-contrast: var(--blue-contrast);
+  --accent-surface: var(--blue-surface);
+  --accent-indicator: var(--blue-indicator);
+  --accent-track: var(--blue-track);
+}
+
+/* Future: Add additional accent colors when scales are available */
+/* :where([data-accent-color='green']) { ... } */
+/* :where([data-accent-color='red']) { ... } */
+/* :where([data-accent-color='amber']) { ... } */
+/* :where([data-accent-color='purple']) { ... } */
+
+/* ============================================
+   Focus Tokens (derived from accent)
+   ============================================ */
+:where([data-accent-color]) {
+  --focus-1: var(--accent-1);
+  --focus-2: var(--accent-2);
+  --focus-3: var(--accent-3);
+  --focus-4: var(--accent-4);
+  --focus-5: var(--accent-5);
+  --focus-6: var(--accent-6);
+  --focus-7: var(--accent-7);
+  --focus-8: var(--accent-8);
+  --focus-9: var(--accent-9);
+  --focus-10: var(--accent-10);
+  --focus-11: var(--accent-11);
+  --focus-12: var(--accent-12);
+}
+
+/* ============================================
+   Semantic Background Tokens - Dark Theme
+   ============================================ */
+:where(.dark) {
+  --color-background: var(--gray-1);
+  --color-surface: var(--gray-2);
+  --color-panel-solid: var(--gray-3);
+  --color-panel-translucent: var(--gray-a3);
+  --color-overlay: var(--gray-a8);
+}
+
+/* ============================================
+   Semantic Background Tokens - Light Theme
+   ============================================ */
+:where(.light) {
+  --color-background: #fff;
+  --color-surface: var(--gray-2);
+  --color-panel-solid: var(--gray-3);
+  --color-panel-translucent: var(--gray-a3);
+  --color-overlay: var(--gray-a8);
+}
+
+/* ============================================
+   Legacy Token Aliases (for gradual migration)
+   Maps old runi tokens to new Radix-idiomatic names
+   ============================================ */
+:where(.dark),
+:where(.light) {
+  /* Background aliases */
+  --color-bg-app: var(--color-background);
+  --color-bg-surface: var(--color-surface);
+  --color-bg-raised: var(--color-panel-solid);
+  --color-bg-elevated: var(--gray-4);
+
+  /* Text aliases */
+  --color-text-primary: var(--gray-12);
+  --color-text-secondary: var(--gray-11);
+  --color-text-muted: var(--gray-9);
+
+  /* Border aliases */
+  --color-border-subtle: var(--gray-4);
+  --color-border-default: var(--gray-6);
+  --color-border-emphasis: var(--gray-8);
+
+  /* Accent aliases */
+  --color-accent-blue: var(--accent-9);
+  --color-accent-blue-hover: var(--accent-10);
+}

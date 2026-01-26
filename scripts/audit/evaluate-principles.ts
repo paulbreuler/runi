@@ -20,7 +20,7 @@ import type {
 } from './types';
 
 /**
- * All 10 design principles from runi's design system
+ * All 11 design principles from runi's design system
  */
 const ALL_PRINCIPLES: DesignPrinciple[] = [
   'grayscale-foundation',
@@ -33,6 +33,7 @@ const ALL_PRINCIPLES: DesignPrinciple[] = [
   'dark-mode-compatible',
   'motion-animations',
   'zen-aesthetic',
+  'radix-compliance',
 ];
 
 /**
@@ -118,7 +119,8 @@ const CSS_TRANSITION_PATTERNS = [
 function evaluatePrinciple(
   principle: DesignPrinciple,
   content: string,
-  lines: string[]
+  lines: string[],
+  filePath: string = ''
 ): PrincipleEvaluation {
   const violations: PrincipleViolation[] = [];
   const evidence: string[] = [];
@@ -154,6 +156,9 @@ function evaluatePrinciple(
 
     case 'zen-aesthetic':
       return evaluateZenAesthetic(content, lines);
+
+    case 'radix-compliance':
+      return evaluateRadixCompliance(content, lines, filePath);
 
     default:
       return {
@@ -729,6 +734,174 @@ function evaluateZenAesthetic(content: string, lines: string[]): PrincipleEvalua
 }
 
 /**
+ * Patterns for old token names that should be migrated to Radix-idiomatic names
+ */
+const OLD_TOKEN_PATTERNS = [
+  { pattern: /--color-bg-app/g, suggestion: 'Use --color-background instead' },
+  { pattern: /--color-bg-surface/g, suggestion: 'Use --color-surface instead' },
+  { pattern: /--color-bg-raised/g, suggestion: 'Use --color-panel-solid instead' },
+  {
+    pattern: /--color-bg-elevated/g,
+    suggestion: 'Use --gray-4 or --color-panel-translucent instead',
+  },
+  { pattern: /--color-text-primary/g, suggestion: 'Use --gray-12 instead' },
+  { pattern: /--color-text-secondary/g, suggestion: 'Use --gray-11 instead' },
+  { pattern: /--color-text-muted/g, suggestion: 'Use --gray-9 instead' },
+  { pattern: /--color-border-subtle/g, suggestion: 'Use --gray-4 instead' },
+  { pattern: /--color-border-default/g, suggestion: 'Use --gray-6 instead' },
+  { pattern: /--color-border-emphasis/g, suggestion: 'Use --gray-8 instead' },
+  { pattern: /--color-accent-blue(?!-hover)/g, suggestion: 'Use --accent-9 instead' },
+];
+
+/**
+ * Patterns for Radix-idiomatic tokens (good)
+ */
+const RADIX_TOKEN_PATTERNS = [
+  /--gray-[1-9][0-2]?/g,
+  /--blue-[1-9][0-2]?/g,
+  /--accent-[1-9][0-2]?/g,
+  /--focus-[1-9][0-2]?/g,
+  /--color-background/g,
+  /--color-surface/g,
+  /--color-panel-solid/g,
+  /--color-panel-translucent/g,
+];
+
+/**
+ * Evaluate Radix UI token compliance
+ */
+function evaluateRadixCompliance(
+  content: string,
+  lines: string[],
+  filePath: string
+): PrincipleEvaluation {
+  const violations: PrincipleViolation[] = [];
+  const evidence: string[] = [];
+  const recommendations: string[] = [];
+
+  // Skip theme/style files - they define the tokens, not use them
+  const isThemeFile =
+    filePath.includes('app.css') ||
+    filePath.includes('radix-colors') ||
+    filePath.includes('theme-tokens') ||
+    filePath.includes('styles/');
+
+  if (isThemeFile) {
+    return {
+      principle: 'radix-compliance',
+      status: 'not-applicable',
+      score: 100,
+      violations: [],
+      evidence: ['Theme file - token definitions, not usage'],
+      recommendations: [],
+    };
+  }
+
+  // Count Radix-idiomatic tokens
+  let radixTokenCount = 0;
+  RADIX_TOKEN_PATTERNS.forEach((pattern) => {
+    const matches = content.match(pattern) || [];
+    radixTokenCount += matches.length;
+  });
+
+  if (radixTokenCount > 0) {
+    evidence.push(`Found ${radixTokenCount} Radix-idiomatic token usages`);
+  }
+
+  // Check for old token names that should be migrated
+  lines.forEach((line, index) => {
+    const lineNum = index + 1;
+
+    // Skip import lines and comments
+    if (
+      line.trim().startsWith('import') ||
+      line.trim().startsWith('//') ||
+      line.trim().startsWith('*') ||
+      line.trim().startsWith('/*')
+    ) {
+      return;
+    }
+
+    OLD_TOKEN_PATTERNS.forEach(({ pattern, suggestion }) => {
+      const matches = line.match(pattern);
+      if (matches) {
+        matches.forEach((match) => {
+          // Ignore matches in comments
+          if (line.indexOf('//') !== -1 && line.indexOf('//') < line.indexOf(match)) {
+            return;
+          }
+
+          violations.push({
+            line: lineNum,
+            code: match,
+            message: `Legacy token detected: ${match}`,
+            severity: 'warning',
+            suggestion,
+          });
+        });
+      }
+    });
+
+    // Check for hardcoded colors in style props/attributes
+    const hardcodedColorPatterns = [
+      { pattern: /#[0-9a-fA-F]{3,8}\b/g, name: 'hex color' },
+      { pattern: /rgba?\s*\([^)]+\)/gi, name: 'rgb/rgba color' },
+      { pattern: /hsla?\s*\([^)]+\)/gi, name: 'hsl/hsla color' },
+    ];
+
+    hardcodedColorPatterns.forEach(({ pattern, name }) => {
+      const matches = line.match(pattern);
+      if (matches) {
+        matches.forEach((match) => {
+          // Skip CSS variable definitions and oklch values (they're defining tokens)
+          if (line.includes('--') && line.includes(':')) {
+            return;
+          }
+          // Skip oklch values (design system definitions)
+          if (line.includes('oklch')) {
+            return;
+          }
+          // Skip color-gamut media queries
+          if (line.includes('color-gamut') || line.includes('display-p3')) {
+            return;
+          }
+          // Ignore matches in comments
+          if (line.indexOf('//') !== -1 && line.indexOf('//') < line.indexOf(match)) {
+            return;
+          }
+
+          violations.push({
+            line: lineNum,
+            code: match,
+            message: `Hardcoded ${name} detected: ${match}`,
+            severity: 'error',
+            suggestion: 'Use Radix color tokens (--gray-*, --accent-*) or semantic tokens',
+          });
+        });
+      }
+    });
+  });
+
+  const score = violations.length === 0 ? 100 : Math.max(0, 100 - violations.length * 5);
+  const status: ComplianceStatus =
+    violations.length === 0 ? 'pass' : violations.length < 5 ? 'partial' : 'fail';
+
+  if (violations.length > 0) {
+    recommendations.push('Migrate legacy tokens to Radix-idiomatic names');
+    recommendations.push('Replace hardcoded colors with semantic tokens');
+  }
+
+  return {
+    principle: 'radix-compliance',
+    status,
+    score,
+    violations,
+    evidence,
+    recommendations,
+  };
+}
+
+/**
  * Calculate overall score from principle evaluations
  */
 function calculateOverallScore(principles: PrincipleEvaluation[]): number {
@@ -767,7 +940,7 @@ export async function evaluatePrinciples(componentPath: string): Promise<Princip
   const componentName = basename(componentPath, '.tsx').replace('.jsx', '');
 
   const principles = ALL_PRINCIPLES.map((principle) =>
-    evaluatePrinciple(principle, content, lines)
+    evaluatePrinciple(principle, content, lines, componentPath)
   );
 
   return {

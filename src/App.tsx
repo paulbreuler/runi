@@ -9,17 +9,20 @@ import { HomePage } from './routes/index';
 import { DevToolsPopout } from './routes/devtools-popout';
 import { ToastProvider } from './components/ui/Toast';
 import { MemoryWarningListener } from './components/Memory/MemoryWarningListener';
+import { ThemeProvider } from './components/ThemeProvider';
 
 export const App = (): React.JSX.Element => {
   return (
-    <ToastProvider>
-      <MemoryWarningListener />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/devtools-popout" element={<DevToolsPopout />} />
-        </Routes>
-      </BrowserRouter>
-    </ToastProvider>
+    <ThemeProvider appearance="dark" accentColor="blue" grayColor="gray">
+      <ToastProvider>
+        <MemoryWarningListener />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/devtools-popout" element={<DevToolsPopout />} />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </ThemeProvider>
   );
 };

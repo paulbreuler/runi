@@ -1,83 +1,74 @@
-@import 'tailwindcss';
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ *
+ * runi Design System
+ * Based on Radix Themes 3 architecture with Tailwind CSS utilities
+ */
 
+/* ============================================
+   Radix Color Scales (raw values)
+   ============================================ */
+@import './styles/radix-colors.css';
+
+/* ============================================
+   Theme Token Mappings (data attribute selectors)
+   ============================================ */
+@import './styles/theme-tokens.css';
+
+/* ============================================
+   Tailwind CSS
+   ============================================ */
+@import 'tailwindcss';
 @import 'tw-animate-css';
 
 /* ============================================
-   runi Design System
-   Based on basestate.io styling approach
+   Tailwind Theme Extensions
    ============================================ */
-
 @theme {
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* Background Colors - Dark Mode (default) */
-  --color-bg-app: #0a0a0a;
-  --color-bg-surface: #141414;
-  --color-bg-raised: #1e1e1e;
-  --color-bg-elevated: #262626;
-
-  /* Text Colors */
-  --color-text-primary: #f5f5f5;
-  --color-text-secondary: #a3a3a3;
-  --color-text-muted: #636363;
-
-  /* Border Colors */
-  --color-border-subtle: #1e1e1e;
-  --color-border-default: #2e2e2e;
-  --color-border-emphasis: #404040;
-
-  /* Accent Colors - runi palette - using oklch for opacity modifier support */
-  --color-accent-blue: oklch(0.623 0.214 259.1);
-  --color-accent-blue-hover: oklch(0.546 0.245 262.9);
-  --color-accent-purple: oklch(0.627 0.265 303.9);
-  --color-accent-green: oklch(0.723 0.191 142.5);
-  --color-accent-amber: oklch(0.769 0.188 70.08);
-  --color-accent-red: oklch(0.637 0.237 25.33);
-
-  /* HTTP Method Colors - Industry Standard
-   * GET: Blue (read, safe, neutral)
-   * POST: Green (create, positive action)
-   * PUT/PATCH: Orange/Yellow (update, caution)
-   * DELETE: Red (destructive, warning)
-   * HEAD/OPTIONS: Gray (meta, less frequent)
-   */
-  --color-method-get: oklch(0.623 0.214 259.1); /* Blue - accent-blue */
-  --color-method-post: oklch(0.723 0.191 142.5); /* Green - signal-success */
-  --color-method-put: oklch(0.769 0.188 70.08); /* Orange - signal-warning */
-  --color-method-patch: oklch(0.769 0.188 70.08); /* Orange - same as PUT */
-  --color-method-delete: oklch(0.637 0.237 25.33); /* Red - signal-error */
-  --color-method-head: oklch(0.5 0 0); /* Gray - text-muted */
-  --color-method-options: oklch(0.5 0 0); /* Gray - same as HEAD */
-
-  /* Signal Colors - using oklch for opacity modifier support */
+  /* Signal Colors (runi-specific, until full Radix scales added) */
   --color-signal-success: oklch(0.723 0.191 142.5);
   --color-signal-warning: oklch(0.769 0.188 70.08);
   --color-signal-error: oklch(0.637 0.237 25.33);
   --color-signal-ai: oklch(0.627 0.265 303.9);
 
-  /* Legacy shadcn/ui compatibility - mapped to new semantic names */
-  --color-background: var(--color-bg-app);
-  --color-foreground: var(--color-text-primary);
-  --color-card: var(--color-bg-surface);
-  --color-card-foreground: var(--color-text-primary);
-  --color-popover: var(--color-bg-surface);
-  --color-popover-foreground: var(--color-text-primary);
-  --color-primary: var(--color-accent-blue);
-  --color-primary-foreground: #ffffff;
-  --color-secondary: var(--color-bg-raised);
-  --color-secondary-foreground: var(--color-text-primary);
-  --color-muted: var(--color-bg-raised);
-  --color-muted-foreground: var(--color-text-secondary);
-  --color-accent: var(--color-bg-raised);
-  --color-accent-foreground: var(--color-text-primary);
+  /* HTTP Method Colors */
+  --color-method-get: var(--accent-9);
+  --color-method-post: var(--color-signal-success);
+  --color-method-put: var(--color-signal-warning);
+  --color-method-patch: var(--color-signal-warning);
+  --color-method-delete: var(--color-signal-error);
+  --color-method-head: var(--gray-9);
+  --color-method-options: var(--gray-9);
+
+  /* Accent Colors (for Tailwind utility compatibility) */
+  --color-accent-purple: oklch(0.627 0.265 303.9);
+  --color-accent-green: oklch(0.723 0.191 142.5);
+  --color-accent-amber: oklch(0.769 0.188 70.08);
+  --color-accent-red: oklch(0.637 0.237 25.33);
+
+  /* shadcn/ui compatibility layer */
+  --color-foreground: var(--gray-12);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--gray-12);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--gray-12);
+  --color-primary: var(--accent-9);
+  --color-primary-foreground: var(--accent-contrast);
+  --color-secondary: var(--color-panel-solid);
+  --color-secondary-foreground: var(--gray-12);
+  --color-muted: var(--color-panel-solid);
+  --color-muted-foreground: var(--gray-11);
+  --color-accent: var(--color-panel-solid);
+  --color-accent-foreground: var(--gray-12);
   --color-destructive: var(--color-signal-error);
-  --color-border: var(--color-border-default);
-  --color-input: var(--color-bg-raised);
-  --color-ring: var(
-    --color-accent-blue
-  ); /* Default fallback - components should use accent-blue explicitly */
+  --color-border: var(--gray-6);
+  --color-input: var(--color-panel-solid);
+  --color-ring: var(--focus-8);
 }
 
 /* ============================================
@@ -90,8 +81,8 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-bg-app);
-  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  color: var(--gray-12);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -99,7 +90,7 @@ body {
 
 @layer base {
   * {
-    @apply border-border-default outline-ring/50;
+    @apply border-[var(--gray-6)] outline-[var(--focus-8)]/50;
   }
 }
 
@@ -163,16 +154,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-surface);
+  background: var(--color-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-emphasis);
+  background: var(--gray-8);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+  background: var(--gray-9);
 }
 
 /* Hide scrollbars while preserving scroll behavior */
@@ -244,8 +235,8 @@ aside[data-testid='sidebar'] {
    ============================================ */
 
 ::selection {
-  background: oklch(0.623 0.214 259.1 / 0.3); /* accent-blue with 30% opacity */
-  color: var(--color-text-primary);
+  background: var(--accent-a5);
+  color: var(--gray-12);
 }
 
 /* ============================================
@@ -267,7 +258,7 @@ aside[data-testid='sidebar'] {
 
 /* Remove left padding from container when it contains line numbers */
 /* This overrides the px-2 padding on borderless variant */
-/* 
+/*
  * Note: !important is necessary here because we need to override Tailwind's utility classes
  * (px-2) when line numbers are present. The :has() selector provides specificity but
  * Tailwind's utility classes have high specificity, so !important is required to ensure
