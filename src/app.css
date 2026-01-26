@@ -30,6 +30,32 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
+  /* ============================================
+     Semantic Color Tokens
+     Uses --color-* prefix so Tailwind utilities work:
+     - bg-bg-app, bg-bg-surface use --color-bg-*
+     - text-text-primary, text-text-muted use --color-text-*
+     - border-border-subtle use --color-border-*
+     ============================================ */
+
+  /* Background tokens (used as bg-bg-app, bg-bg-surface, etc.) */
+  --color-bg-app: var(--color-background);
+  --color-bg-surface: var(--color-surface);
+  --color-bg-raised: var(--color-panel-solid);
+  --color-bg-elevated: var(--gray-4);
+  --color-bg-overlay: var(--color-overlay);
+
+  /* Text tokens (used as text-text-primary, text-text-muted, etc.) */
+  --color-text-primary: var(--gray-12);
+  --color-text-secondary: var(--gray-11);
+  --color-text-muted: var(--gray-9);
+  --color-text-contrast: var(--gray-1);
+
+  /* Border tokens (used as border-border-subtle, border-border-default, etc.) */
+  --color-border-subtle: var(--gray-5);
+  --color-border-default: var(--gray-6);
+  --color-border-emphasis: var(--gray-7);
+
   /* Signal Colors (runi-specific, until full Radix scales added) */
   --color-signal-success: oklch(0.723 0.191 142.5);
   --color-signal-warning: oklch(0.769 0.188 70.08);
@@ -46,6 +72,8 @@
   --color-method-options: var(--gray-9);
 
   /* Accent Colors (for Tailwind utility compatibility) */
+  --color-accent-blue: var(--accent-9);
+  --color-accent-blue-hover: var(--accent-10);
   --color-accent-purple: oklch(0.627 0.265 303.9);
   --color-accent-green: oklch(0.723 0.191 142.5);
   --color-accent-amber: oklch(0.769 0.188 70.08);

@@ -83,3 +83,6 @@ prompts/
 .tmp/
 .cursor/code-review-report.md
 .cursor/plans/
+
+# Audit scripts (moved to external glimps extension)
+scripts/audit/
