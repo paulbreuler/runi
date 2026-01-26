@@ -66,7 +66,7 @@ generate-types:
 # - Runs npm ci to install dependencies
 # Note: If token not available, individual commands use npx fallback for tools that don't need motion-plus
 ensure-deps:
-    @bash -c 'if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/vite" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then source .env && just install; elif [ -n "$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
+    @bash -c 'if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/vite" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then export $(grep -v "^#" .env | xargs) && just install; elif [ -n "$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
 
 # Update all dependencies
 update:
