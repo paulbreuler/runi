@@ -225,26 +225,90 @@ export const toast = {
 };
 
 /**
+ * Event bus bridge handler function.
+ * Extracted to allow testing and reuse.
+ */
+const handleToastEvent = (event: { payload: ToastEventPayload }): void => {
+  const { type, message, details, correlationId, duration, testId } = event.payload;
+
+  // Map event type to variant (they're the same values)
+  const variant: ToastVariant = type;
+
+  useToastStore.getState().addToast(variant, {
+    message,
+    details,
+    correlationId,
+    duration,
+    testId,
+  });
+};
+
+/**
+ * Track if event bridge is already set up to prevent duplicate listeners.
+ */
+let eventBridgeSetup = false;
+
+/**
+ * Store the cleanup function for the event bridge.
+ * Used internally for proper cleanup in tests.
+ */
+let eventBridgeCleanup: (() => void) | null = null;
+
+/**
  * Set up the event bus bridge to listen for toast.show events.
- * Call this once when the ToastProvider mounts.
+ * Safe to call multiple times - only sets up once.
  *
  * @returns Cleanup function to unsubscribe
  */
-export const setupToastEventBridge = (): (() => void) => {
-  const unsubscribe = globalEventBus.on<ToastEventPayload>('toast.show', (event) => {
-    const { type, message, details, correlationId, duration, testId } = event.payload;
-
-    // Map event type to variant (they're the same values)
-    const variant: ToastVariant = type;
-
-    useToastStore.getState().addToast(variant, {
-      message,
-      details,
-      correlationId,
-      duration,
-      testId,
-    });
-  });
-
-  return unsubscribe;
+/** No-op cleanup function for when bridge is already set up */
+const noopCleanup = (): void => {
+  // No-op: bridge already set up, cleanup handled by original setup
 };
+
+export const setupToastEventBridge = (): (() => void) => {
+  if (eventBridgeSetup) {
+    // Already set up, return the existing cleanup function or no-op
+    return eventBridgeCleanup ?? noopCleanup;
+  }
+
+  eventBridgeSetup = true;
+  const unsubscribe = globalEventBus.on<ToastEventPayload>('toast.show', handleToastEvent);
+
+  const cleanup = (): void => {
+    unsubscribe();
+    eventBridgeSetup = false;
+    eventBridgeCleanup = null;
+  };
+
+  eventBridgeCleanup = cleanup;
+
+  return cleanup;
+};
+
+/**
+ * Reset the event bridge state for testing purposes.
+ * This allows tests to properly clean up and re-initialize the bridge.
+ *
+ * @internal Only for use in tests
+ */
+export const __resetEventBridgeForTesting = (): void => {
+  if (eventBridgeCleanup !== null) {
+    eventBridgeCleanup();
+  }
+  eventBridgeSetup = false;
+  eventBridgeCleanup = null;
+};
+
+/**
+ * Initialize the event bridge immediately at module load time.
+ * This ensures toast events are captured even before React renders.
+ *
+ * Note: In test environments, the mock may not be ready yet, so we
+ * wrap this in a try-catch. The bridge can be manually set up in tests.
+ */
+try {
+  setupToastEventBridge();
+} catch {
+  // Initialization may fail in test environments where mocks aren't ready.
+  // Tests should call setupToastEventBridge() after setting up mocks.
+}

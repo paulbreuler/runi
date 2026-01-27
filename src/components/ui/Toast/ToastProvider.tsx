@@ -8,7 +8,7 @@ import { AnimatePresence } from 'motion/react';
 import * as ToastPrimitives from '@radix-ui/react-toast';
 import { cn } from '@/utils/cn';
 import { Toast } from './Toast';
-import { useToastStore, setupToastEventBridge } from './useToast';
+import { useToastStore } from './useToast';
 
 export interface ToastProviderProps {
   /** Children to render within the provider */
@@ -39,11 +39,8 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     [toastsMap]
   );
 
-  // Set up event bus bridge on mount
-  React.useEffect(() => {
-    const unsubscribe = setupToastEventBridge();
-    return unsubscribe;
-  }, []);
+  // Note: Event bus bridge is set up at module load time in useToast.ts
+  // This ensures events are captured even before React renders
 
   return (
     <ToastPrimitives.Provider swipeDirection="right">

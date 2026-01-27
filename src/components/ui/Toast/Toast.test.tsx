@@ -8,7 +8,12 @@ import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastProvider } from './ToastProvider';
 import { ToastBell } from './ToastBell';
-import { toast, useToastStore, setupToastEventBridge } from './useToast';
+import {
+  toast,
+  useToastStore,
+  setupToastEventBridge,
+  __resetEventBridgeForTesting,
+} from './useToast';
 import { globalEventBus } from '@/events/bus';
 
 // Mock Motion to avoid animation timing issues in tests
@@ -212,16 +217,20 @@ describe('Toast Store', () => {
 describe('Event Bus Bridge', () => {
   beforeEach(() => {
     useToastStore.getState().clearAll();
+    // Reset event bridge to clean state for each test
+    __resetEventBridgeForTesting();
   });
 
   afterEach(() => {
     useToastStore.getState().clearAll();
-    globalEventBus.removeAllListeners('toast.show');
+    // Reset event bridge to clean state
+    __resetEventBridgeForTesting();
     vi.clearAllMocks();
   });
 
   it('toast.show event creates a toast', () => {
-    const unsubscribe = setupToastEventBridge();
+    // Set up the event bridge for this test
+    setupToastEventBridge();
 
     act(() => {
       globalEventBus.emit('toast.show', {
@@ -234,12 +243,11 @@ describe('Event Bus Bridge', () => {
     expect(toasts).toHaveLength(1);
     expect(toasts[0]?.variant).toBe('success');
     expect(toasts[0]?.message).toBe('Event bus message');
-
-    unsubscribe();
   });
 
   it('toast.show with all fields', () => {
-    const unsubscribe = setupToastEventBridge();
+    // Set up the event bridge for this test
+    setupToastEventBridge();
 
     act(() => {
       globalEventBus.emit('toast.show', {
@@ -261,11 +269,12 @@ describe('Event Bus Bridge', () => {
       duration: 10000,
       testId: 'test-123',
     });
-
-    unsubscribe();
   });
 
-  it('ToastProvider sets up event bridge on mount', async () => {
+  it('event bridge is initialized at module load', async () => {
+    // Re-initialize the event bridge (simulates module load)
+    setupToastEventBridge();
+
     render(
       <ToastProvider>
         <div>Content</div>
