@@ -165,17 +165,19 @@ export const Toast = React.forwardRef<HTMLLIElement, ToastProps>(
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <ToastPrimitives.Title className="text-xs font-medium text-text-primary line-clamp-2">
-                  {toast.message}
+                <div className="flex items-start gap-1.5">
+                  <ToastPrimitives.Title className="text-xs font-medium text-text-primary line-clamp-2">
+                    {toast.message}
+                  </ToastPrimitives.Title>
                   {toast.count > 1 && (
                     <span
-                      className="ml-1.5 text-text-muted font-normal"
+                      className="shrink-0 text-xs text-text-muted font-normal"
                       data-testid={`toast-count-${toast.id}`}
                     >
                       (x{toast.count})
                     </span>
                   )}
-                </ToastPrimitives.Title>
+                </div>
 
                 {toast.details !== undefined && (
                   <ToastPrimitives.Description className="mt-0.5 text-xs text-text-secondary line-clamp-1">
