@@ -210,7 +210,7 @@ export const StatusBar = (): React.JSX.Element => {
         </span>
       </div>
       {/* Right side - metrics and version */}
-      <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1">
         {/* Metrics popover */}
         <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
           <PopoverTrigger asChild>

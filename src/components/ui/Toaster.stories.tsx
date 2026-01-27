@@ -23,7 +23,6 @@ const ToasterStoryWrapper = ({ children }: { children?: React.ReactNode }): Reac
 
 const meta = {
   title: 'UI/Toaster',
-  component: Toaster,
   decorators: [
     (Story): React.JSX.Element => (
       <ToasterStoryWrapper>
@@ -45,10 +44,33 @@ const meta = {
     },
   },
   tags: ['autodocs'],
-} satisfies Meta<typeof Toaster>;
+} satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/**
+ * Default story showing the Toaster component.
+ * The Toaster itself is invisible until toasts are triggered.
+ */
+export const Default: Story = {
+  render: (): React.JSX.Element => (
+    <div className="p-8">
+      <p className="text-text-muted text-sm mb-4">
+        The Toaster component renders the toast container. Toasts appear in the bottom-right corner
+        when triggered via <code className="text-xs">showToast()</code> or{' '}
+        <code className="text-xs">globalEventBus.emit(&apos;toast.show&apos;, ...)</code>.
+      </p>
+      <Button
+        onClick={(): void => {
+          showToast({ type: 'info', message: 'Toaster is working!' });
+        }}
+      >
+        Show Test Toast
+      </Button>
+    </div>
+  ),
+};
 
 /**
  * Helper component to trigger toasts via button click.

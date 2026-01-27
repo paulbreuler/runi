@@ -515,6 +515,7 @@ export const ToastBell: React.FC = () => {
         key={shakeKey}
         animate={shakeKey > 0 ? bellShakeAnimation : undefined}
         transition={bellShakeTransition}
+        className="flex items-center justify-center w-2"
       >
         <Bell className="w-3 h-3" />
       </motion.div>
