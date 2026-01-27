@@ -109,6 +109,8 @@ export const Playground: Story = {
           onSaveSelection={noop}
           onClearAll={noopAsync}
           isSaveSelectionDisabled={args.isSaveSelectionDisabled}
+          autoScroll={true}
+          onAutoScrollToggle={noop}
         />
       </div>
     );
@@ -237,6 +239,8 @@ export const FilterInteractionsTest: Story = {
           onSaveSelection={noop}
           onClearAll={noopAsync}
           isSaveSelectionDisabled={false}
+          autoScroll={true}
+          onAutoScrollToggle={noop}
         />
       </div>
     );

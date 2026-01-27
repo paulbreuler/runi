@@ -28,6 +28,10 @@ export interface FilterBarProps {
   onClearAll: () => Promise<void>;
   /** Whether save selection is disabled */
   isSaveSelectionDisabled: boolean;
+  /** Whether auto-scroll is enabled */
+  autoScroll: boolean;
+  /** Toggle auto-scroll behavior */
+  onAutoScrollToggle: () => void;
 }
 
 /**
@@ -50,6 +54,8 @@ export const FilterBar = ({
   onSaveSelection,
   onClearAll,
   isSaveSelectionDisabled,
+  autoScroll,
+  onAutoScrollToggle,
 }: FilterBarProps): React.JSX.Element => {
   return (
     <ActionBar breakpoints={[800, 600]} aria-label="Network history filter bar">
@@ -64,6 +70,8 @@ export const FilterBar = ({
         onSaveSelection={onSaveSelection}
         onClearAll={onClearAll}
         isSaveSelectionDisabled={isSaveSelectionDisabled}
+        autoScroll={autoScroll}
+        onAutoScrollToggle={onAutoScrollToggle}
       />
     </ActionBar>
   );

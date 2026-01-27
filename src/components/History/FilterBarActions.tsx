@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { Download, Trash2 } from 'lucide-react';
+import { Download, Trash2, ArrowDownToLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SplitButton } from '@/components/ui/SplitButton';
 import { ActionBarGroup, useOptionalActionBarContext } from '@/components/ActionBar';
@@ -17,6 +17,10 @@ interface FilterBarActionsProps {
   onClearAll: () => Promise<void>;
   /** Whether save selection is disabled (no items selected) */
   isSaveSelectionDisabled: boolean;
+  /** Whether auto-scroll is enabled */
+  autoScroll: boolean;
+  /** Toggle auto-scroll behavior */
+  onAutoScrollToggle: () => void;
 }
 
 /**
@@ -34,6 +38,8 @@ export const FilterBarActions = ({
   onSaveSelection,
   onClearAll,
   isSaveSelectionDisabled,
+  autoScroll,
+  onAutoScrollToggle,
 }: FilterBarActionsProps): React.JSX.Element => {
   const context = useOptionalActionBarContext();
   const isIconMode = context?.variant === 'icon';
@@ -68,6 +74,18 @@ export const FilterBarActions = ({
             },
           ]}
         />
+        {/* Auto-scroll toggle: filled = ON, outline = OFF */}
+        <Button
+          type="button"
+          onClick={onAutoScrollToggle}
+          variant={autoScroll ? 'default' : 'outline'}
+          size="icon-xs"
+          title={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
+          aria-label={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
+          aria-pressed={autoScroll}
+        >
+          <ArrowDownToLine size={14} />
+        </Button>
         <Button
           type="button"
           onClick={onClearAll}
@@ -108,6 +126,18 @@ export const FilterBarActions = ({
           },
         ]}
       />
+      {/* Auto-scroll toggle: filled = ON, outline = OFF */}
+      <Button
+        type="button"
+        onClick={onAutoScrollToggle}
+        variant={autoScroll ? 'default' : 'outline'}
+        size="xs"
+        title={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
+        aria-pressed={autoScroll}
+      >
+        <ArrowDownToLine size={12} />
+        <span>Auto</span>
+      </Button>
       <Button
         type="button"
         onClick={onClearAll}

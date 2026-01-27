@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { useMemo, useEffect, useCallback, useRef } from 'react';
+import { useMemo, useEffect, useCallback, useRef, useState } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { cn } from '@/utils/cn';
@@ -76,6 +76,10 @@ export const NetworkHistoryPanel = ({
   // Note: store entries are HistoryEntry but can be treated as NetworkHistoryEntry
   // (they just won't have intelligence/waterfall populated)
   const entries = (entriesProp ?? storeEntries) as NetworkHistoryEntry[];
+
+  // Auto-scroll state (scroll to bottom when new entries arrive)
+  const [autoScroll, setAutoScroll] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Filter entries - use store's filteredEntries if using store entries, otherwise compute locally
   const filteredEntries = useMemo(() => {
@@ -521,6 +525,24 @@ export const NetworkHistoryPanel = ({
   // Note: Select all is handled via TanStack Table's header checkbox in selection column
   // The store's selectAll/deselectAll will be called via handleRowSelectionChange
 
+  // Auto-scroll to bottom when new entries arrive
+  useEffect(() => {
+    if (!autoScroll || scrollContainerRef.current === null) {
+      return;
+    }
+
+    // Defer scroll until DOM has updated
+    requestAnimationFrame(() => {
+      if (scrollContainerRef.current === null) {
+        return;
+      }
+
+      const container = scrollContainerRef.current;
+      const targetScroll = container.scrollHeight - container.clientHeight;
+      container.scrollTop = targetScroll;
+    });
+  }, [filteredEntries.length, autoScroll]);
+
   return (
     <div className="flex flex-col h-full bg-bg-surface">
       {/* Filter bar - responsive with horizontal scroll */}
@@ -533,10 +555,14 @@ export const NetworkHistoryPanel = ({
         onSaveSelection={handleSaveSelection}
         onClearAll={handleClearAll}
         isSaveSelectionDisabled={selectedIds.size === 0}
+        autoScroll={autoScroll}
+        onAutoScrollToggle={(): void => {
+          setAutoScroll((prev) => !prev);
+        }}
       />
 
       {/* VirtualDataGrid container - matches ConsolePanel structure exactly */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden" ref={scrollContainerRef}>
         <div className="flex-1 flex flex-col min-h-0 overflow-x-auto" ref={parentRef}>
           <VirtualDataGrid
             data={filteredEntries}
