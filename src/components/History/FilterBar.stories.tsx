@@ -116,7 +116,7 @@ export const Playground: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     await step('Test filter interaction', async () => {
-      const searchInput = canvas.queryByLabelText(/filter history by url/i);
+      const searchInput = canvas.queryByTestId('history-search');
       if (searchInput !== null) {
         // Since this is a controlled component with noop onChange, the value won't update
         // Just verify the input is interactive and can receive focus
@@ -245,7 +245,7 @@ export const FilterInteractionsTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Change search filter', async () => {
-      const searchInput = canvas.getByLabelText(/filter history by url/i);
+      const searchInput = canvas.getByTestId('history-search');
       await userEvent.clear(searchInput);
       await new Promise((resolve) => setTimeout(resolve, 50));
       await userEvent.type(searchInput, 'users');
@@ -258,9 +258,9 @@ export const FilterInteractionsTest: Story = {
       await userEvent.click(methodFilter);
       await new Promise((resolve) => setTimeout(resolve, 200));
       // Radix Select renders options in a portal (document.body), search there
-      const postOption = await within(document.body).findByRole(
-        'option',
-        { name: /^post$/i },
+      const postOption = await within(document.body).findByTestId(
+        'method-filter-option-post',
+        {},
         { timeout: 3000 }
       );
       await userEvent.click(postOption);
@@ -273,9 +273,9 @@ export const FilterInteractionsTest: Story = {
       await userEvent.click(statusFilter);
       await new Promise((resolve) => setTimeout(resolve, 200));
       // Radix Select renders options in a portal (document.body), search there
-      const statusOption = await within(document.body).findByRole(
-        'option',
-        { name: /4xx/i },
+      const statusOption = await within(document.body).findByTestId(
+        'status-filter-option-4xx',
+        {},
         { timeout: 3000 }
       );
       await userEvent.click(statusOption);
@@ -288,9 +288,9 @@ export const FilterInteractionsTest: Story = {
       await userEvent.click(intelligenceFilter);
       await new Promise((resolve) => setTimeout(resolve, 200));
       // Radix Select renders options in a portal (document.body), search there
-      const driftOption = await within(document.body).findByRole(
-        'option',
-        { name: /has drift/i },
+      const driftOption = await within(document.body).findByTestId(
+        'intelligence-filter-option-has-drift',
+        {},
         { timeout: 3000 }
       );
       await userEvent.click(driftOption);
@@ -325,7 +325,7 @@ export const KeyboardNavigationTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Tab to search input', async () => {
-      const searchInput = canvas.getByLabelText(/filter history by url/i);
+      const searchInput = canvas.getByTestId('history-search');
       const focused = await tabToElement(searchInput, 10);
       await expect(focused).toBe(true);
       await expect(searchInput).toHaveFocus();

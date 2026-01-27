@@ -195,7 +195,7 @@ export const StatusBar = (): React.JSX.Element => {
 
   return (
     <div
-      className="h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-5 text-xs"
+      className="h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-2 text-xs"
       data-testid="status-bar"
     >
       {/* Left side - environment and request count */}
@@ -209,13 +209,14 @@ export const StatusBar = (): React.JSX.Element => {
         </span>
       </div>
       {/* Right side - metrics and version */}
-      <div className="flex items-center gap-4 opacity-60 hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1">
         {/* Metrics popover */}
         <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="xs"
+              noScale
               className={cn('gap-1.5', isPanelOpen && 'bg-bg-raised text-text-primary')}
               data-testid="status-bar-metrics-button"
               aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}

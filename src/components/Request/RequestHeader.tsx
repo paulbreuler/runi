@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
 
@@ -98,46 +99,32 @@ export const RequestHeader = ({
 
   return (
     <div className="flex gap-3 items-center px-6 py-4 border-b border-border-subtle bg-bg-surface">
-      <motion.div
-        layout={!prefersReducedMotion}
-        transition={
-          prefersReducedMotion
-            ? undefined
-            : {
-                type: 'spring',
-                stiffness: 320,
-                damping: 26,
-              }
-        }
-        className="inline-flex"
-      >
-        <Select.Select value={method} onValueChange={handleMethodChange}>
-          <Select.SelectTrigger
-            role="button"
-            aria-haspopup="listbox"
-            className={`min-w-28 w-auto font-semibold bg-transparent border-0 hover:bg-bg-raised/50 rounded-lg transition-all duration-200 whitespace-nowrap ${methodColor}`}
-            data-testid="method-select"
-            disabled={loading}
-            aria-label="HTTP Method"
-          >
-            <Select.SelectValue>{method}</Select.SelectValue>
-          </Select.SelectTrigger>
-          <Select.SelectContent>
-            {httpMethods.map((httpMethod) => {
-              const color = getMethodColor(httpMethod);
-              return (
-                <Select.SelectItem
-                  key={httpMethod}
-                  value={httpMethod}
-                  className={`${color} data-highlighted:bg-bg-raised/50`}
-                >
-                  {httpMethod}
-                </Select.SelectItem>
-              );
-            })}
-          </Select.SelectContent>
-        </Select.Select>
-      </motion.div>
+      <Select.Select value={method} onValueChange={handleMethodChange}>
+        <Select.SelectTrigger
+          role="button"
+          aria-haspopup="listbox"
+          className={`min-w-28 w-auto font-semibold bg-transparent border-0 hover:bg-bg-raised/50 rounded-lg transition-colors duration-200 whitespace-nowrap ${methodColor}`}
+          data-testid="method-select"
+          disabled={loading}
+          aria-label="HTTP Method"
+        >
+          <Select.SelectValue>{method}</Select.SelectValue>
+        </Select.SelectTrigger>
+        <Select.SelectContent>
+          {httpMethods.map((httpMethod) => {
+            const color = getMethodColor(httpMethod);
+            return (
+              <Select.SelectItem
+                key={httpMethod}
+                value={httpMethod}
+                className={`${color} data-highlighted:bg-bg-raised/50`}
+              >
+                {httpMethod}
+              </Select.SelectItem>
+            );
+          })}
+        </Select.SelectContent>
+      </Select.Select>
 
       <Input
         type="text"
@@ -148,19 +135,20 @@ export const RequestHeader = ({
         data-testid="url-input"
         disabled={loading}
         aria-label="Request URL"
-        glass={true}
         className="flex-1"
       />
 
-      <button
+      <Button
+        variant="ghost"
+        noScale
         onClick={onSend}
         disabled={!isValidUrl || loading}
         data-testid="send-button"
         aria-label="Send Request"
-        className="inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50 bg-transparent text-text-muted hover:text-accent-blue hover:bg-bg-raised/50 px-5 py-2 text-sm h-9 relative"
+        className="hover:text-accent-blue"
       >
         {loading ? renderLoadingState() : 'Send'}
-      </button>
+      </Button>
     </div>
   );
 };

@@ -89,10 +89,12 @@ export interface ButtonProps
     >,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  /** Disable scale animations on hover/tap (useful for compact UI like status bars) */
+  noScale?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, disabled, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, disabled, noScale = false, ...props }, ref) => {
     if (asChild) {
       const Comp = Slot;
       return (
@@ -102,16 +104,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Use Motion variants for cleaner, more maintainable animations
     // Following Motion docs: variants are better than inline whileHover/whileTap
+    // noScale disables hover/tap animations for compact UI contexts
     return (
       <motion.button
         {...props}
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={disabled}
-        variants={buttonMotionVariants}
-        initial="rest"
-        whileHover={disabled === true ? undefined : 'hover'}
-        whileTap={disabled === true ? undefined : 'tap'}
+        variants={noScale ? undefined : buttonMotionVariants}
+        initial={noScale ? undefined : 'rest'}
+        whileHover={disabled === true || noScale ? undefined : 'hover'}
+        whileTap={disabled === true || noScale ? undefined : 'tap'}
       />
     );
   }

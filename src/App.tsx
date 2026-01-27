@@ -7,9 +7,9 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HomePage } from './routes/index';
 import { DevToolsPopout } from './routes/devtools-popout';
-import { ToastProvider } from './components/ui/Toast';
 import { MemoryWarningListener } from './components/Memory/MemoryWarningListener';
 import { ThemeProvider } from './components/ThemeProvider';
+import { ToastProvider } from './components/ui/Toast';
 
 export const App = (): React.JSX.Element => {
   return (

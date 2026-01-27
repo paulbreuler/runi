@@ -48,23 +48,13 @@ describe('RequestHeader', () => {
     expect(urlInput).toHaveAttribute('placeholder', 'Enter request URL...');
   });
 
-  it('renders URL input with glass-morphism styling (Apple 2025 aesthetic)', () => {
+  it('renders URL input with proper styling', () => {
     render(<RequestHeader {...defaultProps} url="" />);
 
     const urlInput = screen.getByTestId('url-input');
-    // Should be a motion component for glass effect
-    expect(urlInput).toHaveAttribute('data-motion-component', 'input');
-    // Glass-morphism: should have border and shadow classes
+    // Should have border and background classes
     expect(urlInput).toHaveClass('border');
-    expect(urlInput).toHaveClass('shadow-sm');
-  });
-
-  it('applies Motion animations for glass effect', () => {
-    render(<RequestHeader {...defaultProps} url="" />);
-
-    const urlInput = screen.getByTestId('url-input');
-    // Should be a motion component with glass effect
-    expect(urlInput).toHaveAttribute('data-motion-component', 'input');
+    expect(urlInput).toHaveClass('bg-bg-raised');
   });
 
   it('renders send button with proper styling', () => {

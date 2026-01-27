@@ -9,6 +9,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import { StatusBar } from './StatusBar';
 
 const meta = {
@@ -18,44 +19,37 @@ const meta = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: `Status bar component that displays application status information and provides access to metrics monitoring.
+        component: `Status bar component that displays application status information and metrics monitoring.
 
 ## Features
 
 - **Environment Display**: Shows current environment name (default: "default")
+- **Request Count**: Shows number of requests in history
 - **Metrics Button**: Opens/closes metrics panel tray with pulsing glow indicator
 - **Compact Metrics Display**: Shows live metrics inline when feature is enabled
 - **Version Display**: Displays application version from build-time define
-- **Metrics Panel Tray**: Appears 36px above status bar when opened, aligned to Metrics button
 
 ## Pulsing Glow States
 
 The Metrics button includes a pulsing glow indicator with three states:
 
-- **init**: Strong pulse when metrics are not yet initialized (\`metrics.memory === undefined\`)
-- **tracking**: Faint pulse when metrics are actively updating (live) and feature is enabled
+- **init**: Strong pulse when metrics are not yet initialized
+- **tracking**: Faint pulse when metrics are actively updating (live)
 - **idle**: No pulse when metrics exist but not live, or feature is disabled
 
 ## State Management
 
 - Uses \`useSettingsStore\` for \`metricsVisible\` toggle state
 - Uses \`useMetricsStore\` for metrics data, timestamp, and live status
-- Local state manages panel open/close (\`isPanelOpen\`)
-
-## Metrics Display Logic
-
-- Compact metrics display appears on the status bar when:
-  - Metrics feature is enabled (\`metricsVisible === true\`)
-  - Metrics data exists (\`metrics.memory !== undefined\`)
-- Metrics panel tray shows full metrics grid with toggle controls
+- Local state manages panel open/close
 
 ## Accessibility
 
 - Full keyboard navigation support
-- Focus ring styling for Metrics button
-- ARIA labels for Metrics button states
-- Click outside to close tray
-- Escape key closes tray
+- Focus ring styling for all interactive elements
+- ARIA labels for button states
+- Click outside to close panels
+- Escape key closes panels
 
 ## Usage
 
@@ -80,17 +74,15 @@ type Story = StoryObj<typeof meta>;
  * Interactive playground for StatusBar.
  *
  * - Click the "Metrics" button to open/close the metrics panel tray
- * - The tray appears 36px above the status bar, aligned to the Metrics button
  * - The pulsing glow indicator shows the current metrics state (init/tracking/idle)
  * - Compact metrics display appears when metrics are enabled and data exists
- * - Version and environment information are displayed on the right side
  */
 export const Playground: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'Interactive example showing the StatusBar in its typical layout position. Click the Metrics button to see the tray animation and metrics panel. The pulsing glow indicator reflects the current metrics state.',
+          'Interactive example showing the StatusBar in its typical layout position. Click the Metrics button to see the tray animation and metrics panel.',
       },
     },
   },
@@ -102,4 +94,13 @@ export const Playground: Story = {
       </div>
     </div>
   ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify status bar elements', async () => {
+      // Metrics button
+      const metricsButton = canvas.getByTestId('status-bar-metrics-button');
+      await expect(metricsButton).toBeInTheDocument();
+    });
+  },
 };
