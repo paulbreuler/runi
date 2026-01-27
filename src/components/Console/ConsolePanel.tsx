@@ -334,9 +334,10 @@ export const ConsolePanel = ({
     }
 
     // Sort by timestamp descending (newest first)
+    // For grouped logs, use lastTimestamp so groups move to top when new duplicates arrive
     return result.sort((a, b) => {
-      const timeA = isGroupedLog(a) ? a.firstTimestamp : a.timestamp;
-      const timeB = isGroupedLog(b) ? b.firstTimestamp : b.timestamp;
+      const timeA = isGroupedLog(a) ? a.lastTimestamp : a.timestamp;
+      const timeB = isGroupedLog(b) ? b.lastTimestamp : b.timestamp;
       return timeB - timeA;
     });
   }, [logs, filter, searchFilter]);

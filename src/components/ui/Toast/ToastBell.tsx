@@ -72,7 +72,11 @@ export const ToastBell: React.FC<ToastBellProps> = ({ className, onClick }) => {
         focusRingClasses,
         className
       )}
-      aria-label={count > 0 ? `${String(count)} notifications` : 'No notifications'}
+      aria-label={
+        count > 0
+          ? `${String(count)} ${count === 1 ? 'notification' : 'notifications'}`
+          : 'No notifications'
+      }
       data-testid="toast-bell"
     >
       <Bell className="h-3.5 w-3.5" />

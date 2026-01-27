@@ -516,7 +516,7 @@ describe('ToastBell', () => {
     });
 
     render(<ToastBell />);
-    expect(screen.getByTestId('toast-bell')).toHaveAttribute('aria-label', '1 notifications');
+    expect(screen.getByTestId('toast-bell')).toHaveAttribute('aria-label', '1 notification');
   });
 
   it('has correct aria-label for no notifications', () => {

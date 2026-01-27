@@ -25,9 +25,7 @@ import { Button } from '@/components/ui/button';
  * Wrapper component for stories that manages toast state.
  */
 const ToastDemo = ({ showBell = false }: { showBell?: boolean }): React.JSX.Element => {
-  // Clear toasts when component mounts (for story isolation)
-  useToastStore.getState().clearAll();
-
+  // Note: Toast state is cleared by beforeEach hook in meta config
   return (
     <ToastProvider>
       <div className="min-h-[400px] p-4 space-y-4">
