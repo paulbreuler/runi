@@ -146,7 +146,6 @@ export const HomePage = (): React.JSX.Element => {
         globalEventBus.emit<ToastEventPayload>('toast.show', {
           type: 'error',
           message: errorMessage,
-          details: `Correlation ID: ${appError.correlationId}`,
           correlationId: appError.correlationId,
         });
         // Log error to console service with correlation ID
