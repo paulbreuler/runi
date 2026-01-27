@@ -269,6 +269,7 @@ export default tseslint.config(
       'test-results/', // Playwright test results
       'src/types/generated/',
       '.storybook/',
+      '.tmp/', // Ephemeral files (git-ignored)
       'tests/',
       'scripts/', // Setup scripts (Node.js, not TypeScript)
       'packages/', // Package workspace files

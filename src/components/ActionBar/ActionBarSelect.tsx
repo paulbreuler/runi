@@ -93,11 +93,18 @@ export const ActionBarSelect = <T extends BaseSelectOption>({
         {isIconMode ? <span className="text-text-muted">{icon}</span> : <Select.SelectValue />}
       </Select.SelectTrigger>
       <Select.SelectContent>
-        {options.map((option) => (
-          <Select.SelectItem key={option.value} value={option.value}>
-            {renderItem !== undefined ? renderItem(option) : option.label}
-          </Select.SelectItem>
-        ))}
+        {options.map((option) => {
+          const optionTestId =
+            testId !== undefined
+              ? `${testId}-option-${option.value.toLowerCase().replace(/\s+/g, '-')}`
+              : undefined;
+
+          return (
+            <Select.SelectItem key={option.value} value={option.value} data-testid={optionTestId}>
+              {renderItem !== undefined ? renderItem(option) : option.label}
+            </Select.SelectItem>
+          );
+        })}
       </Select.SelectContent>
     </Select.Select>
   );

@@ -86,6 +86,7 @@ export const NetworkHistoryFilters = ({
           }}
           placeholder="Filter by URL..."
           aria-label="Filter history by URL"
+          data-testid="history-search"
         />
         <ActionBarSelect
           value={filters.method}

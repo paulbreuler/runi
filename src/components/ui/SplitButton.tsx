@@ -64,6 +64,8 @@ interface SplitButtonProps extends VariantProps<typeof splitButtonVariants> {
   className?: string;
   /** Custom aria-label for the dropdown trigger */
   dropdownAriaLabel?: string;
+  /** Data testid for testing */
+  'data-testid'?: string;
 }
 
 // Motion animation variants
@@ -117,6 +119,7 @@ export const SplitButton = ({
   size = 'default',
   className,
   dropdownAriaLabel = 'More options',
+  'data-testid': testId,
 }: SplitButtonProps): React.JSX.Element => {
   const [open, setOpen] = React.useState(false);
 
@@ -185,6 +188,7 @@ export const SplitButton = ({
         onClick={handlePrimaryClick}
         disabled={disabled}
         className={cn(splitButtonVariants({ variant, size }), 'rounded-l-lg rounded-r-none')}
+        data-testid={testId}
         variants={buttonMotionVariants}
         initial="rest"
         whileHover={disabled ? undefined : 'hover'}
@@ -210,6 +214,7 @@ export const SplitButton = ({
             aria-label={dropdownAriaLabel}
             aria-haspopup="menu"
             aria-expanded={open}
+            data-testid={testId !== undefined ? `${testId}-dropdown` : undefined}
             variants={buttonMotionVariants}
             initial="rest"
             whileHover="hover"
