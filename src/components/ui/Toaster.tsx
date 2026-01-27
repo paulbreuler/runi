@@ -505,6 +505,7 @@ export const ToastBell: React.FC = () => {
     <Button
       variant="ghost"
       size="xs"
+      noScale
       onClick={handleClick}
       className={cn('gap-1.5 relative', expanded && 'bg-bg-raised text-text-primary')}
       data-testid="toast-bell-button"

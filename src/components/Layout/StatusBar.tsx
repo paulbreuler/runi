@@ -217,6 +217,7 @@ export const StatusBar = (): React.JSX.Element => {
             <Button
               variant="ghost"
               size="xs"
+              noScale
               className={cn('gap-1.5', isPanelOpen && 'bg-bg-raised text-text-primary')}
               data-testid="status-bar-metrics-button"
               aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}
