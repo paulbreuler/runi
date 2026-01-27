@@ -13,24 +13,22 @@ import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 vi.mock('sonner', async () => {
   const actual: Record<string, unknown> = await vi.importActual('sonner');
   const actualToast = actual.toast as Record<string, unknown>;
+
+  // Helper to create toast entry in mock container
+  const createToastEntry = (id?: string): void => {
+    const container = document.getElementById('sonner-mock-container');
+    if (container !== null) {
+      const toastDiv = document.createElement('div');
+      toastDiv.setAttribute('data-sonner-toast-id', id ?? '');
+      container.appendChild(toastDiv);
+    }
+  };
+
   return {
     ...actual,
     toast: {
       ...actualToast,
-      custom: vi.fn(
-        (render: () => React.JSX.Element, options?: { id?: string; duration?: number }) => {
-          // Actually render the component in the test DOM
-          render();
-          // Store in a map for testing
-          const container = document.getElementById('sonner-mock-container');
-          if (container !== null) {
-            const toastDiv = document.createElement('div');
-            toastDiv.setAttribute('data-sonner-toast-id', options?.id ?? '');
-            container.appendChild(toastDiv);
-          }
-          return options?.id;
-        }
-      ),
+      custom: vi.fn(),
       dismiss: vi.fn((id?: string) => {
         if (id !== undefined) {
           const container = document.getElementById('sonner-mock-container');
@@ -40,10 +38,22 @@ vi.mock('sonner', async () => {
           }
         }
       }),
-      success: vi.fn(),
-      warning: vi.fn(),
-      info: vi.fn(),
-      error: vi.fn(),
+      success: vi.fn((_, options?: { id?: string }) => {
+        createToastEntry(options?.id);
+        return options?.id;
+      }),
+      warning: vi.fn((_, options?: { id?: string }) => {
+        createToastEntry(options?.id);
+        return options?.id;
+      }),
+      info: vi.fn((_, options?: { id?: string }) => {
+        createToastEntry(options?.id);
+        return options?.id;
+      }),
+      error: vi.fn((_, options?: { id?: string }) => {
+        createToastEntry(options?.id);
+        return options?.id;
+      }),
     },
     Toaster: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
       <div id="sonner-mock-container">{children}</div>
@@ -70,35 +80,37 @@ describe('Toaster', () => {
   // showToast function tests (unit tests for the logic)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  it('calls toast.custom when showToast is called', () => {
+  it('calls toast.success when showToast is called with success type', () => {
     showToast({
       type: 'success',
       message: 'Operation completed',
     });
 
-    expect(toast.custom).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalled();
   });
 
-  it('calls toast.custom with correct id for error toasts', () => {
+  it('calls toast.error with correct options for error toasts', () => {
     showToast({
       type: 'error',
       message: 'Something went wrong',
     });
 
-    expect(toast.custom).toHaveBeenCalled();
-    const call = vi.mocked(toast.custom).mock.calls[0];
+    expect(toast.error).toHaveBeenCalled();
+    const call = vi.mocked(toast.error).mock.calls[0];
+    expect(call?.[0]).toBe('Something went wrong');
     expect(call?.[1]).toHaveProperty('id');
     expect(call?.[1]).toHaveProperty('duration', Infinity);
+    expect(call?.[1]).toHaveProperty('action');
   });
 
-  it('calls toast.custom with 5000ms duration for non-error toasts', () => {
+  it('calls toast.success with 5000ms duration for non-error toasts', () => {
     showToast({
       type: 'success',
       message: 'Success message',
     });
 
-    expect(toast.custom).toHaveBeenCalled();
-    const call = vi.mocked(toast.custom).mock.calls[0];
+    expect(toast.success).toHaveBeenCalled();
+    const call = vi.mocked(toast.success).mock.calls[0];
     expect(call?.[1]).toHaveProperty('duration', 5000);
   });
 
@@ -109,25 +121,25 @@ describe('Toaster', () => {
       duration: 10000,
     });
 
-    expect(toast.custom).toHaveBeenCalled();
-    const call = vi.mocked(toast.custom).mock.calls[0];
+    expect(toast.warning).toHaveBeenCalled();
+    const call = vi.mocked(toast.warning).mock.calls[0];
     expect(call?.[1]).toHaveProperty('duration', 10000);
   });
 
   it('calls toast.dismiss on duplicate toasts', () => {
     // First toast
     showToast({ type: 'error', message: 'Same error' });
-    expect(toast.custom).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledTimes(1);
 
     // Duplicate toast - should dismiss old and show new
     showToast({ type: 'error', message: 'Same error' });
     expect(toast.dismiss).toHaveBeenCalledTimes(1);
-    expect(toast.custom).toHaveBeenCalledTimes(2);
+    expect(toast.error).toHaveBeenCalledTimes(2);
 
     // Third duplicate
     showToast({ type: 'error', message: 'Same error' });
     expect(toast.dismiss).toHaveBeenCalledTimes(2);
-    expect(toast.custom).toHaveBeenCalledTimes(3);
+    expect(toast.error).toHaveBeenCalledTimes(3);
   });
 
   it('does not deduplicate toasts with different messages', () => {
@@ -136,7 +148,7 @@ describe('Toaster', () => {
 
     // No dismiss calls - these are different toasts
     expect(toast.dismiss).not.toHaveBeenCalled();
-    expect(toast.custom).toHaveBeenCalledTimes(2);
+    expect(toast.error).toHaveBeenCalledTimes(2);
   });
 
   it('does not deduplicate toasts with same message but different type', () => {
@@ -145,7 +157,8 @@ describe('Toaster', () => {
 
     // No dismiss calls - these are different types
     expect(toast.dismiss).not.toHaveBeenCalled();
-    expect(toast.custom).toHaveBeenCalledTimes(2);
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(toast.warning).toHaveBeenCalledTimes(1);
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -155,7 +168,7 @@ describe('Toaster', () => {
   it('clears dedup cache correctly', () => {
     // First toast
     showToast({ type: 'error', message: 'Error' });
-    expect(toast.custom).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledTimes(1);
 
     // Duplicate - will trigger dismiss
     showToast({ type: 'error', message: 'Error' });
@@ -191,7 +204,7 @@ describe('Toaster', () => {
       });
     });
 
-    expect(toast.custom).toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalled();
   });
 
   it('cleans up event subscription on unmount', () => {
@@ -211,7 +224,7 @@ describe('Toaster', () => {
   // onDismiss callback tests
   // ─────────────────────────────────────────────────────────────────────────────
 
-  it('passes onDismiss callback to toast.custom options', () => {
+  it('passes onDismiss callback to toast options', () => {
     const onDismiss = vi.fn();
 
     showToast(
@@ -222,8 +235,8 @@ describe('Toaster', () => {
       { onDismiss }
     );
 
-    expect(toast.custom).toHaveBeenCalled();
-    const call = vi.mocked(toast.custom).mock.calls[0];
+    expect(toast.warning).toHaveBeenCalled();
+    const call = vi.mocked(toast.warning).mock.calls[0];
     // Verify onDismiss is passed as a function in the options
     expect(call?.[1]).toHaveProperty('onDismiss');
     const options = call?.[1] as { onDismiss?: () => void } | undefined;

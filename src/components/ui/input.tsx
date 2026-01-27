@@ -69,8 +69,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       !glass && [
         'bg-bg-raised border border-border-default',
         'transition-colors duration-200',
-        'focus-visible:border-accent-blue focus-visible:ring-2',
-        'focus-visible:ring-accent-blue focus-visible:ring-offset-2',
+        'focus-visible:border-border-emphasis focus-visible:ring-1',
+        'focus-visible:ring-border-default',
       ],
       className
     );
