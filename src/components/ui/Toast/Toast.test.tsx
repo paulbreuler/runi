@@ -32,6 +32,12 @@ vi.mock('motion/react', async (importOriginal) => {
       span: ({ children, ...props }: React.ComponentPropsWithoutRef<'span'>): React.JSX.Element => (
         <span {...props}>{children}</span>
       ),
+      button: ({
+        children,
+        ...props
+      }: React.ComponentPropsWithoutRef<'button'>): React.JSX.Element => (
+        <button {...props}>{children}</button>
+      ),
     },
   };
 });
@@ -364,7 +370,7 @@ describe('Toast Component', () => {
     });
   });
 
-  it('shows View Console action for error toasts with correlationId', async () => {
+  it('shows Console action for error toasts with correlationId', async () => {
     renderWithProvider(<div>Content</div>);
 
     act(() => {
@@ -375,11 +381,12 @@ describe('Toast Component', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('View Console')).toBeInTheDocument();
+      const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]');
+      expect(consoleBtn).toBeInTheDocument();
     });
   });
 
-  it('does not show View Console for non-error toasts', async () => {
+  it('does not show Console action for non-error toasts', async () => {
     renderWithProvider(<div>Content</div>);
 
     act(() => {
@@ -390,13 +397,15 @@ describe('Toast Component', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Success message')).toBeInTheDocument();
+      const toastElement = document.querySelector('[data-testid^="toast-"]');
+      expect(toastElement).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('View Console')).not.toBeInTheDocument();
+    const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]');
+    expect(consoleBtn).not.toBeInTheDocument();
   });
 
-  it('View Console emits panel.console-requested event', async () => {
+  it('Console action emits panel.console-requested event', async () => {
     const user = userEvent.setup();
     const eventHandler = vi.fn();
     const unsubscribe = globalEventBus.on('panel.console-requested', eventHandler);
@@ -411,10 +420,12 @@ describe('Toast Component', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('View Console')).toBeInTheDocument();
+      const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]');
+      expect(consoleBtn).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('View Console'));
+    const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]')!;
+    await user.click(consoleBtn);
 
     expect(eventHandler).toHaveBeenCalledTimes(1);
     expect(eventHandler).toHaveBeenCalledWith(
