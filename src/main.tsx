@@ -6,6 +6,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { initializeConsoleService, getConsoleService } from '@/services/console-service';
+// Import Toast module early to ensure event bridge is set up before any components can emit events
+import '@/components/ui/Toast/useToast';
 import { App } from './App';
 import './app.css';
 
