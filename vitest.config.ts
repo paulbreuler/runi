@@ -32,9 +32,9 @@ export default defineConfig({
     exclude: ['**/node_modules/**', 'scripts/audit/**'],
     environment: 'jsdom', // Default to jsdom, scripts tests use @vitest-environment node comment
     globals: true,
-    // setupFiles is applied to all tests, but vitest.setup.ts checks for window
+    // setupFiles is applied to all tests, but vitest.setup.tsx checks for window
     // Scripts tests in node environment won't have window, so setup will be skipped
-    setupFiles: ['./vitest.setup.ts'],
+    setupFiles: ['./vitest.setup.tsx'],
     testTimeout: 10000, // 10 seconds for async tests
     hookTimeout: 10000, // 10 seconds for setup/teardown
     pool: 'threads', // Use threads for better performance

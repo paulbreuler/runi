@@ -35,7 +35,7 @@
     },
     "types": ["vitest/globals", "@testing-library/jest-dom", "react", "react-dom", "node"]
   },
-  "include": ["src", "src/**/*.tsx", "src/**/*.ts"],
+  "include": ["src", "src/**/*.tsx", "src/**/*.ts", "vitest.setup.tsx"],
   "exclude": ["src/lib", "node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

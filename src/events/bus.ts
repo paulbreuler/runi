@@ -42,12 +42,17 @@ export type EventType =
   | 'toast.show';
 
 /**
+ * Toast notification type.
+ */
+export type ToastType = 'error' | 'warning' | 'info' | 'success';
+
+/**
  * Toast event payload for loose coupling.
  * Components emit this event instead of calling the store directly.
  */
 export interface ToastEventPayload {
   /** Type of toast (determines styling) */
-  type: 'error' | 'warning' | 'info' | 'success';
+  type: ToastType;
   /** Toast message */
   message: string;
   /** Optional detailed description */

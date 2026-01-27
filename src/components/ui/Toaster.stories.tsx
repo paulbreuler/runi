@@ -6,8 +6,7 @@
 import React, { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { ToastProvider, Toast } from './Toast';
-import { useToastStore, clearDedupCache } from '@/stores/useToastStore';
+import { Toaster, showToast, clearToasts, clearDedupCache } from './Toaster';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { Button } from './button';
 
@@ -15,20 +14,21 @@ import { Button } from './button';
  * Wrapper component for Storybook that provides the toast context.
  * Includes min-height container so fixed-positioned toasts are visible in docs mode.
  */
-const ToastStoryWrapper = ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
-  <ToastProvider>
+const ToasterStoryWrapper = ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+  <>
+    <Toaster />
     <div className="relative min-h-[300px] w-full">{children}</div>
-  </ToastProvider>
+  </>
 );
 
 const meta = {
-  title: 'UI/Toast',
-  component: Toast,
+  title: 'UI/Toaster',
+  component: Toaster,
   decorators: [
     (Story): React.JSX.Element => (
-      <ToastStoryWrapper>
+      <ToasterStoryWrapper>
         <Story />
-      </ToastStoryWrapper>
+      </ToasterStoryWrapper>
     ),
   ],
   parameters: {
@@ -36,7 +36,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Toast notification system with event-driven architecture. Toasts can be triggered via `useToastStore.enqueue()` or `globalEventBus.emit("toast.show", ...)`.',
+          'Toast notification system powered by Sonner. Toasts can be triggered via `showToast()` or `globalEventBus.emit("toast.show", ...)`.',
       },
       story: {
         inline: false,
@@ -45,7 +45,7 @@ const meta = {
     },
   },
   tags: ['autodocs'],
-} satisfies Meta<typeof Toast>;
+} satisfies Meta<typeof Toaster>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -66,13 +66,11 @@ const ToastTrigger = ({
   correlationId?: string;
   buttonLabel?: string;
 }): React.JSX.Element => {
-  const { enqueue } = useToastStore();
-
   return (
     <div className="p-8">
       <Button
         onClick={(): void => {
-          enqueue({ type, message, details, correlationId });
+          showToast({ type, message, details, correlationId });
         }}
       >
         {buttonLabel ?? `Show ${type} toast`}
@@ -100,12 +98,8 @@ export const ErrorToast: Story = {
 
     await step('Toast appears after button click', async () => {
       await userEvent.click(triggerButton);
-      // Wait for toast to appear (toasts are animated, need time)
-      // Toasts render in Radix Toast.Viewport which is in document.body
-      // Wait for toast animation to complete (may need more time in CI)
+      // Wait for toast to appear
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Toast uses role="status" with aria-live, not role="alert"
-      // Search by text content instead
       const toast = await within(document.body).findByText(
         /tauri backend is not available/i,
         {},
@@ -115,8 +109,6 @@ export const ErrorToast: Story = {
     });
 
     await step('Error toast has dismiss button', async () => {
-      // Toast is in document.body (Radix portal)
-      // Find by text since it uses role="status" not role="alert"
       const toast = await within(document.body).findByText(
         /tauri backend is not available/i,
         {},
@@ -127,7 +119,7 @@ export const ErrorToast: Story = {
       });
       await expect(dismissButton).toBeVisible();
       await userEvent.click(dismissButton);
-      // Wait for toast to be removed (exit animation)
+      // Wait for toast to be removed
       await new Promise((resolve) => setTimeout(resolve, 500));
       await expect(toast).not.toBeInTheDocument();
     });
@@ -160,24 +152,23 @@ export const InfoToast: Story = {
 };
 
 /**
- * Multiple toasts stacked vertically (up to maxNotifications: 3).
+ * Multiple toasts stacked vertically (up to 3 visible).
  */
 export const MultipleToasts: Story = {
   render: (): React.JSX.Element => {
     const MultipleToastsDemo = (): React.JSX.Element => {
-      const { enqueue, clear } = useToastStore();
-
       useEffect(() => {
-        clear();
-      }, [clear]);
+        clearToasts();
+        clearDedupCache();
+      }, []);
 
       return (
         <div className="p-8 space-y-3">
           <Button
             onClick={(): void => {
-              enqueue({ type: 'error', message: 'Error toast 1' });
-              enqueue({ type: 'warning', message: 'Warning toast 2' });
-              enqueue({ type: 'success', message: 'Success toast 3' });
+              showToast({ type: 'error', message: 'Error toast 1' });
+              showToast({ type: 'warning', message: 'Warning toast 2' });
+              showToast({ type: 'success', message: 'Success toast 3' });
             }}
           >
             Show 3 toasts
@@ -207,40 +198,38 @@ export const LongMessage: Story = {
 export const Interactive: Story = {
   render: (): React.JSX.Element => {
     const InteractiveDemo = (): React.JSX.Element => {
-      const { enqueue, clear } = useToastStore();
-
       useEffect(() => {
-        clear();
+        clearToasts();
         clearDedupCache();
-      }, [clear]);
+      }, []);
 
       return (
         <div className="p-8 space-y-3">
           <div className="flex gap-3 flex-wrap">
             <Button
               onClick={(): void => {
-                enqueue({ type: 'error', message: 'Error occurred' });
+                showToast({ type: 'error', message: 'Error occurred' });
               }}
             >
               Error
             </Button>
             <Button
               onClick={(): void => {
-                enqueue({ type: 'warning', message: 'Warning message' });
+                showToast({ type: 'warning', message: 'Warning message' });
               }}
             >
               Warning
             </Button>
             <Button
               onClick={(): void => {
-                enqueue({ type: 'success', message: 'Success message' });
+                showToast({ type: 'success', message: 'Success message' });
               }}
             >
               Success
             </Button>
             <Button
               onClick={(): void => {
-                enqueue({ type: 'info', message: 'Info message' });
+                showToast({ type: 'info', message: 'Info message' });
               }}
             >
               Info
@@ -248,7 +237,7 @@ export const Interactive: Story = {
           </div>
           <Button
             onClick={(): void => {
-              clear();
+              clearToasts();
             }}
             variant="outline"
           >
@@ -265,9 +254,7 @@ export const Interactive: Story = {
     await step('Can trigger multiple toast types', async () => {
       const errorButton = canvas.getByRole('button', { name: /^error$/i });
       await userEvent.click(errorButton);
-      // Wait for toast animation (toasts render in document.body via Radix portal, may need more time in CI)
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Toast uses role="status" not role="alert", search by text instead
       const errorToast = await within(document.body).findByText(
         /error occurred/i,
         {},
@@ -277,9 +264,7 @@ export const Interactive: Story = {
 
       const successButton = canvas.getByRole('button', { name: /^success$/i });
       await userEvent.click(successButton);
-      // Wait for toast animation
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Toast uses role="status" not role="alert", search by text instead
       const successToast = await within(document.body).findByText(
         /success message/i,
         {},
@@ -291,10 +276,7 @@ export const Interactive: Story = {
     await step('Clear all button removes all toasts', async () => {
       const clearButton = canvas.getByRole('button', { name: /clear all/i });
       await userEvent.click(clearButton);
-      // Wait for toasts to be removed (exit animations)
       await new Promise((resolve) => setTimeout(resolve, 600));
-      // Check document.body for toasts (Radix portal)
-      // Toast uses role="status" not role="alert"
       const toasts = within(document.body).queryAllByRole('status');
       await expect(toasts).toHaveLength(0);
     });
@@ -307,12 +289,10 @@ export const Interactive: Story = {
 export const EventDriven: Story = {
   render: (): React.JSX.Element => {
     const EventDrivenDemo = (): React.JSX.Element => {
-      const { clear } = useToastStore();
-
       useEffect(() => {
-        clear();
+        clearToasts();
         clearDedupCache();
-      }, [clear]);
+      }, []);
 
       return (
         <div className="p-8 space-y-3">
@@ -351,26 +331,24 @@ export const EventDriven: Story = {
 };
 
 /**
- * Deduplication: identical toasts show count badge (×N) instead of stacking.
+ * Deduplication: identical toasts show count badge (xN) instead of stacking.
  */
 export const Deduplication: Story = {
   render: (): React.JSX.Element => {
     const DeduplicationDemo = (): React.JSX.Element => {
-      const { enqueue, clear } = useToastStore();
-
       useEffect(() => {
-        clear();
+        clearToasts();
         clearDedupCache();
-      }, [clear]);
+      }, []);
 
       return (
         <div className="p-8 space-y-3">
           <p className="text-text-muted text-sm mb-4">
-            Click multiple times to see deduplication badge (×N).
+            Click multiple times to see deduplication badge (xN).
           </p>
           <Button
             onClick={(): void => {
-              enqueue({
+              showToast({
                 type: 'error',
                 message: '[TAURI_NOT_AVAILABLE] Tauri backend not available',
               });

@@ -6,6 +6,7 @@
 import React, { useCallback, useRef, useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';
+import * as ScrollArea from '@radix-ui/react-scroll-area';
 import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores/usePanelStore';
 import { DockControls } from './DockControls';
 import { cn } from '@/utils/cn';
@@ -150,6 +151,7 @@ export const DockablePanel = ({
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Horizontal scroll state for header
+  // Radix ScrollArea.Viewport uses a div element, so we can use HTMLDivElement
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -677,17 +679,23 @@ export const DockablePanel = ({
               className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative z-20"
             >
               {/* Scrollable header content */}
-              <div
-                ref={headerScrollRef}
-                className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x min-w-0"
-                aria-label="Panel header content"
-              >
-                <div className="flex items-center gap-2 min-w-max">
+              <ScrollArea.Root className="flex-1 min-w-0" type="hover">
+                <ScrollArea.Viewport
+                  ref={headerScrollRef}
+                  className="flex items-center gap-2 min-w-max h-full touch-pan-x"
+                  aria-label="Panel header content"
+                >
                   {headerContent ?? (
                     <span className="text-sm font-medium text-text-primary truncate">{title}</span>
                   )}
-                </div>
-              </div>
+                </ScrollArea.Viewport>
+                <ScrollArea.Scrollbar
+                  orientation="horizontal"
+                  className="flex touch-none select-none transition-colors h-1"
+                >
+                  <ScrollArea.Thumb className="flex-1 rounded-full" />
+                </ScrollArea.Scrollbar>
+              </ScrollArea.Root>
 
               {/* Overflow gradient cues */}
               {showOverflowCue && canScrollLeft && (
@@ -736,8 +744,8 @@ export const DockablePanel = ({
               </div>
             </div>
 
-            {/* Panel content */}
-            <div className="flex-1 overflow-hidden min-h-0" data-testid="panel-content-area">
+            {/* Panel content - children handle their own scrolling (e.g., VirtualDataGrid) */}
+            <div className="flex-1 min-h-0 overflow-hidden" data-testid="panel-content-area">
               {children}
             </div>
           </>

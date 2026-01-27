@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/Switch';
 import { MetricsGrid } from '@/components/Metrics/MetricsGrid';
 import { AppMetricsContainer } from '@/components/Console/AppMetricsContainer';
+import { NotificationCenter } from '@/components/Notifications/NotificationCenter';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
@@ -293,6 +294,9 @@ export const StatusBar = (): React.JSX.Element => {
             <AppMetricsContainer compact={true} />
           </div>
         )}
+        {/* Notification Center */}
+        <NotificationCenter />
+
         <span className="flex items-center gap-1.5 text-text-muted">
           <span className="text-text-muted">Version:</span>
           <span className="font-mono text-text-secondary">{__APP_VERSION__}</span>

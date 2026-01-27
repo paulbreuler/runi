@@ -6,9 +6,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { MemoryWarningListener } from './MemoryWarningListener';
-import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { getConsoleService } from '@/services/console-service';
-import { useToastStore, clearDedupCache } from '@/stores/useToastStore';
+import * as ToasterModule from '@/components/ui/Toaster';
 
 // Mock event listener
 type EventCallback = (event: { payload: unknown }) => void;
@@ -48,19 +47,39 @@ function emitEvent(eventName: string, payload: unknown): void {
   }
 }
 
-// Mock motion/react to disable animations in tests
-vi.mock('motion/react', async () => {
-  const actual = await vi.importActual('motion/react');
+// Track showToast calls
+interface ShowToastCall {
+  payload: {
+    type: string;
+    message: string;
+    details?: string;
+    duration?: number;
+    correlationId?: string;
+    testId?: string;
+  };
+  options?: {
+    onDismiss?: () => void;
+  };
+}
+
+const showToastCalls: ShowToastCall[] = [];
+let capturedOnDismiss: (() => void) | undefined;
+
+// Mock showToast to capture calls
+vi.mock('@/components/ui/Toaster', async () => {
+  const actual = await vi.importActual('@/components/ui/Toaster');
   return {
     ...actual,
-    useReducedMotion: (): boolean => true,
+    showToast: vi.fn((payload: ShowToastCall['payload'], options?: ShowToastCall['options']) => {
+      showToastCalls.push({ payload, options });
+      if (options?.onDismiss) {
+        capturedOnDismiss = options.onDismiss;
+      }
+    }),
   };
 });
 
 describe('MemoryWarningListener', () => {
-  let toastEmittedEvents: Array<{ type: string; payload: unknown }> = [];
-  let unsubscribeToast: (() => void) | null = null;
-
   beforeEach(() => {
     // Mock Tauri environment
     // @ts-expect-error - intentionally adding __TAURI__ for test
@@ -72,36 +91,24 @@ describe('MemoryWarningListener', () => {
     const service = getConsoleService();
     service.clear();
 
-    // Reset toast store
-    useToastStore.setState({ toasts: [] });
-    // Clear dedup cache to prevent deduplication issues
-    clearDedupCache();
-
     // Clear listeners
     listeners.clear();
     unlistenFns.length = 0;
 
-    // Track toast events and add to store (simulating ToastProvider)
-    toastEmittedEvents = [];
-    unsubscribeToast = globalEventBus.on<ToastEventPayload>('toast.show', (event) => {
-      // Track the event
-      toastEmittedEvents.push({ type: 'toast.show', payload: event.payload });
-      // Add toast to store synchronously
-      useToastStore.getState().enqueue(event.payload);
-    });
+    // Clear showToast calls
+    showToastCalls.length = 0;
+    capturedOnDismiss = undefined;
+
+    // Clear dedup cache
+    ToasterModule.clearDedupCache();
   });
 
   afterEach(() => {
-    if (unsubscribeToast) {
-      unsubscribeToast();
-      unsubscribeToast = null;
-    }
     vi.clearAllMocks();
     listeners.clear();
     unlistenFns.length = 0;
-    toastEmittedEvents = [];
-    // Clear toast store
-    useToastStore.setState({ toasts: [] });
+    showToastCalls.length = 0;
+    capturedOnDismiss = undefined;
   });
 
   it('subscribes to memory:threshold-exceeded events', async () => {
@@ -115,7 +122,7 @@ describe('MemoryWarningListener', () => {
     expect(listeners.has('memory:threshold-exceeded')).toBe(true);
   });
 
-  it('emits toast.show event when threshold exceeded and not dismissed', async () => {
+  it('calls showToast when threshold exceeded and not dismissed', async () => {
     render(<MemoryWarningListener />);
 
     // Wait for listener to be set up
@@ -134,23 +141,18 @@ describe('MemoryWarningListener', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    // Check toast event was emitted
-    expect(toastEmittedEvents.length).toBe(1);
-    expect(toastEmittedEvents[0]?.type).toBe('toast.show');
-    const payload = toastEmittedEvents[0]?.payload as {
-      type: string;
-      message: string;
-      details?: string;
-      duration?: number;
-    };
-    expect(payload.type).toBe('warning');
-    expect(payload.message).toBe('High Memory Usage Detected');
-    expect(payload.details).toContain('2000.5MB');
-    expect(payload.details).toContain('1536.0MB');
-    expect(payload.duration).toBe(10000);
+    // Check showToast was called
+    expect(showToastCalls.length).toBe(1);
+    const call = showToastCalls[0];
+    expect(call?.payload.type).toBe('warning');
+    expect(call?.payload.message).toBe('High Memory Usage Detected');
+    expect(call?.payload.details).toContain('2000.5MB');
+    expect(call?.payload.details).toContain('1536.0MB');
+    expect(call?.payload.duration).toBe(10000);
+    expect(call?.options?.onDismiss).toBeDefined();
   });
 
-  it('does not emit toast when not in Tauri environment', async () => {
+  it('does not show toast when not in Tauri environment', async () => {
     // Remove Tauri environment
     // @ts-expect-error - intentionally removing __TAURI__ for test
     global.window = {} as Window;
@@ -166,7 +168,7 @@ describe('MemoryWarningListener', () => {
     expect(listeners.has('memory:threshold-exceeded')).toBe(false);
   });
 
-  it('does not emit toast after dismissal', async () => {
+  it('does not show toast after dismissal', async () => {
     const service = getConsoleService();
     service.clear();
 
@@ -188,41 +190,17 @@ describe('MemoryWarningListener', () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
-    expect(toastEmittedEvents.length).toBe(1);
+    expect(showToastCalls.length).toBe(1);
 
-    // Ensure toast is in store (subscription should add it, but add manually if needed)
+    // Simulate dismissal via onDismiss callback
+    expect(capturedOnDismiss).toBeDefined();
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    let toasts = useToastStore.getState().toasts;
-    let memoryWarningToast = toasts.find((t) => t.correlationId === 'memory-warning');
-
-    // If toast not in store, add it manually using the expected payload
-    if (!memoryWarningToast) {
-      await act(async () => {
-        useToastStore.getState().enqueue({
-          type: 'warning',
-          message: 'High Memory Usage Detected',
-          details: `runi is using ${(2000.5).toFixed(1)}MB of RAM (threshold: ${(1536.0).toFixed(1)}MB). This may impact performance on systems with limited RAM.`,
-          duration: 10000,
-          correlationId: 'memory-warning',
-          testId: 'memory-warning-toast',
-        });
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      });
-      toasts = useToastStore.getState().toasts;
-      memoryWarningToast = toasts.find((t) => t.correlationId === 'memory-warning');
-    }
-
-    expect(memoryWarningToast).toBeDefined();
-
-    await act(async () => {
-      useToastStore.getState().dismiss(memoryWarningToast!.id);
+      capturedOnDismiss?.();
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
-    toastEmittedEvents = [];
+    // Clear calls to track new ones
+    showToastCalls.length = 0;
 
     // Second threshold exceed - should NOT show toast (dismissed), should log to console
     await act(async () => {
@@ -235,8 +213,8 @@ describe('MemoryWarningListener', () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
-    // Should not emit another toast
-    expect(toastEmittedEvents.length).toBe(0);
+    // Should not have called showToast again
+    expect(showToastCalls.length).toBe(0);
 
     // Should have logged to console
     const logs = service.getLogs();
@@ -268,35 +246,10 @@ describe('MemoryWarningListener', () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
-    // Ensure toast is in store (subscription should add it, but add manually if needed)
+    // Simulate dismissal via onDismiss callback
+    expect(capturedOnDismiss).toBeDefined();
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    let toasts = useToastStore.getState().toasts;
-    let memoryWarningToast = toasts.find((t) => t.correlationId === 'memory-warning');
-
-    // If toast not in store, add it manually using the expected payload
-    if (!memoryWarningToast) {
-      await act(async () => {
-        useToastStore.getState().enqueue({
-          type: 'warning',
-          message: 'High Memory Usage Detected',
-          details: `runi is using ${(2000.5).toFixed(1)}MB of RAM (threshold: ${(1536.0).toFixed(1)}MB). This may impact performance on systems with limited RAM.`,
-          duration: 10000,
-          correlationId: 'memory-warning',
-          testId: 'memory-warning-toast',
-        });
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      });
-      toasts = useToastStore.getState().toasts;
-      memoryWarningToast = toasts.find((t) => t.correlationId === 'memory-warning');
-    }
-
-    expect(memoryWarningToast).toBeDefined();
-
-    await act(async () => {
-      useToastStore.getState().dismiss(memoryWarningToast!.id);
+      capturedOnDismiss?.();
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
@@ -352,33 +305,9 @@ describe('MemoryWarningListener', () => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
-    // Ensure toast is in store (subscription should add it, but add manually if needed)
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-
-    let toasts = useToastStore.getState().toasts;
-    let memoryWarningToast = toasts.find((t) => t.correlationId === 'memory-warning');
-
-    // If toast not in store, add it manually using the expected payload
-    if (!memoryWarningToast) {
-      await act(async () => {
-        useToastStore.getState().enqueue({
-          type: 'warning',
-          message: 'High Memory Usage Detected',
-          details: `runi is using ${(2000.5).toFixed(1)}MB of RAM (threshold: ${(1536.0).toFixed(1)}MB). This may impact performance on systems with limited RAM.`,
-          duration: 10000,
-          correlationId: 'memory-warning',
-          testId: 'memory-warning-toast',
-        });
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      });
-      toasts = useToastStore.getState().toasts;
-      memoryWarningToast = toasts.find((t) => t.correlationId === 'memory-warning');
-    }
-
-    expect(memoryWarningToast).toBeDefined();
-    expect(memoryWarningToast?.testId).toBe('memory-warning-toast');
+    // Check testId was included
+    expect(showToastCalls.length).toBe(1);
+    expect(showToastCalls[0]?.payload.testId).toBe('memory-warning-toast');
   });
 
   it('cleans up event listener on unmount', async () => {
