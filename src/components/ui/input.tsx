@@ -13,10 +13,12 @@ export interface InputProps extends Omit<
 > {
   /** Enable glass-morphism effect (Apple 2025 aesthetic) */
   glass?: boolean;
+  /** Disable scale animations on hover/focus (useful for compact UI) */
+  noScale?: boolean;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, glass = false, onFocus, onBlur, ...props }, ref) => {
+  ({ className, type, glass = false, noScale = false, onFocus, onBlur, ...props }, ref) => {
     // Motion values for smooth animations
     const bgOpacity = useMotionValue(glass ? 0.05 : 1);
     const borderOpacity = useMotionValue(0.1);
@@ -89,13 +91,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             WebkitBackdropFilter: backdropBlur,
           }}
           data-motion-component="input"
-          whileHover={{
-            scale: 1.005,
-          }}
-          whileFocus={{
-            scale: 1.01,
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          whileHover={noScale ? undefined : { scale: 1.005 }}
+          whileFocus={noScale ? undefined : { scale: 1.01 }}
+          transition={noScale ? undefined : { type: 'spring', stiffness: 300, damping: 30 }}
           {...props}
         />
       );
