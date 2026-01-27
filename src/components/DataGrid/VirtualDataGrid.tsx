@@ -21,6 +21,16 @@ import { useAnchorColumnWidths, type AnchorColumnDef } from './useAnchorColumnWi
 import { SortIndicator, type SortDirection } from './columns/SortIndicator';
 import { Z_INDEX } from './constants';
 import { EmptyState } from '@/components/ui/EmptyState';
+
+/**
+ * Imperative handle exposed by VirtualDataGrid via ref
+ */
+export interface VirtualDataGridHandle {
+  /** Scroll to the last row */
+  scrollToBottom: () => void;
+  /** Scroll to a specific row index */
+  scrollToIndex: (index: number) => void;
+}
 // Keyboard navigation is handled at the interactive element level (checkboxes, buttons)
 // Rows and cells are NOT focusable to prevent page scrolling
 
@@ -103,23 +113,26 @@ export interface VirtualDataGridProps<TData> extends Omit<UseDataGridOptions<TDa
  * />
  * ```
  */
-export function VirtualDataGrid<TData>({
-  data,
-  columns,
-  height = 400,
-  estimateRowHeight = 40,
-  overscan = 5,
-  emptyMessage = 'No data',
-  className,
-  onRowSelectionChange,
-  onSortingChange,
-  onExpandedChange,
-  onSetRowSelectionReady,
-  onSetExpandedReady,
-  renderRow,
-  renderHeader,
-  ...hookOptions
-}: VirtualDataGridProps<TData>): React.ReactElement {
+function VirtualDataGridInner<TData>(
+  {
+    data,
+    columns,
+    height = 400,
+    estimateRowHeight = 40,
+    overscan = 5,
+    emptyMessage = 'No data',
+    className,
+    onRowSelectionChange,
+    onSortingChange,
+    onExpandedChange,
+    onSetRowSelectionReady,
+    onSetExpandedReady,
+    renderRow,
+    renderHeader,
+    ...hookOptions
+  }: VirtualDataGridProps<TData>,
+  ref: React.ForwardedRef<VirtualDataGridHandle>
+): React.ReactElement {
   // Scroll container ref
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -228,6 +241,22 @@ export function VirtualDataGrid<TData>({
   // Fallback for test environments where virtualization doesn't work
   // (jsdom doesn't have real scroll dimensions)
   const shouldRenderAllRows = virtualRows.length === 0 && rows.length > 0;
+
+  // Expose scroll methods via ref
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      scrollToBottom: (): void => {
+        if (rows.length > 0) {
+          virtualizer.scrollToIndex(rows.length - 1, { align: 'end' });
+        }
+      },
+      scrollToIndex: (index: number): void => {
+        virtualizer.scrollToIndex(index, { align: 'start' });
+      },
+    }),
+    [rows.length, virtualizer]
+  );
 
   // Store callbacks in refs to avoid dependency issues that can cause infinite loops
   const onRowSelectionChangeRef = React.useRef(onRowSelectionChange);
@@ -812,3 +841,11 @@ export function VirtualDataGrid<TData>({
     </div>
   );
 }
+
+/**
+ * VirtualDataGrid with forwardRef support for imperative scroll methods.
+ * Use the ref to access scrollToBottom() and scrollToIndex() methods.
+ */
+export const VirtualDataGrid = React.forwardRef(VirtualDataGridInner) as <TData>(
+  props: VirtualDataGridProps<TData> & { ref?: React.Ref<VirtualDataGridHandle> }
+) => React.ReactElement;

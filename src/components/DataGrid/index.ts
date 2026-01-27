@@ -26,7 +26,7 @@
 
 // Core components
 export { VirtualDataGrid } from './VirtualDataGrid';
-export type { VirtualDataGridProps } from './VirtualDataGrid';
+export type { VirtualDataGridProps, VirtualDataGridHandle } from './VirtualDataGrid';
 
 export { DataGridHeader } from './DataGridHeader';
 export type { DataGridHeaderProps } from './DataGridHeader';
