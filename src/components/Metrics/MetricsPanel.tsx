@@ -6,10 +6,10 @@
 import React, { type RefObject, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Settings } from 'lucide-react';
-import { Dialog } from '@/components/ui/Dialog';
-import { DialogHeader } from '@/components/ui/DialogHeader';
-import { DialogContent } from '@/components/ui/DialogContent';
-import { DialogFooter } from '@/components/ui/DialogFooter';
+import { NotificationTray } from '@/components/ui/NotificationTray';
+import { NotificationTrayHeader } from '@/components/ui/NotificationTrayHeader';
+import { NotificationTrayContent } from '@/components/ui/NotificationTrayContent';
+import { NotificationTrayFooter } from '@/components/ui/NotificationTrayFooter';
 import { TooltipProvider } from '@/components/ui/Tooltip';
 import { MetricsGrid } from './MetricsGrid';
 import { Switch } from '@/components/ui/Switch';
@@ -35,7 +35,7 @@ export interface MetricsPanelProps {
 }
 
 /**
- * Metrics Panel container component that orchestrates Dialog, DialogHeader, DialogContent, MetricsGrid, MetricsToggle.
+ * Metrics Panel container component that orchestrates NotificationTray, NotificationTrayHeader, NotificationTrayContent, MetricsGrid, MetricsToggle.
  *
  * Handles:
  * - State management (metricsVisible from useSettingsStore, metrics from useMetricsStore)
@@ -44,7 +44,7 @@ export interface MetricsPanelProps {
  *
  * Follows loose coupling and high cohesion:
  * - Container component (handles state, side effects)
- * - Presentational components (Dialog, DialogHeader, DialogContent, MetricsGrid, MetricsToggle) receive data via props
+ * - Presentational components (NotificationTray, NotificationTrayHeader, NotificationTrayContent, MetricsGrid, MetricsToggle) receive data via props
  */
 const SAMPLE_INTERVAL_MS = 30_000; // 30 seconds
 
@@ -196,12 +196,12 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
   }, [isOpen, metricsVisible, setMetricsStore]);
 
   return (
-    <Dialog
+    <NotificationTray
       isOpen={isOpen}
       onClose={onClose}
       buttonRef={buttonRef}
       header={
-        <DialogHeader
+        <NotificationTrayHeader
           title="App Metrics"
           onClose={onClose}
           actions={
@@ -218,13 +218,13 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
       }
       content={
         <TooltipProvider>
-          <DialogContent>
+          <NotificationTrayContent>
             <MetricsGrid metrics={metrics} />
-          </DialogContent>
+          </NotificationTrayContent>
         </TooltipProvider>
       }
       footer={
-        <DialogFooter>
+        <NotificationTrayFooter>
           {/* Left: Next sample countdown */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-text-muted">Next sample:</span>
@@ -248,7 +248,7 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
           >
             <Settings className="w-3.5 h-3.5" />
           </button>
-        </DialogFooter>
+        </NotificationTrayFooter>
       }
       data-testid="metrics-panel"
     />

@@ -5,28 +5,28 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { DialogContent } from './DialogContent';
+import { NotificationTrayContent } from './NotificationTrayContent';
 
-describe('DialogContent', () => {
+describe('NotificationTrayContent', () => {
   it('renders children with padding', () => {
     render(
-      <DialogContent>
+      <NotificationTrayContent>
         <div>Test content</div>
-      </DialogContent>
+      </NotificationTrayContent>
     );
 
     expect(screen.getByText('Test content')).toBeInTheDocument();
-    expect(screen.getByTestId('dialog-content')).toHaveClass('p-2.5');
+    expect(screen.getByTestId('notification-tray-content')).toHaveClass('p-2.5');
   });
 
   it('does not have grid layout (just padding)', () => {
     render(
-      <DialogContent>
+      <NotificationTrayContent>
         <div>Content</div>
-      </DialogContent>
+      </NotificationTrayContent>
     );
 
-    const content = screen.getByTestId('dialog-content');
+    const content = screen.getByTestId('notification-tray-content');
     expect(content).not.toHaveClass('grid');
   });
 });

@@ -77,4 +77,26 @@ describe('MetricsGrid', () => {
     expect(screen.getByTestId('metrics-grid-value-threshold')).toBeInTheDocument();
     expect(screen.getByTestId('metrics-grid-value-threshold')).toHaveClass('text-text-muted');
   });
+
+  it('renders placeholder values when metrics are undefined', () => {
+    const emptyMetrics: AppMetrics = {};
+    render(
+      <TooltipProvider>
+        <MetricsGrid metrics={emptyMetrics} />
+      </TooltipProvider>
+    );
+
+    // Grid should still render with all labels
+    expect(screen.getByTestId('metrics-grid')).toBeInTheDocument();
+    expect(screen.getByTestId('metrics-grid-label-current')).toBeInTheDocument();
+    expect(screen.getByTestId('metrics-grid-label-average')).toBeInTheDocument();
+    expect(screen.getByTestId('metrics-grid-label-peak')).toBeInTheDocument();
+    expect(screen.getByTestId('metrics-grid-label-threshold')).toBeInTheDocument();
+
+    // Values should show placeholder "--"
+    expect(screen.getByTestId('metrics-grid-value-current')).toHaveTextContent('--');
+    expect(screen.getByTestId('metrics-grid-value-average')).toHaveTextContent('--');
+    expect(screen.getByTestId('metrics-grid-value-peak')).toHaveTextContent('--');
+    expect(screen.getByTestId('metrics-grid-value-threshold')).toHaveTextContent('--');
+  });
 });

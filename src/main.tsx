@@ -20,8 +20,8 @@ if (isDev) {
   getConsoleService().setMinLogLevel('debug');
 }
 
-// Ensure dark mode is applied
-document.documentElement.classList.add('dark');
+// Note: Dark mode class is managed by ThemeProvider wrapper component
+// The ThemeProvider sets the appropriate theme class on its wrapper div
 
 // Measure startup time
 // Note: startupStart measures from when JavaScript starts executing (after process/WebView initialization)

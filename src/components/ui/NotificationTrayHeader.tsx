@@ -8,7 +8,7 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
-export interface DialogHeaderProps {
+export interface NotificationTrayHeaderProps {
   /** Header title */
   title: string;
   /** Callback when close button is clicked */
@@ -20,7 +20,7 @@ export interface DialogHeaderProps {
 }
 
 /**
- * Dialog header component with 3-column grid layout.
+ * NotificationTray header component with 3-column grid layout.
  *
  * Layout:
  * - Title on left
@@ -29,11 +29,11 @@ export interface DialogHeaderProps {
  *
  * All items are aligned center (same height).
  */
-export const DialogHeader: React.FC<DialogHeaderProps> = ({
+export const NotificationTrayHeader: React.FC<NotificationTrayHeaderProps> = ({
   title,
   onClose,
   actions,
-  'data-testid': testId = 'dialog-header',
+  'data-testid': testId = 'notification-tray-header',
 }) => {
   return (
     <div
@@ -57,8 +57,8 @@ export const DialogHeader: React.FC<DialogHeaderProps> = ({
           'p-1 rounded text-text-muted hover:text-text-primary hover:bg-bg-raised transition-colors',
           focusRingClasses
         )}
-        aria-label="Close dialog"
-        data-testid="dialog-close-button"
+        aria-label="Close notification tray"
+        data-testid="notification-tray-close-button"
       >
         <ChevronDown className="w-3.5 h-3.5" />
       </button>

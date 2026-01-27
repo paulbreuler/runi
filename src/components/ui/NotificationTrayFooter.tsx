@@ -6,7 +6,7 @@
 import React from 'react';
 import { cn } from '@/utils/cn';
 
-export interface DialogFooterProps {
+export interface NotificationTrayFooterProps {
   /** Footer content */
   children: React.ReactNode;
   /** Optional test ID */
@@ -14,7 +14,7 @@ export interface DialogFooterProps {
 }
 
 /**
- * Dialog footer component matching DialogHeader style.
+ * NotificationTray footer component matching NotificationTrayHeader style.
  *
  * Layout:
  * - Same padding and border styling as header
@@ -22,9 +22,9 @@ export interface DialogFooterProps {
  *
  * All items are aligned center (same height).
  */
-export const DialogFooter: React.FC<DialogFooterProps> = ({
+export const NotificationTrayFooter: React.FC<NotificationTrayFooterProps> = ({
   children,
-  'data-testid': testId = 'dialog-footer',
+  'data-testid': testId = 'notification-tray-footer',
 }) => {
   return (
     <div

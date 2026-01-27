@@ -44,13 +44,28 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
     );
   }, [metrics]);
 
-  if (metrics.memory === undefined) {
-    return <div data-testid={`${testId}-empty`} />;
-  }
-
-  const { memory } = metrics;
+  const memory = metrics.memory;
+  // Show placeholder when no metrics available yet
+  const hasMetrics = memory !== undefined;
   // Show muted text when no samples collected yet (initial state)
-  const isInitialState = memory.samplesCount === 0;
+  const isInitialState = !hasMetrics || memory.samplesCount === 0;
+
+  // Placeholder value for when metrics haven't loaded
+  const placeholder = '--';
+
+  // Helper to render metric value with appropriate styling
+  const renderMetricValue = (
+    value: number | undefined,
+    threshold: number | undefined
+  ): React.ReactNode => {
+    if (!hasMetrics || value === undefined) {
+      return <span className="text-xs font-mono text-text-muted">{placeholder}</span>;
+    }
+    if (isInitialState) {
+      return <span className="text-xs font-mono text-text-muted">{formatMemoryValue(value)}</span>;
+    }
+    return <MetricCell value={value} threshold={threshold ?? 0} formatter={formatMemoryValue} />;
+  };
 
   return (
     <div
@@ -62,17 +77,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
         Current:
       </div>
       <div className="flex items-baseline" data-testid="metrics-grid-value-current">
-        {isInitialState ? (
-          <span className="text-xs font-mono text-text-muted">
-            {formatMemoryValue(memory.current)}
-          </span>
-        ) : (
-          <MetricCell
-            value={memory.current}
-            threshold={memory.threshold}
-            formatter={formatMemoryValue}
-          />
-        )}
+        {renderMetricValue(memory?.current, memory?.threshold)}
       </div>
 
       {/* Average */}
@@ -80,17 +85,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
         Average:
       </div>
       <div className="flex items-baseline" data-testid="metrics-grid-value-average">
-        {isInitialState ? (
-          <span className="text-xs font-mono text-text-muted">
-            {formatMemoryValue(memory.average)}
-          </span>
-        ) : (
-          <MetricCell
-            value={memory.average}
-            threshold={memory.threshold}
-            formatter={formatMemoryValue}
-          />
-        )}
+        {renderMetricValue(memory?.average, memory?.threshold)}
       </div>
 
       {/* Peak */}
@@ -98,21 +93,11 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
         Peak:
       </div>
       <div className="flex items-baseline" data-testid="metrics-grid-value-peak">
-        {isInitialState ? (
-          <span className="text-xs font-mono text-text-muted">
-            {formatMemoryValue(memory.peak)}
-          </span>
-        ) : (
-          <MetricCell
-            value={memory.peak}
-            threshold={memory.threshold}
-            formatter={formatMemoryValue}
-          />
-        )}
+        {renderMetricValue(memory?.peak, memory?.threshold)}
       </div>
 
       {/* Threshold (muted text, not MetricCell) with tooltip */}
-      {tooltipText !== '' ? (
+      {tooltipText !== '' && hasMetrics ? (
         <>
           <Tooltip content={tooltipText} data-testid="metrics-grid-threshold-tooltip">
             <div
@@ -140,7 +125,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
             className="flex items-baseline text-xs font-mono text-text-muted"
             data-testid="metrics-grid-value-threshold"
           >
-            {formatMemoryValue(memory.threshold)}
+            {hasMetrics ? formatMemoryValue(memory.threshold) : placeholder}
           </div>
         </>
       )}
