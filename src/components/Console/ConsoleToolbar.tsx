@@ -11,7 +11,6 @@ import {
   Trash2,
   Download,
   Copy as CopyIcon,
-  ArrowDownToLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SplitButton } from '@/components/ui/SplitButton';
@@ -33,24 +32,6 @@ interface ConsoleToolbarProps {
   searchFilter: string;
   /** Callback when search filter changes */
   onSearchFilterChange: (value: string) => void;
-  /**
-   * Whether auto-scroll is enabled.
-   *
-   * When enabled (default), the console automatically scrolls to show
-   * the latest log entries as they arrive. When disabled, users can
-   * freely scroll through history without being jumped to the bottom.
-   */
-  autoScroll: boolean;
-  /**
-   * Toggle auto-scroll behavior.
-   *
-   * The Auto button provides visual feedback:
-   * - Filled (default variant): Auto-scroll is ON
-   * - Outlined: Auto-scroll is OFF
-   *
-   * Uses `aria-pressed` to communicate toggle state to screen readers.
-   */
-  onAutoScrollToggle: () => void;
   /** Clear all logs */
   onClear: () => void;
   /** Save all logs */
@@ -71,8 +52,6 @@ interface ConsoleToolbarProps {
  * Inner component that uses the ActionBar context
  */
 const ConsoleToolbarActions = ({
-  autoScroll,
-  onAutoScrollToggle,
   onClear,
   onSaveAll,
   onSaveSelection,
@@ -80,13 +59,7 @@ const ConsoleToolbarActions = ({
   selectedCount,
 }: Pick<
   ConsoleToolbarProps,
-  | 'autoScroll'
-  | 'onAutoScrollToggle'
-  | 'onClear'
-  | 'onSaveAll'
-  | 'onSaveSelection'
-  | 'onCopySelection'
-  | 'selectedCount'
+  'onClear' | 'onSaveAll' | 'onSaveSelection' | 'onCopySelection' | 'selectedCount'
 >): React.JSX.Element => {
   const context = useOptionalActionBarContext();
   const isIconMode = context?.variant === 'icon';
@@ -127,18 +100,6 @@ const ConsoleToolbarActions = ({
           aria-label="Copy selected logs"
         >
           <CopyIcon size={14} />
-        </Button>
-        {/* Auto-scroll toggle: filled = ON, outline = OFF */}
-        <Button
-          type="button"
-          onClick={onAutoScrollToggle}
-          variant={autoScroll ? 'default' : 'outline'}
-          size="icon-xs"
-          title={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
-          aria-label={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
-          aria-pressed={autoScroll}
-        >
-          <ArrowDownToLine size={14} />
         </Button>
         <Button
           type="button"
@@ -191,18 +152,6 @@ const ConsoleToolbarActions = ({
         <CopyIcon size={12} />
         <span>Copy</span>
       </Button>
-      {/* Auto-scroll toggle: filled = ON, outline = OFF */}
-      <Button
-        type="button"
-        onClick={onAutoScrollToggle}
-        variant={autoScroll ? 'default' : 'outline'}
-        size="xs"
-        title={autoScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
-        aria-pressed={autoScroll}
-      >
-        <ArrowDownToLine size={12} />
-        <span>Auto</span>
-      </Button>
       <Button
         type="button"
         onClick={onClear}
@@ -228,8 +177,6 @@ export const ConsoleToolbar = ({
   onFilterChange,
   searchFilter,
   onSearchFilterChange,
-  autoScroll,
-  onAutoScrollToggle,
   onClear,
   onSaveAll,
   onSaveSelection,
@@ -282,8 +229,6 @@ export const ConsoleToolbar = ({
       </ActionBarGroup>
 
       <ConsoleToolbarActions
-        autoScroll={autoScroll}
-        onAutoScrollToggle={onAutoScrollToggle}
         onClear={onClear}
         onSaveAll={onSaveAll}
         onSaveSelection={onSaveSelection}

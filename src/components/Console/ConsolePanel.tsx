@@ -141,7 +141,6 @@ export const ConsolePanel = ({
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
   const [filter, setFilter] = useState<LogLevel | 'all'>('all');
   const [searchFilter, setSearchFilter] = useState<string>('');
-  const [autoScroll, setAutoScroll] = useState(true);
   const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
   const [selectedLogIds, setSelectedLogIds] = useState<Set<string>>(new Set());
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
@@ -149,7 +148,6 @@ export const ConsolePanel = ({
     log: DisplayLog;
     position: { x: number; y: number };
   } | null>(null);
-  const logContainerRef = useRef<HTMLDivElement>(null);
   const serviceRef = useRef(getConsoleService());
 
   // Subscribe to console service logs
@@ -232,8 +230,6 @@ export const ConsolePanel = ({
 
     // Set search filter to correlation ID to jump to that log
     setSearchFilter(targetCorrelationId);
-    // Disable auto-scroll so user stays at the filtered result
-    setAutoScroll(false);
     // Clear the target so we don't re-filter on subsequent renders
     onTargetCorrelationIdConsumed?.();
   }, [targetCorrelationId, onTargetCorrelationIdConsumed]);
@@ -337,11 +333,11 @@ export const ConsolePanel = ({
       }
     }
 
-    // Sort by first timestamp
+    // Sort by timestamp descending (newest first)
     return result.sort((a, b) => {
       const timeA = isGroupedLog(a) ? a.firstTimestamp : a.timestamp;
       const timeB = isGroupedLog(b) ? b.firstTimestamp : b.timestamp;
-      return timeA - timeB;
+      return timeB - timeA;
     });
   }, [logs, filter, searchFilter]);
 
@@ -386,27 +382,6 @@ export const ConsolePanel = ({
     },
     [filteredLogs]
   );
-
-  // Auto-scroll to bottom when new logs arrive
-  useEffect(() => {
-    if (!autoScroll || logContainerRef.current === null) {
-      return;
-    }
-
-    // Defer scroll until DOM has updated
-    requestAnimationFrame(() => {
-      if (logContainerRef.current === null) {
-        return;
-      }
-
-      const container = logContainerRef.current;
-      const targetScroll = container.scrollHeight - container.clientHeight;
-
-      // Scroll to bottom (respects reduced motion preference)
-      // Note: Both paths do the same thing - reduced motion is handled by CSS
-      container.scrollTop = targetScroll;
-    });
-  }, [filteredLogs.length, autoScroll]); // Depend on filteredLogs.length, not logs
 
   const handleClear = (): void => {
     const service = getConsoleService();
@@ -986,10 +961,6 @@ export const ConsolePanel = ({
         onFilterChange={setFilter}
         searchFilter={searchFilter}
         onSearchFilterChange={setSearchFilter}
-        autoScroll={autoScroll}
-        onAutoScrollToggle={() => {
-          setAutoScroll(!autoScroll);
-        }}
         onClear={handleClear}
         onSaveAll={handleSaveAll}
         onSaveSelection={handleSaveSelection}
@@ -1005,11 +976,7 @@ export const ConsolePanel = ({
 
         {/* VirtualDataGrid - replaces custom rendering */}
         {/* Note: VirtualDataGrid handles scrolling internally, no need for overflow-x-auto wrapper */}
-        <div
-          className="flex-1 flex flex-col min-h-0"
-          ref={logContainerRef}
-          data-testid="console-logs"
-        >
+        <div className="flex-1 flex flex-col min-h-0" data-testid="console-logs">
           <VirtualDataGrid
             data={tableData}
             columns={columns}
