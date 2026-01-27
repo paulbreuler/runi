@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useSyncExternalStore, useCallback, useState } from 'react';
 import { Toaster as SonnerToaster, toast } from 'sonner';
-import { X, Copy } from 'lucide-react';
+import { motion } from 'motion/react';
+import { X, Copy, Bell } from 'lucide-react';
 import { globalEventBus, type ToastEventPayload, type ToastType } from '@/events/bus';
 import { usePanelStore } from '@/stores/usePanelStore';
-import { useNotificationStore } from '@/stores/useNotificationStore';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,6 +54,108 @@ const cleanExpired = (): void => {
  */
 export const clearDedupCache = (): void => {
   dedupCache.clear();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Active Toast Tracking (module-level)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Set of currently active toast IDs */
+const activeToasts = new Set<string>();
+
+/** Subscribers to toast count changes */
+const countSubscribers = new Set<() => void>();
+
+/** Get current active toast count */
+const getActiveToastCount = (): number => activeToasts.size;
+
+/** Subscribe to count changes (for useSyncExternalStore) */
+const subscribeToCount = (callback: () => void): (() => void) => {
+  countSubscribers.add(callback);
+  return (): void => {
+    countSubscribers.delete(callback);
+  };
+};
+
+/** Notify all subscribers of count change */
+const notifyCountChange = (): void => {
+  for (const subscriber of countSubscribers) {
+    subscriber();
+  }
+};
+
+/** Track a toast as active */
+const trackToast = (id: string): void => {
+  activeToasts.add(id);
+  notifyCountChange();
+};
+
+/** Untrack a toast (dismissed or expired) */
+const untrackToast = (id: string): void => {
+  activeToasts.delete(id);
+  notifyCountChange();
+};
+
+/** Clear all tracked toasts */
+const clearTrackedToasts = (): void => {
+  activeToasts.clear();
+  notifyCountChange();
+};
+
+/**
+ * Hook to get the current active toast count.
+ * Re-renders when count changes.
+ */
+export const useToastCount = (): number => {
+  return useSyncExternalStore(subscribeToCount, getActiveToastCount);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Expand State (module-level)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Current expand state */
+let expandState = false;
+
+/** Subscribers to expand state changes */
+const expandSubscribers = new Set<() => void>();
+
+/** Get current expand state */
+const getExpandState = (): boolean => expandState;
+
+/** Subscribe to expand changes (for useSyncExternalStore) */
+const subscribeToExpand = (callback: () => void): (() => void) => {
+  expandSubscribers.add(callback);
+  return (): void => {
+    expandSubscribers.delete(callback);
+  };
+};
+
+/** Notify all expand subscribers */
+const notifyExpandChange = (): void => {
+  for (const subscriber of expandSubscribers) {
+    subscriber();
+  }
+};
+
+/** Set expand state */
+export const setToastExpand = (expanded: boolean): void => {
+  expandState = expanded;
+  notifyExpandChange();
+};
+
+/** Toggle expand state */
+export const toggleToastExpand = (): void => {
+  expandState = !expandState;
+  notifyExpandChange();
+};
+
+/**
+ * Hook to get the current expand state.
+ * Re-renders when state changes.
+ */
+export const useToastExpand = (): boolean => {
+  return useSyncExternalStore(subscribeToExpand, getExpandState);
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -257,14 +360,6 @@ export const showToast = (
   const { type, message, details, correlationId, duration, testId } = payload;
   const { onDismiss } = options ?? {};
 
-  // Add to notification center
-  useNotificationStore.getState().addNotification({
-    type,
-    message,
-    details,
-    correlationId,
-  });
-
   cleanExpired();
 
   const dedupKey = getDedupKey(type, message);
@@ -294,6 +389,9 @@ export const showToast = (
     });
   }
 
+  // Track toast as active
+  trackToast(toastId);
+
   if (type === 'error') {
     toast.custom(
       () => (
@@ -311,7 +409,8 @@ export const showToast = (
         id: toastId,
         duration: Infinity,
         onDismiss: () => {
-          // Remove from dedup cache when dismissed
+          // Remove from tracking and dedup cache when dismissed
+          untrackToast(toastId);
           dedupCache.delete(dedupKey);
           onDismiss?.();
         },
@@ -332,7 +431,8 @@ export const showToast = (
         id: toastId,
         duration: duration ?? 5000,
         onDismiss: () => {
-          // Remove from dedup cache when dismissed
+          // Remove from tracking and dedup cache when dismissed
+          untrackToast(toastId);
           dedupCache.delete(dedupKey);
         },
       }
@@ -346,6 +446,7 @@ export const showToast = (
 export const clearToasts = (): void => {
   toast.dismiss();
   clearDedupCache();
+  clearTrackedToasts();
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -368,6 +469,69 @@ const ToastEventBridge = (): null => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ToastBell Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Shake animation for empty bell (matches BadgeCount pattern)
+const bellShakeAnimation = {
+  x: [0, -2, 2, -2, 2, -2, 2, 0],
+};
+
+const bellShakeTransition = {
+  duration: 0.4,
+  ease: 'easeInOut' as const,
+};
+
+/**
+ * Bell icon button that shows toast count badge and toggles Sonner expand.
+ * Used in StatusBar to provide quick access to toasts.
+ * Shakes when clicked with no active toasts to provide feedback.
+ */
+export const ToastBell: React.FC = () => {
+  const count = useToastCount();
+  const expanded = useToastExpand();
+  const [shakeKey, setShakeKey] = useState(0);
+
+  const handleClick = useCallback(() => {
+    if (count === 0) {
+      // Trigger shake animation by incrementing key
+      setShakeKey((k) => k + 1);
+    } else {
+      toggleToastExpand();
+    }
+  }, [count]);
+
+  return (
+    <Button
+      variant="ghost"
+      size="xs"
+      onClick={handleClick}
+      className={cn('gap-1.5 relative', expanded && 'bg-bg-raised text-text-primary')}
+      data-testid="toast-bell-button"
+      aria-label={count > 0 ? `Notifications (${String(count)} active)` : 'Notifications'}
+      aria-expanded={expanded}
+    >
+      <motion.div
+        key={shakeKey}
+        animate={shakeKey > 0 ? bellShakeAnimation : undefined}
+        transition={bellShakeTransition}
+      >
+        <Bell className="w-3 h-3" />
+      </motion.div>
+      {/* Active toast badge */}
+      {count > 0 && (
+        <span
+          className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-signal-error text-white text-[9px] font-medium flex items-center justify-center px-1"
+          data-testid="toast-bell-badge"
+        >
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </Button>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Toaster Component
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -376,6 +540,8 @@ const ToastEventBridge = (): null => {
  * Should be mounted once at the app root.
  */
 export const Toaster = (): React.JSX.Element => {
+  const expanded = useToastExpand();
+
   return (
     <>
       <ToastEventBridge />
@@ -384,6 +550,7 @@ export const Toaster = (): React.JSX.Element => {
         offset={56}
         gap={10}
         visibleToasts={3}
+        expand={expanded}
         toastOptions={{
           unstyled: true,
         }}

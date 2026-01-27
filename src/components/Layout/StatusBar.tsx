@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/Switch';
 import { MetricsGrid } from '@/components/Metrics/MetricsGrid';
 import { AppMetricsContainer } from '@/components/Console/AppMetricsContainer';
-import { NotificationCenter } from '@/components/Notifications/NotificationCenter';
+import { ToastBell } from '@/components/ui/Toaster';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
@@ -196,7 +196,7 @@ export const StatusBar = (): React.JSX.Element => {
 
   return (
     <div
-      className="h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-5 text-xs"
+      className="h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-2 text-xs"
       data-testid="status-bar"
     >
       {/* Left side - environment and request count */}
@@ -210,7 +210,7 @@ export const StatusBar = (): React.JSX.Element => {
         </span>
       </div>
       {/* Right side - metrics and version */}
-      <div className="flex items-center gap-4 opacity-60 hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
         {/* Metrics popover */}
         <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
           <PopoverTrigger asChild>
@@ -294,13 +294,13 @@ export const StatusBar = (): React.JSX.Element => {
             <AppMetricsContainer compact={true} />
           </div>
         )}
-        {/* Notification Center */}
-        <NotificationCenter />
-
         <span className="flex items-center gap-1.5 text-text-muted">
           <span className="text-text-muted">Version:</span>
           <span className="font-mono text-text-secondary">{__APP_VERSION__}</span>
         </span>
+
+        {/* Toast Bell - rightmost */}
+        <ToastBell />
       </div>
     </div>
   );

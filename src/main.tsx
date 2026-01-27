@@ -157,27 +157,29 @@ if (rootElement !== null) {
           }
 
           await invoke('write_startup_timing', {
-            timestamp: new Date().toISOString(),
-            platform: systemSpecs.platform,
-            architecture: systemSpecs.architecture,
-            buildMode: systemSpecs.buildMode,
-            systemSpecs: {
-              cpuModel: systemSpecs.cpuModel,
-              cpuCores: systemSpecs.cpuCores,
-              totalMemoryGb: systemSpecs.totalMemoryGb,
+            timing: {
+              timestamp: new Date().toISOString(),
               platform: systemSpecs.platform,
               architecture: systemSpecs.architecture,
               buildMode: systemSpecs.buildMode,
-              bundleSizeMb: systemSpecs.bundleSizeMb,
+              systemSpecs: {
+                cpuModel: systemSpecs.cpuModel,
+                cpuCores: systemSpecs.cpuCores,
+                totalMemoryGb: systemSpecs.totalMemoryGb,
+                platform: systemSpecs.platform,
+                architecture: systemSpecs.architecture,
+                buildMode: systemSpecs.buildMode,
+                bundleSizeMb: systemSpecs.bundleSizeMb,
+              },
+              timing: {
+                processStartup: startupTiming.processStartup,
+                domContentLoaded: startupTiming.domContentLoaded,
+                windowLoaded: startupTiming.windowLoaded,
+                reactMounted: startupTiming.reactMounted,
+                total: startupTiming.total,
+              },
+              unit: 'ms',
             },
-            timing: {
-              processStartup: startupTiming.processStartup,
-              domContentLoaded: startupTiming.domContentLoaded,
-              windowLoaded: startupTiming.windowLoaded,
-              reactMounted: startupTiming.reactMounted,
-              total: startupTiming.total,
-            },
-            unit: 'ms',
           });
         } catch (error) {
           // Silently fail - don't break the app if file write fails
