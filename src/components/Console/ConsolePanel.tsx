@@ -26,6 +26,10 @@ export interface ConsolePanelProps {
   maxLogs?: number;
   /** Maximum size in bytes for log storage (default: 4MB) */
   maxSizeBytes?: number;
+  /** Target correlation ID to filter/jump to (from toast "View Console" action) */
+  targetCorrelationId?: string;
+  /** Callback when target correlation ID has been consumed (to clear parent state) */
+  onTargetCorrelationIdConsumed?: () => void;
 }
 
 interface GroupedLog {
@@ -131,6 +135,8 @@ const DEFAULT_MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
 export const ConsolePanel = ({
   maxLogs = 1000,
   maxSizeBytes = DEFAULT_MAX_SIZE_BYTES,
+  targetCorrelationId,
+  onTargetCorrelationIdConsumed,
 }: ConsolePanelProps): React.JSX.Element => {
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
   const [filter, setFilter] = useState<LogLevel | 'all'>('all');
@@ -217,6 +223,20 @@ export const ConsolePanel = ({
       }
     };
   }, [maxLogs, maxSizeBytes]);
+
+  // Handle jump to correlation ID (from toast "View Console" action)
+  useEffect(() => {
+    if (targetCorrelationId === undefined || targetCorrelationId === '') {
+      return;
+    }
+
+    // Set search filter to correlation ID to jump to that log
+    setSearchFilter(targetCorrelationId);
+    // Disable auto-scroll so user stays at the filtered result
+    setAutoScroll(false);
+    // Clear the target so we don't re-filter on subsequent renders
+    onTargetCorrelationIdConsumed?.();
+  }, [targetCorrelationId, onTargetCorrelationIdConsumed]);
 
   // Helper function to check if log matches search text
   const matchesSearch = (log: ConsoleLog, searchText: string): boolean => {

@@ -142,13 +142,20 @@ export const MainLayout = ({
     description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
   });
 
+  // Track target correlation ID for console panel jump
+  const [targetCorrelationId, setTargetCorrelationId] = useState<string | undefined>(undefined);
+
   // Listen for console panel requests (e.g., from error toasts)
   useEffect(() => {
     const unsubscribe = globalEventBus.on<{ correlationId?: string }>(
       'panel.console-requested',
-      () => {
+      (event) => {
         setVisible(true);
         setActiveTab('console');
+        // Pass correlation ID to console panel for jumping to entry
+        if (event.payload.correlationId !== undefined) {
+          setTargetCorrelationId(event.payload.correlationId);
+        }
       }
     );
 
@@ -546,7 +553,14 @@ export const MainLayout = ({
                 <PanelContent
                   activeTab={activeTab}
                   networkContent={<NetworkHistoryPanel {...historyPanelProps} />}
-                  consoleContent={<ConsolePanel />}
+                  consoleContent={
+                    <ConsolePanel
+                      targetCorrelationId={targetCorrelationId}
+                      onTargetCorrelationIdConsumed={() => {
+                        setTargetCorrelationId(undefined);
+                      }}
+                    />
+                  }
                 />
               </DockablePanel>
             )}
@@ -639,7 +653,14 @@ export const MainLayout = ({
                 <PanelContent
                   activeTab={activeTab}
                   networkContent={<NetworkHistoryPanel {...historyPanelProps} />}
-                  consoleContent={<ConsolePanel />}
+                  consoleContent={
+                    <ConsolePanel
+                      targetCorrelationId={targetCorrelationId}
+                      onTargetCorrelationIdConsumed={() => {
+                        setTargetCorrelationId(undefined);
+                      }}
+                    />
+                  }
                 />
               </DockablePanel>
             )}
@@ -662,7 +683,14 @@ export const MainLayout = ({
           <PanelContent
             activeTab={activeTab}
             networkContent={<NetworkHistoryPanel {...historyPanelProps} />}
-            consoleContent={<ConsolePanel />}
+            consoleContent={
+              <ConsolePanel
+                targetCorrelationId={targetCorrelationId}
+                onTargetCorrelationIdConsumed={() => {
+                  setTargetCorrelationId(undefined);
+                }}
+              />
+            }
           />
         </DockablePanel>
       )}
