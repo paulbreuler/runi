@@ -135,8 +135,6 @@ export const RequestHeader = ({
         data-testid="url-input"
         disabled={loading}
         aria-label="Request URL"
-        glass
-        noScale
         className="flex-1"
       />
 
