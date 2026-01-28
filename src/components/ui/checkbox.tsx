@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
+import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 import { motion, type Variant } from 'motion/react';
 import { Check, Minus } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';

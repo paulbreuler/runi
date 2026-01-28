@@ -9,7 +9,7 @@
  */
 
 import { useState, useRef } from 'react';
-import * as Tabs from '@radix-ui/react-tabs';
+import { Tabs } from 'radix-ui';
 import { cn } from '@/utils/cn';
 import { TimingTab } from '@/components/History/TimingTab';
 import { ResponseTab } from '@/components/History/ResponseTab';

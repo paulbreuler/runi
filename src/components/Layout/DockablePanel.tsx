@@ -6,7 +6,7 @@
 import React, { useCallback, useRef, useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';
-import * as ScrollArea from '@radix-ui/react-scroll-area';
+import { ScrollArea } from 'radix-ui';
 import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores/usePanelStore';
 import { DockControls } from './DockControls';
 import { cn } from '@/utils/cn';
