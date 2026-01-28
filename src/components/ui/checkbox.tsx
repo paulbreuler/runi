@@ -92,7 +92,7 @@ const Checkbox = React.forwardRef<React.ComponentRef<typeof CheckboxPrimitive.Ro
       >
         <CheckboxPrimitive.Indicator asChild forceMount>
           <motion.span
-            className="flex items-center justify-center text-white"
+            className="flex items-center justify-center text-accent-contrast"
             initial="hidden"
             animate={isChecked || isIndeterminate ? 'visible' : 'hidden'}
             variants={indicatorMotionVariants}

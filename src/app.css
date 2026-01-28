@@ -74,6 +74,7 @@
   /* Accent Colors (for Tailwind utility compatibility) */
   --color-accent-blue: var(--accent-9);
   --color-accent-blue-hover: var(--accent-10);
+  --color-accent-contrast: var(--accent-contrast);
   --color-accent-purple: oklch(0.627 0.265 303.9);
   --color-accent-green: oklch(0.723 0.191 142.5);
   --color-accent-amber: oklch(0.769 0.188 70.08);

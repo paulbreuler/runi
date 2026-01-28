@@ -65,10 +65,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         'focus-visible:shadow-md focus-visible:shadow-black/10',
         'focus-visible:ring-1 focus-visible:ring-white/20',
       ],
-      // Non-glass fallback styles
+      // Non-glass fallback styles (matches Radix TextField variant-surface pattern)
       !glass && [
-        'bg-bg-raised border border-border-default',
+        'bg-bg-surface border border-border-subtle',
         'transition-colors duration-200',
+        'hover:border-border-default',
         'focus-visible:border-border-emphasis focus-visible:ring-1',
         'focus-visible:ring-border-default',
       ],

@@ -31,7 +31,10 @@
         "alwaysOnTop": false,
         "skipTaskbar": false,
         "visible": true,
-        "center": true
+        "center": true,
+        "backgroundColor": "#0c0c0e",
+        "titleBarStyle": "Transparent",
+        "theme": "Dark"
       }
     ],
     "macOSPrivateApi": true

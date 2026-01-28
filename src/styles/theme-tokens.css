@@ -58,7 +58,9 @@
    ============================================ */
 .light,
 .light-theme {
+  /* Background: white in light theme (matches Radix pattern) */
   --color-background: #fff;
+  /* Surface and panel tokens use gray scale which switches automatically */
   --color-surface: var(--gray-2);
   --color-panel-solid: var(--gray-3);
   --color-panel-translucent: var(--gray-a3);
