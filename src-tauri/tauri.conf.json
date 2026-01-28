@@ -1,6 +1,6 @@
 {
   "productName": "runi",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "identifier": "com.runi.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -59,8 +59,14 @@
           "width": 660,
           "height": 370
         },
-        "appPosition": { "x": 180, "y": 185 },
-        "applicationFolderPosition": { "x": 480, "y": 185 }
+        "appPosition": {
+          "x": 180,
+          "y": 185
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 185
+        }
       }
     }
   },

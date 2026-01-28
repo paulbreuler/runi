@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/paulbreuler/runi/compare/runi-v0.2.5...runi-v0.3.0) (2026-01-27)
+
+
+### Features
+
+* **theme:** integrate Radix UI Themes 3 token architecture ([#77](https://github.com/paulbreuler/runi/issues/77)) ([4a0596d](https://github.com/paulbreuler/runi/commit/4a0596db2e51d9482f8d84dfbee597828b8d6a24))
+* **ui:** overhaul toast system with Radix primitives and unify panel ordering ([#78](https://github.com/paulbreuler/runi/issues/78)) ([b625ca7](https://github.com/paulbreuler/runi/commit/b625ca761ce3a6bc52f079ae243714a5a8d33ef6))
+
+
+### Bug Fixes
+
+* **release:** checkout commit SHA and ensure DMG artifacts are properly built ([#75](https://github.com/paulbreuler/runi/issues/75)) ([ff68630](https://github.com/paulbreuler/runi/commit/ff68630322d5a160076e33da0e78e17035321679))
+
 ## [0.2.5](https://github.com/paulbreuler/runi/compare/runi-v0.2.4...runi-v0.2.5) (2026-01-26)
 
 
