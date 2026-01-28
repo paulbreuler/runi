@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { motion, type Variant } from 'motion/react';
-import { Slot } from '@radix-ui/react-slot';
+import { Slot } from 'radix-ui';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
 
@@ -96,7 +96,7 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, disabled, noScale = false, ...props }, ref) => {
     if (asChild) {
-      const Comp = Slot;
+      const Comp = Slot.Root;
       return (
         <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
       );

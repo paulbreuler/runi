@@ -8,7 +8,7 @@
  * @description Tab navigation for expanded panel
  */
 
-import * as Tabs from '@radix-ui/react-tabs';
+import { Tabs } from 'radix-ui';
 import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import * as PopoverPrimitive from '@radix-ui/react-popover';
+import { Popover as PopoverPrimitive } from 'radix-ui';
 import React from 'react';
 import { cn } from '@/utils/cn';
 

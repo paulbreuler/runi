@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Terminal, Network } from 'lucide-react';
-import * as Tabs from '@radix-ui/react-tabs';
+import { Tabs } from 'radix-ui';
 import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 

@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import * as ToastPrimitives from '@radix-ui/react-toast';
+import { Toast as ToastPrimitives } from 'radix-ui';
 import { cn } from '@/utils/cn';
 import { Toast } from './Toast';
 import { useToastStore } from './useToast';

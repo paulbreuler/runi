@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { DropdownMenu } from 'radix-ui';
 import { motion, type Variant } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';

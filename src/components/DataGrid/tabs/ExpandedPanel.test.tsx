@@ -18,101 +18,103 @@ import type { NetworkHistoryEntry } from '@/types/history';
 let mockOnValueChange: ((value: string) => void) | undefined;
 let mockCurrentValue: string | undefined;
 
-vi.mock('@radix-ui/react-tabs', () => ({
-  Root: ({
-    children,
-    value,
-    onValueChange,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    value?: string;
-    onValueChange?: (value: string) => void;
-    [key: string]: unknown;
-  }): React.JSX.Element => {
-    mockOnValueChange = onValueChange;
-    mockCurrentValue = value;
-    return (
-      <div data-testid="tabs-root" data-value={value} {...props}>
+vi.mock('radix-ui', () => ({
+  Tabs: {
+    Root: ({
+      children,
+      value,
+      onValueChange,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      value?: string;
+      onValueChange?: (value: string) => void;
+      [key: string]: unknown;
+    }): React.JSX.Element => {
+      mockOnValueChange = onValueChange;
+      mockCurrentValue = value;
+      return (
+        <div data-testid="tabs-root" data-value={value} {...props}>
+          {children}
+        </div>
+      );
+    },
+    List: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: unknown;
+    }): React.JSX.Element => (
+      <div data-testid="tabs-list" {...props}>
         {children}
       </div>
-    );
-  },
-  List: ({
-    children,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    [key: string]: unknown;
-  }): React.JSX.Element => (
-    <div data-testid="tabs-list" {...props}>
-      {children}
-    </div>
-  ),
-  Trigger: ({
-    children,
-    value,
-    asChild,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    value?: string;
-    asChild?: boolean;
-    [key: string]: unknown;
-  }): React.JSX.Element => {
-    const handleClick = (): void => {
-      if (mockOnValueChange !== undefined && value !== undefined) {
-        mockOnValueChange(value);
-      }
-    };
-
-    if (asChild && React.isValidElement(children)) {
-      const childProps = {
-        ...props,
-        onClick: handleClick,
-        'data-testid': `tab-${value ?? 'unknown'}`,
-        'data-value': value,
-        'data-as-child': asChild,
-        role: 'tab',
-        'aria-selected': value === mockCurrentValue ? 'true' : 'false',
+    ),
+    Trigger: ({
+      children,
+      value,
+      asChild,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      value?: string;
+      asChild?: boolean;
+      [key: string]: unknown;
+    }): React.JSX.Element => {
+      const handleClick = (): void => {
+        if (mockOnValueChange !== undefined && value !== undefined) {
+          mockOnValueChange(value);
+        }
       };
 
-      return React.cloneElement(
-        children as React.ReactElement<Record<string, unknown>>,
-        childProps
-      );
-    }
+      if (asChild && React.isValidElement(children)) {
+        const childProps = {
+          ...props,
+          onClick: handleClick,
+          'data-testid': `tab-${value ?? 'unknown'}`,
+          'data-value': value,
+          'data-as-child': asChild,
+          role: 'tab',
+          'aria-selected': value === mockCurrentValue ? 'true' : 'false',
+        };
 
-    return (
+        return React.cloneElement(
+          children as React.ReactElement<Record<string, unknown>>,
+          childProps
+        );
+      }
+
+      return (
+        <div
+          data-testid={`tab-${value ?? 'unknown'}`}
+          data-value={value}
+          role="tab"
+          aria-selected={value === mockCurrentValue ? 'true' : 'false'}
+          onClick={handleClick}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    },
+    Content: ({
+      children,
+      value,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      value?: string;
+      [key: string]: unknown;
+    }): React.JSX.Element => (
       <div
-        data-testid={`tab-${value ?? 'unknown'}`}
-        data-value={value}
-        role="tab"
-        aria-selected={value === mockCurrentValue ? 'true' : 'false'}
-        onClick={handleClick}
+        data-testid={`tab-content-${value ?? 'unknown'}`}
+        data-value={value ?? 'unknown'}
         {...props}
       >
         {children}
       </div>
-    );
+    ),
   },
-  Content: ({
-    children,
-    value,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    value?: string;
-    [key: string]: unknown;
-  }): React.JSX.Element => (
-    <div
-      data-testid={`tab-content-${value ?? 'unknown'}`}
-      data-value={value ?? 'unknown'}
-      {...props}
-    >
-      {children}
-    </div>
-  ),
 }));
 
 describe('ExpandedPanel', () => {

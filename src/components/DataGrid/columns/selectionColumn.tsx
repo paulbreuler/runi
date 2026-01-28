@@ -14,8 +14,10 @@
 import * as React from 'react';
 import type { ColumnDef, Table, Row, HeaderContext, CellContext } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { CheckedState } from '@radix-ui/react-checkbox';
 import { COLUMN_WIDTHS } from '@/components/DataGrid/constants';
+
+// CheckedState type: boolean | 'indeterminate'
+type CheckedState = boolean | 'indeterminate';
 import { useKeyboardNavInteractive } from '../accessibility/keyboardNav';
 
 /**

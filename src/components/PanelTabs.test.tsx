@@ -48,80 +48,82 @@ vi.mock('motion/react', () => ({
 // Store onValueChange callback to simulate Radix behavior
 let mockOnValueChange: ((value: string) => void) | undefined;
 
-vi.mock('@radix-ui/react-tabs', () => ({
-  Root: ({
-    children,
-    value,
-    onValueChange,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    value?: string;
-    onValueChange?: (value: string) => void;
-    [key: string]: unknown;
-  }): React.JSX.Element => {
-    // Store callback for Trigger to use
-    mockOnValueChange = onValueChange;
-    return (
-      <div data-testid="tabs-root" data-value={value} {...props}>
+vi.mock('radix-ui', () => ({
+  Tabs: {
+    Root: ({
+      children,
+      value,
+      onValueChange,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      value?: string;
+      onValueChange?: (value: string) => void;
+      [key: string]: unknown;
+    }): React.JSX.Element => {
+      // Store callback for Trigger to use
+      mockOnValueChange = onValueChange;
+      return (
+        <div data-testid="tabs-root" data-value={value} {...props}>
+          {children}
+        </div>
+      );
+    },
+    List: ({
+      children,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      [key: string]: unknown;
+    }): React.JSX.Element => (
+      <div data-testid="tabs-list" {...props}>
         {children}
       </div>
-    );
-  },
-  List: ({
-    children,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    [key: string]: unknown;
-  }): React.JSX.Element => (
-    <div data-testid="tabs-list" {...props}>
-      {children}
-    </div>
-  ),
-  Trigger: ({
-    children,
-    value,
-    asChild,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    value?: string;
-    asChild?: boolean;
-    [key: string]: unknown;
-  }): React.JSX.Element => {
-    // When asChild is true, children should be a single element (motion.button)
-    // We need to clone it and add onClick handler
-    const handleClick = (): void => {
-      if (mockOnValueChange !== undefined && value !== undefined) {
-        mockOnValueChange(value);
-      }
-    };
-
-    if (asChild && React.isValidElement(children)) {
-      // TypeScript workaround for cloneElement with dynamic props
-      const childProps = {
-        ...props,
-        onClick: handleClick,
-        'data-testid': 'tabs-trigger',
-        'data-value': value,
-        'data-as-child': asChild,
+    ),
+    Trigger: ({
+      children,
+      value,
+      asChild,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      value?: string;
+      asChild?: boolean;
+      [key: string]: unknown;
+    }): React.JSX.Element => {
+      // When asChild is true, children should be a single element (motion.button)
+      // We need to clone it and add onClick handler
+      const handleClick = (): void => {
+        if (mockOnValueChange !== undefined && value !== undefined) {
+          mockOnValueChange(value);
+        }
       };
 
-      return React.cloneElement(children as React.ReactElement<any>, childProps);
-    }
+      if (asChild && React.isValidElement(children)) {
+        // TypeScript workaround for cloneElement with dynamic props
+        const childProps = {
+          ...props,
+          onClick: handleClick,
+          'data-testid': 'tabs-trigger',
+          'data-value': value,
+          'data-as-child': asChild,
+        };
 
-    return (
-      <div
-        data-testid="tabs-trigger"
-        data-value={value}
-        data-as-child={asChild}
-        onClick={handleClick}
-        {...props}
-      >
-        {children}
-      </div>
-    );
+        return React.cloneElement(children as React.ReactElement<any>, childProps);
+      }
+
+      return (
+        <div
+          data-testid="tabs-trigger"
+          data-value={value}
+          data-as-child={asChild}
+          onClick={handleClick}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    },
   },
 }));
 

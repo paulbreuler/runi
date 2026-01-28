@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
-import * as ToastPrimitives from '@radix-ui/react-toast';
+import { Toast as ToastPrimitives } from 'radix-ui';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { X, AlertCircle, CheckCircle, AlertTriangle, Info, Terminal } from 'lucide-react';
 import { cn } from '@/utils/cn';
