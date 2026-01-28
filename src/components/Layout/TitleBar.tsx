@@ -168,7 +168,8 @@ export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX
     <div
       className={cn(
         // Height matches VS Code title bar (~32px) with overlay style
-        'h-8 border-b border-border-subtle bg-bg-surface/80 backdrop-blur-sm flex items-center relative',
+        // Using bg-bg-raised for lighter appearance in color hierarchy (gray-3 vs gray-2)
+        'h-8 border-b border-border-subtle bg-bg-raised/80 backdrop-blur-sm flex items-center relative',
         'text-xs text-text-secondary select-none',
         // Windows/Linux: Controls on right, so add left padding
         !isMac && 'pl-4'

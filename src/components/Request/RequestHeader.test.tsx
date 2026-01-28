@@ -21,10 +21,10 @@ describe('RequestHeader', () => {
   it('renders with proper layout structure', () => {
     const { container } = render(<RequestHeader {...defaultProps} />);
 
-    // Should have professional spacing (px-6 py-4)
+    // Should have compact spacing (px-4 py-2) for unified command input
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass('px-6');
-    expect(wrapper).toHaveClass('py-4');
+    expect(wrapper).toHaveClass('px-4');
+    expect(wrapper).toHaveClass('py-2');
   });
 
   it('renders method select with colored text only', () => {
@@ -52,9 +52,9 @@ describe('RequestHeader', () => {
     render(<RequestHeader {...defaultProps} url="" />);
 
     const urlInput = screen.getByTestId('url-input');
-    // Should have border and background classes
-    expect(urlInput).toHaveClass('border');
-    expect(urlInput).toHaveClass('bg-bg-raised');
+    // Should be seamless with unified container (no border, transparent background)
+    expect(urlInput).toHaveClass('border-0');
+    expect(urlInput).toHaveClass('bg-transparent');
   });
 
   it('renders send button with proper styling', () => {
@@ -122,11 +122,12 @@ describe('RequestHeader', () => {
     expect(onUrlChange).toHaveBeenCalled();
   });
 
-  it('has proper gap between elements', () => {
+  it('renders unified command input container', () => {
     const { container } = render(<RequestHeader {...defaultProps} />);
 
-    // Should have gap-3 for professional spacing
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass('gap-3');
+    // Should have unified container with no gap (gap-0) for seamless appearance
+    const unifiedContainer = container.querySelector('.bg-bg-raised.border');
+    expect(unifiedContainer).toBeInTheDocument();
+    expect(unifiedContainer).toHaveClass('gap-0');
   });
 });

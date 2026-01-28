@@ -15,7 +15,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         // Primary: Clean solid accent - the main action
-        default: 'bg-accent-blue hover:bg-accent-blue-hover text-white',
+        default: 'bg-accent-blue hover:bg-accent-blue-hover text-accent-contrast',
         // Destructive: Soft error styling
         destructive: 'bg-signal-error/10 text-signal-error hover:bg-signal-error/20',
         // Destructive Outline: Ghost until hover, then reveals destructive intent

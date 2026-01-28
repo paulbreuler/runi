@@ -21,7 +21,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['storybook-static'],
+    entries: ['src/**/*.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
   },
   server: {
     port: 5175,

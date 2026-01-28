@@ -30,8 +30,8 @@ const splitButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-accent-blue text-white hover:bg-accent-blue-hover',
-        destructive: 'bg-signal-error text-white hover:bg-signal-error/90',
+        default: 'bg-accent-blue text-accent-contrast hover:bg-accent-blue-hover',
+        destructive: 'bg-signal-error text-accent-contrast hover:bg-signal-error/90',
         outline:
           'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50',
         ghost: 'bg-transparent text-text-muted hover:text-text-secondary hover:bg-bg-raised/50',
@@ -139,9 +139,9 @@ export const SplitButton = ({
   const getTriggerClasses = (): string => {
     switch (variant) {
       case 'default':
-        return 'bg-accent-blue text-white hover:bg-accent-blue-hover';
+        return 'bg-accent-blue text-accent-contrast hover:bg-accent-blue-hover';
       case 'destructive':
-        return 'bg-signal-error text-white hover:bg-signal-error/90';
+        return 'bg-signal-error text-accent-contrast hover:bg-signal-error/90';
       case 'outline':
         return 'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 border-l-0';
       case 'ghost':
