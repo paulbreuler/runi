@@ -21,7 +21,22 @@ export const App = (): React.JSX.Element => {
       <ToastProvider>
         <MemoryWarningListener />
         <BrowserRouter>
-          <Suspense fallback={<div />}>
+          <Suspense
+            fallback={
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100vh',
+                  backgroundColor: '#0a0a0a',
+                  color: '#ffffff',
+                }}
+              >
+                Loading...
+              </div>
+            }
+          >
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/devtools-popout" element={<DevToolsPopout />} />
