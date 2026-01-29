@@ -78,10 +78,9 @@ jobs:
     needs: check-ci-status
     if: needs.check-ci-status.outputs.ci-passed == 'true'
     outputs:
-      release_created: ${{ steps.final-outputs.outputs.release_created }}
-      tag_name: ${{ steps.final-outputs.outputs.tag_name }}
-      changelog: ${{ steps.final-outputs.outputs.changelog }}
-      merge_commit: ${{ steps.final-outputs.outputs.merge_commit }}
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      changelog: ${{ steps.release.outputs.changelog }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -90,153 +89,18 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run release-please (manages PRs only)
+      - name: Run release-please
         uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
 
-      - name: Detect merged release PR and prepare release
-        id: detect-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Strategy: Look for recently merged release PRs by searching commit history
-          # We search for merge commits with pattern "chore(main): release runi X.Y.Z"
-          # This is more reliable than relying on manifest version which may have been updated
-
-          echo "Searching for recently merged release PRs..."
-
-          # Find all merge commits matching release PR pattern from last 50 commits
-          # Format: "chore(main): release runi X.Y.Z (#PR)"
-          RELEASE_COMMITS=$(git log --grep="chore(main): release runi" --format="%H|%s" -n 50 | grep -E "chore\(main\): release runi [0-9]+\.[0-9]+\.[0-9]+")
-
-          if [ -z "$RELEASE_COMMITS" ]; then
-            echo "No release PR merge commits found"
-            echo "tag_name=" >> $GITHUB_OUTPUT
-            echo "release_created=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Process each release commit to find one without a tag
-          FOUND_RELEASE=false
-          while IFS='|' read -r COMMIT_SHA COMMIT_MSG; do
-            # Extract version from commit message: "chore(main): release runi 0.3.0 (#76)"
-            VERSION=$(echo "$COMMIT_MSG" | sed -nE 's/.*release runi ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
-            
-            if [ -z "$VERSION" ]; then
-              continue
-            fi
-            
-            TAG_NAME="runi-v${VERSION}"
-            
-            echo "Checking version $VERSION (tag: $TAG_NAME) at commit $COMMIT_SHA"
-            
-            # Check if GitHub release already exists - if it does, skip entirely
-            if gh release view "$TAG_NAME" >/dev/null 2>&1; then
-              echo "Release $TAG_NAME already exists, skipping"
-              continue
-            fi
-            
-            # Check if tag exists (for logging)
-            TAG_EXISTS=false
-            if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
-              echo "Tag $TAG_NAME already exists (release will be created for existing tag)"
-              TAG_EXISTS=true
-            else
-              echo "Tag $TAG_NAME does not exist (will be created)"
-            fi
-            
-            # Found a release PR that was merged but has no release
-            # Tag may or may not exist, but release definitely doesn't
-            echo "✅ Found merged release PR for $VERSION at $COMMIT_SHA"
-            echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-            echo "release_created=true" >> $GITHUB_OUTPUT
-            echo "merge_commit=$COMMIT_SHA" >> $GITHUB_OUTPUT
-            FOUND_RELEASE=true
-            break
-            
-          done <<< "$RELEASE_COMMITS"
-
-          if [ "$FOUND_RELEASE" = "false" ]; then
-            echo "No untagged release PRs found"
-            echo "tag_name=" >> $GITHUB_OUTPUT
-            echo "release_created=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Extract changelog for release
-        id: changelog
-        if: steps.detect-release.outputs.release_created == 'true'
-        run: |
-          if [ -f "CHANGELOG.md" ]; then
-            # Extract the latest changelog entry (from first ## header to next ## or end of file)
-            CHANGELOG=$(awk 'BEGIN{in_section=0} /^## /{ if (in_section) exit; in_section=1 } in_section' CHANGELOG.md)
-            # Escape for multiline output
-            echo "changelog<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGELOG" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set outputs
-        id: final-outputs
-        run: |
-          echo "release_created=${{ steps.detect-release.outputs.release_created }}" >> $GITHUB_OUTPUT
-          echo "tag_name=${{ steps.detect-release.outputs.tag_name }}" >> $GITHUB_OUTPUT
-          echo "merge_commit=${{ steps.detect-release.outputs.merge_commit }}" >> $GITHUB_OUTPUT
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ steps.changelog.outputs.changelog }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-  create-tag:
-    name: Create Release Tag
+  build:
+    name: Build ${{ matrix.os }}
     needs: [check-ci-status, release-please]
     if: |
       needs.release-please.outputs.release_created == 'true' &&
       needs.check-ci-status.outputs.ci-passed == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
-          fetch-depth: 0
-
-      - name: Create release tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
-          MERGE_COMMIT="${{ needs.release-please.outputs.merge_commit }}"
-
-          if [ -z "$MERGE_COMMIT" ]; then
-            echo "::error::Merge commit not found for tag $TAG_NAME"
-            exit 1
-          fi
-
-          # Check if tag already exists
-          if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
-            echo "Tag $TAG_NAME already exists, skipping creation"
-          else
-            echo "Creating tag: $TAG_NAME at $MERGE_COMMIT"
-            
-            # Create the tag
-            gh api repos/${{ github.repository }}/git/refs \
-              -X POST \
-              -f ref="refs/tags/$TAG_NAME" \
-              -f sha="$MERGE_COMMIT"
-            
-            echo "✅ Created tag $TAG_NAME"
-          fi
-
-  build:
-    name: Build ${{ matrix.os }}
-    needs: [check-ci-status, release-please, create-tag]
-    if: |
-      needs.release-please.outputs.release_created == 'true' &&
-      needs.check-ci-status.outputs.ci-passed == 'true' &&
-      needs.create-tag.result == 'success'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -382,12 +246,11 @@ jobs:
           retention-days: 7
 
   create-release:
-    name: Create Release with Artifacts
-    needs: [check-ci-status, release-please, create-tag, build]
+    name: Upload Artifacts to Release
+    needs: [check-ci-status, release-please, build]
     if: |
       needs.release-please.outputs.release_created == 'true' &&
       needs.check-ci-status.outputs.ci-passed == 'true' &&
-      needs.create-tag.result == 'success' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
     permissions:
@@ -413,17 +276,13 @@ jobs:
             echo "⚠️ No artifacts found" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Create GitHub Release with artifacts
+      - name: Upload artifacts to existing release
         if: steps.check-artifacts.outputs.found == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
-          name: Release ${{ needs.release-please.outputs.tag_name }}
-          body: ${{ needs.release-please.outputs.changelog }}
           files: |
             release-artifacts/*
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
