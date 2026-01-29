@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.4.0](https://github.com/paulbreuler/runi/compare/runi-v0.3.0...runi-v0.4.0) (2026-01-29)
+
+
+### Features
+
+* **assets:** add update visuals and limps MCP guidance ([#81](https://github.com/paulbreuler/runi/issues/81)) ([21d7f5d](https://github.com/paulbreuler/runi/commit/21d7f5d29512bc44e23894f8f4cee9ad515f4986))
+* **theme:** standardize Radix UI token usage across components ([#80](https://github.com/paulbreuler/runi/issues/80)) ([a1fbc49](https://github.com/paulbreuler/runi/commit/a1fbc49626565c038505cba444578ffafbb2caa2))
+
+
+### Bug Fixes
+
+* **ci:** correct workflow_id case in release-please manual dispatch ([#83](https://github.com/paulbreuler/runi/issues/83)) ([a37fe54](https://github.com/paulbreuler/runi/commit/a37fe54ec5534aa51bf4ea7c95f6cc8174b82028))
+* **readme:** update CI badge and add coverage, issues, PRs badges ([#82](https://github.com/paulbreuler/runi/issues/82)) ([df7eae5](https://github.com/paulbreuler/runi/commit/df7eae5373f61f3ab3e3aa387db00f20ed4ad5cc))
+* **release:** simplify release workflow by removing skip-github-release ([#84](https://github.com/paulbreuler/runi/issues/84)) ([d12cd2e](https://github.com/paulbreuler/runi/commit/d12cd2ec48168e3bb434747d7f09be3d27edc504))
+
+
+### Refactoring
+
+* **release:** simplify workflow based on official release-please docs ([#86](https://github.com/paulbreuler/runi/issues/86)) ([27f3226](https://github.com/paulbreuler/runi/commit/27f32264894117c82f029ccd42ae85236402be8b))
+
+
+### Chores
+
+* **commands:** align planning workflow and review skills ([#88](https://github.com/paulbreuler/runi/issues/88)) ([acf0f6e](https://github.com/paulbreuler/runi/commit/acf0f6ea17036a5fdb85947d8cbee7d8a2be05b0))
+* **deps:** migrate to unified radix-ui package ([#79](https://github.com/paulbreuler/runi/issues/79)) ([653949d](https://github.com/paulbreuler/runi/commit/653949d686422c128db5e3d65f0d33b13e4c1cdb))
+
 ## [0.3.0](https://github.com/paulbreuler/runi/compare/runi-v0.2.5...runi-v0.3.0) (2026-01-27)
 
 
