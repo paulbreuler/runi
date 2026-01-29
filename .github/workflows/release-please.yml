@@ -7,6 +7,13 @@ on:
       - completed
     branches:
       - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       skip_ci_check:
@@ -41,6 +48,10 @@ jobs:
               } else {
                 core.setOutput('ci-passed', 'true');
               }
+            } else if (context.eventName === 'pull_request') {
+              // For PRs, we're just validating the workflow - skip CI check
+              core.setOutput('ci-passed', 'true');
+              core.info('PR validation mode: Skipping CI check');
             } else {
               // Manual trigger - check if user explicitly skipped CI check
               const skipCiCheck = context.payload.inputs?.skip_ci_check === 'true';
@@ -78,38 +89,59 @@ jobs:
     needs: check-ci-status
     if: needs.check-ci-status.outputs.ci-passed == 'true'
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-      changelog: ${{ steps.release.outputs.changelog }}
+      release_created: ${{ steps.final-outputs.outputs.release_created }}
+      tag_name: ${{ steps.final-outputs.outputs.tag_name }}
+      changelog: ${{ steps.final-outputs.outputs.changelog }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.ref }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run release-please
+        if: github.event_name != 'pull_request'
         uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
 
+      - name: Set outputs for PR validation
+        if: github.event_name == 'pull_request'
+        id: final-outputs
+        run: |
+          echo "PR validation mode: Workflow syntax validated, skipping release operations"
+          echo "release_created=false" >> $GITHUB_OUTPUT
+          echo "tag_name=" >> $GITHUB_OUTPUT
+          echo "changelog=" >> $GITHUB_OUTPUT
+
+      - name: Set outputs for release
+        if: github.event_name != 'pull_request'
+        id: final-outputs
+        run: |
+          echo "release_created=${{ steps.release.outputs.release_created }}" >> $GITHUB_OUTPUT
+          echo "tag_name=${{ steps.release.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          echo "changelog=${{ steps.release.outputs.changelog }}" >> $GITHUB_OUTPUT
+
       - name: Update release with building message
-        if: steps.release.outputs.release_created == 'true'
+        if: |
+          steps.final-outputs.outputs.release_created == 'true' &&
+          github.event_name != 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG_NAME="${{ steps.release.outputs.tag_name }}"
+          TAG_NAME="${{ steps.final-outputs.outputs.tag_name }}"
 
           # Get current release body
           CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq '.body // ""')
 
           # Add building message if not already present
-          if echo "$CURRENT_BODY" | grep -q "Artifacts are being built"; then
+          if printf '%s\n' "$CURRENT_BODY" | grep -q "Artifacts are being built"; then
             echo "Building message already present"
           else
-            BUILDING_MSG="\n\n---\n\n⏳ **Artifacts are being built...**"
+            # Use $'...' syntax for actual newlines
+            BUILDING_MSG=$'\n\n---\n\n⏳ **Artifacts are being built...**'
             NEW_BODY="${CURRENT_BODY}${BUILDING_MSG}"
             
             gh release edit "$TAG_NAME" --notes "$NEW_BODY"
@@ -310,10 +342,11 @@ jobs:
           # Remove building message section (everything from "---" onwards)
           # The building message format is: "\n\n---\n\n⏳ **Artifacts are being built...**"
           # Use awk to print lines until we hit "---", then stop
-          NEW_BODY=$(echo "$CURRENT_BODY" | awk '/^---$/{exit} {print}')
+          NEW_BODY=$(printf '%s\n' "$CURRENT_BODY" | awk '/^---$/{exit} {print}')
 
-          # Trim trailing newlines
-          NEW_BODY=$(echo "$NEW_BODY" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
+          # Trim trailing newlines - use a more reliable approach
+          # Remove trailing newlines while preserving content
+          NEW_BODY=$(printf '%s\n' "$NEW_BODY" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' | sed -e :a -e '$!{N;ba' -e '}' -e 's/\n*$//')
 
           # Upload artifacts
           gh release upload "$TAG_NAME" release-artifacts/* --clobber
