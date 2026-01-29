@@ -23,16 +23,7 @@ export const App = (): React.JSX.Element => {
         <BrowserRouter>
           <Suspense
             fallback={
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100vh',
-                  backgroundColor: '#0a0a0a',
-                  color: '#ffffff',
-                }}
-              >
+              <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
                 Loading...
               </div>
             }

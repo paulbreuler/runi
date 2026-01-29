@@ -38,6 +38,9 @@ export default defineConfig({
         },
       },
     },
+    // Use a higher-than-default limit (500 KB) to account for the Tauri/React desktop bundle.
+    // The vendor chunk includes React, React Router, Motion, and other core dependencies.
+    // Monitor `dist` bundle sizes in production builds and adjust if needed.
     chunkSizeWarningLimit: 1350,
   },
   server: {
