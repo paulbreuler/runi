@@ -33,8 +33,14 @@ When this command is invoked, you must:
    - Use `/code-review` if changes are non-trivial
 
 6. **Commit and push only if requested:**
-   - Conventional commit format
-   - Push branch and re-check PR status
+   - **Commit message format**: Use conventional commits, reference the failing check:
+     - `fix(ci): resolve linting errors in server.ts`
+     - `fix(test): update test assertions for new API`
+     - `fix(format): apply prettier formatting`
+   - Use `/git-commit-best-practices` for detailed commit message guidance
+   - **Commit scope**: Reference the package/component that was fixed
+   - Push branch: `git push` (force push only if rebased: `git push --force-with-lease`)
+   - Re-check PR status: `gh pr checks` or view PR in browser
 
 ## Notes
 
