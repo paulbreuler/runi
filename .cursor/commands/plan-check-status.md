@@ -2,6 +2,12 @@
 
 Simple entry point: "I want to check plan status". Shows plan status without overwhelming detail.
 
+## LLM Execution Rules
+
+- Prefer `npx limps next-task` for auto-detect; fall back to `npx limps list-plans` on failure.
+- If no plan can be determined, stop and ask the user to choose.
+- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+
 ## Invocation
 
 ```
@@ -44,8 +50,9 @@ Bypasses auto-detection and uses the specified plan.
 **When this command is invoked, you must:**
 
 1. **Check plan status:**
-   - If `--plan` provided: `npx limps status <plan-name>`
+   - If `--plan` provided: `npx limps status <plan-name>` and `npx limps next-task <plan-name>`
    - Otherwise: Use `npx limps next-task` to auto-detect plan and get next task
+   - If auto-detect fails: run `npx limps list-plans` and ask user to pick a plan
 
 2. **Display the output:**
    - Show QUICK DECISION section

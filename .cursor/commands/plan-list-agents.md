@@ -2,6 +2,11 @@
 
 List all agents in a plan with their status, features, and clickable links. Helps you find and select which specific agent to run.
 
+## LLM Execution Rules
+
+- Use `npx limps list-agents` as the source of truth.
+- If auto-detection fails, run `npx limps list-plans` and ask the user to choose.
+
 ## Invocation
 
 ```

@@ -2,15 +2,23 @@
 
 Verify agent completion, sync status, and identify unblocked work.
 
+## LLM Execution Rules
+
+- Only operate on planning docs under `../runi-planning-docs/`.
+- Do not modify source code in the main repo.
+- If tests were not run, say so explicitly in the report.
+- If the agent file path does not exist, stop and report the error.
+- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+
 ## Invocation
 
-```
+```text
 /close-feature-agent [path-to-agent-file]
 ```
 
 Example:
 
-```
+```text
 /close-feature-agent ../runi-planning-docs/plans/datagrid_overhaul_abc123/agents/columns.agent.md
 ```
 
@@ -39,13 +47,15 @@ Read the agent's `.agent.md` and extract:
 - Files that should exist
 - Gotchas section
 
+Use MCP planning tools (`read_doc` / `rlm_query`) when available to avoid manual file parsing.
+
 ### Step 2: Verify Completion
 
 For each feature marked `PASS`:
 
 **Check files exist**:
 
-```
+```text
 - [ ] src/components/Column/ColumnHeader.tsx exists
 - [ ] src/components/Column/ColumnHeader.test.tsx exists
 - [ ] src/components/Column/ColumnHeader.stories.tsx exists
@@ -53,14 +63,14 @@ For each feature marked `PASS`:
 
 **Check exports match interface** (spot check):
 
-```
+```text
 - [ ] useColumnHeader exports match declared signature
 - [ ] ColumnHeader component exports match declared signature
 ```
 
 **Check tests pass**:
 
-```
+```text
 - [ ] `just test src/components/Column` passes
 ```
 
@@ -70,19 +80,22 @@ Update `README.md` status matrix:
 
 Before:
 
-```
+```text
 | 2 | Headers | Columns | 🔄 WIP | - |
 | 3 | Resize | Columns | ❌ GAP | #2 |
 ```
 
 After:
 
-```
+```text
 | 2 | Headers | Columns | ✅ PASS | - |
 | 3 | Resize | Columns | ✅ PASS | - |
 ```
 
 Update dependency graph colors if present.
+
+**Planning docs must be updated via MCP tools** using the server resolved from
+`.cursor/mcp.json`.
 
 ### Step 4: Identify Unblocked
 
@@ -118,9 +131,10 @@ All gotchas synced ✓
 
 ## Output Format
 
-The output should be clean, readable text with minimal markdown formatting. Use plain text sections, not markdown headers. Structure:
+The output should be clean, readable text with minimal markdown formatting. Use
+plain text sections, not markdown headers. Structure:
 
-```
+```text
 Agent Close Report: columns.agent.md
 
 Verification
@@ -165,8 +179,6 @@ Next Steps
 - Avoid emoji in section titles
 - Keep content concise and scannable
 
-````
-
 ## Failure Cases
 
 ### Feature Not Complete
@@ -196,7 +208,7 @@ Next Steps
 
 ## Integration with Plan Lifecycle
 
-```
+```text
 create-feature-plan
     ↓
 [agent implements]
@@ -224,13 +236,16 @@ close-feature-agent
 
 After closing an agent, use these commands to continue work:
 
-1. **Assess overall plan status**: Run `npx limps status <plan-name>` to assess all agent statuses and identify cleanup needs
-2. **Auto-cleanup if needed**: If status shows completed agents that need cleanup, run `/heal` or `just heal` to automatically move completed agents to `completed/` directory
-3. **Start next task**: Use `npx limps next-task <plan-name>` to get the next best task, then open the agent file with `cursor`
+1. **Assess overall plan status**: Run `npx limps status <plan-name>` to assess
+   all agent statuses and identify cleanup needs
+2. **Auto-cleanup if needed**: If status shows completed agents that need
+   cleanup, run `/heal` or `just heal` to move agents to `completed/`
+3. **Start next task**: Use `npx limps next-task <plan-name>` to get the next
+   task, then open the agent file with `cursor`
 
 ### Recommended Post-Close Workflow
 
-```
+```text
 1. Close agent: /close-feature-agent [agent-path]
 2. Assess status: `npx limps status <plan-name>` (check overall plan status)
 3. Cleanup if needed: /heal (auto-fixes completed agents)
@@ -239,7 +254,7 @@ After closing an agent, use these commands to continue work:
 
 ## Command Flags
 
-```
+```text
 /close-feature-agent [path] --skip-tests    # Skip test verification (use with caution)
 /close-feature-agent [path] --dry-run       # Report only, don't update files
 /close-feature-agent [path] --force         # Close even with warnings
@@ -249,7 +264,7 @@ After closing an agent, use these commands to continue work:
 
 If you prefer manual verification, use checklist mode:
 
-```
+```text
 /close-feature-agent [path] --checklist
 ```
 

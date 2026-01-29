@@ -2,6 +2,13 @@
 
 Generate a TDD plan with verbose planning docs and minimal agent execution files using MCP planning tools.
 
+## LLM Execution Rules
+
+- Use MCP planning tools for all reads/writes; do not write files directly.
+- Do not include secrets, tokens, or credentials in plan content.
+- Keep agent files distilled and ≤ 500 lines.
+- Only run `rlm_query`/`rlm_multi_query` with code you authored or reviewed.
+
 ## Invocation
 
 ```text
@@ -12,7 +19,9 @@ Generate a TDD plan with verbose planning docs and minimal agent execution files
 
 This command uses MCP planning tools for document management:
 
-- **Server**: `mcp-planning-server` (located at `../mcp-planning-server`)
+- **Server**: Use the limps planning MCP server registered in `.cursor/mcp.json`
+  - Example in this repo: `project-0-runi-limps-planning-runi-planning-docs`
+  - Always resolve the server name from the MCP registry before calling tools
 - **Tools**:
   - `create_plan` - Create the plan structure
   - `create_doc` - Create planning documents (plan.md, interfaces.md, README.md, gotchas.md)
@@ -21,7 +30,7 @@ This command uses MCP planning tools for document management:
   - `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
   - `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
 
-**Usage**: Call tools via `call_mcp_tool` with `server: "mcp-planning-server"` and the tool name (e.g., `create_plan`, `create_doc`, etc.)
+**Usage**: Call tools via `call_mcp_tool` with the resolved server name (see above) and the tool name (e.g., `create_plan`, `create_doc`, etc.)
 
 ## Skills Integration
 
@@ -369,14 +378,14 @@ Review README.md status matrix
 ```typescript
 // 1. List existing plans to find next number
 const plans = await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'list_docs',
   arguments: { path: 'plans' },
 });
 
 // 2. Create plan structure
 await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'create_plan',
   arguments: {
     name: '0008-storybook-testing-overhaul',
@@ -386,7 +395,7 @@ await call_mcp_tool({
 
 // 3. Create plan.md
 await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/plan.md',
@@ -397,7 +406,7 @@ await call_mcp_tool({
 
 // 4. Create interfaces.md
 await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/interfaces.md',
@@ -408,7 +417,7 @@ await call_mcp_tool({
 
 // 5. Create README.md
 await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/README.md',
@@ -419,7 +428,7 @@ await call_mcp_tool({
 
 // 6. Create gotchas.md
 await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/gotchas.md',
@@ -430,7 +439,7 @@ await call_mcp_tool({
 
 // 7. Create agent files
 await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/agents/000_agent_infrastructure.agent.md',
@@ -445,7 +454,7 @@ await call_mcp_tool({
 ```typescript
 // Read existing plan for reference
 const existingPlan = await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'read_doc',
   arguments: {
     path: 'plans/0005-storybook-testing-overhaul/plan.md',
@@ -454,7 +463,7 @@ const existingPlan = await call_mcp_tool({
 
 // Read specific lines
 const interfaces = await call_mcp_tool({
-  server: 'mcp-planning-server',
+  server: '<planning-mcp-server>',
   toolName: 'read_doc',
   arguments: {
     path: 'plans/0005-storybook-testing-overhaul/interfaces.md',

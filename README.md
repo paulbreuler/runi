@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/runi.svg" alt="runi" width="120" />
+  <img src=".github/assets/runi-head-iced.svg" alt="runi" width="120" />
 </p>
 
 <h1 align="center">runi</h1>
@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src=".github/assets/runi-demo.gif" alt="runi demo showing HTTP client interface, network history, and timing waterfall" width="800" />
+  <img src=".github/assets/runi-update.gif" alt="runi demo showing HTTP client interface, network history, and timing waterfall" width="800" />
 </p>
 
 <p align="center">

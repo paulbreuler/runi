@@ -5,6 +5,14 @@ Select the next best agent task from a plan and open it in Cursor, or run a spec
 **Note**: This command now uses `limps` CLI directly. The old `run-agent.sh` script has been
 replaced with minimal wrapper scripts.
 
+## LLM Execution Rules
+
+- Do not open or modify an agent file before successfully claiming the task.
+- If task claim fails, stop and report the failure.
+- Only operate on agent files under `../runi-planning-docs/plans/`.
+- Do not include secrets in GitHub issue bodies or logs.
+- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+
 ## Invocation
 
 ```bash
@@ -123,7 +131,7 @@ Assesses all agents in the plan for completion status and file organization.
      `0023-memory-metrics-ui#1`)
    - **Extract agentId** from agent file name: `<agent-file-name>` (e.g., `000_agent_memory_warning.agent.md`)
    - **For agents with multiple features**: Claim each feature separately, or claim the first/primary feature
-   - Call: `call_mcp_tool` with server `mcp-planning-server`, tool `claim_task`, arguments:
+  - Call: `call_mcp_tool` with server `<planning-mcp-server>`, tool `claim_task`, arguments:
 
      ```json
      {
@@ -144,7 +152,7 @@ Assesses all agents in the plan for completion status and file organization.
      ```
 
    - **This must happen BEFORE opening the file or starting work** to prevent conflicts
-   - **Note**: Server name changed from `user-runi Planning` to `mcp-planning-server` (new location: `../mcp-planning-server`)
+  - **Note**: Server name is resolved from `.cursor/mcp.json` (limps MCP server)
    - **Note**: The server expects taskId format `<plan-name>#<feature-number>`, not the agent file path
 
 2. **GitHub Issue Creation:**
