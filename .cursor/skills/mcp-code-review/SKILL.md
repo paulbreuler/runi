@@ -41,7 +41,7 @@ Use `$ARGUMENTS` as the scope (paths, diff range, PR number, or component name).
    - Validate tool arguments and path handling in command files
    - Check for proper error handling when MCP tools are unavailable
    - Verify RLM query code safety (only execute code you authored or reviewed)
-   - Review MCP server configuration in `.cursor/mcp.json` for security
+  - Review MCP server configuration in `.mcp.json` (repo root) for security
 6. **Future MCP server review** (When runi implements its own MCP server)
    - Review tool schemas, argument validation, and permission boundaries
    - Identify prompt injection vectors and untrusted content handling
@@ -65,7 +65,7 @@ Focus extra scrutiny on:
 - `src-tauri/src/commands/*` (Tauri command handlers, HTTP client, file operations)
 - `src-tauri/src/intelligence/*` (AI provider integration, drift detection)
 - `src/utils/*` (URL parsing, request building, data transformation)
-- `.cursor/mcp.json` and `.mcp.json` (MCP server configuration - client-side)
+- `.mcp.json` (repo root, MCP registry) and `.cursor/mcp.json` (Cursor overrides, if present)
 - `src/stores/*` (Zustand stores, state management)
 - `src/components/*` (React components handling user input or external data)
 
@@ -75,7 +75,7 @@ Focus extra scrutiny on:
 - Validate MCP tool arguments and path handling in command files
 - Ensure RLM query code is only executed when authored or reviewed
 - Check for proper error handling when MCP tools are unavailable
-- Verify server name resolution from `.cursor/mcp.json` is correct
+- Verify server name resolution from `.mcp.json` is correct
 - Guard against path traversal in MCP tool path arguments
 - Ensure user-controlled content doesn't become tool arguments without sanitization
 

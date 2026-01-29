@@ -8,7 +8,7 @@ Verify agent completion, sync status, and identify unblocked work.
 - Do not modify source code in the main repo.
 - If tests were not run, say so explicitly in the report.
 - If the agent file path does not exist, stop and report the error.
-- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 
 ## Invocation
 
@@ -95,7 +95,7 @@ After:
 Update dependency graph colors if present.
 
 **Planning docs must be updated via MCP tools** using the server resolved from
-`.cursor/mcp.json`.
+`.mcp.json` (repo root).
 
 ### Step 4: Identify Unblocked
 

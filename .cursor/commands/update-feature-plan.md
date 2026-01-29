@@ -8,7 +8,7 @@ Apply feedback to an existing plan, regenerate affected agent files, and commit 
 - Preserve existing GitHub issue numbers in agent files.
 - Do not include secrets or tokens in plan documents.
 - Only run `rlm_query` with code you authored or reviewed.
-- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 
 ## Key Change from v1.x
 
@@ -86,7 +86,7 @@ Parse feedback for:
     └── *.agent.md       # Minimal execution files
 ```
 
-Read all files to understand current state. Use `process_doc` (server: `limps-planning-runi`) for reading plan files with extraction capabilities.
+Read all files to understand current state. Use `process_doc` (server: `runi-Planning`) for reading plan files with extraction capabilities.
 
 ### 4. Analyze & Propose Changes
 
@@ -140,13 +140,13 @@ For each feedback item, classify:
 ### 6. Apply Changes (After Approval)
 
 **Planning docs** (verbose):
-- Update `{plan-name}-plan.md` with full feature specs using `update_doc` (server: `limps-planning-runi`)
+- Update `{plan-name}-plan.md` with full feature specs using `update_doc` (server: `runi-Planning`)
 - Update `interfaces.md` if contracts change using `update_doc`
 - Update `README.md` status matrix using `update_doc`
 - Append to `gotchas.md` if new issues using `update_doc`
 
 **Agent files** (distilled):
-- **Regenerate** affected agent files using `create_doc` or `update_doc` (server: `limps-planning-runi`), don't patch
+- **Regenerate** affected agent files using `create_doc` or `update_doc` (server: `runi-Planning`), don't patch
 - Distill from updated {plan-name}-plan.md
 - Target ~200-400 lines per agent
 
@@ -271,12 +271,12 @@ Example:
 
 ## Plan Analysis with MCP Tools
 
-Use `process_doc` (server: `limps-planning-runi`) to analyze plans before and after updates:
+Use `process_doc` (server: `runi-Planning`) to analyze plans before and after updates:
 
 ```typescript
 // Find all features affected by an interface change (preferred: process_doc)
 const affectedFeatures = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'process_doc',
   arguments: {
     path: 'plans/[plan-name]/[plan-name]-plan.md',
@@ -290,7 +290,7 @@ const affectedFeatures = await call_mcp_tool({
 
 // Compare feature status before/after update
 const statusDiff = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'process_doc',
   arguments: {
     path: 'plans/[plan-name]/[plan-name]-plan.md',
@@ -415,7 +415,7 @@ work (assess status, find next task)
 - **Interface changes cascade**: Always identify dependent agents
 - **Regenerate, don't patch**: Cleaner than surgical edits
 - **Verify consistency**: All files must agree
-- **Use MCP tools**: Use `process_doc`, `update_doc`, `create_doc` for all document operations (server: `limps-planning-runi`)
+- **Use MCP tools**: Use `process_doc`, `update_doc`, `create_doc` for all document operations (server: `runi-Planning`)
 - **Plan file naming**: Use `{plan-name}-plan.md` format (e.g., `0008-storybook-testing-overhaul-plan.md`)
 - **Commit after approval**: Changes go to runi-planning-docs repo (git operations use file paths, but document reading should use MCP tools)
 ```

@@ -4,7 +4,7 @@ Create a pull request on GitHub with a comprehensive description from staged cha
 
 ## LLM Execution Rules
 
-- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 - Do not create files for PR descriptions; generate in memory only.
 - Never include secrets or credentials in PR bodies or comments.
 

@@ -11,7 +11,7 @@ replaced with minimal wrapper scripts.
 - If task claim fails, stop and report the failure.
 - Only operate on agent files under `../runi-planning-docs/plans/`.
 - Do not include secrets in GitHub issue bodies or logs.
-- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 
 ## Invocation
 
@@ -152,7 +152,7 @@ Assesses all agents in the plan for completion status and file organization.
      ```
 
    - **This must happen BEFORE opening the file or starting work** to prevent conflicts
-  - **Note**: Server name is resolved from `.cursor/mcp.json` (limps MCP server)
+  - **Note**: Server name is resolved from `.mcp.json` (planning MCP server)
    - **Note**: The server expects taskId format `<plan-name>#<feature-number>`, not the agent file path
 
 2. **GitHub Issue Creation:**

@@ -14,9 +14,9 @@ and before running agents; output is intended to feed back into the plan for ite
 
 ## MCP Integration
 
-This command uses limps MCP tools for plan analysis:
+This command uses MCP tools for plan analysis:
 
-- **Server**: `limps-planning-runi` (from `.cursor/mcp.json`)
+- **Server**: `runi-Planning` (from `.mcp.json` in the repository root)
 - **Tools**:
   - `list_plans` - List available plans (when no plan specified or plan not found)
   - `list_agents` - List agents for a plan (plan name required)
@@ -25,7 +25,7 @@ This command uses limps MCP tools for plan analysis:
   - `process_docs` - Analyze multiple documents (e.g. all plan files for duplicate scan)
   - `search_docs` - Full-text search (optional, for keyword collisions in duplicate scan)
 
-**Usage**: Call tools via `call_mcp_tool` with `server: "limps-planning-runi"` and the tool name.
+**Usage**: Call tools via `call_mcp_tool` with `server: "runi-Planning"` and the tool name.
 Paths are relative to configured docsPath (e.g. `plans/NNNN-name/{plan-name}-plan.md`).
 
 ## When to Use
@@ -43,19 +43,19 @@ Paths are relative to configured docsPath (e.g. `plans/NNNN-name/{plan-name}-pla
 
 - If user provides a plan name or path (e.g. `0018-component-design-principles-audit` or
   `plans/0018-component-design-principles-audit`), use it.
-- If no plan provided: call `list_plans` (server: `limps-planning-runi`), then choose the most
+- If no plan provided: call `list_plans` (server: `runi-Planning`), then choose the most
   recently modified or highest-numbered plan as default, or ask the user which plan to audit.
 - Resolve to a plan directory name `NNNN-descriptive-name` and base path `plans/NNNN-descriptive-name/`.
 
 ### 2. Load Plan Artifacts
 
-Using only `process_doc` and `process_docs` (server: `limps-planning-runi`), read:
+Using only `process_doc` and `process_docs` (server: `runi-Planning`), read:
 
 - `plans/{plan-name}/{plan-name}-plan.md` - Full specs
 - `plans/{plan-name}/interfaces.md` - Contracts
 - `plans/{plan-name}/README.md` - Index, graph, status matrix
 - `plans/{plan-name}/gotchas.md` - If present
-- All agent files: use `process_docs` (server: `limps-planning-runi`) with pattern
+- All agent files: use `process_docs` (server: `runi-Planning`) with pattern
   `plans/{plan-name}/agents/*.agent.md` to read all agent files in one call.
 
 If a file is missing, note it in the audit and continue (e.g. no gotchas.md is acceptable).
@@ -80,7 +80,7 @@ avoid vague praise or criticism.
 
 ### 4. Duplicate Scan (unless `--no-duplicates`)
 
-- Call `process_docs` (server: `limps-planning-runi`) with pattern `plans/*/*-plan.md` and code
+- Call `process_docs` (server: `runi-Planning`) with pattern `plans/*/*-plan.md` and code
   that extracts from each document: plan name, feature IDs, and normalized feature titles
   (or one-line summaries).
 - Compare the audited plan's features to others: normalize titles (lowercase, strip punctuation),

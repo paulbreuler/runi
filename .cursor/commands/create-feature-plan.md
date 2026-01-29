@@ -19,8 +19,8 @@ Generate a TDD plan with verbose planning docs and minimal agent execution files
 
 This command uses MCP planning tools for document management:
 
-- **Server**: Use the limps planning MCP server registered in `.cursor/mcp.json`
-  - Server name in this repo: `limps-planning-runi`
+- **Server**: Use the planning MCP server registered in `.mcp.json` (repo root)
+  - Server name in this repo: `runi-Planning`
   - Always resolve the server name from the MCP registry before calling tools
 - **Tools**:
   - `create_plan` - Create the plan structure
@@ -67,17 +67,17 @@ Ask user for:
 
 **Use MCP tools for document creation:**
 
-1. **Determine next plan number** using `list_docs` (server: `limps-planning-runi`):
+1. **Determine next plan number** using `list_docs` (server: `runi-Planning`):
    - List all plans in `../runi-planning-docs/plans/`
    - Extract numeric prefixes from directory names
    - Find maximum plan number (handle both padded and unpadded formats)
    - Next plan number = max + 1
 
-2. **Create plan structure** using `create_plan` (server: `limps-planning-runi`):
+2. **Create plan structure** using `create_plan` (server: `runi-Planning`):
    - Plan name: `NNNN-descriptive-name` (zero-padded to 4 digits)
    - Description: Brief overview of the plan
 
-3. **Create planning documents** using `create_doc` (server: `limps-planning-runi`):
+3. **Create planning documents** using `create_doc` (server: `runi-Planning`):
    - Use template `none` for {plan-name}-plan.md, interfaces.md, README.md
    - Use template `addendum` for gotchas.md (if template available)
    - Path format: `plans/NNNN-descriptive-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
@@ -116,7 +116,7 @@ lexicographical ordering. Scripts support both padded and unpadded formats for b
 **4. gotchas.md** - Empty, ready for discoveries
 
 - Template with format
-  - Created using `create_doc` (server: `limps-planning-runi`) with appropriate template
+  - Created using `create_doc` (server: `runi-Planning`) with appropriate template
 
 ### Phase 3: Assign Features to Agents
 
@@ -143,7 +143,7 @@ Each agent should have:
 
 **Use MCP tools for agent file creation:**
 
-- Create agent files using `create_doc` (server: `limps-planning-runi`)
+- Create agent files using `create_doc` (server: `runi-Planning`)
 - Path format: `plans/NNNN-descriptive-name/agents/NNN_agent_descriptive-name.agent.md`
 - Use template `none` (agent files are code, not documentation)
 
@@ -398,14 +398,14 @@ Review README.md status matrix
 ```typescript
 // 1. List existing plans to find next number
 const plans = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'list_docs',
   arguments: { path: 'plans' },
 });
 
 // 2. Create plan structure
 await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'create_plan',
   arguments: {
     name: '0008-storybook-testing-overhaul',
@@ -415,7 +415,7 @@ await call_mcp_tool({
 
 // 3. Create {plan-name}-plan.md
 await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/0008-storybook-testing-overhaul-plan.md',
@@ -426,7 +426,7 @@ await call_mcp_tool({
 
 // 4. Create interfaces.md
 await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/interfaces.md',
@@ -437,7 +437,7 @@ await call_mcp_tool({
 
 // 5. Create README.md
 await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/README.md',
@@ -448,7 +448,7 @@ await call_mcp_tool({
 
 // 6. Create gotchas.md
 await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/gotchas.md',
@@ -459,7 +459,7 @@ await call_mcp_tool({
 
 // 7. Create agent files
 await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/agents/000_agent_infrastructure.agent.md',
@@ -476,7 +476,7 @@ await call_mcp_tool({
 ```typescript
 // Read existing plan for reference (preferred method)
 const existingPlan = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'process_doc',
   arguments: {
     path: 'plans/0005-storybook-testing-overhaul/0005-storybook-testing-overhaul-plan.md',
@@ -486,7 +486,7 @@ const existingPlan = await call_mcp_tool({
 
 // Extract specific sections
 const interfaces = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'process_doc',
   arguments: {
     path: 'plans/0005-storybook-testing-overhaul/interfaces.md',
@@ -500,7 +500,7 @@ const interfaces = await call_mcp_tool({
 ```typescript
 // Simple read without extraction
 const plan = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'read_doc',
   arguments: {
     path: 'plans/0005-storybook-testing-overhaul/0005-storybook-testing-overhaul-plan.md',
@@ -513,7 +513,7 @@ const plan = await call_mcp_tool({
 ```typescript
 // Extract all GAP features from a plan (using process_doc - preferred)
 const gapFeatures = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'process_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/0008-storybook-testing-overhaul-plan.md',
@@ -526,7 +526,7 @@ const gapFeatures = await call_mcp_tool({
 
 // Analyze feature distribution across all plans (using process_docs - preferred)
 const planSummary = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'process_docs',
   arguments: {
     pattern: 'plans/*/*-plan.md',
@@ -547,7 +547,7 @@ const planSummary = await call_mcp_tool({
 
 // Alternative: Use rlm_query/rlm_multi_query for complex queries
 const gapFeaturesAlt = await call_mcp_tool({
-  server: 'limps-planning-runi',
+  server: 'runi-Planning',
   toolName: 'rlm_query',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/0008-storybook-testing-overhaul-plan.md',
