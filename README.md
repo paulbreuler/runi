@@ -90,6 +90,10 @@ features disappear.
 
 **runi is different.**
 
+_Statistics above: Stack Overflow 2025 Developer Survey (AI usage, trust, frustrations);
+Postman State of API 2025 (generative AI in workflow);
+APIContext API Drift White Paper (spec mismatch)._
+
 ---
 
 ## Why runi?
