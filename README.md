@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD033 MD041 -->
 <p align="center">
   <img src=".github/assets/runi-head-iced.svg" alt="runi" width="120" />
 </p>
@@ -14,15 +15,37 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/paulbreuler/runi/releases"><img src="https://img.shields.io/github/v/release/paulbreuler/runi?style=flat-square" alt="Release" /></a>
-  <a href="https://github.com/paulbreuler/runi/actions/workflows/release.yml"><img src="https://github.com/paulbreuler/runi/actions/workflows/release.yml/badge.svg" alt="Release Workflow Status" /></a>
-  <a href="https://github.com/paulbreuler/runi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
-  <a href="https://github.com/paulbreuler/runi/stargazers"><img src="https://img.shields.io/github/stars/paulbreuler/runi?style=flat-square" alt="Stars" /></a>
-  <a href="https://discord.gg/MHzmdpw4TR"><img src="https://img.shields.io/discord/000000000?style=flat-square&logo=discord&logoColor=white&label=Discord" alt="Discord" /></a>
+  <a href="https://github.com/paulbreuler/runi/releases"><img
+      src="https://img.shields.io/github/v/release/paulbreuler/runi?style=flat-square"
+      alt="Release" /></a>
+  <a href="https://github.com/paulbreuler/runi/actions/workflows/ci.yml"><img
+      src="https://img.shields.io/github/actions/workflow/status/paulbreuler/runi/ci.yml?style=flat-square"
+      alt="CI Status" /></a>
+  <a href="https://github.com/paulbreuler/runi/blob/main/LICENSE"><img
+      src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"
+      alt="License" /></a>
+  <a href="https://github.com/paulbreuler/runi/stargazers"><img
+      src="https://img.shields.io/github/stars/paulbreuler/runi?style=flat-square"
+      alt="Stars" /></a>
+  <a href="https://github.com/paulbreuler/runi/issues"><img
+      src="https://img.shields.io/github/issues/paulbreuler/runi?style=flat-square"
+      alt="Issues" /></a>
+  <a href="https://github.com/paulbreuler/runi/pulls"><img
+      src="https://img.shields.io/github/issues-pr/paulbreuler/runi?style=flat-square"
+      alt="Pull Requests" /></a>
+  <a href="https://github.com/paulbreuler/runi/actions/workflows/ci.yml"><img
+      src="https://img.shields.io/badge/coverage-%E2%89%A585%25-green?style=flat-square"
+      alt="Coverage (min, PR gate)" /></a>
+  <a href="https://discord.gg/MHzmdpw4TR"><img
+      src="https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white"
+      alt="Discord" /></a>
 </p>
 
 <p align="center">
-  <img src=".github/assets/runi-update.gif" alt="runi demo showing HTTP client interface, network history, and timing waterfall" width="800" />
+  <img
+    src=".github/assets/runi-update.gif"
+    alt="runi demo showing HTTP client interface, network history, and timing waterfall"
+    width="800" />
 </p>
 
 <p align="center">
@@ -37,24 +60,39 @@
   <a href="#roadmap">Roadmap</a> •
   <a href="#contributing">Contributing</a>
 </p>
+<!-- markdownlint-enable MD033 MD041 -->
 
 ---
 
-> **Pre-alpha.** runi is under active development. The vision is solidifying, the foundations are being laid. Expect rough edges — and rapid evolution. Star the repo to follow along.
+> **Pre-alpha.** runi is under active development. The vision is solidifying,
+> the foundations are being laid. Expect rough edges — and rapid evolution.
+> Star the repo to follow along.
 
 ---
 
 ## The Problem
 
-You're using AI to write API integration code. So is everyone else — [84% of developers now use AI tools](https://survey.stackoverflow.co/2025/ai), with [89% using generative AI in their workflow](https://www.postman.com/state-of-api/2025/).
+You're using AI to write API integration code. So is everyone else —
+[84% of developers now use AI tools](https://survey.stackoverflow.co/2025/ai),
+with [89% using generative AI in their workflow](https://www.postman.com/state-of-api/2025/).
 
-But here's what nobody talks about: **[46% of developers don't trust the accuracy of AI output](https://stackoverflow.co/company/press/archive/stack-overflow-2025-developer-survey/)** — up from 31% last year. The biggest frustration? [66% cite "solutions that are almost right, but not quite."](https://survey.stackoverflow.co/2025/ai)
+But here's what nobody talks about:
+**[46% of developers don't trust the accuracy of AI output](https://stackoverflow.co/company/press/archive/stack-overflow-2025-developer-survey/)**
+— up from 31% last year. The biggest frustration?
+[66% cite "solutions that are almost right, but not quite."](https://survey.stackoverflow.co/2025/ai)
 
-The tools generating code are getting better. The tools verifying that code? They don't exist.
+The tools generating code are getting better. The tools verifying that code?
+They don't exist.
 
-Meanwhile, your HTTP client wants you to create an account, sync to their cloud, and hope your credentials don't leak. When you refuse, half the features disappear.
+Meanwhile, your HTTP client wants you to create an account, sync to their
+cloud, and hope your credentials don't leak. When you refuse, half the
+features disappear.
 
 **runi is different.**
+
+_Statistics above: Stack Overflow 2025 Developer Survey (AI usage, trust, frustrations);
+Postman State of API 2025 (generative AI in workflow);
+APIContext API Drift White Paper (spec mismatch)._
 
 ---
 
@@ -102,33 +140,39 @@ requests:
 
 This is why you'll stay:
 
-**Drift Detection**
+#### Drift Detection
 
-[75% of production APIs don't match their published specs.](https://apicontext.com/resources/api-drift-white-paper/) runi catches this before you ship.
+[75% of production APIs don't match their published specs.](https://apicontext.com/resources/api-drift-white-paper/)
+runi catches this before you ship.
 
 - Bind requests to your OpenAPI spec
 - Real-time validation as you work
 - Yellow badge = your request doesn't match the spec anymore
 - One-click: "Show me what changed"
 
-**AI Verification**
+#### AI Verification
 
-When [46% of developers don't trust AI output](https://stackoverflow.co/company/press/archive/stack-overflow-2025-developer-survey/), you need a second opinion. runi is that opinion.
+When [46% of developers don't trust AI output](https://stackoverflow.co/company/press/archive/stack-overflow-2025-developer-survey/),
+you need a second opinion. runi is that opinion.
 
 - Paste AI-generated code → runi validates against bound spec
 - Catches hallucinated endpoints before you waste an hour debugging
 - Flags deprecated fields the AI didn't know about
 - **Purple (`#a855f7`) until verified. Green (`#22c55e`) when safe.**
 
-> **Signal System:** runi uses consistent visual signals to communicate intelligence. Green = verified/safe, Amber = drift detected, Red = breaking change, Purple = AI-generated (suspect until verified), Blue = suggestion available. See [CLAUDE.md](./CLAUDE.md#signal-system) for the complete signal reference.
+> **Signal System:** runi uses consistent visual signals to communicate
+> intelligence. Green = verified/safe, Amber = drift detected, Red = breaking
+> change, Purple = AI-generated (suspect until verified), Blue = suggestion
+> available. See [CLAUDE.md](./CLAUDE.md#signal-system) for the complete signal
+> reference.
 
-**Temporal Awareness**
+#### Temporal Awareness
 
 - See how your API evolved over time
 - Diff between spec versions
 - "When did this field become required?"
 
-**Semantic Links**
+#### Semantic Links
 
 - `Stripe:Customer` ↔ `YourAPI:User` — see the relationship
 - Cross-API mapping for complex integrations
@@ -156,9 +200,11 @@ just install
 just build
 ```
 
-**Requirements:** Rust 1.80+, Node.js 20+, pnpm, [just](https://github.com/casey/just) (task runner)
+**Requirements:** Rust 1.80+, Node.js 20+, pnpm,
+[just](https://github.com/casey/just) (task runner)
 
-> **Note:** All commands use `just` for consistency between local development and CI. See `justfile` for the complete command list.
+> **Note:** All commands use `just` for consistency between local development
+> and CI. See `justfile` for the complete command list.
 
 ---
 
@@ -181,7 +227,10 @@ just dev
 #    Change your spec. See the yellow badge appear.
 ```
 
-> **The Adoption Ladder:** runi reveals features progressively as you use it. Start with the HTTP client and network history, discover drift detection when you import a spec, then AI verification, semantic links, and temporal awareness.
+> **The Adoption Ladder:** runi reveals features progressively as you use it.
+> Start with the HTTP client and network history, discover drift detection when
+> you import a spec, then AI verification, semantic links, and temporal
+> awareness.
 
 ---
 
@@ -307,9 +356,12 @@ Look for issues labeled [`good first issue`](https://github.com/paulbreuler/runi
 
 ## Community
 
+<!-- markdownlint-disable MD033 -->
+
 - [Discord](https://discord.gg/MHzmdpw4TR) — Chat with the team and community
 - [Twitter/X](https://twitter.com/basestate) — Updates and announcements
 - [Blog](https://basestate.io/blog) — Deep dives and tutorials
+<!-- markdownlint-enable MD033 -->
 
 ---
 
@@ -325,10 +377,12 @@ Named after **Kiki runi** — a German Shepherd who sniffs out what's hidden and
 
 Built by [BaseState](https://basestate.io) in Fargo, North Dakota.
 
-_"Collapse uncertainty into truth"_
+> _"Collapse uncertainty into truth"_
 
 ---
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
   <sub>If runi helps you, consider giving it a star ⭐</sub>
 </p>
+<!-- markdownlint-enable MD033 -->
