@@ -95,6 +95,27 @@ jobs:
         with:
           config-file: release-please-config.json
 
+      - name: Update release with building message
+        if: steps.release.outputs.release_created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ steps.release.outputs.tag_name }}"
+
+          # Get current release body
+          CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq '.body // ""')
+
+          # Add building message if not already present
+          if echo "$CURRENT_BODY" | grep -q "Artifacts are being built"; then
+            echo "Building message already present"
+          else
+            BUILDING_MSG="\n\n---\n\n⏳ **Artifacts are being built...**"
+            NEW_BODY="${CURRENT_BODY}${BUILDING_MSG}"
+            
+            gh release edit "$TAG_NAME" --notes "$NEW_BODY"
+            echo "✅ Added building message to release"
+          fi
+
   build:
     name: Build ${{ matrix.os }}
     needs: [check-ci-status, release-please]
@@ -276,15 +297,36 @@ jobs:
             echo "⚠️ No artifacts found" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Upload artifacts to existing release
+      - name: Upload artifacts and update release
         if: steps.check-artifacts.outputs.found == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.release-please.outputs.tag_name }}
-          files: |
-            release-artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
+
+          # Get current release body
+          CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq '.body // ""')
+
+          # Remove building message section (everything from "---" onwards)
+          # The building message format is: "\n\n---\n\n⏳ **Artifacts are being built...**"
+          # Use awk to print lines until we hit "---", then stop
+          NEW_BODY=$(echo "$CURRENT_BODY" | awk '/^---$/{exit} {print}')
+
+          # Trim trailing newlines
+          NEW_BODY=$(echo "$NEW_BODY" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
+
+          # Upload artifacts
+          gh release upload "$TAG_NAME" release-artifacts/* --clobber
+
+          # Update release body to remove building message
+          # Use original changelog as fallback if body is empty
+          if [ -z "$NEW_BODY" ]; then
+            NEW_BODY="${{ needs.release-please.outputs.changelog }}"
+          fi
+
+          gh release edit "$TAG_NAME" --notes "$NEW_BODY"
+
+          echo "✅ Artifacts uploaded and release updated"
 
       - name: Warn if release skipped
         if: steps.check-artifacts.outputs.found == 'false'
