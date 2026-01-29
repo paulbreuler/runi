@@ -18,6 +18,7 @@
         }
       ],
       "versioning-strategy": "default",
+      "skip-github-release": true,
       "changelog-sections": [
         {
           "type": "feat",
