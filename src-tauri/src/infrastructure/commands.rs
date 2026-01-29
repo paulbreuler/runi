@@ -407,9 +407,9 @@ struct StartupTimingData {
 /// - `total`: Complete startup time from process start to React mount (processStartup + reactMounted)
 ///
 /// The file is written to the platform-appropriate app data directory:
-/// - macOS: `~/Library/Application Support/com.runi.app/startup-timing.json`
-/// - Linux: `~/.local/share/com.runi.app/startup-timing.json` or `$XDG_DATA_HOME/com.runi.app/startup-timing.json`
-/// - Windows: `%APPDATA%\com.runi.app\startup-timing.json`
+/// - macOS: `~/Library/Application Support/com.runi/startup-timing.json`
+/// - Linux: `~/.local/share/com.runi/startup-timing.json` or `$XDG_DATA_HOME/com.runi/startup-timing.json`
+/// - Windows: `%APPDATA%\com.runi\startup-timing.json`
 ///
 /// # File Format
 ///

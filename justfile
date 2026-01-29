@@ -33,8 +33,9 @@ dev:
 # ============================================================================
 
 # Build for production
+# Unset CI if it's set to a numeric value (Tauri expects boolean true/false)
 build:
-    npm run tauri build
+    @bash -c 'if [ "$CI" = "1" ] || [ "$CI" = "0" ]; then unset CI && npm run tauri build; else npm run tauri build; fi'
 
 # Build frontend only (required for Rust compilation)
 # Uses npx as fallback if vite isn't available (doesn't require motion-plus)

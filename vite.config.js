@@ -21,7 +21,25 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    entries: ['src/**/*.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
+    entries: ['src/**/*.{ts,tsx}'],
+    exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.stories.{ts,tsx}'],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Tauri in its own chunk; all other node_modules in one vendor chunk
+          // to avoid circular refs (vendor <-> react-vendor etc.)
+          if (id.includes('@tauri-apps')) {
+            return 'tauri-vendor';
+          }
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1350,
   },
   server: {
     port: 5175,

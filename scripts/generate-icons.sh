@@ -1,25 +1,25 @@
 #!/bin/bash
-# Generate icons from PNG with dark background
+# Generate icons from SVG with dark background
 # Usage: bash scripts/generate-icons.sh
 
 set -e
 
-PNG=".github/assets/runi.png"
+SOURCE=".github/assets/runi-head-iced.svg"
 ICON_DIR="src-tauri/icons"
 BG_COLOR="#0a0a0a"  # Brand dark background (--color-bg-app)
 
 mkdir -p "$ICON_DIR"
 
-echo "🔄 Generating icons from PNG with dark background..."
+echo "🔄 Generating icons from SVG with dark background..."
 
-# Get source PNG dimensions
+# Get source image dimensions (works for both PNG and SVG)
 if command -v identify &> /dev/null; then
-  DIMENSIONS=$(identify -format "%wx%h" "$PNG")
+  DIMENSIONS=$(identify -format "%wx%h" "$SOURCE")
   WIDTH=$(echo "$DIMENSIONS" | cut -d'x' -f1)
   HEIGHT=$(echo "$DIMENSIONS" | cut -d'x' -f2)
 else
-  WIDTH=$(magick identify -format "%w" "$PNG" 2>/dev/null)
-  HEIGHT=$(magick identify -format "%h" "$PNG" 2>/dev/null)
+  WIDTH=$(magick identify -format "%w" "$SOURCE" 2>/dev/null)
+  HEIGHT=$(magick identify -format "%h" "$SOURCE" 2>/dev/null)
 fi
 
 echo "  Source: ${WIDTH}x${HEIGHT}"
@@ -33,17 +33,17 @@ for size in 32 128 256 512; do
   scaled_w=$(( WIDTH * size / HEIGHT ))
   x_offset=$(( (size - scaled_w) / 2 ))
   
-  # Create square canvas with dark background, then composite resized PNG on top
+  # Create square canvas with dark background, then composite resized source image on top
   # Force 8-bit RGBA format (required by Tauri) using -depth 8 and -type TrueColorMatte
   if command -v magick &> /dev/null; then
     magick -size ${size}x${size} xc:"$BG_COLOR" \
-      \( "$PNG" -resize ${scaled_w}x${size} -alpha on -depth 8 \) \
+      \( "$SOURCE" -resize ${scaled_w}x${size} -alpha on -depth 8 \) \
       -geometry +${x_offset}+0 -compose Over -composite \
       -alpha on -type TrueColorMatte -depth 8 \
       "$ICON_DIR/${size}x${size}.png"
   else
     convert -size ${size}x${size} xc:"$BG_COLOR" \
-      \( "$PNG" -resize ${scaled_w}x${size} -alpha on -depth 8 \) \
+      \( "$SOURCE" -resize ${scaled_w}x${size} -alpha on -depth 8 \) \
       -geometry +${x_offset}+0 -compose Over -composite \
       -alpha on -type TrueColorMatte -depth 8 \
       "$ICON_DIR/${size}x${size}.png"
