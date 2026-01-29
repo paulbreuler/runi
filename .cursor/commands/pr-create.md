@@ -4,7 +4,7 @@ Create a pull request on GitHub with a comprehensive description from staged cha
 
 ## LLM Execution Rules
 
-- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 - Do not create files for PR descriptions; generate in memory only.
 - Never include secrets or credentials in PR bodies or comments.
 
@@ -19,8 +19,8 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - Check if PR already exists (`gh pr view`)
 
 2. **Optional code reviews (recommended before PR creation):**
-   - General review: run `/code-review` if changes are non-trivial
-   - MCP/LLM review: run `/review-mcp` if MCP/LLM tools or security-critical areas changed
+   - General review: run `/code-review` or invoke `/branch-code-review` skill if changes are non-trivial
+   - MCP/LLM review: run `/review-mcp` or invoke `/mcp-code-review` skill if MCP/LLM tools or security-critical areas changed
 
 3. **Detect plan/agent context (if applicable):**
    - Use limps MCP tools when available:
@@ -35,9 +35,16 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - Use `git log <base>..HEAD` and `git diff --stat <base>..HEAD`
    - If no commits exist, analyze `git diff --cached`
 
-5. **Optional commit review:**
-   - `git log --format="%H%n%s%n%b%n---" <base>..HEAD`
-   - If messages are non-compliant, note it in PR description or advise amend
+5. **Optional commit review (recommended):**
+   - Review commits: `git log --format="%H%n%s%n%b%n---" <base>..HEAD`
+   - Invoke `/git-commit-best-practices review-commits` to validate commit message quality
+   - Check for conventional commit format, atomic commits, and clear messages
+   - **If issues found**: Present findings and ask user if they want to:
+     - Amend commits before creating PR (recommended), OR
+     - Proceed with PR creation anyway (issues will be noted in PR description)
+   - **Detect breaking changes**: Search commit messages for `BREAKING CHANGE:` footer:
+     - `git log --format=%B main..HEAD | grep -i "BREAKING CHANGE"` or parse commit bodies
+     - Extract breaking change descriptions for PR description
 
 6. **Generate PR description (in memory only):**
    - Summary, Changes, Tests
@@ -122,9 +129,9 @@ The generated PR follows this structure:
 - ...
 
 ## Code Review
-- General review: [✅ Passed | ⚠️ Issues found | Not run]
-- MCP/LLM review: [✅ Passed | ⚠️ Issues found | Not run]
-- Commit review: [✅ Passed | ⚠️ Issues found | Not run]
+- General review: [✅ Passed | ⚠️ Issues found | Not run] (via `/code-review` or `/branch-code-review` skill)
+- MCP/LLM review: [✅ Passed | ⚠️ Issues found | Not run] (via `/review-mcp` or `/mcp-code-review` skill)
+- Commit review: [✅ Passed | ⚠️ Issues found | Not run] (via `/git-commit-best-practices review-commits` skill)
 
 ## Breaking Changes
 - [If any commits contain `BREAKING CHANGE:` footer, list them]
@@ -174,7 +181,7 @@ refactor(commands): extract HTTP client to separate module
 
 ## Commit Message Format
 
-Generated commit messages follow conventional commits:
+Generated commit messages follow conventional commits. For detailed guidance, use `/git-commit-best-practices` skill.
 
 ```text
 <type>(<scope>): <description>
@@ -193,6 +200,11 @@ Generated commit messages follow conventional commits:
 - `docs`: Documentation
 - `style`: Formatting (no code change)
 - `chore`: Maintenance
+
+**For detailed commit message guidance**, invoke `/git-commit-best-practices` skill with:
+- No arguments: Guide for staged changes
+- `review-commits`: Review existing commits in a range
+- Commit range: Review specific commits (e.g., `HEAD~5..HEAD`)
 
 ## Analysis Process
 
@@ -344,7 +356,10 @@ PR creation proceeds automatically...
 
 ## Related Commands
 
-- `/code-review` - Review code before creating PR
+- `/code-review` - Review code before creating PR (comprehensive runi standards)
+- `/branch-code-review` - Architecture/maintainability review (skill)
+- `/review-mcp` or `/mcp-code-review` - MCP/LLM security review (skill)
+- `/git-commit-best-practices` - Commit message guidance and review (skill)
 - `/pr-comments` - Get and address PR comments (see `CLAUDE.md` PR Workflow section)
 - `just ci` - Run CI checks before PR
 - `git commit` - Commit changes before creating PR

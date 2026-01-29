@@ -6,7 +6,7 @@ Simple entry point: "I want to check plan status". Shows plan status without ove
 
 - Prefer `npx limps next-task` for auto-detect; fall back to `npx limps list-plans` on failure.
 - If no plan can be determined, stop and ask the user to choose.
-- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 
 ## Invocation
 

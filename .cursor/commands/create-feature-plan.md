@@ -19,27 +19,34 @@ Generate a TDD plan with verbose planning docs and minimal agent execution files
 
 This command uses MCP planning tools for document management:
 
-- **Server**: Use the limps planning MCP server registered in `.cursor/mcp.json`
-  - Example in this repo: `project-0-runi-limps-planning-runi-planning-docs`
+- **Server**: Use the planning MCP server registered in `.mcp.json` (repo root)
+  - Server name in this repo: `runi-Planning`
   - Always resolve the server name from the MCP registry before calling tools
 - **Tools**:
   - `create_plan` - Create the plan structure
-  - `create_doc` - Create planning documents (plan.md, interfaces.md, README.md, gotchas.md)
+  - `create_doc` - Create planning documents ({plan-name}-plan.md, interfaces.md, README.md, gotchas.md)
   - `list_docs` - List existing plans to determine next plan number
-  - `read_doc` - Read existing documents for reference
+  - `process_doc` - Read and analyze a single document (preferred over read_doc for reading with extraction)
+  - `process_docs` - Analyze multiple documents (e.g., all plan files for duplicate scan)
+  - `read_doc` - Read existing documents for reference (use process_doc when extraction needed)
   - `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
   - `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
 
-**Usage**: Call tools via `call_mcp_tool` with the resolved server name (see above) and the tool name (e.g., `create_plan`, `create_doc`, etc.)
+**Usage**: Call tools via `call_mcp_tool` with the resolved server name (see above) and the tool name
+(e.g., `create_plan`, `create_doc`, etc.)
 
 ## Skills Integration
 
 When creating plans that involve Storybook stories or testing:
 
-- **Automatically use `storybook-testing` skill** - For features that require Storybook stories, play functions, accessibility tests, or visual regression
-- **Controls-first approach is mandatory** - Use Storybook 10 controls for state variations instead of creating separate stories for every prop combination
-- **Limit to 1-3 stories per component** - One Playground story with controls covers most cases (we consolidated from 500+ stories to 50-75 by using controls)
-- **Separate stories only for** - Complex interactions that need dedicated play functions, real-world examples, or documentation purposes
+- **Automatically use `storybook-testing` skill** - For features that require Storybook stories,
+  play functions, accessibility tests, or visual regression
+- **Controls-first approach is mandatory** - Use Storybook 10 controls for state variations
+  instead of creating separate stories for every prop combination
+- **Limit to 1-3 stories per component** - One Playground story with controls covers most cases
+  (we consolidated from 500+ stories to 50-75 by using controls)
+- **Separate stories only for** - Complex interactions that need dedicated play functions,
+  real-world examples, or documentation purposes
 - Reference story templates from `.storybook/templates/` when planning story creation
 - Use testing utilities from `@/utils/storybook-test-helpers` in test specifications
 
@@ -60,24 +67,25 @@ Ask user for:
 
 **Use MCP tools for document creation:**
 
-1. **Determine next plan number** using `list_docs` (server: `mcp-planning-server`):
+1. **Determine next plan number** using `list_docs` (server: `runi-Planning`):
    - List all plans in `../runi-planning-docs/plans/`
    - Extract numeric prefixes from directory names
    - Find maximum plan number (handle both padded and unpadded formats)
    - Next plan number = max + 1
 
-2. **Create plan structure** using `create_plan` (server: `mcp-planning-server`):
+2. **Create plan structure** using `create_plan` (server: `runi-Planning`):
    - Plan name: `NNNN-descriptive-name` (zero-padded to 4 digits)
    - Description: Brief overview of the plan
 
-3. **Create planning documents** using `create_doc` (server: `mcp-planning-server`):
-   - Use template `none` for plan.md, interfaces.md, README.md
+3. **Create planning documents** using `create_doc` (server: `runi-Planning`):
+   - Use template `none` for {plan-name}-plan.md, interfaces.md, README.md
    - Use template `addendum` for gotchas.md (if template available)
-   - Path format: `plans/NNNN-descriptive-name/filename.md`
+   - Path format: `plans/NNNN-descriptive-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
 
-**Plan Number Format**: Zero-padded to 4 digits (0001, 0002, ..., 0007, 0008, ...) for proper lexicographical ordering. Scripts support both padded and unpadded formats for backward compatibility.
+**Plan Number Format**: Zero-padded to 4 digits (0001, 0002, ..., 0007, 0008, ...) for proper
+lexicographical ordering. Scripts support both padded and unpadded formats for backward compatibility.
 
-**1. plan.md** - Full feature specifications
+**1. {plan-name}-plan.md** - Full feature specifications
 
 - Complete Gherkin scenarios (all paths)
 - Detailed TDD cycles with test code
@@ -108,7 +116,7 @@ Ask user for:
 **4. gotchas.md** - Empty, ready for discoveries
 
 - Template with format
-  - Created using `create_doc` (server: `mcp-planning-server`) with appropriate template
+  - Created using `create_doc` (server: `runi-Planning`) with appropriate template
 
 ### Phase 3: Assign Features to Agents
 
@@ -117,14 +125,17 @@ Group features by:
 - File ownership (minimize conflicts)
 - Dependency chains (dependent features same agent when possible)
 - Parallelism (maximize independent work)
-- **Storybook story creation** - Features that create Storybook stories should be grouped together when possible. Note that controls-first approach means most components need only 1 Playground story with controls, not multiple stories for different prop combinations
+- **Storybook story creation** - Features that create Storybook stories should be grouped together
+  when possible. Note that controls-first approach means most components need only 1 Playground
+  story with controls, not multiple stories for different prop combinations
 
 Each agent should have:
 
 - 2-4 features (adjust based on complexity)
 - Clear file ownership
 - Minimal cross-agent dependencies
-- **Skill activation** - If agent creates Storybook stories, note that `storybook-testing` skill should be used
+- **Skill activation** - If agent creates Storybook stories, note that `storybook-testing` skill
+  should be used
 
 ### Phase 4: Distill Agent Files (Minimal)
 
@@ -132,11 +143,12 @@ Each agent should have:
 
 **Use MCP tools for agent file creation:**
 
-- Create agent files using `create_doc` (server: `mcp-planning-server`)
+- Create agent files using `create_doc` (server: `runi-Planning`)
 - Path format: `plans/NNNN-descriptive-name/agents/NNN_agent_descriptive-name.agent.md`
 - Use template `none` (agent files are code, not documentation)
 
-For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NNN is sequential starting from 000 (zero-padded to 3 digits):
+For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NNN is sequential
+starting from 000 (zero-padded to 3 digits):
 
 **Agent File Naming Pattern**:
 
@@ -151,16 +163,19 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
 **Rationale**:
 
 - Zero-padding ensures proper lexicographical ordering (000, 001, 002, ... 010, 011, ... 017)
-- Numeric prefixes make execution order clear to humans, even though `npx limps next-task` uses scoring algorithm
+- Numeric prefixes make execution order clear to humans, even though `npx limps next-task`
+  uses scoring algorithm
 - This helps when manually selecting agents or understanding plan structure
 
-**Note**: Scripts support both padded (000, 001) and unpadded (0, 1) formats for backward compatibility, but new agents should use zero-padding.
+**Note**: Scripts support both padded (000, 001) and unpadded (0, 1) formats for backward
+compatibility, but new agents should use zero-padding.
 
 **GitHub Issue Integration**:
 
 - Issues are created automatically when agents start (via `/run-agent` command)
 - **Agent Issue (parent)**: Represents the agent work, includes reference to local agent file
-- **Feature Subissues (children)**: One subissue per feature, created using `gh sub-issue` extension, linked to agent issue as parent
+- **Feature Subissues (children)**: One subissue per feature, created using `gh sub-issue` extension,
+  linked to agent issue as parent
 - **Agent files store issue numbers**:
   - `**GitHub Issue**: #123` at top (agent issue - parent)
   - `**GitHub Subissue**: #124` in each feature section (feature subissue - child)
@@ -168,8 +183,10 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
   - Local agent files are the source of truth
   - Agent issue is parent, feature subissues are children
   - Features reference their subissues (not random PRs)
-- **PRs link to feature subissues**: Use `Closes #124, #125, #126` for feature subissues in PR description
-- **Critical**: `Closes #XXX` only works when PR targets the repository's default branch (main/master)
+- **PRs link to feature subissues**: Use `Closes #124, #125, #126` for feature subissues
+  in PR description
+- **Critical**: `Closes #XXX` only works when PR targets the repository's default branch
+  (main/master)
 - GitHub automatically closes feature subissues when PR with `Closes #124, #125, #126` merges to default branch
 - Agent issue (parent) is not closed by PR - only feature subissues are closed
 - If agent doesn't have issues when PR is created, issues are created retroactively by `/pr` command
@@ -214,7 +231,7 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
 ```text
 NNNN-descriptive-name/
 ├── README.md              # Index, graph, status
-├── plan.md                # Full specs (verbose, ~1000+ lines OK)
+├── {plan-name}-plan.md    # Full specs (verbose, ~1000+ lines OK)
 ├── interfaces.md          # Contracts (~200-500 lines)
 ├── gotchas.md             # Empty template
 └── agents/
@@ -225,14 +242,16 @@ NNNN-descriptive-name/
 
 ## Agent File Format
 
-**File naming**: `<NNN>_agent_<descriptive-name>.agent.md` (e.g., `000_agent_infrastructure.agent.md`) - Zero-padded to 3 digits for proper lexicographical ordering
+**File naming**: `<NNN>_agent_<descriptive-name>.agent.md` (e.g., `000_agent_infrastructure.agent.md`)
+
+- Zero-padded to 3 digits for proper lexicographical ordering
 
 **File header**: The agent header in the file should still be descriptive:
 
 ````markdown
 # Agent <N>: [Descriptive Name]
 
-**Plan Location**: `../runi-planning-docs/plans/[plan-name]/plan.md`
+**Plan Location**: `../runi-planning-docs/plans/[plan-name]/[plan-name]-plan.md`
 **GitHub Issue**: #123 (agent issue - parent, created when agent started)
 
 ## Scope
@@ -299,13 +318,13 @@ Gotchas:
 
 ## Distillation Rules
 
-| plan.md (verbose)        | agent.md (distilled)     |
+| {plan-name}-plan.md (verbose) | agent.md (distilled) |
 | ------------------------ | ------------------------ |
-| Full Gherkin scenario    | One-line TL;DR           |
-| Detailed TDD with code   | `test → impl → refactor` |
-| Component design table   | Just file paths          |
-| Gotcha with full context | `issue: workaround`      |
-| Interface with examples  | Just signatures          |
+| Full Gherkin scenario | One-line TL;DR |
+| Detailed TDD with code | `test → impl → refactor` |
+| Component design table | Just file paths |
+| Gotcha with full context | `issue: workaround` |
+| Interface with examples | Just signatures |
 
 ## Work Type Adjustments
 
@@ -313,19 +332,19 @@ Gotchas:
 
 - Emphasize: behavior preservation tests
 - Agent files include: migration paths
-- Extra in plan.md: before/after comparisons
+- Extra in {plan-name}-plan.md: before/after comparisons
 
 ### Overhaul
 
 - Emphasize: rollback checkpoints
 - Agent files include: rollback commit hashes
-- Extra in plan.md: breaking changes, migration guide
+- Extra in {plan-name}-plan.md: breaking changes, migration guide
 
 ### Feature Development
 
 - Emphasize: integration points
 - Agent files include: dependency status clearly marked
-- Extra in plan.md: user stories, acceptance criteria
+- Extra in {plan-name}-plan.md: user stories, acceptance criteria
 - **Storybook stories**: If features include Storybook stories, follow controls-first approach:
   - **Limit to 1-3 stories per component** - Use controls for state variations, not separate stories
   - **One Playground story with controls** covers most cases
@@ -360,7 +379,8 @@ Agent implements
 ```
 
 **Optional: Assess initial status**:
-After creating a plan, you can use `npx limps next-task <plan-number>` (e.g., `npx limps next-task 1`) to see the first recommended task. This is optional but can help verify the plan structure is correct.
+After creating a plan, you can use `npx limps next-task <plan-number>` (e.g., `npx limps next-task 1`)
+to see the first recommended task. This is optional but can help verify the plan structure is correct.
 
 **Update plan**:
 
@@ -378,14 +398,14 @@ Review README.md status matrix
 ```typescript
 // 1. List existing plans to find next number
 const plans = await call_mcp_tool({
-  server: '<planning-mcp-server>',
+  server: 'runi-Planning',
   toolName: 'list_docs',
   arguments: { path: 'plans' },
 });
 
 // 2. Create plan structure
 await call_mcp_tool({
-  server: '<planning-mcp-server>',
+  server: 'runi-Planning',
   toolName: 'create_plan',
   arguments: {
     name: '0008-storybook-testing-overhaul',
@@ -393,12 +413,12 @@ await call_mcp_tool({
   },
 });
 
-// 3. Create plan.md
+// 3. Create {plan-name}-plan.md
 await call_mcp_tool({
-  server: '<planning-mcp-server>',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
-    path: 'plans/0008-storybook-testing-overhaul/plan.md',
+    path: 'plans/0008-storybook-testing-overhaul/0008-storybook-testing-overhaul-plan.md',
     content: '...', // Full verbose specs
     template: 'none',
   },
@@ -406,7 +426,7 @@ await call_mcp_tool({
 
 // 4. Create interfaces.md
 await call_mcp_tool({
-  server: '<planning-mcp-server>',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/interfaces.md',
@@ -417,7 +437,7 @@ await call_mcp_tool({
 
 // 5. Create README.md
 await call_mcp_tool({
-  server: '<planning-mcp-server>',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/README.md',
@@ -428,7 +448,7 @@ await call_mcp_tool({
 
 // 6. Create gotchas.md
 await call_mcp_tool({
-  server: '<planning-mcp-server>',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/gotchas.md',
@@ -439,7 +459,7 @@ await call_mcp_tool({
 
 // 7. Create agent files
 await call_mcp_tool({
-  server: '<planning-mcp-server>',
+  server: 'runi-Planning',
   toolName: 'create_doc',
   arguments: {
     path: 'plans/0008-storybook-testing-overhaul/agents/000_agent_infrastructure.agent.md',
@@ -451,23 +471,39 @@ await call_mcp_tool({
 
 ### Reading Existing Documents
 
+**Preferred**: Use `process_doc` for reading with extraction capabilities:
+
 ```typescript
-// Read existing plan for reference
+// Read existing plan for reference (preferred method)
 const existingPlan = await call_mcp_tool({
-  server: '<planning-mcp-server>',
-  toolName: 'read_doc',
+  server: 'runi-Planning',
+  toolName: 'process_doc',
   arguments: {
-    path: 'plans/0005-storybook-testing-overhaul/plan.md',
+    path: 'plans/0005-storybook-testing-overhaul/0005-storybook-testing-overhaul-plan.md',
+    code: 'doc.content', // Read full content
   },
 });
 
-// Read specific lines
+// Extract specific sections
 const interfaces = await call_mcp_tool({
-  server: '<planning-mcp-server>',
-  toolName: 'read_doc',
+  server: 'runi-Planning',
+  toolName: 'process_doc',
   arguments: {
     path: 'plans/0005-storybook-testing-overhaul/interfaces.md',
-    lines: [1, 50], // Read lines 1-50
+    code: 'doc.content.split("\\n").slice(0, 50).join("\\n")', // First 50 lines
+  },
+});
+```
+
+**Alternative**: Use `read_doc` for simple reads:
+
+```typescript
+// Simple read without extraction
+const plan = await call_mcp_tool({
+  server: 'runi-Planning',
+  toolName: 'read_doc',
+  arguments: {
+    path: 'plans/0005-storybook-testing-overhaul/0005-storybook-testing-overhaul-plan.md',
   },
 });
 ```
@@ -475,30 +511,51 @@ const interfaces = await call_mcp_tool({
 ### Querying Documents with RLM Tools
 
 ```typescript
-// Extract all GAP features from a plan
-const gapFeatures = await rlm_query({
-  path: 'plans/0008-storybook-testing-overhaul/plan.md',
-  code: `
-    const features = extractFeatures(doc.content);
-    return features.filter(f => f.status === 'GAP');
-  `,
+// Extract all GAP features from a plan (using process_doc - preferred)
+const gapFeatures = await call_mcp_tool({
+  server: 'runi-Planning',
+  toolName: 'process_doc',
+  arguments: {
+    path: 'plans/0008-storybook-testing-overhaul/0008-storybook-testing-overhaul-plan.md',
+    code: `
+      const features = extractFeatures(doc.content);
+      return features.filter(f => f.status === 'GAP');
+    `,
+  },
 });
 
-// Analyze feature distribution across all plans
-const planSummary = await rlm_multi_query({
-  pattern: 'plans/*/plan.md',
-  code: `
-    return docs.map(doc => {
+// Analyze feature distribution across all plans (using process_docs - preferred)
+const planSummary = await call_mcp_tool({
+  server: 'runi-Planning',
+  toolName: 'process_docs',
+  arguments: {
+    pattern: 'plans/*/*-plan.md',
+    code: `
+      return docs.map(doc => {
+        const features = extractFeatures(doc.content);
+        return {
+          plan: extractFrontmatter(doc.content).meta.name,
+          total: features.length,
+          gap: features.filter(f => f.status === 'GAP').length,
+          wip: features.filter(f => f.status === 'WIP').length,
+          pass: features.filter(f => f.status === 'PASS').length
+        };
+      });
+    `,
+  },
+});
+
+// Alternative: Use rlm_query/rlm_multi_query for complex queries
+const gapFeaturesAlt = await call_mcp_tool({
+  server: 'runi-Planning',
+  toolName: 'rlm_query',
+  arguments: {
+    path: 'plans/0008-storybook-testing-overhaul/0008-storybook-testing-overhaul-plan.md',
+    code: `
       const features = extractFeatures(doc.content);
-      return {
-        plan: extractFrontmatter(doc.content).meta.name,
-        total: features.length,
-        gap: features.filter(f => f.status === 'GAP').length,
-        wip: features.filter(f => f.status === 'WIP').length,
-        pass: features.filter(f => f.status === 'PASS').length
-      };
-    });
-  `,
+      return features.filter(f => f.status === 'GAP');
+    `,
+  },
 });
 ```
 
@@ -506,5 +563,13 @@ const planSummary = await rlm_multi_query({
 
 - **MCP tools handle file operations** - No need to manually create directories or files
 - **Templates available** - Use `addendum`, `research`, `example`, or `none` templates when creating docs
-- **Path format** - Always use relative paths from planning docs root: `plans/NNNN-name/filename.md`
-- **Storybook skill** - Automatically activated when features involve Storybook stories; reference templates and utilities in agent files. **Critical**: Follow controls-first approach (1-3 stories per component, use controls for variations) - see `storybook-testing` skill for full guidance
+- **Path format** - Always use relative paths from planning docs root:
+  `plans/NNNN-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
+- **Plan file naming** - Use `{plan-name}-plan.md` format
+  (e.g., `0008-storybook-testing-overhaul-plan.md`) for consistency with limps standards
+- **Reading documents** - Prefer `process_doc`/`process_docs` over `read_doc` when extraction
+  or filtering is needed
+- **Storybook skill** - Automatically activated when features involve Storybook stories;
+  reference templates and utilities in agent files. **Critical**: Follow controls-first approach
+  (1-3 stories per component, use controls for variations) - see `storybook-testing` skill
+  for full guidance

@@ -8,12 +8,12 @@ Apply feedback to an existing plan, regenerate affected agent files, and commit 
 - Preserve existing GitHub issue numbers in agent files.
 - Do not include secrets or tokens in plan documents.
 - Only run `rlm_query` with code you authored or reviewed.
-- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 
 ## Key Change from v1.x
 
 **Old**: Update plan.md + speed_prompts.md (summaries)
-**New**: Update plan.md + regenerate affected `agents/*.agent.md` (distilled execution files)
+**New**: Update {plan-name}-plan.md + regenerate affected `agents/*.agent.md` (distilled execution files)
 
 Agent files are **distilled**, not copied. When plan changes, affected agent files must be regenerated.
 
@@ -31,7 +31,7 @@ Agent files are **distilled**, not copied. When plan changes, affected agent fil
 3. Read current state
 4. Analyze & propose changes
 5. User approves
-6. Apply to plan.md, interfaces.md
+6. Apply to {plan-name}-plan.md, interfaces.md
 7. Identify affected agents
 8. Regenerate affected agent files (distill, don't copy)
 9. Verify consistency
@@ -79,14 +79,14 @@ Parse feedback for:
 ```
 [plan-name]/
 ├── README.md
-├── plan.md           # Full verbose specs
-├── interfaces.md     # Contract source of truth
+├── {plan-name}-plan.md  # Full verbose specs
+├── interfaces.md        # Contract source of truth
 ├── gotchas.md
 └── agents/
-    └── *.agent.md    # Minimal execution files
+    └── *.agent.md       # Minimal execution files
 ```
 
-Read all files to understand current state.
+Read all files to understand current state. Use `process_doc` (server: `runi-Planning`) for reading plan files with extraction capabilities.
 
 ### 4. Analyze & Propose Changes
 
@@ -105,7 +105,7 @@ For each feedback item, classify:
 ````markdown
 ## Proposed Changes: [plan-name]
 
-### plan.md
+### {plan-name}-plan.md
 
 **Change**: Add Feature #7 Accessibility
 **Diff**:
@@ -140,14 +140,14 @@ For each feedback item, classify:
 ### 6. Apply Changes (After Approval)
 
 **Planning docs** (verbose):
-- Update `plan.md` with full feature specs
-- Update `interfaces.md` if contracts change
-- Update `README.md` status matrix
-- Append to `gotchas.md` if new issues
+- Update `{plan-name}-plan.md` with full feature specs using `update_doc` (server: `runi-Planning`)
+- Update `interfaces.md` if contracts change using `update_doc`
+- Update `README.md` status matrix using `update_doc`
+- Append to `gotchas.md` if new issues using `update_doc`
 
 **Agent files** (distilled):
-- **Regenerate** affected agent files, don't patch
-- Distill from updated plan.md
+- **Regenerate** affected agent files using `create_doc` or `update_doc` (server: `runi-Planning`), don't patch
+- Distill from updated {plan-name}-plan.md
 - Target ~200-400 lines per agent
 
 ### 7. Identify Affected Agents
@@ -190,8 +190,8 @@ Target: ~200-400 lines for 2-4 features.
 
 ### 9. Verify Consistency
 
-- [ ] All features in plan.md have an assigned agent
-- [ ] All agent files reflect current plan.md
+- [ ] All features in {plan-name}-plan.md have an assigned agent
+- [ ] All agent files reflect current {plan-name}-plan.md
 - [ ] interfaces.md matches agent exports/receives
 - [ ] README.md status matrix is current
 - [ ] Dependency graph is accurate
@@ -210,7 +210,7 @@ git commit -m "update(plans): [plan-name] - [description]"
 
 ### Adding a Feature
 
-1. Add to `plan.md` (verbose spec)
+1. Add to `{plan-name}-plan.md` (verbose spec)
 2. Add to `interfaces.md` if it exports anything
 3. Assign to an agent
 4. Regenerate that agent's file
@@ -218,7 +218,7 @@ git commit -m "update(plans): [plan-name] - [description]"
 
 ### Modifying a Feature
 
-1. Update in `plan.md`
+1. Update in `{plan-name}-plan.md`
 2. Update `interfaces.md` if exports changed
 3. Regenerate owning agent's file
 4. If interface changed: regenerate dependent agents
@@ -228,7 +228,7 @@ git commit -m "update(plans): [plan-name] - [description]"
 Most impactful change—affects downstream agents.
 
 1. Update `interfaces.md` (source of truth)
-2. Update `plan.md` feature spec
+2. Update `{plan-name}-plan.md` feature spec
 3. Identify all agents that receive this interface
 4. Regenerate ALL affected agent files
 5. Mark downstream features as potentially BLOCKED if breaking
@@ -252,13 +252,13 @@ Example:
 
 ### Status Update
 
-1. Update feature status in `plan.md`
+1. Update feature status in `{plan-name}-plan.md`
 2. Update README.md status matrix
 3. **Don't regenerate agent files** (status is in agent's own file)
 
 ### Dependency Change
 
-1. Update `plan.md` feature dependencies
+1. Update `{plan-name}-plan.md` feature dependencies
 2. Update `parallelization.md` if exists
 3. Regenerate affected agent files
 4. Update README.md graph
@@ -266,35 +266,43 @@ Example:
 ### Gotcha Discovered
 
 1. Append to `gotchas.md`
-2. Add to affected features in `plan.md`
+2. Add to affected features in `{plan-name}-plan.md`
 3. Regenerate agent files that need to know
 
-## RLM Query Tools for Plan Analysis
+## Plan Analysis with MCP Tools
 
-RLM query tools can help analyze plans before and after updates:
+Use `process_doc` (server: `runi-Planning`) to analyze plans before and after updates:
 
 ```typescript
-// Find all features affected by an interface change
-const affectedFeatures = await rlm_query({
-  path: 'plans/[plan-name]/plan.md',
-  code: `
-    const features = extractFeatures(doc.content);
-    const interface = extractInterfaces(doc.content).find(i => i.name === 'useColumnHeader');
-    return features.filter(f => f.dependsOn?.includes(interface.id));
-  `,
+// Find all features affected by an interface change (preferred: process_doc)
+const affectedFeatures = await call_mcp_tool({
+  server: 'runi-Planning',
+  toolName: 'process_doc',
+  arguments: {
+    path: 'plans/[plan-name]/[plan-name]-plan.md',
+    code: `
+      const features = extractFeatures(doc.content);
+      const interface = extractInterfaces(doc.content).find(i => i.name === 'useColumnHeader');
+      return features.filter(f => f.dependsOn?.includes(interface.id));
+    `,
+  },
 });
 
 // Compare feature status before/after update
-const statusDiff = await rlm_query({
-  path: 'plans/[plan-name]/plan.md',
-  code: `
-    const features = extractFeatures(doc.content);
-    return {
-      gap: features.filter(f => f.status === 'GAP').length,
-      wip: features.filter(f => f.status === 'WIP').length,
-      pass: features.filter(f => f.status === 'PASS').length
-    };
-  `,
+const statusDiff = await call_mcp_tool({
+  server: 'runi-Planning',
+  toolName: 'process_doc',
+  arguments: {
+    path: 'plans/[plan-name]/[plan-name]-plan.md',
+    code: `
+      const features = extractFeatures(doc.content);
+      return {
+        gap: features.filter(f => f.status === 'GAP').length,
+        wip: features.filter(f => f.status === 'WIP').length,
+        pass: features.filter(f => f.status === 'PASS').length
+      };
+    `,
+  },
 });
 ```
 
@@ -307,14 +315,14 @@ const statusDiff = await rlm_query({
 
 | File                    | Changes               | Lines |
 | ----------------------- | --------------------- | ----- |
-| plan.md                 | +1 feature, ~50 lines | +50   |
+| {plan-name}-plan.md     | +1 feature, ~50 lines | +50   |
 | interfaces.md           | +1 interface          | +15   |
 | agents/columns.agent.md | Regenerate            | ~220  |
 | README.md               | Status update         | +1    |
 
 ### Details
 
-#### plan.md
+#### {plan-name}-plan.md
 
 **Add Feature #7: Accessibility**
 
@@ -407,5 +415,7 @@ work (assess status, find next task)
 - **Interface changes cascade**: Always identify dependent agents
 - **Regenerate, don't patch**: Cleaner than surgical edits
 - **Verify consistency**: All files must agree
+- **Use MCP tools**: Use `process_doc`, `update_doc`, `create_doc` for all document operations (server: `runi-Planning`)
+- **Plan file naming**: Use `{plan-name}-plan.md` format (e.g., `0008-storybook-testing-overhaul-plan.md`)
 - **Commit after approval**: Changes go to runi-planning-docs repo (git operations use file paths, but document reading should use MCP tools)
 ```

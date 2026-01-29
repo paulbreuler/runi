@@ -280,6 +280,7 @@ jobs:
         if: steps.check-artifacts.outputs.found == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release upload ${{ needs.release-please.outputs.tag_name }} release-artifacts/* --clobber
           echo "✅ Artifacts uploaded to release ${{ needs.release-please.outputs.tag_name }}"
