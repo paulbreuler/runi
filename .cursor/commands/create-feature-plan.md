@@ -32,16 +32,21 @@ This command uses MCP planning tools for document management:
   - `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
   - `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
 
-**Usage**: Call tools via `call_mcp_tool` with the resolved server name (see above) and the tool name (e.g., `create_plan`, `create_doc`, etc.)
+**Usage**: Call tools via `call_mcp_tool` with the resolved server name (see above) and the tool name
+(e.g., `create_plan`, `create_doc`, etc.)
 
 ## Skills Integration
 
 When creating plans that involve Storybook stories or testing:
 
-- **Automatically use `storybook-testing` skill** - For features that require Storybook stories, play functions, accessibility tests, or visual regression
-- **Controls-first approach is mandatory** - Use Storybook 10 controls for state variations instead of creating separate stories for every prop combination
-- **Limit to 1-3 stories per component** - One Playground story with controls covers most cases (we consolidated from 500+ stories to 50-75 by using controls)
-- **Separate stories only for** - Complex interactions that need dedicated play functions, real-world examples, or documentation purposes
+- **Automatically use `storybook-testing` skill** - For features that require Storybook stories,
+  play functions, accessibility tests, or visual regression
+- **Controls-first approach is mandatory** - Use Storybook 10 controls for state variations
+  instead of creating separate stories for every prop combination
+- **Limit to 1-3 stories per component** - One Playground story with controls covers most cases
+  (we consolidated from 500+ stories to 50-75 by using controls)
+- **Separate stories only for** - Complex interactions that need dedicated play functions,
+  real-world examples, or documentation purposes
 - Reference story templates from `.storybook/templates/` when planning story creation
 - Use testing utilities from `@/utils/storybook-test-helpers` in test specifications
 
@@ -62,13 +67,13 @@ Ask user for:
 
 **Use MCP tools for document creation:**
 
-1. **Determine next plan number** using `list_docs` (server: `mcp-planning-server`):
+1. **Determine next plan number** using `list_docs` (server: `limps-planning-runi`):
    - List all plans in `../runi-planning-docs/plans/`
    - Extract numeric prefixes from directory names
    - Find maximum plan number (handle both padded and unpadded formats)
    - Next plan number = max + 1
 
-2. **Create plan structure** using `create_plan` (server: `mcp-planning-server`):
+2. **Create plan structure** using `create_plan` (server: `limps-planning-runi`):
    - Plan name: `NNNN-descriptive-name` (zero-padded to 4 digits)
    - Description: Brief overview of the plan
 
@@ -77,7 +82,8 @@ Ask user for:
    - Use template `addendum` for gotchas.md (if template available)
    - Path format: `plans/NNNN-descriptive-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
 
-**Plan Number Format**: Zero-padded to 4 digits (0001, 0002, ..., 0007, 0008, ...) for proper lexicographical ordering. Scripts support both padded and unpadded formats for backward compatibility.
+**Plan Number Format**: Zero-padded to 4 digits (0001, 0002, ..., 0007, 0008, ...) for proper
+lexicographical ordering. Scripts support both padded and unpadded formats for backward compatibility.
 
 **1. {plan-name}-plan.md** - Full feature specifications
 
@@ -119,14 +125,17 @@ Group features by:
 - File ownership (minimize conflicts)
 - Dependency chains (dependent features same agent when possible)
 - Parallelism (maximize independent work)
-- **Storybook story creation** - Features that create Storybook stories should be grouped together when possible. Note that controls-first approach means most components need only 1 Playground story with controls, not multiple stories for different prop combinations
+- **Storybook story creation** - Features that create Storybook stories should be grouped together
+  when possible. Note that controls-first approach means most components need only 1 Playground
+  story with controls, not multiple stories for different prop combinations
 
 Each agent should have:
 
 - 2-4 features (adjust based on complexity)
 - Clear file ownership
 - Minimal cross-agent dependencies
-- **Skill activation** - If agent creates Storybook stories, note that `storybook-testing` skill should be used
+- **Skill activation** - If agent creates Storybook stories, note that `storybook-testing` skill
+  should be used
 
 ### Phase 4: Distill Agent Files (Minimal)
 
@@ -138,7 +147,8 @@ Each agent should have:
 - Path format: `plans/NNNN-descriptive-name/agents/NNN_agent_descriptive-name.agent.md`
 - Use template `none` (agent files are code, not documentation)
 
-For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NNN is sequential starting from 000 (zero-padded to 3 digits):
+For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NNN is sequential
+starting from 000 (zero-padded to 3 digits):
 
 **Agent File Naming Pattern**:
 
@@ -153,16 +163,19 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
 **Rationale**:
 
 - Zero-padding ensures proper lexicographical ordering (000, 001, 002, ... 010, 011, ... 017)
-- Numeric prefixes make execution order clear to humans, even though `npx limps next-task` uses scoring algorithm
+- Numeric prefixes make execution order clear to humans, even though `npx limps next-task`
+  uses scoring algorithm
 - This helps when manually selecting agents or understanding plan structure
 
-**Note**: Scripts support both padded (000, 001) and unpadded (0, 1) formats for backward compatibility, but new agents should use zero-padding.
+**Note**: Scripts support both padded (000, 001) and unpadded (0, 1) formats for backward
+compatibility, but new agents should use zero-padding.
 
 **GitHub Issue Integration**:
 
 - Issues are created automatically when agents start (via `/run-agent` command)
 - **Agent Issue (parent)**: Represents the agent work, includes reference to local agent file
-- **Feature Subissues (children)**: One subissue per feature, created using `gh sub-issue` extension, linked to agent issue as parent
+- **Feature Subissues (children)**: One subissue per feature, created using `gh sub-issue` extension,
+  linked to agent issue as parent
 - **Agent files store issue numbers**:
   - `**GitHub Issue**: #123` at top (agent issue - parent)
   - `**GitHub Subissue**: #124` in each feature section (feature subissue - child)
@@ -170,8 +183,10 @@ For each agent, create `agents/<NNN>_agent_<descriptive-name>.agent.md` where NN
   - Local agent files are the source of truth
   - Agent issue is parent, feature subissues are children
   - Features reference their subissues (not random PRs)
-- **PRs link to feature subissues**: Use `Closes #124, #125, #126` for feature subissues in PR description
-- **Critical**: `Closes #XXX` only works when PR targets the repository's default branch (main/master)
+- **PRs link to feature subissues**: Use `Closes #124, #125, #126` for feature subissues
+  in PR description
+- **Critical**: `Closes #XXX` only works when PR targets the repository's default branch
+  (main/master)
 - GitHub automatically closes feature subissues when PR with `Closes #124, #125, #126` merges to default branch
 - Agent issue (parent) is not closed by PR - only feature subissues are closed
 - If agent doesn't have issues when PR is created, issues are created retroactively by `/pr` command
@@ -227,7 +242,9 @@ NNNN-descriptive-name/
 
 ## Agent File Format
 
-**File naming**: `<NNN>_agent_<descriptive-name>.agent.md` (e.g., `000_agent_infrastructure.agent.md`) - Zero-padded to 3 digits for proper lexicographical ordering
+**File naming**: `<NNN>_agent_<descriptive-name>.agent.md` (e.g., `000_agent_infrastructure.agent.md`)
+
+- Zero-padded to 3 digits for proper lexicographical ordering
 
 **File header**: The agent header in the file should still be descriptive:
 
@@ -301,13 +318,13 @@ Gotchas:
 
 ## Distillation Rules
 
-| {plan-name}-plan.md (verbose)        | agent.md (distilled)     |
+| {plan-name}-plan.md (verbose) | agent.md (distilled) |
 | ------------------------ | ------------------------ |
-| Full Gherkin scenario    | One-line TL;DR           |
-| Detailed TDD with code   | `test → impl → refactor` |
-| Component design table   | Just file paths          |
-| Gotcha with full context | `issue: workaround`      |
-| Interface with examples  | Just signatures          |
+| Full Gherkin scenario | One-line TL;DR |
+| Detailed TDD with code | `test → impl → refactor` |
+| Component design table | Just file paths |
+| Gotcha with full context | `issue: workaround` |
+| Interface with examples | Just signatures |
 
 ## Work Type Adjustments
 
@@ -362,7 +379,8 @@ Agent implements
 ```
 
 **Optional: Assess initial status**:
-After creating a plan, you can use `npx limps next-task <plan-number>` (e.g., `npx limps next-task 1`) to see the first recommended task. This is optional but can help verify the plan structure is correct.
+After creating a plan, you can use `npx limps next-task <plan-number>` (e.g., `npx limps next-task 1`)
+to see the first recommended task. This is optional but can help verify the plan structure is correct.
 
 **Update plan**:
 
@@ -545,7 +563,13 @@ const gapFeaturesAlt = await call_mcp_tool({
 
 - **MCP tools handle file operations** - No need to manually create directories or files
 - **Templates available** - Use `addendum`, `research`, `example`, or `none` templates when creating docs
-- **Path format** - Always use relative paths from planning docs root: `plans/NNNN-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
-- **Plan file naming** - Use `{plan-name}-plan.md` format (e.g., `0008-storybook-testing-overhaul-plan.md`) for consistency with limps standards
-- **Reading documents** - Prefer `process_doc`/`process_docs` over `read_doc` when extraction or filtering is needed
-- **Storybook skill** - Automatically activated when features involve Storybook stories; reference templates and utilities in agent files. **Critical**: Follow controls-first approach (1-3 stories per component, use controls for variations) - see `storybook-testing` skill for full guidance
+- **Path format** - Always use relative paths from planning docs root:
+  `plans/NNNN-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
+- **Plan file naming** - Use `{plan-name}-plan.md` format
+  (e.g., `0008-storybook-testing-overhaul-plan.md`) for consistency with limps standards
+- **Reading documents** - Prefer `process_doc`/`process_docs` over `read_doc` when extraction
+  or filtering is needed
+- **Storybook skill** - Automatically activated when features involve Storybook stories;
+  reference templates and utilities in agent files. **Critical**: Follow controls-first approach
+  (1-3 stories per component, use controls for variations) - see `storybook-testing` skill
+  for full guidance

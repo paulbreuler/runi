@@ -1,15 +1,19 @@
 ---
 name: branch-code-review
-description: Review changes on the current branch versus main for design, maintainability, and correctness. Use when a general code review is requested.
+description: Review changes on the current branch versus main for architecture, maintainability, and correctness. Use when you want a focused architecture/maintainability review separate from the comprehensive `/code-review` command.
 argument-hint: "[scope | base..head]"
 allowed-tools: Bash(git *), Read, Grep, Glob
 ---
-# Branch Code Review (General)
+# Branch Code Review (Architecture/Maintainability Focus)
 
 ## Purpose
 
-Perform a general code review on the current branch compared to the base branch (`main` by default),
-focusing on architecture, maintainability, and correctness.
+Perform a focused code review on the current branch compared to the base branch (`main` by default),
+emphasizing architecture, maintainability, and correctness patterns.
+
+**When to use this vs. `/code-review`**:
+- Use `/code-review` for comprehensive runi-specific standards review (TDD, coverage, test selectors, etc.)
+- Use `/branch-code-review` for focused architecture/maintainability review (coupling, cohesion, patterns)
 
 ## Scope
 

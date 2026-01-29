@@ -17,4 +17,6 @@ Run the MCP/LLM-focused review skill for this repo.
 
 - This command provides a simple entry point for MCP/LLM security-focused code review
 - For general code review, use `/code-review` instead
-- The MCP code review skill focuses on security, MCP safety, and LLM-related concerns
+- **Current focus**: Reviews MCP tool usage in commands (runi uses MCP tools as a client)
+- **Future focus**: Will review MCP server implementation when runi adds its own MCP server
+- The MCP code review skill focuses on security, MCP tool usage safety, and LLM-related concerns
