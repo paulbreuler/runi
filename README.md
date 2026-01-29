@@ -19,7 +19,7 @@
       src="https://img.shields.io/github/v/release/paulbreuler/runi?style=flat-square"
       alt="Release" /></a>
   <a href="https://github.com/paulbreuler/runi/actions/workflows/ci.yml"><img
-      src="https://github.com/paulbreuler/runi/actions/workflows/ci.yml/badge.svg"
+      src="https://img.shields.io/github/actions/workflow/status/paulbreuler/runi/ci.yml?style=flat-square"
       alt="CI Status" /></a>
   <a href="https://github.com/paulbreuler/runi/blob/main/LICENSE"><img
       src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"
