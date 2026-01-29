@@ -21,7 +21,27 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    entries: ['src/**/*.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
+    entries: ['src/**/*.{ts,tsx}'],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Tauri in its own chunk; all other node_modules in one vendor chunk
+          // to avoid circular refs (vendor <-> react-vendor etc.)
+          if (id.includes('@tauri-apps')) {
+            return 'tauri-vendor';
+          }
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+      },
+    },
+    // Use a higher-than-default limit (500 KB) to account for the Tauri/React desktop bundle.
+    // The vendor chunk includes React, React Router, Motion, and other core dependencies.
+    // Monitor `dist` bundle sizes in production builds and adjust if needed.
+    chunkSizeWarningLimit: 1350,
   },
   server: {
     port: 5175,

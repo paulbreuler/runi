@@ -44,28 +44,37 @@ test.describe('MainLayout', () => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'userAgentData', {
         get: () => ({ platform: 'macOS' }),
+        configurable: true,
       });
       Object.defineProperty(navigator, 'userAgent', {
         get: () => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+        configurable: true,
       });
     });
 
     await page.goto('/');
 
+    // Wait for main layout to be ready
+    await expect(page.getByTestId('main-layout')).toBeVisible();
+
     // Verify sidebar is collapsed by default
     await expect(page.getByTestId('sidebar')).not.toBeVisible();
+
+    // Focus the page to ensure keyboard events are received
+    await page.focus('body');
+    await page.waitForTimeout(100);
 
     // Press ⌘B (Meta+B on Mac) to open sidebar
     await page.keyboard.press('Meta+b');
 
     // Sidebar should now be visible
-    await expect(page.getByTestId('sidebar')).toBeVisible();
+    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 2000 });
 
     // Press ⌘B again to close
     await page.keyboard.press('Meta+b');
 
     // Sidebar should be hidden again
-    await expect(page.getByTestId('sidebar')).not.toBeVisible();
+    await expect(page.getByTestId('sidebar')).not.toBeVisible({ timeout: 2000 });
   });
 
   test('keyboard shortcut toggles sidebar (Windows/Linux)', async ({ page }) => {
@@ -73,28 +82,37 @@ test.describe('MainLayout', () => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'userAgentData', {
         get: () => ({ platform: 'Windows' }),
+        configurable: true,
       });
       Object.defineProperty(navigator, 'userAgent', {
         get: () => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        configurable: true,
       });
     });
 
     await page.goto('/');
 
+    // Wait for main layout to be ready
+    await expect(page.getByTestId('main-layout')).toBeVisible();
+
     // Verify sidebar is collapsed by default
     await expect(page.getByTestId('sidebar')).not.toBeVisible();
+
+    // Focus the page to ensure keyboard events are received
+    await page.focus('body');
+    await page.waitForTimeout(100);
 
     // Press Ctrl+B on Windows/Linux to open sidebar
     await page.keyboard.press('Control+b');
 
     // Sidebar should now be visible
-    await expect(page.getByTestId('sidebar')).toBeVisible();
+    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 2000 });
 
     // Press Ctrl+B again to close
     await page.keyboard.press('Control+b');
 
     // Sidebar should be hidden again
-    await expect(page.getByTestId('sidebar')).not.toBeVisible();
+    await expect(page.getByTestId('sidebar')).not.toBeVisible({ timeout: 2000 });
   });
 
   test('pane resizer is visible and interactive', async ({ page }) => {

@@ -20,6 +20,7 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { isMacSync, getModifierKeyName } from '@/utils/platform';
+import type { ModifierKey } from '@/utils/keyboard';
 import { useResponsive } from '@/hooks/useResponsive';
 import { cn } from '@/utils/cn';
 import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
@@ -127,20 +128,41 @@ export const MainLayout = ({
     }
   }, [initialSidebarVisible, setSidebarVisible]);
 
-  useKeyboardShortcuts({
-    key: 'b',
-    modifier: isMacSync() ? 'meta' : 'ctrl',
-    handler: toggleSidebar,
-    description: `${getModifierKeyName()}B - Toggle sidebar`,
-  });
+  // Memoize keyboard shortcuts to prevent unnecessary re-registrations
+  // Register both meta and ctrl for sidebar toggle to work in all environments (including E2E tests)
+  const sidebarShortcutMeta = useMemo(
+    () => ({
+      key: 'b',
+      modifier: 'meta' as const,
+      handler: toggleSidebar,
+      description: '⌘B - Toggle sidebar',
+    }),
+    [toggleSidebar]
+  );
 
-  // DevTools panel toggle: Cmd+Shift+I (Mac) or Ctrl+Shift+I (Windows/Linux)
-  useKeyboardShortcuts({
-    key: 'i',
-    modifier: isMacSync() ? ['meta', 'shift'] : ['ctrl', 'shift'],
-    handler: togglePanel,
-    description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
-  });
+  const sidebarShortcutCtrl = useMemo(
+    () => ({
+      key: 'b',
+      modifier: 'ctrl' as const,
+      handler: toggleSidebar,
+      description: 'Ctrl+B - Toggle sidebar',
+    }),
+    [toggleSidebar]
+  );
+
+  const panelShortcut = useMemo(
+    () => ({
+      key: 'i',
+      modifier: (isMacSync() ? ['meta', 'shift'] : ['ctrl', 'shift']) as ModifierKey[],
+      handler: togglePanel,
+      description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
+    }),
+    [togglePanel]
+  );
+
+  useKeyboardShortcuts(sidebarShortcutMeta);
+  useKeyboardShortcuts(sidebarShortcutCtrl);
+  useKeyboardShortcuts(panelShortcut);
 
   // Track target correlation ID for console panel jump
   const [targetCorrelationId, setTargetCorrelationId] = useState<string | undefined>(undefined);

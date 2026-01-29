@@ -3,13 +3,17 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { HomePage } from './routes/index';
-import { DevToolsPopout } from './routes/devtools-popout';
 import { MemoryWarningListener } from './components/Memory/MemoryWarningListener';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastProvider } from './components/ui/Toast';
+
+// Lazy load routes for code splitting
+const HomePage = lazy(() => import('./routes/index').then((m) => ({ default: m.HomePage })));
+const DevToolsPopout = lazy(() =>
+  import('./routes/devtools-popout').then((m) => ({ default: m.DevToolsPopout }))
+);
 
 export const App = (): React.JSX.Element => {
   return (
@@ -17,10 +21,18 @@ export const App = (): React.JSX.Element => {
       <ToastProvider>
         <MemoryWarningListener />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/devtools-popout" element={<DevToolsPopout />} />
-          </Routes>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
+                Loading...
+              </div>
+            }
+          >
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/devtools-popout" element={<DevToolsPopout />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </ToastProvider>
     </ThemeProvider>

@@ -20,15 +20,15 @@ function getAppDataDir() {
 
   if (platform === 'darwin') {
     // macOS
-    appDataDir = path.join(os.homedir(), 'Library', 'Application Support', 'com.runi.app');
+    appDataDir = path.join(os.homedir(), 'Library', 'Application Support', 'com.runi');
   } else if (platform === 'win32') {
     // Windows
-    appDataDir = path.join(process.env.APPDATA || os.homedir(), 'com.runi.app');
+    appDataDir = path.join(process.env.APPDATA || os.homedir(), 'com.runi');
   } else {
     // Linux
     appDataDir = path.join(
       process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'),
-      'com.runi.app'
+      'com.runi'
     );
   }
 
