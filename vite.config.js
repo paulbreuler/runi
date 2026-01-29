@@ -22,7 +22,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     entries: ['src/**/*.{ts,tsx}'],
-    exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.stories.{ts,tsx}'],
   },
   build: {
     rollupOptions: {
