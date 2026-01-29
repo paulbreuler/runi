@@ -132,19 +132,23 @@ jobs:
             
             echo "Checking version $VERSION (tag: $TAG_NAME) at commit $COMMIT_SHA"
             
-            # Check if tag already exists
-            if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
-              echo "Tag $TAG_NAME already exists, skipping"
-              continue
-            fi
-            
-            # Check if GitHub release already exists
+            # Check if GitHub release already exists - if it does, skip entirely
             if gh release view "$TAG_NAME" >/dev/null 2>&1; then
               echo "Release $TAG_NAME already exists, skipping"
               continue
             fi
             
-            # Found a release PR that was merged but has no tag/release
+            # Check if tag exists (for logging)
+            TAG_EXISTS=false
+            if gh api "repos/${{ github.repository }}/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
+              echo "Tag $TAG_NAME already exists (release will be created for existing tag)"
+              TAG_EXISTS=true
+            else
+              echo "Tag $TAG_NAME does not exist (will be created)"
+            fi
+            
+            # Found a release PR that was merged but has no release
+            # Tag may or may not exist, but release definitely doesn't
             echo "✅ Found merged release PR for $VERSION at $COMMIT_SHA"
             echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
             echo "release_created=true" >> $GITHUB_OUTPUT
