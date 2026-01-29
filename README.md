@@ -15,10 +15,13 @@
 
 <p align="center">
   <a href="https://github.com/paulbreuler/runi/releases"><img src="https://img.shields.io/github/v/release/paulbreuler/runi?style=flat-square" alt="Release" /></a>
-  <a href="https://github.com/paulbreuler/runi/actions/workflows/release.yml"><img src="https://github.com/paulbreuler/runi/actions/workflows/release.yml/badge.svg" alt="Release Workflow Status" /></a>
+  <a href="https://github.com/paulbreuler/runi/actions/workflows/ci.yml"><img src="https://github.com/paulbreuler/runi/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
   <a href="https://github.com/paulbreuler/runi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
   <a href="https://github.com/paulbreuler/runi/stargazers"><img src="https://img.shields.io/github/stars/paulbreuler/runi?style=flat-square" alt="Stars" /></a>
-  <a href="https://discord.gg/MHzmdpw4TR"><img src="https://img.shields.io/discord/000000000?style=flat-square&logo=discord&logoColor=white&label=Discord" alt="Discord" /></a>
+  <a href="https://github.com/paulbreuler/runi/issues"><img src="https://img.shields.io/github/issues/paulbreuler/runi?style=flat-square" alt="Issues" /></a>
+  <a href="https://github.com/paulbreuler/runi/pulls"><img src="https://img.shields.io/github/issues-pr/paulbreuler/runi?style=flat-square" alt="Pull Requests" /></a>
+  <a href="https://github.com/paulbreuler/runi/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/coverage-85%25-green?style=flat-square" alt="Test Coverage" /></a>
+  <a href="https://discord.gg/MHzmdpw4TR"><img src="https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord" /></a>
 </p>
 
 <p align="center">
