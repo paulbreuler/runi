@@ -7,6 +7,8 @@ on:
       - completed
     branches:
       - main
+      - dev
+      - develop
   pull_request:
     types:
       - opened
@@ -14,6 +16,8 @@ on:
       - reopened
     branches:
       - main
+      - dev
+      - develop
   workflow_dispatch:
     inputs:
       skip_ci_check:
@@ -92,6 +96,8 @@ jobs:
       release_created: ${{ steps.final-outputs.outputs.release_created }}
       tag_name: ${{ steps.final-outputs.outputs.tag_name }}
       changelog: ${{ steps.final-outputs.outputs.changelog }}
+      is_dev: ${{ steps.final-outputs.outputs.is_dev }}
+      base_tag_name: ${{ steps.final-outputs.outputs.base_tag_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -116,18 +122,109 @@ jobs:
           echo "tag_name=" >> $GITHUB_OUTPUT
           echo "changelog=" >> $GITHUB_OUTPUT
 
+      - name: Detect branch type
+        if: github.event_name != 'pull_request'
+        id: branch-info
+        run: |
+          # Determine current branch
+          if [ "${{ github.event_name }}" == "workflow_run" ]; then
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+
+          echo "Current branch: $BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+          # Check if this is a dev branch
+          if [[ "$BRANCH" == "dev" ]] || [[ "$BRANCH" == "develop" ]] || [[ "$BRANCH" =~ ^dev/ ]]; then
+            echo "is_dev=true" >> $GITHUB_OUTPUT
+            echo "Dev branch detected: $BRANCH"
+          else
+            echo "is_dev=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set outputs for release
         if: github.event_name != 'pull_request'
         id: final-outputs
         run: |
-          echo "release_created=${{ steps.release.outputs.release_created }}" >> $GITHUB_OUTPUT
-          echo "tag_name=${{ steps.release.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          RELEASE_CREATED="${{ steps.release.outputs.release_created }}"
+          BASE_TAG="${{ steps.release.outputs.tag_name }}"
+          IS_DEV="${{ steps.branch-info.outputs.is_dev }}"
+
+          # Modify tag name for dev branches
+          if [ "$IS_DEV" == "true" ] && [ -n "$BASE_TAG" ]; then
+            # Add -dev suffix to tag name (e.g., runi-v0.3.0 -> runi-v0.3.0-dev)
+            TAG_NAME="${BASE_TAG}-dev"
+            echo "Dev branch: Modified tag from $BASE_TAG to $TAG_NAME"
+          else
+            TAG_NAME="$BASE_TAG"
+          fi
+
+          echo "release_created=$RELEASE_CREATED" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "base_tag_name=$BASE_TAG" >> $GITHUB_OUTPUT
           echo "changelog=${{ steps.release.outputs.changelog }}" >> $GITHUB_OUTPUT
+          echo "is_dev=$IS_DEV" >> $GITHUB_OUTPUT
+
+      - name: Create dev tag and release if needed
+        if: |
+          github.event_name != 'pull_request' &&
+          steps.final-outputs.outputs.is_dev == 'true' &&
+          steps.final-outputs.outputs.release_created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE_TAG="${{ steps.release.outputs.tag_name }}"
+          DEV_TAG="${{ steps.final-outputs.outputs.tag_name }}"
+          CHANGELOG="${{ steps.release.outputs.changelog }}"
+
+          # Wait a moment for release-please to create the base tag
+          sleep 2
+
+          # Get the commit SHA that the base tag points to (or use current HEAD)
+          if gh api "repos/${{ github.repository }}/git/ref/tags/$BASE_TAG" >/dev/null 2>&1; then
+            TAG_SHA=$(gh api "repos/${{ github.repository }}/git/ref/tags/$BASE_TAG" --jq '.object.sha')
+            echo "Base tag $BASE_TAG points to commit $TAG_SHA"
+          else
+            # If base tag doesn't exist yet, use the current HEAD
+            TAG_SHA=$(git rev-parse HEAD)
+            echo "Base tag $BASE_TAG not found, using current HEAD: $TAG_SHA"
+          fi
+
+          # Create dev tag if it doesn't exist
+          if gh api "repos/${{ github.repository }}/git/ref/tags/$DEV_TAG" >/dev/null 2>&1; then
+            echo "Dev tag $DEV_TAG already exists"
+          else
+            echo "Creating dev tag $DEV_TAG at commit $TAG_SHA"
+            gh api repos/${{ github.repository }}/git/refs \
+              -X POST \
+              -f ref="refs/tags/$DEV_TAG" \
+              -f sha="$TAG_SHA"
+            echo "✅ Created dev tag $DEV_TAG"
+          fi
+
+          # Create or update dev release as prerelease with building message
+          BUILDING_MSG=$'\n\n---\n\n⏳ **Artifacts are being built...**'
+          RELEASE_NOTES="${CHANGELOG}${BUILDING_MSG}"
+
+          if gh release view "$DEV_TAG" >/dev/null 2>&1; then
+            echo "Dev release $DEV_TAG already exists, updating to prerelease"
+            gh release edit "$DEV_TAG" --prerelease --notes "$RELEASE_NOTES"
+          else
+            echo "Creating dev release $DEV_TAG as prerelease"
+            gh release create "$DEV_TAG" \
+              --title "Release $DEV_TAG (Dev)" \
+              --notes "$RELEASE_NOTES" \
+              --prerelease
+            echo "✅ Created dev release $DEV_TAG as prerelease"
+          fi
 
       - name: Update release with building message
         if: |
           steps.final-outputs.outputs.release_created == 'true' &&
-          github.event_name != 'pull_request'
+          github.event_name != 'pull_request' &&
+          steps.final-outputs.outputs.is_dev != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -335,9 +432,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME="${{ needs.release-please.outputs.tag_name }}"
+          IS_DEV="${{ needs.release-please.outputs.is_dev }}"
 
-          # Get current release body
-          CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq '.body // ""')
+          # For dev branches, use the dev tag; otherwise use the base tag
+          if [ "$IS_DEV" == "true" ]; then
+            RELEASE_TAG="$TAG_NAME"
+            echo "Using dev tag for release: $RELEASE_TAG"
+          else
+            RELEASE_TAG="$TAG_NAME"
+            echo "Using base tag for release: $RELEASE_TAG"
+          fi
+
+          # Get current release body (try dev tag first, fallback to base)
+          CURRENT_BODY=""
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            CURRENT_BODY=$(gh release view "$RELEASE_TAG" --json body --jq '.body // ""')
+          elif [ "$IS_DEV" != "true" ] && gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq '.body // ""')
+          fi
 
           # Remove building message section (everything from "---" onwards)
           # The building message format is: "\n\n---\n\n⏳ **Artifacts are being built...**"
@@ -348,8 +460,8 @@ jobs:
           # Remove trailing newlines while preserving content
           NEW_BODY=$(printf '%s\n' "$NEW_BODY" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' | sed -e :a -e '$!{N;ba' -e '}' -e 's/\n*$//')
 
-          # Upload artifacts
-          gh release upload "$TAG_NAME" release-artifacts/* --clobber
+          # Upload artifacts to the appropriate release
+          gh release upload "$RELEASE_TAG" release-artifacts/* --clobber
 
           # Update release body to remove building message
           # Use original changelog as fallback if body is empty
@@ -357,9 +469,14 @@ jobs:
             NEW_BODY="${{ needs.release-please.outputs.changelog }}"
           fi
 
-          gh release edit "$TAG_NAME" --notes "$NEW_BODY"
-
-          echo "✅ Artifacts uploaded and release updated"
+          # Update release, marking as prerelease for dev branches
+          if [ "$IS_DEV" == "true" ]; then
+            gh release edit "$RELEASE_TAG" --notes "$NEW_BODY" --prerelease
+            echo "✅ Artifacts uploaded to dev release $RELEASE_TAG (prerelease)"
+          else
+            gh release edit "$RELEASE_TAG" --notes "$NEW_BODY"
+            echo "✅ Artifacts uploaded and release updated"
+          fi
 
       - name: Warn if release skipped
         if: steps.check-artifacts.outputs.found == 'false'
