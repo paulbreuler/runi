@@ -89,7 +89,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run release-please (skip release creation - we'll create it after artifacts are built)
+      - name: Run release-please
         uses: googleapis/release-please-action@v4
         id: release
         with:
@@ -338,15 +338,13 @@ jobs:
           echo "tag_exists=false" >> "$GITHUB_OUTPUT"
           echo "⚠️ Tag '$TAG_NAME' was not found after waiting." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Create GitHub Release with artifacts
+      - name: Update GitHub Release with artifacts
         if: |
           steps.check-artifacts.outputs.found == 'true' &&
           steps.check-tag.outputs.tag_exists == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
-          name: Release ${{ needs.release-please.outputs.tag_name }}
-          body: ${{ needs.release-please.outputs.changelog }}
           files: |
             release-artifacts/*
           draft: false
