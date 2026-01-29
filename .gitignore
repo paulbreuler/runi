@@ -83,6 +83,7 @@ prompts/
 .tmp/
 .cursor/code-review-report.md
 .cursor/plans/
+.cursor/mcp.json
 
 # Audit scripts (moved to external glimps extension)
 scripts/audit/
