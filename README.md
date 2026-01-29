@@ -34,8 +34,8 @@
       src="https://img.shields.io/github/issues-pr/paulbreuler/runi?style=flat-square"
       alt="Pull Requests" /></a>
   <a href="https://github.com/paulbreuler/runi/actions/workflows/ci.yml"><img
-      src="https://img.shields.io/badge/coverage-85%25-green?style=flat-square"
-      alt="Test Coverage" /></a>
+      src="https://img.shields.io/badge/coverage-%E2%89%A585%25-green?style=flat-square"
+      alt="Coverage (min, PR gate)" /></a>
   <a href="https://discord.gg/MHzmdpw4TR"><img
       src="https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white"
       alt="Discord" /></a>
