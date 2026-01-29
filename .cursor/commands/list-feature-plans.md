@@ -2,6 +2,11 @@
 
 List all available TDD plans in the runi-planning-docs repository with their work types, names, and overviews.
 
+## LLM Execution Rules
+
+- Prefer `npx limps list-plans` output over manual filesystem scans.
+- If the command fails, report the error and stop.
+
 ## Instructions for Claude
 
 **When this command is invoked, you must:**

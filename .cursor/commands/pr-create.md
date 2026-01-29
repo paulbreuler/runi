@@ -2,98 +2,61 @@
 
 Create a pull request on GitHub with a comprehensive description from staged changes or recent commits.
 
+## LLM Execution Rules
+
+- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+- Do not create files for PR descriptions; generate in memory only.
+- Never include secrets or credentials in PR bodies or comments.
+
 ## Instructions for Claude
 
 **When this command is invoked, you must:**
 
 1. **Check prerequisites:**
    - Verify current branch is not main
-   - Check if branch is pushed to remote (`git push --dry-run`)
+   - Check if branch is pushed (`git push --dry-run`)
    - Verify GitHub CLI is available (`gh --version`)
    - Check if PR already exists (`gh pr view`)
 
-2. **Detect active agent (if working with feature plan):**
-   - Detect plan from git context using `scripts/detect-active-plan.sh`:
-     - Analyzes last merged PR (files, title, branch name)
-     - Extracts plan name from PR context
-     - Falls back to recent file modifications if PR detection fails
-   - Use `npx limps next-task <plan-id>` to get current task/agent file path
-   - Note: `limps next-task` outputs the agent file path as the last line of output
-   - Security note: If limps is published to npm, consider pinning the version (e.g., `npx limps@<version>`) to reduce supply-chain risk
-   - If agent detected:
-     - Extract agent file path and info from limps output
-     - **Validate/Create GitHub issues** (CRITICAL - must exist before PR creation):
-       - Check if agent issue exists in agent file (`**GitHub Issue**: #XXX`)
-       - If missing, create issues using GitHub CLI:
-         - Agent issue (parent) - represents the agent
-         - Feature subissues (children) - one per feature using `gh sub-issue create`
-       - Verify all feature subissues exist in agent file (`**GitHub Subissue**: #XXX` in each feature section)
-       - If any subissues missing, create missing subissues
-     - **Extract GitHub issue numbers** (NOT local feature numbers):
-       - Agent issue number: From `**GitHub Issue**: #36` in agent file header
-       - Feature subissue numbers: From `**GitHub Subissue**: #37` in each feature section
-     - **DO NOT include local feature numbers** (#13, #14, #15) in PR body - these are planning references only, not GitHub issues (see note below)
-     - Use agent context for PR title and description
-     - **Use GitHub issues in PR**: Include `Closes #37, #38, #39` in PR description "Related Issues" section (feature subissues only, not agent issue)
-   - If no agent detected:
-     - Proceed with standard PR generation (non-agent work)
+2. **Optional code reviews (recommended before PR creation):**
+   - General review: run `/code-review` if changes are non-trivial
+   - MCP/LLM review: run `/review-mcp` if MCP/LLM tools or security-critical areas changed
 
-2a. **Validate agent status (if agent detected):**
+3. **Detect plan/agent context (if applicable):**
+   - Use limps MCP tools when available:
+     - `list_plans`, `list_agents`, `get_plan_status`, `process_doc`
+   - If a plan is inferred (modified files under `plans/`, branch/commit context), locate the agent file
+   - Extract agent title, feature list, and GitHub issue numbers from the agent file
 
-- Use `npx limps status <plan-id>` to check agent status
-- Parse status output to check:
-  - If all features have status PASS/Complete (e.g., "4 PASS, 0 WIP, 0 GAP")
-  - If agent file is still in `agents/` directory (File Organization: "active (in agents/)")
-- If validation conditions met (all PASS + not completed):
-  - Display informational message with agent name, feature counts, and recommendation
-  - Note: Consider running `/close-feature-agent <agent-file-path>` after PR creation to clean up agent status
-  - Proceed automatically with PR creation (non-blocking)
-- If validation conditions not met or status check fails:
-  - Proceed normally with PR creation (no warning)
+4. **Analyze git changes:**
+   - Detect base branch:
+     - `git symbolic-ref refs/remotes/origin/HEAD` → extract branch name
+     - Fallback: `origin/main`, then `origin/master`
+   - Use `git log <base>..HEAD` and `git diff --stat <base>..HEAD`
+   - If no commits exist, analyze `git diff --cached`
 
-1. **Analyze git changes:**
-   - Get current branch name
-   - Determine base branch (default: main/master)
-   - Use `git log` to get commits since base branch
-   - Use `git diff` to understand what changed
-   - Count files changed and lines changed
+5. **Optional commit review:**
+   - `git log --format="%H%n%s%n%b%n---" <base>..HEAD`
+   - If messages are non-compliant, note it in PR description or advise amend
 
-2. **Generate PR description (in memory, NO files):**
-   - **Related Issues section** (at top, if agent detected with feature subissues):
-     - Use `Closes #37, #38, #39` for feature subissues (GitHub official method - automatically closes subissues when PR merges to default branch)
-     - **Critical**: Only works when PR targets default branch (main/master)
-     - **Note**: Don't close agent issue - only close feature subissues (agent issue is parent, subissues are children)
-   - Summary of changes
-   - Detailed changes list
-   - Test plan
-   - Breaking changes (if any)
-   - **Related Agent section** (if agent detected):
-     - Agent name
-     - Plan name
-     - Agent GitHub Issue: #36 (parent issue - for context, not closed by PR)
-     - Feature Subissues: #37, #38, #39 (closed by PR)
-     - Brief description from agent file TL;DR
-     - **DO NOT include local feature numbers** (#13, #14, #15) - these are planning references, not GitHub issues (see note below)
-   - Review checklist
-   - Use markdown formatting
-   - Include code references where helpful
+6. **Generate PR description (in memory only):**
+   - Summary, Changes, Tests
+   - Code review status (if run)
+   - Breaking changes (extract `BREAKING CHANGE:` footers)
+   - Plan/Agent context (if detected)
+   - Related issues: `Closes #<feature-subissues>` only (do not close parent agent issue)
 
-3. **Create PR on GitHub:**
-   - Push branch if not already pushed (`git push -u origin <branch>`)
-   - Use `gh pr create` with generated description
-   - Set base branch correctly
-   - **Generate PR title:**
-     - **If agent detected:** `feat(<scope>): <agent-name> - <primary-feature-description>`
-     - **If no agent:** Use conventional commit format based on code analysis
-   - Display PR URL when created
+7. **Create PR on GitHub:**
+   - Push branch if needed (`git push -u origin <branch>`)
+   - Use `gh pr create` with title/body
+   - PR title follows conventional commits, preferring the most significant change type
 
-4. **Handle errors gracefully:**
-   - If PR already exists: show existing PR URL
-   - If GitHub CLI not available: show instructions
-   - If branch not pushed: push first, then create PR
-   - If no changes: inform user
+8. **Handle errors gracefully:**
+   - If PR already exists: show URL and stop
+   - If `gh` missing: show install/auth instructions
+   - If no changes: report and stop
 
-**CRITICAL: DO NOT create any files (NO PR_DESCRIPTION.md or similar). Generate description in memory and pass directly to `gh pr create`.**
+**CRITICAL: Do not create any files. Pass the PR body directly to `gh pr create`.**
 
 ## What This Does
 
@@ -150,66 +113,30 @@ The generated PR follows this structure:
 
 ```markdown
 ## Summary
-
-Brief description of what this PR does and why.
-
-## Related Agent
-
-_(Only included if agent detected)_
-
-Working on: [Agent Name]
-Plan: [plan-name]
-Agent Issue: #36 (parent issue - provides context, not closed by PR)
-Feature Subissues: #37, #38, #39 (closed by this PR)
-
-[Brief description from agent file TL;DR]
-
-**Note**: Local feature numbers (#13, #14, #15) are planning references and are **never** included in PR body. Only GitHub issues (agent issue and feature subissues) are referenced. This applies throughout the PR description.
+- ...
 
 ## Changes
+- ...
 
-- [File/Component] - Description of change
-- [File/Component] - Description of change
+## Tests
+- ...
 
-## Testing
-
-- [ ] Unit tests added/updated
-- [ ] Integration tests pass
-- [ ] E2E tests pass (if user-facing feature or complex interactions)
-- [ ] Migration tests pass (if overhaul with data structure changes)
-- [ ] Performance tests pass (if data-heavy feature, include thresholds)
-- [ ] **Test selectors**: Components include `data-test-id` attributes on interactive elements
-- [ ] **Test queries**: Tests use `getByTestId` for element selection (resilient to UI changes)
-- [ ] **Design Principles**: Components follow DESIGN-PRINCIPLES.md criteria (see `mcp_runi_Planning_read_doc({ path: 'plans/0018-component-design-principles-audit/plan.md' })` for audit methodology)
-- [ ] **Design Principles (RLM)**: For component-specific compliance, use `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName')).flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })` to check audit status (replace `'ComponentName'` with the actual component name being reviewed)
-- [ ] Manual testing completed
-- [ ] Coverage: [percentage]% (target: ≥85%)
+## Code Review
+- General review: [✅ Passed | ⚠️ Issues found | Not run]
+- MCP/LLM review: [✅ Passed | ⚠️ Issues found | Not run]
+- Commit review: [✅ Passed | ⚠️ Issues found | Not run]
 
 ## Breaking Changes
+- [If any commits contain `BREAKING CHANGE:` footer, list them]
+- [Include migration notes if applicable]
 
-None (or description of breaking changes with migration guide)
+## Notes / Risks
+- ...
 
-**For Overhauls:** Must include:
-
-- Explicit migration guide
-- Backward compatibility considerations
-- Migration test results
-- Data integrity validation
-
-## Related Issues
-
-Closes #37, #38, #39 <!-- Feature subissues - will auto-close when PR merges to default branch -->
-
-<!-- Agent Issue #36 is parent and provides context, but is not closed by this PR -->
-
-## Checklist
-
-- [ ] Code follows runi's style guidelines
-- [ ] Tests added/updated (TDD workflow)
-- [ ] Documentation updated (if needed)
-- [ ] `just ci` passes locally
-- [ ] No warnings in CI
-- [ ] CLAUDE.md decision log updated (if applicable)
+## Plan / Agent (if applicable)
+- Plan: <plan-name>
+- Agent: <agent-title> (<agent-file>)
+- Related issues: Closes #<feature-subissue>, #<feature-subissue>
 ```
 
 ## PR Title Format

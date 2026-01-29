@@ -6,11 +6,20 @@ Fetch, review, address, and resolve PR review comments.
 
 When this command is invoked:
 
-1. **Get current PR**: Use `gh pr view --json number,url` to get the PR number
-2. **List comments**: Fetch all review comments and threads
-3. **Categorize**: Group by file path, identify deleted files, outdated comments
-4. **Address**: Reply to comments with explanations
-5. **Resolve**: Mark threads as resolved via GraphQL API
+1. **Get current PR**:
+   - `gh pr view --json number,url,headRepositoryOwner,headRepositoryName`
+2. **List comments and threads**:
+   - Fetch all review comments and unresolved threads
+3. **Categorize**:
+   - Group by file path
+   - Identify deleted files and outdated comments
+4. **Address**:
+   - Reply with explanations or fixes
+   - For architecture/maintainability concerns, run `/code-review` before fixing
+5. **Commit fixes only if requested**:
+   - Use conventional commits and reference the concern
+6. **Resolve threads**:
+   - Mark as resolved only after replying (and after fixes land)
 
 ## API Commands Reference
 
@@ -117,15 +126,17 @@ query {
 ### 1. Analyze Comments
 
 ```bash
-# Get PR number
+# Get PR context
 pr_number=$(gh pr view --json number --jq '.number')
+owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
+repo=$(gh pr view --json headRepositoryName --jq '.headRepositoryName')
 
 # List comments by file
-gh api repos/paulbreuler/runi/pulls/$pr_number/comments --paginate \
+gh api repos/$owner/$repo/pulls/$pr_number/comments --paginate \
   --jq '.[] | .path' | sort | uniq -c | sort -rn
 
 # Check which files still exist
-for file in $(gh api repos/paulbreuler/runi/pulls/$pr_number/comments --paginate --jq '.[] | .path' | sort -u); do
+for file in $(gh api repos/$owner/$repo/pulls/$pr_number/comments --paginate --jq '.[] | .path' | sort -u); do
   if [ -f "$file" ]; then
     echo "EXISTS: $file"
   else
@@ -139,7 +150,9 @@ done
 For deleted files:
 
 ```bash
-gh api repos/paulbreuler/runi/pulls/$pr_number/comments/{id}/replies \
+owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
+repo=$(gh pr view --json headRepositoryName --jq '.headRepositoryName')
+gh api repos/$owner/$repo/pulls/$pr_number/comments/{id}/replies \
   -X POST \
   -f body="This file has been removed in subsequent commits."
 ```
@@ -147,7 +160,9 @@ gh api repos/paulbreuler/runi/pulls/$pr_number/comments/{id}/replies \
 For addressed issues:
 
 ```bash
-gh api repos/paulbreuler/runi/pulls/$pr_number/comments/{id}/replies \
+owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
+repo=$(gh pr view --json headRepositoryName --jq '.headRepositoryName')
+gh api repos/$owner/$repo/pulls/$pr_number/comments/{id}/replies \
   -X POST \
   -f body="Fixed in commit abc123." # or explanation of why it's not an issue
 ```
@@ -158,7 +173,7 @@ gh api repos/paulbreuler/runi/pulls/$pr_number/comments/{id}/replies \
 # Get all unresolved thread IDs
 thread_ids=$(gh api graphql -f query='
 query {
-  repository(owner: "paulbreuler", name: "runi") {
+  repository(owner: "'$owner'", name: "'$repo'") {
     pullRequest(number: '$pr_number') {
       reviewThreads(first: 100) {
         nodes {
@@ -181,6 +196,23 @@ for thread_id in $thread_ids; do
   " --silent
   echo "Resolved: $thread_id"
 done
+```
+
+### Verify All Threads Resolved (GraphQL)
+
+```bash
+gh api graphql -f query='
+query {
+  repository(owner: "'$owner'", name: "'$repo'") {
+    pullRequest(number: '$pr_number') {
+      reviewThreads(first: 100) {
+        nodes {
+          isResolved
+        }
+      }
+    }
+  }
+}' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | .isResolved] | {total: length, resolved: (map(select(. == true)) | length), unresolved: (map(select(. == false)) | length)}'
 ```
 
 ## Reply Templates
@@ -211,3 +243,5 @@ done
 - Group similar comments and batch process them
 - Check if files still exist before addressing implementation concerns
 - Use `--silent` flag when batch processing to reduce noise
+- If fixes are required, use conventional commits (see `CLAUDE.md`)
+- Never include secrets, tokens, or credentials in replies

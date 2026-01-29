@@ -2,6 +2,14 @@
 
 Apply feedback to an existing plan, regenerate affected agent files, and commit after approval.
 
+## LLM Execution Rules
+
+- Use MCP planning tools for all reads/writes; do not edit files directly.
+- Preserve existing GitHub issue numbers in agent files.
+- Do not include secrets or tokens in plan documents.
+- Only run `rlm_query` with code you authored or reviewed.
+- Resolve the MCP server name from `.cursor/mcp.json` before calling tools.
+
 ## Key Change from v1.x
 
 **Old**: Update plan.md + speed_prompts.md (summaries)

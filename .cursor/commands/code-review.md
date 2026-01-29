@@ -2,6 +2,13 @@
 
 Perform a comprehensive code review following runi's quality standards and best practices.
 
+## LLM Execution Rules
+
+- Prefer explicit scope over guessing. If no scope is given, review staged changes first, then recent commits.
+- Never run destructive or irreversible commands.
+- Do not paste secrets, tokens, or credentials into outputs.
+- If any automated checks are skipped or fail to run, say so explicitly.
+
 ## Instructions for Claude
 
 **When this command is invoked, you must:**
@@ -59,7 +66,7 @@ Perform a comprehensive code review following runi's quality standards and best 
 - ✅ Security considerations (OWASP-inspired for API requests)
 - ✅ Privacy-first (no telemetry, local-first data storage)
 
-4. **Provide structured feedback** organized by category:
+1. **Provide structured feedback** organized by category (findings first, highest severity first):
    - **Critical Issues** (must fix before merge)
    - **Quality Issues** (should fix - style, documentation, test coverage)
    - **Architectural Violations** (must fix - hardcoded layouts, tight coupling, missing event bus usage)
@@ -70,14 +77,14 @@ Perform a comprehensive code review following runi's quality standards and best 
    - **Performance** (potential bottlenecks, inefficiencies, missing performance tests for data-heavy features)
    - **Breaking Changes** (missing migration guide for overhauls)
 
-5. **Reference specific lines** using code references format:
+2. **Reference specific lines** using code references format:
 
    ```text
    startLine:endLine:filepath
    // code snippet
    ```
 
-6. **Check project-specific patterns**:
+3. **Check project-specific patterns**:
    - Component organization (Layout/, Request/, Response/, Intelligence/, ui/)
    - Naming conventions (PascalCase for components, camelCase for utils/stores)
    - Tauri command patterns (async, Result<T, String>)
@@ -160,6 +167,13 @@ Perform a comprehensive code review following runi's quality standards and best 
 - [ ] **API Security**: Auth headers over HTTPS, OWASP-inspired validation
 - [ ] **Error Handling**: No sensitive data leaked in error messages
 - [ ] **Input Validation**: Proper validation of user inputs
+- [ ] **Secrets Hygiene**: No secrets committed, logged, or echoed
+- [ ] **Injection Safety**: Validate untrusted inputs (command, SQL, path, URL)
+- [ ] **SSRF/URL Handling**: Reject local/metadata IPs unless explicitly allowed
+- [ ] **Filesystem Safety**: Prevent path traversal and unsafe file writes
+- [ ] **AuthZ Boundaries**: No privilege escalation or missing access checks
+- [ ] **Crypto Use**: No custom crypto, use approved libraries
+- [ ] **Least Privilege**: Avoid broad file/network access without need
 
 ### Documentation
 
@@ -177,9 +191,9 @@ Structure your review like this:
 ## Code Review Summary
 
 **Files Reviewed:** [list of files]
-**Automated Checks:** ✅ Passing | ❌ Failing
+**Automated Checks:** ✅ Passing | ❌ Failing | ⚠️ Not run
 **Test Coverage:** [percentage]% (target: ≥85%)
-**Overall Status:** CODE REVIEW COMPLED: ✅ Approve | ⚠️ Needs Changes | ❌ Reject
+**Overall Status:** CODE REVIEW COMPLETED: ✅ Approve | ⚠️ Needs Changes | ❌ Reject
 
 ### Critical Issues (Must Fix)
 
