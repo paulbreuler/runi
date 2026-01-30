@@ -49,7 +49,7 @@ All components follow runi's design system with Motion animations, accessibility
     },
   },
   tags: ['autodocs'],
-} satisfies Meta;
+} as Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

@@ -30,11 +30,11 @@ const SelectValue = SelectPrimitive.Value;
  */
 const SelectTrigger = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & { 'data-testid'?: string }
 >(({ className, children, 'data-testid': dataTestId, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
-    data-testid={dataTestId}
+    {...(dataTestId !== undefined && { 'data-testid': dataTestId })}
     className={cn(
       'border border-border-subtle data-[placeholder]:text-text-muted flex h-9 w-fit items-center justify-between gap-2 rounded-lg bg-bg-surface px-3 py-2 text-sm transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:cursor-not-allowed disabled:opacity-50 hover:bg-bg-raised hover:border-border-default [&>span]:line-clamp-1',
       className
@@ -81,6 +81,7 @@ const SelectContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<'div'> & {
     position?: 'popper' | 'item-aligned';
+    'data-testid'?: string;
   }
 >(({ className, children, position = 'popper', 'data-testid': dataTestId, ...props }, ref) => (
   <SelectPrimitive.Portal>
@@ -94,7 +95,7 @@ const SelectContent = React.forwardRef<
     >
       <SelectPrimitive.Popup
         ref={ref}
-        data-testid={dataTestId}
+        {...(dataTestId !== undefined && { 'data-testid': dataTestId })}
         className={cn(
           'bg-bg-surface text-text-primary relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-border-default shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-end-2 data-[side=right]:slide-in-from-start-2 data-[side=top]:slide-in-from-bottom-2',
           className
@@ -124,11 +125,11 @@ SelectLabel.displayName = 'SelectLabel';
 
 const SelectItem = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & { 'data-testid'?: string }
 >(({ className, children, 'data-testid': dataTestId, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
-    data-testid={dataTestId}
+    {...(dataTestId !== undefined && { 'data-testid': dataTestId })}
     className={cn(
       'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-6 pr-8 text-sm outline-none focus:bg-bg-raised focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className

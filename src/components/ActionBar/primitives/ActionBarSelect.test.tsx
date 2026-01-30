@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { Code } from 'lucide-react';
@@ -65,9 +65,14 @@ describe('ActionBarSelect', () => {
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Select method' }));
 
-    // Check that options are visible
-    expect(screen.getByRole('option', { name: 'All Methods' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'GET' })).toBeInTheDocument();
+    // Wait for popup to open and options to be visible
+    await waitFor(
+      () => {
+        expect(screen.getByRole('option', { name: 'All Methods' })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'GET' })).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('calls onValueChange when option is selected', async () => {
@@ -87,7 +92,7 @@ describe('ActionBarSelect', () => {
 
     // Base UI onValueChange passes (value, eventDetails)
     expect(handleChange).toHaveBeenCalled();
-    expect(handleChange).toHaveBeenCalledWith('POST', expect.any(Object));
+    expect(handleChange).toHaveBeenNthCalledWith(1, 'POST', expect.anything());
   });
 
   it('uses data-testid when provided', () => {
