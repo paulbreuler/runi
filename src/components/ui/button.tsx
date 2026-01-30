@@ -33,7 +33,7 @@ const buttonVariants = cva(
         secondary:
           'bg-bg-raised border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-emphasis',
         // Ghost: Invisible until hover
-        ghost: 'bg-transparent text-text-muted hover:text-text-secondary hover:bg-bg-raised/50',
+        ghost: 'bg-transparent text-text-muted hover:text-text-primary hover:bg-bg-raised/50',
         // Link: Text only
         link: 'text-accent-blue underline-offset-4 hover:underline',
       },

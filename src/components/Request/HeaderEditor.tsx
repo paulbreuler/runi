@@ -135,7 +135,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     variant="ghost"
                     size="icon-sm"
                     onClick={handleCancelEdit}
-                    className="text-text-muted hover:text-text-secondary"
+                    className="text-text-muted hover:text-text-primary"
                     data-testid={`cancel-header-button-${key}`}
                   >
                     <X />
@@ -216,7 +216,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleCancelEdit}
-                className="text-text-muted hover:text-text-secondary"
+                className="text-text-muted hover:text-text-primary"
                 data-testid="cancel-new-header-button"
               >
                 <X />

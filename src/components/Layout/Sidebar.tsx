@@ -7,6 +7,8 @@ import React, { useState } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { focusRingClasses } from '@/utils/accessibility';
+import { cn } from '@/utils/cn';
 
 interface DrawerSectionProps {
   title: string;
@@ -30,13 +32,16 @@ const DrawerSection = ({
     <div className="border-b border-border-subtle last:border-b-0" data-testid={testId}>
       <button
         type="button"
-        className="w-full flex items-center gap-2 px-4 py-3 hover:bg-bg-raised/30 transition-colors cursor-pointer group"
+        className={cn(
+          focusRingClasses,
+          'w-full flex items-center gap-2 px-4 py-3 hover:bg-bg-raised/30 transition-colors cursor-pointer group'
+        )}
         onClick={() => {
           setIsOpen(!isOpen);
         }}
         aria-expanded={isOpen}
       >
-        <span className="text-text-muted group-hover:text-text-secondary transition-colors">
+        <span className="text-text-muted group-hover:text-text-primary transition-colors">
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </span>
         <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider group-hover:text-text-primary transition-colors">

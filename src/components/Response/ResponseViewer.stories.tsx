@@ -10,6 +10,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 import { ResponseViewer, type ResponseViewerProps } from './ResponseViewer';
 import { StatusBadge } from './StatusBadge';
 import type { HttpResponse } from '@/types/http';
@@ -107,6 +108,7 @@ const createMockResponse = (
  * Playground with controls for all ResponseViewer features.
  */
 export const Playground: Story = {
+  tags: ['test'],
   render: (args: ResponseViewerProps & ResponseViewerStoryArgs) => {
     const statusMap = {
       success: { status: 200, text: 'OK' },
@@ -132,8 +134,17 @@ export const Playground: Story = {
     await step('Test tab navigation', async () => {
       const headersTab = canvas.queryByTestId('response-tab-headers');
       if (headersTab !== null) {
-        await userEvent.click(headersTab);
-        await expect(headersTab).toHaveClass('bg-bg-raised');
+        const focused = await tabToElement(headersTab, 6);
+        await expect(focused).toBe(true);
+        await waitForFocus(headersTab, 1000);
+        await expect(headersTab).toHaveClass('font-medium');
+      }
+    });
+    await step('Arrow Right focuses Raw tab', async () => {
+      const rawTab = canvas.queryByTestId('response-tab-raw');
+      if (rawTab !== null) {
+        await userEvent.keyboard('{ArrowRight}');
+        await expect(rawTab).toHaveFocus();
       }
     });
   },

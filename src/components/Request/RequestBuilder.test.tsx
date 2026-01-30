@@ -54,9 +54,25 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const bodyTab = screen.getByText('Body');
+    const bodyTabLabel = screen.getByText('Body');
+    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
     await user.click(bodyTab);
 
+    expect(await screen.findByTestId('code-editor')).toBeInTheDocument();
+  });
+
+  it('moves focus with arrow keys and activates tab', async () => {
+    const user = userEvent.setup();
+    render(<RequestBuilder />);
+
+    const headersTab = screen.getByRole('tab', { name: /headers/i });
+    const bodyTab = screen.getByRole('tab', { name: /body/i });
+
+    await user.click(headersTab);
+    expect(headersTab).toHaveFocus();
+
+    await user.keyboard('{ArrowRight}');
+    expect(bodyTab).toHaveFocus();
     expect(await screen.findByTestId('code-editor')).toBeInTheDocument();
   });
 
@@ -64,7 +80,8 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const paramsTab = screen.getByText('Params');
+    const paramsTabLabel = screen.getByText('Params');
+    const paramsTab = paramsTabLabel.closest('[role="tab"]') ?? paramsTabLabel;
     await user.click(paramsTab);
 
     expect(await screen.findByTestId('params-editor')).toBeInTheDocument();
@@ -74,7 +91,8 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const authTab = screen.getByText('Auth');
+    const authTabLabel = screen.getByText('Auth');
+    const authTab = authTabLabel.closest('[role="tab"]') ?? authTabLabel;
     await user.click(authTab);
 
     expect(await screen.findByTestId('auth-editor')).toBeInTheDocument();
@@ -135,7 +153,8 @@ describe('RequestBuilder', () => {
     render(<RequestBuilder />);
 
     // Switch to body tab
-    const bodyTab = screen.getByText('Body');
+    const bodyTabLabel = screen.getByText('Body');
+    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
     await user.click(bodyTab);
 
     const bodyEditor = await screen.findByTestId('code-editor');
@@ -151,7 +170,8 @@ describe('RequestBuilder', () => {
     render(<RequestBuilder />);
 
     // Switch to body tab
-    const bodyTab = screen.getByText('Body');
+    const bodyTabLabel = screen.getByText('Body');
+    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
     await user.click(bodyTab);
 
     const bodyTextarea = await screen.findByTestId('code-editor-textarea');
@@ -165,21 +185,21 @@ describe('RequestBuilder', () => {
   it('shows active tab with proper styling', () => {
     render(<RequestBuilder />);
 
-    const headersTab = screen.getByText('Headers').closest('button');
+    const headersTab = screen.getByRole('tab', { name: /headers/i });
     expect(headersTab).toHaveClass(/bg-bg-raised|text-text-primary/);
   });
 
   it('shows inactive tabs with muted styling', () => {
     render(<RequestBuilder />);
 
-    const bodyTab = screen.getByText('Body').closest('button');
+    const bodyTab = screen.getByRole('tab', { name: /body/i });
     expect(bodyTab).toHaveClass(/text-text-muted/);
   });
 
   it('shows right overflow cue when tabs overflow', () => {
     render(<RequestBuilder />);
 
-    const tabScroller = screen.getByLabelText('Request tabs');
+    const tabScroller = screen.getByTestId('request-tabs-scroll');
     Object.defineProperty(tabScroller, 'scrollWidth', { value: 480, configurable: true });
     Object.defineProperty(tabScroller, 'clientWidth', { value: 200, configurable: true });
     Object.defineProperty(tabScroller, 'scrollLeft', {
@@ -197,7 +217,7 @@ describe('RequestBuilder', () => {
   it('shows left overflow cue after scrolling tabs', () => {
     render(<RequestBuilder />);
 
-    const tabScroller = screen.getByLabelText('Request tabs');
+    const tabScroller = screen.getByTestId('request-tabs-scroll');
     Object.defineProperty(tabScroller, 'scrollWidth', { value: 480, configurable: true });
     Object.defineProperty(tabScroller, 'clientWidth', { value: 200, configurable: true });
     Object.defineProperty(tabScroller, 'scrollLeft', {
@@ -216,7 +236,8 @@ describe('RequestBuilder', () => {
       const user = userEvent.setup();
       render(<RequestBuilder />);
 
-      const bodyTab = screen.getByText('Body');
+      const bodyTabLabel = screen.getByText('Body');
+      const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
       await user.click(bodyTab);
 
       const bodyTextarea = await screen.findByTestId('code-editor-textarea');

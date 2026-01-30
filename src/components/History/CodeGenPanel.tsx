@@ -9,6 +9,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { Tabs } from '@base-ui/react/tabs';
 import { cn } from '@/utils/cn';
 import { LanguageTabs } from './LanguageTabs';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
@@ -65,17 +66,11 @@ export const CodeGenPanel = ({
         activeLanguage={activeLanguage}
         onLanguageChange={setActiveLanguage}
         className="mb-3"
-      />
-
-      {/* Code content */}
-      <div
-        id={`code-panel-${activeLanguage}`}
-        role="tabpanel"
-        aria-labelledby={`language-tab-${activeLanguage}`}
-        className="flex-1 flex flex-col min-h-0"
       >
-        <CodeEditor mode="display" code={code} language={syntaxLanguage} className="flex-1" />
-      </div>
+        <Tabs.Panel value={activeLanguage} className="flex-1 flex flex-col min-h-0">
+          <CodeEditor mode="display" code={code} language={syntaxLanguage} className="flex-1" />
+        </Tabs.Panel>
+      </LanguageTabs>
     </div>
   );
 };

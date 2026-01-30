@@ -299,7 +299,10 @@ export const CodeEditor = ({
             {showFormatButton && (
               <button
                 onClick={formatJson}
-                className="px-2 py-1 text-xs rounded bg-bg-raised text-text-secondary hover:text-text-primary hover:border-border-emphasis transition-colors border border-transparent"
+                className={cn(
+                  focusRingClasses,
+                  'px-2 py-1 text-xs rounded bg-bg-raised text-text-secondary hover:text-text-primary hover:border-border-emphasis transition-colors border border-transparent'
+                )}
                 data-testid="format-json-button"
               >
                 Format

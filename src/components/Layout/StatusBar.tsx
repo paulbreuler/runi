@@ -17,6 +17,7 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { focusRingClasses } from '@/utils/accessibility';
+import { STATUS_BAR_Z_INDEX } from '@/utils/z-index';
 import { cn } from '@/utils/cn';
 import type { AppMetrics, MemoryMetrics } from '@/types/metrics';
 
@@ -195,7 +196,8 @@ export const StatusBar = (): React.JSX.Element => {
 
   return (
     <div
-      className="h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-2 text-xs"
+      className="relative h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-2 text-xs"
+      style={{ zIndex: STATUS_BAR_Z_INDEX }}
       data-testid="status-bar"
     >
       {/* Left side - environment and request count */}

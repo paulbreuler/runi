@@ -20,7 +20,7 @@ import * as React from 'react';
  *
  * Follows WCAG 2.1 AA requirements:
  * - 2px ring width for visibility
- * - Blue accent color (accent-blue) for consistency
+ * - Theme ring color token (--color-ring) for consistency
  * - 2px offset for better visibility on dark backgrounds
  * - Uses :focus-visible (only shows on keyboard focus, not mouse clicks)
  *
@@ -44,13 +44,13 @@ export const focusRingClasses = [
   'outline-none',
   // Native :focus-visible (Tab key, some browsers handle programmatic focus)
   'focus-visible:ring-2',
-  'focus-visible:ring-accent-blue',
+  'focus-visible:ring-[color:var(--color-ring)]',
   'focus-visible:ring-offset-2',
   'focus-visible:ring-offset-bg-app',
   // Programmatic focus visibility (arrow key navigation)
   // Uses attribute selector with :focus to ensure element is actually focused
   '[&[data-focus-visible-added]:focus]:ring-2',
-  '[&[data-focus-visible-added]:focus]:ring-accent-blue',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:ring-offset-2',
   '[&[data-focus-visible-added]:focus]:ring-offset-bg-app',
 ].join(' ');

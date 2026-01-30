@@ -6,6 +6,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
@@ -869,7 +870,10 @@ export const ConsolePanel = ({
                                 return next;
                               });
                             }}
-                            className="flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full"
+                            className={cn(
+                              focusRingClasses,
+                              'flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full'
+                            )}
                           >
                             {expandedLogIds.has(`${originalLog.id}_occurrences`) ? (
                               <ChevronDown size={12} />

@@ -4,13 +4,14 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { Tabs } from '@base-ui/react/tabs';
+import { motion, useReducedMotion } from 'motion/react';
 import { HeaderEditor } from './HeaderEditor';
 import { ParamsEditor } from './ParamsEditor';
 import { AuthEditor } from './AuthEditor';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 import { useRequestStore } from '@/stores/useRequestStore';
-import { cn } from '@/utils/cn';
 
 type TabId = 'headers' | 'body' | 'params' | 'auth';
 
@@ -109,63 +110,58 @@ export const RequestBuilder = (): React.JSX.Element => {
   return (
     <div className="h-full flex flex-col bg-bg-app" data-testid="request-builder">
       {/* Tab navigation */}
-      <div className="relative flex items-center px-6 py-2 border-b border-border-subtle bg-bg-surface">
-        <div
-          ref={tabScrollRef}
-          className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
-          aria-label="Request tabs"
-        >
-          <div className="flex items-center gap-1 pr-2 min-w-max">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                  }}
-                  className={cn(
-                    'px-3 h-7 text-sm rounded-lg transition-colors duration-200 font-medium',
-                    isActive
-                      ? 'bg-bg-raised text-text-primary'
-                      : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
-                  )}
-                  whileHover={!isActive ? { scale: 1.02 } : undefined}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {tab.label}
-                </motion.button>
-              );
-            })}
+      <Tabs.Root value={activeTab} onValueChange={setActiveTab as (value: string) => void}>
+        <div className="relative flex items-center px-6 py-2 border-b border-border-subtle bg-bg-surface">
+          <div
+            ref={tabScrollRef}
+            className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
+            aria-label="Request tabs"
+            data-testid="request-tabs-scroll"
+          >
+            <BaseTabsList
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              tabs={tabs.map((tab) => ({
+                value: tab.id,
+                label: tab.label,
+                testId: `request-tab-${tab.id}`,
+              }))}
+              listClassName="flex items-center gap-1 pr-2 min-w-max"
+              tabClassName="px-3 h-7 text-sm rounded-lg transition-colors duration-200 font-medium relative"
+              activeTabClassName="bg-bg-raised text-text-primary"
+              inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+              indicatorLayoutId="request-tab-indicator"
+              indicatorClassName="bg-bg-raised rounded-lg"
+              indicatorTestId="request-tab-indicator"
+              listTestId="request-tabs-list"
+              listAriaLabel="Request tabs"
+              activateOnFocus={false}
+            />
           </div>
-        </div>
-        {showOverflowCue && canScrollLeft && (
-          <motion.div
-            className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
-            data-testid="request-tabs-overflow-left"
-            initial={false}
-            animate={getOverflowAnimation('left')}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
-        {showOverflowCue && canScrollRight && (
-          <motion.div
-            className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
-            data-testid="request-tabs-overflow-right"
-            initial={false}
-            animate={getOverflowAnimation('right')}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
-      </div>
-
-      {/* Tab content - overflow hidden to prevent scrollbar flash during transitions */}
-      <div className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
-          {activeTab === 'headers' && (
+          {showOverflowCue && canScrollLeft && (
             <motion.div
-              key="headers"
+              className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
+              data-testid="request-tabs-overflow-left"
+              initial={false}
+              animate={getOverflowAnimation('left')}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+          {showOverflowCue && canScrollRight && (
+            <motion.div
+              className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
+              data-testid="request-tabs-overflow-right"
+              initial={false}
+              animate={getOverflowAnimation('right')}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+        </div>
+
+        {/* Tab content - overflow hidden to prevent scrollbar flash during transitions */}
+        <div className="flex-1 overflow-hidden">
+          <Tabs.Panel value="headers">
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -175,11 +171,10 @@ export const RequestBuilder = (): React.JSX.Element => {
             >
               <HeaderEditor />
             </motion.div>
-          )}
+          </Tabs.Panel>
 
-          {activeTab === 'body' && (
+          <Tabs.Panel value="body">
             <motion.div
-              key="body"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -196,11 +191,10 @@ export const RequestBuilder = (): React.JSX.Element => {
                 placeholder="Enter request body (JSON, XML, text, etc.)"
               />
             </motion.div>
-          )}
+          </Tabs.Panel>
 
-          {activeTab === 'params' && (
+          <Tabs.Panel value="params">
             <motion.div
-              key="params"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -210,11 +204,10 @@ export const RequestBuilder = (): React.JSX.Element => {
             >
               <ParamsEditor />
             </motion.div>
-          )}
+          </Tabs.Panel>
 
-          {activeTab === 'auth' && (
+          <Tabs.Panel value="auth">
             <motion.div
-              key="auth"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -224,9 +217,9 @@ export const RequestBuilder = (): React.JSX.Element => {
             >
               <AuthEditor />
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </Tabs.Panel>
+        </div>
+      </Tabs.Root>
     </div>
   );
 };

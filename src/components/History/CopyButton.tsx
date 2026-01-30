@@ -22,6 +22,8 @@ export interface CopyButtonProps {
   className?: string;
   /** ARIA label for the button */
   'aria-label'?: string;
+  /** Test id for automation */
+  'data-testid'?: string;
 }
 
 /**
@@ -37,6 +39,7 @@ export const CopyButton = ({
   feedbackDuration = 2000,
   className,
   'aria-label': ariaLabel = 'Copy to clipboard',
+  'data-testid': dataTestId = 'copy-button',
 }: CopyButtonProps): React.ReactElement => {
   const [copied, setCopied] = useState(false);
 
@@ -58,6 +61,7 @@ export const CopyButton = ({
     <button
       type="button"
       onClick={handleCopy}
+      data-testid={dataTestId}
       className={cn(
         focusRingClasses,
         'flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary rounded',

@@ -36,7 +36,7 @@ const _splitButtonVariants = cva(
         destructive: 'bg-signal-error text-accent-contrast hover:bg-signal-error/90',
         outline:
           'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50',
-        ghost: 'bg-transparent text-text-muted hover:text-text-secondary hover:bg-bg-raised/50',
+        ghost: 'bg-transparent text-text-muted hover:text-text-primary hover:bg-bg-raised/50',
       },
       size: {
         default: 'h-9 px-3 text-sm',
@@ -131,7 +131,7 @@ export const SplitButton = ({
       case 'outline':
         return 'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 border-l-0';
       case 'ghost':
-        return 'bg-transparent text-text-muted hover:text-text-secondary hover:bg-bg-raised/50';
+        return 'bg-transparent text-text-muted hover:text-text-primary hover:bg-bg-raised/50';
       default:
         return '';
     }

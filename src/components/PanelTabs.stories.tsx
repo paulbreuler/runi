@@ -6,6 +6,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
+import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
 import { PanelTabs, type PanelTabType } from './PanelTabs';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -43,6 +44,7 @@ type Story = StoryObj<typeof PanelTabs>;
  * Play runs keyboard interaction test (see Interactions panel).
  */
 export const Playground: Story = {
+  tags: ['test'],
   args: {
     activeTab: 'network',
     networkCount: 5,
@@ -68,11 +70,13 @@ export const Playground: Story = {
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-    const networkTab = canvas.getByRole('tab', { name: /network/i });
-    const consoleTab = canvas.getByRole('tab', { name: /console/i });
+    const networkTab = canvas.getByTestId('panel-tab-network');
+    const consoleTab = canvas.getByTestId('panel-tab-console');
 
     await step('Focus Network tab', async () => {
-      await userEvent.click(networkTab);
+      const focused = await tabToElement(networkTab, 6);
+      await expect(focused).toBe(true);
+      await waitForFocus(networkTab, 1000);
       await expect(networkTab).toHaveFocus();
     });
 

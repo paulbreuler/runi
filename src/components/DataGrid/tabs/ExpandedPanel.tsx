@@ -129,7 +129,7 @@ export const ExpandedPanel = ({
         ref={topLevelContainerRef}
         onKeyDown={handleTopLevelKeyDown}
       >
-        <TabNavigation activeTab={activeTab} />
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         <Tabs.Panel value="timing" className="px-4 py-3">
           <TimingTab

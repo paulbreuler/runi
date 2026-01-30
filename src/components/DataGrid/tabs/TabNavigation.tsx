@@ -8,10 +8,7 @@
  * @description Tab navigation for expanded panel
  */
 
-import { Tabs } from '@base-ui/react/tabs';
-import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
-import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 import type { ExpandedPanelTabType } from './ExpandedPanel';
 
 /**
@@ -34,11 +31,14 @@ import type { ExpandedPanelTabType } from './ExpandedPanel';
 export interface TabNavigationProps {
   /** Active tab */
   activeTab: ExpandedPanelTabType;
+  /** Tab change handler */
+  onTabChange: (tab: ExpandedPanelTabType) => void;
 }
 
-export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Element => {
-  const prefersReducedMotion = useReducedMotion() === true;
-
+export const TabNavigation = ({
+  activeTab,
+  onTabChange,
+}: TabNavigationProps): React.JSX.Element => {
   const tabs: Array<{ id: ExpandedPanelTabType; label: string }> = [
     { id: 'timing', label: 'Timing' },
     { id: 'response', label: 'Response' },
@@ -48,61 +48,23 @@ export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Elem
   ];
 
   return (
-    <LayoutGroup>
-      <Tabs.List
-        activateOnFocus
-        className="flex items-center gap-1 border-b border-border-default px-4 pt-2 relative"
-        data-testid="expanded-tabs-list"
-      >
-        {tabs.map((tab) => (
-          <Tabs.Tab
-            key={tab.id}
-            value={tab.id}
-            render={({
-              onDrag: _onDrag,
-              onDragStart: _onDragStart,
-              onDragEnd: _onDragEnd,
-              onAnimationStart: _onAnimStart,
-              onAnimationEnd: _onAnimEnd,
-              ...props
-            }) => (
-              <motion.button
-                {...props}
-                type="button"
-                role="tab"
-                data-testid={`tab-${tab.id}`}
-                aria-selected={activeTab === tab.id}
-                className={cn(
-                  'px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative',
-                  focusRingClasses,
-                  activeTab === tab.id
-                    ? 'text-text-primary'
-                    : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-                )}
-                whileHover={activeTab !== tab.id ? { scale: 1.02 } : undefined}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15 }}
-              >
-                {activeTab === tab.id && (
-                  <motion.div
-                    layoutId="expanded-tab-indicator"
-                    className="absolute inset-0 bg-bg-raised rounded-t pointer-events-none z-0"
-                    data-testid="expanded-tab-indicator"
-                    data-layout-id="expanded-tab-indicator"
-                    transition={
-                      prefersReducedMotion
-                        ? { duration: 0 }
-                        : { type: 'spring', stiffness: 300, damping: 30 }
-                    }
-                    initial={false}
-                  />
-                )}
-                <span className="relative z-10">{tab.label}</span>
-              </motion.button>
-            )}
-          />
-        ))}
-      </Tabs.List>
-    </LayoutGroup>
+    <BaseTabsList
+      activeTab={activeTab}
+      onTabChange={onTabChange}
+      tabs={tabs.map((tab) => ({
+        value: tab.id,
+        label: tab.label,
+        testId: `tab-${tab.id}`,
+      }))}
+      listClassName="flex items-center gap-1 border-b border-border-default px-4 pt-2"
+      tabClassName="px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative"
+      activeTabClassName="text-text-primary"
+      inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+      indicatorLayoutId="expanded-tab-indicator"
+      indicatorClassName="bg-bg-raised rounded-t"
+      indicatorTestId="expanded-tab-indicator"
+      listTestId="expanded-tabs-list"
+      activateOnFocus={true}
+    />
   );
 };

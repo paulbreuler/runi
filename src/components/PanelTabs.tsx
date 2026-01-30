@@ -3,13 +3,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import { Terminal, Network } from 'lucide-react';
 import { Tabs } from '@base-ui/react/tabs';
-import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
-import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
-import { focusWithVisibility } from '@/utils/focusVisibility';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
 export type PanelTabType = 'network' | 'console';
 
@@ -58,170 +55,59 @@ interface PanelTabsProps {
  * />
  * ```
  */
-const TAB_ORDER: PanelTabType[] = ['network', 'console'];
-
 export const PanelTabs = ({
   activeTab,
   onTabChange,
   networkCount = 0,
   consoleCount = 0,
 }: PanelTabsProps): React.JSX.Element => {
-  const prefersReducedMotion = useReducedMotion() === true;
-  const listContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleListKeyDown = useCallback(
-    (e: React.KeyboardEvent): void => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
-        return;
-      }
-      const container = listContainerRef.current;
-      if (container === null) {
-        return;
-      }
-      const tabs = Array.from(container.querySelectorAll<HTMLElement>('[role="tab"]'));
-      if (tabs.length === 0) {
-        return;
-      }
-      const activeEl = document.activeElement as HTMLElement | null;
-      const currentIndex =
-        activeEl !== null ? tabs.indexOf(activeEl) : TAB_ORDER.indexOf(activeTab);
-      const idx = currentIndex < 0 ? TAB_ORDER.indexOf(activeTab) : currentIndex;
-      const nextIndex =
-        e.key === 'ArrowRight' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
-      const nextTab = tabs[nextIndex];
-      const nextValue = TAB_ORDER[nextIndex];
-      if (nextTab !== undefined && nextValue !== undefined) {
-        e.preventDefault();
-        e.stopPropagation();
-        focusWithVisibility(nextTab);
-        onTabChange(nextValue);
-      }
-    },
-    [activeTab, onTabChange]
-  );
-
   return (
     <Tabs.Root value={activeTab} onValueChange={onTabChange as (value: string) => void}>
-      <LayoutGroup>
-        <div
-          ref={listContainerRef}
-          onKeyDownCapture={handleListKeyDown}
-          className="contents"
-          role="presentation"
-        >
-          <Tabs.List
-            activateOnFocus={false}
-            className="flex items-center gap-1 border-r border-border-default pr-2 mr-2 relative"
-            data-testid="tabs-list"
-          >
-            {/* Network Tab — only active in tab order so Tab goes to panel; arrows handled above */}
-            <Tabs.Tab
-              value="network"
-              render={({
-                onDrag: _onDrag,
-                onDragStart: _onDragStart,
-                onDragEnd: _onDragEnd,
-                onAnimationStart: _onAnimStart,
-                onAnimationEnd: _onAnimEnd,
-                ...props
-              }) => (
-                <motion.button
-                  {...props}
-                  type="button"
-                  tabIndex={activeTab === 'network' ? 0 : -1}
-                  className={cn(
-                    'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
-                    focusRingClasses,
-                    activeTab === 'network'
-                      ? 'text-text-primary'
-                      : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-                  )}
-                  whileHover={activeTab !== 'network' ? { scale: 1.02 } : undefined}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {activeTab === 'network' && (
-                    <motion.div
-                      layoutId="panel-tab-indicator"
-                      className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
-                      data-testid="panel-tab-indicator"
-                      data-layout-id="panel-tab-indicator"
-                      transition={
-                        prefersReducedMotion
-                          ? { duration: 0 }
-                          : { type: 'spring', stiffness: 300, damping: 30 }
-                      }
-                      initial={false}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    <Network size={12} />
-                    <span>Network</span>
-                    {networkCount > 0 && (
-                      <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
-                        {networkCount}
-                      </span>
-                    )}
+      <BaseTabsList
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        tabs={[
+          {
+            value: 'network',
+            testId: 'panel-tab-network',
+            label: (
+              <span className="flex items-center gap-1.5">
+                <Network size={12} />
+                <span>Network</span>
+                {networkCount > 0 && (
+                  <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
+                    {networkCount}
                   </span>
-                </motion.button>
-              )}
-            />
-
-            {/* Console Tab — only active in tab order so Tab goes to panel; arrows handled above */}
-            <Tabs.Tab
-              value="console"
-              render={({
-                onDrag: _onDrag,
-                onDragStart: _onDragStart,
-                onDragEnd: _onDragEnd,
-                onAnimationStart: _onAnimStart,
-                onAnimationEnd: _onAnimEnd,
-                ...props
-              }) => (
-                <motion.button
-                  {...props}
-                  type="button"
-                  tabIndex={activeTab === 'console' ? 0 : -1}
-                  className={cn(
-                    'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
-                    focusRingClasses,
-                    activeTab === 'console'
-                      ? 'text-text-primary'
-                      : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-                  )}
-                  whileHover={activeTab !== 'console' ? { scale: 1.02 } : undefined}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {activeTab === 'console' && (
-                    <motion.div
-                      layoutId="panel-tab-indicator"
-                      className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
-                      data-testid="panel-tab-indicator"
-                      data-layout-id="panel-tab-indicator"
-                      transition={
-                        prefersReducedMotion
-                          ? { duration: 0 }
-                          : { type: 'spring', stiffness: 300, damping: 30 }
-                      }
-                      initial={false}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    <Terminal size={12} />
-                    <span>Console</span>
-                    {consoleCount > 0 && (
-                      <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
-                        {consoleCount}
-                      </span>
-                    )}
+                )}
+              </span>
+            ),
+          },
+          {
+            value: 'console',
+            testId: 'panel-tab-console',
+            label: (
+              <span className="flex items-center gap-1.5">
+                <Terminal size={12} />
+                <span>Console</span>
+                {consoleCount > 0 && (
+                  <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
+                    {consoleCount}
                   </span>
-                </motion.button>
-              )}
-            />
-          </Tabs.List>
-        </div>
-      </LayoutGroup>
+                )}
+              </span>
+            ),
+          },
+        ]}
+        listClassName="flex items-center gap-1 border-r border-border-default pr-2 mr-2"
+        tabClassName="shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative"
+        activeTabClassName="text-text-primary"
+        inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+        indicatorLayoutId="panel-tab-indicator"
+        indicatorClassName="bg-bg-raised rounded"
+        indicatorTestId="panel-tab-indicator"
+        listTestId="tabs-list"
+        activateOnFocus={false}
+      />
     </Tabs.Root>
   );
 };

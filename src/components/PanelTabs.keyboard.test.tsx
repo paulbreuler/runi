@@ -46,8 +46,8 @@ describe('PanelTabs keyboard (integration)', () => {
     const user = userEvent.setup();
     render(<PanelTabs activeTab="network" onTabChange={onTabChange} />);
 
-    const networkTab = screen.getByRole('tab', { name: /network/i });
-    const consoleTab = screen.getByRole('tab', { name: /console/i });
+    const networkTab = screen.getByTestId('panel-tab-network');
+    const consoleTab = screen.getByTestId('panel-tab-console');
 
     await user.click(networkTab);
     expect(networkTab).toHaveFocus();
@@ -63,8 +63,8 @@ describe('PanelTabs keyboard (integration)', () => {
     const user = userEvent.setup();
     render(<PanelTabs activeTab="console" onTabChange={onTabChange} />);
 
-    const networkTab = screen.getByRole('tab', { name: /network/i });
-    const consoleTab = screen.getByRole('tab', { name: /console/i });
+    const networkTab = screen.getByTestId('panel-tab-network');
+    const consoleTab = screen.getByTestId('panel-tab-console');
 
     await user.click(consoleTab);
     expect(consoleTab).toHaveFocus();
@@ -80,8 +80,8 @@ describe('PanelTabs keyboard (integration)', () => {
     const user = userEvent.setup();
     render(<PanelTabs activeTab="network" onTabChange={onTabChange} />);
 
-    const networkTab = screen.getByRole('tab', { name: /network/i });
-    const consoleTab = screen.getByRole('tab', { name: /console/i });
+    const networkTab = screen.getByTestId('panel-tab-network');
+    const consoleTab = screen.getByTestId('panel-tab-console');
 
     await user.click(networkTab);
     await user.keyboard('{ArrowRight}');
@@ -108,7 +108,7 @@ describe('PanelTabs keyboard (integration)', () => {
     );
 
     const before = screen.getByTestId('before');
-    const networkTab = screen.getByRole('tab', { name: /network/i });
+    const networkTab = screen.getByTestId('panel-tab-network');
     const after = screen.getByTestId('after');
 
     await user.click(before);
@@ -126,8 +126,8 @@ describe('PanelTabs keyboard (integration)', () => {
     const user = userEvent.setup();
     render(<PanelTabs activeTab="network" onTabChange={onTabChange} />);
 
-    const networkTab = screen.getByRole('tab', { name: /network/i });
-    const consoleTab = screen.getByRole('tab', { name: /console/i });
+    const networkTab = screen.getByTestId('panel-tab-network');
+    const consoleTab = screen.getByTestId('panel-tab-console');
 
     await user.click(networkTab);
     await user.keyboard('{ArrowRight}');

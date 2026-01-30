@@ -67,7 +67,7 @@ export const ToastBell: React.FC<ToastBellProps> = ({ className, onClick }) => {
       onClick={onClick}
       className={cn(
         'relative p-1 rounded',
-        'text-text-muted hover:text-text-secondary',
+        'text-text-muted hover:text-text-primary',
         'transition-colors',
         focusRingClasses,
         className

@@ -6,6 +6,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 import { Minimize2, Maximize2, X } from 'lucide-react';
+import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
@@ -128,7 +129,10 @@ const TitleBarControls = (): React.JSX.Element | null => {
       <button
         type="button"
         onClick={handleMinimize}
-        className="w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors"
+        className={cn(
+          focusRingClasses,
+          'w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors'
+        )}
         aria-label="Minimize window"
         data-testid="titlebar-minimize"
       >
@@ -137,7 +141,10 @@ const TitleBarControls = (): React.JSX.Element | null => {
       <button
         type="button"
         onClick={handleMaximize}
-        className="w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors"
+        className={cn(
+          focusRingClasses,
+          'w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors'
+        )}
         aria-label="Maximize window"
         data-testid="titlebar-maximize"
       >
@@ -146,7 +153,10 @@ const TitleBarControls = (): React.JSX.Element | null => {
       <button
         type="button"
         onClick={handleClose}
-        className="w-[30px] h-[30px] flex items-center justify-center hover:bg-signal-error/20 hover:text-signal-error transition-colors"
+        className={cn(
+          focusRingClasses,
+          'w-[30px] h-[30px] flex items-center justify-center hover:bg-signal-error/20 hover:text-signal-error transition-colors'
+        )}
         aria-label="Close window"
         data-testid="titlebar-close"
       >

@@ -8,6 +8,8 @@ import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } fr
 import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';
 import { ScrollArea } from '@base-ui/react/scroll-area';
 import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores/usePanelStore';
+import { focusRingClasses } from '@/utils/accessibility';
+import { DOCKABLE_PANEL_Z_INDEX } from '@/utils/z-index';
 import { DockControls } from './DockControls';
 import { cn } from '@/utils/cn';
 
@@ -489,7 +491,7 @@ export const DockablePanel = ({
           isCollapsed && isHorizontal && 'cursor-pointer',
           className
         )}
-        style={getPanelStyle()}
+        style={{ ...getPanelStyle(), zIndex: DOCKABLE_PANEL_Z_INDEX }}
         initial={prefersReducedMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -732,7 +734,10 @@ export const DockablePanel = ({
                 {/* Collapse/Minimize button */}
                 <button
                   type="button"
-                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors"
+                  className={cn(
+                    focusRingClasses,
+                    'p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors'
+                  )}
                   onClick={handleMinimize}
                   aria-label="Collapse panel"
                 >
@@ -742,7 +747,10 @@ export const DockablePanel = ({
                 {/* Close button */}
                 <button
                   type="button"
-                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors"
+                  className={cn(
+                    focusRingClasses,
+                    'p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors'
+                  )}
                   onClick={handleClose}
                   aria-label="Close panel"
                 >

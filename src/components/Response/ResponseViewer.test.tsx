@@ -66,7 +66,8 @@ describe('ResponseViewer', () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
 
-    const headersTab = screen.getByText('Headers');
+    const headersTabLabel = screen.getByText('Headers');
+    const headersTab = headersTabLabel.closest('[role="tab"]') ?? headersTabLabel;
     await user.click(headersTab);
 
     // Headers tab should be active
@@ -93,7 +94,8 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTab = screen.getByText('Raw');
+    const rawTabLabel = screen.getByText('Raw');
+    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
     await user.click(rawTab);
 
     // Raw tab should be active
@@ -150,7 +152,8 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTab = screen.getByText('Raw');
+    const rawTabLabel = screen.getByText('Raw');
+    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
     await user.click(rawTab);
 
     // Copy button should be visible with http language label
@@ -169,7 +172,8 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTab = screen.getByText('Raw');
+    const rawTabLabel = screen.getByText('Raw');
+    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
     await user.click(rawTab);
 
     // CodeSnippet should be rendered
@@ -193,7 +197,8 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTab = screen.getByText('Raw');
+    const rawTabLabel = screen.getByText('Raw');
+    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
     await user.click(rawTab);
 
     const codeBox = screen.getByTestId('code-box');
@@ -203,5 +208,20 @@ describe('ResponseViewer', () => {
     expect(innerBox).not.toHaveClass('bg-bg-raised');
     expect(innerBox).not.toHaveClass('border');
     expect(innerBox).not.toHaveClass('rounded');
+  });
+
+  it('moves focus with arrow keys', async () => {
+    const user = userEvent.setup();
+    render(<ResponseViewer response={mockResponse} />);
+
+    const bodyTabLabel = screen.getByText('Body');
+    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
+    const headersTabLabel = screen.getByText('Headers');
+    const headersTab = headersTabLabel.closest('[role="tab"]') ?? headersTabLabel;
+
+    await user.click(bodyTab);
+    expect(bodyTab).toHaveFocus();
+    await user.keyboard('{ArrowRight}');
+    expect(headersTab).toHaveFocus();
   });
 });

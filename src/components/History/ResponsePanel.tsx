@@ -8,13 +8,13 @@
  * @description Panel with tabs for Request Body and Response Body
  */
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { Tabs } from '@base-ui/react/tabs';
 import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
-import { focusWithVisibility } from '@/utils/focusVisibility';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
 export interface ResponsePanelProps {
   /** Request body content */
@@ -29,13 +29,22 @@ export interface ResponsePanelProps {
   containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-type TabType = 'response' | 'request';
+export type ResponsePanelTabType = 'response' | 'request';
+
+function formatJsonBody(body: string): string {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return body;
+  }
+}
 
 /**
  * ResponsePanel component with tabs for Request Body and Response Body.
  *
- * Response Body tab is active by default. Includes copy button for
- * the currently active tab's content.
+ * Uses Base UI Tabs with Motion indicator. Response Body tab is active by default.
+ * Roving tabindex: only active tab in tab order; Arrow keys move between tabs.
  *
  * @example
  * ```tsx
@@ -45,19 +54,6 @@ type TabType = 'response' | 'request';
  * />
  * ```
  */
-/**
- * Format JSON with 2-space indentation if valid JSON, otherwise return as-is
- */
-function formatJsonBody(body: string): string {
-  try {
-    const parsed: unknown = JSON.parse(body);
-    return JSON.stringify(parsed, null, 2);
-  } catch {
-    // Not valid JSON, return as-is
-    return body;
-  }
-}
-
 export const ResponsePanel = ({
   requestBody,
   responseBody,
@@ -65,73 +61,42 @@ export const ResponsePanel = ({
   onKeyDown,
   containerRef,
 }: ResponsePanelProps): React.ReactElement => {
-  const [activeTab, setActiveTab] = useState<TabType>('response');
-  const responseTabRef = useRef<HTMLButtonElement>(null);
-  const requestTabRef = useRef<HTMLButtonElement>(null);
+  const [activeTab, setActiveTab] = useState<ResponsePanelTabType>('response');
 
-  const currentBody = activeTab === 'response' ? responseBody : requestBody;
-  const currentBodyText = currentBody ?? '';
+  const responseBodyText = responseBody;
+  const requestBodyText = requestBody ?? '';
 
-  // Detect language for syntax highlighting (matches ResponseViewer body tab)
-  const language = useMemo(() => {
-    if (currentBodyText === '') {
+  const responseLanguage = useMemo(() => {
+    if (responseBodyText === '') {
       return 'text';
     }
-    return detectSyntaxLanguage({ body: currentBodyText });
-  }, [currentBodyText]);
+    return detectSyntaxLanguage({ body: responseBodyText });
+  }, [responseBodyText]);
 
-  // Format body (only format JSON if language is detected as JSON, matches ResponseViewer body tab)
-  const formattedBody = useMemo(() => {
-    if (currentBodyText === '') {
+  const requestLanguage = useMemo(() => {
+    if (requestBodyText === '') {
+      return 'text';
+    }
+    return detectSyntaxLanguage({ body: requestBodyText });
+  }, [requestBodyText]);
+
+  const responseFormatted = useMemo(() => {
+    if (responseBodyText === '') {
       return '';
     }
-    // Only format JSON if language is detected as JSON, otherwise use body as-is
-    return language === 'json' ? formatJsonBody(currentBodyText) : currentBodyText;
-  }, [currentBodyText, language]);
+    return responseLanguage === 'json' ? formatJsonBody(responseBodyText) : responseBodyText;
+  }, [responseBodyText, responseLanguage]);
 
-  /**
-   * Internal keyboard navigation for secondary tabs.
-   * Handles ArrowLeft/ArrowRight to navigate between tabs.
-   * Uses focusWithVisibility to ensure focus ring appears.
-   */
-  const handleInternalKeyDown = useCallback(
+  const requestFormatted = useMemo(() => {
+    if (requestBodyText === '') {
+      return '';
+    }
+    return requestLanguage === 'json' ? formatJsonBody(requestBodyText) : requestBodyText;
+  }, [requestBodyText, requestLanguage]);
+
+  const handleContainerKeyDown = useCallback(
     (e: React.KeyboardEvent): void => {
-      // First, let parent handler process the event (for ArrowUp to return to top-level)
       onKeyDown?.(e);
-
-      // If parent handled it, don't process further
-      if (e.defaultPrevented) {
-        return;
-      }
-
-      const { key } = e;
-
-      // Navigate between secondary tabs with Arrow keys
-      if (key === 'ArrowRight' || key === 'ArrowLeft') {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const tabs = [responseTabRef.current, requestTabRef.current];
-        const currentFocusedIndex = tabs.findIndex((tab) => tab === document.activeElement);
-
-        if (currentFocusedIndex === -1) {
-          return;
-        }
-
-        let nextIndex: number;
-        if (key === 'ArrowRight') {
-          nextIndex = (currentFocusedIndex + 1) % tabs.length;
-        } else {
-          nextIndex = currentFocusedIndex === 0 ? tabs.length - 1 : currentFocusedIndex - 1;
-        }
-
-        const nextTab = tabs[nextIndex];
-        if (nextTab !== undefined && nextTab !== null) {
-          focusWithVisibility(nextTab);
-          // Activate the tab
-          setActiveTab(nextIndex === 0 ? 'response' : 'request');
-        }
-      }
     },
     [onKeyDown]
   );
@@ -141,77 +106,62 @@ export const ResponsePanel = ({
       ref={containerRef}
       data-testid="response-panel"
       className={cn('flex flex-col', className)}
-      onKeyDown={handleInternalKeyDown}
+      onKeyDown={handleContainerKeyDown}
     >
-      {/* Tab navigation */}
-      <div className="flex gap-1 border-b border-border-default mb-3">
-        <button
-          ref={responseTabRef}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'response'}
-          data-testid="response-body-tab"
-          onClick={(): void => {
-            setActiveTab('response');
-          }}
-          className={cn(
-            'px-3 py-1.5 text-xs font-medium transition-colors',
-            'border-b-2 -mb-px',
-            focusRingClasses,
-            activeTab === 'response'
-              ? 'text-text-primary border-accent-purple'
-              : 'text-text-secondary border-transparent hover:text-text-primary'
-          )}
-        >
-          Response Body
-        </button>
-        <button
-          ref={requestTabRef}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'request'}
-          data-testid="request-body-tab"
-          onClick={(): void => {
-            setActiveTab('request');
-          }}
-          className={cn(
-            'px-3 py-1.5 text-xs font-medium transition-colors',
-            'border-b-2 -mb-px',
-            focusRingClasses,
-            activeTab === 'request'
-              ? 'text-text-primary border-accent-purple'
-              : 'text-text-secondary border-transparent hover:text-text-primary'
-          )}
-        >
-          Request Body
-        </button>
-      </div>
+      <Tabs.Root value={activeTab} onValueChange={setActiveTab as (value: string) => void}>
+        <BaseTabsList
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={[
+            { value: 'response', label: 'Response Body', testId: 'response-body-tab' },
+            { value: 'request', label: 'Request Body', testId: 'request-body-tab' },
+          ]}
+          listClassName="flex gap-1 border-b border-border-default mb-3"
+          tabClassName="shrink-0 px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative"
+          activeTabClassName="text-text-primary"
+          inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+          indicatorLayoutId="response-body-tab-indicator"
+          indicatorClassName="bg-bg-raised rounded-t"
+          indicatorTestId="response-body-tab-indicator"
+          listTestId="response-tabs-list"
+          activateOnFocus={false}
+        />
 
-      {/* Tab content */}
-      <div
-        id={activeTab === 'response' ? 'response-body-panel' : 'request-body-panel'}
-        role="tabpanel"
-        aria-labelledby={activeTab === 'response' ? 'response-body-tab' : 'request-body-tab'}
-        className="flex-1 flex flex-col"
-      >
-        {currentBodyText === '' ? (
-          <EmptyState
-            variant="muted"
-            title={`No ${activeTab} body`}
-            description={
-              activeTab === 'response' ? 'This response has no body' : 'This request has no body'
-            }
-          />
-        ) : (
-          <CodeEditor
-            mode="display"
-            code={formattedBody}
-            language={language}
-            variant="contained"
-            className="flex-1"
-          />
-        )}
-      </div>
+        <Tabs.Panel value="response" className="flex-1 flex flex-col">
+          {responseBodyText === '' ? (
+            <EmptyState
+              variant="muted"
+              title="No response body"
+              description="This response has no body"
+            />
+          ) : (
+            <CodeEditor
+              mode="display"
+              code={responseFormatted}
+              language={responseLanguage}
+              variant="contained"
+              className="flex-1"
+            />
+          )}
+        </Tabs.Panel>
+        <Tabs.Panel value="request" className="flex-1 flex flex-col">
+          {requestBodyText === '' ? (
+            <EmptyState
+              variant="muted"
+              title="No request body"
+              description="This request has no body"
+            />
+          ) : (
+            <CodeEditor
+              mode="display"
+              code={requestFormatted}
+              language={requestLanguage}
+              variant="contained"
+              className="flex-1"
+            />
+          )}
+        </Tabs.Panel>
+      </Tabs.Root>
     </div>
   );
 };

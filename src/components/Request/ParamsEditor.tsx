@@ -164,7 +164,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                     variant="ghost"
                     size="icon-sm"
                     onClick={handleCancelEdit}
-                    className="text-text-muted hover:text-text-secondary"
+                    className="text-text-muted hover:text-text-primary"
                     data-testid="cancel-param-button"
                   >
                     <X />
@@ -247,7 +247,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleCancelEdit}
-                className="text-text-muted hover:text-text-secondary"
+                className="text-text-muted hover:text-text-primary"
                 data-testid="cancel-new-param-button"
               >
                 <X />

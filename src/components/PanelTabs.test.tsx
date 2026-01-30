@@ -128,8 +128,8 @@ describe('PanelTabs', () => {
     it('renders Network and Console tabs', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      expect(screen.getByText('Network')).toBeInTheDocument();
-      expect(screen.getByText('Console')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-network')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-console')).toBeInTheDocument();
     });
 
     it('uses Base UI Tabs primitives', () => {
@@ -140,24 +140,24 @@ describe('PanelTabs', () => {
       expect(root).toBeInTheDocument();
       const list = container.querySelector('[data-testid="tabs-list"]');
       expect(list).toBeInTheDocument();
-      const triggers = container.querySelectorAll('[data-testid="tabs-trigger"]');
+      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"]');
       expect(triggers).toHaveLength(2);
     });
 
     it('renders Network tab with icon', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const networkTab = screen.getByText('Network').closest('[data-testid="tabs-trigger"]');
+      const networkTab = screen.getByTestId('panel-tab-network');
       expect(networkTab).toBeInTheDocument();
-      // Network text should be present
-      expect(screen.getByText('Network')).toBeInTheDocument();
+      expect(networkTab).toHaveTextContent('Network');
     });
 
     it('renders Console tab with icon', () => {
       render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
-      const consoleTab = screen.getByText('Console').closest('[data-testid="tabs-trigger"]');
+      const consoleTab = screen.getByTestId('panel-tab-console');
       expect(consoleTab).toBeInTheDocument();
+      expect(consoleTab).toHaveTextContent('Console');
     });
 
     it('displays network count badge when provided', () => {
@@ -186,7 +186,7 @@ describe('PanelTabs', () => {
       const user = userEvent.setup();
       render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
-      const networkTab = screen.getByText('Network');
+      const networkTab = screen.getByTestId('panel-tab-network');
       await user.click(networkTab);
 
       expect(mockOnTabChange).toHaveBeenCalledWith('network');
@@ -196,7 +196,7 @@ describe('PanelTabs', () => {
       const user = userEvent.setup();
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const consoleTab = screen.getByText('Console');
+      const consoleTab = screen.getByTestId('panel-tab-console');
       await user.click(consoleTab);
 
       expect(mockOnTabChange).toHaveBeenCalledWith('console');
@@ -238,7 +238,7 @@ describe('PanelTabs', () => {
     it('uses motion.button for tabs via render prop', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const triggers = container.querySelectorAll('[data-testid="tabs-trigger"]');
+      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"]');
       expect(triggers.length).toBeGreaterThan(0);
       // motion.button should be rendered via render prop
       triggers.forEach((trigger) => {
@@ -323,14 +323,14 @@ describe('PanelTabs', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
       // Active tab should have active styling (checked via className or data attributes)
-      const networkTrigger = screen.getByText('Network').closest('[data-testid="tabs-trigger"]');
+      const networkTrigger = screen.getByTestId('panel-tab-network');
       expect(networkTrigger).toBeInTheDocument();
     });
 
     it('applies inactive tab styling', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const consoleTrigger = screen.getByText('Console').closest('[data-testid="tabs-trigger"]');
+      const consoleTrigger = screen.getByTestId('panel-tab-console');
       expect(consoleTrigger).toBeInTheDocument();
     });
   });

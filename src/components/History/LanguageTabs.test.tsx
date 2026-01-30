@@ -65,7 +65,7 @@ describe('LanguageTabs', () => {
       />
     );
 
-    const javascriptTab = screen.getByText('JavaScript');
+    const javascriptTab = screen.getByRole('tab', { name: /javascript/i });
     javascriptTab.focus();
 
     await user.keyboard('{ArrowRight}');
@@ -80,7 +80,7 @@ describe('LanguageTabs', () => {
         onLanguageChange={onLanguageChange}
       />
     );
-    const pythonTab = screen.getAllByText('Python')[0]!;
+    const pythonTab = screen.getByRole('tab', { name: /python/i });
     pythonTab.focus();
 
     await user.keyboard('{ArrowLeft}');
@@ -95,7 +95,7 @@ describe('LanguageTabs', () => {
       <LanguageTabs languages={languages} activeLanguage="go" onLanguageChange={onLanguageChange} />
     );
 
-    const goTab = screen.getByText('Go');
+    const goTab = screen.getByRole('tab', { name: /^go$/i });
     goTab.focus();
 
     await user.keyboard('{ArrowRight}');
@@ -112,11 +112,7 @@ describe('LanguageTabs', () => {
 
     const tabs = screen.getAllByRole('tab');
     tabs.forEach((tab, index) => {
-      const language = languages[index];
       expect(tab).toHaveAttribute('aria-selected', index === 0 ? 'true' : 'false');
-      if (language !== undefined) {
-        expect(tab).toHaveAttribute('aria-controls', `code-panel-${language}`);
-      }
     });
   });
 });
