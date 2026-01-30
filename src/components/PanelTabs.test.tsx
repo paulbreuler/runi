@@ -7,6 +7,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { fireEvent } from '@testing-library/react';
 import { PanelTabs } from './PanelTabs';
 
 // Mock motion/react to avoid animation-related issues in tests
@@ -100,6 +101,7 @@ vi.mock('@base-ui/react/tabs', () => ({
         const tabProps = {
           ...props,
           onClick: handleClick,
+          role: 'tab',
           'data-testid': 'tabs-trigger',
           'data-value': value,
         };
@@ -266,6 +268,34 @@ describe('PanelTabs', () => {
       // Indicator should still exist but be positioned on console tab
       indicator = container.querySelector('[data-testid="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
+    });
+  });
+
+  describe('keyboard navigation', () => {
+    it('Arrow Right moves focus to next tab and activates it', () => {
+      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+
+      const list = screen.getByTestId('tabs-list');
+      const wrapper = list.parentElement;
+      expect(wrapper).not.toBeNull();
+
+      fireEvent.keyDown(wrapper!, { key: 'ArrowRight', bubbles: true });
+
+      expect(mockOnTabChange).toHaveBeenCalledTimes(1);
+      expect(mockOnTabChange).toHaveBeenCalledWith('console');
+    });
+
+    it('Arrow Left moves focus to previous tab and activates it', () => {
+      render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
+
+      const list = screen.getByTestId('tabs-list');
+      const wrapper = list.parentElement;
+      expect(wrapper).not.toBeNull();
+
+      fireEvent.keyDown(wrapper!, { key: 'ArrowLeft', bubbles: true });
+
+      expect(mockOnTabChange).toHaveBeenCalledTimes(1);
+      expect(mockOnTabChange).toHaveBeenCalledWith('network');
     });
   });
 

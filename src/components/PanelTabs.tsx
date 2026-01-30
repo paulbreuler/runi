@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Terminal, Network } from 'lucide-react';
 import { Tabs } from '@base-ui/react/tabs';
 import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
+import { focusWithVisibility } from '@/utils/focusVisibility';
 
 export type PanelTabType = 'network' | 'console';
 
@@ -26,7 +28,7 @@ interface PanelTabsProps {
  *
  * ## Features
  *
- * - **Accessible**: Built on Base UI Tabs; Enter/Space to activate. Tab currently moves between tabs; moving focus into panel content is a follow-up.
+ * - **Accessible**: Built on Base UI Tabs; roving tabindex (only active tab in tab order). Tab moves focus into panel content; Arrow keys move between tabs; Enter/Space to activate.
  * - **Animated**: Tab indicator uses Motion's `layoutId` for shared element transitions
  * - **Spring Physics**: Indicator animates with spring physics (stiffness: 300, damping: 30)
  * - **Reduced Motion**: Respects `prefers-reduced-motion` setting
@@ -40,9 +42,9 @@ interface PanelTabsProps {
  *
  * ## Accessibility
  *
- * - Full keyboard navigation provided by Base UI
- * - ARIA attributes handled automatically
- * - Focus management on tab activation
+ * - Roving tabindex: only the active tab is in the tab order, so Tab moves focus into panel content
+ * - Arrow keys move focus between tabs; Enter/Space activates the focused tab
+ * - ARIA attributes handled automatically by Base UI
  *
  * @example
  * ```tsx
@@ -56,6 +58,8 @@ interface PanelTabsProps {
  * />
  * ```
  */
+const TAB_ORDER: PanelTabType[] = ['network', 'console'];
+
 export const PanelTabs = ({
   activeTab,
   onTabChange,
@@ -63,117 +67,160 @@ export const PanelTabs = ({
   consoleCount = 0,
 }: PanelTabsProps): React.JSX.Element => {
   const prefersReducedMotion = useReducedMotion() === true;
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleListKeyDown = useCallback(
+    (e: React.KeyboardEvent): void => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+        return;
+      }
+      const container = listContainerRef.current;
+      if (container === null) {
+        return;
+      }
+      const tabs = Array.from(container.querySelectorAll<HTMLElement>('[role="tab"]'));
+      if (tabs.length === 0) {
+        return;
+      }
+      const activeEl = document.activeElement as HTMLElement | null;
+      const currentIndex =
+        activeEl !== null ? tabs.indexOf(activeEl) : TAB_ORDER.indexOf(activeTab);
+      const idx = currentIndex < 0 ? TAB_ORDER.indexOf(activeTab) : currentIndex;
+      const nextIndex =
+        e.key === 'ArrowRight' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
+      const nextTab = tabs[nextIndex];
+      const nextValue = TAB_ORDER[nextIndex];
+      if (nextTab !== undefined && nextValue !== undefined) {
+        e.preventDefault();
+        e.stopPropagation();
+        focusWithVisibility(nextTab);
+        onTabChange(nextValue);
+      }
+    },
+    [activeTab, onTabChange]
+  );
 
   return (
     <Tabs.Root value={activeTab} onValueChange={onTabChange as (value: string) => void}>
       <LayoutGroup>
-        <Tabs.List
-          activateOnFocus
-          className="flex items-center gap-1 border-r border-border-default pr-2 mr-2 relative"
-          data-testid="tabs-list"
+        <div
+          ref={listContainerRef}
+          onKeyDownCapture={handleListKeyDown}
+          className="contents"
+          role="presentation"
         >
-          {/* Network Tab */}
-          <Tabs.Tab
-            value="network"
-            render={({
-              onDrag: _onDrag,
-              onDragStart: _onDragStart,
-              onDragEnd: _onDragEnd,
-              onAnimationStart: _onAnimStart,
-              onAnimationEnd: _onAnimEnd,
-              ...props
-            }) => (
-              <motion.button
-                {...props}
-                type="button"
-                className={cn(
-                  'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
-                  activeTab === 'network'
-                    ? 'text-text-primary'
-                    : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-                )}
-                whileHover={activeTab !== 'network' ? { scale: 1.02 } : undefined}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15 }}
-              >
-                {activeTab === 'network' && (
-                  <motion.div
-                    layoutId="panel-tab-indicator"
-                    className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
-                    data-testid="panel-tab-indicator"
-                    data-layout-id="panel-tab-indicator"
-                    transition={
-                      prefersReducedMotion
-                        ? { duration: 0 }
-                        : { type: 'spring', stiffness: 300, damping: 30 }
-                    }
-                    initial={false}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <Network size={12} />
-                  <span>Network</span>
-                  {networkCount > 0 && (
-                    <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
-                      {networkCount}
-                    </span>
+          <Tabs.List
+            activateOnFocus={false}
+            className="flex items-center gap-1 border-r border-border-default pr-2 mr-2 relative"
+            data-testid="tabs-list"
+          >
+            {/* Network Tab — only active in tab order so Tab goes to panel; arrows handled above */}
+            <Tabs.Tab
+              value="network"
+              render={({
+                onDrag: _onDrag,
+                onDragStart: _onDragStart,
+                onDragEnd: _onDragEnd,
+                onAnimationStart: _onAnimStart,
+                onAnimationEnd: _onAnimEnd,
+                ...props
+              }) => (
+                <motion.button
+                  {...props}
+                  type="button"
+                  tabIndex={activeTab === 'network' ? 0 : -1}
+                  className={cn(
+                    'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
+                    focusRingClasses,
+                    activeTab === 'network'
+                      ? 'text-text-primary'
+                      : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
                   )}
-                </span>
-              </motion.button>
-            )}
-          />
+                  whileHover={activeTab !== 'network' ? { scale: 1.02 } : undefined}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {activeTab === 'network' && (
+                    <motion.div
+                      layoutId="panel-tab-indicator"
+                      className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
+                      data-testid="panel-tab-indicator"
+                      data-layout-id="panel-tab-indicator"
+                      transition={
+                        prefersReducedMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 300, damping: 30 }
+                      }
+                      initial={false}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <Network size={12} />
+                    <span>Network</span>
+                    {networkCount > 0 && (
+                      <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
+                        {networkCount}
+                      </span>
+                    )}
+                  </span>
+                </motion.button>
+              )}
+            />
 
-          {/* Console Tab */}
-          <Tabs.Tab
-            value="console"
-            render={({
-              onDrag: _onDrag,
-              onDragStart: _onDragStart,
-              onDragEnd: _onDragEnd,
-              onAnimationStart: _onAnimStart,
-              onAnimationEnd: _onAnimEnd,
-              ...props
-            }) => (
-              <motion.button
-                {...props}
-                type="button"
-                className={cn(
-                  'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
-                  activeTab === 'console'
-                    ? 'text-text-primary'
-                    : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-                )}
-                whileHover={activeTab !== 'console' ? { scale: 1.02 } : undefined}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15 }}
-              >
-                {activeTab === 'console' && (
-                  <motion.div
-                    layoutId="panel-tab-indicator"
-                    className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
-                    data-testid="panel-tab-indicator"
-                    data-layout-id="panel-tab-indicator"
-                    transition={
-                      prefersReducedMotion
-                        ? { duration: 0 }
-                        : { type: 'spring', stiffness: 300, damping: 30 }
-                    }
-                    initial={false}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <Terminal size={12} />
-                  <span>Console</span>
-                  {consoleCount > 0 && (
-                    <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
-                      {consoleCount}
-                    </span>
+            {/* Console Tab — only active in tab order so Tab goes to panel; arrows handled above */}
+            <Tabs.Tab
+              value="console"
+              render={({
+                onDrag: _onDrag,
+                onDragStart: _onDragStart,
+                onDragEnd: _onDragEnd,
+                onAnimationStart: _onAnimStart,
+                onAnimationEnd: _onAnimEnd,
+                ...props
+              }) => (
+                <motion.button
+                  {...props}
+                  type="button"
+                  tabIndex={activeTab === 'console' ? 0 : -1}
+                  className={cn(
+                    'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
+                    focusRingClasses,
+                    activeTab === 'console'
+                      ? 'text-text-primary'
+                      : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
                   )}
-                </span>
-              </motion.button>
-            )}
-          />
-        </Tabs.List>
+                  whileHover={activeTab !== 'console' ? { scale: 1.02 } : undefined}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {activeTab === 'console' && (
+                    <motion.div
+                      layoutId="panel-tab-indicator"
+                      className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
+                      data-testid="panel-tab-indicator"
+                      data-layout-id="panel-tab-indicator"
+                      transition={
+                        prefersReducedMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 300, damping: 30 }
+                      }
+                      initial={false}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <Terminal size={12} />
+                    <span>Console</span>
+                    {consoleCount > 0 && (
+                      <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
+                        {consoleCount}
+                      </span>
+                    )}
+                  </span>
+                </motion.button>
+              )}
+            />
+          </Tabs.List>
+        </div>
       </LayoutGroup>
     </Tabs.Root>
   );

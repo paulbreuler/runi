@@ -88,6 +88,7 @@ export const TabNavigation = ({ activeTab }: TabNavigationProps): React.JSX.Elem
                     layoutId="expanded-tab-indicator"
                     className="absolute inset-0 bg-bg-raised rounded-t pointer-events-none z-0"
                     data-testid="expanded-tab-indicator"
+                    data-layout-id="expanded-tab-indicator"
                     transition={
                       prefersReducedMotion
                         ? { duration: 0 }
