@@ -135,6 +135,6 @@ describe('PanelTabs keyboard (integration)', () => {
 
     await user.keyboard('{Enter}');
     expect(onTabChange).toHaveBeenCalled();
-    expect(onTabChange.mock.calls[0][0]).toBe('console');
+    expect(onTabChange).toHaveBeenCalledWith('console');
   });
 });

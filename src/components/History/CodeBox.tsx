@@ -72,8 +72,9 @@ export const CodeBox = ({
   return (
     <div
       data-testid={dataTestId}
+      data-test-id={dataTestId}
       className={cn(
-        'flex flex-col flex-1 overflow-auto',
+        'flex flex-col flex-1 min-h-0 overflow-hidden',
         // Contained variant: full visual container
         isContained && 'bg-bg-raised rounded border border-border-default',
         containerClassName
@@ -90,7 +91,7 @@ export const CodeBox = ({
       {/* Content */}
       <div
         className={cn(
-          'text-xs font-mono overflow-x-auto',
+          'text-xs font-mono flex-1 min-h-0 overflow-auto',
           // Padding based on variant
           isContained && 'px-3 pb-3',
           isContained && !hasCopyButton && 'pt-3',

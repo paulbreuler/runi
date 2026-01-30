@@ -97,7 +97,7 @@
   --color-destructive: var(--color-signal-error);
   --color-border: var(--gray-6);
   --color-input: var(--color-panel-solid);
-  --color-ring: var(--focus-8);
+  --color-ring: var(--color-primary);
 }
 
 /* ============================================

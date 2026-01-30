@@ -53,7 +53,7 @@ Use controls to explore different response statuses and sizes.`,
   },
   args: {
     responseStatus: 'success',
-    responseSize: 'medium',
+    responseSize: 'large',
   },
 } satisfies Meta<ResponseViewerProps & ResponseViewerStoryArgs>;
 
@@ -67,7 +67,7 @@ const createMockResponse = (
 ): HttpResponse => {
   let bodyData: Record<string, unknown>;
   if (bodySize === 'small') {
-    bodyData = { id: 1, name: 'John' };
+    bodyData = { id: 1, name: 'John', trace: `trace_${'x'.repeat(120)}` };
   } else if (bodySize === 'large') {
     bodyData = {
       users: Array.from({ length: 10 }, (_, i) => ({
@@ -75,6 +75,7 @@ const createMockResponse = (
         name: `User ${String(i + 1)}`,
         email: `user${String(i + 1)}@example.com`,
       })),
+      debug: `trace_${'x'.repeat(180)}`,
     };
   } else {
     bodyData = {
@@ -82,6 +83,7 @@ const createMockResponse = (
       name: 'John Doe',
       email: 'john@example.com',
       active: true,
+      trace: `trace_${'x'.repeat(160)}`,
     };
   }
 
@@ -131,6 +133,13 @@ export const Playground: Story = {
   },
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
+    const getByTestId = (testId: string): HTMLElement => {
+      const el = canvasElement.querySelector(`[data-test-id="${testId}"]`);
+      if (!(el instanceof HTMLElement)) {
+        throw new Error(`Missing element [data-test-id="${testId}"]`);
+      }
+      return el;
+    };
     await step('Test tab navigation', async () => {
       const headersTab = canvas.queryByTestId('response-tab-headers');
       if (headersTab !== null) {
@@ -146,6 +155,24 @@ export const Playground: Story = {
         await userEvent.keyboard('{ArrowRight}');
         await expect(rawTab).toHaveFocus();
       }
+    });
+
+    await step('Raw tab supports horizontal scroll', async () => {
+      const rawTab = canvas.queryByTestId('response-tab-raw');
+      if (rawTab !== null) {
+        await userEvent.click(rawTab);
+      }
+      const codeBox = getByTestId('code-box');
+      const scrollArea = codeBox.querySelector('[data-language]');
+      if (!(scrollArea instanceof HTMLElement)) {
+        throw new Error('Missing raw response scroll area');
+      }
+      const scrollWidth = scrollArea.scrollWidth;
+      const clientWidth = scrollArea.clientWidth;
+      await expect(scrollWidth).toBeGreaterThan(clientWidth);
+      scrollArea.scrollLeft = 80;
+      scrollArea.dispatchEvent(new Event('scroll'));
+      await expect(scrollArea.scrollLeft).toBeGreaterThan(0);
     });
   },
 };

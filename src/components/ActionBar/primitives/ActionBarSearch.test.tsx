@@ -52,7 +52,7 @@ describe('ActionBarSearch', () => {
     render(<ActionBarSearch value="" onChange={() => {}} aria-label="Search" />);
     const input = screen.getByRole('textbox');
     expect(input.className).toContain('focus-visible:ring-2');
-    expect(input.className).toContain('ring-accent-blue');
+    expect(input.className).toContain('ring-[color:var(--color-ring)]');
   });
 
   it('applies custom className', () => {

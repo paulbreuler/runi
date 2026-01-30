@@ -45,13 +45,13 @@ describe('Input', () => {
     const { container } = render(<Input placeholder="Test" />);
     const input = container.querySelector('input');
     expect(input?.className).toContain('focus-visible:ring-2');
-    expect(input?.className).toContain('ring-accent-blue');
+    expect(input?.className).toContain('ring-[color:var(--color-ring)]');
   });
 
   it('uses standard focus ring classes when glass is true', () => {
     const { container } = render(<Input glass placeholder="Test" />);
     const input = container.querySelector('input');
     expect(input?.className).toContain('focus-visible:ring-2');
-    expect(input?.className).toContain('ring-accent-blue');
+    expect(input?.className).toContain('ring-[color:var(--color-ring)]');
   });
 });

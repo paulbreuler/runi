@@ -458,7 +458,7 @@ export const MainLayout = ({
   const isSidebarOverlay = sidebarVisible && isCompact;
 
   return (
-    <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
+    <div className="relative z-0 flex h-screen flex-col bg-bg-app" data-testid="main-layout">
       <div className="flex flex-1 overflow-hidden gap-0">
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (

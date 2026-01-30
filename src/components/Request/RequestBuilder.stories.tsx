@@ -62,9 +62,15 @@ export const Playground: Story = {
     </div>
   ),
   play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-    const headersTab = canvas.getByTestId('request-tab-headers');
-    const bodyTab = canvas.getByTestId('request-tab-body');
+    const getByTestId = (testId: string): HTMLElement => {
+      const el = canvasElement.querySelector(`[data-test-id="${testId}"]`);
+      if (!(el instanceof HTMLElement)) {
+        throw new Error(`Missing element [data-test-id="${testId}"]`);
+      }
+      return el;
+    };
+    const headersTab = getByTestId('request-tab-headers');
+    const bodyTab = getByTestId('request-tab-body');
 
     await step('Focus Headers tab', async () => {
       const focused = await tabToElement(headersTab, 6);
@@ -76,7 +82,28 @@ export const Playground: Story = {
     await step('Arrow Right → focus Body and show editor', async () => {
       await userEvent.keyboard('{ArrowRight}');
       await expect(bodyTab).toHaveFocus();
-      await expect(canvas.getByTestId('code-editor')).toBeInTheDocument();
+      await expect(getByTestId('code-editor')).toBeInTheDocument();
+    });
+
+    await step('Body panel fills available height', async () => {
+      const panel = getByTestId('request-tab-panel-body');
+      const textarea = getByTestId('code-editor-textarea');
+      const panelHeight = Math.round(panel.getBoundingClientRect().height);
+      const textareaHeight = Math.round(textarea.getBoundingClientRect().height);
+      await expect(textareaHeight).toBeGreaterThanOrEqual(panelHeight - 8);
+    });
+
+    await step('Body editor supports horizontal scroll', async () => {
+      const textarea = getByTestId('code-editor-textarea');
+      const longLine = `{"token":"${'a'.repeat(240)}"}`;
+      useRequestStore.getState().setBody(longLine);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const scrollWidth = textarea.scrollWidth;
+      const clientWidth = textarea.clientWidth;
+      await expect(scrollWidth).toBeGreaterThan(clientWidth);
+      textarea.scrollLeft = 80;
+      textarea.dispatchEvent(new Event('scroll'));
+      await expect(textarea.scrollLeft).toBeGreaterThan(0);
     });
   },
 };

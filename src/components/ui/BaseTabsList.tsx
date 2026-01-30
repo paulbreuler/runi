@@ -98,6 +98,7 @@ export const BaseTabsList = <T extends string>({
           activateOnFocus={activateOnFocus}
           className={cn('relative', listClassName)}
           data-testid={listTestId}
+          data-test-id={listTestId}
           aria-label={listAriaLabel}
         >
           {tabs.map((tab) => (
@@ -112,7 +113,7 @@ export const BaseTabsList = <T extends string>({
                 onAnimationEnd: _onAnimEnd,
                 ...props
               }) => {
-                const resolvedTestId = tab.testId ?? (props['data-testid'] as string | undefined);
+                const resolvedTestId = tab.testId;
                 const handleClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
                   const onClick = props.onClick as
                     | ((evt: React.MouseEvent<HTMLButtonElement>) => void)
@@ -128,6 +129,7 @@ export const BaseTabsList = <T extends string>({
                     type="button"
                     tabIndex={activeTab === tab.value ? 0 : -1}
                     data-testid={resolvedTestId}
+                    data-test-id={resolvedTestId}
                     onClick={handleClick}
                     className={cn(
                       tabClassName,
@@ -146,6 +148,7 @@ export const BaseTabsList = <T extends string>({
                           indicatorClassName
                         )}
                         data-testid={indicatorTestId}
+                        data-test-id={indicatorTestId}
                         data-layout-id={indicatorLayoutId}
                         transition={
                           prefersReducedMotion

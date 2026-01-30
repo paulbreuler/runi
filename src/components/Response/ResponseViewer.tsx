@@ -169,7 +169,11 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
 
   return (
     <div className="h-full flex flex-col" data-testid="response-viewer">
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab as (value: string) => void}>
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={setActiveTab as (value: string) => void}
+        className="flex-1 min-h-0 flex flex-col"
+      >
         {/* Tab bar */}
         <div className="relative flex items-center gap-2 px-6 py-2 border-b border-border-subtle bg-bg-surface">
           <div
@@ -231,27 +235,26 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         </div>
 
         {/* Content - vertical scroll only, code blocks handle horizontal */}
-        <div
-          className="flex-1 overflow-y-auto overflow-x-hidden"
-          style={{ scrollbarGutter: 'stable' }}
-        >
-          <Tabs.Panel value="body">
-            <div className="p-4" data-testid="response-body">
+        <div className="flex-1 min-h-0 overflow-hidden" style={{ scrollbarGutter: 'stable' }}>
+          <Tabs.Panel value="body" className="h-full min-h-0">
+            <div className="p-4 h-full min-h-0 flex flex-col" data-testid="response-body">
               <span className="sr-only" data-testid="response-body-raw">
                 {formattedBody}
               </span>
-              <CodeEditor
-                mode="display"
-                code={formattedBody}
-                language={language}
-                variant="borderless"
-                className="h-full"
-              />
+              <div className="flex-1 min-h-0">
+                <CodeEditor
+                  mode="display"
+                  code={formattedBody}
+                  language={language}
+                  variant="borderless"
+                  className="h-full"
+                />
+              </div>
             </div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="headers">
-            <div className="p-4">
+          <Tabs.Panel value="headers" className="h-full min-h-0">
+            <div className="p-4 h-full min-h-0 overflow-auto">
               {/* Status line - httpie style */}
               <div className="mb-4 pb-4 border-b border-border-subtle">
                 <span className="font-mono text-sm">
@@ -274,18 +277,20 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             </div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="raw">
-            <div className="p-4" data-testid="response-raw">
+          <Tabs.Panel value="raw" className="h-full min-h-0">
+            <div className="p-4 h-full min-h-0 flex flex-col" data-testid="response-raw">
               <span className="sr-only" data-testid="response-raw-text">
                 {formatRawHttp(response)}
               </span>
-              <CodeEditor
-                mode="display"
-                code={formatRawHttp(response)}
-                language="http"
-                variant="borderless"
-                className="h-full"
-              />
+              <div className="flex-1 min-h-0">
+                <CodeEditor
+                  mode="display"
+                  code={formatRawHttp(response)}
+                  language="http"
+                  variant="borderless"
+                  className="h-full"
+                />
+              </div>
             </div>
           </Tabs.Panel>
         </div>

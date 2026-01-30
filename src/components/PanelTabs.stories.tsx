@@ -50,17 +50,16 @@ export const Playground: Story = {
     networkCount: 5,
     consoleCount: 3,
   },
-  render: function PlaygroundRender({ args }) {
-    const initialTab: PanelTabType =
-      args?.activeTab === 'console' || args?.activeTab === 'network' ? args.activeTab : 'network';
+  render: function PlaygroundRender(args) {
+    const initialTab: PanelTabType = args.activeTab;
     const [activeTab, setActiveTab] = useState<PanelTabType>(initialTab);
     return (
       <div className="p-8 bg-bg-app">
         <PanelTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          networkCount={args?.networkCount ?? 0}
-          consoleCount={args?.consoleCount ?? 0}
+          networkCount={args.networkCount ?? 0}
+          consoleCount={args.consoleCount ?? 0}
         />
         <p className="mt-4 text-sm text-text-muted" data-testid="active-tab-display">
           Active tab: <strong>{activeTab}</strong>
