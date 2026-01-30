@@ -59,11 +59,11 @@ describe('ExpandedContent', () => {
       render(<ExpandedContent>{mockChildren}</ExpandedContent>);
 
       const expandedSection = screen.getByTestId('expanded-section');
-      const innerDiv = expandedSection.querySelector('div.bg-bg-surface.border-t');
+      const innerDiv = screen.getByTestId('expanded-content-inner');
 
-      // Should use EXPANDED_CONTENT_LEFT_MARGIN_PX (54px = 32+16+6)
-      expect(innerDiv).toBeInTheDocument();
-      expect(innerDiv).toHaveStyle({ marginLeft: '54px' });
+      // Expanded content uses full width (marginLeft 0)
+      expect(expandedSection).toContainElement(innerDiv);
+      expect(innerDiv).toHaveStyle({ marginLeft: '0px' });
     });
 
     it('expanded content spans all columns', () => {

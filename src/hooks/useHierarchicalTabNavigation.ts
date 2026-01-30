@@ -149,65 +149,56 @@ export function useHierarchicalTabNavigation(
   );
 
   /**
-   * Handle keyboard events for top-level tabs
+   * Handle keyboard events for top-level container.
+   * Only handles ArrowDown (move to secondary tabs when focus is on a top-level tab).
+   * Arrow Left/Right and Home/End are handled by Base UI Tabs on the tab list.
    */
   const handleTopLevelKeyDown = useCallback(
     (e: React.KeyboardEvent): void => {
       const { key } = e;
 
-      // Arrow Down: Move to secondary tabs if available
+      // Only handle ArrowDown when focus is on a top-level tab (don't steal from content)
+      if (key !== 'ArrowDown' || !hasSecondaryTabs) {
+        return;
+      }
+
       const secondaryContainer = secondaryContainerRef?.current;
-      if (
-        key === 'ArrowDown' &&
-        hasSecondaryTabs &&
-        secondaryContainer !== null &&
-        secondaryContainer !== undefined
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-        const secondaryTabs = getTabs(secondaryContainer);
-        if (secondaryTabs.length > 0) {
-          setIsSecondaryFocused(true);
-          const firstTab = secondaryTabs[0];
-          if (firstTab !== undefined) {
-            focusWithVisibility(firstTab);
-            // Activate if not already active
-            const isActive =
-              firstTab.getAttribute('data-state') === 'active' ||
-              firstTab.getAttribute('aria-selected') === 'true';
-            if (!isActive) {
-              firstTab.click();
-            }
-            onMoveToSecondary?.();
+      if (secondaryContainer === null || secondaryContainer === undefined) {
+        return;
+      }
+
+      const topLevelTabs = getTabs(topLevelContainerRef.current);
+      const focusedTab = getFocusedTab();
+      const focusIsOnTopLevelTab =
+        focusedTab !== null && topLevelTabs.length > 0 && topLevelTabs.includes(focusedTab);
+
+      if (!focusIsOnTopLevelTab) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      const secondaryTabs = getTabs(secondaryContainer);
+      if (secondaryTabs.length > 0) {
+        setIsSecondaryFocused(true);
+        const firstTab = secondaryTabs[0];
+        if (firstTab !== undefined) {
+          focusWithVisibility(firstTab);
+          const isActive =
+            firstTab.getAttribute('data-state') === 'active' ||
+            firstTab.getAttribute('aria-selected') === 'true';
+          if (!isActive) {
+            firstTab.click();
           }
+          onMoveToSecondary?.();
         }
-        return;
-      }
-
-      // Arrow Left/Right: Navigate within top-level tabs
-      // We handle this ourselves to ensure focus ring appears
-      if (key === 'ArrowLeft' || key === 'ArrowRight') {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsSecondaryFocused(false);
-        const topLevelTabs = getTabs(topLevelContainerRef.current);
-        navigateTab(topLevelTabs, key === 'ArrowRight' ? 'next' : 'prev');
-        return;
-      }
-
-      // Home/End: Navigate to first/last top-level tab
-      if (key === 'Home' || key === 'End') {
-        e.preventDefault();
-        e.stopPropagation();
-        const topLevelTabs = getTabs(topLevelContainerRef.current);
-        navigateTab(topLevelTabs, key === 'Home' ? 'first' : 'last');
       }
     },
     [
       hasSecondaryTabs,
       secondaryContainerRef,
       getTabs,
-      navigateTab,
+      getFocusedTab,
       onMoveToSecondary,
       topLevelContainerRef,
     ]

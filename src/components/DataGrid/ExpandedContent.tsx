@@ -84,6 +84,7 @@ export const ExpandedContent = ({
           <div
             className={innerClassName}
             style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
+            data-testid="expanded-content-inner"
           >
             {children}
           </div>

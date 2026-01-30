@@ -124,8 +124,12 @@ export const ExpandedPanel = ({
       onValueChange={setActiveTab as (value: string) => void}
       className={cn('flex flex-col', className)}
     >
-      <div data-testid="expanded-panel" ref={topLevelContainerRef}>
-        <TabNavigation activeTab={activeTab} onKeyDown={handleTopLevelKeyDown} />
+      <div
+        data-testid="expanded-panel"
+        ref={topLevelContainerRef}
+        onKeyDown={handleTopLevelKeyDown}
+      >
+        <TabNavigation activeTab={activeTab} />
 
         <Tabs.Panel value="timing" className="px-4 py-3">
           <TimingTab

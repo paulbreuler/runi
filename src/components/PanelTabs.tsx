@@ -68,6 +68,7 @@ export const PanelTabs = ({
     <Tabs.Root value={activeTab} onValueChange={onTabChange as (value: string) => void}>
       <LayoutGroup>
         <Tabs.List
+          activateOnFocus
           className="flex items-center gap-1 border-r border-border-default pr-2 mr-2 relative"
           data-testid="tabs-list"
         >

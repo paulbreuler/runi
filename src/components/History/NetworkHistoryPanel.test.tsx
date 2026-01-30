@@ -230,18 +230,16 @@ describe('NetworkHistoryPanel', () => {
       expect(Number.parseInt(colSpan ?? '0', 10)).toBeGreaterThan(1);
     });
 
-    it('expanded content uses EXPANDED_CONTENT_LEFT_MARGIN_PX for alignment', () => {
+    it('expanded content uses full width (no left margin)', () => {
       render(<NetworkHistoryPanel {...defaultProps} />);
       const expandButton = screen.getAllByTestId('expand-button')[0]!;
       fireEvent.click(expandButton);
 
       const expandedSection = screen.getByTestId('expanded-section');
-      // Find the inner div that has the marginLeft style (contains ExpandedPanel)
-      const innerDiv = expandedSection.querySelector('div.bg-bg-surface.border-t');
+      const innerDiv = screen.getByTestId('expanded-content-inner');
 
-      // Should use EXPANDED_CONTENT_LEFT_MARGIN_PX (54px = 32+16+6)
-      expect(innerDiv).toBeInTheDocument();
-      expect(innerDiv).toHaveStyle({ marginLeft: '54px' });
+      expect(expandedSection).toContainElement(innerDiv);
+      expect(innerDiv).toHaveStyle({ marginLeft: '0px' });
     });
   });
 
