@@ -107,7 +107,9 @@ describe('DataGridHeader', () => {
       render(<TestWrapper showSelectAll enableRowSelection />);
 
       const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      // Base UI uses data-checked, not data-state
+      expect(checkbox).not.toHaveAttribute('data-checked');
+      expect(checkbox).not.toHaveAttribute('data-indeterminate');
     });
 
     it('checkbox is checked when all rows selected', () => {
@@ -120,14 +122,14 @@ describe('DataGridHeader', () => {
       );
 
       const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toHaveAttribute('data-state', 'checked');
+      expect(checkbox).toHaveAttribute('data-checked');
     });
 
     it('checkbox is indeterminate when some rows selected', () => {
       render(<TestWrapper showSelectAll enableRowSelection initialSelection={{ '1': true }} />);
 
       const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toHaveAttribute('data-state', 'indeterminate');
+      expect(checkbox).toHaveAttribute('data-indeterminate');
     });
 
     it('calls onSelectAllChange when checkbox clicked', () => {

@@ -56,7 +56,8 @@ describe('Checkbox', () => {
       render(<Checkbox onCheckedChange={onCheckedChange} />);
       const checkbox = screen.getByRole('checkbox');
       fireEvent.click(checkbox);
-      expect(onCheckedChange).toHaveBeenCalledWith(true);
+      // Base UI passes (checked, eventDetails)
+      expect(onCheckedChange).toHaveBeenCalledWith(true, expect.anything());
     });
 
     it('calls onCheckedChange with false when checked is toggled off', () => {
@@ -64,7 +65,7 @@ describe('Checkbox', () => {
       render(<Checkbox checked={true} onCheckedChange={onCheckedChange} />);
       const checkbox = screen.getByRole('checkbox');
       fireEvent.click(checkbox);
-      expect(onCheckedChange).toHaveBeenCalledWith(false);
+      expect(onCheckedChange).toHaveBeenCalledWith(false, expect.anything());
     });
 
     it('does not call onCheckedChange when disabled', () => {
@@ -80,7 +81,9 @@ describe('Checkbox', () => {
     it('applies disabled attribute when disabled', () => {
       render(<Checkbox disabled />);
       const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toBeDisabled();
+      // Base UI uses aria-disabled and data-disabled on the root span
+      expect(checkbox).toHaveAttribute('aria-disabled', 'true');
+      expect(checkbox).toHaveAttribute('data-disabled');
     });
 
     it('has disabled styling when disabled', () => {
@@ -164,7 +167,8 @@ describe('Checkbox', () => {
       expect(ref).toHaveBeenCalled();
       const firstCall = ref.mock.calls[0];
       expect(firstCall).toBeDefined();
-      expect(firstCall?.[0]).toBeInstanceOf(HTMLButtonElement);
+      // Base UI Checkbox.Root renders a span
+      expect(firstCall?.[0]).toBeInstanceOf(HTMLElement);
     });
   });
 });
