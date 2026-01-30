@@ -6,6 +6,7 @@
 import { useState, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import { useOptionalActionBarContext, type ActionBarVariant } from './ActionBarContext';
 
 interface ActionBarSearchProps {
@@ -123,8 +124,9 @@ export const ActionBarSearch = ({
         aria-label={ariaLabel}
         data-testid={testId}
         className={cn(
+          focusRingClasses,
           'w-full pl-7 pr-2 py-1 text-sm bg-bg-surface border border-border-subtle rounded',
-          'focus:outline-none focus:border-border-emphasis',
+          'focus:border-border-emphasis',
           'text-text-secondary placeholder:text-text-muted',
           'transition-colors duration-200'
         )}

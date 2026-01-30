@@ -20,6 +20,7 @@ import {
   syntaxHighlightTheme,
 } from '@/components/CodeHighlighting/syntaxHighlighting';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 export interface CodeEditorProps {
   /** Display mode shows read-only code, edit mode allows editing */
@@ -257,10 +258,10 @@ export const CodeEditor = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className={cn(
+            focusRingClasses,
             'w-full h-full p-4 font-mono text-sm leading-relaxed',
             'bg-transparent text-transparent',
-            'border-0 outline-none resize-none',
-            'focus:outline-none',
+            'border-0 resize-none',
             'placeholder:text-text-muted/50'
           )}
           style={{

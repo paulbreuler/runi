@@ -16,6 +16,7 @@ import type { ColumnDef, Row, CellContext } from '@tanstack/react-table';
 import { motion, useReducedMotion } from 'motion/react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import { COLUMN_WIDTHS } from '@/components/DataGrid/constants';
 import { useKeyboardNavExpander, useKeyboardNavInteractive } from '../accessibility/keyboardNav';
 
@@ -82,9 +83,9 @@ const ExpanderCell = <TData,>({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
+        focusRingClasses,
         'w-full h-full flex items-center justify-center rounded transition-colors',
-        'hover:bg-bg-raised',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-1'
+        'hover:bg-bg-raised'
       )}
       aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
       aria-expanded={isExpanded}

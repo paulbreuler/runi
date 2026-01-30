@@ -123,7 +123,8 @@ body {
 
 @layer base {
   * {
-    @apply border-[color:var(--gray-6)] outline-[color:var(--focus-8)]/50;
+    /* Focus indicator: use focusRingClasses on interactive elements; no global outline to avoid double indicators */
+    @apply border-[color:var(--gray-6)];
   }
 
   /* Disable elastic overscroll bounce on all scrollable elements */

@@ -67,6 +67,7 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentPro
           className={cn(
             'z-50 w-72 rounded-md border border-border-default bg-bg-surface p-4 shadow-lg',
             'outline-none',
+            'focus-within:ring-2 focus-within:ring-accent-blue focus-within:ring-offset-2 focus-within:ring-offset-bg-app',
             'animate-in fade-in-0 zoom-in-95',
             'data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
             'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2',

@@ -86,7 +86,7 @@ export const PanelTabs = ({
                 {...props}
                 type="button"
                 className={cn(
-                  'px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
+                  'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
                   activeTab === 'network'
                     ? 'text-text-primary'
                     : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
@@ -137,7 +137,7 @@ export const PanelTabs = ({
                 {...props}
                 type="button"
                 className={cn(
-                  'px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
+                  'shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
                   activeTab === 'console'
                     ? 'text-text-primary'
                     : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'

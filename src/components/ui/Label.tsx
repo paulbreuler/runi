@@ -4,10 +4,9 @@
  */
 
 import * as React from 'react';
-import { Field } from '@base-ui/react/field';
 import { cn } from '@/utils/cn';
 
-export interface LabelProps extends React.ComponentPropsWithoutRef<typeof Field.Label> {
+export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   /** Label text */
   children: React.ReactNode;
 }
@@ -15,22 +14,20 @@ export interface LabelProps extends React.ComponentPropsWithoutRef<typeof Field.
 /**
  * Label component for form inputs and controls.
  *
- * Uses Base UI Field.Label for better accessibility and focus management.
+ * Uses a standard HTML label element for maximum flexibility.
  * Use with Switch, Input, Checkbox, and other form controls.
  * Associates label with control via htmlFor/id for accessibility.
  */
-export const Label = React.forwardRef<React.ComponentRef<typeof Field.Label>, LabelProps>(
+export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
   ({ children, className, ...props }, ref) => {
-    const resolvedClassName =
-      typeof className === 'function'
-        ? (state: Field.Label.State): string =>
-            cn('text-xs text-text-secondary cursor-pointer', className(state))
-        : cn('text-xs text-text-secondary cursor-pointer', className);
-
     return (
-      <Field.Label ref={ref} className={resolvedClassName} {...props}>
+      <label
+        ref={ref}
+        className={cn('text-xs text-text-secondary cursor-pointer', className)}
+        {...props}
+      >
         {children}
-      </Field.Label>
+      </label>
     );
   }
 );

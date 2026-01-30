@@ -506,14 +506,218 @@ pub async fn execute_request(
 }
 
 #[cfg(test)]
+#[allow(clippy::significant_drop_tightening)]
 mod tests {
     use super::*;
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+    use std::time::Duration;
+
+    #[derive(Clone, Debug)]
+    struct TestRequest {
+        method: String,
+        path: String,
+        headers: HashMap<String, String>,
+        body: String,
+    }
+
+    struct TestResponse {
+        status: u16,
+        status_text: &'static str,
+        headers: Vec<(String, String)>,
+        body: String,
+    }
+
+    struct TestServer {
+        base_url: String,
+    }
+
+    fn start_test_server(
+        expected_requests: usize,
+        handler: Arc<dyn Fn(TestRequest) -> TestResponse + Send + Sync>,
+    ) -> Option<TestServer> {
+        let listener = match TcpListener::bind("127.0.0.1:0") {
+            Ok(listener) => listener,
+            Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => {
+                eprintln!("[TEST] Skipping HTTP server bind: {err}");
+                return None;
+            }
+            Err(err) => panic!("bind test server: {err}"),
+        };
+        let addr = listener.local_addr().expect("resolve test server addr");
+        let base_url = format!("http://{addr}");
+
+        thread::spawn(move || {
+            for _ in 0..expected_requests {
+                let (mut stream, _) = listener.accept().expect("accept test request");
+                let request = read_request(&mut stream);
+                let response = handler(request);
+                write_response(&mut stream, response);
+            }
+        });
+
+        Some(TestServer { base_url })
+    }
+
+    fn start_http_test_server(
+        expected_requests: usize,
+        requests: Arc<Mutex<Vec<TestRequest>>>,
+    ) -> Option<TestServer> {
+        start_test_server(
+            expected_requests,
+            Arc::new(move |request| {
+                requests
+                    .lock()
+                    .expect("lock requests")
+                    .push(request.clone());
+                match request.path.as_str() {
+                    "/status/404" => TestResponse {
+                        status: 404,
+                        status_text: "Not Found",
+                        headers: vec![("Content-Type".to_string(), "text/plain".to_string())],
+                        body: "Not Found".to_string(),
+                    },
+                    "/headers" => {
+                        let header_value = request
+                            .headers
+                            .get("x-custom-header")
+                            .cloned()
+                            .unwrap_or_default();
+                        TestResponse {
+                            status: 200,
+                            status_text: "OK",
+                            headers: vec![("Content-Type".to_string(), "text/plain".to_string())],
+                            body: format!("X-Custom-Header: {header_value}"),
+                        }
+                    }
+                    "/post" => TestResponse {
+                        status: 200,
+                        status_text: "OK",
+                        headers: vec![("Content-Type".to_string(), "application/json".to_string())],
+                        body: request.body,
+                    },
+                    _ => TestResponse {
+                        status: 200,
+                        status_text: "OK",
+                        headers: vec![("Content-Type".to_string(), "application/json".to_string())],
+                        body: "{\"ok\":true}".to_string(),
+                    },
+                }
+            }),
+        )
+    }
+
+    fn read_request(stream: &mut TcpStream) -> TestRequest {
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
+        let mut buffer = Vec::new();
+        let mut temp = [0u8; 1024];
+        let mut header_end = None;
+        let mut content_length = 0usize;
+
+        loop {
+            let read = stream.read(&mut temp).expect("read request");
+            if read == 0 {
+                break;
+            }
+            buffer.extend_from_slice(&temp[..read]);
+
+            if header_end.is_none() {
+                if let Some(idx) = find_header_end(&buffer) {
+                    header_end = Some(idx);
+                    let header_text = String::from_utf8_lossy(&buffer[..idx]);
+                    content_length = parse_content_length(&header_text);
+                }
+            }
+
+            if let Some(idx) = header_end {
+                let total_needed = idx + 4 + content_length;
+                if buffer.len() >= total_needed {
+                    break;
+                }
+            }
+        }
+
+        let header_end = header_end.expect("header end");
+        let header_text = String::from_utf8_lossy(&buffer[..header_end]);
+        let mut lines = header_text.split("\r\n");
+        let request_line = lines.next().unwrap_or_default();
+        let mut request_parts = request_line.split_whitespace();
+        let method = request_parts.next().unwrap_or_default().to_string();
+        let path = request_parts.next().unwrap_or_default().to_string();
+
+        let mut headers = HashMap::new();
+        for line in lines {
+            if line.is_empty() {
+                continue;
+            }
+            if let Some((name, value)) = line.split_once(':') {
+                headers.insert(name.trim().to_lowercase(), value.trim().to_string());
+            }
+        }
+
+        let body_start = header_end + 4;
+        let body = if buffer.len() > body_start {
+            String::from_utf8_lossy(&buffer[body_start..]).to_string()
+        } else {
+            String::new()
+        };
+
+        TestRequest {
+            method,
+            path,
+            headers,
+            body,
+        }
+    }
+
+    fn find_header_end(buffer: &[u8]) -> Option<usize> {
+        buffer.windows(4).position(|window| window == b"\r\n\r\n")
+    }
+
+    fn parse_content_length(header_text: &str) -> usize {
+        header_text
+            .lines()
+            .find_map(|line| {
+                let (name, value) = line.split_once(':')?;
+                if name.trim().eq_ignore_ascii_case("content-length") {
+                    value.trim().parse().ok()
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(0)
+    }
+
+    fn write_response(stream: &mut TcpStream, response: TestResponse) {
+        use std::fmt::Write;
+        let body_bytes = response.body.as_bytes();
+        let mut response_text = format!(
+            "HTTP/1.1 {} {}\r\nContent-Length: {}\r\nConnection: close\r\n",
+            response.status,
+            response.status_text,
+            body_bytes.len()
+        );
+        for (name, value) in response.headers {
+            let _ = write!(response_text, "{name}: {value}\r\n");
+        }
+        response_text.push_str("\r\n");
+
+        stream
+            .write_all(response_text.as_bytes())
+            .expect("write response headers");
+        stream.write_all(body_bytes).expect("write response body");
+    }
 
     #[tokio::test]
-    #[ignore = "Flaky: depends on external service (httpbin.org) which intermittently returns 502 errors. Test passes locally but fails in CI due to network/service reliability issues."]
     async fn test_execute_request_get() {
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(1, Arc::clone(&requests)) else {
+            return;
+        };
         let params = RequestParams {
-            url: "https://httpbin.org/get".to_string(),
+            url: format!("{}/get", server.base_url),
             method: "GET".to_string(),
             headers: HashMap::new(),
             body: None,
@@ -527,15 +731,24 @@ mod tests {
         assert_eq!(response.status, 200);
         assert_eq!(response.status_text, "OK");
         assert!(response.timing.total_ms > 0);
+
+        let recorded = requests.lock().expect("lock requests");
+        assert_eq!(recorded.len(), 1);
+        assert_eq!(recorded[0].method, "GET");
+        assert_eq!(recorded[0].path, "/get");
     }
 
     #[tokio::test]
     async fn test_execute_request_post_with_body() {
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(1, Arc::clone(&requests)) else {
+            return;
+        };
         let mut headers = HashMap::new();
         headers.insert("Content-Type".to_string(), "application/json".to_string());
 
         let params = RequestParams {
-            url: "https://httpbin.org/post".to_string(),
+            url: format!("{}/post", server.base_url),
             method: "POST".to_string(),
             headers,
             body: Some(r#"{"test": "data"}"#.to_string()),
@@ -548,15 +761,24 @@ mod tests {
         let response = result.unwrap();
         assert_eq!(response.status, 200);
         assert!(response.body.contains("test"));
+
+        let recorded = requests.lock().expect("lock requests");
+        assert_eq!(recorded.len(), 1);
+        assert_eq!(recorded[0].method, "POST");
+        assert!(recorded[0].body.contains("test"));
     }
 
     #[tokio::test]
     async fn test_execute_request_with_headers() {
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(1, Arc::clone(&requests)) else {
+            return;
+        };
         let mut headers = HashMap::new();
         headers.insert("X-Custom-Header".to_string(), "test-value".to_string());
 
         let params = RequestParams {
-            url: "https://httpbin.org/headers".to_string(),
+            url: format!("{}/headers", server.base_url),
             method: "GET".to_string(),
             headers,
             body: None,
@@ -564,18 +786,20 @@ mod tests {
         };
 
         let result = execute_request(params, None).await;
-        // httpbin.org can be flaky, so check if request succeeded
-        if let Ok(response) = result {
-            // If we got a response (even if 502), verify headers were sent
-            if response.status == 200 {
-                assert!(response.body.contains("X-Custom-Header"));
-            }
-            // If 502, httpbin is down - test still validates request was made with headers
-            // (headers are sent before response, so test still has value)
-        } else {
-            // Request failed entirely - this is a real failure
-            panic!("Request should succeed or return response: {result:?}");
-        }
+        assert!(result.is_ok(), "Request should succeed: {result:?}");
+        let response = result.unwrap();
+        assert_eq!(response.status, 200);
+        assert!(response.body.contains("X-Custom-Header"));
+
+        let recorded = requests.lock().expect("lock requests");
+        assert_eq!(recorded.len(), 1);
+        assert_eq!(
+            recorded[0]
+                .headers
+                .get("x-custom-header")
+                .map(String::as_str),
+            Some("test-value")
+        );
     }
 
     #[tokio::test]
@@ -597,7 +821,7 @@ mod tests {
         // HTTP allows extension methods, so "INVALID" is actually valid
         // Use a method with invalid characters (space) to trigger an error
         let params = RequestParams {
-            url: "https://httpbin.org/get".to_string(),
+            url: "http://127.0.0.1:1/get".to_string(),
             method: "GET POST".to_string(),
             headers: HashMap::new(),
             body: None,
@@ -619,8 +843,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_request_404() {
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(1, Arc::clone(&requests)) else {
+            return;
+        };
         let params = RequestParams {
-            url: "https://httpbin.org/status/404".to_string(),
+            url: format!("{}/status/404", server.base_url),
             method: "GET".to_string(),
             headers: HashMap::new(),
             body: None,
@@ -639,16 +867,24 @@ mod tests {
             "not found",
             "Status text should be 'Not Found' (case-insensitive)"
         );
+
+        let recorded = requests.lock().expect("lock requests");
+        assert_eq!(recorded.len(), 1);
+        assert_eq!(recorded[0].path, "/status/404");
     }
 
     #[tokio::test]
     async fn test_execute_request_different_methods() {
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(3, Arc::clone(&requests)) else {
+            return;
+        };
         let methods = vec!["PUT", "PATCH", "DELETE"];
 
-        for method in methods {
+        for method in &methods {
             let params = RequestParams {
-                url: format!("https://httpbin.org/{}", method.to_lowercase()),
-                method: method.to_string(),
+                url: format!("{}/{}", server.base_url, method.to_lowercase()),
+                method: (*method).to_string(),
                 headers: HashMap::new(),
                 body: None,
                 timeout_ms: 10000,
@@ -661,12 +897,25 @@ mod tests {
             );
             assert_eq!(result.unwrap().status, 200);
         }
+
+        let recorded = requests.lock().expect("lock requests");
+        let recorded_methods: Vec<&str> = recorded.iter().map(|req| req.method.as_str()).collect();
+        for method in &methods {
+            assert!(
+                recorded_methods.contains(method),
+                "Expected method {method} to be recorded"
+            );
+        }
     }
 
     #[tokio::test]
     async fn test_timing_fields_populated() {
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(1, Arc::clone(&requests)) else {
+            return;
+        };
         let params = RequestParams {
-            url: "https://httpbin.org/get".to_string(),
+            url: format!("{}/get", server.base_url),
             method: "GET".to_string(),
             headers: HashMap::new(),
             body: None,
@@ -679,24 +928,18 @@ mod tests {
         let response = result.unwrap();
         let timing = &response.timing;
 
-        // All timing fields should be populated for HTTPS request
+        // Timing fields should be populated for HTTP request
         assert!(timing.total_ms > 0, "total_ms should be positive");
-        assert!(timing.dns_ms.is_some(), "dns_ms should be populated");
         assert!(
             timing.connect_ms.is_some(),
             "connect_ms should be populated"
         );
-        assert!(timing.tls_ms.is_some(), "tls_ms should be populated");
         assert!(
             timing.first_byte_ms.is_some(),
             "first_byte_ms should be populated"
         );
 
-        // TLS time should be > 0 for HTTPS
-        assert!(
-            timing.tls_ms.unwrap() > 0,
-            "tls_ms should be positive for HTTPS"
-        );
+        assert_eq!(timing.tls_ms, Some(0), "tls_ms should be 0 for HTTP");
 
         // First byte should be before or equal to total
         assert!(
@@ -708,8 +951,12 @@ mod tests {
     #[tokio::test]
     async fn test_http_no_tls_time() {
         // HTTP (not HTTPS) should have tls_ms = 0
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(1, Arc::clone(&requests)) else {
+            return;
+        };
         let params = RequestParams {
-            url: "http://httpbin.org/get".to_string(),
+            url: format!("{}/get", server.base_url),
             method: "GET".to_string(),
             headers: HashMap::new(),
             body: None,
@@ -729,8 +976,12 @@ mod tests {
     #[tokio::test]
     async fn test_timing_debug_log() {
         // Debug test to see what curl is actually returning
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let Some(server) = start_http_test_server(1, Arc::clone(&requests)) else {
+            return;
+        };
         let params = RequestParams {
-            url: "https://httpbin.org/get".to_string(),
+            url: format!("{}/get", server.base_url),
             method: "GET".to_string(),
             headers: HashMap::new(),
             body: None,

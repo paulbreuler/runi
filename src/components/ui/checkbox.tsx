@@ -9,14 +9,14 @@ import { motion, type Variant } from 'motion/react';
 import { Check, Minus } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 const checkboxVariants = cva(
   // Base styles - matching existing checkbox pattern in the codebase
   [
+    focusRingClasses,
     'peer shrink-0 rounded border-2 flex items-center justify-center',
     'transition-colors duration-200',
-    'outline-none',
-    'focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app',
     'disabled:cursor-not-allowed disabled:opacity-50',
     // Default unchecked state
     'border-border-default hover:border-border-emphasis',

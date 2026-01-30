@@ -207,7 +207,7 @@ export const ResponsePanel = ({
             mode="display"
             code={formattedBody}
             language={language}
-            variant="borderless"
+            variant="contained"
             className="flex-1"
           />
         )}

@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 import { ActionBarContext, type ActionBarVariant } from './ActionBarContext';
 
 interface ActionBarProps {
@@ -160,6 +161,7 @@ export const ActionBar = ({
           'flex items-center py-1.5 border-b border-border-subtle bg-bg-raised/30 shrink-0 relative',
           className
         )}
+        style={{ zIndex: OVERLAY_Z_INDEX }}
         role="toolbar"
         aria-label={ariaLabel}
       >

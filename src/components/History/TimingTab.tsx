@@ -65,28 +65,37 @@ export const TimingTab = ({
   // Blocked state takes precedence
   if (isBlocked) {
     return (
-      <section aria-label="Timing" role="region" className="space-y-4">
-        <div
-          data-testid="blocked-message"
-          role="alert"
-          className={cn(
-            'p-4 rounded-lg border text-center',
-            'bg-signal-error/10 border-signal-error/30'
-          )}
-        >
-          <span className="font-semibold text-signal-error">⊘ Request Blocked</span>
-          <p className="mt-2 text-sm text-text-secondary">
-            This request was blocked by a filter rule
-          </p>
-        </div>
-      </section>
+      <div
+        className="bg-bg-raised rounded border border-border-default p-4"
+        data-testid="timing-tab-container"
+      >
+        <section aria-label="Timing" role="region" className="space-y-4">
+          <div
+            data-testid="blocked-message"
+            role="alert"
+            className={cn(
+              'p-4 rounded-lg border text-center',
+              'bg-signal-error/10 border-signal-error/30'
+            )}
+          >
+            <span className="font-semibold text-signal-error">⊘ Request Blocked</span>
+            <p className="mt-2 text-sm text-text-secondary">
+              This request was blocked by a filter rule
+            </p>
+          </div>
+        </section>
+      </div>
     );
   }
 
   const showIntelligence = hasIntelligenceSignals(intelligence);
 
   return (
-    <section aria-label="Timing" role="region" className="space-y-5">
+    <section
+      aria-label="Timing"
+      role="region"
+      className={cn('space-y-5', 'bg-bg-raised rounded border border-border-default p-4')}
+    >
       {/* Header with streaming indicator and total time */}
       <div className="flex justify-between items-center">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">

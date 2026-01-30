@@ -113,15 +113,13 @@ describe('ResponsePanel', () => {
     expect(screen.getByText(/no response body/i)).toBeInTheDocument();
   });
 
-  it('uses borderless variant for CodeSnippet to match ResponseViewer body tab', () => {
+  it('uses contained variant for code box to match headers and code gen areas', () => {
     render(<ResponsePanel requestBody={mockRequestBody} responseBody={mockResponseBody} />);
 
     const codeBox = screen.getByTestId('code-box');
-    const innerBox =
-      codeBox.querySelector('[data-language]') ?? codeBox.querySelector('div:last-child');
-    // Borderless variant should not have container styling (matches ResponseViewer body tab)
-    expect(innerBox).not.toHaveClass('bg-bg-raised');
-    expect(innerBox).not.toHaveClass('border');
+    // Contained variant has raised background and border (matches Headers and CodeGen tabs)
+    expect(codeBox).toHaveClass('bg-bg-raised');
+    expect(codeBox).toHaveClass('border');
   });
 
   it('formats body the same way as ResponseViewer body tab (only format JSON if detected as JSON)', () => {

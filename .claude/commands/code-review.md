@@ -8,6 +8,7 @@ Perform a comprehensive code review following runi's quality standards and best 
 - Never run destructive or irreversible commands.
 - Do not paste secrets, tokens, or credentials into outputs.
 - If any automated checks are skipped or fail to run, say so explicitly.
+- Follow repo guidance in `CLAUDE.md` (canonical; do not reference AGENTS.md).
 
 ## Skills Integration
 

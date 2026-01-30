@@ -363,7 +363,7 @@ When creating or updating components:
 
 ### Focus Ring Standard
 
-All interactive elements must use consistent focus ring styling:
+All interactive elements must use consistent focus ring styling. Use `focusRingClasses` from `@/utils/accessibility` for all interactive focus indicators (2px ring, accent-blue, 2px offset, ring-offset-bg-app); use `focusWithVisibility()` for programmatic focus.
 
 - **Color**: `accent-blue` (aligns with design system: "Blue—action, selection, focus")
 - **Width**: `2px` (`ring-2`)

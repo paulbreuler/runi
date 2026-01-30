@@ -157,6 +157,10 @@ These patterns apply when working in the React frontend.
 - Layout components should accept children, not hardcode structure
 - Use composition to build complex UIs from simple, reusable pieces
 
+### Focus Ring Standard
+
+- Use `focusRingClasses` from `@/utils/accessibility` for all interactive focus indicators (2px ring, accent-blue, 2px offset, ring-offset-bg-app); use `focusWithVisibility()` for programmatic focus. Document any design exception (e.g. composite bar) if a component does not use the standard ring.
+
 ---
 
 ## Backend Patterns (Rust/Tauri in `src-tauri/`)

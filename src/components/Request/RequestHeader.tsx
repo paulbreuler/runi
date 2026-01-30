@@ -139,7 +139,7 @@ export const RequestHeader = ({
           data-testid="url-input"
           disabled={loading}
           aria-label="Request URL"
-          className="flex-1 h-8 border-0 rounded-none bg-transparent focus-visible:ring-0 text-text-secondary placeholder:text-text-muted"
+          className="flex-1 h-8 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted"
         />
 
         {/* Send button - appears as suffix with fixed width to prevent layout shift */}

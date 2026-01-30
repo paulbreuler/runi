@@ -434,7 +434,7 @@ export const DockablePanel = ({
   // Get resizer position classes
   const getResizerClasses = (): string => {
     // When collapsed, resizer is part of the unified tray - no independent hover
-    // z-30 ensures resizer is above header (z-20) so it can receive pointer events
+    // z-30 ensures resizer is above header so it can receive pointer events
     const base = cn(
       'absolute z-30 bg-transparent',
       !isCollapsed && 'hover:bg-border-default/50',
@@ -482,7 +482,7 @@ export const DockablePanel = ({
     <AnimatePresence>
       <motion.div
         ref={panelRef}
-        data-test-id="dockable-panel"
+        data-testid="dockable-panel"
         className={cn(
           getPanelClasses(),
           isCollapsed && 'overflow-visible',
@@ -498,7 +498,7 @@ export const DockablePanel = ({
       >
         {/* Resize handle */}
         <div
-          data-test-id="panel-resizer"
+          data-testid="panel-resizer"
           className={getResizerClasses()}
           role="separator"
           aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
@@ -531,7 +531,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for bottom dock */}
         {isCollapsed && position === 'bottom' && (
           <motion.div
-            data-test-id="panel-collapsed-edge"
+            data-testid="panel-collapsed-edge"
             className={cn(
               'absolute inset-x-0 top-0 h-full',
               'border-t border-border-default',
@@ -575,7 +575,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for left dock */}
         {isCollapsed && position === 'left' && (
           <motion.div
-            data-test-id="panel-collapsed-edge"
+            data-testid="panel-collapsed-edge"
             className={cn(
               'absolute inset-y-0 left-0 w-full',
               'border-r border-border-default',
@@ -624,7 +624,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for right dock */}
         {isCollapsed && position === 'right' && (
           <motion.div
-            data-test-id="panel-collapsed-edge"
+            data-testid="panel-collapsed-edge"
             className={cn(
               'absolute inset-y-0 right-0 w-full',
               'border-l border-border-default',
@@ -670,19 +670,22 @@ export const DockablePanel = ({
           </motion.div>
         )}
 
-        {/* Expanded state - full header + content */}
+        {/* Expanded state - full header + content (container for @container queries) */}
         {!isCollapsed && (
-          <>
+          <div
+            className="flex flex-col flex-1 min-h-0 min-w-0 @container [container-name:panel]"
+            data-testid="panel-expanded-container"
+          >
             {/* Panel header */}
             <div
-              data-test-id="panel-header"
-              className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative z-20"
+              data-testid="panel-header"
+              className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative"
             >
               {/* Scrollable header content */}
               <ScrollArea.Root className="flex-1 min-w-0">
                 <ScrollArea.Viewport
                   ref={headerScrollRef}
-                  className="scroll-area-viewport flex items-center gap-2 min-w-max h-full touch-pan-x"
+                  className="scroll-area-viewport flex items-center gap-2 min-w-max h-full touch-pan-x overflow-x-auto overflow-y-hidden"
                   aria-label="Panel header content"
                 >
                   <ScrollArea.Content className="flex items-center gap-2 min-w-max">
@@ -705,7 +708,7 @@ export const DockablePanel = ({
               {showOverflowCue && canScrollLeft && (
                 <motion.div
                   className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
-                  data-test-id="panel-header-overflow-left"
+                  data-testid="panel-header-overflow-left"
                   initial={false}
                   animate={getOverflowAnimation('left')}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -714,7 +717,7 @@ export const DockablePanel = ({
               {showOverflowCue && canScrollRight && (
                 <motion.div
                   className="pointer-events-none absolute inset-y-0 right-[84px] w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
-                  data-test-id="panel-header-overflow-right"
+                  data-testid="panel-header-overflow-right"
                   initial={false}
                   animate={getOverflowAnimation('right')}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -749,10 +752,10 @@ export const DockablePanel = ({
             </div>
 
             {/* Panel content - children handle their own scrolling (e.g., VirtualDataGrid) */}
-            <div className="flex-1 min-h-0 overflow-hidden" data-test-id="panel-content-area">
+            <div className="flex-1 min-h-0 overflow-hidden" data-testid="panel-content">
               {children}
             </div>
-          </>
+          </div>
         )}
       </motion.div>
     </AnimatePresence>

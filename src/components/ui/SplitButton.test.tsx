@@ -343,7 +343,10 @@ describe('SplitButton', () => {
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
 
       await user.click(trigger);
-      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      // Base UI updates aria-expanded asynchronously
+      await waitFor(() => {
+        expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      });
     });
 
     it('supports custom dropdown aria-label', () => {

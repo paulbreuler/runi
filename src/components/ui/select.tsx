@@ -7,6 +7,8 @@ import * as React from 'react';
 import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 const Select = SelectPrimitive.Root;
 
@@ -36,7 +38,8 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     {...(dataTestId !== undefined && { 'data-testid': dataTestId })}
     className={cn(
-      'border border-border-subtle data-[placeholder]:text-text-muted flex h-9 w-fit items-center justify-between gap-2 rounded-lg bg-bg-surface px-3 py-2 text-sm transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:cursor-not-allowed disabled:opacity-50 hover:bg-bg-raised hover:border-border-default [&>span]:line-clamp-1',
+      focusRingClasses,
+      'border border-border-subtle data-[placeholder]:text-text-muted flex h-9 w-fit items-center justify-between gap-2 rounded-lg bg-bg-surface px-3 py-2 text-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-bg-raised hover:border-border-default [&>span]:line-clamp-1',
       className
     )}
     {...props}
@@ -85,28 +88,42 @@ const SelectContent = React.forwardRef<
   }
 >(({ className, children, position = 'popper', 'data-testid': dataTestId, ...props }, ref) => (
   <SelectPrimitive.Portal>
-    <SelectPrimitive.Positioner
-      alignItemWithTrigger={position === 'item-aligned'}
-      sideOffset={8}
-      className={cn(
-        position === 'popper' &&
-          'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1'
-      )}
+    {/* Fixed overlay ensures dropdown stacks above sticky/pinned columns (viewport stacking) */}
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: OVERLAY_Z_INDEX,
+        pointerEvents: 'none',
+      }}
     >
-      <SelectPrimitive.Popup
-        ref={ref}
-        {...(dataTestId !== undefined && { 'data-testid': dataTestId })}
-        className={cn(
-          'bg-bg-surface text-text-primary relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-border-default shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-end-2 data-[side=right]:slide-in-from-start-2 data-[side=top]:slide-in-from-bottom-2',
-          className
-        )}
-        {...props}
-      >
-        <SelectScrollUpButton />
-        <SelectPrimitive.List className="p-1">{children}</SelectPrimitive.List>
-        <SelectScrollDownButton />
-      </SelectPrimitive.Popup>
-    </SelectPrimitive.Positioner>
+      {/* Restore pointer events for the dropdown so it remains interactive */}
+      <div style={{ pointerEvents: 'auto' }}>
+        <SelectPrimitive.Positioner
+          alignItemWithTrigger={position === 'item-aligned'}
+          sideOffset={8}
+          className={cn(
+            position === 'popper' &&
+              'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1'
+          )}
+        >
+          <SelectPrimitive.Popup
+            ref={ref}
+            {...(dataTestId !== undefined && { 'data-testid': dataTestId })}
+            style={{ zIndex: OVERLAY_Z_INDEX }}
+            className={cn(
+              'bg-bg-surface text-text-primary relative max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-border-default shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-end-2 data-[side=right]:slide-in-from-start-2 data-[side=top]:slide-in-from-bottom-2',
+              className
+            )}
+            {...props}
+          >
+            <SelectScrollUpButton />
+            <SelectPrimitive.List className="p-1">{children}</SelectPrimitive.List>
+            <SelectScrollDownButton />
+          </SelectPrimitive.Popup>
+        </SelectPrimitive.Positioner>
+      </div>
+    </div>
   </SelectPrimitive.Portal>
 ));
 SelectContent.displayName = 'SelectContent';

@@ -166,7 +166,8 @@ describe('DataPanelHeader', () => {
       );
 
       const checkbox = screen.getByRole('checkbox', { name: /select all/i });
-      expect(checkbox).toHaveAttribute('data-state', 'indeterminate');
+      // Base UI uses data-indeterminate attribute instead of data-state
+      expect(checkbox).toHaveAttribute('data-indeterminate');
     });
 
     it('calls onSelectAllChange with true when checkbox is clicked (unchecked)', () => {

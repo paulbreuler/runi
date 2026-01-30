@@ -8,6 +8,8 @@ import { Menu } from '@base-ui/react/menu';
 import { ChevronDown } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 import { Button } from '@/components/ui/button';
 
 interface SplitButtonMenuItem {
@@ -26,7 +28,7 @@ interface SplitButtonSeparator {
 type SplitButtonItem = SplitButtonMenuItem | SplitButtonSeparator;
 
 const _splitButtonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50',
+  `${focusRingClasses} inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50`,
   {
     variants: {
       variant: {
@@ -217,42 +219,57 @@ export const SplitButton = ({
         />
 
         <Menu.Portal>
-          <Menu.Positioner sideOffset={4} align="end">
-            <Menu.Popup className="z-50 min-w-[140px] bg-bg-surface border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95">
-              {items.map((item, index) => {
-                if (!isMenuItemGuard(item)) {
-                  return (
-                    <Menu.Separator
-                      key={`separator-${String(index)}`}
-                      className="h-px bg-border-subtle my-1"
-                    />
-                  );
-                }
+          {/* Fixed overlay ensures dropdown stacks above sticky/pinned columns */}
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: OVERLAY_Z_INDEX,
+              pointerEvents: 'none',
+            }}
+          >
+            <div style={{ pointerEvents: 'auto' }}>
+              <Menu.Positioner sideOffset={4} align="end">
+                <Menu.Popup
+                  style={{ zIndex: OVERLAY_Z_INDEX }}
+                  className="min-w-[140px] bg-bg-surface border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95"
+                >
+                  {items.map((item, index) => {
+                    if (!isMenuItemGuard(item)) {
+                      return (
+                        <Menu.Separator
+                          key={`separator-${String(index)}`}
+                          className="h-px bg-border-subtle my-1"
+                        />
+                      );
+                    }
 
-                return (
-                  <Menu.Item
-                    key={item.id}
-                    label={item.label}
-                    className={cn(
-                      'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
-                      item.destructive === true
-                        ? 'text-signal-error hover:bg-signal-error/10 focus:bg-signal-error/10'
-                        : 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus:bg-bg-raised focus:text-text-primary',
-                      item.disabled === true && 'opacity-50 cursor-not-allowed'
-                    )}
-                    disabled={item.disabled}
-                    onClick={() => {
-                      handleItemClick(item);
-                    }}
-                    closeOnClick={true}
-                  >
-                    {item.icon !== undefined && <span className="shrink-0">{item.icon}</span>}
-                    <span>{item.label}</span>
-                  </Menu.Item>
-                );
-              })}
-            </Menu.Popup>
-          </Menu.Positioner>
+                    return (
+                      <Menu.Item
+                        key={item.id}
+                        label={item.label}
+                        className={cn(
+                          'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                          item.destructive === true
+                            ? 'text-signal-error hover:bg-signal-error/10 focus:bg-signal-error/10'
+                            : 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus:bg-bg-raised focus:text-text-primary',
+                          item.disabled === true && 'opacity-50 cursor-not-allowed'
+                        )}
+                        disabled={item.disabled}
+                        onClick={() => {
+                          handleItemClick(item);
+                        }}
+                        closeOnClick={true}
+                      >
+                        {item.icon !== undefined && <span className="shrink-0">{item.icon}</span>}
+                        <span>{item.label}</span>
+                      </Menu.Item>
+                    );
+                  })}
+                </Menu.Popup>
+              </Menu.Positioner>
+            </div>
+          </div>
         </Menu.Portal>
       </Menu.Root>
     </div>

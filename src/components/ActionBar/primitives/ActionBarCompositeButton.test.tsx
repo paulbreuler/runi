@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { Download, Save } from 'lucide-react';
@@ -58,8 +58,10 @@ describe('ActionBarCompositeButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'More options' }));
 
-    // Check dropdown menu appears
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    // Check dropdown menu appears - Base UI may open asynchronously
+    await waitFor(() => {
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
     expect(screen.getByRole('menuitem', { name: 'Save Selected' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Save All' })).toBeInTheDocument();
   });
@@ -74,6 +76,10 @@ describe('ActionBarCompositeButton', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'More options' }));
+    // Wait for menu to appear
+    await waitFor(() => {
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
     await userEvent.click(screen.getByRole('menuitem', { name: 'Save All' }));
 
     expect(handleSaveAll).toHaveBeenCalledTimes(1);
@@ -83,16 +89,20 @@ describe('ActionBarCompositeButton', () => {
     render(<ActionBarCompositeButton primary={defaultPrimary} options={defaultOptions} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'More options' }));
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
 
     await userEvent.click(screen.getByRole('menuitem', { name: 'Save All' }));
 
     // Menu should close
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
   });
 
   it('closes dropdown when clicking outside', async () => {
-    // Skip pointer events check due to Radix UI portal overlay
+    // Skip pointer events check due to Base UI portal overlay
     const user = userEvent.setup({ pointerEventsCheck: 0 });
 
     render(
@@ -103,24 +113,32 @@ describe('ActionBarCompositeButton', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'More options' }));
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
 
     await user.click(screen.getByTestId('outside'));
 
     // Menu should close
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
   });
 
   it('closes dropdown when escape is pressed', async () => {
     render(<ActionBarCompositeButton primary={defaultPrimary} options={defaultOptions} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'More options' }));
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
 
     await userEvent.keyboard('{Escape}');
 
     // Menu should close
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
   });
 
   it('renders only icon button in icon mode', () => {
@@ -176,6 +194,9 @@ describe('ActionBarCompositeButton', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'More options' }));
+    await waitFor(() => {
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
 
     // Click disabled option
     await userEvent.click(screen.getByRole('menuitem', { name: 'Disabled' }));

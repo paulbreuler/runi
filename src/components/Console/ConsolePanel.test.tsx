@@ -870,15 +870,18 @@ describe('ConsolePanel', () => {
     // Click to expand
     fireEvent.click(chevronButton!);
 
-    // Wait for args to appear
+    const getArgsText = (): string =>
+      screen
+        .queryAllByTestId('code-box')
+        .map((box) => box.textContent || '')
+        .join(' ');
+
+    // Wait for args to appear in CodeSnippet (syntax highlighted)
     await waitFor(() => {
-      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+      expect(getArgsText()).toMatch(/connection timeout/i);
     }, WAIT_TIMEOUT);
 
-    // Verify args are displayed - text is now in CodeSnippet with syntax highlighting
-    // Check text content in code-box containers
-    const codeBoxes = screen.getAllByTestId('code-box');
-    const allText = codeBoxes.map((box) => box.textContent || '').join(' ');
+    const allText = getArgsText();
     expect(allText).toMatch(/connection timeout/i);
     expect(allText).toMatch(/"code":\s*500/i);
   });
@@ -916,9 +919,15 @@ describe('ConsolePanel', () => {
     expect(chevronButton).toBeInTheDocument();
     fireEvent.click(chevronButton!);
 
+    const getArgsText = (): string =>
+      screen
+        .queryAllByTestId('code-box')
+        .map((box) => box.textContent || '')
+        .join(' ');
+
     // Wait for args to appear
     await waitFor(() => {
-      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+      expect(getArgsText()).toMatch(/connection timeout/i);
     }, WAIT_TIMEOUT);
 
     // Click again to collapse
@@ -926,7 +935,7 @@ describe('ConsolePanel', () => {
 
     // Wait for args to disappear
     await waitFor(() => {
-      expect(screen.queryByText(/connection timeout/i)).not.toBeInTheDocument();
+      expect(getArgsText()).not.toMatch(/connection timeout/i);
     }, WAIT_TIMEOUT);
   });
 
@@ -1354,7 +1363,7 @@ describe('ConsolePanel', () => {
       // Initially not selected - use role="checkbox" for Radix Checkbox
       const checkbox = logEntry.querySelector('[role="checkbox"]');
       expect(checkbox).toBeInTheDocument();
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      expect(checkbox).not.toHaveAttribute('data-checked');
 
       // Click the row (not the checkbox)
       fireEvent.click(logEntry);
@@ -1363,7 +1372,7 @@ describe('ConsolePanel', () => {
       await waitFor(() => {
         const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
         expect(updatedCheckbox).toBeInTheDocument();
-        expect(updatedCheckbox).toHaveAttribute('data-state', 'checked');
+        expect(updatedCheckbox).toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
 
       // Click the row again to deselect
@@ -1373,7 +1382,7 @@ describe('ConsolePanel', () => {
       await waitFor(() => {
         const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
         expect(updatedCheckbox).toBeInTheDocument();
-        expect(updatedCheckbox).toHaveAttribute('data-state', 'unchecked');
+        expect(updatedCheckbox).not.toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
     });
 
@@ -1406,9 +1415,9 @@ describe('ConsolePanel', () => {
       // Click the checkbox directly
       fireEvent.click(checkbox);
 
-      // Should be selected (Radix Checkbox uses data-state attribute)
+      // Should be selected (Base UI Checkbox uses data-checked attribute)
       await waitFor(() => {
-        expect(checkbox).toHaveAttribute('data-state', 'checked');
+        expect(checkbox).toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
 
       // Click checkbox again
@@ -1416,7 +1425,7 @@ describe('ConsolePanel', () => {
 
       // Should be deselected
       await waitFor(() => {
-        expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+        expect(checkbox).not.toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
     });
 
@@ -1449,7 +1458,7 @@ describe('ConsolePanel', () => {
 
       // Initially not selected (use role="checkbox" for Radix Checkbox)
       const checkbox = logEntry.querySelector('[role="checkbox"]');
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      expect(checkbox).not.toHaveAttribute('data-checked');
 
       // Click the expand button
       if (expandButton !== undefined) {
@@ -1459,7 +1468,7 @@ describe('ConsolePanel', () => {
       // Should still not be selected (expand button doesn't trigger selection)
       const stillUnselectedCheckbox = logEntry.querySelector('[role="checkbox"]');
       expect(stillUnselectedCheckbox).toBeInTheDocument();
-      expect(stillUnselectedCheckbox).toHaveAttribute('data-state', 'unchecked');
+      expect(stillUnselectedCheckbox).not.toHaveAttribute('data-checked');
     });
   });
 

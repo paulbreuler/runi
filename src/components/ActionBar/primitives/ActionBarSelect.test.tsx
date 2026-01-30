@@ -3,15 +3,20 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { Code } from 'lucide-react';
 import { ActionBarSelect } from '../ActionBarSelect';
 
-// Mock scrollIntoView for Radix Select (not available in jsdom)
+// Mock scrollIntoView for Base UI Select (not available in jsdom)
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
+});
+
+// Ensure proper cleanup between tests to avoid portal leakage
+afterEach(() => {
+  cleanup();
 });
 
 describe('ActionBarSelect', () => {
@@ -63,7 +68,8 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('combobox', { name: 'Select method' }));
+    const trigger = screen.getByRole('combobox', { name: 'Select method' });
+    await userEvent.click(trigger);
 
     // Wait for popup to open and options to be visible
     await waitFor(
@@ -73,6 +79,9 @@ describe('ActionBarSelect', () => {
       },
       { timeout: 2000 }
     );
+
+    // Close the dropdown by pressing Escape to ensure clean state for next test
+    await userEvent.keyboard('{Escape}');
   });
 
   it('calls onValueChange when option is selected', async () => {
@@ -87,11 +96,17 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('combobox', { name: 'Select method' }));
-    await userEvent.click(screen.getByRole('option', { name: 'POST' }));
+    const trigger = screen.getByRole('combobox', { name: 'Select method' });
+    await userEvent.click(trigger);
 
-    // Base UI onValueChange passes (value, eventDetails)
-    expect(handleChange).toHaveBeenCalled();
+    // Wait for options to be visible before clicking
+    const postOption = await screen.findByRole('option', { name: 'POST' });
+    await userEvent.click(postOption);
+
+    // Base UI onValueChange passes (value, eventDetails) - wait for async callback
+    await waitFor(() => {
+      expect(handleChange).toHaveBeenCalled();
+    });
     expect(handleChange).toHaveBeenNthCalledWith(1, 'POST', expect.anything());
   });
 

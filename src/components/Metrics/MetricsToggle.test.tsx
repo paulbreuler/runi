@@ -20,12 +20,15 @@ describe('MetricsToggle', () => {
 
   it('calls onChange when toggle changes', async () => {
     const user = userEvent.setup();
-    render(<MetricsToggle checked={false} onChange={mockOnChange} label="Enable metrics" />);
+    const onChange = vi.fn();
+    render(<MetricsToggle checked={false} onChange={onChange} label="Enable metrics" />);
 
     const toggle = screen.getByTestId('switch');
     await user.click(toggle);
 
-    expect(mockOnChange).toHaveBeenCalledWith(true);
+    // Base UI Switch passes (checked, eventDetails)
+    expect(onChange).toHaveBeenCalled();
+    expect(onChange.mock.calls[0]?.[0]).toBe(true);
   });
 
   it('prevents dialog close with stopPropagation', async () => {

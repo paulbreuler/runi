@@ -7,6 +7,7 @@ import * as React from 'react';
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch';
 import { motion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 export interface SwitchProps extends Omit<
   React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>,
@@ -47,8 +48,8 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
             {...rootProps}
             ref={ref}
             className={cn(
-              'relative flex h-[18px] w-[32px] cursor-pointer items-center rounded-full p-[2px] outline-none',
-              'focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app',
+              focusRingClasses,
+              'relative flex h-[18px] w-[32px] cursor-pointer items-center rounded-full p-[2px]',
               className
             )}
             style={{
