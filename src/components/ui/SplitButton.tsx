@@ -232,7 +232,7 @@ export const SplitButton = ({
               <Menu.Positioner sideOffset={4} align="end">
                 <Menu.Popup
                   style={{ zIndex: OVERLAY_Z_INDEX }}
-                  className="min-w-[140px] bg-bg-surface border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95"
+                  className="min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95"
                 >
                   {items.map((item, index) => {
                     if (!isMenuItemGuard(item)) {

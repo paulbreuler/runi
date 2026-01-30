@@ -65,7 +65,7 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentPro
         <BaseUIPopover.Popup
           ref={ref}
           className={cn(
-            'z-50 w-72 rounded-md border border-border-default bg-bg-surface p-4 shadow-lg',
+            'z-50 w-72 rounded-md border border-border-default bg-bg-elevated p-4 shadow-lg',
             'outline-none',
             'focus-within:ring-2 focus-within:ring-accent-blue focus-within:ring-offset-2 focus-within:ring-offset-bg-app',
             'animate-in fade-in-0 zoom-in-95',

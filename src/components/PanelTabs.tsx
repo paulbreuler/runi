@@ -113,7 +113,7 @@ export const PanelTabs = ({
                   <Network size={12} />
                   <span>Network</span>
                   {networkCount > 0 && (
-                    <span className="px-1 py-0.5 text-[10px] bg-bg-elevated rounded">
+                    <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
                       {networkCount}
                     </span>
                   )}
@@ -164,7 +164,7 @@ export const PanelTabs = ({
                   <Terminal size={12} />
                   <span>Console</span>
                   {consoleCount > 0 && (
-                    <span className="px-1 py-0.5 text-[10px] bg-bg-elevated rounded">
+                    <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
                       {consoleCount}
                     </span>
                   )}

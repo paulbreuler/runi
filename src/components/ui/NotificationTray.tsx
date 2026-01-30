@@ -127,7 +127,7 @@ export const NotificationTray: React.FC<NotificationTrayProps> = ({
             exit="hidden"
             transition={contentTransition}
             className={cn(
-              'bg-bg-surface border border-border-default rounded-t-lg shadow-lg pointer-events-auto',
+              'bg-bg-elevated border border-border-default rounded-t-lg shadow-lg pointer-events-auto',
               'w-[320px] relative'
             )}
             data-testid={`${testId}-panel`}

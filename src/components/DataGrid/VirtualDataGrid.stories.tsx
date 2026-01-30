@@ -215,10 +215,10 @@ const createTestColumns = (): Array<ColumnDef<TestRow>> => [
     header: 'Actions',
     cell: () => (
       <div className="flex gap-1">
-        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-elevated rounded">
+        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded">
           Edit
         </button>
-        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-elevated rounded">
+        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded">
           Delete
         </button>
       </div>
@@ -394,7 +394,7 @@ export const Playground: Story = {
                             {metadata.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="px-2 py-1 text-xs bg-bg-elevated rounded border border-border-default"
+                                className="px-2 py-1 text-xs bg-bg-raised rounded border border-border-default"
                               >
                                 {tag}
                               </span>

@@ -834,7 +834,7 @@ export const ConsolePanel = ({
           {isExpanded && (
             <tr key={`${row.id}-expanded`}>
               <td colSpan={columns.length} className="p-0">
-                <ExpandedContent innerClassName="mt-0.5 space-y-0.5 border-l border-border-default pl-2">
+                <ExpandedContent innerClassName="bg-bg-surface border-t border-border-subtle mt-0.5 space-y-0.5 border-l border-border-default pl-2">
                   {isGrouped ? (
                     <>
                       {/* Args content (grouped logs show args once) */}
