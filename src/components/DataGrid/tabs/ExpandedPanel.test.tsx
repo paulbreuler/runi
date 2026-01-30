@@ -34,7 +34,7 @@ vi.mock('@base-ui/react/tabs', () => ({
       mockOnValueChange = onValueChange;
       mockCurrentValue = value;
       return (
-        <div data-testid="tabs-root" data-value={value} {...props}>
+        <div data-test-id="tabs-root" data-value={value} {...props}>
           {children}
         </div>
       );
@@ -46,7 +46,7 @@ vi.mock('@base-ui/react/tabs', () => ({
       children?: React.ReactNode;
       [key: string]: unknown;
     }): React.JSX.Element => (
-      <div data-testid="tabs-list" {...props}>
+      <div data-test-id="tabs-list" {...props}>
         {children}
       </div>
     ),
@@ -69,7 +69,7 @@ vi.mock('@base-ui/react/tabs', () => ({
         const tabProps = {
           ...props,
           onClick: handleClick,
-          'data-testid': `tab-${value ?? 'unknown'}`,
+          'data-test-id': `tab-${value ?? 'unknown'}`,
           'data-value': value,
           role: 'tab',
           'aria-selected': value === mockCurrentValue ? 'true' : 'false',
@@ -79,7 +79,7 @@ vi.mock('@base-ui/react/tabs', () => ({
 
       return (
         <div
-          data-testid={`tab-${value ?? 'unknown'}`}
+          data-test-id={`tab-${value ?? 'unknown'}`}
           data-value={value}
           role="tab"
           aria-selected={value === mockCurrentValue ? 'true' : 'false'}
@@ -100,7 +100,7 @@ vi.mock('@base-ui/react/tabs', () => ({
       [key: string]: unknown;
     }): React.JSX.Element => (
       <div
-        data-testid={`tab-content-${value ?? 'unknown'}`}
+        data-test-id={`tab-content-${value ?? 'unknown'}`}
         data-value={value ?? 'unknown'}
         {...props}
       >
@@ -141,7 +141,7 @@ describe('ExpandedPanel', () => {
       const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
       // Get tabs from the expanded tabs list (top-level navigation)
-      const tabsList = container.querySelector('[data-testid="expanded-tabs-list"]');
+      const tabsList = container.querySelector('[data-test-id="expanded-tabs-list"]');
       expect(tabsList).toBeInTheDocument();
       const tabs = tabsList?.querySelectorAll('[role="tab"]') ?? [];
 
@@ -159,7 +159,7 @@ describe('ExpandedPanel', () => {
     it('Timing tab is active by default', () => {
       const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
-      const tabsRoot = container.querySelector('[data-testid="tabs-root"]');
+      const tabsRoot = container.querySelector('[data-test-id="tabs-root"]');
       expect(tabsRoot).toBeInTheDocument();
       expect(tabsRoot).toHaveAttribute('data-value', 'timing');
     });
@@ -170,14 +170,14 @@ describe('ExpandedPanel', () => {
 
       const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
-      // Find the Response tab button by data-testid
-      const responseTab = container.querySelector('[data-testid="tab-response"]');
+      // Find the Response tab button by data-test-id
+      const responseTab = container.querySelector('[data-test-id="tab-response"]');
       expect(responseTab).toBeInTheDocument();
       if (responseTab) {
         await user.click(responseTab);
       }
 
-      const tabsRoot = container.querySelector('[data-testid="tabs-root"]');
+      const tabsRoot = container.querySelector('[data-test-id="tabs-root"]');
       expect(tabsRoot).toBeInTheDocument();
       expect(tabsRoot).toHaveAttribute('data-value', 'response');
     });
@@ -185,8 +185,8 @@ describe('ExpandedPanel', () => {
     it('highlights active tab', () => {
       const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
-      // Find the Timing tab button by data-testid
-      const timingTab = container.querySelector('[data-testid="tab-timing"]');
+      // Find the Timing tab button by data-test-id
+      const timingTab = container.querySelector('[data-test-id="tab-timing"]');
       expect(timingTab).toBeInTheDocument();
       // Active tab should have text-text-primary class
       expect(timingTab).toHaveClass('text-text-primary');

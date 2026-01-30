@@ -97,11 +97,11 @@ describe('PanelTabs keyboard (integration)', () => {
     const user = userEvent.setup();
     render(
       <div>
-        <button type="button" data-testid="before">
+        <button type="button" data-test-id="before">
           Before
         </button>
         <PanelTabs activeTab="network" onTabChange={onTabChange} />
-        <button type="button" data-testid="after">
+        <button type="button" data-test-id="after">
           After
         </button>
       </div>

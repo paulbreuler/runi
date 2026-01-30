@@ -44,7 +44,7 @@ export const TLSPanel = ({
   const hasCertificate = certificate !== null && certificate !== undefined;
 
   return (
-    <div data-testid="tls-panel" className={cn('flex flex-col h-full', className)}>
+    <div data-test-id="tls-panel" className={cn('flex flex-col h-full', className)}>
       {hasCertificate ? (
         <div className="flex-1 overflow-auto" style={{ scrollbarGutter: 'stable' }}>
           {/* Connection Info */}

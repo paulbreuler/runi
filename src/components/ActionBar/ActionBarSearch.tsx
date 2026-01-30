@@ -28,7 +28,7 @@ interface ActionBarSearchProps {
   /** Override the variant from context */
   variant?: ActionBarVariant;
   /** Data testid for testing */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -56,7 +56,7 @@ export const ActionBarSearch = ({
   expandable = false,
   className,
   variant: variantOverride,
-  'data-testid': testId,
+  'data-test-id': testId,
 }: ActionBarSearchProps): React.JSX.Element => {
   const context = useOptionalActionBarContext();
   const variant = variantOverride ?? context?.variant ?? 'full';
@@ -88,7 +88,7 @@ export const ActionBarSearch = ({
         )}
         aria-label={ariaLabel}
         title={placeholder}
-        data-testid={testId}
+        data-test-id={testId}
       >
         <Search size={14} />
       </button>
@@ -122,7 +122,7 @@ export const ActionBarSearch = ({
         }}
         placeholder={isIconMode ? 'Search...' : placeholder}
         aria-label={ariaLabel}
-        data-testid={testId}
+        data-test-id={testId}
         className={cn(
           focusRingClasses,
           'w-full pl-7 pr-2 py-1 text-sm bg-bg-surface border border-border-subtle rounded',

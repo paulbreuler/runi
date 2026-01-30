@@ -484,7 +484,7 @@ export const DockablePanel = ({
     <AnimatePresence>
       <motion.div
         ref={panelRef}
-        data-testid="dockable-panel"
+        data-test-id="dockable-panel"
         className={cn(
           getPanelClasses(),
           isCollapsed && 'overflow-visible',
@@ -500,7 +500,7 @@ export const DockablePanel = ({
       >
         {/* Resize handle */}
         <div
-          data-testid="panel-resizer"
+          data-test-id="panel-resizer"
           className={getResizerClasses()}
           role="separator"
           aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
@@ -533,7 +533,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for bottom dock */}
         {isCollapsed && position === 'bottom' && (
           <motion.div
-            data-testid="panel-collapsed-edge"
+            data-test-id="panel-collapsed-edge"
             className={cn(
               'absolute inset-x-0 top-0 h-full',
               'border-t border-border-default',
@@ -577,7 +577,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for left dock */}
         {isCollapsed && position === 'left' && (
           <motion.div
-            data-testid="panel-collapsed-edge"
+            data-test-id="panel-collapsed-edge"
             className={cn(
               'absolute inset-y-0 left-0 w-full',
               'border-r border-border-default',
@@ -626,7 +626,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for right dock */}
         {isCollapsed && position === 'right' && (
           <motion.div
-            data-testid="panel-collapsed-edge"
+            data-test-id="panel-collapsed-edge"
             className={cn(
               'absolute inset-y-0 right-0 w-full',
               'border-l border-border-default',
@@ -676,11 +676,11 @@ export const DockablePanel = ({
         {!isCollapsed && (
           <div
             className="flex flex-col flex-1 min-h-0 min-w-0 @container [container-name:panel]"
-            data-testid="panel-expanded-container"
+            data-test-id="panel-expanded-container"
           >
             {/* Panel header */}
             <div
-              data-testid="panel-header"
+              data-test-id="panel-header"
               className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative"
             >
               {/* Scrollable header content */}
@@ -710,7 +710,7 @@ export const DockablePanel = ({
               {showOverflowCue && canScrollLeft && (
                 <motion.div
                   className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
-                  data-testid="panel-header-overflow-left"
+                  data-test-id="panel-header-overflow-left"
                   initial={false}
                   animate={getOverflowAnimation('left')}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -719,7 +719,7 @@ export const DockablePanel = ({
               {showOverflowCue && canScrollRight && (
                 <motion.div
                   className="pointer-events-none absolute inset-y-0 right-[84px] w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
-                  data-testid="panel-header-overflow-right"
+                  data-test-id="panel-header-overflow-right"
                   initial={false}
                   animate={getOverflowAnimation('right')}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -760,7 +760,7 @@ export const DockablePanel = ({
             </div>
 
             {/* Panel content - children handle their own scrolling (e.g., VirtualDataGrid) */}
-            <div className="flex-1 min-h-0 overflow-hidden" data-testid="panel-content">
+            <div className="flex-1 min-h-0 overflow-hidden" data-test-id="panel-content">
               {children}
             </div>
           </div>

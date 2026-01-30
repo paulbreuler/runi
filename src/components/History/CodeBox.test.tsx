@@ -108,9 +108,9 @@ describe('CodeBox', () => {
     expect(innerBox).toHaveAttribute('data-language', 'javascript');
   });
 
-  it('uses custom data-testid', () => {
+  it('uses custom data-test-id', () => {
     render(
-      <CodeBox data-testid="custom-test-id">
+      <CodeBox data-test-id="custom-test-id">
         <pre>
           <code>test</code>
         </pre>

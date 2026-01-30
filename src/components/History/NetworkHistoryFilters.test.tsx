@@ -86,7 +86,7 @@ describe('NetworkHistoryFilters', () => {
     // Check search input value
     expect(screen.getByDisplayValue('test query')).toBeInTheDocument();
 
-    // Verify filter triggers are rendered with their data-testids
+    // Verify filter triggers are rendered with their data-test-ids
     // Base UI Select displays selected values - we check the triggers are present
     const methodTrigger = screen.getByTestId('method-filter');
     const statusTrigger = screen.getByTestId('status-filter');

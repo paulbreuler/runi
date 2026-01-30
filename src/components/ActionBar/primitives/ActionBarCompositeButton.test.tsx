@@ -107,7 +107,7 @@ describe('ActionBarCompositeButton', () => {
 
     render(
       <div>
-        <span data-testid="outside">Outside</span>
+        <span data-test-id="outside">Outside</span>
         <ActionBarCompositeButton primary={defaultPrimary} options={defaultOptions} />
       </div>
     );

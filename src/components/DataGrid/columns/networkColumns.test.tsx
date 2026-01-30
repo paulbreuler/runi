@@ -115,7 +115,7 @@ const TestTable = ({
       </thead>
       <tbody>
         {table.getRowModel().rows.map((row) => (
-          <tr key={row.id} data-testid="table-row">
+          <tr key={row.id} data-test-id="table-row">
             {row.getVisibleCells().map((cell) => (
               <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
             ))}

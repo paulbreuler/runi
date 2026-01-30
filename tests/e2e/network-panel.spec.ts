@@ -30,10 +30,10 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for the panel content to load
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // The VirtualDataGrid should be rendered
-    const virtualDataGrid = page.locator('[data-testid="virtual-datagrid"]');
+    const virtualDataGrid = page.locator('[data-test-id="virtual-datagrid"]');
     await expect(virtualDataGrid).toBeVisible();
   });
 
@@ -54,7 +54,7 @@ test.describe('Network Panel', () => {
 
     // Should show empty state or no rows
     // The VirtualDataGrid should still be present
-    const virtualDataGrid = page.locator('[data-testid="virtual-datagrid"]');
+    const virtualDataGrid = page.locator('[data-test-id="virtual-datagrid"]');
     await expect(virtualDataGrid).toBeVisible();
   });
 
@@ -74,14 +74,14 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // Method filter should be visible
-    const methodFilter = page.locator('[data-testid="method-filter"]');
+    const methodFilter = page.locator('[data-test-id="method-filter"]');
     await expect(methodFilter).toBeVisible();
 
     // Status filter should be visible
-    const statusFilter = page.locator('[data-testid="status-filter"]');
+    const statusFilter = page.locator('[data-test-id="status-filter"]');
     await expect(statusFilter).toBeVisible();
   });
 
@@ -101,10 +101,10 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // Find and click the method filter
-    const methodFilter = page.locator('[data-testid="method-filter"]');
+    const methodFilter = page.locator('[data-test-id="method-filter"]');
     await expect(methodFilter).toBeVisible();
     await methodFilter.click();
 
@@ -135,10 +135,10 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // Find and click the status filter
-    const statusFilter = page.locator('[data-testid="status-filter"]');
+    const statusFilter = page.locator('[data-test-id="status-filter"]');
     await expect(statusFilter).toBeVisible();
     await statusFilter.click();
 
@@ -168,16 +168,16 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // Find and click the compare toggle
-    const compareToggle = page.locator('[data-testid="compare-toggle"]').first();
+    const compareToggle = page.locator('[data-test-id="compare-toggle"]').first();
     if (await compareToggle.isVisible()) {
       await compareToggle.click();
 
       // Compare mode should now be active
       // The Compare Responses button might appear
-      const compareButton = page.locator('[data-testid="compare-responses-button"]');
+      const compareButton = page.locator('[data-test-id="compare-responses-button"]');
       // Button might not be visible until entries are selected, but toggle should work
     }
   });
@@ -198,10 +198,10 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // Virtual scroll container should be present
-    const scrollContainer = page.locator('[data-testid="virtual-scroll-container"]');
+    const scrollContainer = page.locator('[data-test-id="virtual-scroll-container"]');
     await expect(scrollContainer).toBeVisible();
   });
 
@@ -217,14 +217,14 @@ test.describe('Network Panel', () => {
     }
 
     // Wait for panel
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // Panel resizer should be visible
-    const resizer = page.locator('[data-testid="panel-resizer"]');
+    const resizer = page.locator('[data-test-id="panel-resizer"]');
     await expect(resizer).toBeVisible();
 
     // Get initial panel height
-    const panel = page.locator('[data-testid="dockable-panel"]');
+    const panel = page.locator('[data-test-id="dockable-panel"]');
     const initialBox = await panel.boundingBox();
     expect(initialBox).not.toBeNull();
 
@@ -266,7 +266,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-testid="dockable-panel"]');
+    await page.waitForSelector('[data-test-id="dockable-panel"]');
 
     // Tab navigation should work within the panel
     // Focus should move through filter controls
@@ -312,7 +312,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Verify VirtualDataGrid is visible
-    const virtualDataGrid = page.locator('[data-testid="virtual-datagrid"]');
+    const virtualDataGrid = page.locator('[data-test-id="virtual-datagrid"]');
     await expect(virtualDataGrid).toBeVisible();
 
     // Switch to Console tab
@@ -320,10 +320,10 @@ test.describe('Network Panel', () => {
     await consoleTab.click();
 
     // Wait for console content
-    await page.waitForSelector('[data-testid="console-logs"]');
+    await page.waitForSelector('[data-test-id="console-logs"]');
 
     // Console logs should be visible
-    const consoleLogs = page.locator('[data-testid="console-logs"]');
+    const consoleLogs = page.locator('[data-test-id="console-logs"]');
     await expect(consoleLogs).toBeVisible();
 
     // Switch back to Network tab

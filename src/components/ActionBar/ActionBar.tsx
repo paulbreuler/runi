@@ -177,7 +177,7 @@ export const ActionBar = ({
         {showOverflowCue && canScrollLeft && (
           <motion.div
             className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-bg-raised/30 to-transparent"
-            data-testid="actionbar-overflow-left"
+            data-test-id="actionbar-overflow-left"
             initial={false}
             animate={getOverflowAnimation('left')}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -186,7 +186,7 @@ export const ActionBar = ({
         {showOverflowCue && canScrollRight && (
           <motion.div
             className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-bg-raised/30 to-transparent"
-            data-testid="actionbar-overflow-right"
+            data-test-id="actionbar-overflow-right"
             initial={false}
             animate={getOverflowAnimation('right')}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}

@@ -24,7 +24,7 @@ vi.mock('motion/react', async () => {
 });
 
 describe('ExpandedContent', () => {
-  const mockChildren = <div data-testid="test-content">Test content</div>;
+  const mockChildren = <div data-test-id="test-content">Test content</div>;
 
   describe('Feature #16: Row Expansion Animation', () => {
     it('animates expansion with height transition', async () => {
@@ -34,7 +34,7 @@ describe('ExpandedContent', () => {
       expect(expandedSection).toBeInTheDocument();
 
       // Check that motion.div is present with animation props
-      const motionDiv = container.querySelector('[data-testid="expanded-section"]');
+      const motionDiv = container.querySelector('[data-test-id="expanded-section"]');
       expect(motionDiv).toBeInTheDocument();
     });
 
@@ -49,7 +49,7 @@ describe('ExpandedContent', () => {
 
       // When reduced motion is enabled, animation should be disabled
       // (duration: 0 in transition)
-      const motionDiv = container.querySelector('[data-testid="expanded-section"]');
+      const motionDiv = container.querySelector('[data-test-id="expanded-section"]');
       expect(motionDiv).toBeInTheDocument();
     });
   });
@@ -125,10 +125,10 @@ describe('ExpandedContent', () => {
 
       const childrenWithTab = (
         <div>
-          <button role="tab" data-testid="first-tab">
+          <button role="tab" data-test-id="first-tab">
             Timing
           </button>
-          <button role="tab" data-testid="second-tab">
+          <button role="tab" data-test-id="second-tab">
             Response
           </button>
         </div>
@@ -158,7 +158,7 @@ describe('ExpandedContent', () => {
 
       const childrenWithTab = (
         <div>
-          <button role="tab" data-testid="first-tab">
+          <button role="tab" data-test-id="first-tab">
             Timing
           </button>
         </div>
@@ -176,7 +176,7 @@ describe('ExpandedContent', () => {
     it('has a ref attached to the motion.div for querying tabs', () => {
       const childrenWithTab = (
         <div>
-          <button role="tab" data-testid="first-tab">
+          <button role="tab" data-test-id="first-tab">
             Timing
           </button>
         </div>
@@ -188,7 +188,7 @@ describe('ExpandedContent', () => {
       const tabWithinSection = expandedSection.querySelector('[role="tab"]');
 
       expect(tabWithinSection).toBeInTheDocument();
-      expect(tabWithinSection).toHaveAttribute('data-testid', 'first-tab');
+      expect(tabWithinSection).toHaveAttribute('data-test-id', 'first-tab');
     });
   });
 });

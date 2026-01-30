@@ -72,7 +72,7 @@ export const ExpandedContent = ({
       {isVisible && (
         <motion.div
           ref={contentRef}
-          data-testid="expanded-section"
+          data-test-id="expanded-section"
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
@@ -84,7 +84,7 @@ export const ExpandedContent = ({
           <div
             className={innerClassName}
             style={{ marginLeft: `${String(EXPANDED_CONTENT_LEFT_MARGIN_PX)}px` }}
-            data-testid="expanded-content-inner"
+            data-test-id="expanded-content-inner"
           >
             {children}
           </div>

@@ -14,7 +14,7 @@ export interface MetricCellProps {
   /** Formatter function to convert value to string */
   formatter: (value: number) => string;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -32,7 +32,7 @@ export const MetricCell: React.FC<MetricCellProps> = ({
   value,
   threshold,
   formatter,
-  'data-testid': testId = 'metric-cell',
+  'data-test-id': testId = 'metric-cell',
 }) => {
   // Load AnimateNumber from motion-plus immediately
   const [AnimateNumber, setAnimateNumber] = React.useState<React.ComponentType<{
@@ -73,7 +73,7 @@ export const MetricCell: React.FC<MetricCellProps> = ({
   const unit = match?.[2] !== undefined ? ` ${match[2]}` : '';
 
   return (
-    <span className={cn('text-xs font-mono', colorClass)} data-testid={testId}>
+    <span className={cn('text-xs font-mono', colorClass)} data-test-id={testId}>
       {AnimateNumber !== null ? (
         <>
           <AnimateNumber

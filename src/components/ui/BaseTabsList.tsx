@@ -97,7 +97,6 @@ export const BaseTabsList = <T extends string>({
         <Tabs.List
           activateOnFocus={activateOnFocus}
           className={cn('relative', listClassName)}
-          data-testid={listTestId}
           data-test-id={listTestId}
           aria-label={listAriaLabel}
         >
@@ -128,7 +127,6 @@ export const BaseTabsList = <T extends string>({
                     {...props}
                     type="button"
                     tabIndex={activeTab === tab.value ? 0 : -1}
-                    data-testid={resolvedTestId}
                     data-test-id={resolvedTestId}
                     onClick={handleClick}
                     className={cn(
@@ -147,7 +145,6 @@ export const BaseTabsList = <T extends string>({
                           'absolute inset-0 pointer-events-none z-0',
                           indicatorClassName
                         )}
-                        data-testid={indicatorTestId}
                         data-test-id={indicatorTestId}
                         data-layout-id={indicatorLayoutId}
                         transition={

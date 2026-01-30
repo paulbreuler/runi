@@ -134,7 +134,7 @@ const TitleBarControls = (): React.JSX.Element | null => {
           'w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors'
         )}
         aria-label="Minimize window"
-        data-testid="titlebar-minimize"
+        data-test-id="titlebar-minimize"
       >
         <Minimize2 size={12} className="text-text-muted" />
       </button>
@@ -146,7 +146,7 @@ const TitleBarControls = (): React.JSX.Element | null => {
           'w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors'
         )}
         aria-label="Maximize window"
-        data-testid="titlebar-maximize"
+        data-test-id="titlebar-maximize"
       >
         <Maximize2 size={12} className="text-text-muted" />
       </button>
@@ -158,7 +158,7 @@ const TitleBarControls = (): React.JSX.Element | null => {
           'w-[30px] h-[30px] flex items-center justify-center hover:bg-signal-error/20 hover:text-signal-error transition-colors'
         )}
         aria-label="Close window"
-        data-testid="titlebar-close"
+        data-test-id="titlebar-close"
       >
         <X size={12} className="text-text-muted" />
       </button>
@@ -185,7 +185,7 @@ export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX
         !isMac && 'pl-4'
       )}
       style={isMac ? { paddingLeft: `${MACOS_TRAFFIC_LIGHT_OFFSET.toString()}px` } : undefined}
-      data-testid="titlebar"
+      data-test-id="titlebar"
       data-tauri-drag-region
     >
       {/* Title/content area - centered and draggable on all platforms */}

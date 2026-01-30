@@ -71,7 +71,7 @@ describe('DockablePanel', () => {
     it('renders children content', () => {
       render(
         <DockablePanel title="Test Panel">
-          <div data-test-id="panel-content">Panel Content</div>
+          <div>Panel Content</div>
         </DockablePanel>
       );
 
@@ -185,7 +185,7 @@ describe('DockablePanel', () => {
 
       render(
         <DockablePanel title="Test Panel">
-          <div data-test-id="panel-content">Content</div>
+          <div>Content</div>
         </DockablePanel>
       );
 
@@ -349,7 +349,7 @@ describe('DockablePanel', () => {
 
       render(
         <DockablePanel title="Test Panel">
-          <div data-test-id="panel-content">Content</div>
+          <div>Content</div>
         </DockablePanel>
       );
 
@@ -371,7 +371,7 @@ describe('DockablePanel', () => {
 
       render(
         <DockablePanel title="Test Panel">
-          <div data-test-id="panel-content">Content</div>
+          <div>Content</div>
         </DockablePanel>
       );
 
@@ -424,7 +424,7 @@ describe('DockablePanel', () => {
 
       render(
         <DockablePanel title="Test Panel">
-          <div data-test-id="panel-content">Content</div>
+          <div>Content</div>
         </DockablePanel>
       );
 
@@ -451,7 +451,7 @@ describe('DockablePanel', () => {
 
       render(
         <DockablePanel title="Test Panel">
-          <div data-test-id="panel-content">Content</div>
+          <div>Content</div>
         </DockablePanel>
       );
 
@@ -479,7 +479,7 @@ describe('DockablePanel', () => {
 
       render(
         <DockablePanel title="Test Panel">
-          <div data-test-id="panel-content">Content</div>
+          <div>Content</div>
         </DockablePanel>
       );
 

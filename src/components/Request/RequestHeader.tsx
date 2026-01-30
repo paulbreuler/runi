@@ -107,7 +107,7 @@ export const RequestHeader = ({
             role="button"
             aria-haspopup="listbox"
             className={`min-w-28 w-auto h-8 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary ${methodColor}`}
-            data-testid="method-select"
+            data-test-id="method-select"
             disabled={loading}
             aria-label="HTTP Method"
           >
@@ -136,7 +136,7 @@ export const RequestHeader = ({
           onChange={(e) => onUrlChange?.(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Enter request URL..."
-          data-testid="url-input"
+          data-test-id="url-input"
           disabled={loading}
           aria-label="Request URL"
           className="flex-1 h-8 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted"
@@ -150,7 +150,7 @@ export const RequestHeader = ({
             noScale
             onClick={onSend}
             disabled={!isValidUrl || loading}
-            data-testid="send-button"
+            data-test-id="send-button"
             aria-label="Send Request"
             className="w-full justify-center whitespace-nowrap hover:text-accent-blue !px-2"
             style={{ minWidth: '72px' }}

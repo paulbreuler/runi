@@ -77,7 +77,7 @@ const NextSampleCountdown: React.FC<{
     return (
       <span
         className="text-xs font-mono text-text-muted whitespace-nowrap"
-        data-testid="next-sample-countdown"
+        data-test-id="next-sample-countdown"
       >
         —
       </span>
@@ -87,7 +87,7 @@ const NextSampleCountdown: React.FC<{
   return (
     <span
       className="text-xs font-mono text-text-muted whitespace-nowrap inline-flex items-baseline"
-      data-testid="next-sample-countdown"
+      data-test-id="next-sample-countdown"
     >
       {AnimateNumber !== null ? (
         <>
@@ -198,7 +198,7 @@ export const StatusBar = (): React.JSX.Element => {
     <div
       className="relative h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-2 text-xs"
       style={{ zIndex: STATUS_BAR_Z_INDEX }}
-      data-testid="status-bar"
+      data-test-id="status-bar"
     >
       {/* Left side - environment and request count */}
       <div className="flex items-center gap-4 opacity-70">
@@ -206,7 +206,7 @@ export const StatusBar = (): React.JSX.Element => {
           <span className="text-text-muted">Environment:</span>
           <span className="font-mono text-text-secondary">default</span>
         </span>
-        <span className="text-text-secondary" data-testid="status-bar-request-count">
+        <span className="text-text-secondary" data-test-id="status-bar-request-count">
           {requestCount} {requestWord}
         </span>
       </div>
@@ -222,10 +222,10 @@ export const StatusBar = (): React.JSX.Element => {
                 size="xs"
                 noScale
                 className={cn('gap-1.5', isPanelOpen && 'bg-bg-raised text-text-primary')}
-                data-testid="status-bar-metrics-button"
+                data-test-id="status-bar-metrics-button"
                 aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}
               >
-                <PulsingGlow state={pulsingState} data-testid="metrics-pulsing-glow">
+                <PulsingGlow state={pulsingState} data-test-id="metrics-pulsing-glow">
                   <Activity className="w-2.5! h-2.5!" />
                 </PulsingGlow>
                 <span>Metrics</span>
@@ -233,7 +233,7 @@ export const StatusBar = (): React.JSX.Element => {
                 {shouldShowMetrics && (
                   <span
                     className="font-mono text-text-secondary"
-                    data-testid="status-bar-metrics-inline"
+                    data-test-id="status-bar-metrics-inline"
                   >
                     {metrics.memory?.current.toFixed(1)} MB
                   </span>
@@ -246,7 +246,7 @@ export const StatusBar = (): React.JSX.Element => {
             side="top"
             sideOffset={8}
             className="w-[280px]"
-            data-testid="metrics-panel"
+            data-test-id="metrics-panel"
           >
             <TooltipProvider>
               <div className="space-y-4">
@@ -258,7 +258,7 @@ export const StatusBar = (): React.JSX.Element => {
                     onCheckedChange={(checked: boolean): void => {
                       setMetricsVisible(checked);
                     }}
-                    data-testid="metrics-switch"
+                    data-test-id="metrics-switch"
                     aria-label="Enable metrics"
                   />
                 </div>
@@ -283,7 +283,7 @@ export const StatusBar = (): React.JSX.Element => {
                         focusRingClasses
                       )}
                       aria-label="Metrics settings"
-                      data-testid="metrics-settings-button"
+                      data-test-id="metrics-settings-button"
                     >
                       <Settings className="w-3.5 h-3.5" />
                     </button>
@@ -295,7 +295,7 @@ export const StatusBar = (): React.JSX.Element => {
         </Popover>
         {/* Hidden AppMetricsContainer to maintain event listener */}
         {metricsVisible && (
-          <div className="hidden" data-testid="status-bar-metrics-hidden">
+          <div className="hidden" data-test-id="status-bar-metrics-hidden">
             <AppMetricsContainer compact={true} />
           </div>
         )}

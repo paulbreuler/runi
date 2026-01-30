@@ -387,7 +387,7 @@ export const SegmentedControl = <T extends string>({
                 transition={{ duration: transitionDuration }}
                 aria-pressed={isSelected}
                 title={getTooltip(option)}
-                data-testid={`segment-${option.value}`}
+                data-test-id={`segment-${option.value}`}
               >
                 {option.icon !== undefined && <span className="shrink-0">{option.icon}</span>}
                 {!isIconMode && <span>{option.label}</span>}

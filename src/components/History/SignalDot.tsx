@@ -55,7 +55,7 @@ export const SignalDot = ({ type, size = 'sm', tooltip }: SignalDotProps): React
 
   return (
     <motion.span
-      data-testid={`signal-dot-${type}`}
+      data-test-id={`signal-dot-${type}`}
       className={cn(
         'inline-block rounded-full cursor-pointer',
         sizeClasses[size],

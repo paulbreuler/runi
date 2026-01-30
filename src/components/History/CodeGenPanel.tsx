@@ -59,7 +59,7 @@ export const CodeGenPanel = ({
   const syntaxLanguage = LANGUAGE_SYNTAX[activeLanguage];
 
   return (
-    <div data-testid="codegen-panel" className={cn('flex flex-col h-full', className)}>
+    <div data-test-id="codegen-panel" className={cn('flex flex-col h-full', className)}>
       {/* Language tabs */}
       <LanguageTabs
         languages={languages}

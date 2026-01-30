@@ -35,10 +35,10 @@ test.describe('Console Panel', () => {
     });
 
     // Wait for logs to appear
-    await page.waitForSelector('[data-testid="console-logs"]');
+    await page.waitForSelector('[data-test-id="console-logs"]');
 
     // Verify logs appear in console panel
-    const consoleLogs = page.locator('[data-testid="console-logs"]');
+    const consoleLogs = page.locator('[data-test-id="console-logs"]');
     await expect(consoleLogs).toContainText('Test info message');
     await expect(consoleLogs).toContainText('Test error message');
   });
@@ -66,14 +66,14 @@ test.describe('Console Panel', () => {
     });
 
     // Wait for logs
-    await page.waitForSelector('[data-testid="console-logs"]');
+    await page.waitForSelector('[data-test-id="console-logs"]');
 
     // Filter by error
     const errorButton = page.getByRole('button', { name: /errors/i });
     await errorButton.click();
 
     // Verify only error logs are shown
-    const consoleLogs = page.locator('[data-testid="console-logs"]');
+    const consoleLogs = page.locator('[data-test-id="console-logs"]');
     await expect(consoleLogs).toContainText('Error message');
     await expect(consoleLogs).not.toContainText('Debug message');
     await expect(consoleLogs).not.toContainText('Warning message');
@@ -101,15 +101,15 @@ test.describe('Console Panel', () => {
     });
 
     // Wait for logs to appear
-    await page.waitForSelector('[data-testid="console-logs"]');
-    await expect(page.locator('[data-testid="console-logs"]')).toContainText('Message 1');
+    await page.waitForSelector('[data-test-id="console-logs"]');
+    await expect(page.locator('[data-test-id="console-logs"]')).toContainText('Message 1');
 
     // Clear logs
     const clearButton = page.getByRole('button', { name: /clear/i });
     await clearButton.click();
 
     // Verify logs are cleared
-    await expect(page.locator('[data-testid="console-logs"]')).toContainText(/no logs/i);
+    await expect(page.locator('[data-test-id="console-logs"]')).toContainText(/no logs/i);
   });
 
   test('displays badge counts for all log levels', async ({ page }) => {
@@ -139,7 +139,7 @@ test.describe('Console Panel', () => {
     });
 
     // Wait for logs to appear
-    await page.waitForSelector('[data-testid="console-logs"]', { timeout: 5000 });
+    await page.waitForSelector('[data-test-id="console-logs"]', { timeout: 5000 });
 
     // Wait a bit for badge counts to update
     await page.waitForTimeout(200);
@@ -158,7 +158,7 @@ test.describe('Console Panel', () => {
     expect(warnButtonText).toContain('2');
 
     // Info button should show badge with count 3
-    const infoButton = page.locator('[data-testid="segment-info"]');
+    const infoButton = page.locator('[data-test-id="segment-info"]');
     await expect(infoButton).toBeVisible();
     const infoButtonText = await infoButton.textContent();
     expect(infoButtonText).toContain('3');

@@ -29,7 +29,7 @@ const DrawerSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-border-subtle last:border-b-0" data-testid={testId}>
+    <div className="border-b border-border-subtle last:border-b-0" data-test-id={testId}>
       <button
         type="button"
         className={cn(
@@ -67,7 +67,7 @@ const DrawerSection = ({
 
 export const Sidebar = (): React.JSX.Element => {
   return (
-    <aside className="w-full h-full bg-bg-surface flex flex-col" data-testid="sidebar-content">
+    <aside className="w-full h-full bg-bg-surface flex flex-col" data-test-id="sidebar-content">
       {/* Collections Drawer - Default collapsed since collections aren't supported yet */}
       <DrawerSection
         title="Collections"

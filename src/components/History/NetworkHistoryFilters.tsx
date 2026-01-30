@@ -86,7 +86,7 @@ export const NetworkHistoryFilters = ({
           }}
           placeholder="Filter by URL..."
           aria-label="Filter history by URL"
-          data-testid="history-search"
+          data-test-id="history-search"
         />
         <ActionBarSelect
           value={filters.method}
@@ -96,7 +96,7 @@ export const NetworkHistoryFilters = ({
           options={METHOD_OPTIONS}
           icon={<Code size={14} />}
           aria-label="Filter by HTTP method"
-          data-testid="method-filter"
+          data-test-id="method-filter"
           renderItem={renderMethodOption}
         />
         <ActionBarSelect
@@ -107,7 +107,7 @@ export const NetworkHistoryFilters = ({
           options={STATUS_OPTIONS}
           icon={<CheckCircle size={14} />}
           aria-label="Filter by status code"
-          data-testid="status-filter"
+          data-test-id="status-filter"
           renderItem={renderStatusOption}
         />
         <ActionBarSelect
@@ -118,7 +118,7 @@ export const NetworkHistoryFilters = ({
           options={INTELLIGENCE_OPTIONS}
           icon={<Brain size={14} />}
           aria-label="Filter by intelligence"
-          data-testid="intelligence-filter"
+          data-test-id="intelligence-filter"
           renderItem={renderIntelligenceOption}
         />
       </ActionBarGroup>
@@ -128,7 +128,7 @@ export const NetworkHistoryFilters = ({
         <ActionBarGroup separator aria-label="Compare controls">
           {/* Compare Selected button - shown when exactly 2 entries are selected */}
           <Button
-            data-testid="compare-selected-button"
+            data-test-id="compare-selected-button"
             onClick={onCompareResponses}
             size={isIconMode ? 'icon-xs' : 'xs'}
             className="bg-signal-ai text-white hover:bg-signal-ai/90"

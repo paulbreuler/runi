@@ -80,10 +80,10 @@ test.describe('Error Propagation with Correlation IDs', () => {
     await page.waitForTimeout(1000); // Wait for request to complete
 
     // Verify error appears in console panel with correlation ID
-    const consoleLogs = page.locator('[data-testid="console-logs"]');
+    const consoleLogs = page.locator('[data-test-id="console-logs"]');
 
     // Check for error log
-    const errorLog = consoleLogs.locator('[data-testid*="console-log-error"]');
+    const errorLog = consoleLogs.locator('[data-test-id*="console-log-error"]');
     await expect(errorLog.first()).toBeVisible({ timeout: 5000 });
 
     // Verify error message contains expected content
@@ -92,7 +92,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
 
     // Expand the error log to reveal the correlation ID in args
     // Click the expand button within the error log row
-    const expandButton = errorLog.first().locator('[data-testid="expand-button"]');
+    const expandButton = errorLog.first().locator('[data-test-id="expand-button"]');
     if (await expandButton.isVisible()) {
       await expandButton.click();
       // Wait for expanded content to appear
@@ -101,7 +101,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
 
     // Check for correlation ID in expanded content or log entry
     // The appError object is passed as an arg and contains correlation_id
-    const expandedContent = page.locator('[data-testid="expanded-section"]');
+    const expandedContent = page.locator('[data-test-id="expanded-section"]');
     const hasExpandedContent = await expandedContent.isVisible().catch(() => false);
 
     if (hasExpandedContent) {
@@ -148,8 +148,8 @@ test.describe('Error Propagation with Correlation IDs', () => {
     await page.waitForTimeout(1000);
 
     // Get correlation ID from console log
-    const consoleLogs = page.locator('[data-testid="console-logs"]');
-    const errorLog = consoleLogs.locator('[data-testid*="console-log-error"]').first();
+    const consoleLogs = page.locator('[data-test-id="console-logs"]');
+    const errorLog = consoleLogs.locator('[data-test-id*="console-log-error"]').first();
     await errorLog.waitFor({ timeout: 5000 });
 
     // Extract correlation ID from error log (check for UUID pattern or first 8 chars)
@@ -172,7 +172,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
       await page.waitForTimeout(300);
 
       // Verify at least one log with that correlation ID is shown (partial match)
-      const filteredLogs = consoleLogs.locator('[data-testid*="console-log"]');
+      const filteredLogs = consoleLogs.locator('[data-test-id*="console-log"]');
       const count = await filteredLogs.count();
       expect(count).toBeGreaterThan(0);
     } else {
@@ -200,7 +200,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
     await consoleTab.click();
 
     // Check for startup logs (should be captured before React mount)
-    const consoleLogs = page.locator('[data-testid="console-logs"]');
+    const consoleLogs = page.locator('[data-test-id="console-logs"]');
 
     // Startup timing log should be present (from main.tsx)
     // This validates that console service works before React mounts

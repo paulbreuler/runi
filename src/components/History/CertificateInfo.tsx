@@ -122,7 +122,7 @@ export const CertificateInfo = ({
   );
 
   return (
-    <div data-testid="certificate-info" className={cn('space-y-4 text-sm', className)}>
+    <div data-test-id="certificate-info" className={cn('space-y-4 text-sm', className)}>
       {/* Status warning */}
       {status.isExpired && (
         <div

@@ -41,7 +41,7 @@ export const ResponseTab = ({
   containerRef,
 }: ResponseTabProps): React.ReactElement => {
   return (
-    <div data-testid="response-tab" className={className}>
+    <div data-test-id="response-tab" className={className}>
       <ResponsePanel
         requestBody={entry.request.body}
         responseBody={entry.response.body}

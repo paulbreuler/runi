@@ -175,7 +175,7 @@ export const Playground: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify panel renders', async () => {
-      // ExpandedPanel has data-testid="expanded-panel" on the root container
+      // ExpandedPanel has data-test-id="expanded-panel" on the root container
       const panel = await canvas.findByTestId('expanded-panel', {}, { timeout: 3000 });
       await expect(panel).toBeInTheDocument();
     });
@@ -195,7 +195,7 @@ export const Playground: Story = {
       // ExpandedPanel is used standalone in this story, so it won't have the expanded-section wrapper
       // Skip z-index check for standalone ExpandedPanel (it's only relevant when used in VirtualDataGrid)
       // Just verify the panel renders correctly
-      const expandedPanel = canvasElement.querySelector('[data-testid="expanded-panel"]');
+      const expandedPanel = canvasElement.querySelector('[data-test-id="expanded-panel"]');
       await expect(expandedPanel).toBeInTheDocument();
     });
 

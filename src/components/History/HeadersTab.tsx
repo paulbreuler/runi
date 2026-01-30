@@ -41,7 +41,7 @@ export const HeadersTab = ({
   containerRef,
 }: HeadersTabProps): React.ReactElement => {
   return (
-    <div data-testid="headers-tab" className={className}>
+    <div data-test-id="headers-tab" className={className}>
       <HeadersPanel
         requestHeaders={entry.request.headers}
         responseHeaders={entry.response.headers}

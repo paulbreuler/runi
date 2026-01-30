@@ -171,7 +171,7 @@ describe('VirtualDataGrid', () => {
     it('supports custom row renderer', () => {
       const testData = generateTestData(3);
       const customRowRenderer = vi.fn((row: Row<TestRow>, cells: React.ReactNode) => (
-        <tr key={row.id} data-testid={`custom-row-${row.id}`}>
+        <tr key={row.id} data-test-id={`custom-row-${row.id}`}>
           {cells}
         </tr>
       ));

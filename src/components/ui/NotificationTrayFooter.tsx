@@ -10,7 +10,7 @@ export interface NotificationTrayFooterProps {
   /** Footer content */
   children: React.ReactNode;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -24,7 +24,7 @@ export interface NotificationTrayFooterProps {
  */
 export const NotificationTrayFooter: React.FC<NotificationTrayFooterProps> = ({
   children,
-  'data-testid': testId = 'notification-tray-footer',
+  'data-test-id': testId = 'notification-tray-footer',
 }) => {
   return (
     <div
@@ -32,7 +32,7 @@ export const NotificationTrayFooter: React.FC<NotificationTrayFooterProps> = ({
         'grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2.5 py-1.5',
         'border-t border-border-subtle'
       )}
-      data-testid={testId}
+      data-test-id={testId}
     >
       {children}
     </div>

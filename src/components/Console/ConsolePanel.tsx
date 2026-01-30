@@ -828,7 +828,7 @@ export const ConsolePanel = ({
               getLogLevelClass(logLevel)
             )}
             data-row-id={row.id}
-            data-testid={`console-log-${logLevel}`}
+            data-test-id={`console-log-${logLevel}`}
             onClick={handleRowClick}
             onDoubleClick={handleRowDoubleClick}
             onMouseDown={(e): void => {
@@ -994,7 +994,7 @@ export const ConsolePanel = ({
 
         {/* VirtualDataGrid - replaces custom rendering */}
         {/* Note: VirtualDataGrid handles scrolling internally, no need for overflow-x-auto wrapper */}
-        <div className="flex-1 flex flex-col min-h-0" data-testid="console-logs">
+        <div className="flex-1 flex flex-col min-h-0" data-test-id="console-logs">
           <VirtualDataGrid
             data={tableData}
             columns={columns}

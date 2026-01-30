@@ -61,7 +61,7 @@ export const Playground: Story = {
           networkCount={args.networkCount ?? 0}
           consoleCount={args.consoleCount ?? 0}
         />
-        <p className="mt-4 text-sm text-text-muted" data-testid="active-tab-display">
+        <p className="mt-4 text-sm text-text-muted" data-test-id="active-tab-display">
           Active tab: <strong>{activeTab}</strong>
         </p>
       </div>

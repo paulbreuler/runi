@@ -189,11 +189,7 @@ export const CodeEditor = ({
   // Display mode - read-only with copy button via CodeBox
   if (mode === 'display') {
     return (
-      <div
-        data-testid="code-editor"
-        data-test-id="code-editor"
-        className={cn('flex flex-col min-h-0', className)}
-      >
+      <div data-test-id="code-editor" className={cn('flex flex-col min-h-0', className)}>
         <CodeBox
           copyText={code}
           copyButtonLabel={`Copy ${detectedLanguage} code`}
@@ -224,18 +220,14 @@ export const CodeEditor = ({
 
   // Edit mode - editable with overlay technique
   return (
-    <div
-      className={cn('h-full min-h-0 flex flex-col', className)}
-      data-testid="code-editor"
-      data-test-id="code-editor"
-    >
+    <div className={cn('h-full min-h-0 flex flex-col', className)} data-test-id="code-editor">
       <div className="flex-1 overflow-hidden relative bg-bg-app">
         {/* Syntax highlight layer (non-interactive) */}
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
           aria-hidden
           ref={highlightRef}
-          data-testid="code-editor-syntax-layer"
+          data-test-id="code-editor-syntax-layer"
         >
           <div className="p-4">
             <div data-language={detectedLanguage}>
@@ -278,7 +270,6 @@ export const CodeEditor = ({
             caretColor: 'var(--color-text-secondary)',
             scrollbarGutter: 'stable both-edges',
           }}
-          data-testid="code-editor-textarea"
           data-test-id="code-editor-textarea"
           spellCheck={false}
         />
@@ -293,7 +284,6 @@ export const CodeEditor = ({
             {isJsonBody ? (
               <div
                 className="flex items-center gap-2 px-2 py-1 rounded bg-signal-success/10 text-signal-success text-xs"
-                data-testid="json-valid-indicator"
                 data-test-id="json-valid-indicator"
               >
                 <span className="size-1.5 rounded-full bg-signal-success" />
@@ -302,7 +292,6 @@ export const CodeEditor = ({
             ) : (
               <div
                 className="flex items-center gap-2 px-2 py-1 rounded bg-signal-error/10 text-signal-error text-xs"
-                data-testid="json-invalid-indicator"
                 data-test-id="json-invalid-indicator"
               >
                 <span className="size-1.5 rounded-full bg-signal-error" />
@@ -316,7 +305,6 @@ export const CodeEditor = ({
                   focusRingClasses,
                   'px-2 py-1 text-xs rounded bg-bg-raised text-text-secondary hover:text-text-primary hover:border-border-emphasis transition-colors border border-transparent'
                 )}
-                data-testid="format-json-button"
                 data-test-id="format-json-button"
               >
                 Format

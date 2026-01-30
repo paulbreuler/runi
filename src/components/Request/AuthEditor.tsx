@@ -124,14 +124,14 @@ export const AuthEditor = (): React.JSX.Element => {
   };
 
   return (
-    <div className="h-full flex flex-col" data-testid="auth-editor">
+    <div className="h-full flex flex-col" data-test-id="auth-editor">
       <div className="flex-1 overflow-auto p-4" style={{ scrollbarGutter: 'stable' }}>
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Auth type selector */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-text-secondary">Authentication Type</label>
             <Select.Select value={authType} onValueChange={handleAuthTypeChange}>
-              <Select.SelectTrigger className="w-full" data-testid="auth-type-select">
+              <Select.SelectTrigger className="w-full" data-test-id="auth-type-select">
                 <Select.SelectValue />
               </Select.SelectTrigger>
               <Select.SelectContent>
@@ -161,7 +161,7 @@ export const AuthEditor = (): React.JSX.Element => {
                 }}
                 placeholder="Enter bearer token"
                 className="font-mono text-sm"
-                data-testid="bearer-token-input"
+                data-test-id="bearer-token-input"
               />
             </motion.div>
           )}
@@ -185,7 +185,7 @@ export const AuthEditor = (): React.JSX.Element => {
                   }}
                   placeholder="Enter username"
                   className="font-mono text-sm"
-                  data-testid="basic-username-input"
+                  data-test-id="basic-username-input"
                 />
               </div>
               <div className="space-y-2">
@@ -200,7 +200,7 @@ export const AuthEditor = (): React.JSX.Element => {
                     }}
                     placeholder="Enter password"
                     className="font-mono text-sm pr-10"
-                    data-testid="basic-password-input"
+                    data-test-id="basic-password-input"
                   />
                   <Button
                     variant="ghost"
@@ -209,7 +209,7 @@ export const AuthEditor = (): React.JSX.Element => {
                       setShowPassword(!showPassword);
                     }}
                     className="absolute right-2 top-1/2 -translate-y-1/2"
-                    data-testid="toggle-password-visibility"
+                    data-test-id="toggle-password-visibility"
                   >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </Button>
@@ -238,7 +238,7 @@ export const AuthEditor = (): React.JSX.Element => {
                 }}
                 placeholder="Enter custom authorization header value"
                 className="font-mono text-sm"
-                data-testid="custom-header-input"
+                data-test-id="custom-header-input"
               />
             </motion.div>
           )}

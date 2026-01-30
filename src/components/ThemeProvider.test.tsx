@@ -133,7 +133,7 @@ describe('ThemeProvider', () => {
     it('renders children without wrapper div', () => {
       render(
         <ThemeProvider>
-          <div data-testid="child">Child Content</div>
+          <div data-test-id="child">Child Content</div>
         </ThemeProvider>
       );
 

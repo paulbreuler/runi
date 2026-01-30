@@ -125,7 +125,7 @@ export const ExpandedPanel = ({
       className={cn('flex flex-col', className)}
     >
       <div
-        data-testid="expanded-panel"
+        data-test-id="expanded-panel"
         ref={topLevelContainerRef}
         onKeyDown={handleTopLevelKeyDown}
       >

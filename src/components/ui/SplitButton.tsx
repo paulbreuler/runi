@@ -67,7 +67,7 @@ interface SplitButtonProps extends VariantProps<typeof _splitButtonVariants> {
   /** Custom aria-label for the dropdown trigger */
   dropdownAriaLabel?: string;
   /** Data testid for testing */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -105,7 +105,7 @@ export const SplitButton = ({
   size = 'default',
   className,
   dropdownAriaLabel = 'More options',
-  'data-testid': testId,
+  'data-test-id': testId,
 }: SplitButtonProps): React.JSX.Element => {
   const [open, setOpen] = React.useState(false);
 
@@ -179,10 +179,10 @@ export const SplitButton = ({
           variant === 'destructive' &&
             'bg-signal-error text-accent-contrast hover:bg-signal-error/90'
         )}
-        data-testid={testId}
+        data-test-id={testId}
       >
         {icon !== undefined && (
-          <span className="shrink-0" data-testid="split-button-icon">
+          <span className="shrink-0" data-test-id="split-button-icon">
             {icon}
           </span>
         )}
@@ -208,7 +208,7 @@ export const SplitButton = ({
               aria-label={dropdownAriaLabel}
               aria-haspopup="menu"
               aria-expanded={open}
-              data-testid={testId !== undefined ? `${testId}-dropdown` : undefined}
+              data-test-id={testId !== undefined ? `${testId}-dropdown` : undefined}
             >
               <ChevronDown
                 size={size === 'xs' ? 12 : 14}

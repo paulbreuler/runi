@@ -20,7 +20,7 @@ vi.mock('motion/react', () => ({
       children?: React.ReactNode;
       [key: string]: unknown;
     }): React.JSX.Element => (
-      <button data-testid="motion-button" {...props}>
+      <button data-test-id="motion-button" {...props}>
         {children}
       </button>
     ),
@@ -31,13 +31,13 @@ vi.mock('motion/react', () => ({
       children?: React.ReactNode;
       [key: string]: unknown;
     }): React.JSX.Element => (
-      <div data-testid="motion-div" {...props}>
+      <div data-test-id="motion-div" {...props}>
         {children}
       </div>
     ),
   },
   LayoutGroup: ({ children }: { children?: React.ReactNode }): React.ReactNode => (
-    <div data-testid="layout-group">{children}</div>
+    <div data-test-id="layout-group">{children}</div>
   ),
   AnimatePresence: ({ children }: { children?: React.ReactNode }): React.ReactNode => (
     <>{children}</>
@@ -65,7 +65,7 @@ vi.mock('@base-ui/react/tabs', () => ({
       // Store callback for Tab to use
       mockOnValueChange = onValueChange;
       return (
-        <div data-testid="tabs-root" data-value={value} {...props}>
+        <div data-test-id="tabs-root" data-value={value} {...props}>
           {children}
         </div>
       );
@@ -77,7 +77,7 @@ vi.mock('@base-ui/react/tabs', () => ({
       children?: React.ReactNode;
       [key: string]: unknown;
     }): React.JSX.Element => (
-      <div data-testid="tabs-list" {...props}>
+      <div data-test-id="tabs-list" {...props}>
         {children}
       </div>
     ),
@@ -102,14 +102,14 @@ vi.mock('@base-ui/react/tabs', () => ({
           ...props,
           onClick: handleClick,
           role: 'tab',
-          'data-testid': 'tabs-trigger',
+          'data-test-id': 'tabs-trigger',
           'data-value': value,
         };
         return render(tabProps);
       }
 
       return (
-        <div data-testid="tabs-trigger" data-value={value} onClick={handleClick} {...props}>
+        <div data-test-id="tabs-trigger" data-value={value} onClick={handleClick} {...props}>
           {value}
         </div>
       );
@@ -136,11 +136,11 @@ describe('PanelTabs', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
       // Check that mock elements are rendered
-      const root = container.querySelector('[data-testid="tabs-root"]');
+      const root = container.querySelector('[data-test-id="tabs-root"]');
       expect(root).toBeInTheDocument();
-      const list = container.querySelector('[data-testid="tabs-list"]');
+      const list = container.querySelector('[data-test-id="tabs-list"]');
       expect(list).toBeInTheDocument();
-      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"][role="tab"]');
+      const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"][role="tab"]');
       expect(triggers).toHaveLength(2);
     });
 
@@ -205,7 +205,7 @@ describe('PanelTabs', () => {
     it('passes correct value to Base UI Tabs.Root', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const root = container.querySelector('[data-testid="tabs-root"]');
+      const root = container.querySelector('[data-test-id="tabs-root"]');
       expect(root).toBeInTheDocument();
       expect(root).toHaveAttribute('data-value', 'network');
     });
@@ -215,13 +215,13 @@ describe('PanelTabs', () => {
         <PanelTabs activeTab="network" onTabChange={mockOnTabChange} />
       );
 
-      let root = container.querySelector('[data-testid="tabs-root"]');
+      let root = container.querySelector('[data-test-id="tabs-root"]');
       expect(root).toBeInTheDocument();
       expect(root).toHaveAttribute('data-value', 'network');
 
       rerender(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
-      root = container.querySelector('[data-testid="tabs-root"]');
+      root = container.querySelector('[data-test-id="tabs-root"]');
       expect(root).toBeInTheDocument();
       expect(root).toHaveAttribute('data-value', 'console');
     });
@@ -231,14 +231,14 @@ describe('PanelTabs', () => {
     it('uses LayoutGroup for layout animations', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const layoutGroup = container.querySelector('[data-testid="layout-group"]');
+      const layoutGroup = container.querySelector('[data-test-id="layout-group"]');
       expect(layoutGroup).toBeInTheDocument();
     });
 
     it('uses motion.button for tabs via render prop', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"]');
+      const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"]');
       expect(triggers.length).toBeGreaterThan(0);
       // motion.button should be rendered via render prop
       triggers.forEach((trigger) => {
@@ -249,7 +249,7 @@ describe('PanelTabs', () => {
     it('renders animated indicator with layoutId', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const indicator = container.querySelector('[data-testid="panel-tab-indicator"]');
+      const indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
       // layoutId should be set (checked via motion.div testid)
       expect(indicator).toHaveAttribute('data-layout-id', 'panel-tab-indicator');
@@ -260,13 +260,13 @@ describe('PanelTabs', () => {
         <PanelTabs activeTab="network" onTabChange={mockOnTabChange} />
       );
 
-      let indicator = container.querySelector('[data-testid="panel-tab-indicator"]');
+      let indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
 
       rerender(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
       // Indicator should still exist but be positioned on console tab
-      indicator = container.querySelector('[data-testid="panel-tab-indicator"]');
+      indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
     });
   });
@@ -303,7 +303,7 @@ describe('PanelTabs', () => {
     it('has proper ARIA attributes from Base UI Tabs', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const root = container.querySelector('[data-testid="tabs-root"]');
+      const root = container.querySelector('[data-test-id="tabs-root"]');
       expect(root).toBeInTheDocument();
       // Base UI Tabs provides ARIA attributes automatically
     });
@@ -311,7 +311,7 @@ describe('PanelTabs', () => {
     it('triggers have correct value attributes', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"][role="tab"]');
+      const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"][role="tab"]');
       const values = Array.from(triggers).map((t) => t.getAttribute('data-value'));
       expect(values).toContain('network');
       expect(values).toContain('console');

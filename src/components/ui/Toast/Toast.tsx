@@ -154,7 +154,7 @@ export const Toast = React.forwardRef<HTMLLIElement, ToastProps>(
               animate="animate"
               exit="exit"
               className={cn(toastVariants({ variant: toastVariant }))}
-              data-testid={toast.testId ?? `toast-${toast.id}`}
+              data-test-id={toast.testId ?? `toast-${toast.id}`}
               data-variant={toastVariant}
             >
               {/* Icon */}
@@ -172,7 +172,7 @@ export const Toast = React.forwardRef<HTMLLIElement, ToastProps>(
                   {toast.count > 1 && (
                     <span
                       className="shrink-0 text-xs text-text-muted font-normal"
-                      data-testid={`toast-count-${toast.id}`}
+                      data-test-id={`toast-count-${toast.id}`}
                     >
                       (x{toast.count})
                     </span>
@@ -194,7 +194,7 @@ export const Toast = React.forwardRef<HTMLLIElement, ToastProps>(
                     size="xs"
                     noScale
                     onClick={handleViewConsole}
-                    data-testid={`toast-view-console-${toast.id}`}
+                    data-test-id={`toast-view-console-${toast.id}`}
                   >
                     <Terminal className="h-3 w-3" />
                     Console
@@ -211,7 +211,7 @@ export const Toast = React.forwardRef<HTMLLIElement, ToastProps>(
                   focusRingClasses
                 )}
                 aria-label="Dismiss notification"
-                data-testid={`toast-close-${toast.id}`}
+                data-test-id={`toast-close-${toast.id}`}
               >
                 <X className="h-3.5 w-3.5" />
               </ToastPrimitives.Close>

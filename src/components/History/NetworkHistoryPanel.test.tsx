@@ -275,7 +275,7 @@ describe('NetworkHistoryPanel', () => {
         if (headerId === 'select' || header.querySelector('[role="checkbox"]')) {
           selectionHeader = header;
         }
-        if (headerId === 'expand' || header.querySelector('[data-testid="expand-button"]')) {
+        if (headerId === 'expand' || header.querySelector('[data-test-id="expand-button"]')) {
           expanderHeader = header;
         }
       });
@@ -304,7 +304,7 @@ describe('NetworkHistoryPanel', () => {
   describe('TDD: VirtualDataGrid props match console tab', () => {
     it('VirtualDataGrid has correct className pattern', () => {
       const { container } = render(<NetworkHistoryPanel {...defaultProps} />);
-      const virtualDataGrid = container.querySelector('[data-testid="virtual-datagrid"]');
+      const virtualDataGrid = container.querySelector('[data-test-id="virtual-datagrid"]');
       expect(virtualDataGrid).toBeInTheDocument();
       // Should have flex-1 class (console has "flex-1 font-mono text-xs", network may just have "flex-1")
       expect(virtualDataGrid).toHaveClass('flex-1');

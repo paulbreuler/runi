@@ -77,7 +77,7 @@ export const ToastBell: React.FC<ToastBellProps> = ({ className, onClick }) => {
           ? `${String(count)} ${count === 1 ? 'notification' : 'notifications'}`
           : 'No notifications'
       }
-      data-testid="toast-bell"
+      data-test-id="toast-bell"
     >
       <Bell className="h-3.5 w-3.5" />
 
@@ -95,7 +95,7 @@ export const ToastBell: React.FC<ToastBellProps> = ({ className, onClick }) => {
               'text-[10px] font-medium text-accent-contrast',
               'bg-signal-error rounded-full'
             )}
-            data-testid="toast-bell-badge"
+            data-test-id="toast-bell-badge"
           >
             {displayCount}
           </motion.span>

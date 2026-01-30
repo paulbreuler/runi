@@ -108,7 +108,7 @@ export const RequestBuilder = (): React.JSX.Element => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-bg-app" data-testid="request-builder">
+    <div className="h-full flex flex-col bg-bg-app" data-test-id="request-builder">
       {/* Tab navigation */}
       <Tabs.Root
         value={activeTab}
@@ -120,7 +120,7 @@ export const RequestBuilder = (): React.JSX.Element => {
             ref={tabScrollRef}
             className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
             aria-label="Request tabs"
-            data-testid="request-tabs-scroll"
+            data-test-id="request-tabs-scroll"
           >
             <BaseTabsList
               activeTab={activeTab}
@@ -145,7 +145,7 @@ export const RequestBuilder = (): React.JSX.Element => {
           {showOverflowCue && canScrollLeft && (
             <motion.div
               className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
-              data-testid="request-tabs-overflow-left"
+              data-test-id="request-tabs-overflow-left"
               initial={false}
               animate={getOverflowAnimation('left')}
               transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -154,7 +154,7 @@ export const RequestBuilder = (): React.JSX.Element => {
           {showOverflowCue && canScrollRight && (
             <motion.div
               className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
-              data-testid="request-tabs-overflow-right"
+              data-test-id="request-tabs-overflow-right"
               initial={false}
               animate={getOverflowAnimation('right')}
               transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}

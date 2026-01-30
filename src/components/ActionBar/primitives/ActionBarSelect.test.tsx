@@ -110,7 +110,7 @@ describe('ActionBarSelect', () => {
     expect(handleChange).toHaveBeenNthCalledWith(1, 'POST', expect.anything());
   });
 
-  it('uses data-testid when provided', () => {
+  it('uses data-test-id when provided', () => {
     render(
       <ActionBarSelect
         value="ALL"
@@ -118,7 +118,7 @@ describe('ActionBarSelect', () => {
         options={defaultOptions}
         icon={<Code size={14} />}
         aria-label="Select method"
-        data-testid="method-select"
+        data-test-id="method-select"
       />
     );
 
@@ -131,7 +131,7 @@ describe('ActionBarSelect', () => {
         value="GET"
         onValueChange={() => {}}
         options={defaultOptions}
-        icon={<Code size={14} data-testid="select-icon" />}
+        icon={<Code size={14} data-test-id="select-icon" />}
         aria-label="Select method"
         variant="icon"
       />

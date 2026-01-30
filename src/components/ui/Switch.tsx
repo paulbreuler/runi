@@ -18,7 +18,7 @@ export interface SwitchProps extends Omit<
   /** Callback when switch changes */
   onCheckedChange: (checked: boolean) => void;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -31,7 +31,7 @@ export interface SwitchProps extends Omit<
  * - Accessible with proper ARIA attributes
  */
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
-  ({ checked, onCheckedChange, className, 'data-testid': testId = 'switch', ...props }, ref) => {
+  ({ checked, onCheckedChange, className, 'data-test-id': testId = 'switch', ...props }, ref) => {
     return (
       <SwitchPrimitive.Root
         checked={checked}
@@ -64,7 +64,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
               e.stopPropagation(); // Prevent dialog from closing
               rootProps.onMouseDown?.(e);
             }}
-            data-testid={testId}
+            data-test-id={testId}
           >
             <SwitchPrimitive.Thumb
               render={({

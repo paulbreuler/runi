@@ -80,7 +80,7 @@ const TestTable = ({
         <tr>
           {table.getHeaderGroups().map((headerGroup) =>
             headerGroup.headers.map((header) => (
-              <th key={header.id} data-testid={`header-${header.id}`}>
+              <th key={header.id} data-test-id={`header-${header.id}`}>
                 {header.isPlaceholder
                   ? null
                   : flexRender(header.column.columnDef.header, header.getContext())}
@@ -91,9 +91,9 @@ const TestTable = ({
       </thead>
       <tbody>
         {table.getRowModel().rows.map((row) => (
-          <tr key={row.id} data-testid={`row-${row.id}`}>
+          <tr key={row.id} data-test-id={`row-${row.id}`}>
             {row.getVisibleCells().map((cell) => (
-              <td key={cell.id} data-testid={`cell-${cell.column.id}-${row.id}`}>
+              <td key={cell.id} data-test-id={`cell-${cell.column.id}-${row.id}`}>
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
             ))}

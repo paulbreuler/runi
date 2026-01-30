@@ -52,7 +52,7 @@ export const FilterBarActions = ({
           variant="ghost"
           size="xs"
           dropdownAriaLabel="More save options"
-          data-testid="history-save"
+          data-test-id="history-save"
           items={[
             {
               id: 'save-selection',
@@ -76,7 +76,7 @@ export const FilterBarActions = ({
           size="icon-xs"
           title="Delete all network history entries (cannot be undone)"
           aria-label="Delete all network history entries"
-          data-testid="history-delete-all"
+          data-test-id="history-delete-all"
         >
           <Trash2 size={14} />
         </Button>
@@ -94,7 +94,7 @@ export const FilterBarActions = ({
         variant="ghost"
         size="xs"
         dropdownAriaLabel="More save options"
-        data-testid="history-save"
+        data-test-id="history-save"
         items={[
           {
             id: 'save-selection',
@@ -118,7 +118,7 @@ export const FilterBarActions = ({
         size="xs"
         title="Delete all network history entries (cannot be undone)"
         aria-label="Delete all network history entries"
-        data-testid="history-delete-all"
+        data-test-id="history-delete-all"
       >
         <Trash2 size={12} />
         <span>Delete All</span>

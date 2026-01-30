@@ -16,7 +16,7 @@ export interface MetricsToggleProps {
   /** Toggle label */
   label: string;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -29,12 +29,12 @@ export const MetricsToggle: React.FC<MetricsToggleProps> = ({
   checked,
   onChange,
   label,
-  'data-testid': testId = 'metrics-toggle',
+  'data-test-id': testId = 'metrics-toggle',
 }) => {
   const toggleId = `${testId}-toggle`;
 
   return (
-    <div className={cn('flex items-center')} data-testid={testId}>
+    <div className={cn('flex items-center')} data-test-id={testId}>
       {label !== '' ? (
         <Label
           htmlFor={toggleId}
@@ -50,7 +50,7 @@ export const MetricsToggle: React.FC<MetricsToggleProps> = ({
         id={toggleId}
         checked={checked}
         onCheckedChange={onChange}
-        data-testid="switch"
+        data-test-id="switch"
         aria-label={label !== '' ? label : 'Toggle metrics'}
       />
     </div>

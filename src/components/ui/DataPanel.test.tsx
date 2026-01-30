@@ -21,7 +21,7 @@ describe('DataPanel', () => {
   ];
 
   const renderRow = (item: TestItem, index: number): React.ReactNode => (
-    <div key={item.id} data-testid={`row-${item.id}`} data-index={index}>
+    <div key={item.id} data-test-id={`row-${item.id}`} data-index={index}>
       {item.name}
     </div>
   );
@@ -136,7 +136,7 @@ describe('DataPanel', () => {
         <DataPanel
           items={[]}
           renderRow={renderRow}
-          emptyState={<div data-testid="empty-state">No items</div>}
+          emptyState={<div data-test-id="empty-state">No items</div>}
         />
       );
 
@@ -148,7 +148,7 @@ describe('DataPanel', () => {
         <DataPanel
           items={testItems}
           renderRow={renderRow}
-          emptyState={<div data-testid="empty-state">No items</div>}
+          emptyState={<div data-test-id="empty-state">No items</div>}
         />
       );
 
@@ -251,7 +251,7 @@ describe('DataPanel', () => {
 
     it('supports custom item types', () => {
       const customRenderRow = (item: CustomItem): React.ReactNode => (
-        <div key={item.uuid} data-testid={`custom-${item.uuid}`}>
+        <div key={item.uuid} data-test-id={`custom-${item.uuid}`}>
           {item.title}: {item.count}
         </div>
       );

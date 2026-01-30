@@ -11,7 +11,7 @@ describe('Card', () => {
   it('renders children', () => {
     render(
       <Card>
-        <div data-testid="card-content">Card content</div>
+        <div data-test-id="card-content">Card content</div>
       </Card>
     );
     expect(screen.getByTestId('card-content')).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('CardHeader', () => {
   it('renders children', () => {
     render(
       <CardHeader>
-        <div data-testid="header-content">Header</div>
+        <div data-test-id="header-content">Header</div>
       </CardHeader>
     );
     expect(screen.getByTestId('header-content')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('CardTitle', () => {
   it('renders children', () => {
     render(
       <CardTitle>
-        <span data-testid="title-content">Title</span>
+        <span data-test-id="title-content">Title</span>
       </CardTitle>
     );
     expect(screen.getByTestId('title-content')).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('CardContent', () => {
   it('renders children', () => {
     render(
       <CardContent>
-        <div data-testid="content">Content</div>
+        <div data-test-id="content">Content</div>
       </CardContent>
     );
     expect(screen.getByTestId('content')).toBeInTheDocument();
@@ -126,7 +126,7 @@ describe('CardFooter', () => {
   it('renders children', () => {
     render(
       <CardFooter>
-        <div data-testid="footer-content">Footer</div>
+        <div data-test-id="footer-content">Footer</div>
       </CardFooter>
     );
     expect(screen.getByTestId('footer-content')).toBeInTheDocument();

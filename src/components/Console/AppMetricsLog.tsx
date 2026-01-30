@@ -44,7 +44,7 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
 
     return (
       <div
-        data-testid="app-metrics-log"
+        data-test-id="app-metrics-log"
         data-live={isLive}
         className="flex items-center gap-1.5 font-mono text-xs"
       >
@@ -56,9 +56,9 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
 
   // Full version for console (compact for dialog panel)
   return (
-    <div data-testid="app-metrics-log" data-live={isLive} className="text-xs">
+    <div data-test-id="app-metrics-log" data-live={isLive} className="text-xs">
       {metrics.memory !== undefined ? (
-        <div data-testid="memory-metrics-display" className="text-xs font-mono space-y-0.5">
+        <div data-test-id="memory-metrics-display" className="text-xs font-mono space-y-0.5">
           {/* Show muted text when no samples collected yet (initial state) */}
           {metrics.memory.samplesCount === 0 ? (
             <>
@@ -89,7 +89,7 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
           </div>
         </div>
       ) : (
-        <div data-testid="metrics-loading" />
+        <div data-test-id="metrics-loading" />
       )}
     </div>
   );

@@ -32,7 +32,7 @@ describe('SplitButton', () => {
     });
 
     it('renders an icon when provided', () => {
-      render(<SplitButton {...defaultProps} icon={<Download data-testid="icon" />} />);
+      render(<SplitButton {...defaultProps} icon={<Download data-test-id="icon" />} />);
 
       expect(screen.getByTestId('icon')).toBeInTheDocument();
     });
@@ -160,7 +160,12 @@ describe('SplitButton', () => {
         <SplitButton
           {...defaultProps}
           items={[
-            { id: 'copy', label: 'Copy', icon: <Copy data-testid="copy-icon" />, onClick: vi.fn() },
+            {
+              id: 'copy',
+              label: 'Copy',
+              icon: <Copy data-test-id="copy-icon" />,
+              onClick: vi.fn(),
+            },
           ]}
         />
       );

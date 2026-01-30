@@ -544,11 +544,11 @@ describe.skipIf(isCI)('DataGrid Performance', () => {
         const isExpanded = row.getIsExpanded();
         return (
           <>
-            <tr key={row.id} data-row-id={row.id} data-testid={`row-${row.id}`}>
+            <tr key={row.id} data-row-id={row.id} data-test-id={`row-${row.id}`}>
               {cells}
             </tr>
             {isExpanded && (
-              <tr key={`${row.id}-expanded`} data-testid={`expanded-${row.id}`}>
+              <tr key={`${row.id}-expanded`} data-test-id={`expanded-${row.id}`}>
                 <td colSpan={testColumns.length} className="px-4 py-3 bg-bg-raised">
                   <div>Expanded content for {row.original.name}</div>
                 </td>

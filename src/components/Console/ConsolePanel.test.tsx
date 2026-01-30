@@ -508,7 +508,9 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
 
     // Check that timestamp is displayed (format: HH:MM:SS.mmm)
-    const logEntry = screen.getByText(/test message/i).closest('[data-testid="console-log-debug"]');
+    const logEntry = screen
+      .getByText(/test message/i)
+      .closest('[data-test-id="console-log-debug"]');
     expect(logEntry).toBeInTheDocument();
     // Timestamp format should be in the log entry
     expect(logEntry?.textContent).toMatch(/\d{2}:\d{2}:\d{2}\.\d{3}/);
@@ -789,7 +791,7 @@ describe('ConsolePanel', () => {
     // Right-click on the grouped log entry to open context menu
     const logEntry = screen
       .getByText(/failed to open devtools popout window/i)
-      .closest('[data-testid="console-log-error"]');
+      .closest('[data-test-id="console-log-error"]');
     expect(logEntry).toBeInTheDocument();
 
     fireEvent.contextMenu(logEntry!);
@@ -859,7 +861,7 @@ describe('ConsolePanel', () => {
     if (logEntry === null) {
       throw new Error('Log entry not found');
     }
-    const chevronButton = logEntry.querySelector('[data-testid="expand-button"]');
+    const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
 
     // Click to expand
@@ -905,7 +907,7 @@ describe('ConsolePanel', () => {
     if (logEntry === null) {
       throw new Error('Log entry not found');
     }
-    const chevronButton = logEntry.querySelector('[data-testid="expand-button"]');
+    const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
     fireEvent.click(chevronButton as HTMLElement);
 

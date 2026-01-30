@@ -65,9 +65,9 @@ describe('accessibility utilities', () => {
         const isVisible = useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
-            <button data-testid="button">Click me</button>
-            {isVisible && <span data-testid="visible-indicator">Visible</span>}
+          <div ref={containerRef} data-test-id="container">
+            <button data-test-id="button">Click me</button>
+            {isVisible && <span data-test-id="visible-indicator">Visible</span>}
           </div>
         );
       };
@@ -84,9 +84,9 @@ describe('accessibility utilities', () => {
         const isVisible = useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
-            <button data-testid="button">Click me</button>
-            {isVisible && <span data-testid="visible-indicator">Visible</span>}
+          <div ref={containerRef} data-test-id="container">
+            <button data-test-id="button">Click me</button>
+            {isVisible && <span data-test-id="visible-indicator">Visible</span>}
           </div>
         );
       };
@@ -109,11 +109,11 @@ describe('accessibility utilities', () => {
 
         return (
           <>
-            <div ref={containerRef} data-testid="container">
-              <button data-testid="button-inside">Inside</button>
-              {isVisible && <span data-testid="visible-indicator">Visible</span>}
+            <div ref={containerRef} data-test-id="container">
+              <button data-test-id="button-inside">Inside</button>
+              {isVisible && <span data-test-id="visible-indicator">Visible</span>}
             </div>
-            <button data-testid="button-outside">Outside</button>
+            <button data-test-id="button-outside">Outside</button>
           </>
         );
       };
@@ -142,10 +142,10 @@ describe('accessibility utilities', () => {
         const isVisible = useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
-            <button data-testid="button-1">Button 1</button>
-            <button data-testid="button-2">Button 2</button>
-            {isVisible && <span data-testid="visible-indicator">Visible</span>}
+          <div ref={containerRef} data-test-id="container">
+            <button data-test-id="button-1">Button 1</button>
+            <button data-test-id="button-2">Button 2</button>
+            {isVisible && <span data-test-id="visible-indicator">Visible</span>}
           </div>
         );
       };
@@ -178,7 +178,7 @@ describe('accessibility utilities', () => {
         useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
+          <div ref={containerRef} data-test-id="container">
             <button>Click me</button>
           </div>
         );

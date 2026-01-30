@@ -407,20 +407,20 @@ export const SelectPlayground: Story = {
   },
   render: ({ value, open, disabled }) => (
     <Select.Select value={value} open={open} disabled={disabled}>
-      <Select.SelectTrigger data-testid="select-trigger" className="w-[180px]">
+      <Select.SelectTrigger data-test-id="select-trigger" className="w-[180px]">
         <Select.SelectValue placeholder="Select a fruit" />
       </Select.SelectTrigger>
-      <Select.SelectContent data-testid="select-content">
-        <Select.SelectItem value="apple" data-testid="select-item-apple">
+      <Select.SelectContent data-test-id="select-content">
+        <Select.SelectItem value="apple" data-test-id="select-item-apple">
           Apple
         </Select.SelectItem>
-        <Select.SelectItem value="banana" data-testid="select-item-banana">
+        <Select.SelectItem value="banana" data-test-id="select-item-banana">
           Banana
         </Select.SelectItem>
-        <Select.SelectItem value="orange" data-testid="select-item-orange">
+        <Select.SelectItem value="orange" data-test-id="select-item-orange">
           Orange
         </Select.SelectItem>
-        <Select.SelectItem value="grape" data-testid="select-item-grape">
+        <Select.SelectItem value="grape" data-test-id="select-item-grape">
           Grape
         </Select.SelectItem>
       </Select.SelectContent>
@@ -456,20 +456,20 @@ export const SelectPlayground: Story = {
 export const SelectDefault: Story = {
   render: () => (
     <Select.Select defaultValue="apple">
-      <Select.SelectTrigger data-testid="select-trigger" className="w-[180px]">
+      <Select.SelectTrigger data-test-id="select-trigger" className="w-[180px]">
         <Select.SelectValue placeholder="Select a fruit" />
       </Select.SelectTrigger>
-      <Select.SelectContent data-testid="select-content">
-        <Select.SelectItem value="apple" data-testid="select-item-apple">
+      <Select.SelectContent data-test-id="select-content">
+        <Select.SelectItem value="apple" data-test-id="select-item-apple">
           Apple
         </Select.SelectItem>
-        <Select.SelectItem value="banana" data-testid="select-item-banana">
+        <Select.SelectItem value="banana" data-test-id="select-item-banana">
           Banana
         </Select.SelectItem>
-        <Select.SelectItem value="orange" data-testid="select-item-orange">
+        <Select.SelectItem value="orange" data-test-id="select-item-orange">
           Orange
         </Select.SelectItem>
-        <Select.SelectItem value="grape" data-testid="select-item-grape">
+        <Select.SelectItem value="grape" data-test-id="select-item-grape">
           Grape
         </Select.SelectItem>
       </Select.SelectContent>
@@ -498,23 +498,23 @@ export const SelectDefault: Story = {
 export const SelectWithGroups: Story = {
   render: () => (
     <Select.Select defaultValue="apple">
-      <Select.SelectTrigger data-testid="select-trigger" className="w-[200px]">
+      <Select.SelectTrigger data-test-id="select-trigger" className="w-[200px]">
         <Select.SelectValue placeholder="Select a fruit" />
       </Select.SelectTrigger>
-      <Select.SelectContent data-testid="select-content">
+      <Select.SelectContent data-test-id="select-content">
         <Select.SelectGroup>
           <Select.SelectLabel>Fruits</Select.SelectLabel>
-          <Select.SelectItem value="apple" data-testid="select-item-apple">
+          <Select.SelectItem value="apple" data-test-id="select-item-apple">
             Apple
           </Select.SelectItem>
-          <Select.SelectItem value="banana" data-testid="select-item-banana">
+          <Select.SelectItem value="banana" data-test-id="select-item-banana">
             Banana
           </Select.SelectItem>
         </Select.SelectGroup>
         <Select.SelectSeparator />
         <Select.SelectGroup>
           <Select.SelectLabel>Vegetables</Select.SelectLabel>
-          <Select.SelectItem value="carrot" data-testid="select-item-carrot">
+          <Select.SelectItem value="carrot" data-test-id="select-item-carrot">
             Carrot
           </Select.SelectItem>
         </Select.SelectGroup>
@@ -530,21 +530,21 @@ export const SelectDisabled: Story = {
   render: () => (
     <div className="flex flex-col gap-4">
       <Select.Select defaultValue="apple" disabled>
-        <Select.SelectTrigger data-testid="select-trigger-disabled" className="w-[180px]">
+        <Select.SelectTrigger data-test-id="select-trigger-disabled" className="w-[180px]">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
-          <Select.SelectItem value="apple" data-testid="select-item-apple">
+          <Select.SelectItem value="apple" data-test-id="select-item-apple">
             Apple
           </Select.SelectItem>
         </Select.SelectContent>
       </Select.Select>
       <Select.Select defaultValue="banana">
-        <Select.SelectTrigger data-testid="select-trigger-enabled" className="w-[180px]">
+        <Select.SelectTrigger data-test-id="select-trigger-enabled" className="w-[180px]">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
-          <Select.SelectItem value="banana" disabled data-testid="select-item-banana-disabled">
+          <Select.SelectItem value="banana" disabled data-test-id="select-item-banana-disabled">
             Banana (disabled)
           </Select.SelectItem>
         </Select.SelectContent>

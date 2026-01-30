@@ -104,7 +104,7 @@ export const ResponsePanel = ({
   return (
     <div
       ref={containerRef}
-      data-testid="response-panel"
+      data-test-id="response-panel"
       className={cn('flex flex-col', className)}
       onKeyDown={handleContainerKeyDown}
     >

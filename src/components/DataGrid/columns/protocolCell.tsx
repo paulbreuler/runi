@@ -29,7 +29,7 @@ interface ProtocolCellProps {
 export const ProtocolCell = ({ protocol }: ProtocolCellProps): React.ReactElement => {
   if (protocol === null || protocol === undefined) {
     return (
-      <div data-testid="protocol-cell" className="text-xs text-text-muted">
+      <div data-test-id="protocol-cell" className="text-xs text-text-muted">
         —
       </div>
     );
@@ -42,7 +42,7 @@ export const ProtocolCell = ({ protocol }: ProtocolCellProps): React.ReactElemen
 
   return (
     <span
-      data-testid="protocol-cell"
+      data-test-id="protocol-cell"
       className={cn('px-1.5 py-0.5 text-xs font-semibold rounded font-mono', colorClass, bgClass)}
     >
       {protocol}

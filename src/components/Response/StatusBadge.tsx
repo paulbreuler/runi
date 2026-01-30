@@ -52,7 +52,7 @@ export const StatusBadge = ({ status, statusText }: StatusBadgeProps): React.JSX
   return (
     <span
       className={`flex items-center gap-2 font-medium px-3 h-7 rounded-lg text-sm border transition-colors duration-200 ${styles.bg} ${styles.text} ${styles.border}`}
-      data-testid="status-badge"
+      data-test-id="status-badge"
     >
       <span className="font-semibold">{status}</span>
       <span className="opacity-80">{statusText}</span>

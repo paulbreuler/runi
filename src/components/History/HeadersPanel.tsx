@@ -78,7 +78,7 @@ export const HeadersPanel = ({
   return (
     <div
       ref={containerRef}
-      data-testid="headers-panel"
+      data-test-id="headers-panel"
       className={cn('flex flex-col', className)}
       onKeyDown={handleContainerKeyDown}
     >

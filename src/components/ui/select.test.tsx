@@ -12,11 +12,11 @@ describe('Select', () => {
   it('renders select with trigger and value', () => {
     render(
       <Select.Select defaultValue="apple">
-        <Select.SelectTrigger data-testid="select-trigger">
+        <Select.SelectTrigger data-test-id="select-trigger">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
-          <Select.SelectItem value="apple" data-testid="select-item-apple">
+          <Select.SelectItem value="apple" data-test-id="select-item-apple">
             Apple
           </Select.SelectItem>
         </Select.SelectContent>
@@ -32,14 +32,14 @@ describe('Select', () => {
   it('opens popup when trigger is clicked', async () => {
     render(
       <Select.Select defaultValue="apple">
-        <Select.SelectTrigger data-testid="select-trigger">
+        <Select.SelectTrigger data-test-id="select-trigger">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
-        <Select.SelectContent data-testid="select-content">
-          <Select.SelectItem value="apple" data-testid="select-item-apple">
+        <Select.SelectContent data-test-id="select-content">
+          <Select.SelectItem value="apple" data-test-id="select-item-apple">
             Apple
           </Select.SelectItem>
-          <Select.SelectItem value="banana" data-testid="select-item-banana">
+          <Select.SelectItem value="banana" data-test-id="select-item-banana">
             Banana
           </Select.SelectItem>
         </Select.SelectContent>
@@ -58,14 +58,14 @@ describe('Select', () => {
     const onValueChange = vi.fn();
     render(
       <Select.Select onValueChange={onValueChange}>
-        <Select.SelectTrigger data-testid="select-trigger">
+        <Select.SelectTrigger data-test-id="select-trigger">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
-          <Select.SelectItem value="apple" data-testid="select-item-apple">
+          <Select.SelectItem value="apple" data-test-id="select-item-apple">
             Apple
           </Select.SelectItem>
-          <Select.SelectItem value="banana" data-testid="select-item-banana">
+          <Select.SelectItem value="banana" data-test-id="select-item-banana">
             Banana
           </Select.SelectItem>
         </Select.SelectContent>
@@ -88,7 +88,7 @@ describe('Select', () => {
   it('displays placeholder when no value is selected', () => {
     render(
       <Select.Select>
-        <Select.SelectTrigger data-testid="select-trigger">
+        <Select.SelectTrigger data-test-id="select-trigger">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
@@ -103,7 +103,7 @@ describe('Select', () => {
   it('supports disabled state', () => {
     render(
       <Select.Select disabled>
-        <Select.SelectTrigger data-testid="select-trigger">
+        <Select.SelectTrigger data-test-id="select-trigger">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
@@ -119,7 +119,7 @@ describe('Select', () => {
   it('supports groups', async () => {
     render(
       <Select.Select defaultValue="apple">
-        <Select.SelectTrigger data-testid="select-trigger">
+        <Select.SelectTrigger data-test-id="select-trigger">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>

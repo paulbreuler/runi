@@ -168,7 +168,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
   const formattedBody = language === 'json' ? formatJson(response.body) : response.body;
 
   return (
-    <div className="h-full flex flex-col" data-testid="response-viewer">
+    <div className="h-full flex flex-col" data-test-id="response-viewer">
       <Tabs.Root
         value={activeTab}
         onValueChange={setActiveTab as (value: string) => void}
@@ -211,7 +211,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
           {showOverflowCue && canScrollLeft && (
             <motion.div
               className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
-              data-testid="response-tabs-overflow-left"
+              data-test-id="response-tabs-overflow-left"
               initial={false}
               animate={getOverflowAnimation('left')}
               transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -220,7 +220,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
           {showOverflowCue && canScrollRight && (
             <motion.div
               className="pointer-events-none absolute inset-y-0 right-20 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
-              data-testid="response-tabs-overflow-right"
+              data-test-id="response-tabs-overflow-right"
               initial={false}
               animate={getOverflowAnimation('right')}
               transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -237,8 +237,8 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         {/* Content - vertical scroll only, code blocks handle horizontal */}
         <div className="flex-1 min-h-0 overflow-hidden" style={{ scrollbarGutter: 'stable' }}>
           <Tabs.Panel value="body" className="h-full min-h-0">
-            <div className="p-4 h-full min-h-0 flex flex-col" data-testid="response-body">
-              <span className="sr-only" data-testid="response-body-raw">
+            <div className="p-4 h-full min-h-0 flex flex-col" data-test-id="response-body">
+              <span className="sr-only" data-test-id="response-body-raw">
                 {formattedBody}
               </span>
               <div className="flex-1 min-h-0">
@@ -278,8 +278,8 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
           </Tabs.Panel>
 
           <Tabs.Panel value="raw" className="h-full min-h-0">
-            <div className="p-4 h-full min-h-0 flex flex-col" data-testid="response-raw">
-              <span className="sr-only" data-testid="response-raw-text">
+            <div className="p-4 h-full min-h-0 flex flex-col" data-test-id="response-raw">
+              <span className="sr-only" data-test-id="response-raw-text">
                 {formatRawHttp(response)}
               </span>
               <div className="flex-1 min-h-0">

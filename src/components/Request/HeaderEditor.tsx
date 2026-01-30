@@ -76,7 +76,7 @@ export const HeaderEditor = (): React.JSX.Element => {
   };
 
   return (
-    <div className="h-full flex flex-col" data-testid="headers-editor">
+    <div className="h-full flex flex-col" data-test-id="headers-editor">
       <div className="flex-1 overflow-auto p-4" style={{ scrollbarGutter: 'stable' }}>
         {headerEntries.length === 0 && editingKey === null && (
           <EmptyState
@@ -108,7 +108,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     placeholder="Header name"
                     className="flex-1 font-mono text-sm"
                     autoFocus
-                    data-testid={`header-key-input-${key}`}
+                    data-test-id={`header-key-input-${key}`}
                   />
                   <span className="text-text-muted">:</span>
                   <Input
@@ -120,14 +120,14 @@ export const HeaderEditor = (): React.JSX.Element => {
                     onKeyDown={handleKeyDown}
                     placeholder="Header value"
                     className="flex-1 font-mono text-sm"
-                    data-testid={`header-value-input-${key}`}
+                    data-test-id={`header-value-input-${key}`}
                   />
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     onClick={handleSaveHeader}
                     className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
-                    data-testid={`save-header-button-${key}`}
+                    data-test-id={`save-header-button-${key}`}
                   >
                     <X className="rotate-45" />
                   </Button>
@@ -136,7 +136,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     size="icon-sm"
                     onClick={handleCancelEdit}
                     className="text-text-muted hover:text-text-primary"
-                    data-testid={`cancel-header-button-${key}`}
+                    data-test-id={`cancel-header-button-${key}`}
                   >
                     <X />
                   </Button>
@@ -162,7 +162,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                       handleRemoveHeader(key);
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
-                    data-testid={`remove-header-${key}`}
+                    data-test-id={`remove-header-${key}`}
                   >
                     <X />
                   </Button>
@@ -189,7 +189,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 placeholder="Header name"
                 className="flex-1 font-mono text-sm"
                 autoFocus
-                data-testid="new-header-key-input"
+                data-test-id="new-header-key-input"
               />
               <span className="text-text-muted">:</span>
               <Input
@@ -201,14 +201,14 @@ export const HeaderEditor = (): React.JSX.Element => {
                 onKeyDown={handleKeyDown}
                 placeholder="Header value"
                 className="flex-1 font-mono text-sm"
-                data-testid="new-header-value-input"
+                data-test-id="new-header-value-input"
               />
               <Button
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleSaveHeader}
                 className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
-                data-testid="save-new-header-button"
+                data-test-id="save-new-header-button"
               >
                 <X className="rotate-45" />
               </Button>
@@ -217,7 +217,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 size="icon-sm"
                 onClick={handleCancelEdit}
                 className="text-text-muted hover:text-text-primary"
-                data-testid="cancel-new-header-button"
+                data-test-id="cancel-new-header-button"
               >
                 <X />
               </Button>
@@ -233,7 +233,7 @@ export const HeaderEditor = (): React.JSX.Element => {
             size="sm"
             onClick={handleAddHeader}
             className="w-full"
-            data-testid="add-header-button"
+            data-test-id="add-header-button"
           >
             <Plus className="size-4" />
             Add Header

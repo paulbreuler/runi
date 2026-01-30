@@ -10,7 +10,7 @@ export interface NotificationTrayContentProps {
   /** Content children */
   children: React.ReactNode;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -21,10 +21,10 @@ export interface NotificationTrayContentProps {
  */
 export const NotificationTrayContent: React.FC<NotificationTrayContentProps> = ({
   children,
-  'data-testid': testId = 'notification-tray-content',
+  'data-test-id': testId = 'notification-tray-content',
 }) => {
   return (
-    <div className={cn('p-2.5')} data-testid={testId}>
+    <div className={cn('p-2.5')} data-test-id={testId}>
       {children}
     </div>
   );
