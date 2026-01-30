@@ -63,7 +63,7 @@ This command can leverage specialized review skills:
    - ✅ TDD workflow followed (tests written first)
    - ✅ **Test selectors**: Components include `data-test-id` attributes on interactive elements and test targets
    - ✅ **Test queries**: Tests use `getByTestId` for element selection
-    (not `getByText`, `getByRole`, or `getByLabel` for component identification)
+     (not `getByText`, `getByRole`, or `getByLabel` for component identification)
 
 - ✅ Zustand for global state (not Redux, not Context for shared state)
 - ✅ Motion 12 for animations (import from `motion/react`)
@@ -72,8 +72,8 @@ This command can leverage specialized review skills:
   for audit methodology)
 - ✅ **Design Principles (RLM)**: For component-specific audit findings, use
   `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md',
-  code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'))
-  .flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })`
+code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'))
+.flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })`
   to get targeted findings
 
 **General Standards:**
@@ -151,9 +151,9 @@ This command can leverage specialized review skills:
 - [ ] **Test Queries**: Tests use `getByTestId` for element selection (not generic selectors for component identification)
 - [ ] **Storybook**: Component stories created (for UI components)
 - [ ] **Design Principles (RLM)**: For reviewed components, query audit findings using RLM:
-  `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md',
-  code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'))
-  .flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })`
+      `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md',
+code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'))
+.flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })`
 
 ### Architecture & Patterns
 

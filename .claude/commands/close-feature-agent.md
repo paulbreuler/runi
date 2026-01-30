@@ -192,7 +192,7 @@ Next Steps
 | #4 Sorting | ❌     | Export mismatch: toggle() returns void, declared boolean |
 
 **Action**: Agent must fix issues before close
-````
+```
 
 ### Tests Failing
 

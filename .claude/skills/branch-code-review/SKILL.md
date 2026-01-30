@@ -1,9 +1,10 @@
 ---
 name: branch-code-review
 description: Review changes on the current branch versus main for architecture, maintainability, and correctness. Use when you want a focused architecture/maintainability review separate from the comprehensive `/code-review` command.
-argument-hint: "[scope | base..head]"
+argument-hint: '[scope | base..head]'
 allowed-tools: Bash(git *), Read, Grep, Glob
 ---
+
 # Branch Code Review (Architecture/Maintainability Focus)
 
 ## Purpose
@@ -12,6 +13,7 @@ Perform a focused code review on the current branch compared to the base branch 
 emphasizing architecture, maintainability, and correctness patterns.
 
 **When to use this vs. `/code-review`**:
+
 - Use `/code-review` for comprehensive runi-specific standards review (TDD, coverage, test selectors, etc.)
 - Use `/branch-code-review` for focused architecture/maintainability review (coupling, cohesion, patterns)
 
@@ -38,7 +40,7 @@ emphasizing architecture, maintainability, and correctness patterns.
 4. **Maintainability pass**
    - Keep files under ~500 lines unless necessary.
    - Names are descriptive; public names are concise; internal names can be verbose.
-   - Comments explain *why* for non-obvious logic; remove redundant comments.
+   - Comments explain _why_ for non-obvious logic; remove redundant comments.
    - Documentation is updated for behavior, usage, or interface changes.
 5. **Correctness and safety**
    - Validate logic, edge cases, and error handling.

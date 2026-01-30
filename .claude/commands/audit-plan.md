@@ -68,15 +68,15 @@ avoid vague praise or criticism.
 
 **Categories:**
 
-| Category | What to evaluate |
-| -------- | ---------------- |
-| **Problem & Scope** | Clear goal, non-goals, user value, constraints, assumptions, explicit scope boundaries. |
-| **Scenarios & Acceptance Criteria** | Gherkin/acceptance criteria: happy path, edge cases, error/negative cases; testability; explicit success conditions. |
-| **Local-First Experience** | Offline-first behavior, instant local responsiveness, data ownership/privacy, sync/conflict behavior, graceful degradation without network. Explicitly evaluate impact on **Cursor**, **Claude**, and **CLI** local-only workflows. |
-| **CLI & Extensibility** | Structure for adding new content: command patterns, flags, output format consistency, discoverability, minimal coupling, backward-compatible evolution. |
-| **Dependencies & Risks** | External dependencies, sequence constraints, risk mitigation, rollback paths. |
-| **Plan Consistency** | Alignment between plan file, interfaces.md, README.md, and agent files; no mismatch between interfaces and agent exports/receives; dependency graph matches assignments. |
-| **Duplicate Detection** | Only if not disabled with `--no-duplicates`: see step 4. Score 0-5 based on whether the plan clearly differs from others (5 = no overlap, 0 = high overlap or redundant intent). |
+| Category                            | What to evaluate                                                                                                                                                                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Problem & Scope**                 | Clear goal, non-goals, user value, constraints, assumptions, explicit scope boundaries.                                                                                                                                             |
+| **Scenarios & Acceptance Criteria** | Gherkin/acceptance criteria: happy path, edge cases, error/negative cases; testability; explicit success conditions.                                                                                                                |
+| **Local-First Experience**          | Offline-first behavior, instant local responsiveness, data ownership/privacy, sync/conflict behavior, graceful degradation without network. Explicitly evaluate impact on **Cursor**, **Claude**, and **CLI** local-only workflows. |
+| **CLI & Extensibility**             | Structure for adding new content: command patterns, flags, output format consistency, discoverability, minimal coupling, backward-compatible evolution.                                                                             |
+| **Dependencies & Risks**            | External dependencies, sequence constraints, risk mitigation, rollback paths.                                                                                                                                                       |
+| **Plan Consistency**                | Alignment between plan file, interfaces.md, README.md, and agent files; no mismatch between interfaces and agent exports/receives; dependency graph matches assignments.                                                            |
+| **Duplicate Detection**             | Only if not disabled with `--no-duplicates`: see step 4. Score 0-5 based on whether the plan clearly differs from others (5 = no overlap, 0 = high overlap or redundant intent).                                                    |
 
 ### 4. Duplicate Scan (unless `--no-duplicates`)
 
@@ -102,15 +102,15 @@ Produce the following in order:
 
 **Scorecard (table):** Output a table like:
 
-| Category | Score (0-5) | Notes |
-| -------- | ----------- | ----- |
-| Problem & Scope | X | ... |
-| Scenarios & Acceptance Criteria | X | ... |
-| Local-First Experience | X | ... |
-| CLI & Extensibility | X | ... |
-| Dependencies & Risks | X | ... |
-| Plan Consistency | X | ... |
-| Duplicate Detection | X | ... (or "Skipped") |
+| Category                        | Score (0-5) | Notes              |
+| ------------------------------- | ----------- | ------------------ |
+| Problem & Scope                 | X           | ...                |
+| Scenarios & Acceptance Criteria | X           | ...                |
+| Local-First Experience          | X           | ...                |
+| CLI & Extensibility             | X           | ...                |
+| Dependencies & Risks            | X           | ...                |
+| Plan Consistency                | X           | ...                |
+| Duplicate Detection             | X           | ... (or "Skipped") |
 
 **Findings** (Critical / Major / Minor)
 
@@ -162,13 +162,13 @@ No likely duplicates found.
 
 ## Integration with Other Commands
 
-| Command | Purpose |
-| ------- | ------- |
-| `create-feature-plan` | Create new plan; run audit after to validate. |
-| `update-feature-plan` | Update plan and agents; run audit to re-check quality. |
-| **audit-plan** | PM-style audit and next-edits; feed results into plan edits. |
-| `run-agent` | Start agent work; run after audit when satisfied. |
-| `list-feature-plans` | Discover plan names if unsure which to audit. |
+| Command               | Purpose                                                      |
+| --------------------- | ------------------------------------------------------------ |
+| `create-feature-plan` | Create new plan; run audit after to validate.                |
+| `update-feature-plan` | Update plan and agents; run audit to re-check quality.       |
+| **audit-plan**        | PM-style audit and next-edits; feed results into plan edits. |
+| `run-agent`           | Start agent work; run after audit when satisfied.            |
+| `list-feature-plans`  | Discover plan names if unsure which to audit.                |
 
 ## Notes
 

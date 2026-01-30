@@ -131,29 +131,30 @@ Assesses all agents in the plan for completion status and file organization.
      `0023-memory-metrics-ui#1`)
    - **Extract agentId** from agent file name: `<agent-file-name>` (e.g., `000_agent_memory_warning.agent.md`)
    - **For agents with multiple features**: Claim each feature separately, or claim the first/primary feature
-  - Call: `call_mcp_tool` with server `<planning-mcp-server>`, tool `claim_task`, arguments:
 
-     ```json
-     {
-       "taskId": "<plan-name>#<feature-number>",
-       "agentId": "<agent-file-name>",
-       "persona": "coder"
-     }
-     ```
+- Call: `call_mcp_tool` with server `<planning-mcp-server>`, tool `claim_task`, arguments:
 
-   - **Example**: For agent file `plans/0023-memory-metrics-ui/agents/000_agent_memory_warning.agent.md` with Feature #1:
+  ```json
+  {
+    "taskId": "<plan-name>#<feature-number>",
+    "agentId": "<agent-file-name>",
+    "persona": "coder"
+  }
+  ```
 
-     ```json
-     {
-       "taskId": "0023-memory-metrics-ui#1",
-       "agentId": "000_agent_memory_warning.agent.md",
-       "persona": "coder"
-     }
-     ```
+- **Example**: For agent file `plans/0023-memory-metrics-ui/agents/000_agent_memory_warning.agent.md` with Feature #1:
 
-   - **This must happen BEFORE opening the file or starting work** to prevent conflicts
-  - **Note**: Server name is resolved from `.mcp.json` (planning MCP server)
-   - **Note**: The server expects taskId format `<plan-name>#<feature-number>`, not the agent file path
+  ```json
+  {
+    "taskId": "0023-memory-metrics-ui#1",
+    "agentId": "000_agent_memory_warning.agent.md",
+    "persona": "coder"
+  }
+  ```
+
+- **This must happen BEFORE opening the file or starting work** to prevent conflicts
+- **Note**: Server name is resolved from `.mcp.json` (planning MCP server)
+- **Note**: The server expects taskId format `<plan-name>#<feature-number>`, not the agent file path
 
 2. **GitHub Issue Creation:**
    - The script automatically creates GitHub issues when an agent file is opened (if issues don't exist)

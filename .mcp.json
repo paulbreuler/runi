@@ -7,9 +7,17 @@
         "X-MCP-Toolsets": "dev,docs"
       }
     },
-    "runi-Planning": {
-      "command": "node",
-      "args": ["/Users/paul/Documents/GitHub/runi-planning-docs/.mcp/server/dist/index.js"]
+    "limps-planning-limps": {
+      "command": "limps",
+      "args": ["serve", "--config", "/Users/paul/Library/Application Support/limps/config.json"]
+    },
+    "limps-planning-runi-planning-docs": {
+      "command": "limps",
+      "args": [
+        "serve",
+        "--config",
+        "/Users/paul/Library/Application Support/runi-planning-docs/config.json"
+      ]
     }
   }
 }

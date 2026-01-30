@@ -199,23 +199,27 @@ When proposing a workflow solution, use this process:
 ## Verification Checklist
 
 ### Research
+
 - [ ] GitHub Actions docs consulted
 - [ ] Action documentation reviewed
 - [ ] API documentation verified
 
 ### Testing
+
 - [ ] Git commands tested
 - [ ] Script logic tested
 - [ ] API calls tested
 - [ ] Edge cases tested
 
 ### Structure
+
 - [ ] Job dependencies verified
 - [ ] Conditionals verified
 - [ ] Permissions verified
 - [ ] Outputs verified
 
 ### Proof
+
 - [ ] Test results documented
 - [ ] Sources cited
 - [ ] Flow diagram created

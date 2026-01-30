@@ -2,6 +2,7 @@
 name: mcp-code-review
 description: Review code for correctness, security, and LLM/MCP safety in this repo. Use when a code review, security review, or MCP/LLM audit is requested.
 ---
+
 # MCP + LLM Code Review (runi)
 
 ## Purpose
@@ -41,7 +42,9 @@ Use `$ARGUMENTS` as the scope (paths, diff range, PR number, or component name).
    - Validate tool arguments and path handling in command files
    - Check for proper error handling when MCP tools are unavailable
    - Verify RLM query code safety (only execute code you authored or reviewed)
-  - Review MCP server configuration in `.mcp.json` (repo root) for security
+
+- Review MCP server configuration in `.mcp.json` (repo root) for security
+
 6. **Future MCP server review** (When runi implements its own MCP server)
    - Review tool schemas, argument validation, and permission boundaries
    - Identify prompt injection vectors and untrusted content handling
@@ -72,6 +75,7 @@ Focus extra scrutiny on:
 ## MCP/LLM Security Checklist
 
 **Current (MCP Tool Usage)**:
+
 - Validate MCP tool arguments and path handling in command files
 - Ensure RLM query code is only executed when authored or reviewed
 - Check for proper error handling when MCP tools are unavailable
@@ -80,6 +84,7 @@ Focus extra scrutiny on:
 - Ensure user-controlled content doesn't become tool arguments without sanitization
 
 **Future (MCP Server Implementation)**:
+
 - Validate tool inputs and guard file paths against traversal
 - Avoid executing untrusted code or shell commands without sandboxing
 - Check for prompt injection via markdown, frontmatter, or external content
@@ -87,6 +92,7 @@ Focus extra scrutiny on:
 - Verify allowed-tools / permissions are least-privilege
 
 **General**:
+
 - Verify dependency integrity to reduce supply-chain risk:
   - Prefer `pnpm install --frozen-lockfile` and check lockfile integrity hashes
   - Flag suspicious name lookalikes or unexpected transitive packages

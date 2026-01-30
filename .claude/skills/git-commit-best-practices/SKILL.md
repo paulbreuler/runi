@@ -1,9 +1,10 @@
 ---
 name: git-commit-best-practices
 description: Guide for creating well-structured, meaningful Git commits following conventional commits and repository best practices. Use when creating commits, amending commit messages, or reviewing commit history.
-argument-hint: "[scope | review-commits | commit-range]"
+argument-hint: '[scope | review-commits | commit-range]'
 allowed-tools: Bash(git *), Read, Grep
 ---
+
 # Git Commit Best Practices (runi)
 
 ## Purpose

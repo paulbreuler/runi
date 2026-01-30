@@ -120,27 +120,34 @@ The generated PR follows this structure:
 
 ```markdown
 ## Summary
+
 - ...
 
 ## Changes
+
 - ...
 
 ## Tests
+
 - ...
 
 ## Code Review
+
 - General review: [✅ Passed | ⚠️ Issues found | Not run] (via `/code-review` or `/branch-code-review` skill)
 - MCP/LLM review: [✅ Passed | ⚠️ Issues found | Not run] (via `/review-mcp` or `/mcp-code-review` skill)
 - Commit review: [✅ Passed | ⚠️ Issues found | Not run] (via `/git-commit-best-practices review-commits` skill)
 
 ## Breaking Changes
+
 - [If any commits contain `BREAKING CHANGE:` footer, list them]
 - [Include migration notes if applicable]
 
 ## Notes / Risks
+
 - ...
 
 ## Plan / Agent (if applicable)
+
 - Plan: <plan-name>
 - Agent: <agent-title> (<agent-file>)
 - Related issues: Closes #<feature-subissue>, #<feature-subissue>
@@ -202,6 +209,7 @@ Generated commit messages follow conventional commits. For detailed guidance, us
 - `chore`: Maintenance
 
 **For detailed commit message guidance**, invoke `/git-commit-best-practices` skill with:
+
 - No arguments: Guide for staged changes
 - `review-commits`: Review existing commits in a range
 - Commit range: Review specific commits (e.g., `HEAD~5..HEAD`)

@@ -318,13 +318,13 @@ Gotchas:
 
 ## Distillation Rules
 
-| {plan-name}-plan.md (verbose) | agent.md (distilled) |
-| ------------------------ | ------------------------ |
-| Full Gherkin scenario | One-line TL;DR |
-| Detailed TDD with code | `test → impl → refactor` |
-| Component design table | Just file paths |
-| Gotcha with full context | `issue: workaround` |
-| Interface with examples | Just signatures |
+| {plan-name}-plan.md (verbose) | agent.md (distilled)     |
+| ----------------------------- | ------------------------ |
+| Full Gherkin scenario         | One-line TL;DR           |
+| Detailed TDD with code        | `test → impl → refactor` |
+| Component design table        | Just file paths          |
+| Gotcha with full context      | `issue: workaround`      |
+| Interface with examples       | Just signatures          |
 
 ## Work Type Adjustments
 
