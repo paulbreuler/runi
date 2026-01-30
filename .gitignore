@@ -85,6 +85,7 @@ prompts/
 .cursor/code-review-report.md
 .cursor/plans/
 .cursor/mcp.json
+.limps-headless/
 
 # Audit scripts (moved to external glimps extension)
 scripts/audit/

@@ -459,7 +459,7 @@ export const MainLayout = ({
 
   return (
     <div className="relative z-0 flex h-screen flex-col bg-bg-app" data-testid="main-layout">
-      <div className="flex flex-1 overflow-hidden gap-0">
+      <div className="flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
           <AnimatePresence>
@@ -541,7 +541,7 @@ export const MainLayout = ({
           )}
         </AnimatePresence>
 
-        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden min-w-0">
           <div className="shrink-0" data-testid="header-bar">
             {headerContent !== undefined ? (
               headerContent
@@ -555,7 +555,7 @@ export const MainLayout = ({
           {/* Content area with panes and dockable panel */}
           <div
             className={cn(
-              'flex flex-1 overflow-hidden',
+              'flex flex-1 min-h-0 overflow-hidden',
               panelPosition === 'left' || panelPosition === 'right' ? 'flex-row' : 'flex-col'
             )}
             data-testid="content-area"
@@ -590,7 +590,7 @@ export const MainLayout = ({
             <LayoutGroup>
               <motion.div
                 ref={containerRef}
-                className="flex-1 overflow-hidden flex relative min-w-0"
+                className="flex-1 min-h-0 overflow-hidden flex relative min-w-0"
                 data-testid="pane-container"
                 style={{ scrollbarGutter: 'stable' }}
                 layout

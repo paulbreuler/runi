@@ -110,7 +110,11 @@ export const RequestBuilder = (): React.JSX.Element => {
   return (
     <div className="h-full flex flex-col bg-bg-app" data-testid="request-builder">
       {/* Tab navigation */}
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab as (value: string) => void}>
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={setActiveTab as (value: string) => void}
+        className="flex-1 min-h-0 flex flex-col"
+      >
         <div className="relative flex items-center px-6 py-2 border-b border-border-subtle bg-bg-surface">
           <div
             ref={tabScrollRef}
@@ -159,8 +163,8 @@ export const RequestBuilder = (): React.JSX.Element => {
         </div>
 
         {/* Tab content - overflow hidden to prevent scrollbar flash during transitions */}
-        <div className="flex-1 overflow-hidden">
-          <Tabs.Panel value="headers">
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <Tabs.Panel value="headers" className="h-full min-h-0">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -173,27 +177,29 @@ export const RequestBuilder = (): React.JSX.Element => {
             </motion.div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="body">
+          <Tabs.Panel value="body" className="h-full min-h-0">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="h-full overflow-auto"
+              className="h-full min-h-0 overflow-hidden flex flex-col p-4"
               style={{ scrollbarGutter: 'stable' }}
             >
-              <CodeEditor
-                mode="edit"
-                code={body}
-                onChange={setBody}
-                enableJsonValidation
-                enableJsonFormatting
-                placeholder="Enter request body (JSON, XML, text, etc.)"
-              />
+              <div className="flex-1 min-h-0">
+                <CodeEditor
+                  mode="edit"
+                  code={body}
+                  onChange={setBody}
+                  enableJsonValidation
+                  enableJsonFormatting
+                  placeholder="Enter request body (JSON, XML, text, etc.)"
+                />
+              </div>
             </motion.div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="params">
+          <Tabs.Panel value="params" className="h-full min-h-0">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -206,7 +212,7 @@ export const RequestBuilder = (): React.JSX.Element => {
             </motion.div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="auth">
+          <Tabs.Panel value="auth" className="h-full min-h-0">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

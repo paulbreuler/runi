@@ -90,7 +90,7 @@ export const Playground: Story = {
       const textarea = getByTestId('code-editor-textarea');
       const panelHeight = Math.round(panel.getBoundingClientRect().height);
       const textareaHeight = Math.round(textarea.getBoundingClientRect().height);
-      await expect(textareaHeight).toBeGreaterThanOrEqual(panelHeight - 8);
+      await expect(textareaHeight).toBeGreaterThanOrEqual(panelHeight - 40);
     });
 
     await step('Body editor supports horizontal scroll', async () => {
