@@ -18,7 +18,7 @@ interface ActionBarSelectProps<T extends BaseSelectOption = BaseSelectOption> {
   /** Currently selected value */
   value: string;
   /** Callback when selection changes */
-  onValueChange: (value: string) => void;
+  onValueChange: (value: string | null, eventDetails?: unknown) => void;
   /** Available options */
   options: T[];
   /** Icon to show in icon mode */

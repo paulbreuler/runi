@@ -2,13 +2,9 @@
  * Copyright (c) 2026 BaseState LLC
  * SPDX-License-Identifier: MIT
  *
- * Radix UI Color Scales
- * Based on Radix Themes 3 color architecture
- * 12-step scales with alpha variants
- *
+ * Color Scales
+ * 12-step scales with alpha variants for runi design system
  * Dark theme at :root (default), light theme overrides with .light class
- *
- * @see https://www.radix-ui.com/themes/docs/theme/color
  */
 
 /* ============================================

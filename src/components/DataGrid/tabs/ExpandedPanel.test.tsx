@@ -8,17 +8,17 @@
  * @description Tests for ExpandedPanel component with tab navigation
  */
 
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 import React from 'react';
 import { ExpandedPanel } from './ExpandedPanel';
 import type { NetworkHistoryEntry } from '@/types/history';
 
-// Mock Radix Tabs (similar to PanelTabs.test.tsx)
+// Mock Base UI Tabs (similar to PanelTabs.test.tsx)
 let mockOnValueChange: ((value: string) => void) | undefined;
 let mockCurrentValue: string | undefined;
 
-vi.mock('radix-ui', () => ({
+vi.mock('@base-ui/react/tabs', () => ({
   Tabs: {
     Root: ({
       children,
@@ -50,15 +50,13 @@ vi.mock('radix-ui', () => ({
         {children}
       </div>
     ),
-    Trigger: ({
-      children,
+    Tab: ({
       value,
-      asChild,
+      render,
       ...props
     }: {
-      children?: React.ReactNode;
       value?: string;
-      asChild?: boolean;
+      render?: (props: Record<string, unknown>) => React.ReactElement;
       [key: string]: unknown;
     }): React.JSX.Element => {
       const handleClick = (): void => {
@@ -67,21 +65,16 @@ vi.mock('radix-ui', () => ({
         }
       };
 
-      if (asChild && React.isValidElement(children)) {
-        const childProps = {
+      if (render !== undefined) {
+        const tabProps = {
           ...props,
           onClick: handleClick,
           'data-testid': `tab-${value ?? 'unknown'}`,
           'data-value': value,
-          'data-as-child': asChild,
           role: 'tab',
           'aria-selected': value === mockCurrentValue ? 'true' : 'false',
         };
-
-        return React.cloneElement(
-          children as React.ReactElement<Record<string, unknown>>,
-          childProps
-        );
+        return render(tabProps);
       }
 
       return (
@@ -93,11 +86,11 @@ vi.mock('radix-ui', () => ({
           onClick={handleClick}
           {...props}
         >
-          {children}
+          {value}
         </div>
       );
     },
-    Content: ({
+    Panel: ({
       children,
       value,
       ...props
@@ -145,11 +138,12 @@ describe('ExpandedPanel', () => {
 
   describe('Feature #18: Tab Navigation', () => {
     it('renders all tabs', () => {
-      render(<ExpandedPanel entry={mockEntry} />);
+      const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
       // Get tabs from the expanded tabs list (top-level navigation)
-      const tabsList = screen.getByTestId('expanded-tabs-list');
-      const tabs = tabsList.querySelectorAll('[role="tab"]');
+      const tabsList = container.querySelector('[data-testid="expanded-tabs-list"]');
+      expect(tabsList).toBeInTheDocument();
+      const tabs = tabsList?.querySelectorAll('[role="tab"]') ?? [];
 
       // Check that we have exactly 5 top-level tabs
       expect(tabs).toHaveLength(5);
@@ -163,9 +157,10 @@ describe('ExpandedPanel', () => {
     });
 
     it('Timing tab is active by default', () => {
-      render(<ExpandedPanel entry={mockEntry} />);
+      const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
-      const tabsRoot = screen.getByTestId('tabs-root');
+      const tabsRoot = container.querySelector('[data-testid="tabs-root"]');
+      expect(tabsRoot).toBeInTheDocument();
       expect(tabsRoot).toHaveAttribute('data-value', 'timing');
     });
 
@@ -173,22 +168,26 @@ describe('ExpandedPanel', () => {
       const { userEvent } = await import('@testing-library/user-event');
       const user = userEvent.setup();
 
-      render(<ExpandedPanel entry={mockEntry} />);
+      const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
       // Find the Response tab button by data-testid
-      const responseTab = screen.getByTestId('tab-response');
+      const responseTab = container.querySelector('[data-testid="tab-response"]');
       expect(responseTab).toBeInTheDocument();
-      await user.click(responseTab);
+      if (responseTab) {
+        await user.click(responseTab);
+      }
 
-      const tabsRoot = screen.getByTestId('tabs-root');
+      const tabsRoot = container.querySelector('[data-testid="tabs-root"]');
+      expect(tabsRoot).toBeInTheDocument();
       expect(tabsRoot).toHaveAttribute('data-value', 'response');
     });
 
     it('highlights active tab', () => {
-      render(<ExpandedPanel entry={mockEntry} />);
+      const { container } = render(<ExpandedPanel entry={mockEntry} />);
 
       // Find the Timing tab button by data-testid
-      const timingTab = screen.getByTestId('tab-timing');
+      const timingTab = container.querySelector('[data-testid="tab-timing"]');
+      expect(timingTab).toBeInTheDocument();
       // Active tab should have text-text-primary class
       expect(timingTab).toHaveClass('text-text-primary');
     });

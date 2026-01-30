@@ -80,8 +80,8 @@ export const AuthEditor = (): React.JSX.Element => {
     setHeaders(updatedHeaders);
   };
 
-  const handleAuthTypeChange = (value: string | undefined): void => {
-    const newType = (value ?? 'none') as AuthType;
+  const handleAuthTypeChange = (value: string | null): void => {
+    const newType = (value !== null && value !== '' ? value : 'none') as AuthType;
     setAuthType(newType);
 
     if (newType === 'none') {

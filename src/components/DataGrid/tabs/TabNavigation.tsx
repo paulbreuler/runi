@@ -8,7 +8,7 @@
  * @description Tab navigation for expanded panel
  */
 
-import { Tabs } from 'radix-ui';
+import { Tabs } from '@base-ui/react/tabs';
 import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
@@ -17,16 +17,16 @@ import type { ExpandedPanelTabType } from './ExpandedPanel';
 /**
  * TabNavigation - Tab switcher for expanded panel content.
  *
- * Uses Radix Tabs primitives with Motion animations for smooth tab indicator transitions.
+ * Uses Base UI Tabs primitives with Motion animations for smooth tab indicator transitions.
  * Allows switching between Timing, Response, Headers, TLS, and Code Gen views.
  *
- * Note: This component must be used inside a Tabs.Root from Radix UI.
+ * Note: This component must be used inside a Tabs.Root from Base UI.
  *
  * @example
  * ```tsx
  * <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
  *   <TabNavigation activeTab={activeTab} />
- *   <Tabs.Content value="timing">...</Tabs.Content>
+ *   <Tabs.Panel value="timing">...</Tabs.Panel>
  * </Tabs.Root>
  * ```
  */
@@ -57,39 +57,44 @@ export const TabNavigation = ({ activeTab, onKeyDown }: TabNavigationProps): Rea
         onKeyDown={onKeyDown}
       >
         {tabs.map((tab) => (
-          <Tabs.Trigger key={tab.id} value={tab.id} asChild>
-            <motion.button
-              type="button"
-              role="tab"
-              data-testid={`tab-${tab.id}`}
-              aria-selected={activeTab === tab.id}
-              className={cn(
-                'px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative',
-                focusRingClasses,
-                activeTab === tab.id
-                  ? 'text-text-primary'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-              whileHover={activeTab !== tab.id ? { scale: 1.02 } : undefined}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-            >
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="expanded-tab-indicator"
-                  className="absolute inset-0 bg-bg-raised rounded-t pointer-events-none z-0"
-                  data-testid="expanded-tab-indicator"
-                  transition={
-                    prefersReducedMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', stiffness: 300, damping: 30 }
-                  }
-                  initial={false}
-                />
-              )}
-              <span className="relative z-10">{tab.label}</span>
-            </motion.button>
-          </Tabs.Trigger>
+          <Tabs.Tab
+            key={tab.id}
+            value={tab.id}
+            render={(props) => (
+              <motion.button
+                {...props}
+                type="button"
+                role="tab"
+                data-testid={`tab-${tab.id}`}
+                aria-selected={activeTab === tab.id}
+                className={cn(
+                  'px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative',
+                  focusRingClasses,
+                  activeTab === tab.id
+                    ? 'text-text-primary'
+                    : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
+                )}
+                whileHover={activeTab !== tab.id ? { scale: 1.02 } : undefined}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+              >
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="expanded-tab-indicator"
+                    className="absolute inset-0 bg-bg-raised rounded-t pointer-events-none z-0"
+                    data-testid="expanded-tab-indicator"
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : { type: 'spring', stiffness: 300, damping: 30 }
+                    }
+                    initial={false}
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </motion.button>
+            )}
+          />
         ))}
       </Tabs.List>
     </LayoutGroup>

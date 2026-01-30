@@ -53,8 +53,8 @@ export const RequestHeader = ({
     };
   }, []);
 
-  const handleMethodChange = (value: string | undefined): void => {
-    if (value !== undefined && value.length > 0 && onMethodChange !== undefined) {
+  const handleMethodChange = (value: string | null): void => {
+    if (value !== null && value.length > 0 && onMethodChange !== undefined) {
       onMethodChange(value as HttpMethod);
     }
   };

@@ -212,30 +212,33 @@ export const StatusBar = (): React.JSX.Element => {
       <div className="flex items-center gap-1">
         {/* Metrics popover */}
         <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="xs"
-              noScale
-              className={cn('gap-1.5', isPanelOpen && 'bg-bg-raised text-text-primary')}
-              data-testid="status-bar-metrics-button"
-              aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}
-            >
-              <PulsingGlow state={pulsingState} data-testid="metrics-pulsing-glow">
-                <Activity className="w-2.5! h-2.5!" />
-              </PulsingGlow>
-              <span>Metrics</span>
-              {/* Inline RAM value when metrics are available */}
-              {shouldShowMetrics && (
-                <span
-                  className="font-mono text-text-secondary"
-                  data-testid="status-bar-metrics-inline"
-                >
-                  {metrics.memory?.current.toFixed(1)} MB
-                </span>
-              )}
-            </Button>
-          </PopoverTrigger>
+          <PopoverTrigger
+            render={(triggerProps) => (
+              <Button
+                {...triggerProps}
+                variant="ghost"
+                size="xs"
+                noScale
+                className={cn('gap-1.5', isPanelOpen && 'bg-bg-raised text-text-primary')}
+                data-testid="status-bar-metrics-button"
+                aria-label={isPanelOpen ? 'Close metrics panel' : 'Open metrics panel'}
+              >
+                <PulsingGlow state={pulsingState} data-testid="metrics-pulsing-glow">
+                  <Activity className="w-2.5! h-2.5!" />
+                </PulsingGlow>
+                <span>Metrics</span>
+                {/* Inline RAM value when metrics are available */}
+                {shouldShowMetrics && (
+                  <span
+                    className="font-mono text-text-secondary"
+                    data-testid="status-bar-metrics-inline"
+                  >
+                    {metrics.memory?.current.toFixed(1)} MB
+                  </span>
+                )}
+              </Button>
+            )}
+          />
           <PopoverContent
             align="end"
             side="top"

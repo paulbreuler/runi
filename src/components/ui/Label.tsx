@@ -4,10 +4,10 @@
  */
 
 import * as React from 'react';
-import { Label as LabelPrimitive } from 'radix-ui';
+import { Field } from '@base-ui/react/field';
 import { cn } from '@/utils/cn';
 
-export interface LabelProps extends React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> {
+export interface LabelProps extends React.ComponentPropsWithoutRef<typeof Field.Label> {
   /** Label text */
   children: React.ReactNode;
 }
@@ -15,21 +15,23 @@ export interface LabelProps extends React.ComponentPropsWithoutRef<typeof LabelP
 /**
  * Label component for form inputs and controls.
  *
- * Uses Radix UI Label primitive for better accessibility and focus management.
+ * Uses Base UI Field.Label for better accessibility and focus management.
  * Use with Switch, Input, Checkbox, and other form controls.
  * Associates label with control via htmlFor/id for accessibility.
  */
-export const Label = React.forwardRef<React.ComponentRef<typeof LabelPrimitive.Root>, LabelProps>(
+export const Label = React.forwardRef<React.ComponentRef<typeof Field.Label>, LabelProps>(
   ({ children, className, ...props }, ref) => {
+    const resolvedClassName =
+      typeof className === 'function'
+        ? (state: Field.Label.State): string =>
+            cn('text-xs text-text-secondary cursor-pointer', className(state))
+        : cn('text-xs text-text-secondary cursor-pointer', className);
+
     return (
-      <LabelPrimitive.Root
-        ref={ref}
-        className={cn('text-xs text-text-secondary cursor-pointer', className)}
-        {...props}
-      >
+      <Field.Label ref={ref} className={resolvedClassName} {...props}>
         {children}
-      </LabelPrimitive.Root>
+      </Field.Label>
     );
   }
 );
-Label.displayName = LabelPrimitive.Root.displayName;
+Label.displayName = 'Label';

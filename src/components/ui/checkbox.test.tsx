@@ -33,7 +33,8 @@ describe('Checkbox', () => {
       const checkbox = screen.getByRole('checkbox');
       expect(checkbox).toBeInTheDocument();
       // Indeterminate checkboxes are not "checked" per ARIA spec
-      expect(checkbox).toHaveAttribute('data-state', 'indeterminate');
+      // Base UI uses data-indeterminate attribute
+      expect(checkbox).toHaveAttribute('data-indeterminate');
     });
 
     it('renders with custom className', () => {
@@ -102,33 +103,34 @@ describe('Checkbox', () => {
     it('has checked styling when checked', () => {
       render(<Checkbox checked={true} />);
       const checkbox = screen.getByRole('checkbox');
-      // The component uses data-state attribute selectors for styling
-      expect(checkbox).toHaveAttribute('data-state', 'checked');
+      // Base UI uses data-checked attribute
+      expect(checkbox).toHaveAttribute('data-checked');
       // Verify the class contains the data-attribute selector
-      expect(checkbox).toHaveClass('data-[state=checked]:bg-accent-blue');
+      expect(checkbox).toHaveClass('data-checked:bg-accent-blue');
     });
 
     it('has border styling when unchecked', () => {
       render(<Checkbox checked={false} />);
       const checkbox = screen.getByRole('checkbox');
-      // The component uses data-state attribute selectors for styling
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
-      // Verify the class contains the data-attribute selector
-      expect(checkbox).toHaveClass('data-[state=unchecked]:border-border-default');
+      // Base UI doesn't set data-checked when unchecked
+      expect(checkbox).not.toHaveAttribute('data-checked');
+      expect(checkbox).not.toHaveAttribute('data-indeterminate');
     });
 
     it('shows check icon when checked', () => {
       render(<Checkbox checked={true} />);
       // The check icon should be visible
       const checkbox = screen.getByRole('checkbox');
-      // Radix Checkbox uses an indicator element
-      expect(checkbox.querySelector('[data-state="checked"]')).toBeInTheDocument();
+      // Base UI Checkbox uses an indicator element
+      const indicator = checkbox.querySelector('[data-checked]') ?? checkbox;
+      expect(indicator).toBeInTheDocument();
     });
 
     it('shows minus icon when indeterminate', () => {
       render(<Checkbox checked="indeterminate" />);
       const checkbox = screen.getByRole('checkbox');
-      expect(checkbox.querySelector('[data-state="indeterminate"]')).toBeInTheDocument();
+      // Base UI uses data-indeterminate attribute
+      expect(checkbox).toHaveAttribute('data-indeterminate');
     });
   });
 

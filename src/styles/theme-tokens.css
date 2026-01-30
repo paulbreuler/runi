@@ -3,10 +3,8 @@
  * SPDX-License-Identifier: MIT
  *
  * Theme Token Mappings
- * Maps raw Radix color scales to accent and semantic tokens
- * Inspired by Radix Themes 3 architecture
- *
- * @see https://www.radix-ui.com/themes/docs/theme/color
+ * Maps raw color scales to accent and semantic tokens
+ * Based on runi design system architecture
  */
 
 /* ============================================

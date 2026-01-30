@@ -4,10 +4,9 @@
  */
 
 /**
- * @file ThemeProvider - Radix UI Themes-inspired theme context
+ * @file ThemeProvider - Theme context for runi design system
  * @description Applies theme class and data attributes to document.documentElement (html)
- * for proper Radix-style theming that affects all global styles including body.
- * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/theme.tsx
+ * for proper theming that affects all global styles including body.
  */
 
 import { createContext, useContext, useMemo, useEffect, type ReactNode } from 'react';

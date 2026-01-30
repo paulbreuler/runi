@@ -91,7 +91,7 @@ export const NetworkHistoryFilters = ({
         <ActionBarSelect
           value={filters.method}
           onValueChange={(value) => {
-            onFilterChange('method', value);
+            onFilterChange('method', value ?? 'ALL');
           }}
           options={METHOD_OPTIONS}
           icon={<Code size={14} />}
@@ -102,7 +102,7 @@ export const NetworkHistoryFilters = ({
         <ActionBarSelect
           value={filters.status}
           onValueChange={(value) => {
-            onFilterChange('status', value);
+            onFilterChange('status', value ?? 'All');
           }}
           options={STATUS_OPTIONS}
           icon={<CheckCircle size={14} />}
@@ -113,7 +113,7 @@ export const NetworkHistoryFilters = ({
         <ActionBarSelect
           value={filters.intelligence}
           onValueChange={(value) => {
-            onFilterChange('intelligence', value);
+            onFilterChange('intelligence', value ?? 'all');
           }}
           options={INTELLIGENCE_OPTIONS}
           icon={<Brain size={14} />}

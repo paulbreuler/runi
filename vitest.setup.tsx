@@ -2,11 +2,8 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 import '@testing-library/jest-dom';
-import { configure } from '@testing-library/react';
 import React from 'react';
 import { vi } from 'vitest';
-
-configure({ testIdAttribute: 'data-test-id' });
 
 // Mock Base UI ScrollArea to pass through children in tests
 // ScrollArea.Viewport uses refs that don't work well in JSDOM

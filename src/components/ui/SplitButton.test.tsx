@@ -174,8 +174,10 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      // Should have a separator element
-      expect(screen.getByRole('separator')).toBeInTheDocument();
+      // Should have a separator element (wait for menu to render)
+      await waitFor(() => {
+        expect(screen.getByRole('separator')).toBeInTheDocument();
+      });
     });
 
     it('disables individual menu items when item.disabled is true', async () => {
@@ -192,7 +194,7 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      const saveItem = screen.getByRole('menuitem', { name: /save$/i });
+      const saveItem = await screen.findByRole('menuitem', { name: /save$/i });
       expect(saveItem).toHaveAttribute('data-disabled');
     });
 
@@ -209,7 +211,7 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      const deleteItem = screen.getByRole('menuitem', { name: /delete/i });
+      const deleteItem = await screen.findByRole('menuitem', { name: /delete/i });
       expect(deleteItem).toHaveClass('text-signal-error');
     });
   });
@@ -224,7 +226,9 @@ describe('SplitButton', () => {
       trigger.focus();
       await user.keyboard('{Enter}');
 
-      expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
+      });
     });
 
     it('closes dropdown on Escape key', async () => {
@@ -235,9 +239,15 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
+      await waitFor(() => {
+        expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
+      });
+
       await user.keyboard('{Escape}');
 
-      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+      });
     });
   });
 

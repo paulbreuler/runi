@@ -4,11 +4,12 @@
  */
 
 import * as React from 'react';
-import { DropdownMenu } from 'radix-ui';
-import { motion, type Variant } from 'motion/react';
+import { Menu } from '@base-ui/react/menu';
+import { type Variant } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
+import { Button } from '@/components/ui/button';
 
 interface SplitButtonMenuItem {
   id: string;
@@ -25,7 +26,7 @@ interface SplitButtonSeparator {
 
 type SplitButtonItem = SplitButtonMenuItem | SplitButtonSeparator;
 
-const splitButtonVariants = cva(
+const _splitButtonVariants = cva(
   'inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
@@ -49,7 +50,7 @@ const splitButtonVariants = cva(
   }
 );
 
-interface SplitButtonProps extends VariantProps<typeof splitButtonVariants> {
+interface SplitButtonProps extends VariantProps<typeof _splitButtonVariants> {
   /** Button label */
   label: string;
   /** Button icon (optional) */
@@ -68,8 +69,8 @@ interface SplitButtonProps extends VariantProps<typeof splitButtonVariants> {
   'data-testid'?: string;
 }
 
-// Motion animation variants
-const buttonMotionVariants: Record<string, Variant> = {
+// Motion animation variants (reserved for future use)
+const _buttonMotionVariants: Record<string, Variant> = {
   rest: {
     scale: 1,
     transition: { type: 'spring', stiffness: 400, damping: 25 },
@@ -182,90 +183,95 @@ export const SplitButton = ({
 
   return (
     <div className={cn('inline-flex', className)}>
-      {/* Primary button */}
-      <motion.button
-        type="button"
+      {/* Primary button - using Button component */}
+      <Button
         onClick={handlePrimaryClick}
         disabled={disabled}
-        className={cn(splitButtonVariants({ variant, size }), 'rounded-l-lg rounded-r-none')}
+        variant={variant === 'destructive' ? 'destructive-outline' : variant}
+        size={size}
+        className={cn(
+          'rounded-l-lg rounded-r-none',
+          variant === 'destructive' &&
+            'bg-signal-error text-accent-contrast hover:bg-signal-error/90'
+        )}
         data-testid={testId}
-        variants={buttonMotionVariants}
-        initial="rest"
-        whileHover={disabled ? undefined : 'hover'}
-        whileTap={disabled ? undefined : 'tap'}
       >
-        {icon !== undefined && <span className="shrink-0">{icon}</span>}
+        {icon !== undefined && (
+          <span className="shrink-0" data-testid="split-button-icon">
+            {icon}
+          </span>
+        )}
         <span>{label}</span>
-      </motion.button>
+      </Button>
 
       {/* Visual separator */}
       <div className={cn('w-px self-stretch', getSeparatorColor())} aria-hidden="true" />
 
-      {/* Dropdown trigger */}
-      <DropdownMenu.Root open={open} onOpenChange={setOpen}>
-        <DropdownMenu.Trigger asChild>
-          <motion.button
-            type="button"
-            className={cn(
-              'inline-flex items-center justify-center font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app rounded-r-lg rounded-l-none',
-              getTriggerClasses(),
-              getTriggerSizeClasses()
-            )}
-            aria-label={dropdownAriaLabel}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            data-testid={testId !== undefined ? `${testId}-dropdown` : undefined}
-            variants={buttonMotionVariants}
-            initial="rest"
-            whileHover="hover"
-            whileTap="tap"
-          >
-            <ChevronDown
-              size={size === 'xs' ? 12 : 14}
-              className={cn('transition-transform', open && 'rotate-180')}
-            />
-          </motion.button>
-        </DropdownMenu.Trigger>
+      {/* Dropdown menu */}
+      <Menu.Root open={open} onOpenChange={setOpen}>
+        <Menu.Trigger
+          render={(props) => (
+            <Button
+              {...props}
+              variant={variant}
+              size={size}
+              className={cn(
+                'rounded-r-lg rounded-l-none',
+                getTriggerClasses(),
+                getTriggerSizeClasses()
+              )}
+              aria-label={dropdownAriaLabel}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              data-testid={testId !== undefined ? `${testId}-dropdown` : undefined}
+            >
+              <ChevronDown
+                size={size === 'xs' ? 12 : 14}
+                className={cn('transition-transform', open && 'rotate-180')}
+              />
+            </Button>
+          )}
+        />
 
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content
-            className="z-50 min-w-[140px] bg-bg-surface border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95"
-            sideOffset={4}
-            align="end"
-          >
-            {items.map((item, index) => {
-              if (!isMenuItemGuard(item)) {
+        <Menu.Portal>
+          <Menu.Positioner sideOffset={4} align="end">
+            <Menu.Popup className="z-50 min-w-[140px] bg-bg-surface border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95">
+              {items.map((item, index) => {
+                if (!isMenuItemGuard(item)) {
+                  return (
+                    <Menu.Separator
+                      key={`separator-${String(index)}`}
+                      className="h-px bg-border-subtle my-1"
+                    />
+                  );
+                }
+
                 return (
-                  <DropdownMenu.Separator
-                    key={`separator-${String(index)}`}
-                    className="h-px bg-border-subtle my-1"
-                  />
+                  <Menu.Item
+                    key={item.id}
+                    label={item.label}
+                    className={cn(
+                      'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                      item.destructive === true
+                        ? 'text-signal-error hover:bg-signal-error/10 focus:bg-signal-error/10'
+                        : 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus:bg-bg-raised focus:text-text-primary',
+                      item.disabled === true && 'opacity-50 cursor-not-allowed'
+                    )}
+                    disabled={item.disabled}
+                    onClick={() => {
+                      handleItemClick(item);
+                    }}
+                    closeOnClick={true}
+                  >
+                    {item.icon !== undefined && <span className="shrink-0">{item.icon}</span>}
+                    <span>{item.label}</span>
+                  </Menu.Item>
                 );
-              }
-
-              return (
-                <DropdownMenu.Item
-                  key={item.id}
-                  className={cn(
-                    'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
-                    item.destructive === true
-                      ? 'text-signal-error hover:bg-signal-error/10 focus:bg-signal-error/10'
-                      : 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus:bg-bg-raised focus:text-text-primary',
-                    item.disabled === true && 'opacity-50 cursor-not-allowed'
-                  )}
-                  disabled={item.disabled}
-                  onSelect={() => {
-                    handleItemClick(item);
-                  }}
-                >
-                  {item.icon !== undefined && <span className="shrink-0">{item.icon}</span>}
-                  <span>{item.label}</span>
-                </DropdownMenu.Item>
-              );
-            })}
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
+              })}
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
     </div>
   );
 };

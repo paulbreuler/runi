@@ -33,7 +33,8 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Select method' })).toBeInTheDocument();
+    // Base UI uses role="combobox" by default, but we override it to "button"
+    expect(screen.getByRole('combobox', { name: 'Select method' })).toBeInTheDocument();
   });
 
   it('displays selected value in full mode', () => {
@@ -62,7 +63,7 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Select method' }));
+    await userEvent.click(screen.getByRole('combobox', { name: 'Select method' }));
 
     // Check that options are visible
     expect(screen.getByRole('option', { name: 'All Methods' })).toBeInTheDocument();
@@ -81,10 +82,12 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Select method' }));
+    await userEvent.click(screen.getByRole('combobox', { name: 'Select method' }));
     await userEvent.click(screen.getByRole('option', { name: 'POST' }));
 
-    expect(handleChange).toHaveBeenCalledWith('POST');
+    // Base UI onValueChange passes (value, eventDetails)
+    expect(handleChange).toHaveBeenCalled();
+    expect(handleChange).toHaveBeenCalledWith('POST', expect.any(Object));
   });
 
   it('uses data-testid when provided', () => {

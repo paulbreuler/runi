@@ -99,7 +99,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
       {/* Threshold (muted text, not MetricCell) with tooltip */}
       {tooltipText !== '' && hasMetrics ? (
         <>
-          <Tooltip content={tooltipText} data-testid="metrics-grid-threshold-tooltip">
+          <Tooltip content={tooltipText} data-test-id="metrics-grid-threshold-tooltip">
             <div
               className="text-xs text-text-muted cursor-help"
               data-testid="metrics-grid-label-threshold"
@@ -107,7 +107,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
               Threshold:
             </div>
           </Tooltip>
-          <Tooltip content={tooltipText} data-testid="metrics-grid-threshold-value-tooltip">
+          <Tooltip content={tooltipText} data-test-id="metrics-grid-threshold-value-tooltip">
             <div
               className="flex items-baseline text-xs font-mono text-text-muted cursor-help"
               data-testid="metrics-grid-value-threshold"
