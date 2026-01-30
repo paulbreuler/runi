@@ -6,7 +6,7 @@
 import React, { useCallback, useRef, useState, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { X, Minus, GripHorizontal, GripVertical } from 'lucide-react';
-import { ScrollArea } from 'radix-ui';
+import { ScrollArea } from '@base-ui/react/scroll-area';
 import { usePanelStore, COLLAPSED_PANEL_HEIGHT, MIN_PANEL_SIZES } from '@/stores/usePanelStore';
 import { DockControls } from './DockControls';
 import { cn } from '@/utils/cn';
@@ -151,7 +151,7 @@ export const DockablePanel = ({
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Horizontal scroll state for header
-  // Radix ScrollArea.Viewport uses a div element, so we can use HTMLDivElement
+  // Base UI ScrollArea.Viewport uses a div element, so we can use HTMLDivElement
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -482,7 +482,7 @@ export const DockablePanel = ({
     <AnimatePresence>
       <motion.div
         ref={panelRef}
-        data-testid="dockable-panel"
+        data-test-id="dockable-panel"
         className={cn(
           getPanelClasses(),
           isCollapsed && 'overflow-visible',
@@ -498,7 +498,7 @@ export const DockablePanel = ({
       >
         {/* Resize handle */}
         <div
-          data-testid="panel-resizer"
+          data-test-id="panel-resizer"
           className={getResizerClasses()}
           role="separator"
           aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
@@ -531,7 +531,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for bottom dock */}
         {isCollapsed && position === 'bottom' && (
           <motion.div
-            data-testid="panel-collapsed-edge"
+            data-test-id="panel-collapsed-edge"
             className={cn(
               'absolute inset-x-0 top-0 h-full',
               'border-t border-border-default',
@@ -575,7 +575,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for left dock */}
         {isCollapsed && position === 'left' && (
           <motion.div
-            data-testid="panel-collapsed-edge"
+            data-test-id="panel-collapsed-edge"
             className={cn(
               'absolute inset-y-0 left-0 w-full',
               'border-r border-border-default',
@@ -624,7 +624,7 @@ export const DockablePanel = ({
         {/* Collapsed state - Unified pull tab for right dock */}
         {isCollapsed && position === 'right' && (
           <motion.div
-            data-testid="panel-collapsed-edge"
+            data-test-id="panel-collapsed-edge"
             className={cn(
               'absolute inset-y-0 right-0 w-full',
               'border-l border-border-default',
@@ -675,25 +675,29 @@ export const DockablePanel = ({
           <>
             {/* Panel header */}
             <div
-              data-testid="panel-header"
+              data-test-id="panel-header"
               className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative z-20"
             >
               {/* Scrollable header content */}
-              <ScrollArea.Root className="flex-1 min-w-0" type="hover">
+              <ScrollArea.Root className="flex-1 min-w-0">
                 <ScrollArea.Viewport
                   ref={headerScrollRef}
-                  className="flex items-center gap-2 min-w-max h-full touch-pan-x"
+                  className="scroll-area-viewport flex items-center gap-2 min-w-max h-full touch-pan-x"
                   aria-label="Panel header content"
                 >
-                  {headerContent ?? (
-                    <span className="text-sm font-medium text-text-primary truncate">{title}</span>
-                  )}
+                  <ScrollArea.Content className="flex items-center gap-2 min-w-max">
+                    {headerContent ?? (
+                      <span className="text-sm font-medium text-text-primary truncate">
+                        {title}
+                      </span>
+                    )}
+                  </ScrollArea.Content>
                 </ScrollArea.Viewport>
                 <ScrollArea.Scrollbar
                   orientation="horizontal"
-                  className="flex touch-none select-none transition-colors h-1"
+                  className="scroll-area-scrollbar flex touch-none select-none transition-colors h-1"
                 >
-                  <ScrollArea.Thumb className="flex-1 rounded-full" />
+                  <ScrollArea.Thumb className="scroll-area-thumb flex-1 rounded-full" />
                 </ScrollArea.Scrollbar>
               </ScrollArea.Root>
 
@@ -701,7 +705,7 @@ export const DockablePanel = ({
               {showOverflowCue && canScrollLeft && (
                 <motion.div
                   className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
-                  data-testid="panel-header-overflow-left"
+                  data-test-id="panel-header-overflow-left"
                   initial={false}
                   animate={getOverflowAnimation('left')}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -710,7 +714,7 @@ export const DockablePanel = ({
               {showOverflowCue && canScrollRight && (
                 <motion.div
                   className="pointer-events-none absolute inset-y-0 right-[84px] w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
-                  data-testid="panel-header-overflow-right"
+                  data-test-id="panel-header-overflow-right"
                   initial={false}
                   animate={getOverflowAnimation('right')}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -745,7 +749,7 @@ export const DockablePanel = ({
             </div>
 
             {/* Panel content - children handle their own scrolling (e.g., VirtualDataGrid) */}
-            <div className="flex-1 min-h-0 overflow-hidden" data-testid="panel-content-area">
+            <div className="flex-1 min-h-0 overflow-hidden" data-test-id="panel-content-area">
               {children}
             </div>
           </>

@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: MIT
  *
  * runi Design System
- * Based on Radix Themes 3 architecture with Tailwind CSS utilities
+ * Based on runi design tokens with Tailwind CSS utilities
  */
 
 /* ============================================
-   Radix Color Scales (raw values)
+   Color Scales (raw values)
    ============================================ */
-@import './styles/radix-colors.css';
+@import './styles/color-scales.css';
 
 /* ============================================
    Theme Token Mappings (:root / .light selectors)
@@ -218,38 +218,38 @@ body {
 }
 
 /* ============================================
-   Radix ScrollArea Styling
+   Base UI ScrollArea Styling
    ============================================ */
 
 /* Hide native scrollbar on viewport */
-[data-radix-scroll-area-viewport] {
+.scroll-area-viewport {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+.scroll-area-viewport::-webkit-scrollbar {
   display: none;
 }
 
 /* Scrollbar track */
-[data-radix-scroll-area-scrollbar] {
+.scroll-area-scrollbar {
   background: var(--color-surface);
   border-radius: 4px;
 }
 
 /* Scrollbar thumb */
-[data-radix-scroll-area-thumb] {
+.scroll-area-thumb {
   background: var(--gray-8);
   border-radius: 4px;
   position: relative;
 }
 
-[data-radix-scroll-area-thumb]:hover {
+.scroll-area-thumb:hover {
   background: var(--gray-9);
 }
 
 /* Ensure minimum touch target size (44x44px) */
-[data-radix-scroll-area-thumb]::before {
+.scroll-area-thumb::before {
   content: '';
   position: absolute;
   top: 50%;

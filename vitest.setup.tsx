@@ -2,29 +2,39 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
 import React from 'react';
 import { vi } from 'vitest';
 
-// Mock Radix ScrollArea to pass through children in tests
-// ScrollArea.Viewport uses refs and portals that don't work well in JSDOM
-vi.mock('@radix-ui/react-scroll-area', () => ({
-  Root: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
-    <div data-radix-scroll-area-root="" {...props}>
-      {children}
-    </div>
-  ),
-  Viewport: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
-    <div data-radix-scroll-area-viewport="" {...props}>
-      {children}
-    </div>
-  ),
-  Scrollbar: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
-    <div data-radix-scroll-area-scrollbar="" {...props}>
-      {children}
-    </div>
-  ),
-  Thumb: (props: Record<string, unknown>) => <div data-radix-scroll-area-thumb="" {...props} />,
-  Corner: (props: Record<string, unknown>) => <div data-radix-scroll-area-corner="" {...props} />,
+configure({ testIdAttribute: 'data-test-id' });
+
+// Mock Base UI ScrollArea to pass through children in tests
+// ScrollArea.Viewport uses refs that don't work well in JSDOM
+vi.mock('@base-ui/react/scroll-area', () => ({
+  ScrollArea: {
+    Root: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <div className="scroll-area-root" {...props}>
+        {children}
+      </div>
+    ),
+    Viewport: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <div className="scroll-area-viewport" {...props}>
+        {children}
+      </div>
+    ),
+    Content: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <div className="scroll-area-content" {...props}>
+        {children}
+      </div>
+    ),
+    Scrollbar: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <div className="scroll-area-scrollbar" {...props}>
+        {children}
+      </div>
+    ),
+    Thumb: (props: Record<string, unknown>) => <div className="scroll-area-thumb" {...props} />,
+    Corner: (props: Record<string, unknown>) => <div className="scroll-area-corner" {...props} />,
+  },
 }));
 
 // Only setup window mocks if we're in jsdom environment (not node)
