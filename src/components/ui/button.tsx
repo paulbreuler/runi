@@ -31,7 +31,7 @@ const buttonVariants = cva(
           'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50',
         // Secondary: Raised surface
         secondary:
-          'bg-bg-raised border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-elevated',
+          'bg-bg-raised border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-emphasis',
         // Ghost: Invisible until hover
         ghost: 'bg-transparent text-text-muted hover:text-text-secondary hover:bg-bg-raised/50',
         // Link: Text only

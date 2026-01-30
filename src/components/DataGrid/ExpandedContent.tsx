@@ -30,7 +30,7 @@ export interface ExpandedContentProps {
   children: React.ReactNode;
   /** Whether the content is visible (for AnimatePresence) */
   isVisible?: boolean;
-  /** Custom className for the inner wrapper div (default: bg-bg-elevated border-t border-border-subtle) */
+  /** Custom className for the inner wrapper div (default: bg-bg-surface border-t border-border-subtle) */
   innerClassName?: string;
 }
 
@@ -48,7 +48,7 @@ export interface ExpandedContentProps {
 export const ExpandedContent = ({
   children,
   isVisible = true,
-  innerClassName = 'bg-bg-elevated border-t border-border-subtle',
+  innerClassName = 'bg-bg-surface border-t border-border-subtle',
 }: ExpandedContentProps): React.JSX.Element => {
   const shouldReduceMotion = useReducedMotion() === true;
   const contentRef = useRef<HTMLDivElement>(null);

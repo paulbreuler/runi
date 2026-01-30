@@ -732,7 +732,7 @@ export const DockablePanel = ({
                 {/* Collapse/Minimize button */}
                 <button
                   type="button"
-                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 transition-colors"
+                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors"
                   onClick={handleMinimize}
                   aria-label="Collapse panel"
                 >
@@ -742,7 +742,7 @@ export const DockablePanel = ({
                 {/* Close button */}
                 <button
                   type="button"
-                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 transition-colors"
+                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors"
                   onClick={handleClose}
                   aria-label="Close panel"
                 >

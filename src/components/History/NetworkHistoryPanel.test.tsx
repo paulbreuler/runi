@@ -237,7 +237,7 @@ describe('NetworkHistoryPanel', () => {
 
       const expandedSection = screen.getByTestId('expanded-section');
       // Find the inner div that has the marginLeft style (contains ExpandedPanel)
-      const innerDiv = expandedSection.querySelector('div.bg-bg-elevated.border-t');
+      const innerDiv = expandedSection.querySelector('div.bg-bg-surface.border-t');
 
       // Should use EXPANDED_CONTENT_LEFT_MARGIN_PX (54px = 32+16+6)
       expect(innerDiv).toBeInTheDocument();

@@ -730,7 +730,7 @@ mod tests {
         let response = result.unwrap();
         assert_eq!(response.status, 200);
         assert_eq!(response.status_text, "OK");
-        assert!(response.timing.total_ms > 0);
+        // Timing is populated (can be 0 for very fast localhost requests)
 
         let recorded = requests.lock().expect("lock requests");
         assert_eq!(recorded.len(), 1);
@@ -929,7 +929,7 @@ mod tests {
         let timing = &response.timing;
 
         // Timing fields should be populated for HTTP request
-        assert!(timing.total_ms > 0, "total_ms should be positive");
+        // Note: total_ms can be 0 for very fast localhost requests (sub-millisecond)
         assert!(
             timing.connect_ms.is_some(),
             "connect_ms should be populated"
@@ -1002,8 +1002,8 @@ mod tests {
         eprintln!("  tls_ms: {:?}", timing.tls_ms);
         eprintln!("  first_byte_ms: {:?}", timing.first_byte_ms);
 
-        // At minimum, we should have total_ms
-        assert!(timing.total_ms > 0, "total_ms should be positive");
+        // At minimum, we should have total_ms field populated
+        // Note: total_ms can be 0 for very fast localhost requests (sub-millisecond)
 
         // Log whether timing fields are available
         if timing.dns_ms.is_none() {
