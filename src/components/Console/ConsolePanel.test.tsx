@@ -869,8 +869,8 @@ describe('ConsolePanel', () => {
 
     const getArgsText = (): string =>
       screen
-        .queryAllByTestId('code-box')
-        .map((box) => box.textContent || '')
+        .queryAllByTestId('code-editor')
+        .map((editor) => editor.textContent || '')
         .join(' ');
 
     // Wait for args to appear in CodeSnippet (syntax highlighted)
@@ -913,8 +913,8 @@ describe('ConsolePanel', () => {
 
     const getArgsText = (): string =>
       screen
-        .queryAllByTestId('code-box')
-        .map((box) => box.textContent || '')
+        .queryAllByTestId('code-editor')
+        .map((editor) => editor.textContent || '')
         .join(' ');
 
     // Wait for args to appear
