@@ -7,6 +7,11 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest';
 import { Popover, PopoverTrigger, PopoverContent } from './Popover';
 
+/** Popover content renders in a portal with data-test-id; use this to find it. */
+function getPopoverContent(): HTMLElement | null {
+  return document.querySelector('[data-test-id="popover-content"]');
+}
+
 describe('Popover', () => {
   it('renders trigger element', () => {
     render(
@@ -31,8 +36,15 @@ describe('Popover', () => {
       fireEvent.click(trigger);
     });
 
-    // Wait for popover to render in portal
-    const content = await waitFor(() => screen.getByTestId('popover-content'), { timeout: 2000 });
+    // Wait for popover to render in portal (uses data-test-id)
+    const content = await waitFor(
+      () => {
+        const el = getPopoverContent();
+        expect(el).toBeTruthy();
+        return el!;
+      },
+      { timeout: 2000 }
+    );
     expect(content).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
   });
@@ -78,7 +90,8 @@ describe('Popover', () => {
     // Should have called onOpenChange with false (Base UI calls with (open, eventDetails))
     // Check that the last call had false as the first argument
     const lastCall = handleOpenChange.mock.calls[handleOpenChange.mock.calls.length - 1];
-    expect(lastCall[0]).toBe(false);
+    expect(lastCall).toBeDefined();
+    expect(lastCall![0]).toBe(false);
   });
 
   it('applies custom className to content', async () => {
@@ -91,7 +104,14 @@ describe('Popover', () => {
       </Popover>
     );
 
-    const content = await waitFor(() => screen.getByTestId('popover-content'), { timeout: 2000 });
+    const content = await waitFor(
+      () => {
+        const el = getPopoverContent();
+        expect(el).toBeTruthy();
+        return el!;
+      },
+      { timeout: 2000 }
+    );
     expect(content).toHaveClass('custom-class');
   });
 
@@ -118,13 +138,20 @@ describe('Popover', () => {
     render(<TestComponent />);
 
     // Initially closed
-    expect(screen.queryByTestId('popover-content')).not.toBeInTheDocument();
+    expect(getPopoverContent()).toBeNull();
 
     // Open via external button
     await act(async () => {
       fireEvent.click(screen.getByText('External Open'));
     });
-    const content = await waitFor(() => screen.getByTestId('popover-content'), { timeout: 2000 });
+    const content = await waitFor(
+      () => {
+        const el = getPopoverContent();
+        expect(el).toBeTruthy();
+        return el!;
+      },
+      { timeout: 2000 }
+    );
     expect(content).toBeInTheDocument();
   });
 });
