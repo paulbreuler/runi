@@ -5,7 +5,6 @@
 
 import * as React from 'react';
 import { Menu } from '@base-ui/react/menu';
-import { type Variant } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
@@ -68,22 +67,6 @@ interface SplitButtonProps extends VariantProps<typeof _splitButtonVariants> {
   /** Data testid for testing */
   'data-testid'?: string;
 }
-
-// Motion animation variants (reserved for future use)
-const _buttonMotionVariants: Record<string, Variant> = {
-  rest: {
-    scale: 1,
-    transition: { type: 'spring', stiffness: 400, damping: 25 },
-  },
-  hover: {
-    scale: 1.02,
-    transition: { type: 'spring', stiffness: 400, damping: 25 },
-  },
-  tap: {
-    scale: 0.98,
-    transition: { type: 'spring', stiffness: 600, damping: 30 },
-  },
-};
 
 /**
  * SplitButton - A true split button with independent primary action and dropdown menu.

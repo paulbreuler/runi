@@ -142,11 +142,15 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
         nativeButton={asChild ? (nativeButton ?? false) : nativeButton}
         render={
           resolvedRender ??
-          ((renderProps) => {
+          ((renderProps): React.ReactElement => {
             const {
               children: renderChildren,
               type,
               onDrag: _onDrag,
+              onDragStart: _onDragStart,
+              onDragEnd: _onDragEnd,
+              onAnimationStart: _onAnimationStart,
+              onAnimationEnd: _onAnimationEnd,
               ...restRenderProps
             } = renderProps as React.ComponentPropsWithRef<'button'>;
 
@@ -160,8 +164,8 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
                 disabled={disabled}
                 variants={noScale ? undefined : buttonMotionVariants}
                 initial={noScale ? undefined : 'rest'}
-                whileHover={disabled === true || noScale ? undefined : 'hover'}
-                whileTap={disabled === true || noScale ? undefined : 'tap'}
+                whileHover={disabled || noScale ? undefined : 'hover'}
+                whileTap={disabled || noScale ? undefined : 'tap'}
               >
                 {renderChildren}
               </motion.button>
@@ -169,7 +173,7 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
           })
         }
       >
-        {renderElement !== undefined && renderElement !== null ? null : children}
+        {renderElement === undefined ? children : null}
       </BaseButton>
     );
   }

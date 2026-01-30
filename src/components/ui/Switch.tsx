@@ -35,7 +35,14 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
       <SwitchPrimitive.Root
         checked={checked}
         onCheckedChange={onCheckedChange}
-        render={({ onDrag: _onDrag, ...rootProps }) => (
+        render={({
+          onDrag: _onDrag,
+          onDragStart: _onDragStart,
+          onDragEnd: _onDragEnd,
+          onAnimationStart: _onAnimStart,
+          onAnimationEnd: _onAnimEnd,
+          ...rootProps
+        }) => (
           <motion.button
             {...rootProps}
             ref={ref}
@@ -59,7 +66,14 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
             data-testid={testId}
           >
             <SwitchPrimitive.Thumb
-              render={({ onDrag: _onDrag, ...thumbProps }) => (
+              render={({
+                onDrag: _onDrag,
+                onDragStart: _onDragStart,
+                onDragEnd: _onDragEnd,
+                onAnimationStart: _onAnimStart,
+                onAnimationEnd: _onAnimEnd,
+                ...thumbProps
+              }) => (
                 <motion.div
                   {...thumbProps}
                   className="block size-[14px] rounded-full bg-white shadow-sm"

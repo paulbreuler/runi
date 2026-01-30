@@ -88,7 +88,7 @@ const meta = {
     />
     <ActionBarSelect
       value={filter}
-      onValueChange={setFilter}
+      onValueChange={(v) => setFilter(v)}
       options={[...]}
       icon={<Filter />}
       aria-label="Filter by..."
@@ -183,7 +183,9 @@ export const NetworkHistoryFilterBar: Story = {
             />
             <ActionBarSelect
               value={method}
-              onValueChange={setMethod}
+              onValueChange={(v) => {
+                setMethod(v ?? 'ALL');
+              }}
               options={[
                 { value: 'ALL', label: 'All Methods' },
                 { value: 'GET', label: 'GET' },
@@ -197,7 +199,9 @@ export const NetworkHistoryFilterBar: Story = {
             />
             <ActionBarSelect
               value={status}
-              onValueChange={setStatus}
+              onValueChange={(v) => {
+                setStatus(v ?? 'All');
+              }}
               options={[
                 { value: 'All', label: 'All Status' },
                 { value: '2xx', label: '2xx Success' },
@@ -210,7 +214,9 @@ export const NetworkHistoryFilterBar: Story = {
             />
             <ActionBarSelect
               value={intelligence}
-              onValueChange={setIntelligence}
+              onValueChange={(v) => {
+                setIntelligence(v ?? 'All');
+              }}
               options={[
                 { value: 'All', label: 'All' },
                 { value: 'Has Drift', label: 'Has Drift' },
@@ -558,7 +564,9 @@ export const ConsolePanelToolbar: Story = {
           <ActionBarGroup>
             <ActionBarSegment
               value={filter}
-              onValueChange={setFilter}
+              onValueChange={(v) => {
+                setFilter(v);
+              }}
               options={[
                 { value: 'all', label: `All (${String(total)})` },
                 {
@@ -637,7 +645,9 @@ export const SegmentedControl: Story = {
           <ActionBarGroup>
             <ActionBarSegment
               value={value}
-              onValueChange={setValue}
+              onValueChange={(v) => {
+                setValue(v);
+              }}
               options={[
                 { value: 'all', label: 'All' },
                 { value: 'active', label: 'Active', badge: 12 },
@@ -747,7 +757,9 @@ export const ResponsiveVariants: Story = {
             />
             <ActionBarSelect
               value={method}
-              onValueChange={setMethod}
+              onValueChange={(v) => {
+                setMethod(v ?? 'ALL');
+              }}
               options={[
                 { value: 'ALL', label: 'All Methods' },
                 { value: 'GET', label: 'GET' },
@@ -839,7 +851,9 @@ export const ActionBarSelectDefault: Story = {
         <ActionBarGroup>
           <ActionBarSelect
             value={value}
-            onValueChange={setValue}
+            onValueChange={(v) => {
+              setValue(v ?? '');
+            }}
             options={[
               { value: 'option1', label: 'Option 1' },
               { value: 'option2', label: 'Option 2' },
@@ -878,7 +892,9 @@ export const ActionBarSelectMethod: Story = {
         <ActionBarGroup>
           <ActionBarSelect<MethodSelectOption>
             value={value}
-            onValueChange={setValue}
+            onValueChange={(v) => {
+              setValue(v ?? '');
+            }}
             options={METHOD_OPTIONS}
             icon={<Code size={14} />}
             aria-label="Filter by HTTP method"
@@ -913,7 +929,9 @@ export const ActionBarSelectStatus: Story = {
         <ActionBarGroup>
           <ActionBarSelect<StatusSelectOption>
             value={value}
-            onValueChange={setValue}
+            onValueChange={(v) => {
+              setValue(v ?? '');
+            }}
             options={STATUS_OPTIONS}
             icon={<CheckCircle size={14} />}
             aria-label="Filter by status code"
@@ -948,7 +966,9 @@ export const ActionBarSelectIntelligence: Story = {
         <ActionBarGroup>
           <ActionBarSelect<IntelligenceSelectOption>
             value={value}
-            onValueChange={setValue}
+            onValueChange={(v) => {
+              setValue(v ?? '');
+            }}
             options={INTELLIGENCE_OPTIONS}
             icon={<Brain size={14} />}
             aria-label="Filter by intelligence signal"
@@ -977,7 +997,9 @@ export const ActionBarSelectNetworkHistoryFilters: Story = {
         <ActionBarGroup>
           <ActionBarSelect
             value={method}
-            onValueChange={setMethod}
+            onValueChange={(v) => {
+              setMethod(v ?? 'ALL');
+            }}
             options={METHOD_OPTIONS}
             icon={<Code size={14} />}
             aria-label="Filter by HTTP method"
@@ -985,7 +1007,9 @@ export const ActionBarSelectNetworkHistoryFilters: Story = {
           />
           <ActionBarSelect
             value={status}
-            onValueChange={setStatus}
+            onValueChange={(v) => {
+              setStatus(v ?? 'All');
+            }}
             options={STATUS_OPTIONS}
             icon={<CheckCircle size={14} />}
             aria-label="Filter by status code"
@@ -993,7 +1017,9 @@ export const ActionBarSelectNetworkHistoryFilters: Story = {
           />
           <ActionBarSelect
             value={intelligence}
-            onValueChange={setIntelligence}
+            onValueChange={(v) => {
+              setIntelligence(v ?? 'All');
+            }}
             options={INTELLIGENCE_OPTIONS}
             icon={<Brain size={14} />}
             aria-label="Filter by intelligence signal"

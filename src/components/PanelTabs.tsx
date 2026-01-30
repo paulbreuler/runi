@@ -74,7 +74,14 @@ export const PanelTabs = ({
           {/* Network Tab */}
           <Tabs.Tab
             value="network"
-            render={({ onDrag: _onDrag, ...props }) => (
+            render={({
+              onDrag: _onDrag,
+              onDragStart: _onDragStart,
+              onDragEnd: _onDragEnd,
+              onAnimationStart: _onAnimStart,
+              onAnimationEnd: _onAnimEnd,
+              ...props
+            }) => (
               <motion.button
                 {...props}
                 type="button"
@@ -118,7 +125,14 @@ export const PanelTabs = ({
           {/* Console Tab */}
           <Tabs.Tab
             value="console"
-            render={(props) => (
+            render={({
+              onDrag: _onDrag,
+              onDragStart: _onDragStart,
+              onDragEnd: _onDragEnd,
+              onAnimationStart: _onAnimStart,
+              onAnimationEnd: _onAnimEnd,
+              ...props
+            }) => (
               <motion.button
                 {...props}
                 type="button"

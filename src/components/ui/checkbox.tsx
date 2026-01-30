@@ -113,7 +113,7 @@ const Checkbox = React.forwardRef<React.ComponentRef<typeof CheckboxPrimitive.Ro
         rootRef.current = node;
         if (typeof ref === 'function') {
           ref(node);
-        } else if (ref !== null && ref !== undefined) {
+        } else if (typeof ref === 'object' && ref !== null) {
           ref.current = node;
         }
       },
@@ -128,7 +128,14 @@ const Checkbox = React.forwardRef<React.ComponentRef<typeof CheckboxPrimitive.Ro
         {...props}
       >
         <CheckboxPrimitive.Indicator
-          render={({ onDrag: _onDrag, ...props }) => (
+          render={({
+            onDrag: _onDrag,
+            onDragStart: _onDragStart,
+            onDragEnd: _onDragEnd,
+            onAnimationStart: _onAnimStart,
+            onAnimationEnd: _onAnimEnd,
+            ...props
+          }) => (
             <motion.span
               {...props}
               className="flex items-center justify-center text-accent-contrast"

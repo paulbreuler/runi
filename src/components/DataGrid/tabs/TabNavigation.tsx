@@ -60,7 +60,14 @@ export const TabNavigation = ({ activeTab, onKeyDown }: TabNavigationProps): Rea
           <Tabs.Tab
             key={tab.id}
             value={tab.id}
-            render={(props) => (
+            render={({
+              onDrag: _onDrag,
+              onDragStart: _onDragStart,
+              onDragEnd: _onDragEnd,
+              onAnimationStart: _onAnimStart,
+              onAnimationEnd: _onAnimEnd,
+              ...props
+            }) => (
               <motion.button
                 {...props}
                 type="button"
