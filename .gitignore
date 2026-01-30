@@ -27,6 +27,7 @@ storybook-static
 
 # Misc
 .DS_Store
+.mcp.json
 *.pem
 
 # Environment files (secrets)

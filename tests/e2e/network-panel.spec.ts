@@ -30,7 +30,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for the panel content to load
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // The VirtualDataGrid should be rendered
     const virtualDataGrid = page.locator('[data-testid="virtual-datagrid"]');
@@ -74,7 +74,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // Method filter should be visible
     const methodFilter = page.locator('[data-testid="method-filter"]');
@@ -101,7 +101,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // Find and click the method filter
     const methodFilter = page.locator('[data-testid="method-filter"]');
@@ -135,7 +135,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // Find and click the status filter
     const statusFilter = page.locator('[data-testid="status-filter"]');
@@ -168,7 +168,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // Find and click the compare toggle
     const compareToggle = page.locator('[data-testid="compare-toggle"]').first();
@@ -198,7 +198,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // Virtual scroll container should be present
     const scrollContainer = page.locator('[data-testid="virtual-scroll-container"]');
@@ -217,14 +217,14 @@ test.describe('Network Panel', () => {
     }
 
     // Wait for panel
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // Panel resizer should be visible
-    const resizer = page.locator('[data-test-id="panel-resizer"]');
+    const resizer = page.locator('[data-testid="panel-resizer"]');
     await expect(resizer).toBeVisible();
 
     // Get initial panel height
-    const panel = page.locator('[data-test-id="dockable-panel"]');
+    const panel = page.locator('[data-testid="dockable-panel"]');
     const initialBox = await panel.boundingBox();
     expect(initialBox).not.toBeNull();
 
@@ -266,7 +266,7 @@ test.describe('Network Panel', () => {
     await networkTab.click();
 
     // Wait for panel content
-    await page.waitForSelector('[data-test-id="dockable-panel"]');
+    await page.waitForSelector('[data-testid="dockable-panel"]');
 
     // Tab navigation should work within the panel
     // Focus should move through filter controls

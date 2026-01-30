@@ -239,12 +239,12 @@ clean:
 # Prettier handles: formatting, trailing whitespace, line endings
 docs-check:
     @echo "📚 Checking markdown formatting..."
-    npx prettier --check "**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md" || true
+    npx prettier --check "**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
 
 # Fix documentation formatting
 docs-fix:
     @echo "📚 Fixing markdown formatting..."
-    npx prettier --write "**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md" || true
+    npx prettier --write "**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
     @echo "✅ Documentation formatting fixed"
 
 # Generate Rust documentation

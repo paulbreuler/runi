@@ -38,7 +38,7 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    // Base UI uses role="combobox" by default, but we override it to "button"
+    // Base UI Select uses role="combobox" by default (accessible combobox semantics)
     expect(screen.getByRole('combobox', { name: 'Select method' })).toBeInTheDocument();
   });
 

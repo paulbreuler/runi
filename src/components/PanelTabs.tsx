@@ -26,7 +26,7 @@ interface PanelTabsProps {
  *
  * ## Features
  *
- * - **Accessible**: Built on Base UI Tabs with full keyboard navigation (Tab, Arrow keys, Enter/Space)
+ * - **Accessible**: Built on Base UI Tabs; Enter/Space to activate. Tab currently moves between tabs; moving focus into panel content is a follow-up.
  * - **Animated**: Tab indicator uses Motion's `layoutId` for shared element transitions
  * - **Spring Physics**: Indicator animates with spring physics (stiffness: 300, damping: 30)
  * - **Reduced Motion**: Respects `prefers-reduced-motion` setting

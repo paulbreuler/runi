@@ -39,7 +39,7 @@ export async function openPanel(page: Page): Promise<boolean> {
         // Wait briefly for React state update
         return new Promise<boolean>((resolve) => {
           setTimeout(() => {
-            const panel = document.querySelector('[data-test-id="dockable-panel"]');
+            const panel = document.querySelector('[data-testid="dockable-panel"]');
             resolve(panel !== null);
           }, 150);
         });
@@ -49,7 +49,7 @@ export async function openPanel(page: Page): Promise<boolean> {
 
     if (panelOpened) {
       try {
-        await page.waitForSelector('[data-test-id="dockable-panel"]', { timeout: 3000 });
+        await page.waitForSelector('[data-testid="dockable-panel"]', { timeout: 3000 });
         return true;
       } catch {
         return false;

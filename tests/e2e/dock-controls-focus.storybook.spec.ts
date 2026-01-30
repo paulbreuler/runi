@@ -15,7 +15,7 @@ test.describe('DockControls Focus Restoration', () => {
     );
 
     // Wait for the panel to render and React to fully hydrate
-    await page.waitForSelector('[data-test-id="dockable-panel"]', { timeout: 15000 });
+    await page.waitForSelector('[data-testid="dockable-panel"]', { timeout: 15000 });
     // Wait for panel to be interactive (buttons are rendered)
     await page.waitForSelector('[role="button"][aria-label*="dock"]', { timeout: 2000 });
   });
