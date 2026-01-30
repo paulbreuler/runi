@@ -26,8 +26,12 @@ if (isDev) {
 // The ThemeProvider sets the appropriate theme class on its wrapper div
 
 // Measure startup time
-// Note: startupStart measures from when JavaScript starts executing (after process/WebView initialization)
-const startupStart = performance.now();
+// Note: performance.now() is already relative to navigation start (timeOrigin).
+const navigationTiming = performance.getEntriesByType('navigation')[0] as
+  | PerformanceNavigationTiming
+  | undefined;
+const getNavigationTime = (value: number | undefined): number =>
+  typeof value === 'number' && value > 0 ? value : performance.now();
 let processStartupTime = 0; // Time from process start until JS execution (measured via Tauri)
 const startupTiming = {
   processStartup: 0, // Time from process start until JS execution
@@ -40,19 +44,19 @@ const startupTiming = {
 // Track DOMContentLoaded
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    startupTiming.domContentLoaded = performance.now() - startupStart;
+    startupTiming.domContentLoaded = getNavigationTime(navigationTiming?.domContentLoadedEventEnd);
   });
 } else {
-  startupTiming.domContentLoaded = performance.now() - startupStart;
+  startupTiming.domContentLoaded = getNavigationTime(navigationTiming?.domContentLoadedEventEnd);
 }
 
 // Track window load
 if (document.readyState !== 'complete') {
   window.addEventListener('load', () => {
-    startupTiming.windowLoaded = performance.now() - startupStart;
+    startupTiming.windowLoaded = getNavigationTime(navigationTiming?.loadEventEnd);
   });
 } else {
-  startupTiming.windowLoaded = performance.now() - startupStart;
+  startupTiming.windowLoaded = getNavigationTime(navigationTiming?.loadEventEnd);
 }
 
 const rootElement = document.getElementById('root');
@@ -66,7 +70,7 @@ if (rootElement !== null) {
   // Track React mount (after first render)
   requestAnimationFrame(() => {
     void (async (): Promise<void> => {
-      const frontendStartupTime = performance.now() - startupStart;
+      const frontendStartupTime = performance.now();
       startupTiming.reactMounted = frontendStartupTime;
 
       // Get process startup time from Rust (time from process start until JS execution)
@@ -85,16 +89,16 @@ if (rootElement !== null) {
       startupTiming.total = processStartupTime + frontendStartupTime;
 
       // Log startup timing (only in development or when '?measure-startup' is present in the URL)
-      const isDev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ?? false;
       if (isDev || window.location.search.includes('measure-startup')) {
         // eslint-disable-next-line no-console
-        console.log('🚀 Startup Timing:', {
-          'Process Startup': processStartupTime > 0 ? `${processStartupTime.toFixed(2)}ms` : 'N/A',
-          'Frontend Startup': `${frontendStartupTime.toFixed(2)}ms`,
-          DOMContentLoaded: `${startupTiming.domContentLoaded.toFixed(2)}ms`,
-          'Window Load': `${startupTiming.windowLoaded.toFixed(2)}ms`,
-          'React Mounted': `${startupTiming.reactMounted.toFixed(2)}ms`,
-          'Total (Process + Frontend)': `${startupTiming.total.toFixed(2)}ms`,
+        console.log('🚀 Startup Timing', {
+          buildMode: isDev ? 'dev' : 'release',
+          totalMs: Number(startupTiming.total.toFixed(2)),
+          processMs: processStartupTime > 0 ? Number(processStartupTime.toFixed(2)) : 'N/A',
+          frontendMs: Number(frontendStartupTime.toFixed(2)),
+          domContentLoadedMs: Number(startupTiming.domContentLoaded.toFixed(2)),
+          windowLoadMs: Number(startupTiming.windowLoaded.toFixed(2)),
+          reactMountedMs: Number(startupTiming.reactMounted.toFixed(2)),
         });
       }
 

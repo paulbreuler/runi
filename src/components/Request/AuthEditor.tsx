@@ -211,7 +211,7 @@ export const AuthEditor = (): React.JSX.Element => {
                     className="absolute right-2 top-1/2 -translate-y-1/2"
                     data-testid="toggle-password-visibility"
                   >
-                    {showPassword ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </Button>
                 </div>
               </div>

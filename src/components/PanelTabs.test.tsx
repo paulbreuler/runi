@@ -140,7 +140,7 @@ describe('PanelTabs', () => {
       expect(root).toBeInTheDocument();
       const list = container.querySelector('[data-testid="tabs-list"]');
       expect(list).toBeInTheDocument();
-      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"]');
+      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"][role="tab"]');
       expect(triggers).toHaveLength(2);
     });
 
@@ -311,7 +311,7 @@ describe('PanelTabs', () => {
     it('triggers have correct value attributes', () => {
       const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const triggers = container.querySelectorAll('[data-testid="tabs-trigger"]');
+      const triggers = container.querySelectorAll('[data-testid^="panel-tab-"][role="tab"]');
       const values = Array.from(triggers).map((t) => t.getAttribute('data-value'));
       expect(values).toContain('network');
       expect(values).toContain('console');

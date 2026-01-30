@@ -133,6 +133,18 @@ function formatLogArgs(args: unknown[]): FormattedLogArgs {
  */
 const DEFAULT_MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
 
+/** Build the empty message for the data grid based on active filters */
+const getEmptyMessage = (searchFilter: string, filter: LogLevel | 'all'): string => {
+  const trimmed = searchFilter.trim();
+  if (trimmed !== '') {
+    return `No logs matching "${trimmed}"`;
+  }
+  if (filter !== 'all') {
+    return `No logs (${filter} only)`;
+  }
+  return 'No logs';
+};
+
 export const ConsolePanel = ({
   maxLogs = 1000,
   maxSizeBytes = DEFAULT_MAX_SIZE_BYTES,
@@ -973,6 +985,7 @@ export const ConsolePanel = ({
         selectedCount={selectedLogIds.size}
         counts={countByLevel}
         totalCount={logs.length}
+        filteredCount={filteredLogs.length}
       />
 
       {/* Log list container */}
@@ -997,7 +1010,7 @@ export const ConsolePanel = ({
             onSetRowSelectionReady={handleSetRowSelectionReady}
             onSetExpandedReady={handleSetExpandedReady}
             estimateRowHeight={32}
-            emptyMessage={`No logs${filter !== 'all' ? ` (${filter} only)` : ''}`}
+            emptyMessage={getEmptyMessage(searchFilter, filter)}
             renderRow={renderRow}
             height={600}
             className="flex-1 font-mono text-xs"

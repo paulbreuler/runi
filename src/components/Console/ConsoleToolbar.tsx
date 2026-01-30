@@ -11,6 +11,7 @@ import {
   Trash2,
   Download,
   Copy as CopyIcon,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SplitButton } from '@/components/ui/SplitButton';
@@ -46,6 +47,8 @@ interface ConsoleToolbarProps {
   counts: Record<LogLevel, number>;
   /** Total log count */
   totalCount: number;
+  /** Count after level + search filter (so we can show "Showing X of Y" when search is active) */
+  filteredCount?: number;
 }
 
 /**
@@ -184,7 +187,11 @@ export const ConsoleToolbar = ({
   selectedCount,
   counts,
   totalCount,
+  filteredCount,
 }: ConsoleToolbarProps): React.JSX.Element => {
+  const searchActive = searchFilter.trim() !== '';
+  const showFilteredHint = searchActive && filteredCount !== undefined && totalCount > 0;
+
   return (
     <ActionBar breakpoints={[700, 500]} aria-label="Console toolbar">
       <ActionBarGroup aria-label="Log filters">
@@ -220,12 +227,35 @@ export const ConsoleToolbar = ({
           ]}
           aria-label="Filter by log level"
         />
-        <ActionBarSearch
-          value={searchFilter}
-          onChange={onSearchFilterChange}
-          placeholder="Search logs..."
-          aria-label="Search logs"
-        />
+        <div className="flex items-center gap-1 shrink-0">
+          <ActionBarSearch
+            value={searchFilter}
+            onChange={onSearchFilterChange}
+            placeholder="Search logs..."
+            aria-label="Search logs"
+          />
+          {searchActive && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={(): void => {
+                onSearchFilterChange('');
+              }}
+              aria-label="Clear search"
+              title="Clear search to show all logs"
+              className="shrink-0"
+              data-test-id="console-clear-search"
+            >
+              <X size={14} />
+            </Button>
+          )}
+        </div>
+        {showFilteredHint && (
+          <span className="text-xs text-text-muted whitespace-nowrap" aria-live="polite">
+            Showing {filteredCount} of {totalCount} logs
+          </span>
+        )}
       </ActionBarGroup>
 
       <ConsoleToolbarActions

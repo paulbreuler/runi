@@ -6,6 +6,7 @@
 import { Popover as BaseUIPopover } from '@base-ui/react/popover';
 import React from 'react';
 import { cn } from '@/utils/cn';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 /**
  * Popover root component.
@@ -55,6 +56,7 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentPro
       align = 'start',
       side = 'bottom',
       sideOffset = 8,
+      style,
       'data-test-id': testId = 'popover-content',
       ...props
     },
@@ -65,15 +67,16 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentPro
         <BaseUIPopover.Popup
           ref={ref}
           className={cn(
-            'z-50 w-72 rounded-md border border-border-default bg-bg-elevated p-4 shadow-lg',
+            'w-72 rounded-md border border-border-default bg-bg-elevated p-4 shadow-lg',
             'outline-none',
-            'focus-within:ring-2 focus-within:ring-[color:var(--color-ring)] focus-within:ring-offset-2 focus-within:ring-offset-bg-app',
+            'focus-within:ring-2 focus-within:ring-(--color-ring) focus-within:ring-offset-2 focus-within:ring-offset-bg-app',
             'animate-in fade-in-0 zoom-in-95',
             'data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
             'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2',
             'data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
             className
           )}
+          style={{ ...(style as React.CSSProperties), zIndex: OVERLAY_Z_INDEX }}
           data-test-id={testId}
           {...props}
         />

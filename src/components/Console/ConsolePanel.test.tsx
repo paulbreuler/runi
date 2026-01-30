@@ -854,17 +854,12 @@ describe('ConsolePanel', () => {
       expect(screen.getByText(/test error/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
-    // Find the chevron button (should be ChevronRight when collapsed)
+    // Find the chevron button (expander column)
     const logEntry = screen.getByText(/test error/i).closest('.group');
     if (logEntry === null) {
       throw new Error('Log entry not found');
     }
-    // Find button with title or any button with chevron icon (skip checkbox)
-    const chevronButton =
-      logEntry.querySelector('button[title="Expand/collapse args"]') ??
-      Array.from(logEntry.querySelectorAll('button')).find(
-        (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
-      );
+    const chevronButton = logEntry.querySelector('[data-testid="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
 
     // Click to expand
@@ -910,14 +905,9 @@ describe('ConsolePanel', () => {
     if (logEntry === null) {
       throw new Error('Log entry not found');
     }
-    // Find button with title or any button with chevron icon
-    const chevronButton =
-      logEntry.querySelector('button[title="Expand/collapse args"]') ??
-      Array.from(logEntry.querySelectorAll('button')).find(
-        (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
-      );
+    const chevronButton = logEntry.querySelector('[data-testid="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
-    fireEvent.click(chevronButton!);
+    fireEvent.click(chevronButton as HTMLElement);
 
     const getArgsText = (): string =>
       screen
