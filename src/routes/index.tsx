@@ -148,13 +148,7 @@ export const HomePage = (): React.JSX.Element => {
           message: errorMessage,
           correlationId: appError.correlationId,
         });
-        // Log error to console service with correlation ID
-        getConsoleService().addLog({
-          level: 'error',
-          message: `[${appError.code}] ${appError.message}`,
-          args: [appError],
-          correlationId: appError.correlationId,
-        });
+        // Do not addLog here; executeRequest already logged to console with correlation ID
       } else {
         const errorMessage = e instanceof Error ? e.message : String(e);
         // Show toast notification via event bus (loose coupling)
