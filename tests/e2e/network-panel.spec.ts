@@ -176,9 +176,7 @@ test.describe('Network Panel', () => {
       await compareToggle.click();
 
       // Compare mode should now be active
-      // The Compare Responses button might appear
-      const compareButton = page.locator('[data-test-id="compare-responses-button"]');
-      // Button might not be visible until entries are selected, but toggle should work
+      // The Compare Responses button might appear when entries are selected
     }
   });
 

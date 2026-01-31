@@ -264,9 +264,9 @@ body {
 
 /* Prevent scrollbar flashing during drag/resize operations */
 /* Reserve space for scrollbars to prevent layout shifts */
-[data-testid='request-pane'],
-[data-testid='response-pane'],
-[data-testid='pane-container'] {
+[data-test-id='request-pane'],
+[data-test-id='response-pane'],
+[data-test-id='pane-container'] {
   scrollbar-gutter: stable;
   /* Use overlay scrollbars on macOS to prevent flashing */
   scrollbar-width: thin;
@@ -275,42 +275,42 @@ body {
 }
 
 /* Ensure scrollable content areas maintain stable scrollbars */
-[data-testid='request-pane'] > *,
-[data-testid='response-pane'] > * {
+[data-test-id='request-pane'] > *,
+[data-test-id='response-pane'] > * {
   scrollbar-gutter: stable;
 }
 
 /* Prevent scrollbar flashing during sidebar resize */
-aside[data-testid='sidebar'] {
+aside[data-test-id='sidebar'] {
   scrollbar-gutter: stable;
 }
 
 /* Prevent scrollbar flashing during drag/resize operations */
 .scroll-container,
-[data-testid='request-pane'],
-[data-testid='response-pane'],
-[data-testid='pane-container'] {
+[data-test-id='request-pane'],
+[data-test-id='response-pane'],
+[data-test-id='pane-container'] {
   scrollbar-gutter: stable;
   /* Reserve space for scrollbar to prevent layout shifts */
 }
 
 /* Ensure scrollbars don't flash during layout animations */
-[data-testid='request-pane'] *,
-[data-testid='response-pane'] * {
+[data-test-id='request-pane'] *,
+[data-test-id='response-pane'] * {
   scrollbar-gutter: stable;
 }
 
 /* Prevent text color/rendering changes during resize */
 /* This fixes subpixel rendering artifacts that can cause text color shifts */
-[data-testid='request-pane'],
-[data-testid='response-pane'] {
+[data-test-id='request-pane'],
+[data-test-id='response-pane'] {
   /* Disable color transitions on text elements during resize */
   /* Only allow transitions on hover/focus, not during layout changes */
 }
 
 /* Ensure text elements don't transition color during layout changes */
-[data-testid='request-pane'] *,
-[data-testid='response-pane'] * {
+[data-test-id='request-pane'] *,
+[data-test-id='response-pane'] * {
   /* Text color transitions should only occur on hover/focus, not layout changes */
   /* This prevents color shifts during resize operations */
 }
@@ -355,8 +355,8 @@ aside[data-testid='sidebar'] {
 }
 
 /* Remove left padding from ResponseViewer body container when it contains line numbers */
-[data-testid='response-body']:has(.code-snippet-wrapper .react-syntax-highlighter-line-number),
-[data-testid='response-body']:has(.code-snippet-wrapper span[class*='linenumber']) {
+[data-test-id='response-body']:has(.code-snippet-wrapper .react-syntax-highlighter-line-number),
+[data-test-id='response-body']:has(.code-snippet-wrapper span[class*='linenumber']) {
   padding-left: 0 !important;
 }
 
@@ -368,11 +368,11 @@ aside[data-testid='sidebar'] {
 .code-snippet-wrapper span[class*='linenumber'],
 .code-snippet-wrapper .react-syntax-highlighter-line-number,
 /* Also apply to BodyEditor and other direct SyntaxHighlighter usage */
-[data-testid='body-syntax-layer'] table[class*='react-syntax-highlighter'],
-[data-testid='body-syntax-layer'] table[class*='react-syntax-highlighter'] td:first-child,
-[data-testid='body-syntax-layer'] span[class*='react-syntax-highlighter-line-number'],
-[data-testid='body-syntax-layer'] span[class*='linenumber'],
-[data-testid='body-syntax-layer'] .react-syntax-highlighter-line-number,
+[data-test-id='body-syntax-layer'] table[class*='react-syntax-highlighter'],
+[data-test-id='body-syntax-layer'] table[class*='react-syntax-highlighter'] td:first-child,
+[data-test-id='body-syntax-layer'] span[class*='react-syntax-highlighter-line-number'],
+[data-test-id='body-syntax-layer'] span[class*='linenumber'],
+[data-test-id='body-syntax-layer'] .react-syntax-highlighter-line-number,
 /* General selectors for any SyntaxHighlighter usage */
 span[class*='react-syntax-highlighter-line-number'],
 span[class*='linenumber'],
@@ -385,8 +385,8 @@ span[class*='linenumber'],
 .code-snippet-wrapper pre[class*='language-'],
 .code-snippet-wrapper code[class*='language-'],
 .code-snippet-wrapper div[class*='language-'],
-[data-testid='body-syntax-layer'] pre[class*='language-'],
-[data-testid='body-syntax-layer'] code[class*='language-'],
-[data-testid='body-syntax-layer'] div[class*='language-'] {
+[data-test-id='body-syntax-layer'] pre[class*='language-'],
+[data-test-id='body-syntax-layer'] code[class*='language-'],
+[data-test-id='body-syntax-layer'] div[class*='language-'] {
   padding-left: 0;
 }
