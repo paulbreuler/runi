@@ -870,19 +870,16 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
+    // Wait for expanded args content (VirtualDataGrid may defer rendering; use visible text)
+    await waitFor(() => {
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
     const getArgsText = (): string =>
       screen
         .queryAllByTestId('code-editor')
         .map((editor) => editor.textContent || '')
         .join(' ');
-
-    // Wait for args to appear in CodeSnippet (syntax highlighted)
-    // Use a longer timeout for CI environments which may be slower
-    await waitFor(() => {
-      const text = getArgsText();
-      expect(text.length).toBeGreaterThan(0);
-      expect(text).toMatch(/connection timeout/i);
-    }, WAIT_TIMEOUT);
 
     const allText = getArgsText();
     expect(allText).toMatch(/connection timeout/i);
