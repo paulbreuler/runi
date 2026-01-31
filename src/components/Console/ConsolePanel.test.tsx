@@ -1391,10 +1391,10 @@ describe('ConsolePanel', () => {
       const logEntry = screen.getByTestId(/console-log-info/i);
       expect(logEntry).toBeInTheDocument();
 
-      // Initially not selected - use role="checkbox" for Radix Checkbox
+      // Initially not selected - use aria-checked for reliable state across envs
       const checkbox = logEntry.querySelector('[role="checkbox"]');
       expect(checkbox).toBeInTheDocument();
-      expect(checkbox).not.toHaveAttribute('data-checked');
+      expect(checkbox).toHaveAttribute('aria-checked', 'false');
 
       // Click the row (not the checkbox)
       fireEvent.click(logEntry);
@@ -1403,7 +1403,7 @@ describe('ConsolePanel', () => {
       await waitFor(() => {
         const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
         expect(updatedCheckbox).toBeInTheDocument();
-        expect(updatedCheckbox).toHaveAttribute('data-checked');
+        expect(updatedCheckbox).toHaveAttribute('aria-checked', 'true');
       }, WAIT_TIMEOUT);
 
       // Click the row again to deselect
@@ -1413,7 +1413,7 @@ describe('ConsolePanel', () => {
       await waitFor(() => {
         const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
         expect(updatedCheckbox).toBeInTheDocument();
-        expect(updatedCheckbox).not.toHaveAttribute('data-checked');
+        expect(updatedCheckbox).toHaveAttribute('aria-checked', 'false');
       }, WAIT_TIMEOUT);
     });
 
@@ -1446,9 +1446,10 @@ describe('ConsolePanel', () => {
       // Click the checkbox directly
       fireEvent.click(checkbox);
 
-      // Should be selected (Base UI Checkbox uses data-checked attribute)
+      // Should be selected (aria-checked is reliable across envs)
       await waitFor(() => {
-        expect(checkbox).toHaveAttribute('data-checked');
+        const currentCheckbox = logEntry.querySelector('[role="checkbox"]');
+        expect(currentCheckbox).toHaveAttribute('aria-checked', 'true');
       }, WAIT_TIMEOUT);
 
       // Click checkbox again
@@ -1456,7 +1457,9 @@ describe('ConsolePanel', () => {
 
       // Should be deselected
       await waitFor(() => {
-        expect(checkbox).not.toHaveAttribute('data-checked');
+        const currentCheckbox = logEntry.querySelector('[role="checkbox"]');
+        expect(currentCheckbox).toBeInTheDocument();
+        expect(currentCheckbox).toHaveAttribute('aria-checked', 'false');
       }, WAIT_TIMEOUT);
     });
 
@@ -1487,9 +1490,9 @@ describe('ConsolePanel', () => {
       );
       expect(expandButton).toBeInTheDocument();
 
-      // Initially not selected (use role="checkbox" for Radix Checkbox)
+      // Initially not selected (aria-checked is reliable across envs)
       const checkbox = logEntry.querySelector('[role="checkbox"]');
-      expect(checkbox).not.toHaveAttribute('data-checked');
+      expect(checkbox).toHaveAttribute('aria-checked', 'false');
 
       // Click the expand button
       if (expandButton !== undefined) {
@@ -1499,7 +1502,7 @@ describe('ConsolePanel', () => {
       // Should still not be selected (expand button doesn't trigger selection)
       const stillUnselectedCheckbox = logEntry.querySelector('[role="checkbox"]');
       expect(stillUnselectedCheckbox).toBeInTheDocument();
-      expect(stillUnselectedCheckbox).not.toHaveAttribute('data-checked');
+      expect(stillUnselectedCheckbox).toHaveAttribute('aria-checked', 'false');
     });
   });
 
