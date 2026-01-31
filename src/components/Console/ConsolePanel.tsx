@@ -125,14 +125,6 @@ function formatLogArgs(args: unknown[]): FormattedLogArgs {
     return { code: '', language: 'text' };
   }
 
-  const formatOne = (arg: unknown): string => {
-    if (typeof arg === 'string') {
-      const { formatted } = tryFormatJsonString(arg);
-      return formatted;
-    }
-    return JSON.stringify(arg, null, 2);
-  };
-
   // If single arg, format it directly
   if (args.length === 1) {
     const arg = args[0];
@@ -150,12 +142,18 @@ function formatLogArgs(args: unknown[]): FormattedLogArgs {
     return { code, language };
   }
 
-  // Multiple args: combine them (typically all JSON or all strings)
-  const formattedArgs = args.map(formatOne);
-  const code = formattedArgs.join('\n\n');
-  const hasObjects = args.some((a) => typeof a !== 'string');
-  const anyJson =
-    hasObjects || args.some((a) => typeof a === 'string' && tryFormatJsonString(a).isJson);
+  // Multiple args: single pass to avoid double-parsing string args (format + isJson)
+  interface FormattedArg { formatted: string; isJson: boolean }
+  const formatOneWithMeta = (arg: unknown): FormattedArg => {
+    if (typeof arg === 'string') {
+      const result = tryFormatJsonString(arg);
+      return { formatted: result.formatted, isJson: result.isJson };
+    }
+    return { formatted: JSON.stringify(arg, null, 2), isJson: true };
+  };
+  const mapped = args.map(formatOneWithMeta);
+  const code = mapped.map((m) => m.formatted).join('\n\n');
+  const anyJson = mapped.some((m) => m.isJson);
   const language = anyJson ? 'json' : detectSyntaxLanguage({ body: code });
   return { code, language };
 }
