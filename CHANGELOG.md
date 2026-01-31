@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.0](https://github.com/paulbreuler/runi/compare/runi-v0.4.0...runi-v0.5.0) (2026-01-31)
+
+
+### Features
+
+* **tauri,build:** modern DMG UI, Iced icons, bundle id, and build optimizations ([#89](https://github.com/paulbreuler/runi/issues/89)) ([c3241b1](https://github.com/paulbreuler/runi/commit/c3241b1acaadc8492b17af90f0e0c53086227c94))
+* **ui:** migrate from Radix UI to Base UI primitives ([#91](https://github.com/paulbreuler/runi/issues/91)) ([f87c9a3](https://github.com/paulbreuler/runi/commit/f87c9a3b0aa70f32ca831394213343ca169cbb34))
+
+
+### Bug Fixes
+
+* **console:** one error per failed request and pretty-print JSON in args ([#92](https://github.com/paulbreuler/runi/issues/92)) ([add8070](https://github.com/paulbreuler/runi/commit/add80706be752e8e20a17a7f96c570bdfab710da))
+* **console:** use aria-checked in ConsolePanel selection tests ([#94](https://github.com/paulbreuler/runi/issues/94)) ([44669d4](https://github.com/paulbreuler/runi/commit/44669d47e3ab7665ab29d0367354f91a6d829b3a))
+
+
+### Chores
+
+* **husky:** fast pre-commit + fix ConsolePanel expand test (fixes main CI) ([#93](https://github.com/paulbreuler/runi/issues/93)) ([2563533](https://github.com/paulbreuler/runi/commit/2563533b708c3c1257dfd3212a48605db472ee75))
+
 ## [0.4.0](https://github.com/paulbreuler/runi/compare/runi-v0.3.0...runi-v0.4.0) (2026-01-29)
 
 
