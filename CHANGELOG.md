@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/paulbreuler/runi/compare/runi-v0.5.0...runi-v0.5.1) (2026-01-31)
+
+
+### Tests
+
+* **console:** remove flaky row click selection tests ([#95](https://github.com/paulbreuler/runi/issues/95)) ([f4a088c](https://github.com/paulbreuler/runi/commit/f4a088c5c0666297b2815d68329226a34bf7b696))
+
 ## [0.5.0](https://github.com/paulbreuler/runi/compare/runi-v0.4.0...runi-v0.5.0) (2026-01-31)
 
 
