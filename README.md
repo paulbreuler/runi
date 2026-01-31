@@ -43,7 +43,7 @@
 
 <p align="center">
   <img
-    src=".github/assets/runi-update.gif"
+    src=".github/assets/runi-on-base.gif"
     alt="runi demo showing HTTP client interface, network history, and timing waterfall"
     width="800" />
 </p>

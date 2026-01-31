@@ -34,7 +34,8 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
 }));
 
 // Default timeout for waitFor (polling interval is 100ms)
-const WAIT_TIMEOUT = { timeout: 2000 };
+// CI environments may be slower, so use a generous timeout
+const WAIT_TIMEOUT = { timeout: 5000 };
 
 describe('ConsolePanel', () => {
   beforeEach(() => {
@@ -864,8 +865,10 @@ describe('ConsolePanel', () => {
     const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
 
-    // Click to expand
-    fireEvent.click(chevronButton!);
+    // Click to expand and wait for React to process the state update
+    await act(async () => {
+      fireEvent.click(chevronButton!);
+    });
 
     const getArgsText = (): string =>
       screen
@@ -874,8 +877,11 @@ describe('ConsolePanel', () => {
         .join(' ');
 
     // Wait for args to appear in CodeSnippet (syntax highlighted)
+    // Use a longer timeout for CI environments which may be slower
     await waitFor(() => {
-      expect(getArgsText()).toMatch(/connection timeout/i);
+      const text = getArgsText();
+      expect(text.length).toBeGreaterThan(0);
+      expect(text).toMatch(/connection timeout/i);
     }, WAIT_TIMEOUT);
 
     const allText = getArgsText();
