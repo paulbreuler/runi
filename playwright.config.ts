@@ -48,6 +48,9 @@ export default defineConfig({
 
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
+
+    /* Use data-test-id attribute for getByTestId (matches CLAUDE.md standard) */
+    testIdAttribute: 'data-test-id',
   },
 
   /* Configure projects for major browsers */
