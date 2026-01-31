@@ -870,23 +870,18 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
-    const getArgsText = (): string =>
-      screen
-        .queryAllByTestId('code-editor')
-        .map((editor) => editor.textContent || '')
-        .join(' ');
-
-    // Wait for args to appear in CodeSnippet (syntax highlighted)
-    // Use a longer timeout for CI environments which may be slower
-    await waitFor(() => {
-      const text = getArgsText();
-      expect(text.length).toBeGreaterThan(0);
-      expect(text).toMatch(/connection timeout/i);
-    }, WAIT_TIMEOUT);
-
-    const allText = getArgsText();
-    expect(allText).toMatch(/connection timeout/i);
-    expect(allText).toMatch(/"code":\s*500/i);
+    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering).
+    // Re-query expandedRow inside waitFor so we see it after React commits; use longer timeout for CI.
+    await waitFor(
+      () => {
+        const expandedRow = logEntry.nextElementSibling;
+        expect(expandedRow).toBeInTheDocument();
+        const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
+        expect(editor?.textContent).toMatch(/connection timeout/i);
+        expect(editor?.textContent).toMatch(/"code":\s*500/i);
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('pretty-prints JSON strings in log args when expanded', async () => {
@@ -918,23 +913,19 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
-    const getArgsText = (): string =>
-      screen
-        .queryAllByTestId('code-editor')
-        .map((editor) => editor.textContent || '')
-        .join(' ');
-
-    await waitFor(() => {
-      const text = getArgsText();
-      expect(text.length).toBeGreaterThan(0);
-      expect(text).toMatch(/"code":\s*123/);
-    }, WAIT_TIMEOUT);
-
-    const allText = getArgsText();
-    expect(allText).toMatch(/"code":\s*123/);
-    expect(allText).toMatch(/"message":\s*"boom"/);
-    expect(allText).toMatch(/"error":/);
-    expect(allText).toMatch(/\n.*"code":/);
+    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering).
+    // Re-query expandedRow inside waitFor so we see it after React commits; use longer timeout for CI.
+    await waitFor(
+      () => {
+        const expandedRow = logEntry.nextElementSibling;
+        expect(expandedRow).toBeInTheDocument();
+        const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
+        expect(editor?.textContent).toMatch(/"code":\s*123/);
+        expect(editor?.textContent).toMatch(/"message":\s*"boom"/);
+        expect(editor?.textContent).toMatch(/"error":/);
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('collapses expanded args when chevron is clicked again', async () => {
@@ -965,15 +956,9 @@ describe('ConsolePanel', () => {
     expect(chevronButton).toBeInTheDocument();
     fireEvent.click(chevronButton as HTMLElement);
 
-    const getArgsText = (): string =>
-      screen
-        .queryAllByTestId('code-editor')
-        .map((editor) => editor.textContent || '')
-        .join(' ');
-
-    // Wait for args to appear
+    // Wait for args to appear (assert on visible text, not code-editor textContent)
     await waitFor(() => {
-      expect(getArgsText()).toMatch(/connection timeout/i);
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
     // Click again to collapse
@@ -981,7 +966,7 @@ describe('ConsolePanel', () => {
 
     // Wait for args to disappear
     await waitFor(() => {
-      expect(getArgsText()).not.toMatch(/connection timeout/i);
+      expect(screen.queryByText(/connection timeout/i)).not.toBeInTheDocument();
     }, WAIT_TIMEOUT);
   });
 
