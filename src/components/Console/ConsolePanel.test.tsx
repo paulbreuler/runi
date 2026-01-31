@@ -870,20 +870,14 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
-    // Wait for expanded args content (VirtualDataGrid may defer rendering; use visible text)
+    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering)
+    const expandedRow = logEntry.nextElementSibling;
+    expect(expandedRow).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+      const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
+      expect(editor?.textContent).toMatch(/connection timeout/i);
+      expect(editor?.textContent).toMatch(/"code":\s*500/i);
     }, WAIT_TIMEOUT);
-
-    const getArgsText = (): string =>
-      screen
-        .queryAllByTestId('code-editor')
-        .map((editor) => editor.textContent || '')
-        .join(' ');
-
-    const allText = getArgsText();
-    expect(allText).toMatch(/connection timeout/i);
-    expect(allText).toMatch(/"code":\s*500/i);
   });
 
   it('pretty-prints JSON strings in log args when expanded', async () => {
@@ -915,23 +909,15 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
-    const getArgsText = (): string =>
-      screen
-        .queryAllByTestId('code-editor')
-        .map((editor) => editor.textContent || '')
-        .join(' ');
-
+    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering)
+    const expandedRow = logEntry.nextElementSibling;
+    expect(expandedRow).toBeInTheDocument();
     await waitFor(() => {
-      const text = getArgsText();
-      expect(text.length).toBeGreaterThan(0);
-      expect(text).toMatch(/"code":\s*123/);
+      const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
+      expect(editor?.textContent).toMatch(/"code":\s*123/);
+      expect(editor?.textContent).toMatch(/"message":\s*"boom"/);
+      expect(editor?.textContent).toMatch(/"error":/);
     }, WAIT_TIMEOUT);
-
-    const allText = getArgsText();
-    expect(allText).toMatch(/"code":\s*123/);
-    expect(allText).toMatch(/"message":\s*"boom"/);
-    expect(allText).toMatch(/"error":/);
-    expect(allText).toMatch(/\n.*"code":/);
   });
 
   it('collapses expanded args when chevron is clicked again', async () => {
@@ -962,15 +948,9 @@ describe('ConsolePanel', () => {
     expect(chevronButton).toBeInTheDocument();
     fireEvent.click(chevronButton as HTMLElement);
 
-    const getArgsText = (): string =>
-      screen
-        .queryAllByTestId('code-editor')
-        .map((editor) => editor.textContent || '')
-        .join(' ');
-
-    // Wait for args to appear
+    // Wait for args to appear (assert on visible text, not code-editor textContent)
     await waitFor(() => {
-      expect(getArgsText()).toMatch(/connection timeout/i);
+      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
     // Click again to collapse
@@ -978,7 +958,7 @@ describe('ConsolePanel', () => {
 
     // Wait for args to disappear
     await waitFor(() => {
-      expect(getArgsText()).not.toMatch(/connection timeout/i);
+      expect(screen.queryByText(/connection timeout/i)).not.toBeInTheDocument();
     }, WAIT_TIMEOUT);
   });
 

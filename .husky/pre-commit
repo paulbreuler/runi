@@ -1,8 +1,6 @@
-# Run lint-staged to auto-fix formatting and linting on staged files (Prettier + ESLint)
+# Run lint-staged to auto-fix formatting and linting on staged files (Prettier + ESLint).
+# lint-staged v10+ automatically re-stages files it modifies.
 npx lint-staged
-
-# Stage any auto-fixed files from lint-staged
-git add -u
 
 # Quick format check so formatting is always enforced on commit (full checks run on pre-push)
 just fmt-check
