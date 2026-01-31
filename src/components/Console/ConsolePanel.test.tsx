@@ -870,14 +870,18 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
-    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering)
-    const expandedRow = logEntry.nextElementSibling;
-    expect(expandedRow).toBeInTheDocument();
-    await waitFor(() => {
-      const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
-      expect(editor?.textContent).toMatch(/connection timeout/i);
-      expect(editor?.textContent).toMatch(/"code":\s*500/i);
-    }, WAIT_TIMEOUT);
+    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering).
+    // Re-query expandedRow inside waitFor so we see it after React commits; use longer timeout for CI.
+    await waitFor(
+      () => {
+        const expandedRow = logEntry.nextElementSibling;
+        expect(expandedRow).toBeInTheDocument();
+        const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
+        expect(editor?.textContent).toMatch(/connection timeout/i);
+        expect(editor?.textContent).toMatch(/"code":\s*500/i);
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('pretty-prints JSON strings in log args when expanded', async () => {
@@ -909,15 +913,19 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
-    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering)
-    const expandedRow = logEntry.nextElementSibling;
-    expect(expandedRow).toBeInTheDocument();
-    await waitFor(() => {
-      const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
-      expect(editor?.textContent).toMatch(/"code":\s*123/);
-      expect(editor?.textContent).toMatch(/"message":\s*"boom"/);
-      expect(editor?.textContent).toMatch(/"error":/);
-    }, WAIT_TIMEOUT);
+    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering).
+    // Re-query expandedRow inside waitFor so we see it after React commits; use longer timeout for CI.
+    await waitFor(
+      () => {
+        const expandedRow = logEntry.nextElementSibling;
+        expect(expandedRow).toBeInTheDocument();
+        const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
+        expect(editor?.textContent).toMatch(/"code":\s*123/);
+        expect(editor?.textContent).toMatch(/"message":\s*"boom"/);
+        expect(editor?.textContent).toMatch(/"error":/);
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('collapses expanded args when chevron is clicked again', async () => {
