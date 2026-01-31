@@ -86,11 +86,19 @@ describe('NetworkHistoryFilters', () => {
     // Check search input value
     expect(screen.getByDisplayValue('test query')).toBeInTheDocument();
 
-    // For Radix UI Select, the selected value is displayed as text in the trigger
-    // The triggers show the label for the selected value
-    expect(screen.getByText('POST')).toBeInTheDocument();
-    expect(screen.getByText('4xx Client Error')).toBeInTheDocument();
-    expect(screen.getByText('Has Drift')).toBeInTheDocument();
+    // Verify filter triggers are rendered with their data-test-ids
+    // Base UI Select displays selected values - we check the triggers are present
+    const methodTrigger = screen.getByTestId('method-filter');
+    const statusTrigger = screen.getByTestId('status-filter');
+    const intelligenceTrigger = screen.getByTestId('intelligence-filter');
+
+    expect(methodTrigger).toBeInTheDocument();
+    expect(statusTrigger).toBeInTheDocument();
+    expect(intelligenceTrigger).toBeInTheDocument();
+
+    expect(methodTrigger).toHaveTextContent('POST');
+    expect(statusTrigger).toHaveTextContent('4xx');
+    expect(intelligenceTrigger).toHaveTextContent('Has Drift');
   });
 
   it('renders method filter trigger with correct aria-label', () => {

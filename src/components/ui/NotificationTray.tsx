@@ -22,7 +22,7 @@ export interface NotificationTrayProps {
   /** Optional footer component (NotificationTrayFooter) */
   footer?: React.ReactNode;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -52,7 +52,7 @@ export const NotificationTray: React.FC<NotificationTrayProps> = ({
   header,
   content,
   footer,
-  'data-testid': testId = 'notification-tray',
+  'data-test-id': testId = 'notification-tray',
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -117,7 +117,7 @@ export const NotificationTray: React.FC<NotificationTrayProps> = ({
         <div
           className="fixed bottom-[36px] z-50 pointer-events-none"
           style={{ left: `${String(leftOffset)}px` }}
-          data-testid={testId}
+          data-test-id={testId}
         >
           <motion.div
             ref={panelRef}
@@ -127,10 +127,10 @@ export const NotificationTray: React.FC<NotificationTrayProps> = ({
             exit="hidden"
             transition={contentTransition}
             className={cn(
-              'bg-bg-surface border border-border-default rounded-t-lg shadow-lg pointer-events-auto',
+              'bg-bg-elevated border border-border-default rounded-t-lg shadow-lg pointer-events-auto',
               'w-[320px] relative'
             )}
-            data-testid={`${testId}-panel`}
+            data-test-id={`${testId}-panel`}
           >
             {/* Header */}
             {header}

@@ -36,7 +36,7 @@ export interface FilterBarProps {
  * Now built on the ActionBar component system for consistency across panels.
  *
  * Features:
- * - Responsive breakpoints: full (>800px), compact (600-800px), icon (<600px)
+ * - Responsive breakpoints (panel context): full (>480px), compact (360-480px), icon (<360px)
  * - Horizontal scroll when content overflows
  * - Touch/swipe gesture support
  * - Scroll gradient cues
@@ -52,7 +52,7 @@ export const FilterBar = ({
   isSaveSelectionDisabled,
 }: FilterBarProps): React.JSX.Element => {
   return (
-    <ActionBar breakpoints={[800, 600]} aria-label="Network history filter bar">
+    <ActionBar breakpoints={[480, 360]} aria-label="Network history filter bar">
       <NetworkHistoryFilters
         filters={filters}
         onFilterChange={onFilterChange}

@@ -28,10 +28,10 @@ const meta = {
     },
     docs: {
       description: {
-        component: `Switch component based on Radix UI Switch primitive.
+        component: `Switch component based on Base UI Switch primitive.
 
 **Features:**
-- Built on Radix UI Switch for accessibility and keyboard navigation
+- Built on Base UI Switch for accessibility and keyboard navigation
 - Motion animations for smooth toggle transitions
 - Keyboard accessible (Tab, Space, Enter)
 - Prevents event propagation (stopPropagation)
@@ -111,14 +111,16 @@ export const Playground: Story = {
     await step('Switch works on click', async () => {
       const switchElement = canvas.getByTestId('switch');
       await userEvent.click(switchElement);
-      await expect(switchElement).toHaveAttribute('data-state', 'checked');
+      // Base UI uses data-checked attribute
+      await expect(switchElement).toHaveAttribute('data-checked');
     });
 
     await step('Switch works on label click', async () => {
       const label = canvas.getByText('Enable feature');
       const switchElement = canvas.getByTestId('switch');
       await userEvent.click(label);
-      await expect(switchElement).toHaveAttribute('data-state', 'unchecked');
+      // Base UI doesn't set data-checked when unchecked
+      await expect(switchElement).not.toHaveAttribute('data-checked');
     });
 
     await step('Verify switch is keyboard accessible', async () => {
@@ -127,7 +129,8 @@ export const Playground: Story = {
       await expect(focused).toBe(true);
       await expect(switchElement).toHaveFocus();
       await userEvent.keyboard(' ');
-      await expect(switchElement).toHaveAttribute('data-state', 'checked');
+      // Base UI uses data-checked attribute
+      await expect(switchElement).toHaveAttribute('data-checked');
     });
   },
   parameters: {

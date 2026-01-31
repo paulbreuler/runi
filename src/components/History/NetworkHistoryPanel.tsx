@@ -475,7 +475,7 @@ export const NetworkHistoryPanel = ({
               isSelected && 'bg-bg-raised/30'
             )}
             data-row-id={row.id}
-            data-testid="history-row"
+            data-test-id="history-row"
             onClick={handleRowClick}
             onDoubleClick={handleRowDoubleClick}
           >

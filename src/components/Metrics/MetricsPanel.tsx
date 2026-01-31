@@ -102,7 +102,7 @@ const NextSampleCountdown: React.FC<{
     return (
       <span
         className="text-xs font-mono text-text-muted whitespace-nowrap"
-        data-testid="next-sample-countdown"
+        data-test-id="next-sample-countdown"
       >
         —
       </span>
@@ -112,7 +112,7 @@ const NextSampleCountdown: React.FC<{
   return (
     <span
       className="text-xs font-mono text-text-muted whitespace-nowrap inline-flex items-baseline"
-      data-testid="next-sample-countdown"
+      data-test-id="next-sample-countdown"
     >
       {AnimateNumber !== null ? (
         <>
@@ -210,7 +210,7 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
               onCheckedChange={(checked: boolean): void => {
                 setMetricsVisible(checked);
               }}
-              data-testid="metrics-switch"
+              data-test-id="metrics-switch"
               aria-label="Enable metrics"
             />
           }
@@ -243,14 +243,14 @@ export const MetricsPanel: React.FC<MetricsPanelProps> = ({
               focusRingClasses
             )}
             aria-label="Metrics settings"
-            data-testid="metrics-settings-button"
+            data-test-id="metrics-settings-button"
             title="Metrics settings (coming soon)"
           >
             <Settings className="w-3.5 h-3.5" />
           </button>
         </NotificationTrayFooter>
       }
-      data-testid="metrics-panel"
+      data-test-id="metrics-panel"
     />
   );
 };

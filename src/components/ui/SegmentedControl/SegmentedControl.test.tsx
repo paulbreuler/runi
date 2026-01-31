@@ -164,8 +164,8 @@ describe('SegmentedControl', () => {
           value="all"
           onValueChange={() => {}}
           options={[
-            { value: 'error', label: 'Errors', icon: <AlertCircle data-testid="error-icon" /> },
-            { value: 'warn', label: 'Warnings', icon: <AlertTriangle data-testid="warn-icon" /> },
+            { value: 'error', label: 'Errors', icon: <AlertCircle data-test-id="error-icon" /> },
+            { value: 'warn', label: 'Warnings', icon: <AlertTriangle data-test-id="warn-icon" /> },
           ]}
           aria-label="Filter by level"
         />
@@ -243,7 +243,7 @@ describe('SegmentedControl', () => {
         <SegmentedControl
           value="all"
           onValueChange={() => {}}
-          options={[{ value: 'error', label: 'Errors', icon: <AlertCircle data-testid="icon" /> }]}
+          options={[{ value: 'error', label: 'Errors', icon: <AlertCircle data-test-id="icon" /> }]}
           displayVariant="full"
           aria-label="Filter by level"
         />
@@ -257,7 +257,7 @@ describe('SegmentedControl', () => {
         <SegmentedControl
           value="all"
           onValueChange={() => {}}
-          options={[{ value: 'error', label: 'Errors', icon: <AlertCircle data-testid="icon" /> }]}
+          options={[{ value: 'error', label: 'Errors', icon: <AlertCircle data-test-id="icon" /> }]}
           displayVariant="icon"
           aria-label="Filter by level"
         />
@@ -276,7 +276,12 @@ describe('SegmentedControl', () => {
           value="all"
           onValueChange={() => {}}
           options={[
-            { value: 'error', label: 'Errors', icon: <AlertCircle data-testid="icon" />, badge: 5 },
+            {
+              value: 'error',
+              label: 'Errors',
+              icon: <AlertCircle data-test-id="icon" />,
+              badge: 5,
+            },
           ]}
           displayVariant="icon"
           aria-label="Filter by level"

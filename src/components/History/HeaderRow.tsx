@@ -33,7 +33,7 @@ export interface HeaderRowProps {
  */
 export const HeaderRow = ({ name, value, className }: HeaderRowProps): React.ReactElement => {
   return (
-    <div data-testid="header-row" className={cn('flex items-start gap-2 py-1.5', className)}>
+    <div data-test-id="header-row" className={cn('flex items-start gap-2 py-1.5', className)}>
       <span className="text-accent-blue font-mono text-xs font-medium shrink-0">{name}</span>
       <span className="text-text-muted font-mono text-xs shrink-0">:</span>
       <span className="text-text-secondary font-mono text-xs break-words flex-1">{value}</span>

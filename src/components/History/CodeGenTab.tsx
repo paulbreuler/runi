@@ -32,7 +32,7 @@ export interface CodeGenTabProps {
  */
 export const CodeGenTab = ({ entry, className }: CodeGenTabProps): React.ReactElement => {
   return (
-    <div data-testid="codegen-tab" className={className}>
+    <div data-test-id="codegen-tab" className={className}>
       <CodeGenPanel entry={entry} />
     </div>
   );

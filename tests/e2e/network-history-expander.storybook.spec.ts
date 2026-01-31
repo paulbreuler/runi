@@ -16,11 +16,11 @@ const STORYBOOK_BASE_URL = process.env.STORYBOOK_URL ?? 'http://localhost:6006';
 
 /** Test selectors for Network History Panel */
 const selectors = {
-  virtualDatagrid: '[data-testid="virtual-datagrid"]',
-  expandButton: '[data-testid="expand-button"]',
-  expandedSection: '[data-testid="expanded-section"]',
-  expandedPanel: '[data-testid="expanded-panel"]',
-  expandedTabsList: '[data-testid="expanded-tabs-list"]',
+  virtualDatagrid: '[data-test-id="virtual-datagrid"]',
+  expandButton: '[data-test-id="expand-button"]',
+  expandedSection: '[data-test-id="expanded-section"]',
+  expandedPanel: '[data-test-id="expanded-panel"]',
+  expandedTabsList: '[data-test-id="expanded-tabs-list"]',
 } as const;
 
 /** Helper to get common locators for a page */

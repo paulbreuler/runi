@@ -330,7 +330,7 @@ When creating or updating components:
 - [ ] Form inputs have associated labels (`htmlFor`/`id` or `aria-label`)
 - [ ] Icon-only buttons have `aria-label`
 - [ ] Custom components use appropriate ARIA roles
-- [ ] Focus indicators are visible (minimum 2px outline, blue accent-blue color)
+- [ ] Focus indicators are visible (minimum 2px outline, theme token `--color-ring`)
 - [ ] Color is not the only means of conveying information
 - [ ] Animations respect `prefers-reduced-motion`
 - [ ] Error states use `aria-invalid` and `aria-describedby`
@@ -363,9 +363,9 @@ When creating or updating components:
 
 ### Focus Ring Standard
 
-All interactive elements must use consistent focus ring styling:
+All interactive elements must use consistent focus ring styling. Use `focusRingClasses` from `@/utils/accessibility` for all interactive focus indicators (2px ring using theme token `--color-ring`, 2px offset, ring-offset-bg-app); use `focusWithVisibility()` for programmatic focus.
 
-- **Color**: `accent-blue` (aligns with design system: "Blue—action, selection, focus")
+- **Color**: theme token `--color-ring` (aligns with design system: "Blue—action, selection, focus")
 - **Width**: `2px` (`ring-2`)
 - **Offset**: `2px` (`ring-offset-2`)
 - **Offset Color**: `bg-app` (`ring-offset-bg-app`)

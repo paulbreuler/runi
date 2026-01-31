@@ -38,7 +38,7 @@ const meta = {
 
 **Components:**
 - **Button** - Multiple variants, sizes, and Motion animations
-- **Checkbox** - Radix UI Checkbox with Motion animations, supports indeterminate state
+- **Checkbox** - Base UI Checkbox with Motion animations, supports indeterminate state
 - **Input** - Text input with glass-morphism support
 - **Select** - Radix UI Select with groups and custom styling
 - **Card** - Container component with header, content, and footer
@@ -49,7 +49,7 @@ All components follow runi's design system with Motion animations, accessibility
     },
   },
   tags: ['autodocs'],
-} satisfies Meta;
+} as Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -57,6 +57,43 @@ type Story = StoryObj<typeof meta>;
 // ============================================================================
 // Button Stories
 // ============================================================================
+
+/**
+ * Button component - default state with keyboard navigation test.
+ */
+export const ButtonPlayground: Story = {
+  args: {
+    children: 'Button',
+    variant: 'default',
+    size: 'default',
+    disabled: false,
+  },
+  argTypes: {
+    variant: {
+      control: { type: 'select' },
+      options: [
+        'default',
+        'destructive',
+        'destructive-outline',
+        'outline',
+        'secondary',
+        'ghost',
+        'link',
+      ],
+    },
+    size: {
+      control: { type: 'select' },
+      options: ['default', 'sm', 'xs', 'lg', 'icon', 'icon-sm', 'icon-xs', 'icon-lg'],
+    },
+    disabled: {
+      control: { type: 'boolean' },
+    },
+    children: {
+      control: { type: 'text' },
+    },
+  },
+  render: (args) => <Button {...args} />,
+};
 
 /**
  * Button component - default state with keyboard navigation test.
@@ -345,32 +382,109 @@ export const InputWithLabels: Story = {
 // ============================================================================
 
 /**
- * Select component - default state with interaction test.
+ * Select component - Playground with controls for all states.
  */
-export const SelectDefault: Story = {
-  render: () => (
-    <Select.Select defaultValue="apple">
-      <Select.SelectTrigger className="w-[180px]">
+export const SelectPlayground: Story = {
+  args: {
+    value: 'apple',
+    open: false,
+    disabled: false,
+  },
+  argTypes: {
+    value: {
+      control: 'select',
+      options: ['apple', 'banana', 'orange', 'grape', ''],
+      description: 'Selected value',
+    },
+    open: {
+      control: 'boolean',
+      description: 'Whether the select popup is open',
+    },
+    disabled: {
+      control: 'boolean',
+      description: 'Whether the select is disabled',
+    },
+  },
+  render: ({ value, open, disabled }) => (
+    <Select.Select value={value} open={open} disabled={disabled}>
+      <Select.SelectTrigger data-test-id="select-trigger" className="w-[180px]">
         <Select.SelectValue placeholder="Select a fruit" />
       </Select.SelectTrigger>
-      <Select.SelectContent>
-        <Select.SelectItem value="apple">Apple</Select.SelectItem>
-        <Select.SelectItem value="banana">Banana</Select.SelectItem>
-        <Select.SelectItem value="orange">Orange</Select.SelectItem>
-        <Select.SelectItem value="grape">Grape</Select.SelectItem>
+      <Select.SelectContent data-test-id="select-content">
+        <Select.SelectItem value="apple" data-test-id="select-item-apple">
+          Apple
+        </Select.SelectItem>
+        <Select.SelectItem value="banana" data-test-id="select-item-banana">
+          Banana
+        </Select.SelectItem>
+        <Select.SelectItem value="orange" data-test-id="select-item-orange">
+          Orange
+        </Select.SelectItem>
+        <Select.SelectItem value="grape" data-test-id="select-item-grape">
+          Grape
+        </Select.SelectItem>
       </Select.SelectContent>
     </Select.Select>
   ),
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-    const trigger = canvas.getByRole('combobox');
+    const trigger = canvas.getByTestId('select-trigger');
 
     await step('Select opens on click', async () => {
       await userEvent.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 200));
-      const appleOption = await within(document.body).findByRole(
-        'option',
-        { name: /apple/i },
+      const appleOption = await within(document.body).findByTestId(
+        'select-item-apple',
+        {},
+        { timeout: 2000 }
+      );
+      await expect(appleOption).toBeVisible();
+    });
+
+    await step('Select closes when clicking outside', async () => {
+      await userEvent.click(document.body);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const content = within(document.body).queryByTestId('select-content');
+      await expect(content).not.toBeVisible();
+    });
+  },
+};
+
+/**
+ * Select component - default state with interaction test.
+ */
+export const SelectDefault: Story = {
+  render: () => (
+    <Select.Select defaultValue="apple">
+      <Select.SelectTrigger data-test-id="select-trigger" className="w-[180px]">
+        <Select.SelectValue placeholder="Select a fruit" />
+      </Select.SelectTrigger>
+      <Select.SelectContent data-test-id="select-content">
+        <Select.SelectItem value="apple" data-test-id="select-item-apple">
+          Apple
+        </Select.SelectItem>
+        <Select.SelectItem value="banana" data-test-id="select-item-banana">
+          Banana
+        </Select.SelectItem>
+        <Select.SelectItem value="orange" data-test-id="select-item-orange">
+          Orange
+        </Select.SelectItem>
+        <Select.SelectItem value="grape" data-test-id="select-item-grape">
+          Grape
+        </Select.SelectItem>
+      </Select.SelectContent>
+    </Select.Select>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByTestId('select-trigger');
+
+    await step('Select opens on click', async () => {
+      await userEvent.click(trigger);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const appleOption = await within(document.body).findByTestId(
+        'select-item-apple',
+        {},
         { timeout: 2000 }
       );
       await expect(appleOption).toBeVisible();
@@ -384,19 +498,25 @@ export const SelectDefault: Story = {
 export const SelectWithGroups: Story = {
   render: () => (
     <Select.Select defaultValue="apple">
-      <Select.SelectTrigger className="w-[200px]">
+      <Select.SelectTrigger data-test-id="select-trigger" className="w-[200px]">
         <Select.SelectValue placeholder="Select a fruit" />
       </Select.SelectTrigger>
-      <Select.SelectContent>
+      <Select.SelectContent data-test-id="select-content">
         <Select.SelectGroup>
           <Select.SelectLabel>Fruits</Select.SelectLabel>
-          <Select.SelectItem value="apple">Apple</Select.SelectItem>
-          <Select.SelectItem value="banana">Banana</Select.SelectItem>
+          <Select.SelectItem value="apple" data-test-id="select-item-apple">
+            Apple
+          </Select.SelectItem>
+          <Select.SelectItem value="banana" data-test-id="select-item-banana">
+            Banana
+          </Select.SelectItem>
         </Select.SelectGroup>
         <Select.SelectSeparator />
         <Select.SelectGroup>
           <Select.SelectLabel>Vegetables</Select.SelectLabel>
-          <Select.SelectItem value="carrot">Carrot</Select.SelectItem>
+          <Select.SelectItem value="carrot" data-test-id="select-item-carrot">
+            Carrot
+          </Select.SelectItem>
         </Select.SelectGroup>
       </Select.SelectContent>
     </Select.Select>
@@ -410,19 +530,21 @@ export const SelectDisabled: Story = {
   render: () => (
     <div className="flex flex-col gap-4">
       <Select.Select defaultValue="apple" disabled>
-        <Select.SelectTrigger className="w-[180px]">
+        <Select.SelectTrigger data-test-id="select-trigger-disabled" className="w-[180px]">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
-          <Select.SelectItem value="apple">Apple</Select.SelectItem>
+          <Select.SelectItem value="apple" data-test-id="select-item-apple">
+            Apple
+          </Select.SelectItem>
         </Select.SelectContent>
       </Select.Select>
       <Select.Select defaultValue="banana">
-        <Select.SelectTrigger className="w-[180px]">
+        <Select.SelectTrigger data-test-id="select-trigger-enabled" className="w-[180px]">
           <Select.SelectValue placeholder="Select a fruit" />
         </Select.SelectTrigger>
         <Select.SelectContent>
-          <Select.SelectItem value="banana" disabled>
+          <Select.SelectItem value="banana" disabled data-test-id="select-item-banana-disabled">
             Banana (disabled)
           </Select.SelectItem>
         </Select.SelectContent>

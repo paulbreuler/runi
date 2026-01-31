@@ -18,20 +18,22 @@ describe('accessibility utilities', () => {
     it('contains standard focus ring classes', () => {
       expect(focusRingClasses).toContain('outline-none');
       expect(focusRingClasses).toContain('focus-visible:ring-2');
-      expect(focusRingClasses).toContain('focus-visible:ring-accent-blue');
+      expect(focusRingClasses).toContain('focus-visible:ring-[color:var(--color-ring)]');
       expect(focusRingClasses).toContain('focus-visible:ring-offset-2');
       expect(focusRingClasses).toContain('focus-visible:ring-offset-bg-app');
     });
 
-    it('uses accent-blue for focus ring color', () => {
-      expect(focusRingClasses).toContain('accent-blue');
+    it('uses the theme ring token for focus ring color', () => {
+      expect(focusRingClasses).toContain('color-ring');
       expect(focusRingClasses).not.toContain('accent-purple');
     });
 
     it('contains data-focus-visible-added selectors for programmatic focus', () => {
       // These selectors ensure arrow key navigation shows the same focus ring as Tab
       expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-2');
-      expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-accent-blue');
+      expect(focusRingClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]'
+      );
       expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-offset-2');
       expect(focusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-offset-bg-app');
     });
@@ -45,9 +47,11 @@ describe('accessibility utilities', () => {
       expect(hasFocusVisibleRing2).toBe(true);
       expect(hasDataAttrRing2).toBe(true);
 
-      const hasFocusVisibleColor = focusRingClasses.includes('focus-visible:ring-accent-blue');
+      const hasFocusVisibleColor = focusRingClasses.includes(
+        'focus-visible:ring-[color:var(--color-ring)]'
+      );
       const hasDataAttrColor = focusRingClasses.includes(
-        '[&[data-focus-visible-added]:focus]:ring-accent-blue'
+        '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]'
       );
       expect(hasFocusVisibleColor).toBe(true);
       expect(hasDataAttrColor).toBe(true);
@@ -61,9 +65,9 @@ describe('accessibility utilities', () => {
         const isVisible = useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
-            <button data-testid="button">Click me</button>
-            {isVisible && <span data-testid="visible-indicator">Visible</span>}
+          <div ref={containerRef} data-test-id="container">
+            <button data-test-id="button">Click me</button>
+            {isVisible && <span data-test-id="visible-indicator">Visible</span>}
           </div>
         );
       };
@@ -80,9 +84,9 @@ describe('accessibility utilities', () => {
         const isVisible = useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
-            <button data-testid="button">Click me</button>
-            {isVisible && <span data-testid="visible-indicator">Visible</span>}
+          <div ref={containerRef} data-test-id="container">
+            <button data-test-id="button">Click me</button>
+            {isVisible && <span data-test-id="visible-indicator">Visible</span>}
           </div>
         );
       };
@@ -105,11 +109,11 @@ describe('accessibility utilities', () => {
 
         return (
           <>
-            <div ref={containerRef} data-testid="container">
-              <button data-testid="button-inside">Inside</button>
-              {isVisible && <span data-testid="visible-indicator">Visible</span>}
+            <div ref={containerRef} data-test-id="container">
+              <button data-test-id="button-inside">Inside</button>
+              {isVisible && <span data-test-id="visible-indicator">Visible</span>}
             </div>
-            <button data-testid="button-outside">Outside</button>
+            <button data-test-id="button-outside">Outside</button>
           </>
         );
       };
@@ -138,10 +142,10 @@ describe('accessibility utilities', () => {
         const isVisible = useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
-            <button data-testid="button-1">Button 1</button>
-            <button data-testid="button-2">Button 2</button>
-            {isVisible && <span data-testid="visible-indicator">Visible</span>}
+          <div ref={containerRef} data-test-id="container">
+            <button data-test-id="button-1">Button 1</button>
+            <button data-test-id="button-2">Button 2</button>
+            {isVisible && <span data-test-id="visible-indicator">Visible</span>}
           </div>
         );
       };
@@ -174,7 +178,7 @@ describe('accessibility utilities', () => {
         useFocusVisible(containerRef);
 
         return (
-          <div ref={containerRef} data-testid="container">
+          <div ref={containerRef} data-test-id="container">
             <button>Click me</button>
           </div>
         );

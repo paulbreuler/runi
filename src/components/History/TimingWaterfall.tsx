@@ -51,7 +51,7 @@ export const TimingWaterfall = ({
   if (segments === undefined) {
     return (
       <div
-        data-testid="timing-waterfall-empty"
+        data-test-id="timing-waterfall-empty"
         className={cn('w-full bg-bg-raised rounded-full', height)}
       />
     );
@@ -69,7 +69,7 @@ export const TimingWaterfall = ({
     <div className="flex flex-col gap-1">
       {/* Waterfall bar */}
       <div
-        data-testid="timing-waterfall"
+        data-test-id="timing-waterfall"
         className={cn('w-full flex rounded-full overflow-hidden bg-bg-raised', height)}
       >
         {segmentConfig.map(({ key, color }, index) => {
@@ -79,7 +79,7 @@ export const TimingWaterfall = ({
           return (
             <motion.div
               key={key}
-              data-testid={`timing-${key}`}
+              data-test-id={`timing-${key}`}
               className={cn(color, showLabel && 'flex justify-center items-center overflow-hidden')}
               initial={
                 shouldReduceMotion === true

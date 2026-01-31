@@ -45,6 +45,7 @@
     ]
   },
   "dependencies": {
+    "@base-ui/react": "^1.1.0",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.18",
     "@tauri-apps/api": "^2.9.1",

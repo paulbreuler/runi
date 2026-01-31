@@ -44,20 +44,12 @@ export const CELL_PADDING = {
 } as const;
 
 /**
- * Left margin (in pixels) needed for expanded content to align with
- * the first data column's content start.
- *
- * This accounts for:
- * - Selection column width (32px)
- * - Expander column width (16px)
- * - First data column's left padding (6px from px-3)
- *
- * Total: 32 + 16 + 6 = 54px
+ * Left margin (in pixels) for expanded content.
+ * Set to 0 so the expanded panel uses full available width (all the way left).
  *
  * Use this with inline styles: `style={{ marginLeft: \`${EXPANDED_CONTENT_LEFT_MARGIN_PX}px\` }}`
  */
-export const EXPANDED_CONTENT_LEFT_MARGIN_PX =
-  COLUMN_WIDTHS.SELECTION + COLUMN_WIDTHS.EXPANDER + CELL_PADDING.REGULAR; // 32 + 16 + 6 = 54px
+export const EXPANDED_CONTENT_LEFT_MARGIN_PX = 0;
 
 /**
  * Z-index hierarchy for DataGrid components.

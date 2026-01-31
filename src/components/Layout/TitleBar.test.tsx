@@ -98,7 +98,7 @@ describe('TitleBar', () => {
     it('renders children when provided', () => {
       render(
         <TitleBar>
-          <span data-testid="custom-content">Custom Content</span>
+          <span data-test-id="custom-content">Custom Content</span>
         </TitleBar>
       );
 
@@ -192,7 +192,7 @@ describe('TitleBar', () => {
       expect(maximizeButton).toBeInTheDocument();
     });
 
-    it('has data-testid attributes for testing', () => {
+    it('has data-test-id attributes for testing', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
       render(<TitleBar />);
 

@@ -65,28 +65,37 @@ export const TimingTab = ({
   // Blocked state takes precedence
   if (isBlocked) {
     return (
-      <section aria-label="Timing" role="region" className="space-y-4">
-        <div
-          data-testid="blocked-message"
-          role="alert"
-          className={cn(
-            'p-4 rounded-lg border text-center',
-            'bg-signal-error/10 border-signal-error/30'
-          )}
-        >
-          <span className="font-semibold text-signal-error">⊘ Request Blocked</span>
-          <p className="mt-2 text-sm text-text-secondary">
-            This request was blocked by a filter rule
-          </p>
-        </div>
-      </section>
+      <div
+        className="bg-bg-raised rounded border border-border-default p-4"
+        data-test-id="timing-tab-container"
+      >
+        <section aria-label="Timing" role="region" className="space-y-4">
+          <div
+            data-test-id="blocked-message"
+            role="alert"
+            className={cn(
+              'p-4 rounded-lg border text-center',
+              'bg-signal-error/10 border-signal-error/30'
+            )}
+          >
+            <span className="font-semibold text-signal-error">⊘ Request Blocked</span>
+            <p className="mt-2 text-sm text-text-secondary">
+              This request was blocked by a filter rule
+            </p>
+          </div>
+        </section>
+      </div>
     );
   }
 
   const showIntelligence = hasIntelligenceSignals(intelligence);
 
   return (
-    <section aria-label="Timing" role="region" className="space-y-5">
+    <section
+      aria-label="Timing"
+      role="region"
+      className={cn('space-y-5', 'bg-bg-raised rounded border border-border-default p-4')}
+    >
       {/* Header with streaming indicator and total time */}
       <div className="flex justify-between items-center">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
@@ -95,7 +104,7 @@ export const TimingTab = ({
         <div className="flex items-center gap-3">
           {isStreaming && (
             <span
-              data-testid="streaming-indicator"
+              data-test-id="streaming-indicator"
               className="flex items-center gap-1.5 text-xs text-signal-success"
             >
               <span
@@ -123,7 +132,7 @@ export const TimingTab = ({
       {/* Throttle indicator */}
       {throttleRateKbps !== undefined && (
         <div
-          data-testid="throttle-indicator"
+          data-test-id="throttle-indicator"
           className={cn(
             'flex items-center gap-2 p-3 rounded-lg border',
             'bg-signal-warning/10 border-signal-warning/30 text-signal-warning'
@@ -135,7 +144,7 @@ export const TimingTab = ({
 
       {/* Intelligence signals section */}
       {showIntelligence && intelligence !== undefined && (
-        <div data-testid="intelligence-signals-section" className="space-y-3">
+        <div data-test-id="intelligence-signals-section" className="space-y-3">
           <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
             Intelligence Signals
           </span>

@@ -43,7 +43,7 @@ export const UrlCell = ({ url, intelligence }: UrlCellProps): React.ReactElement
         {url}
       </span>
       {intelligence !== undefined && (
-        <div data-testid="intelligence-signals">
+        <div data-test-id="intelligence-signals">
           <IntelligenceSignals intelligence={intelligence} />
         </div>
       )}

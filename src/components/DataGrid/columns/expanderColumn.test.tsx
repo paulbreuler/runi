@@ -95,7 +95,7 @@ const TestTable = ({
         <tr>
           {table.getHeaderGroups().map((headerGroup) =>
             headerGroup.headers.map((header) => (
-              <th key={header.id} data-testid={`header-${header.id}`}>
+              <th key={header.id} data-test-id={`header-${header.id}`}>
                 {header.isPlaceholder
                   ? null
                   : flexRender(header.column.columnDef.header, header.getContext())}
@@ -107,9 +107,9 @@ const TestTable = ({
       <tbody>
         {table.getRowModel().rows.map((row) => (
           <React.Fragment key={row.id}>
-            <tr data-testid={`row-${row.id}`}>
+            <tr data-test-id={`row-${row.id}`}>
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} data-testid={`cell-${cell.column.id}-${row.id}`}>
+                <td key={cell.id} data-test-id={`cell-${cell.column.id}-${row.id}`}>
                   {typeof cell.column.columnDef.cell === 'function'
                     ? cell.column.columnDef.cell(cell.getContext())
                     : String(cell.getValue())}
@@ -117,9 +117,11 @@ const TestTable = ({
               ))}
             </tr>
             {row.getIsExpanded() && (
-              <tr data-testid={`expanded-content-${row.id}`}>
+              <tr data-test-id={`expanded-content-${row.id}`}>
                 <td colSpan={columns.length}>
-                  <div data-testid="expanded-details">Expanded details for {row.original.name}</div>
+                  <div data-test-id="expanded-details">
+                    Expanded details for {row.original.name}
+                  </div>
                 </td>
               </tr>
             )}

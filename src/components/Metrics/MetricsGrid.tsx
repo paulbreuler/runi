@@ -14,7 +14,7 @@ export interface MetricsGridProps {
   /** Application metrics to display */
   metrics: AppMetrics;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -28,7 +28,7 @@ export interface MetricsGridProps {
  */
 export const MetricsGrid: React.FC<MetricsGridProps> = ({
   metrics,
-  'data-testid': testId = 'metrics-grid',
+  'data-test-id': testId = 'metrics-grid',
 }) => {
   const [tooltipText, setTooltipText] = React.useState<string>('');
 
@@ -70,47 +70,47 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
   return (
     <div
       className={cn('grid grid-cols-[auto_1fr] gap-y-0.5 gap-x-2 items-baseline')}
-      data-testid={testId}
+      data-test-id={testId}
     >
       {/* Current */}
-      <div className="text-xs text-text-muted" data-testid="metrics-grid-label-current">
+      <div className="text-xs text-text-muted" data-test-id="metrics-grid-label-current">
         Current:
       </div>
-      <div className="flex items-baseline" data-testid="metrics-grid-value-current">
+      <div className="flex items-baseline" data-test-id="metrics-grid-value-current">
         {renderMetricValue(memory?.current, memory?.threshold)}
       </div>
 
       {/* Average */}
-      <div className="text-xs text-text-muted" data-testid="metrics-grid-label-average">
+      <div className="text-xs text-text-muted" data-test-id="metrics-grid-label-average">
         Average:
       </div>
-      <div className="flex items-baseline" data-testid="metrics-grid-value-average">
+      <div className="flex items-baseline" data-test-id="metrics-grid-value-average">
         {renderMetricValue(memory?.average, memory?.threshold)}
       </div>
 
       {/* Peak */}
-      <div className="text-xs text-text-muted" data-testid="metrics-grid-label-peak">
+      <div className="text-xs text-text-muted" data-test-id="metrics-grid-label-peak">
         Peak:
       </div>
-      <div className="flex items-baseline" data-testid="metrics-grid-value-peak">
+      <div className="flex items-baseline" data-test-id="metrics-grid-value-peak">
         {renderMetricValue(memory?.peak, memory?.threshold)}
       </div>
 
       {/* Threshold (muted text, not MetricCell) with tooltip */}
       {tooltipText !== '' && hasMetrics ? (
         <>
-          <Tooltip content={tooltipText} data-testid="metrics-grid-threshold-tooltip">
+          <Tooltip content={tooltipText} data-test-id="metrics-grid-threshold-tooltip">
             <div
               className="text-xs text-text-muted cursor-help"
-              data-testid="metrics-grid-label-threshold"
+              data-test-id="metrics-grid-label-threshold"
             >
               Threshold:
             </div>
           </Tooltip>
-          <Tooltip content={tooltipText} data-testid="metrics-grid-threshold-value-tooltip">
+          <Tooltip content={tooltipText} data-test-id="metrics-grid-threshold-value-tooltip">
             <div
               className="flex items-baseline text-xs font-mono text-text-muted cursor-help"
-              data-testid="metrics-grid-value-threshold"
+              data-test-id="metrics-grid-value-threshold"
             >
               {formatMemoryValue(memory.threshold)}
             </div>
@@ -118,12 +118,12 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({
         </>
       ) : (
         <>
-          <div className="text-xs text-text-muted" data-testid="metrics-grid-label-threshold">
+          <div className="text-xs text-text-muted" data-test-id="metrics-grid-label-threshold">
             Threshold:
           </div>
           <div
             className="flex items-baseline text-xs font-mono text-text-muted"
-            data-testid="metrics-grid-value-threshold"
+            data-test-id="metrics-grid-value-threshold"
           >
             {hasMetrics ? formatMemoryValue(memory.threshold) : placeholder}
           </div>

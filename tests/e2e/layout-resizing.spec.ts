@@ -319,7 +319,7 @@ test.describe('Layout Resizing', () => {
     test('scrollbars do not flash during resize', async ({ page }) => {
       // Add scrollable content
       await page.evaluate(() => {
-        const requestPane = document.querySelector('[data-testid="request-pane"]');
+        const requestPane = document.querySelector('[data-test-id="request-pane"]');
         if (requestPane) {
           requestPane.innerHTML = `
             <div style="height: 2000px; padding: 20px;">

@@ -11,7 +11,7 @@ describe('focusWithVisibility', () => {
 
   beforeEach(() => {
     element = document.createElement('button');
-    element.setAttribute('data-testid', 'test-button');
+    element.setAttribute('data-test-id', 'test-button');
     document.body.appendChild(element);
   });
 
@@ -31,7 +31,7 @@ describe('focusWithVisibility', () => {
 
   it('removes attribute from previously focused element', () => {
     const element2 = document.createElement('button');
-    element2.setAttribute('data-testid', 'test-button-2');
+    element2.setAttribute('data-test-id', 'test-button-2');
     document.body.appendChild(element2);
 
     focusWithVisibility(element);
@@ -44,7 +44,7 @@ describe('focusWithVisibility', () => {
 
   it('removes attribute when element loses focus via blur', () => {
     const element2 = document.createElement('button');
-    element2.setAttribute('data-testid', 'test-button-2');
+    element2.setAttribute('data-test-id', 'test-button-2');
     document.body.appendChild(element2);
 
     focusWithVisibility(element);

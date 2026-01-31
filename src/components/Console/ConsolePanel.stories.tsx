@@ -148,7 +148,7 @@ export const Playground: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     await step('Verify console panel renders', async () => {
-      // ConsolePanel doesn't have a root data-testid, check for console-logs instead
+      // ConsolePanel doesn't have a root data-test-id, check for console-logs instead
       const logsContainer = await canvas.findByTestId('console-logs', {}, { timeout: 3000 });
       await expect(logsContainer).toBeInTheDocument();
     });

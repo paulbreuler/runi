@@ -18,7 +18,7 @@ interface ActionBarSelectProps<T extends BaseSelectOption = BaseSelectOption> {
   /** Currently selected value */
   value: string;
   /** Callback when selection changes */
-  onValueChange: (value: string) => void;
+  onValueChange: (value: string | null, eventDetails?: unknown) => void;
   /** Available options */
   options: T[];
   /** Icon to show in icon mode */
@@ -30,7 +30,7 @@ interface ActionBarSelectProps<T extends BaseSelectOption = BaseSelectOption> {
   /** Override the variant from context */
   variant?: ActionBarVariant;
   /** Data testid for testing */
-  'data-testid'?: string;
+  'data-test-id'?: string;
   /** Custom renderer for dropdown items */
   renderItem?: (option: T) => React.ReactNode;
 }
@@ -68,7 +68,7 @@ export const ActionBarSelect = <T extends BaseSelectOption>({
   'aria-label': ariaLabel,
   className,
   variant: variantOverride,
-  'data-testid': testId,
+  'data-test-id': testId,
   renderItem,
 }: ActionBarSelectProps<T>): React.JSX.Element => {
   const context = useOptionalActionBarContext();
@@ -84,9 +84,7 @@ export const ActionBarSelect = <T extends BaseSelectOption>({
   return (
     <Select.Select value={value} onValueChange={onValueChange}>
       <Select.SelectTrigger
-        role="button"
-        aria-haspopup="listbox"
-        data-testid={testId}
+        data-test-id={testId}
         className={cn(isIconMode ? iconTriggerClasses : normalTriggerClasses, className)}
         aria-label={ariaLabel}
       >
@@ -100,7 +98,7 @@ export const ActionBarSelect = <T extends BaseSelectOption>({
               : undefined;
 
           return (
-            <Select.SelectItem key={option.value} value={option.value} data-testid={optionTestId}>
+            <Select.SelectItem key={option.value} value={option.value} data-test-id={optionTestId}>
               {renderItem !== undefined ? renderItem(option) : option.label}
             </Select.SelectItem>
           );

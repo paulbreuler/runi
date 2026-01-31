@@ -234,7 +234,7 @@ export const AppMetricsContainer: React.FC<AppMetricsContainerProps> = ({ compac
 
   // Always render when visible, even if metrics haven't arrived yet (shows init animation)
   return (
-    <div data-testid="app-metrics-container">
+    <div data-test-id="app-metrics-container">
       <AppMetricsLog metrics={metrics} timestamp={timestamp} isLive={isLive} compact={compact} />
     </div>
   );

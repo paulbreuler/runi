@@ -75,7 +75,7 @@ export const ActionsCell = ({
       )}
     >
       <Button
-        data-testid="replay-button"
+        data-test-id="replay-button"
         variant="ghost"
         size="icon-xs"
         onClick={handleReplayClick}
@@ -85,7 +85,7 @@ export const ActionsCell = ({
         <Play size={14} />
       </Button>
       <Button
-        data-testid="copy-curl-button"
+        data-test-id="copy-curl-button"
         variant="ghost"
         size="icon-xs"
         onClick={handleCopyClick}
@@ -96,7 +96,7 @@ export const ActionsCell = ({
       </Button>
       {onDelete !== undefined && (
         <Button
-          data-testid="delete-button"
+          data-test-id="delete-button"
           variant="destructive-outline"
           size="icon-xs"
           onClick={handleDeleteClick}

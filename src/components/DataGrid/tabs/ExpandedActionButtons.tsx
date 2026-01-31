@@ -102,7 +102,7 @@ export const ExpandedActionButtons = ({
 
   return (
     <div
-      data-testid="expanded-action-buttons"
+      data-test-id="expanded-action-buttons"
       className={cn('border-t border-border-subtle py-3', className)}
     >
       {/* Scrollable content container */}
@@ -124,7 +124,7 @@ export const ExpandedActionButtons = ({
             onClick={handleReplay}
             aria-label="Edit & Replay"
             title="Edit & Replay"
-            data-testid="replay-button"
+            data-test-id="replay-button"
           >
             <Play size={14} />
             <span>Edit & Replay</span>
@@ -136,7 +136,7 @@ export const ExpandedActionButtons = ({
             onClick={handleCopy}
             aria-label="Copy as cURL"
             title="Copy as cURL"
-            data-testid="copy-curl-button"
+            data-test-id="copy-curl-button"
           >
             <Copy size={14} />
             <span>Copy cURL</span>
@@ -148,7 +148,7 @@ export const ExpandedActionButtons = ({
             onClick={handleChain}
             aria-label="Chain Request"
             title="Chain Request"
-            data-testid="chain-button"
+            data-test-id="chain-button"
           >
             <Link2 size={14} />
             <span>Chain Request</span>
@@ -160,7 +160,7 @@ export const ExpandedActionButtons = ({
             onClick={handleGenerateTests}
             aria-label="Generate Tests"
             title="Generate Tests"
-            data-testid="generate-tests-button"
+            data-test-id="generate-tests-button"
           >
             <TestTube size={14} />
             <span>Generate Tests</span>
@@ -172,7 +172,7 @@ export const ExpandedActionButtons = ({
             onClick={handleAddToCollection}
             aria-label="Add to Collection"
             title="Add to Collection"
-            data-testid="add-to-collection-button"
+            data-test-id="add-to-collection-button"
           >
             <FolderPlus size={14} />
             <span>Add to Collection</span>
@@ -184,7 +184,7 @@ export const ExpandedActionButtons = ({
             onClick={handleBlockToggle}
             aria-label={isBlocked ? 'Unblock' : 'Block'}
             title={isBlocked ? 'Unblock' : 'Block'}
-            data-testid="block-toggle-button"
+            data-test-id="block-toggle-button"
           >
             {isBlocked ? <Unlock size={14} /> : <Ban size={14} />}
             <span>{isBlocked ? 'Unblock' : 'Block'}</span>

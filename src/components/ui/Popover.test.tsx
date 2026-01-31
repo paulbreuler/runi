@@ -3,9 +3,14 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Popover, PopoverTrigger, PopoverContent } from './Popover';
+
+/** Popover content renders in a portal with data-test-id; use this to find it. */
+function getPopoverContent(): HTMLElement | null {
+  return document.querySelector('[data-test-id="popover-content"]');
+}
 
 describe('Popover', () => {
   it('renders trigger element', () => {
@@ -22,14 +27,25 @@ describe('Popover', () => {
     render(
       <Popover>
         <PopoverTrigger>Click me</PopoverTrigger>
-        <PopoverContent data-testid="popover-content">Content</PopoverContent>
+        <PopoverContent data-test-id="popover-content">Content</PopoverContent>
       </Popover>
     );
 
     const trigger = screen.getByText('Click me');
-    fireEvent.click(trigger);
+    await act(async () => {
+      fireEvent.click(trigger);
+    });
 
-    expect(await screen.findByTestId('popover-content')).toBeInTheDocument();
+    // Wait for popover to render in portal (uses data-test-id)
+    const content = await waitFor(
+      () => {
+        const el = getPopoverContent();
+        expect(el).toBeTruthy();
+        return el!;
+      },
+      { timeout: 2000 }
+    );
+    expect(content).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
@@ -37,8 +53,12 @@ describe('Popover', () => {
     const handleOpenChange = vi.fn();
     render(
       <div>
-        <div data-testid="outside">Outside</div>
-        <Popover onOpenChange={handleOpenChange}>
+        <div data-test-id="outside">Outside</div>
+        <Popover
+          onOpenChange={(open) => {
+            handleOpenChange(open);
+          }}
+        >
           <PopoverTrigger>Click me</PopoverTrigger>
           <PopoverContent>Content</PopoverContent>
         </Popover>
@@ -47,27 +67,51 @@ describe('Popover', () => {
 
     // Open popover
     const trigger = screen.getByText('Click me');
-    fireEvent.click(trigger);
+    await act(async () => {
+      fireEvent.click(trigger);
+    });
     expect(await screen.findByText('Content')).toBeInTheDocument();
 
-    // Click outside (Radix handles dismissal via Escape or pointer events)
-    fireEvent.keyDown(document.body, { key: 'Escape' });
+    // Wait for open state to settle
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
 
-    // Should have called onOpenChange with false
-    expect(handleOpenChange).toHaveBeenCalledWith(false);
+    // Click outside (Base UI handles dismissal via Escape or pointer events)
+    await act(async () => {
+      fireEvent.keyDown(document.body, { key: 'Escape' });
+    });
+
+    // Wait for close state to settle
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
+    // Should have called onOpenChange with false (Base UI calls with (open, eventDetails))
+    // Check that the last call had false as the first argument
+    const lastCall = handleOpenChange.mock.calls[handleOpenChange.mock.calls.length - 1];
+    expect(lastCall).toBeDefined();
+    expect(lastCall![0]).toBe(false);
   });
 
   it('applies custom className to content', async () => {
     render(
       <Popover defaultOpen>
         <PopoverTrigger>Click me</PopoverTrigger>
-        <PopoverContent className="custom-class" data-testid="popover-content">
+        <PopoverContent className="custom-class" data-test-id="popover-content">
           Content
         </PopoverContent>
       </Popover>
     );
 
-    const content = await screen.findByTestId('popover-content');
+    const content = await waitFor(
+      () => {
+        const el = getPopoverContent();
+        expect(el).toBeTruthy();
+        return el!;
+      },
+      { timeout: 2000 }
+    );
     expect(content).toHaveClass('custom-class');
   });
 
@@ -85,7 +129,7 @@ describe('Popover', () => {
           </button>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger>Trigger</PopoverTrigger>
-            <PopoverContent data-testid="popover-content">Content</PopoverContent>
+            <PopoverContent data-test-id="popover-content">Content</PopoverContent>
           </Popover>
         </>
       );
@@ -94,11 +138,21 @@ describe('Popover', () => {
     render(<TestComponent />);
 
     // Initially closed
-    expect(screen.queryByTestId('popover-content')).not.toBeInTheDocument();
+    expect(getPopoverContent()).toBeNull();
 
     // Open via external button
-    fireEvent.click(screen.getByText('External Open'));
-    expect(await screen.findByTestId('popover-content')).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByText('External Open'));
+    });
+    const content = await waitFor(
+      () => {
+        const el = getPopoverContent();
+        expect(el).toBeTruthy();
+        return el!;
+      },
+      { timeout: 2000 }
+    );
+    expect(content).toBeInTheDocument();
   });
 });
 

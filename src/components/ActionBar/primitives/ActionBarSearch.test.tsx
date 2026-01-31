@@ -48,6 +48,13 @@ describe('ActionBarSearch', () => {
     expect(screen.getByLabelText('Filter by URL')).toBeInTheDocument();
   });
 
+  it('uses standard focus ring classes for keyboard focus visibility', () => {
+    render(<ActionBarSearch value="" onChange={() => {}} aria-label="Search" />);
+    const input = screen.getByRole('textbox');
+    expect(input.className).toContain('focus-visible:ring-2');
+    expect(input.className).toContain('ring-[color:var(--color-ring)]');
+  });
+
   it('applies custom className', () => {
     const { container } = render(
       <ActionBarSearch value="" onChange={() => {}} aria-label="Search" className="custom-class" />

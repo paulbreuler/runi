@@ -22,12 +22,11 @@ import { HeadersTab } from './HeadersTab';
 import { TimingTab } from './TimingTab';
 import { CodeGenTab } from './CodeGenTab';
 import { CodeGenPanel } from './CodeGenPanel';
-import { HeadersPanel } from './HeadersPanel';
 import { TimingWaterfall } from './TimingWaterfall';
 import { LanguageTabs } from './LanguageTabs';
 import type { NetworkHistoryEntry } from '@/types/history';
 import type { CodeLanguage } from '@/utils/codeGenerators';
-import { waitForFocus, tabToElement } from '@/utils/storybook-test-helpers';
+import { tabToElement } from '@/utils/storybook-test-helpers';
 
 // ============================================================================
 // Mock Data
@@ -252,24 +251,25 @@ export const ResponseTabLargeBody: Story = {
  * Tests Response tab interactions: tab switching, copy button, JSON formatting.
  */
 export const ResponseTabInteractionTest: Story = {
+  tags: ['test'],
   render: () => <ResponseTab entry={createMockEntry()} />,
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
     await step('Verify Response Body tab is active by default', async () => {
-      const responseTab = canvas.getByRole('tab', { name: /response body/i });
+      const responseTab = canvas.getByTestId('response-body-tab');
       await expect(responseTab).toHaveAttribute('aria-selected', 'true');
     });
 
     await step('Switch to Request Body tab', async () => {
-      const requestTab = canvas.getByRole('tab', { name: /request body/i });
+      const requestTab = canvas.getByTestId('request-body-tab');
       await userEvent.click(requestTab);
       await expect(requestTab).toHaveAttribute('aria-selected', 'true');
     });
 
     await step('Verify copy button is present', async () => {
-      const copyButton = canvas.getByRole('button', { name: /copy/i });
-      await expect(copyButton).toBeInTheDocument();
+      const copyButtons = canvas.getAllByTestId('copy-button');
+      await expect(copyButtons.length).toBeGreaterThan(0);
     });
   },
   parameters: {
@@ -361,47 +361,7 @@ export const HeadersTabManyHeaders: Story = {
   },
 };
 
-/**
- * Headers panel with keyboard navigation test.
- */
-export const HeadersPanelKeyboardNavigationTest: Story = {
-  render: () => (
-    <HeadersPanel
-      requestHeaders={{
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer token123',
-      }}
-      responseHeaders={{
-        'Content-Type': 'application/json',
-        'X-Rate-Limit': '100',
-      }}
-    />
-  ),
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-
-    await step('Tab focuses first secondary tab (Response Headers)', async () => {
-      await userEvent.tab();
-      const responseHeadersTab = canvas.getByTestId('response-headers-tab');
-      await waitForFocus(responseHeadersTab, 1000);
-      await expect(responseHeadersTab).toHaveFocus();
-    });
-
-    await step('ArrowRight moves to Request Headers tab', async () => {
-      await userEvent.keyboard('{ArrowRight}');
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const requestHeadersTab = canvas.getByTestId('request-headers-tab');
-      await expect(requestHeadersTab).toHaveFocus();
-    });
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Tests keyboard navigation within HeadersPanel secondary tabs using Arrow keys.',
-      },
-    },
-  },
-};
+// Keyboard navigation for HeadersPanel is covered in History/HeadersPanel Playground story.
 
 // ============================================================================
 // Timing Tab Stories
@@ -621,6 +581,7 @@ export const LanguageTabsSubset: Story = {
  * LanguageTabs - tab interactions test.
  */
 export const LanguageTabsTabInteractionsTest: Story = {
+  tags: ['test'],
   render: () => {
     const [activeLanguage, setActiveLanguage] = useState<CodeLanguage>('javascript');
 
@@ -636,13 +597,13 @@ export const LanguageTabsTabInteractionsTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Click Python tab', async () => {
-      const pythonTab = canvas.getByRole('tab', { name: /python/i });
+      const pythonTab = canvas.getByTestId('language-tab-python');
       await userEvent.click(pythonTab);
       await expect(pythonTab).toHaveAttribute('aria-selected', 'true');
     });
 
     await step('Click Go tab', async () => {
-      const goTab = canvas.getByRole('tab', { name: /^go$/i });
+      const goTab = canvas.getByTestId('language-tab-go');
       await userEvent.click(goTab);
       await expect(goTab).toHaveAttribute('aria-selected', 'true');
     });
@@ -653,6 +614,7 @@ export const LanguageTabsTabInteractionsTest: Story = {
  * LanguageTabs - keyboard navigation test.
  */
 export const LanguageTabsKeyboardNavigationTest: Story = {
+  tags: ['test'],
   render: () => {
     const [activeLanguage, setActiveLanguage] = useState<CodeLanguage>('javascript');
 
@@ -668,7 +630,7 @@ export const LanguageTabsKeyboardNavigationTest: Story = {
     const canvas = within(canvasElement);
 
     await step('Tab to Python tab', async () => {
-      const pythonTab = canvas.getByRole('tab', { name: /python/i });
+      const pythonTab = canvas.getByTestId('language-tab-python');
       const focused = await tabToElement(pythonTab, 10);
       await expect(focused).toBe(true);
       await expect(pythonTab).toHaveFocus();

@@ -11,6 +11,7 @@
 import { useState, useCallback } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 export interface CopyButtonProps {
   /** Text to copy to clipboard */
@@ -21,6 +22,8 @@ export interface CopyButtonProps {
   className?: string;
   /** ARIA label for the button */
   'aria-label'?: string;
+  /** Test id for automation */
+  'data-test-id'?: string;
 }
 
 /**
@@ -36,6 +39,7 @@ export const CopyButton = ({
   feedbackDuration = 2000,
   className,
   'aria-label': ariaLabel = 'Copy to clipboard',
+  'data-test-id': dataTestId = 'copy-button',
 }: CopyButtonProps): React.ReactElement => {
   const [copied, setCopied] = useState(false);
 
@@ -57,11 +61,12 @@ export const CopyButton = ({
     <button
       type="button"
       onClick={handleCopy}
+      data-test-id={dataTestId}
       className={cn(
-        'flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary',
+        focusRingClasses,
+        'flex items-center gap-1.5 px-2 py-1 text-xs text-text-secondary rounded',
         'bg-bg-raised/90 backdrop-blur-sm shadow-sm',
         'hover:text-text-primary hover:bg-bg-raised transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-1 rounded',
         className
       )}
       aria-label={ariaLabel}

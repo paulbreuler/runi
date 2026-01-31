@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 import { ActionBarContext, type ActionBarVariant } from './ActionBarContext';
 
 interface ActionBarProps {
@@ -160,6 +161,7 @@ export const ActionBar = ({
           'flex items-center py-1.5 border-b border-border-subtle bg-bg-raised/30 shrink-0 relative',
           className
         )}
+        style={{ zIndex: OVERLAY_Z_INDEX }}
         role="toolbar"
         aria-label={ariaLabel}
       >
@@ -175,7 +177,7 @@ export const ActionBar = ({
         {showOverflowCue && canScrollLeft && (
           <motion.div
             className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-bg-raised/30 to-transparent"
-            data-testid="actionbar-overflow-left"
+            data-test-id="actionbar-overflow-left"
             initial={false}
             animate={getOverflowAnimation('left')}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -184,7 +186,7 @@ export const ActionBar = ({
         {showOverflowCue && canScrollRight && (
           <motion.div
             className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-bg-raised/30 to-transparent"
-            data-testid="actionbar-overflow-right"
+            data-test-id="actionbar-overflow-right"
             initial={false}
             animate={getOverflowAnimation('right')}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}

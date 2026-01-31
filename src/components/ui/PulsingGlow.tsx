@@ -18,7 +18,7 @@ export interface PulsingGlowProps {
   /** Child elements to wrap */
   children: React.ReactNode;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -37,7 +37,7 @@ export const PulsingGlow: React.FC<PulsingGlowProps> = ({
   intensity = 1,
   size = 8,
   children,
-  'data-testid': testId = 'pulsing-glow',
+  'data-test-id': testId = 'pulsing-glow',
 }) => {
   // Check for reduced motion preference
   const prefersReducedMotion =
@@ -51,7 +51,7 @@ export const PulsingGlow: React.FC<PulsingGlowProps> = ({
     return (
       <div
         className="relative inline-flex items-center justify-center"
-        data-testid={testId}
+        data-test-id={testId}
         data-state={state}
       >
         {children}
@@ -80,10 +80,10 @@ export const PulsingGlow: React.FC<PulsingGlowProps> = ({
   return (
     <div
       className="relative inline-flex items-center justify-center"
-      data-testid={testId}
+      data-test-id={testId}
       data-state={state}
-      data-testid-init={state === 'init' ? `${testId}-init` : undefined}
-      data-testid-tracking={state === 'tracking' ? `${testId}-tracking` : undefined}
+      data-test-id-init={state === 'init' ? `${testId}-init` : undefined}
+      data-test-id-tracking={state === 'tracking' ? `${testId}-tracking` : undefined}
     >
       {/* Glow ring */}
       <motion.div

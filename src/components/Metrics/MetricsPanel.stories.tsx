@@ -135,7 +135,7 @@ export const Playground: Story = {
             onClick={() => {
               setIsOpen(!isOpen);
             }}
-            data-testid="metrics-trigger-button"
+            data-test-id="metrics-trigger-button"
             className={isOpen ? 'bg-bg-raised' : ''}
           >
             Metrics

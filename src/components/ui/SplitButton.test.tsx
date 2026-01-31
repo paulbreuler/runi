@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { Download, Copy } from 'lucide-react';
@@ -32,7 +32,7 @@ describe('SplitButton', () => {
     });
 
     it('renders an icon when provided', () => {
-      render(<SplitButton {...defaultProps} icon={<Download data-testid="icon" />} />);
+      render(<SplitButton {...defaultProps} icon={<Download data-test-id="icon" />} />);
 
       expect(screen.getByTestId('icon')).toBeInTheDocument();
     });
@@ -96,9 +96,14 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      // Dropdown items should be visible
-      expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: /save as/i })).toBeInTheDocument();
+      // Dropdown items should be visible (wait for portal/popup to render)
+      await waitFor(
+        () => {
+          expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
+          expect(screen.getByRole('menuitem', { name: /save as/i })).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it('calls item onClick when a menu item is clicked', async () => {
@@ -118,7 +123,11 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      const saveAsItem = screen.getByRole('menuitem', { name: /save as/i });
+      const saveAsItem = await screen.findByRole(
+        'menuitem',
+        { name: /save as/i },
+        { timeout: 3000 }
+      );
       await user.click(saveAsItem);
 
       expect(handleSaveAs).toHaveBeenCalledTimes(1);
@@ -132,11 +141,16 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      const saveItem = screen.getByRole('menuitem', { name: /save$/i });
+      const saveItem = await screen.findByRole('menuitem', { name: /save$/i }, { timeout: 3000 });
       await user.click(saveItem);
 
       // Dropdown should be closed
-      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it('renders icons in menu items when provided', async () => {
@@ -146,7 +160,12 @@ describe('SplitButton', () => {
         <SplitButton
           {...defaultProps}
           items={[
-            { id: 'copy', label: 'Copy', icon: <Copy data-testid="copy-icon" />, onClick: vi.fn() },
+            {
+              id: 'copy',
+              label: 'Copy',
+              icon: <Copy data-test-id="copy-icon" />,
+              onClick: vi.fn(),
+            },
           ]}
         />
       );
@@ -154,7 +173,9 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      expect(screen.getByTestId('copy-icon')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('copy-icon')).toBeInTheDocument();
+      });
     });
 
     it('renders separators between items when specified', async () => {
@@ -174,8 +195,13 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      // Should have a separator element
-      expect(screen.getByRole('separator')).toBeInTheDocument();
+      // Should have a separator element (wait for menu to render)
+      await waitFor(
+        () => {
+          expect(screen.getByRole('separator')).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it('disables individual menu items when item.disabled is true', async () => {
@@ -192,7 +218,7 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      const saveItem = screen.getByRole('menuitem', { name: /save$/i });
+      const saveItem = await screen.findByRole('menuitem', { name: /save$/i }, { timeout: 3000 });
       expect(saveItem).toHaveAttribute('data-disabled');
     });
 
@@ -209,7 +235,11 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
-      const deleteItem = screen.getByRole('menuitem', { name: /delete/i });
+      const deleteItem = await screen.findByRole(
+        'menuitem',
+        { name: /delete/i },
+        { timeout: 3000 }
+      );
       expect(deleteItem).toHaveClass('text-signal-error');
     });
   });
@@ -224,7 +254,9 @@ describe('SplitButton', () => {
       trigger.focus();
       await user.keyboard('{Enter}');
 
-      expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
+      });
     });
 
     it('closes dropdown on Escape key', async () => {
@@ -235,9 +267,21 @@ describe('SplitButton', () => {
       const trigger = screen.getByRole('button', { name: /more options/i });
       await user.click(trigger);
 
+      await waitFor(
+        () => {
+          expect(screen.getByRole('menuitem', { name: /save$/i })).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
       await user.keyboard('{Escape}');
 
-      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+      await waitFor(
+        () => {
+          expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
@@ -304,7 +348,10 @@ describe('SplitButton', () => {
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
 
       await user.click(trigger);
-      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      // Base UI updates aria-expanded asynchronously
+      await waitFor(() => {
+        expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      });
     });
 
     it('supports custom dropdown aria-label', () => {

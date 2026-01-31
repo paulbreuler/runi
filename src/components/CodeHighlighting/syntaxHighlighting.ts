@@ -20,6 +20,8 @@ export const syntaxHighlightTheme = {
     background: 'transparent',
     padding: 0,
     margin: 0,
+    overflow: 'visible',
+    whiteSpace: 'pre',
   },
   'div[class*="language-"]': {
     ...oneDark['pre[class*="language-"]'],
@@ -27,6 +29,8 @@ export const syntaxHighlightTheme = {
     padding: 0,
     margin: 0,
     paddingLeft: '0',
+    overflow: 'visible',
+    whiteSpace: 'pre',
   },
 };
 
@@ -36,6 +40,8 @@ export const syntaxHighlightBaseStyle = {
   margin: 0,
   fontSize: '0.875rem',
   lineHeight: '1.6',
+  overflow: 'visible',
+  whiteSpace: 'pre',
 };
 
 export const syntaxHighlightLineNumberStyle = {

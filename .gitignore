@@ -27,6 +27,7 @@ storybook-static
 
 # Misc
 .DS_Store
+.mcp.json
 *.pem
 
 # Environment files (secrets)
@@ -84,6 +85,7 @@ prompts/
 .cursor/code-review-report.md
 .cursor/plans/
 .cursor/mcp.json
+.limps-headless/
 
 # Audit scripts (moved to external glimps extension)
 scripts/audit/

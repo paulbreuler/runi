@@ -26,7 +26,7 @@ install:
 
 # Start development server
 dev:
-    npm run tauri dev
+    TAURI_CLI_WATCHER_IGNORE_FILENAME=.gitignore npm run tauri dev
 
 # ============================================================================
 # 🛠️ Development
@@ -239,12 +239,12 @@ clean:
 # Prettier handles: formatting, trailing whitespace, line endings
 docs-check:
     @echo "📚 Checking markdown formatting..."
-    npx prettier --check "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
+    npx prettier --check "**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
 
 # Fix documentation formatting
 docs-fix:
     @echo "📚 Fixing markdown formatting..."
-    npx prettier --write "**/*.md" ".cursor/**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
+    npx prettier --write "**/*.md" "docs/**/*.md" ".claude/**/*.md" ".storybook/**/*.md"
     @echo "✅ Documentation formatting fixed"
 
 # Generate Rust documentation

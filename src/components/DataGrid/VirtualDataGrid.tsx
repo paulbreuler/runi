@@ -224,7 +224,7 @@ function VirtualDataGridInner<TData>(
         // 3. Has expanded-section testid (more reliable check)
         const hasDataIndex = nextRow.hasAttribute('data-index');
         const expandedTd = nextRow.querySelector('td[colspan]');
-        const expandedSection = nextRow.querySelector('[data-testid="expanded-section"]');
+        const expandedSection = nextRow.querySelector('[data-test-id="expanded-section"]');
 
         if (!hasDataIndex && expandedTd !== null && expandedSection !== null) {
           totalHeight += nextRow.offsetHeight;
@@ -661,12 +661,12 @@ function VirtualDataGridInner<TData>(
   };
 
   return (
-    <div className={cn('flex flex-col min-h-0', className)} data-testid="virtual-datagrid">
+    <div className={cn('flex flex-col min-h-0', className)} data-test-id="virtual-datagrid">
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-auto bg-bg-app"
         style={{ height }}
-        data-testid="virtual-scroll-container"
+        data-test-id="virtual-scroll-container"
       >
         <table
           className="border-collapse"

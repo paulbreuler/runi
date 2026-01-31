@@ -51,7 +51,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
           'fixed bottom-10 right-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4',
           'sm:max-w-[420px]'
         )}
-        data-testid="toast-viewport"
+        data-test-id="toast-viewport"
         asChild
       >
         <ol>

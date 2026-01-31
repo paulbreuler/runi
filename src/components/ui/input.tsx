@@ -6,6 +6,7 @@
 import * as React from 'react';
 import { motion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 export interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -53,26 +54,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     };
 
     const baseClasses = cn(
-      'text-text-primary placeholder:text-text-muted ring-offset-bg-app',
+      focusRingClasses,
+      'text-text-primary placeholder:text-text-muted',
       'flex h-9 w-full min-w-0 rounded-lg px-3 py-1 text-sm',
-      'outline-none disabled:cursor-not-allowed disabled:opacity-50',
+      'disabled:cursor-not-allowed disabled:opacity-50',
       'aria-invalid:ring-signal-error/20 aria-invalid:border-signal-error',
       // Glass-morphism base styles (Apple 2025 aesthetic)
-      glass && [
-        'border',
-        'shadow-sm shadow-black/5',
-        // Focus styles - subtle, calm, muted unless focused
-        // Using accent-contrast for semantic token consistency (white in dark, dark in light)
-        'focus-visible:shadow-md focus-visible:shadow-black/10',
-        'focus-visible:ring-1 focus-visible:ring-accent-contrast/20',
-      ],
+      glass && ['border', 'shadow-sm shadow-black/5'],
       // Non-glass fallback styles (matches Radix TextField variant-surface pattern)
       !glass && [
         'bg-bg-surface border border-border-subtle',
         'transition-colors duration-200',
         'hover:border-border-default',
-        'focus-visible:border-border-emphasis focus-visible:ring-1',
-        'focus-visible:ring-border-default',
       ],
       className
     );

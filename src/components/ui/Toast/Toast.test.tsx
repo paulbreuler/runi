@@ -381,7 +381,7 @@ describe('Toast Component', () => {
     });
 
     await waitFor(() => {
-      const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]');
+      const consoleBtn = document.querySelector('[data-test-id^="toast-view-console"]');
       expect(consoleBtn).toBeInTheDocument();
     });
   });
@@ -397,11 +397,11 @@ describe('Toast Component', () => {
     });
 
     await waitFor(() => {
-      const toastElement = document.querySelector('[data-testid^="toast-"]');
+      const toastElement = document.querySelector('[data-test-id^="toast-"]');
       expect(toastElement).toBeInTheDocument();
     });
 
-    const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]');
+    const consoleBtn = document.querySelector('[data-test-id^="toast-view-console"]');
     expect(consoleBtn).not.toBeInTheDocument();
   });
 
@@ -420,11 +420,11 @@ describe('Toast Component', () => {
     });
 
     await waitFor(() => {
-      const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]');
+      const consoleBtn = document.querySelector('[data-test-id^="toast-view-console"]');
       expect(consoleBtn).toBeInTheDocument();
     });
 
-    const consoleBtn = document.querySelector('[data-testid^="toast-view-console"]')!;
+    const consoleBtn = document.querySelector('[data-test-id^="toast-view-console"]')!;
     await user.click(consoleBtn);
 
     expect(eventHandler).toHaveBeenCalledTimes(1);
@@ -558,7 +558,7 @@ describe('Accessibility', () => {
     });
   });
 
-  it('toast viewport has data-testid', async () => {
+  it('toast viewport has data-test-id', async () => {
     renderWithProvider(<div>Content</div>);
 
     await waitFor(() => {
@@ -566,7 +566,7 @@ describe('Accessibility', () => {
     });
   });
 
-  it('toast has data-testid', async () => {
+  it('toast has data-test-id', async () => {
     renderWithProvider(<div>Content</div>);
 
     act(() => {

@@ -5,12 +5,17 @@
 
 import * as React from 'react';
 import { motion, type Variant } from 'motion/react';
-import { Slot } from 'radix-ui';
+import {
+  Button as BaseButton,
+  type ButtonProps as BaseButtonProps,
+  type ButtonState,
+} from '@base-ui/react/button';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
+  `${focusRingClasses} inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-colors duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4`,
   {
     variants: {
       variant: {
@@ -26,9 +31,9 @@ const buttonVariants = cva(
           'bg-transparent border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-raised/50',
         // Secondary: Raised surface
         secondary:
-          'bg-bg-raised border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-bg-elevated',
+          'bg-bg-raised border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-emphasis',
         // Ghost: Invisible until hover
-        ghost: 'bg-transparent text-text-muted hover:text-text-secondary hover:bg-bg-raised/50',
+        ghost: 'bg-transparent text-text-muted hover:text-text-primary hover:bg-bg-raised/50',
         // Link: Text only
         link: 'text-accent-blue underline-offset-4 hover:underline',
       },
@@ -84,38 +89,93 @@ const buttonMotionVariants: Record<string, Variant> = {
 export interface ButtonProps
   extends
     Omit<
-      React.ButtonHTMLAttributes<HTMLButtonElement>,
-      'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd'
+      BaseButtonProps,
+      | 'className'
+      | 'render'
+      | 'onDrag'
+      | 'onDragStart'
+      | 'onDragEnd'
+      | 'onAnimationStart'
+      | 'onAnimationEnd'
     >,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   /** Disable scale animations on hover/tap (useful for compact UI like status bars) */
   noScale?: boolean;
+  className?: BaseButtonProps['className'];
+  render?: BaseButtonProps['render'];
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, disabled, noScale = false, ...props }, ref) => {
-    if (asChild) {
-      const Comp = Slot.Root;
-      return (
-        <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
-      );
-    }
+const Button = React.forwardRef<HTMLElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      disabled = false,
+      noScale = false,
+      render,
+      nativeButton,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const baseClasses = buttonVariants({ variant, size });
+    const resolvedClassName =
+      typeof className === 'function'
+        ? (state: ButtonState): string => cn(baseClasses, className(state))
+        : cn(baseClasses, className);
 
-    // Use Motion variants for cleaner, more maintainable animations
-    // Following Motion docs: variants are better than inline whileHover/whileTap
-    // noScale disables hover/tap animations for compact UI contexts
+    const renderElement =
+      asChild && render === undefined && React.isValidElement(children)
+        ? (children as React.ReactElement)
+        : undefined;
+    const resolvedRender = renderElement ?? render;
+
     return (
-      <motion.button
+      <BaseButton
         {...props}
-        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={disabled}
-        variants={noScale ? undefined : buttonMotionVariants}
-        initial={noScale ? undefined : 'rest'}
-        whileHover={disabled === true || noScale ? undefined : 'hover'}
-        whileTap={disabled === true || noScale ? undefined : 'tap'}
-      />
+        className={resolvedClassName}
+        nativeButton={asChild ? (nativeButton ?? false) : nativeButton}
+        render={
+          resolvedRender ??
+          ((renderProps): React.ReactElement => {
+            const {
+              children: renderChildren,
+              type,
+              onDrag: _onDrag,
+              onDragStart: _onDragStart,
+              onDragEnd: _onDragEnd,
+              onAnimationStart: _onAnimationStart,
+              onAnimationEnd: _onAnimationEnd,
+              ...restRenderProps
+            } = renderProps as React.ComponentPropsWithRef<'button'>;
+
+            // Use Motion variants for cleaner, more maintainable animations
+            // Following Motion docs: variants are better than inline whileHover/whileTap
+            // noScale disables hover/tap animations for compact UI contexts
+            return (
+              <motion.button
+                {...restRenderProps}
+                type={type ?? 'button'}
+                disabled={disabled}
+                variants={noScale ? undefined : buttonMotionVariants}
+                initial={noScale ? undefined : 'rest'}
+                whileHover={disabled || noScale ? undefined : 'hover'}
+                whileTap={disabled || noScale ? undefined : 'tap'}
+              >
+                {renderChildren}
+              </motion.button>
+            );
+          })
+        }
+      >
+        {renderElement === undefined ? children : null}
+      </BaseButton>
     );
   }
 );

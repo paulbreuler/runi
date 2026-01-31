@@ -296,14 +296,14 @@ describe('MainLayout', () => {
 
   describe('Custom Content', () => {
     it('renders custom header content', () => {
-      render(<MainLayout headerContent={<div data-testid="custom-header">Custom Header</div>} />);
+      render(<MainLayout headerContent={<div data-test-id="custom-header">Custom Header</div>} />);
 
       expect(screen.getByTestId('custom-header')).toBeInTheDocument();
     });
 
     it('renders custom request content', () => {
       render(
-        <MainLayout requestContent={<div data-testid="custom-request">Custom Request</div>} />
+        <MainLayout requestContent={<div data-test-id="custom-request">Custom Request</div>} />
       );
 
       expect(screen.getByTestId('custom-request')).toBeInTheDocument();
@@ -311,7 +311,7 @@ describe('MainLayout', () => {
 
     it('renders custom response content', () => {
       render(
-        <MainLayout responseContent={<div data-testid="custom-response">Custom Response</div>} />
+        <MainLayout responseContent={<div data-test-id="custom-response">Custom Response</div>} />
       );
 
       expect(screen.getByTestId('custom-response')).toBeInTheDocument();

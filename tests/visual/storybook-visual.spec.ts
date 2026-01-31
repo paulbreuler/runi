@@ -48,11 +48,25 @@ test.describe('Storybook Visual Regression', () => {
     await expect(storybookUI).toBeVisible();
   });
 
-  // TODO: Add individual story tests as stories are created
-  // Example:
-  // test('Button component matches baseline', async ({ page }) => {
-  //   await page.goto('/?path=/story/ui-components--button-default');
-  //   const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
-  //   await expect(iframe.locator('body')).toHaveScreenshot('button-default.png');
-  // });
+  test('RequestBuilder body panel fills height', async ({ page }) => {
+    await page.goto('/?path=/story/request-requestbuilder--playground');
+    const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
+    const bodyTab = iframe.locator('[data-test-id="request-tab-body"]');
+    await bodyTab.waitFor({ state: 'visible', timeout: 10000 });
+    await bodyTab.click();
+    const textarea = iframe.locator('[data-test-id="code-editor-textarea"]');
+    await expect(textarea).toBeVisible();
+    await textarea.fill(`{"token":"${'a'.repeat(240)}"}`);
+    await expect(iframe.locator('body')).toHaveScreenshot('request-builder-body-panel.png');
+  });
+
+  test('ResponseViewer raw panel layout', async ({ page }) => {
+    await page.goto('/?path=/story/response-responseviewer--playground');
+    const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
+    const rawTab = iframe.locator('[data-test-id="response-tab-raw"]');
+    await rawTab.waitFor({ state: 'visible', timeout: 10000 });
+    await rawTab.click();
+    await expect(iframe.locator('[data-test-id="response-raw"]')).toBeVisible();
+    await expect(iframe.locator('body')).toHaveScreenshot('response-viewer-raw-panel.png');
+  });
 });

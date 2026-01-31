@@ -16,7 +16,7 @@ export interface NotificationTrayHeaderProps {
   /** Optional actions to display (center/right) */
   actions?: React.ReactNode;
   /** Optional test ID */
-  'data-testid'?: string;
+  'data-test-id'?: string;
 }
 
 /**
@@ -33,7 +33,7 @@ export const NotificationTrayHeader: React.FC<NotificationTrayHeaderProps> = ({
   title,
   onClose,
   actions,
-  'data-testid': testId = 'notification-tray-header',
+  'data-test-id': testId = 'notification-tray-header',
 }) => {
   return (
     <div
@@ -41,7 +41,7 @@ export const NotificationTrayHeader: React.FC<NotificationTrayHeaderProps> = ({
         'grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2.5 py-1.5',
         'border-b border-border-subtle'
       )}
-      data-testid={testId}
+      data-test-id={testId}
     >
       {/* Title on left */}
       <h3 className="text-xs font-medium text-text-primary">{title}</h3>
@@ -58,7 +58,7 @@ export const NotificationTrayHeader: React.FC<NotificationTrayHeaderProps> = ({
           focusRingClasses
         )}
         aria-label="Close notification tray"
-        data-testid="notification-tray-close-button"
+        data-test-id="notification-tray-close-button"
       >
         <ChevronDown className="w-3.5 h-3.5" />
       </button>

@@ -57,6 +57,13 @@ describe('RequestHeader', () => {
     expect(urlInput).toHaveClass('bg-transparent');
   });
 
+  it('URL input has visible focus ring for keyboard navigation', () => {
+    render(<RequestHeader {...defaultProps} url="" />);
+    const urlInput = screen.getByTestId('url-input');
+    expect(urlInput.className).toContain('focus-visible:ring-2');
+    expect(urlInput.className).toContain('ring-[color:var(--color-ring)]');
+  });
+
   it('renders send button with proper styling', () => {
     render(<RequestHeader {...defaultProps} />);
 

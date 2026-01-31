@@ -6,6 +6,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { getConsoleService } from '@/services/console-service';
 import type { ConsoleLog, LogLevel } from '@/types/console';
@@ -131,6 +132,18 @@ function formatLogArgs(args: unknown[]): FormattedLogArgs {
  * Supports filtering by level and full-text search across message, args, and correlation ID.
  */
 const DEFAULT_MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
+
+/** Build the empty message for the data grid based on active filters */
+const getEmptyMessage = (searchFilter: string, filter: LogLevel | 'all'): string => {
+  const trimmed = searchFilter.trim();
+  if (trimmed !== '') {
+    return `No logs matching "${trimmed}"`;
+  }
+  if (filter !== 'all') {
+    return `No logs (${filter} only)`;
+  }
+  return 'No logs';
+};
 
 export const ConsolePanel = ({
   maxLogs = 1000,
@@ -815,7 +828,7 @@ export const ConsolePanel = ({
               getLogLevelClass(logLevel)
             )}
             data-row-id={row.id}
-            data-testid={`console-log-${logLevel}`}
+            data-test-id={`console-log-${logLevel}`}
             onClick={handleRowClick}
             onDoubleClick={handleRowDoubleClick}
             onMouseDown={(e): void => {
@@ -834,7 +847,7 @@ export const ConsolePanel = ({
           {isExpanded && (
             <tr key={`${row.id}-expanded`}>
               <td colSpan={columns.length} className="p-0">
-                <ExpandedContent innerClassName="mt-0.5 space-y-0.5 border-l border-border-default pl-2">
+                <ExpandedContent innerClassName="bg-bg-surface border-t border-border-subtle mt-0.5 space-y-0.5 border-l border-border-default pl-2">
                   {isGrouped ? (
                     <>
                       {/* Args content (grouped logs show args once) */}
@@ -869,7 +882,10 @@ export const ConsolePanel = ({
                                 return next;
                               });
                             }}
-                            className="flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full"
+                            className={cn(
+                              focusRingClasses,
+                              'flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full'
+                            )}
                           >
                             {expandedLogIds.has(`${originalLog.id}_occurrences`) ? (
                               <ChevronDown size={12} />
@@ -969,6 +985,7 @@ export const ConsolePanel = ({
         selectedCount={selectedLogIds.size}
         counts={countByLevel}
         totalCount={logs.length}
+        filteredCount={filteredLogs.length}
       />
 
       {/* Log list container */}
@@ -977,7 +994,7 @@ export const ConsolePanel = ({
 
         {/* VirtualDataGrid - replaces custom rendering */}
         {/* Note: VirtualDataGrid handles scrolling internally, no need for overflow-x-auto wrapper */}
-        <div className="flex-1 flex flex-col min-h-0" data-testid="console-logs">
+        <div className="flex-1 flex flex-col min-h-0" data-test-id="console-logs">
           <VirtualDataGrid
             data={tableData}
             columns={columns}
@@ -993,7 +1010,7 @@ export const ConsolePanel = ({
             onSetRowSelectionReady={handleSetRowSelectionReady}
             onSetExpandedReady={handleSetExpandedReady}
             estimateRowHeight={32}
-            emptyMessage={`No logs${filter !== 'all' ? ` (${filter} only)` : ''}`}
+            emptyMessage={getEmptyMessage(searchFilter, filter)}
             renderRow={renderRow}
             height={600}
             className="flex-1 font-mono text-xs"

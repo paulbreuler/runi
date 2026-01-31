@@ -6,6 +6,7 @@
 import React, { useRef, useEffect } from 'react';
 import { PanelBottom, PanelLeft, PanelRight, ExternalLink } from 'lucide-react';
 import { usePanelStore, type PanelPosition } from '@/stores/usePanelStore';
+import { focusRingClasses } from '@/utils/accessibility';
 import { usePopoutWindow } from '@/hooks/usePopoutWindow';
 import { cn } from '@/utils/cn';
 
@@ -40,10 +41,11 @@ const DockButton = ({
       ref={buttonRef}
       type="button"
       className={cn(
+        focusRingClasses,
         'p-1 rounded transition-colors',
         isActive
-          ? 'text-text-primary bg-bg-elevated/70'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50'
+          ? 'text-text-primary bg-bg-raised/80'
+          : 'text-text-secondary hover:text-text-primary hover:bg-bg-raised/50'
       )}
       onClick={onClick}
       aria-label={label}
@@ -223,7 +225,10 @@ export const DockControls = ({ className, onPopout }: DockControlsProps): React.
 
       <button
         type="button"
-        className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50 transition-colors"
+        className={cn(
+          focusRingClasses,
+          'p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors'
+        )}
         onClick={handlePopout}
         aria-label="Pop out to window"
         title="Pop out to window"

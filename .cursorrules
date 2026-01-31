@@ -157,6 +157,17 @@ These patterns apply when working in the React frontend.
 - Layout components should accept children, not hardcode structure
 - Use composition to build complex UIs from simple, reusable pieces
 
+### Focus Ring Standard
+
+- Use `focusRingClasses` from `@/utils/accessibility` for all interactive focus indicators (2px ring using theme token `--color-ring`, 2px offset, ring-offset-bg-app); use `focusWithVisibility()` for programmatic focus. Document any design exception (e.g. composite bar) if a component does not use the standard ring.
+
+### Color / Elevation Layering
+
+- **app** (`bg-bg-app`): Page/canvas — layout root, grid, panes.
+- **surface** (`bg-bg-surface`): Primary surfaces — sidebar, status bar, header bars, expanded row strip.
+- **raised** (`bg-bg-raised`): Cards and contained content on a surface — CodeBox contained, inputs, tab content cards.
+- **elevated** (`bg-bg-elevated`): Floating overlays only — tooltips, dropdowns, popovers, modals. Do not use for inline content (e.g. buttons, badges, expanded strip).
+
 ---
 
 ## Backend Patterns (Rust/Tauri in `src-tauri/`)

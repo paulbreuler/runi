@@ -5,6 +5,8 @@
 
 import React, { useEffect, useRef } from 'react';
 import type { ConsoleLog, LogLevel } from '@/types/console';
+import { focusRingClasses } from '@/utils/accessibility';
+import { cn } from '@/utils/cn';
 
 interface GroupedLog {
   id: string;
@@ -127,7 +129,10 @@ export const ConsoleContextMenu = ({
       <button
         type="button"
         onClick={handleCopyMessage}
-        className="w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors"
+        className={cn(
+          focusRingClasses,
+          'w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors'
+        )}
         role="menuitem"
       >
         Copy message
@@ -136,7 +141,10 @@ export const ConsoleContextMenu = ({
         <button
           type="button"
           onClick={handleCopyCorrelationId}
-          className="w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors"
+          className={cn(
+            focusRingClasses,
+            'w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors'
+          )}
           role="menuitem"
         >
           Copy correlation ID
@@ -145,7 +153,10 @@ export const ConsoleContextMenu = ({
       <button
         type="button"
         onClick={handleCopyAll}
-        className="w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors"
+        className={cn(
+          focusRingClasses,
+          'w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors'
+        )}
         role="menuitem"
       >
         Copy all

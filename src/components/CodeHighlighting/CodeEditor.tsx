@@ -20,6 +20,7 @@ import {
   syntaxHighlightTheme,
 } from '@/components/CodeHighlighting/syntaxHighlighting';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 export interface CodeEditorProps {
   /** Display mode shows read-only code, edit mode allows editing */
@@ -188,7 +189,7 @@ export const CodeEditor = ({
   // Display mode - read-only with copy button via CodeBox
   if (mode === 'display') {
     return (
-      <div data-testid="code-editor" className={cn('flex flex-col', className)}>
+      <div data-test-id="code-editor" className={cn('flex flex-col min-h-0', className)}>
         <CodeBox
           copyText={code}
           copyButtonLabel={`Copy ${detectedLanguage} code`}
@@ -196,22 +197,21 @@ export const CodeEditor = ({
           containerClassName="flex-1"
           data-language={detectedLanguage}
         >
-          <div className="overflow-x-auto" style={{ scrollbarGutter: 'stable' }}>
-            <div className="code-editor-wrapper">
-              <SyntaxHighlighter
-                language={detectedLanguage}
-                style={syntaxHighlightTheme}
-                customStyle={syntaxHighlightBaseStyle}
-                showLineNumbers
-                lineNumberStyle={syntaxHighlightLineNumberStyle}
-                PreTag="div"
-                codeTagProps={{
-                  style: syntaxHighlightCodeTagStyle,
-                }}
-              >
-                {code}
-              </SyntaxHighlighter>
-            </div>
+          <div className="code-editor-wrapper">
+            <SyntaxHighlighter
+              language={detectedLanguage}
+              style={syntaxHighlightTheme}
+              customStyle={syntaxHighlightBaseStyle}
+              showLineNumbers
+              wrapLongLines={false}
+              lineNumberStyle={syntaxHighlightLineNumberStyle}
+              PreTag="div"
+              codeTagProps={{
+                style: syntaxHighlightCodeTagStyle,
+              }}
+            >
+              {code}
+            </SyntaxHighlighter>
           </div>
         </CodeBox>
       </div>
@@ -220,14 +220,14 @@ export const CodeEditor = ({
 
   // Edit mode - editable with overlay technique
   return (
-    <div className={cn('h-full flex flex-col', className)} data-testid="code-editor">
+    <div className={cn('h-full min-h-0 flex flex-col', className)} data-test-id="code-editor">
       <div className="flex-1 overflow-hidden relative bg-bg-app">
         {/* Syntax highlight layer (non-interactive) */}
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
           aria-hidden
           ref={highlightRef}
-          data-testid="code-editor-syntax-layer"
+          data-test-id="code-editor-syntax-layer"
         >
           <div className="p-4">
             <div data-language={detectedLanguage}>
@@ -236,6 +236,7 @@ export const CodeEditor = ({
                 style={syntaxHighlightTheme}
                 customStyle={syntaxHighlightBaseStyle}
                 showLineNumbers
+                wrapLongLines={false}
                 lineNumberStyle={syntaxHighlightLineNumberStyle}
                 PreTag="div"
                 codeTagProps={{
@@ -256,18 +257,20 @@ export const CodeEditor = ({
           onScroll={syncHighlightScroll}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
+          wrap="off"
           className={cn(
+            focusRingClasses,
             'w-full h-full p-4 font-mono text-sm leading-relaxed',
-            'bg-transparent text-transparent',
-            'border-0 outline-none resize-none',
-            'focus:outline-none',
+            'bg-transparent text-transparent overflow-auto',
+            'border-0 resize-none',
             'placeholder:text-text-muted/50'
           )}
           style={{
             paddingLeft: `calc(1rem + ${gutterWidth})`,
             caretColor: 'var(--color-text-secondary)',
+            scrollbarGutter: 'stable both-edges',
           }}
-          data-testid="code-editor-textarea"
+          data-test-id="code-editor-textarea"
           spellCheck={false}
         />
 
@@ -281,7 +284,7 @@ export const CodeEditor = ({
             {isJsonBody ? (
               <div
                 className="flex items-center gap-2 px-2 py-1 rounded bg-signal-success/10 text-signal-success text-xs"
-                data-testid="json-valid-indicator"
+                data-test-id="json-valid-indicator"
               >
                 <span className="size-1.5 rounded-full bg-signal-success" />
                 Valid JSON
@@ -289,7 +292,7 @@ export const CodeEditor = ({
             ) : (
               <div
                 className="flex items-center gap-2 px-2 py-1 rounded bg-signal-error/10 text-signal-error text-xs"
-                data-testid="json-invalid-indicator"
+                data-test-id="json-invalid-indicator"
               >
                 <span className="size-1.5 rounded-full bg-signal-error" />
                 Invalid JSON
@@ -298,8 +301,11 @@ export const CodeEditor = ({
             {showFormatButton && (
               <button
                 onClick={formatJson}
-                className="px-2 py-1 text-xs rounded bg-bg-raised text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
-                data-testid="format-json-button"
+                className={cn(
+                  focusRingClasses,
+                  'px-2 py-1 text-xs rounded bg-bg-raised text-text-secondary hover:text-text-primary hover:border-border-emphasis transition-colors border border-transparent'
+                )}
+                data-test-id="format-json-button"
               >
                 Format
               </button>

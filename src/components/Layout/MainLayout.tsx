@@ -458,8 +458,8 @@ export const MainLayout = ({
   const isSidebarOverlay = sidebarVisible && isCompact;
 
   return (
-    <div className="flex h-screen flex-col bg-bg-app" data-testid="main-layout">
-      <div className="flex flex-1 overflow-hidden gap-0">
+    <div className="relative z-0 flex h-screen flex-col bg-bg-app" data-test-id="main-layout">
+      <div className="flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
           <AnimatePresence>
@@ -467,7 +467,7 @@ export const MainLayout = ({
               <motion.aside
                 className="flex flex-col border-r border-border-default bg-bg-surface overflow-hidden relative shrink-0"
                 style={{ width: sidebarWidthSpring }}
-                data-testid="sidebar"
+                data-test-id="sidebar"
                 initial={false}
                 exit={{ width: 0, opacity: 0 }}
                 transition={prefersReducedMotion ? { duration: 0 } : sidebarSpring}
@@ -483,7 +483,7 @@ export const MainLayout = ({
                 {/* Sash / collapsed indicator - drag or double-click to toggle */}
                 <div
                   className={cn(getSashClasses('right', isSidebarDragging))}
-                  data-testid="sidebar-resizer"
+                  data-test-id="sidebar-resizer"
                   onClick={handleCollapsedClick}
                   onDoubleClick={handleSashDoubleClick}
                   onPointerDown={handleSidebarPointerDown}
@@ -515,7 +515,7 @@ export const MainLayout = ({
                   prefersReducedMotion ? { duration: 0 } : { type: 'spring', ...sidebarSpring }
                 }
                 style={{ width: 256 }}
-                data-testid="sidebar"
+                data-test-id="sidebar"
               >
                 <Sidebar />
               </motion.aside>
@@ -529,7 +529,7 @@ export const MainLayout = ({
                     toggleSidebar();
                   }
                 }}
-                data-testid="sidebar-overlay"
+                data-test-id="sidebar-overlay"
                 aria-label="Close sidebar"
                 variants={overlayVariants}
                 initial="hidden"
@@ -541,8 +541,8 @@ export const MainLayout = ({
           )}
         </AnimatePresence>
 
-        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-          <div className="shrink-0" data-testid="header-bar">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden min-w-0">
+          <div className="shrink-0" data-test-id="header-bar">
             {headerContent !== undefined ? (
               headerContent
             ) : (
@@ -555,10 +555,10 @@ export const MainLayout = ({
           {/* Content area with panes and dockable panel */}
           <div
             className={cn(
-              'flex flex-1 overflow-hidden',
+              'flex flex-1 min-h-0 overflow-hidden',
               panelPosition === 'left' || panelPosition === 'right' ? 'flex-row' : 'flex-col'
             )}
-            data-testid="content-area"
+            data-test-id="content-area"
           >
             {/* Left dock panel */}
             {panelPosition === 'left' && (
@@ -590,8 +590,8 @@ export const MainLayout = ({
             <LayoutGroup>
               <motion.div
                 ref={containerRef}
-                className="flex-1 overflow-hidden flex relative min-w-0"
-                data-testid="pane-container"
+                className="flex-1 min-h-0 overflow-hidden flex relative min-w-0"
+                data-test-id="pane-container"
                 style={{ scrollbarGutter: 'stable' }}
                 layout
                 transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
@@ -599,7 +599,7 @@ export const MainLayout = ({
                 <motion.div
                   layout={!isPaneDragging}
                   className="h-full overflow-hidden shrink-0 border-r border-border-default"
-                  data-testid="request-pane"
+                  data-test-id="request-pane"
                   style={{
                     width: requestWidth,
                     scrollbarGutter: 'stable',
@@ -620,7 +620,7 @@ export const MainLayout = ({
                 <motion.div
                   layout={!isPaneDragging}
                   className="h-full overflow-hidden flex-1"
-                  data-testid="response-pane"
+                  data-test-id="response-pane"
                   style={{
                     width: responseWidth,
                     scrollbarGutter: 'stable',
@@ -641,7 +641,7 @@ export const MainLayout = ({
                 {/* Pane sash */}
                 <motion.div
                   className={getSashClasses('left', isPaneDragging)}
-                  data-testid="pane-resizer"
+                  data-test-id="pane-resizer"
                   style={{
                     left: resizerLeft,
                     transform: 'translateX(-50%)',

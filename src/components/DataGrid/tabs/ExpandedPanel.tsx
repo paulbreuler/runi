@@ -9,7 +9,7 @@
  */
 
 import { useState, useRef } from 'react';
-import { Tabs } from 'radix-ui';
+import { Tabs } from '@base-ui/react/tabs';
 import { cn } from '@/utils/cn';
 import { TimingTab } from '@/components/History/TimingTab';
 import { ResponseTab } from '@/components/History/ResponseTab';
@@ -124,10 +124,14 @@ export const ExpandedPanel = ({
       onValueChange={setActiveTab as (value: string) => void}
       className={cn('flex flex-col', className)}
     >
-      <div data-testid="expanded-panel" ref={topLevelContainerRef}>
-        <TabNavigation activeTab={activeTab} onKeyDown={handleTopLevelKeyDown} />
+      <div
+        data-test-id="expanded-panel"
+        ref={topLevelContainerRef}
+        onKeyDown={handleTopLevelKeyDown}
+      >
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <Tabs.Content value="timing" className="px-4 py-3">
+        <Tabs.Panel value="timing" className="px-4 py-3">
           <TimingTab
             segments={segments}
             totalMs={entry.response.timing.total_ms}
@@ -135,31 +139,31 @@ export const ExpandedPanel = ({
             isBlocked={false} // TODO: Determine from entry
             intelligence={entry.intelligence}
           />
-        </Tabs.Content>
+        </Tabs.Panel>
 
-        <Tabs.Content value="response" className="px-4 py-3">
+        <Tabs.Panel value="response" className="px-4 py-3">
           <ResponseTab
             entry={entry}
             onKeyDown={handleSecondaryKeyDown}
             containerRef={responsePanelRef}
           />
-        </Tabs.Content>
+        </Tabs.Panel>
 
-        <Tabs.Content value="headers" className="px-4 py-3">
+        <Tabs.Panel value="headers" className="px-4 py-3">
           <HeadersTab
             entry={entry}
             onKeyDown={handleSecondaryKeyDown}
             containerRef={headersPanelRef}
           />
-        </Tabs.Content>
+        </Tabs.Panel>
 
-        <Tabs.Content value="tls" className="px-4 py-3">
+        <Tabs.Panel value="tls" className="px-4 py-3">
           <TLSTab entry={entry} certificate={certificate} protocolVersion={protocolVersion} />
-        </Tabs.Content>
+        </Tabs.Panel>
 
-        <Tabs.Content value="codegen" className="px-4 py-3">
+        <Tabs.Panel value="codegen" className="px-4 py-3">
           <CodeGenTab entry={entry} />
-        </Tabs.Content>
+        </Tabs.Panel>
       </div>
 
       {/* Action buttons - only render if at least one callback is provided */}

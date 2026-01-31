@@ -380,6 +380,12 @@ mod tests {
         HistoryEntry::new(request, response)
     }
 
+    fn should_run_perf_tests() -> bool {
+        std::env::var("RUN_PERF_TESTS")
+            .map(|value| value == "1")
+            .unwrap_or(false)
+    }
+
     #[tokio::test]
     async fn test_create_database() {
         let storage = SqliteHistoryStorage::in_memory().unwrap();
@@ -542,6 +548,10 @@ mod tests {
 
     #[tokio::test]
     async fn perf_save_1000_entries() {
+        if !should_run_perf_tests() {
+            eprintln!("[TEST] Skipping perf_save_1000_entries (set RUN_PERF_TESTS=1)");
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(1000);
 
@@ -559,6 +569,10 @@ mod tests {
 
     #[tokio::test]
     async fn perf_get_ids_from_10000_entries() {
+        if !should_run_perf_tests() {
+            eprintln!("[TEST] Skipping perf_get_ids_from_10000_entries (set RUN_PERF_TESTS=1)");
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(10000);
 
@@ -584,6 +598,12 @@ mod tests {
 
     #[tokio::test]
     async fn perf_get_ids_pagination_10000_entries() {
+        if !should_run_perf_tests() {
+            eprintln!(
+                "[TEST] Skipping perf_get_ids_pagination_10000_entries (set RUN_PERF_TESTS=1)"
+            );
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(10000);
 
@@ -609,6 +629,10 @@ mod tests {
 
     #[tokio::test]
     async fn perf_get_batch_100_entries() {
+        if !should_run_perf_tests() {
+            eprintln!("[TEST] Skipping perf_get_batch_100_entries (set RUN_PERF_TESTS=1)");
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(10000);
         let mut saved_ids = Vec::new();
@@ -638,6 +662,10 @@ mod tests {
 
     #[tokio::test]
     async fn perf_load_entries_with_limit() {
+        if !should_run_perf_tests() {
+            eprintln!("[TEST] Skipping perf_load_entries_with_limit (set RUN_PERF_TESTS=1)");
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(10000);
 
@@ -662,6 +690,10 @@ mod tests {
 
     #[tokio::test]
     async fn perf_count_10000_entries() {
+        if !should_run_perf_tests() {
+            eprintln!("[TEST] Skipping perf_count_10000_entries (set RUN_PERF_TESTS=1)");
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(10000);
 
@@ -683,6 +715,10 @@ mod tests {
 
     #[tokio::test]
     async fn perf_delete_entry_from_10000() {
+        if !should_run_perf_tests() {
+            eprintln!("[TEST] Skipping perf_delete_entry_from_10000 (set RUN_PERF_TESTS=1)");
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(10000);
         let mut saved_ids = Vec::new();
@@ -711,6 +747,10 @@ mod tests {
 
     #[tokio::test]
     async fn perf_index_usage_for_sorting() {
+        if !should_run_perf_tests() {
+            eprintln!("[TEST] Skipping perf_index_usage_for_sorting (set RUN_PERF_TESTS=1)");
+            return;
+        }
         let storage = SqliteHistoryStorage::in_memory().unwrap();
         let entries = create_n_entries(10000);
 

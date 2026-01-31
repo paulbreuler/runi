@@ -91,7 +91,7 @@ afterEach(() => {
 // Test component to verify context value
 const ContextConsumer = (): React.JSX.Element => {
   const { variant } = useActionBarContext();
-  return <span data-testid="variant">{variant}</span>;
+  return <span data-test-id="variant">{variant}</span>;
 };
 
 describe('ActionBar', () => {

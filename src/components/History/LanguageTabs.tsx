@@ -8,9 +8,10 @@
  * @description Tab navigation for switching between code generation languages
  */
 
-import { useCallback } from 'react';
+import { Tabs } from '@base-ui/react/tabs';
 import { cn } from '@/utils/cn';
 import { LANGUAGE_NAMES, type CodeLanguage } from '@/utils/codeGenerators';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
 export interface LanguageTabsProps {
   /** Available languages */
@@ -21,6 +22,8 @@ export interface LanguageTabsProps {
   onLanguageChange: (language: CodeLanguage) => void;
   /** Additional CSS classes */
   className?: string;
+  /** Optional tab panels */
+  children?: React.ReactNode;
 }
 
 /**
@@ -42,68 +45,30 @@ export const LanguageTabs = ({
   activeLanguage,
   onLanguageChange,
   className,
+  children,
 }: LanguageTabsProps): React.ReactElement => {
-  const handleTabKeyDown = useCallback(
-    (e: React.KeyboardEvent, language: CodeLanguage): void => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onLanguageChange(language);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        const currentIndex = languages.indexOf(language);
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : languages.length - 1;
-        const prevLanguage = languages[prevIndex];
-        if (prevLanguage !== undefined) {
-          onLanguageChange(prevLanguage);
-        }
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        const currentIndex = languages.indexOf(language);
-        const nextIndex = currentIndex < languages.length - 1 ? currentIndex + 1 : 0;
-        const nextLanguage = languages[nextIndex];
-        if (nextLanguage !== undefined) {
-          onLanguageChange(nextLanguage);
-        }
-      }
-    },
-    [languages, onLanguageChange]
-  );
-
   return (
-    <div
-      data-testid="language-tabs"
-      className={cn('flex gap-1 border-b border-border-default', className)}
-      role="tablist"
-      aria-label="Code generation languages"
-    >
-      {languages.map((language) => {
-        const isActive = language === activeLanguage;
-        return (
-          <button
-            key={language}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            aria-controls={`code-panel-${language}`}
-            id={`language-tab-${language}`}
-            onClick={(): void => {
-              onLanguageChange(language);
-            }}
-            onKeyDown={(e): void => {
-              handleTabKeyDown(e, language);
-            }}
-            className={cn(
-              'px-3 py-1.5 text-xs font-medium transition-colors',
-              'border-b-2 -mb-px',
-              isActive
-                ? 'text-text-primary border-accent-purple'
-                : 'text-text-secondary border-transparent hover:text-text-primary'
-            )}
-          >
-            {LANGUAGE_NAMES[language]}
-          </button>
-        );
-      })}
-    </div>
+    <Tabs.Root value={activeLanguage} onValueChange={onLanguageChange as (value: string) => void}>
+      <BaseTabsList
+        activeTab={activeLanguage}
+        onTabChange={onLanguageChange}
+        tabs={languages.map((language) => ({
+          value: language,
+          label: LANGUAGE_NAMES[language],
+          testId: `language-tab-${language}`,
+        }))}
+        listClassName={cn('flex gap-1 border-b border-border-default', className)}
+        tabClassName="px-3 py-1.5 text-xs rounded-t flex items-center gap-1.5 relative"
+        activeTabClassName="text-text-primary"
+        inactiveTabClassName="text-text-secondary hover:text-text-primary hover:bg-bg-raised/50"
+        indicatorLayoutId="language-tabs-indicator"
+        indicatorClassName="bg-bg-raised rounded-t"
+        indicatorTestId="language-tabs-indicator"
+        listTestId="language-tabs"
+        listAriaLabel="Code generation languages"
+        activateOnFocus={false}
+      />
+      {children}
+    </Tabs.Root>
   );
 };

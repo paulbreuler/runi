@@ -3,15 +3,20 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { Code } from 'lucide-react';
 import { ActionBarSelect } from '../ActionBarSelect';
 
-// Mock scrollIntoView for Radix Select (not available in jsdom)
+// Mock scrollIntoView for Base UI Select (not available in jsdom)
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
+});
+
+// Ensure proper cleanup between tests to avoid portal leakage
+afterEach(() => {
+  cleanup();
 });
 
 describe('ActionBarSelect', () => {
@@ -33,7 +38,8 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Select method' })).toBeInTheDocument();
+    // Base UI Select uses role="combobox" by default (accessible combobox semantics)
+    expect(screen.getByRole('combobox', { name: 'Select method' })).toBeInTheDocument();
   });
 
   it('displays selected value in full mode', () => {
@@ -62,11 +68,20 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Select method' }));
+    const trigger = screen.getByRole('combobox', { name: 'Select method' });
+    await userEvent.click(trigger);
 
-    // Check that options are visible
-    expect(screen.getByRole('option', { name: 'All Methods' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'GET' })).toBeInTheDocument();
+    // Wait for popup to open and options to be visible
+    await waitFor(
+      () => {
+        expect(screen.getByRole('option', { name: 'All Methods' })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'GET' })).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
+
+    // Close the dropdown by pressing Escape to ensure clean state for next test
+    await userEvent.keyboard('{Escape}');
   });
 
   it('calls onValueChange when option is selected', async () => {
@@ -81,13 +96,21 @@ describe('ActionBarSelect', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Select method' }));
-    await userEvent.click(screen.getByRole('option', { name: 'POST' }));
+    const trigger = screen.getByRole('combobox', { name: 'Select method' });
+    await userEvent.click(trigger);
 
-    expect(handleChange).toHaveBeenCalledWith('POST');
+    // Wait for options to be visible before clicking
+    const postOption = await screen.findByRole('option', { name: 'POST' });
+    await userEvent.click(postOption);
+
+    // Base UI onValueChange passes (value, eventDetails) - wait for async callback
+    await waitFor(() => {
+      expect(handleChange).toHaveBeenCalled();
+    });
+    expect(handleChange).toHaveBeenNthCalledWith(1, 'POST', expect.anything());
   });
 
-  it('uses data-testid when provided', () => {
+  it('uses data-test-id when provided', () => {
     render(
       <ActionBarSelect
         value="ALL"
@@ -95,7 +118,7 @@ describe('ActionBarSelect', () => {
         options={defaultOptions}
         icon={<Code size={14} />}
         aria-label="Select method"
-        data-testid="method-select"
+        data-test-id="method-select"
       />
     );
 
@@ -108,7 +131,7 @@ describe('ActionBarSelect', () => {
         value="GET"
         onValueChange={() => {}}
         options={defaultOptions}
-        icon={<Code size={14} data-testid="select-icon" />}
+        icon={<Code size={14} data-test-id="select-icon" />}
         aria-label="Select method"
         variant="icon"
       />

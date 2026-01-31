@@ -5,9 +5,8 @@
 
 import React from 'react';
 import { Terminal, Network } from 'lucide-react';
-import { Tabs } from 'radix-ui';
-import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
-import { cn } from '@/utils/cn';
+import { Tabs } from '@base-ui/react/tabs';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
 export type PanelTabType = 'network' | 'console';
 
@@ -21,12 +20,12 @@ interface PanelTabsProps {
 /**
  * PanelTabs - Tab switcher for dockable panel content.
  *
- * Uses Radix Tabs primitives with Motion animations for smooth tab indicator transitions.
+ * Uses Base UI Tabs primitives with Motion animations for smooth tab indicator transitions.
  * Allows switching between Network History and Console views.
  *
  * ## Features
  *
- * - **Accessible**: Built on Radix UI Tabs with full keyboard navigation (Tab, Arrow keys, Enter/Space)
+ * - **Accessible**: Built on Base UI Tabs; roving tabindex (only active tab in tab order). Tab moves focus into panel content; Arrow keys move between tabs; Enter/Space to activate.
  * - **Animated**: Tab indicator uses Motion's `layoutId` for shared element transitions
  * - **Spring Physics**: Indicator animates with spring physics (stiffness: 300, damping: 30)
  * - **Reduced Motion**: Respects `prefers-reduced-motion` setting
@@ -36,13 +35,13 @@ interface PanelTabsProps {
  *
  * The tab indicator uses Motion's `layoutId="panel-tab-indicator"` to create a shared element
  * transition. When switching tabs, the indicator smoothly animates from one tab to another
- * using spring physics. This pattern is inspired by Motion.dev's Radix Tabs example.
+ * using spring physics. This pattern is inspired by Motion.dev's Tabs examples.
  *
  * ## Accessibility
  *
- * - Full keyboard navigation provided by Radix UI
- * - ARIA attributes handled automatically
- * - Focus management on tab activation
+ * - Roving tabindex: only the active tab is in the tab order, so Tab moves focus into panel content
+ * - Arrow keys move focus between tabs; Enter/Space activates the focused tab
+ * - ARIA attributes handled automatically by Base UI
  *
  * @example
  * ```tsx
@@ -62,96 +61,53 @@ export const PanelTabs = ({
   networkCount = 0,
   consoleCount = 0,
 }: PanelTabsProps): React.JSX.Element => {
-  const prefersReducedMotion = useReducedMotion() === true;
-
   return (
     <Tabs.Root value={activeTab} onValueChange={onTabChange as (value: string) => void}>
-      <LayoutGroup>
-        <Tabs.List
-          className="flex items-center gap-1 border-r border-border-default pr-2 mr-2 relative"
-          data-testid="tabs-list"
-        >
-          {/* Network Tab */}
-          <Tabs.Trigger value="network" asChild>
-            <motion.button
-              type="button"
-              className={cn(
-                'px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
-                activeTab === 'network'
-                  ? 'text-text-primary'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-              whileHover={activeTab !== 'network' ? { scale: 1.02 } : undefined}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-            >
-              {activeTab === 'network' && (
-                <motion.div
-                  layoutId="panel-tab-indicator"
-                  className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
-                  data-testid="panel-tab-indicator"
-                  data-layout-id="panel-tab-indicator"
-                  transition={
-                    prefersReducedMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', stiffness: 300, damping: 30 }
-                  }
-                  initial={false}
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1.5">
+      <BaseTabsList
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        tabs={[
+          {
+            value: 'network',
+            testId: 'panel-tab-network',
+            label: (
+              <span className="flex items-center gap-1.5">
                 <Network size={12} />
                 <span>Network</span>
                 {networkCount > 0 && (
-                  <span className="px-1 py-0.5 text-[10px] bg-bg-elevated rounded">
+                  <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
                     {networkCount}
                   </span>
                 )}
               </span>
-            </motion.button>
-          </Tabs.Trigger>
-
-          {/* Console Tab */}
-          <Tabs.Trigger value="console" asChild>
-            <motion.button
-              type="button"
-              className={cn(
-                'px-2 py-1 text-xs rounded flex items-center gap-1.5 relative',
-                activeTab === 'console'
-                  ? 'text-text-primary'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'
-              )}
-              whileHover={activeTab !== 'console' ? { scale: 1.02 } : undefined}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-            >
-              {activeTab === 'console' && (
-                <motion.div
-                  layoutId="panel-tab-indicator"
-                  className="absolute inset-0 bg-bg-raised rounded pointer-events-none z-0"
-                  data-testid="panel-tab-indicator"
-                  data-layout-id="panel-tab-indicator"
-                  transition={
-                    prefersReducedMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', stiffness: 300, damping: 30 }
-                  }
-                  initial={false}
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1.5">
+            ),
+          },
+          {
+            value: 'console',
+            testId: 'panel-tab-console',
+            label: (
+              <span className="flex items-center gap-1.5">
                 <Terminal size={12} />
                 <span>Console</span>
                 {consoleCount > 0 && (
-                  <span className="px-1 py-0.5 text-[10px] bg-bg-elevated rounded">
+                  <span className="px-1 py-0.5 text-[10px] bg-bg-raised rounded">
                     {consoleCount}
                   </span>
                 )}
               </span>
-            </motion.button>
-          </Tabs.Trigger>
-        </Tabs.List>
-      </LayoutGroup>
+            ),
+          },
+        ]}
+        listClassName="flex items-center gap-1 border-r border-border-default pr-2 mr-2"
+        tabClassName="shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative"
+        activeTabClassName="text-text-primary"
+        inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+        indicatorLayoutId="panel-tab-indicator"
+        indicatorClassName="bg-bg-raised rounded"
+        indicatorTestId="panel-tab-indicator"
+        listTestId="tabs-list"
+        activateOnFocus={false}
+      />
     </Tabs.Root>
   );
 };

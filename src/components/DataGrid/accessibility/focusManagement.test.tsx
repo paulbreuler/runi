@@ -105,14 +105,14 @@ describe('Focus Management', () => {
 
       render(
         <div>
-          <button data-testid="before-table">Before</button>
+          <button data-test-id="before-table">Before</button>
           <VirtualDataGrid
             data={testData}
             columns={columns}
             getRowId={(row) => row.id}
             enableRowSelection
           />
-          <button data-testid="after-table">After</button>
+          <button data-test-id="after-table">After</button>
         </div>
       );
 

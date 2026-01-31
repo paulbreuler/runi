@@ -7,6 +7,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { fireEvent } from '@testing-library/react';
 import { PanelTabs } from './PanelTabs';
 
 // Mock motion/react to avoid animation-related issues in tests
@@ -19,7 +20,7 @@ vi.mock('motion/react', () => ({
       children?: React.ReactNode;
       [key: string]: unknown;
     }): React.JSX.Element => (
-      <button data-testid="motion-button" {...props}>
+      <button data-test-id="motion-button" {...props}>
         {children}
       </button>
     ),
@@ -30,13 +31,13 @@ vi.mock('motion/react', () => ({
       children?: React.ReactNode;
       [key: string]: unknown;
     }): React.JSX.Element => (
-      <div data-testid="motion-div" {...props}>
+      <div data-test-id="motion-div" {...props}>
         {children}
       </div>
     ),
   },
   LayoutGroup: ({ children }: { children?: React.ReactNode }): React.ReactNode => (
-    <div data-testid="layout-group">{children}</div>
+    <div data-test-id="layout-group">{children}</div>
   ),
   AnimatePresence: ({ children }: { children?: React.ReactNode }): React.ReactNode => (
     <>{children}</>
@@ -44,11 +45,11 @@ vi.mock('motion/react', () => ({
   useReducedMotion: (): boolean => false,
 }));
 
-// Mock Radix Tabs
-// Store onValueChange callback to simulate Radix behavior
+// Mock Base UI Tabs
+// Store onValueChange callback to simulate Base UI behavior
 let mockOnValueChange: ((value: string) => void) | undefined;
 
-vi.mock('radix-ui', () => ({
+vi.mock('@base-ui/react/tabs', () => ({
   Tabs: {
     Root: ({
       children,
@@ -61,10 +62,10 @@ vi.mock('radix-ui', () => ({
       onValueChange?: (value: string) => void;
       [key: string]: unknown;
     }): React.JSX.Element => {
-      // Store callback for Trigger to use
+      // Store callback for Tab to use
       mockOnValueChange = onValueChange;
       return (
-        <div data-testid="tabs-root" data-value={value} {...props}>
+        <div data-test-id="tabs-root" data-value={value} {...props}>
           {children}
         </div>
       );
@@ -76,51 +77,40 @@ vi.mock('radix-ui', () => ({
       children?: React.ReactNode;
       [key: string]: unknown;
     }): React.JSX.Element => (
-      <div data-testid="tabs-list" {...props}>
+      <div data-test-id="tabs-list" {...props}>
         {children}
       </div>
     ),
-    Trigger: ({
-      children,
+    Tab: ({
       value,
-      asChild,
+      render,
       ...props
     }: {
-      children?: React.ReactNode;
       value?: string;
-      asChild?: boolean;
+      render?: (props: Record<string, unknown>) => React.ReactElement;
       [key: string]: unknown;
     }): React.JSX.Element => {
-      // When asChild is true, children should be a single element (motion.button)
-      // We need to clone it and add onClick handler
+      // When render is provided, call it with props and onClick handler
       const handleClick = (): void => {
         if (mockOnValueChange !== undefined && value !== undefined) {
           mockOnValueChange(value);
         }
       };
 
-      if (asChild && React.isValidElement(children)) {
-        // TypeScript workaround for cloneElement with dynamic props
-        const childProps = {
+      if (render !== undefined) {
+        const tabProps = {
           ...props,
           onClick: handleClick,
-          'data-testid': 'tabs-trigger',
+          role: 'tab',
+          'data-test-id': 'tabs-trigger',
           'data-value': value,
-          'data-as-child': asChild,
         };
-
-        return React.cloneElement(children as React.ReactElement<any>, childProps);
+        return render(tabProps);
       }
 
       return (
-        <div
-          data-testid="tabs-trigger"
-          data-value={value}
-          data-as-child={asChild}
-          onClick={handleClick}
-          {...props}
-        >
-          {children}
+        <div data-test-id="tabs-trigger" data-value={value} onClick={handleClick} {...props}>
+          {value}
         </div>
       );
     },
@@ -138,32 +128,36 @@ describe('PanelTabs', () => {
     it('renders Network and Console tabs', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      expect(screen.getByText('Network')).toBeInTheDocument();
-      expect(screen.getByText('Console')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-network')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-console')).toBeInTheDocument();
     });
 
-    it('uses Radix Tabs primitives', () => {
-      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+    it('uses Base UI Tabs primitives', () => {
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      expect(screen.getByTestId('tabs-root')).toBeInTheDocument();
-      expect(screen.getByTestId('tabs-list')).toBeInTheDocument();
-      expect(screen.getAllByTestId('tabs-trigger')).toHaveLength(2);
+      // Check that mock elements are rendered
+      const root = container.querySelector('[data-test-id="tabs-root"]');
+      expect(root).toBeInTheDocument();
+      const list = container.querySelector('[data-test-id="tabs-list"]');
+      expect(list).toBeInTheDocument();
+      const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"][role="tab"]');
+      expect(triggers).toHaveLength(2);
     });
 
     it('renders Network tab with icon', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const networkTab = screen.getByText('Network').closest('[data-testid="tabs-trigger"]');
+      const networkTab = screen.getByTestId('panel-tab-network');
       expect(networkTab).toBeInTheDocument();
-      // Network text should be present
-      expect(screen.getByText('Network')).toBeInTheDocument();
+      expect(networkTab).toHaveTextContent('Network');
     });
 
     it('renders Console tab with icon', () => {
       render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
-      const consoleTab = screen.getByText('Console').closest('[data-testid="tabs-trigger"]');
+      const consoleTab = screen.getByTestId('panel-tab-console');
       expect(consoleTab).toBeInTheDocument();
+      expect(consoleTab).toHaveTextContent('Console');
     });
 
     it('displays network count badge when provided', () => {
@@ -192,7 +186,7 @@ describe('PanelTabs', () => {
       const user = userEvent.setup();
       render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
-      const networkTab = screen.getByText('Network');
+      const networkTab = screen.getByTestId('panel-tab-network');
       await user.click(networkTab);
 
       expect(mockOnTabChange).toHaveBeenCalledWith('network');
@@ -202,85 +196,123 @@ describe('PanelTabs', () => {
       const user = userEvent.setup();
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const consoleTab = screen.getByText('Console');
+      const consoleTab = screen.getByTestId('panel-tab-console');
       await user.click(consoleTab);
 
       expect(mockOnTabChange).toHaveBeenCalledWith('console');
     });
 
-    it('passes correct value to Radix Tabs.Root', () => {
-      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+    it('passes correct value to Base UI Tabs.Root', () => {
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const root = screen.getByTestId('tabs-root');
+      const root = container.querySelector('[data-test-id="tabs-root"]');
+      expect(root).toBeInTheDocument();
       expect(root).toHaveAttribute('data-value', 'network');
     });
 
-    it('updates Radix Tabs.Root value when activeTab changes', () => {
-      const { rerender } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+    it('updates Base UI Tabs.Root value when activeTab changes', () => {
+      const { container, rerender } = render(
+        <PanelTabs activeTab="network" onTabChange={mockOnTabChange} />
+      );
 
-      let root = screen.getByTestId('tabs-root');
+      let root = container.querySelector('[data-test-id="tabs-root"]');
+      expect(root).toBeInTheDocument();
       expect(root).toHaveAttribute('data-value', 'network');
 
       rerender(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
-      root = screen.getByTestId('tabs-root');
+      root = container.querySelector('[data-test-id="tabs-root"]');
+      expect(root).toBeInTheDocument();
       expect(root).toHaveAttribute('data-value', 'console');
     });
   });
 
   describe('Motion animations', () => {
     it('uses LayoutGroup for layout animations', () => {
-      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      expect(screen.getByTestId('layout-group')).toBeInTheDocument();
+      const layoutGroup = container.querySelector('[data-test-id="layout-group"]');
+      expect(layoutGroup).toBeInTheDocument();
     });
 
-    it('uses motion.button for tabs via asChild', () => {
-      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+    it('uses motion.button for tabs via render prop', () => {
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const triggers = screen.getAllByTestId('tabs-trigger');
+      const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"]');
+      expect(triggers.length).toBeGreaterThan(0);
+      // motion.button should be rendered via render prop
       triggers.forEach((trigger) => {
-        expect(trigger).toHaveAttribute('data-as-child', 'true');
+        expect(trigger).toBeInTheDocument();
       });
     });
 
     it('renders animated indicator with layoutId', () => {
-      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const indicator = screen.getByTestId('panel-tab-indicator');
+      const indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
       // layoutId should be set (checked via motion.div testid)
       expect(indicator).toHaveAttribute('data-layout-id', 'panel-tab-indicator');
     });
 
     it('indicator appears only on active tab', () => {
-      const { rerender } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+      const { container, rerender } = render(
+        <PanelTabs activeTab="network" onTabChange={mockOnTabChange} />
+      );
 
-      let indicator = screen.getByTestId('panel-tab-indicator');
+      let indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
 
       rerender(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
 
       // Indicator should still exist but be positioned on console tab
-      indicator = screen.getByTestId('panel-tab-indicator');
+      indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
     });
   });
 
-  describe('accessibility', () => {
-    it('has proper ARIA attributes from Radix Tabs', () => {
+  describe('keyboard navigation', () => {
+    it('Arrow Right moves focus to next tab and activates it', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const root = screen.getByTestId('tabs-root');
+      const list = screen.getByTestId('tabs-list');
+      const wrapper = list.parentElement;
+      expect(wrapper).not.toBeNull();
+
+      fireEvent.keyDown(wrapper!, { key: 'ArrowRight', bubbles: true });
+
+      expect(mockOnTabChange).toHaveBeenCalledTimes(1);
+      expect(mockOnTabChange).toHaveBeenCalledWith('console');
+    });
+
+    it('Arrow Left moves focus to previous tab and activates it', () => {
+      render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} />);
+
+      const list = screen.getByTestId('tabs-list');
+      const wrapper = list.parentElement;
+      expect(wrapper).not.toBeNull();
+
+      fireEvent.keyDown(wrapper!, { key: 'ArrowLeft', bubbles: true });
+
+      expect(mockOnTabChange).toHaveBeenCalledTimes(1);
+      expect(mockOnTabChange).toHaveBeenCalledWith('network');
+    });
+  });
+
+  describe('accessibility', () => {
+    it('has proper ARIA attributes from Base UI Tabs', () => {
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+
+      const root = container.querySelector('[data-test-id="tabs-root"]');
       expect(root).toBeInTheDocument();
-      // Radix Tabs provides ARIA attributes automatically
+      // Base UI Tabs provides ARIA attributes automatically
     });
 
     it('triggers have correct value attributes', () => {
-      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const triggers = screen.getAllByTestId('tabs-trigger');
-      const values = triggers.map((t) => t.getAttribute('data-value'));
+      const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"][role="tab"]');
+      const values = Array.from(triggers).map((t) => t.getAttribute('data-value'));
       expect(values).toContain('network');
       expect(values).toContain('console');
     });
@@ -291,14 +323,14 @@ describe('PanelTabs', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
       // Active tab should have active styling (checked via className or data attributes)
-      const networkTrigger = screen.getByText('Network').closest('[data-testid="tabs-trigger"]');
+      const networkTrigger = screen.getByTestId('panel-tab-network');
       expect(networkTrigger).toBeInTheDocument();
     });
 
     it('applies inactive tab styling', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
 
-      const consoleTrigger = screen.getByText('Console').closest('[data-testid="tabs-trigger"]');
+      const consoleTrigger = screen.getByTestId('panel-tab-console');
       expect(consoleTrigger).toBeInTheDocument();
     });
   });

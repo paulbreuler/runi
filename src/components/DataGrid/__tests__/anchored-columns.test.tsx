@@ -362,7 +362,7 @@ describe('Features #38-40: Anchored Columns', () => {
       );
 
       // Resize container (simulate ResizeObserver)
-      const gridContainer = container.querySelector('[data-testid="virtual-datagrid"]');
+      const gridContainer = container.querySelector('[data-test-id="virtual-datagrid"]');
       if (gridContainer !== null) {
         // Trigger resize by changing container width
         const parent = gridContainer.parentElement;

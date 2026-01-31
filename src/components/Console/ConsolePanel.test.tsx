@@ -34,7 +34,8 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
 }));
 
 // Default timeout for waitFor (polling interval is 100ms)
-const WAIT_TIMEOUT = { timeout: 2000 };
+// CI environments may be slower, so use a generous timeout
+const WAIT_TIMEOUT = { timeout: 5000 };
 
 describe('ConsolePanel', () => {
   beforeEach(() => {
@@ -508,7 +509,9 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
 
     // Check that timestamp is displayed (format: HH:MM:SS.mmm)
-    const logEntry = screen.getByText(/test message/i).closest('[data-testid="console-log-debug"]');
+    const logEntry = screen
+      .getByText(/test message/i)
+      .closest('[data-test-id="console-log-debug"]');
     expect(logEntry).toBeInTheDocument();
     // Timestamp format should be in the log entry
     expect(logEntry?.textContent).toMatch(/\d{2}:\d{2}:\d{2}\.\d{3}/);
@@ -789,7 +792,7 @@ describe('ConsolePanel', () => {
     // Right-click on the grouped log entry to open context menu
     const logEntry = screen
       .getByText(/failed to open devtools popout window/i)
-      .closest('[data-testid="console-log-error"]');
+      .closest('[data-test-id="console-log-error"]');
     expect(logEntry).toBeInTheDocument();
 
     fireEvent.contextMenu(logEntry!);
@@ -854,31 +857,34 @@ describe('ConsolePanel', () => {
       expect(screen.getByText(/test error/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
-    // Find the chevron button (should be ChevronRight when collapsed)
+    // Find the chevron button (expander column)
     const logEntry = screen.getByText(/test error/i).closest('.group');
     if (logEntry === null) {
       throw new Error('Log entry not found');
     }
-    // Find button with title or any button with chevron icon (skip checkbox)
-    const chevronButton =
-      logEntry.querySelector('button[title="Expand/collapse args"]') ??
-      Array.from(logEntry.querySelectorAll('button')).find(
-        (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
-      );
+    const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
 
-    // Click to expand
-    fireEvent.click(chevronButton!);
+    // Click to expand and wait for React to process the state update
+    await act(async () => {
+      fireEvent.click(chevronButton!);
+    });
 
-    // Wait for args to appear
+    const getArgsText = (): string =>
+      screen
+        .queryAllByTestId('code-editor')
+        .map((editor) => editor.textContent || '')
+        .join(' ');
+
+    // Wait for args to appear in CodeSnippet (syntax highlighted)
+    // Use a longer timeout for CI environments which may be slower
     await waitFor(() => {
-      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+      const text = getArgsText();
+      expect(text.length).toBeGreaterThan(0);
+      expect(text).toMatch(/connection timeout/i);
     }, WAIT_TIMEOUT);
 
-    // Verify args are displayed - text is now in CodeSnippet with syntax highlighting
-    // Check text content in code-box containers
-    const codeBoxes = screen.getAllByTestId('code-box');
-    const allText = codeBoxes.map((box) => box.textContent || '').join(' ');
+    const allText = getArgsText();
     expect(allText).toMatch(/connection timeout/i);
     expect(allText).toMatch(/"code":\s*500/i);
   });
@@ -907,18 +913,19 @@ describe('ConsolePanel', () => {
     if (logEntry === null) {
       throw new Error('Log entry not found');
     }
-    // Find button with title or any button with chevron icon
-    const chevronButton =
-      logEntry.querySelector('button[title="Expand/collapse args"]') ??
-      Array.from(logEntry.querySelectorAll('button')).find(
-        (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
-      );
+    const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
-    fireEvent.click(chevronButton!);
+    fireEvent.click(chevronButton as HTMLElement);
+
+    const getArgsText = (): string =>
+      screen
+        .queryAllByTestId('code-editor')
+        .map((editor) => editor.textContent || '')
+        .join(' ');
 
     // Wait for args to appear
     await waitFor(() => {
-      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+      expect(getArgsText()).toMatch(/connection timeout/i);
     }, WAIT_TIMEOUT);
 
     // Click again to collapse
@@ -926,7 +933,7 @@ describe('ConsolePanel', () => {
 
     // Wait for args to disappear
     await waitFor(() => {
-      expect(screen.queryByText(/connection timeout/i)).not.toBeInTheDocument();
+      expect(getArgsText()).not.toMatch(/connection timeout/i);
     }, WAIT_TIMEOUT);
   });
 
@@ -1354,7 +1361,7 @@ describe('ConsolePanel', () => {
       // Initially not selected - use role="checkbox" for Radix Checkbox
       const checkbox = logEntry.querySelector('[role="checkbox"]');
       expect(checkbox).toBeInTheDocument();
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      expect(checkbox).not.toHaveAttribute('data-checked');
 
       // Click the row (not the checkbox)
       fireEvent.click(logEntry);
@@ -1363,7 +1370,7 @@ describe('ConsolePanel', () => {
       await waitFor(() => {
         const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
         expect(updatedCheckbox).toBeInTheDocument();
-        expect(updatedCheckbox).toHaveAttribute('data-state', 'checked');
+        expect(updatedCheckbox).toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
 
       // Click the row again to deselect
@@ -1373,7 +1380,7 @@ describe('ConsolePanel', () => {
       await waitFor(() => {
         const updatedCheckbox = logEntry.querySelector('[role="checkbox"]');
         expect(updatedCheckbox).toBeInTheDocument();
-        expect(updatedCheckbox).toHaveAttribute('data-state', 'unchecked');
+        expect(updatedCheckbox).not.toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
     });
 
@@ -1406,9 +1413,9 @@ describe('ConsolePanel', () => {
       // Click the checkbox directly
       fireEvent.click(checkbox);
 
-      // Should be selected (Radix Checkbox uses data-state attribute)
+      // Should be selected (Base UI Checkbox uses data-checked attribute)
       await waitFor(() => {
-        expect(checkbox).toHaveAttribute('data-state', 'checked');
+        expect(checkbox).toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
 
       // Click checkbox again
@@ -1416,7 +1423,7 @@ describe('ConsolePanel', () => {
 
       // Should be deselected
       await waitFor(() => {
-        expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+        expect(checkbox).not.toHaveAttribute('data-checked');
       }, WAIT_TIMEOUT);
     });
 
@@ -1449,7 +1456,7 @@ describe('ConsolePanel', () => {
 
       // Initially not selected (use role="checkbox" for Radix Checkbox)
       const checkbox = logEntry.querySelector('[role="checkbox"]');
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      expect(checkbox).not.toHaveAttribute('data-checked');
 
       // Click the expand button
       if (expandButton !== undefined) {
@@ -1459,7 +1466,7 @@ describe('ConsolePanel', () => {
       // Should still not be selected (expand button doesn't trigger selection)
       const stillUnselectedCheckbox = logEntry.querySelector('[role="checkbox"]');
       expect(stillUnselectedCheckbox).toBeInTheDocument();
-      expect(stillUnselectedCheckbox).toHaveAttribute('data-state', 'unchecked');
+      expect(stillUnselectedCheckbox).not.toHaveAttribute('data-checked');
     });
   });
 

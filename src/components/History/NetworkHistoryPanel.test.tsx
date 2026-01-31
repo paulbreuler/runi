@@ -230,18 +230,16 @@ describe('NetworkHistoryPanel', () => {
       expect(Number.parseInt(colSpan ?? '0', 10)).toBeGreaterThan(1);
     });
 
-    it('expanded content uses EXPANDED_CONTENT_LEFT_MARGIN_PX for alignment', () => {
+    it('expanded content uses full width (no left margin)', () => {
       render(<NetworkHistoryPanel {...defaultProps} />);
       const expandButton = screen.getAllByTestId('expand-button')[0]!;
       fireEvent.click(expandButton);
 
       const expandedSection = screen.getByTestId('expanded-section');
-      // Find the inner div that has the marginLeft style (contains ExpandedPanel)
-      const innerDiv = expandedSection.querySelector('div.bg-bg-elevated.border-t');
+      const innerDiv = screen.getByTestId('expanded-content-inner');
 
-      // Should use EXPANDED_CONTENT_LEFT_MARGIN_PX (54px = 32+16+6)
-      expect(innerDiv).toBeInTheDocument();
-      expect(innerDiv).toHaveStyle({ marginLeft: '54px' });
+      expect(expandedSection).toContainElement(innerDiv);
+      expect(innerDiv).toHaveStyle({ marginLeft: '0px' });
     });
   });
 
@@ -277,7 +275,7 @@ describe('NetworkHistoryPanel', () => {
         if (headerId === 'select' || header.querySelector('[role="checkbox"]')) {
           selectionHeader = header;
         }
-        if (headerId === 'expand' || header.querySelector('[data-testid="expand-button"]')) {
+        if (headerId === 'expand' || header.querySelector('[data-test-id="expand-button"]')) {
           expanderHeader = header;
         }
       });
@@ -306,7 +304,7 @@ describe('NetworkHistoryPanel', () => {
   describe('TDD: VirtualDataGrid props match console tab', () => {
     it('VirtualDataGrid has correct className pattern', () => {
       const { container } = render(<NetworkHistoryPanel {...defaultProps} />);
-      const virtualDataGrid = container.querySelector('[data-testid="virtual-datagrid"]');
+      const virtualDataGrid = container.querySelector('[data-test-id="virtual-datagrid"]');
       expect(virtualDataGrid).toBeInTheDocument();
       // Should have flex-1 class (console has "flex-1 font-mono text-xs", network may just have "flex-1")
       expect(virtualDataGrid).toHaveClass('flex-1');

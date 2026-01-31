@@ -215,10 +215,10 @@ const createTestColumns = (): Array<ColumnDef<TestRow>> => [
     header: 'Actions',
     cell: () => (
       <div className="flex gap-1">
-        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-elevated rounded">
+        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded">
           Edit
         </button>
-        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-elevated rounded">
+        <button className="px-2 py-1 text-xs bg-bg-raised hover:bg-bg-raised/80 rounded">
           Delete
         </button>
       </div>
@@ -385,7 +385,7 @@ export const Playground: Story = {
                   {cells}
                 </tr>
                 {isExpanded && metadata !== undefined && (
-                  <tr key={`${row.id}-expanded`} data-testid="expanded-section">
+                  <tr key={`${row.id}-expanded`} data-test-id="expanded-section">
                     <td colSpan={columns.length} className="px-4 py-3 bg-bg-raised">
                       <div className="space-y-2">
                         <div>
@@ -394,7 +394,7 @@ export const Playground: Story = {
                             {metadata.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="px-2 py-1 text-xs bg-bg-elevated rounded border border-border-default"
+                                className="px-2 py-1 text-xs bg-bg-raised rounded border border-border-default"
                               >
                                 {tag}
                               </span>
@@ -421,7 +421,7 @@ export const Playground: Story = {
       const networkGetRowId = (row: NetworkHistoryEntry) => row.id;
 
       return (
-        <div className="h-[600px] bg-bg-app" data-testid="virtual-datagrid-container">
+        <div className="h-[600px] bg-bg-app" data-test-id="virtual-datagrid-container">
           <div className="mb-2 text-xs text-text-secondary">
             Use the Controls panel to explore different configurations: data type, size, features,
             and column pinning.
@@ -451,7 +451,7 @@ export const Playground: Story = {
     const testGetRowId = (row: TestRow) => row.id;
 
     return (
-      <div className="h-[600px] bg-bg-app" data-testid="virtual-datagrid-container">
+      <div className="h-[600px] bg-bg-app" data-test-id="virtual-datagrid-container">
         <div className="mb-2 text-xs text-text-secondary">
           Use the Controls panel to explore different configurations: data type, size, features, and
           column pinning.
@@ -479,7 +479,7 @@ export const Playground: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify grid renders', async () => {
-      const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
+      const container = canvasElement.querySelector('[data-test-id="virtual-datagrid"]');
       await expect(container).toBeInTheDocument();
     });
 
@@ -499,7 +499,7 @@ export const Playground: Story = {
 
     if (args.enableExpanding === true) {
       await step('Test row expansion', async () => {
-        const expanderButtons = canvasElement.querySelectorAll('[data-testid^="expand-row-"]');
+        const expanderButtons = canvasElement.querySelectorAll('[data-test-id^="expand-row-"]');
         if (expanderButtons.length > 0) {
           const firstExpander = expanderButtons[0] as HTMLElement;
           firstExpander.focus();
@@ -535,7 +535,7 @@ export const Playground: Story = {
 
     if (args.pinLeft === true || args.pinRight === true) {
       await step('Verify sticky columns', () => {
-        const container = canvasElement.querySelector('[data-testid="virtual-datagrid"]');
+        const container = canvasElement.querySelector('[data-test-id="virtual-datagrid"]');
         if (container === null) {
           return;
         }
@@ -767,7 +767,7 @@ export const KeyboardNavigationTest: Story = {
     const columns = createTestColumns();
 
     return (
-      <div data-testid="keyboard-nav-container">
+      <div data-test-id="keyboard-nav-container">
         <VirtualDataGrid<TestRow>
           data={testData}
           columns={columns}
@@ -866,9 +866,9 @@ export const FocusManagementTest: Story = {
     const columns = createTestColumns();
 
     return (
-      <div data-testid="focus-management-container">
+      <div data-test-id="focus-management-container">
         <button
-          data-testid="before-button"
+          data-test-id="before-button"
           className="mb-4 px-3 py-1.5 bg-accent-blue text-white rounded text-sm"
         >
           Before Table
@@ -883,7 +883,7 @@ export const FocusManagementTest: Story = {
           height={400}
         />
         <button
-          data-testid="after-button"
+          data-test-id="after-button"
           className="mt-4 px-3 py-1.5 bg-accent-blue text-white rounded text-sm"
         >
           After Table

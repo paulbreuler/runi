@@ -40,4 +40,18 @@ describe('Input', () => {
     const input = container.querySelector('input');
     expect(input).toHaveClass('custom-class');
   });
+
+  it('uses standard focus ring classes for keyboard focus visibility', () => {
+    const { container } = render(<Input placeholder="Test" />);
+    const input = container.querySelector('input');
+    expect(input?.className).toContain('focus-visible:ring-2');
+    expect(input?.className).toContain('ring-[color:var(--color-ring)]');
+  });
+
+  it('uses standard focus ring classes when glass is true', () => {
+    const { container } = render(<Input glass placeholder="Test" />);
+    const input = container.querySelector('input');
+    expect(input?.className).toContain('focus-visible:ring-2');
+    expect(input?.className).toContain('ring-[color:var(--color-ring)]');
+  });
 });

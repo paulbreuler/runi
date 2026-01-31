@@ -36,7 +36,7 @@ const ToastDemo = ({ showBell = false }: { showBell?: boolean }): React.JSX.Elem
             onClick={(): void => {
               toast.success({ message: 'Request sent successfully!' });
             }}
-            data-testid="trigger-success"
+            data-test-id="trigger-success"
           >
             Success Toast
           </Button>
@@ -50,7 +50,7 @@ const ToastDemo = ({ showBell = false }: { showBell?: boolean }): React.JSX.Elem
                 correlationId: 'error-123',
               });
             }}
-            data-testid="trigger-error"
+            data-test-id="trigger-error"
           >
             Error Toast
           </Button>
@@ -60,7 +60,7 @@ const ToastDemo = ({ showBell = false }: { showBell?: boolean }): React.JSX.Elem
             onClick={(): void => {
               toast.warning({ message: 'Rate limit approaching (90%)' });
             }}
-            data-testid="trigger-warning"
+            data-test-id="trigger-warning"
           >
             Warning Toast
           </Button>
@@ -70,7 +70,7 @@ const ToastDemo = ({ showBell = false }: { showBell?: boolean }): React.JSX.Elem
             onClick={(): void => {
               toast.info({ message: 'New version available', details: 'Version 0.3.0 is ready' });
             }}
-            data-testid="trigger-info"
+            data-test-id="trigger-info"
           >
             Info Toast
           </Button>
@@ -154,7 +154,7 @@ export const Playground: Story = {
 
       await waitFor(
         async () => {
-          const toastViewport = document.querySelector('[data-testid="toast-viewport"]');
+          const toastViewport = document.querySelector('[data-test-id="toast-viewport"]');
           await expect(toastViewport).toBeInTheDocument();
         },
         { timeout: 3000 }
@@ -177,7 +177,7 @@ export const Playground: Story = {
     await step('Verify View Console button on error toast', async () => {
       await waitFor(
         async () => {
-          const viewConsole = document.body.querySelector('button[data-testid*="view-console"]');
+          const viewConsole = document.body.querySelector('button[data-test-id*="view-console"]');
           await expect(viewConsole).toBeInTheDocument();
         },
         { timeout: 3000 }
@@ -187,7 +187,7 @@ export const Playground: Story = {
     await step('Dismiss error toast', async () => {
       const closeBtn = await waitFor(
         async () => {
-          const btn = document.body.querySelector('button[data-testid*="toast-close"]');
+          const btn = document.body.querySelector('button[data-test-id*="toast-close"]');
           await expect(btn).toBeInTheDocument();
           return btn;
         },
@@ -223,7 +223,7 @@ export const Deduplication: Story = {
           onClick={(): void => {
             toast.success({ message: 'Duplicate message' });
           }}
-          data-testid="trigger-duplicate"
+          data-test-id="trigger-duplicate"
         >
           Click Multiple Times
         </Button>
@@ -248,7 +248,7 @@ export const Deduplication: Story = {
       // Verify counter shows (x3)
       await waitFor(
         async () => {
-          const counter = document.body.querySelector('[data-testid*="toast-count"]');
+          const counter = document.body.querySelector('[data-test-id*="toast-count"]');
           await expect(counter).toBeInTheDocument();
           await expect(counter?.textContent).toBe('(x3)');
         },

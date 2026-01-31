@@ -5,9 +5,11 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { HttpResponse } from '@/types/http';
+import { Tabs } from '@base-ui/react/tabs';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { motion, useReducedMotion } from 'motion/react';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
 export interface ResponseViewerProps {
   response: HttpResponse;
@@ -166,122 +168,133 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
   const formattedBody = language === 'json' ? formatJson(response.body) : response.body;
 
   return (
-    <div className="h-full flex flex-col" data-testid="response-viewer">
-      {/* Tab bar */}
-      <div className="relative flex items-center gap-2 px-6 py-2 border-b border-border-subtle bg-bg-surface">
-        <div
-          ref={tabScrollRef}
-          className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
-          aria-label="Response tabs"
-        >
-          <div className="flex items-center gap-1 pr-2 min-w-max">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                }}
-                className={`px-3 h-7 text-sm rounded-lg transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-bg-raised text-text-primary font-medium'
-                    : 'text-text-muted hover:text-text-secondary hover:bg-bg-raised/50'
-                }`}
-                data-testid={`response-tab-${tab.id}`}
-              >
-                {tab.label}
-                {tab.id === 'headers' && (
-                  <span className="ml-1.5 text-xs text-text-muted">({headerCount})</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {showOverflowCue && canScrollLeft && (
-          <motion.div
-            className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
-            data-testid="response-tabs-overflow-left"
-            initial={false}
-            animate={getOverflowAnimation('left')}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
-        {showOverflowCue && canScrollRight && (
-          <motion.div
-            className="pointer-events-none absolute inset-y-0 right-20 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
-            data-testid="response-tabs-overflow-right"
-            initial={false}
-            animate={getOverflowAnimation('right')}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
-
-        {/* Meta info */}
-        <div className="flex items-center gap-4 text-xs text-text-muted font-mono shrink-0">
-          <span>{bodySize}</span>
-          <span>{response.timing.total_ms}ms</span>
-        </div>
-      </div>
-
-      {/* Content - vertical scroll only, code blocks handle horizontal */}
-      <div
-        className="flex-1 overflow-y-auto overflow-x-hidden"
-        style={{ scrollbarGutter: 'stable' }}
+    <div className="h-full flex flex-col" data-test-id="response-viewer">
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={setActiveTab as (value: string) => void}
+        className="flex-1 min-h-0 flex flex-col"
       >
-        {activeTab === 'body' && (
-          <div className="p-4" data-testid="response-body">
-            <span className="sr-only" data-testid="response-body-raw">
-              {formattedBody}
-            </span>
-            <CodeEditor
-              mode="display"
-              code={formattedBody}
-              language={language}
-              variant="borderless"
-              className="h-full"
+        {/* Tab bar */}
+        <div className="relative flex items-center gap-2 px-6 py-2 border-b border-border-subtle bg-bg-surface">
+          <div
+            ref={tabScrollRef}
+            className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
+            aria-label="Response tabs"
+          >
+            <BaseTabsList
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              tabs={tabs.map((tab) => ({
+                value: tab.id,
+                testId: `response-tab-${tab.id}`,
+                label: (
+                  <span className="flex items-center gap-1.5">
+                    <span>{tab.label}</span>
+                    {tab.id === 'headers' && (
+                      <span className="text-xs text-text-muted">({headerCount})</span>
+                    )}
+                  </span>
+                ),
+              }))}
+              listClassName="flex items-center gap-1 pr-2 min-w-max"
+              tabClassName="px-3 h-7 text-sm rounded-lg transition-colors flex items-center gap-1.5 relative"
+              activeTabClassName="text-text-primary font-medium"
+              inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+              indicatorLayoutId="response-viewer-tab-indicator"
+              indicatorClassName="bg-bg-raised rounded-lg"
+              indicatorTestId="response-viewer-tab-indicator"
+              listTestId="response-tabs-list"
+              activateOnFocus={false}
             />
           </div>
-        )}
 
-        {activeTab === 'headers' && (
-          <div className="p-4">
-            {/* Status line - httpie style */}
-            <div className="mb-4 pb-4 border-b border-border-subtle">
-              <span className="font-mono text-sm">
-                <span className="text-text-muted">HTTP/1.1</span>{' '}
-                <span className="text-signal-success font-semibold">{response.status}</span>{' '}
-                <span className="text-text-secondary">{response.status_text}</span>
+          {showOverflowCue && canScrollLeft && (
+            <motion.div
+              className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
+              data-test-id="response-tabs-overflow-left"
+              initial={false}
+              animate={getOverflowAnimation('left')}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+          {showOverflowCue && canScrollRight && (
+            <motion.div
+              className="pointer-events-none absolute inset-y-0 right-20 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
+              data-test-id="response-tabs-overflow-right"
+              initial={false}
+              animate={getOverflowAnimation('right')}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+
+          {/* Meta info */}
+          <div className="flex items-center gap-4 text-xs text-text-muted font-mono shrink-0">
+            <span>{bodySize}</span>
+            <span>{response.timing.total_ms}ms</span>
+          </div>
+        </div>
+
+        {/* Content - vertical scroll only, code blocks handle horizontal */}
+        <div className="flex-1 min-h-0 overflow-hidden" style={{ scrollbarGutter: 'stable' }}>
+          <Tabs.Panel value="body" className="h-full min-h-0">
+            <div className="p-4 h-full min-h-0 flex flex-col" data-test-id="response-body">
+              <span className="sr-only" data-test-id="response-body-raw">
+                {formattedBody}
               </span>
+              <div className="flex-1 min-h-0">
+                <CodeEditor
+                  mode="display"
+                  code={formattedBody}
+                  language={language}
+                  variant="borderless"
+                  className="h-full"
+                />
+              </div>
             </div>
+          </Tabs.Panel>
 
-            {/* Headers */}
-            <div className="space-y-1">
-              {Object.entries(response.headers).map(([key, value]) => (
-                <div key={key} className="font-mono text-sm flex">
-                  <span className="text-accent-blue">{key}</span>
-                  <span className="text-text-muted mx-1">:</span>
-                  <span className="text-text-secondary break-all">{value}</span>
-                </div>
-              ))}
+          <Tabs.Panel value="headers" className="h-full min-h-0">
+            <div className="p-4 h-full min-h-0 overflow-auto">
+              {/* Status line - httpie style */}
+              <div className="mb-4 pb-4 border-b border-border-subtle">
+                <span className="font-mono text-sm">
+                  <span className="text-text-muted">HTTP/1.1</span>{' '}
+                  <span className="text-signal-success font-semibold">{response.status}</span>{' '}
+                  <span className="text-text-secondary">{response.status_text}</span>
+                </span>
+              </div>
+
+              {/* Headers */}
+              <div className="space-y-1">
+                {Object.entries(response.headers).map(([key, value]) => (
+                  <div key={key} className="font-mono text-sm flex">
+                    <span className="text-accent-blue">{key}</span>
+                    <span className="text-text-muted mx-1">:</span>
+                    <span className="text-text-secondary break-all">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          </Tabs.Panel>
 
-        {activeTab === 'raw' && (
-          <div className="p-4" data-testid="response-raw">
-            <span className="sr-only" data-testid="response-raw-text">
-              {formatRawHttp(response)}
-            </span>
-            <CodeEditor
-              mode="display"
-              code={formatRawHttp(response)}
-              language="http"
-              variant="borderless"
-              className="h-full"
-            />
-          </div>
-        )}
-      </div>
+          <Tabs.Panel value="raw" className="h-full min-h-0">
+            <div className="p-4 h-full min-h-0 flex flex-col" data-test-id="response-raw">
+              <span className="sr-only" data-test-id="response-raw-text">
+                {formatRawHttp(response)}
+              </span>
+              <div className="flex-1 min-h-0">
+                <CodeEditor
+                  mode="display"
+                  code={formatRawHttp(response)}
+                  language="http"
+                  variant="borderless"
+                  className="h-full"
+                />
+              </div>
+            </div>
+          </Tabs.Panel>
+        </div>
+      </Tabs.Root>
     </div>
   );
 };

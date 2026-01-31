@@ -254,7 +254,7 @@ export const AnimatedBadges: Story = {
         <button
           type="button"
           onClick={incrementError}
-          className="px-2 py-1 text-xs bg-bg-raised border border-border-subtle rounded hover:bg-bg-elevated"
+          className="px-2 py-1 text-xs bg-bg-raised border border-border-subtle rounded hover:border-border-emphasis"
         >
           Add Error (+1)
         </button>
@@ -805,7 +805,7 @@ export const AllVariantsComparison: Story = {
           <button
             type="button"
             onClick={resetCounts}
-            className="px-3 py-1.5 text-xs bg-bg-raised border border-border-subtle rounded hover:bg-bg-elevated"
+            className="px-3 py-1.5 text-xs bg-bg-raised border border-border-subtle rounded hover:border-border-emphasis"
           >
             Reset
           </button>
