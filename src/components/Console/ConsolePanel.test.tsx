@@ -889,6 +889,54 @@ describe('ConsolePanel', () => {
     expect(allText).toMatch(/"code":\s*500/i);
   });
 
+  it('pretty-prints JSON strings in log args when expanded', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
+
+    const jsonString = '{"error":{"code":123,"message":"boom"}}';
+    await act(async () => {
+      service.addLog({
+        level: 'error',
+        message: 'API error response',
+        args: [jsonString],
+        timestamp: Date.now(),
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/API error response/i)).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
+
+    const logEntry = screen.getByText(/API error response/i).closest('.group');
+    if (logEntry === null) {
+      throw new Error('Log entry not found');
+    }
+    const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
+    expect(chevronButton).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(chevronButton!);
+    });
+
+    const getArgsText = (): string =>
+      screen
+        .queryAllByTestId('code-editor')
+        .map((editor) => editor.textContent || '')
+        .join(' ');
+
+    await waitFor(() => {
+      const text = getArgsText();
+      expect(text.length).toBeGreaterThan(0);
+      expect(text).toMatch(/"code":\s*123/);
+    }, WAIT_TIMEOUT);
+
+    const allText = getArgsText();
+    expect(allText).toMatch(/"code":\s*123/);
+    expect(allText).toMatch(/"message":\s*"boom"/);
+    expect(allText).toMatch(/"error":/);
+    expect(allText).toMatch(/\n.*"code":/);
+  });
+
   it('collapses expanded args when chevron is clicked again', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();

@@ -96,8 +96,29 @@ interface FormattedLogArgs {
 }
 
 /**
+ * Try to parse a string as JSON and return pretty-printed form.
+ * Returns the original string if not valid JSON (or not object/array).
+ */
+function tryFormatJsonString(input: string): { formatted: string; isJson: boolean } {
+  const trimmed = input.trim();
+  if (trimmed.length === 0) {
+    return { formatted: input, isJson: false };
+  }
+  const first = trimmed.charAt(0);
+  if (first !== '{' && first !== '[') {
+    return { formatted: input, isJson: false };
+  }
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    return { formatted: JSON.stringify(parsed, null, 2), isJson: true };
+  } catch {
+    return { formatted: input, isJson: false };
+  }
+}
+
+/**
  * Format log arguments for display and detect language for syntax highlighting.
- * Combines all args into a single code block for consistent display.
+ * JSON strings are pretty-printed; objects/arrays use JSON.stringify(..., null, 2).
  */
 function formatLogArgs(args: unknown[]): FormattedLogArgs {
   if (args.length === 0) {
@@ -107,21 +128,36 @@ function formatLogArgs(args: unknown[]): FormattedLogArgs {
   // If single arg, format it directly
   if (args.length === 1) {
     const arg = args[0];
-    const code = typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2);
-    const language = typeof arg === 'string' ? detectSyntaxLanguage({ body: code }) : 'json';
+    let code: string;
+    let isJsonArg = false;
+    if (typeof arg === 'string') {
+      const result = tryFormatJsonString(arg);
+      code = result.formatted;
+      isJsonArg = result.isJson;
+    } else {
+      code = JSON.stringify(arg, null, 2);
+    }
+    const hasObjects = typeof arg !== 'string';
+    const language = hasObjects || isJsonArg ? 'json' : detectSyntaxLanguage({ body: code });
     return { code, language };
   }
 
-  // Multiple args: combine them (typically all JSON or all strings)
-  // Format each arg and join with newlines
-  const formattedArgs = args.map((arg) => {
-    return typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2);
-  });
-
-  const code = formattedArgs.join('\n\n');
-  // Detect language from first arg, default to json if any arg is an object
-  const hasObjects = args.some((arg) => typeof arg !== 'string');
-  const language = hasObjects ? 'json' : detectSyntaxLanguage({ body: code });
+  // Multiple args: single pass to avoid double-parsing string args (format + isJson)
+  interface FormattedArg {
+    formatted: string;
+    isJson: boolean;
+  }
+  const formatOneWithMeta = (arg: unknown): FormattedArg => {
+    if (typeof arg === 'string') {
+      const result = tryFormatJsonString(arg);
+      return { formatted: result.formatted, isJson: result.isJson };
+    }
+    return { formatted: JSON.stringify(arg, null, 2), isJson: true };
+  };
+  const mapped = args.map(formatOneWithMeta);
+  const code = mapped.map((m) => m.formatted).join('\n\n');
+  const anyJson = mapped.some((m) => m.isJson);
+  const language = anyJson ? 'json' : detectSyntaxLanguage({ body: code });
   return { code, language };
 }
 

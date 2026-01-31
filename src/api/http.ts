@@ -168,14 +168,14 @@ export async function executeRequest(params: RequestParams): Promise<HttpRespons
         };
       }
 
-      // Log error to console service with correlation ID
+      // Log error to console service once (do not call console.error here;
+      // the console service intercepts it and would add a duplicate log)
       consoleService.addLog({
         level: 'error',
         message: `[${appError.code}] ${appError.message}`,
         args: [error],
         correlationId: appError.correlationId,
       });
-      console.error('[HTTP Request Error]', appError);
 
       // Convert AppError to Error for throwing (ESLint requires Error objects)
       const errorObj = new Error(appError.message);
