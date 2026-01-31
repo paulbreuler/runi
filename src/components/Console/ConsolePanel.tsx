@@ -143,7 +143,10 @@ function formatLogArgs(args: unknown[]): FormattedLogArgs {
   }
 
   // Multiple args: single pass to avoid double-parsing string args (format + isJson)
-  interface FormattedArg { formatted: string; isJson: boolean }
+  interface FormattedArg {
+    formatted: string;
+    isJson: boolean;
+  }
   const formatOneWithMeta = (arg: unknown): FormattedArg => {
     if (typeof arg === 'string') {
       const result = tryFormatJsonString(arg);
