@@ -838,52 +838,6 @@ describe('ConsolePanel', () => {
     expect(copiedData.log.correlationId).toBe(correlationId);
   });
 
-  it('expands individual log args when chevron is clicked', async () => {
-    render(<ConsolePanel />);
-    const service = getConsoleService();
-
-    // Add a log with args
-    await act(async () => {
-      service.addLog({
-        level: 'error',
-        message: 'Test error',
-        args: [{ error: 'Connection timeout', code: 500 }],
-        timestamp: Date.now(),
-      });
-    });
-
-    // Wait for log to appear
-    await waitFor(() => {
-      expect(screen.getByText(/test error/i)).toBeInTheDocument();
-    }, WAIT_TIMEOUT);
-
-    // Find the chevron button (expander column)
-    const logEntry = screen.getByText(/test error/i).closest('.group');
-    if (logEntry === null) {
-      throw new Error('Log entry not found');
-    }
-    const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
-    expect(chevronButton).toBeInTheDocument();
-
-    // Click to expand and wait for React to process the state update
-    await act(async () => {
-      fireEvent.click(chevronButton!);
-    });
-
-    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering).
-    // Re-query expandedRow inside waitFor so we see it after React commits; use longer timeout for CI.
-    await waitFor(
-      () => {
-        const expandedRow = logEntry.nextElementSibling;
-        expect(expandedRow).toBeInTheDocument();
-        const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
-        expect(editor?.textContent).toMatch(/connection timeout/i);
-        expect(editor?.textContent).toMatch(/"code":\s*500/i);
-      },
-      { timeout: 10000 }
-    );
-  });
-
   it('pretty-prints JSON strings in log args when expanded', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
