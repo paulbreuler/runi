@@ -231,7 +231,7 @@ pub async fn cmd_delete_collection(collection_id: String) -> Result<(), String> 
 /// Convenience command: Add httpbin.org collection.
 ///
 /// # Flow
-/// 1. Fetch OpenAPI spec from httpbin.org (or use bundled fallback)
+/// 1. Fetch `OpenAPI` spec from httpbin.org (or use bundled fallback)
 /// 2. Parse spec into internal types
 /// 3. Convert to Collection format
 /// 4. Save to disk

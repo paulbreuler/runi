@@ -27,7 +27,7 @@ pub fn get_collections_dir() -> Result<PathBuf, String> {
 /// Save a collection to disk with deterministic serialization.
 ///
 /// # Determinism Guarantees
-/// - BTreeMap fields serialize in alphabetical key order
+/// - `BTreeMap` fields serialize in alphabetical key order
 /// - Struct fields serialize in declaration order
 /// - Timestamps use UTC with Z suffix
 /// - No random elements in output
@@ -98,19 +98,15 @@ fn list_collections_in_dir(dir: &Path) -> Result<Vec<CollectionSummary>, String>
         fs::read_dir(dir).map_err(|e| format!("Failed to read collections directory: {e}"))?;
 
     for entry in entries {
-        let entry = match entry {
-            Ok(entry) => entry,
-            Err(_) => continue,
-        };
+        let Ok(entry) = entry else { continue };
 
         let path = entry.path();
         if !is_yaml_file(&path) || is_temp_file(&path) {
             continue;
         }
 
-        match load_collection_summary(&path) {
-            Ok(summary) => summaries.push(summary),
-            Err(_) => continue,
+        if let Ok(summary) = load_collection_summary(&path) {
+            summaries.push(summary);
         }
     }
 
@@ -149,13 +145,23 @@ fn load_collection_summary(path: &PathBuf) -> Result<CollectionSummary, String> 
     let yaml_content = strip_yaml_comments(&content);
 
     let collection: Collection = serde_yml::from_str(&yaml_content).map_err(|e| e.to_string())?;
+    let Collection {
+        id,
+        metadata,
+        source,
+        requests,
+        ..
+    } = collection;
+    let CollectionMetadata {
+        name, modified_at, ..
+    } = metadata;
 
     Ok(CollectionSummary {
-        id: collection.id.clone(),
-        name: collection.metadata.name.clone(),
-        request_count: collection.requests.len(),
-        source_type: format!("{:?}", collection.source.source_type).to_lowercase(),
-        modified_at: collection.metadata.modified_at.clone(),
+        id,
+        name,
+        request_count: requests.len(),
+        source_type: format!("{:?}", source.source_type).to_lowercase(),
+        modified_at,
     })
 }
 
@@ -169,12 +175,12 @@ fn strip_yaml_comments(content: &str) -> String {
 
 fn is_yaml_file(path: &Path) -> bool {
     path.extension()
-        .map_or(false, |ext| ext.eq_ignore_ascii_case("yaml"))
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("yaml"))
 }
 
 fn is_temp_file(path: &Path) -> bool {
     path.file_name()
-        .map_or(false, |name| name.to_string_lossy().starts_with('.'))
+        .is_some_and(|name| name.to_string_lossy().starts_with('.'))
 }
 
 fn temp_path_for(dir: &Path, collection_id: &str) -> PathBuf {
@@ -207,7 +213,7 @@ fn collections_dir_override() -> Option<PathBuf> {
 }
 
 #[cfg(test)]
-pub(crate) async fn with_collections_dir_override_async<F, Fut, R>(dir: PathBuf, test: F) -> R
+pub async fn with_collections_dir_override_async<F, Fut, R>(dir: PathBuf, test: F) -> R
 where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = R>,
