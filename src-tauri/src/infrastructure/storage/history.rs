@@ -92,7 +92,7 @@ pub async fn save_history_entry(entry: &HistoryEntry) -> Result<PathBuf, String>
     let filename = entry.filename();
     let file_path = history_dir.join(&filename);
 
-    let yaml_content = serde_yaml::to_string(entry)
+    let yaml_content = serde_yml::to_string(entry)
         .map_err(|e| format!("Failed to serialize history entry: {e}"))?;
 
     tokio::fs::write(&file_path, yaml_content)
@@ -113,7 +113,7 @@ pub async fn load_history_entry(path: &Path) -> Result<HistoryEntry, String> {
         .await
         .map_err(|e| format!("Failed to read history file {}: {e}", path.display()))?;
 
-    let entry: HistoryEntry = serde_yaml::from_str(&content)
+    let entry: HistoryEntry = serde_yml::from_str(&content)
         .map_err(|e| format!("Failed to parse history file {}: {e}", path.display()))?;
 
     Ok(entry)
@@ -348,7 +348,7 @@ mod tests {
         let file_path = temp_dir.join(&filename);
 
         // Save
-        let yaml = serde_yaml::to_string(&entry).unwrap();
+        let yaml = serde_yml::to_string(&entry).unwrap();
         tokio::fs::write(&file_path, yaml).await.unwrap();
 
         // Load
@@ -366,8 +366,8 @@ mod tests {
     fn test_history_entry_serialization() {
         let entry = create_test_entry();
 
-        let yaml = serde_yaml::to_string(&entry).unwrap();
-        let parsed: HistoryEntry = serde_yaml::from_str(&yaml).unwrap();
+        let yaml = serde_yml::to_string(&entry).unwrap();
+        let parsed: HistoryEntry = serde_yml::from_str(&yaml).unwrap();
 
         assert_eq!(entry.id, parsed.id);
         assert_eq!(entry.request.url, parsed.request.url);
