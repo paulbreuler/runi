@@ -107,6 +107,20 @@ describe('errors', () => {
       expect(report.pathname.length).toBeGreaterThan(0);
       expect(report.buildMode).toBe('release');
     });
+
+    it('redacts filesystem paths from stacks', () => {
+      const report = createCrashReport({
+        message: 'Crash',
+        stack: 'at /Users/paul/Documents/runi-crash-report.json:1:2',
+        componentStack: 'at C:\\Users\\paul\\Documents\\runi-crash-report.json:1:2',
+        pathname: '/',
+        buildMode: 'dev',
+      });
+      expect(report.stack).toContain('[redacted-path]');
+      expect(report.stack).not.toContain('/Users/paul/Documents');
+      expect(report.componentStack).toContain('[redacted-path]');
+      expect(report.componentStack).not.toContain('C:\\Users\\paul\\Documents');
+    });
   });
 
   describe('isAppError', () => {

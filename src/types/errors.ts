@@ -45,6 +45,15 @@ export interface FrontendCrashReport {
   buildMode: 'dev' | 'release';
 }
 
+const redactStack = (stack?: string): string | undefined => {
+  if (stack === undefined || stack.length === 0) {
+    return stack;
+  }
+  const macPath = /\/Users\/[^\s)]+/g;
+  const winPath = /[A-Za-z]:\\[^\s)]+/g;
+  return stack.replace(macPath, '[redacted-path]').replace(winPath, '[redacted-path]');
+};
+
 /**
  * Create a frontend AppError.
  *
@@ -83,8 +92,8 @@ export function createCrashReport(input: {
 }): FrontendCrashReport {
   return {
     message: input.message,
-    stack: input.stack,
-    componentStack: input.componentStack,
+    stack: redactStack(input.stack),
+    componentStack: redactStack(input.componentStack),
     timestamp: input.timestamp ?? new Date().toISOString(),
     pathname: input.pathname ?? window.location.pathname,
     buildMode: input.buildMode ?? 'release',
