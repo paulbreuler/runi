@@ -53,7 +53,7 @@ If a component doesn't exist in a library that perfectly fits our design system,
 **The Unreal Engine Metaphor:**
 Think like game engine developers—craftsmanship, performance, clarity, not gamification. Game engines don't use generic UI libraries—they craft their own systems that fit perfectly within their architecture. We do the same.
 
-See `DESIGN_IDEOLOGY.md` (read via `mcp_runi_Planning_read_doc({ path: 'DESIGN_IDEOLOGY.md' })`) for the complete craftsmanship philosophy, custom component library approach, and unified material feel principles.
+See `DESIGN_IDEOLOGY.md` (read via runi Planning MCP `process_doc({ path: 'DESIGN_IDEOLOGY.md', code: 'doc.content' })`) for the complete craftsmanship philosophy, custom component library approach, and unified material feel principles.
 
 ## Instructions
 
@@ -656,8 +656,8 @@ export const AISuggestion = ({ suggestion, onAccept }: AISuggestionProps): JSX.E
 
 For detailed technical implementation, use MCP tools to read planning documents:
 
-- **Design Ideology**: Read via `mcp_runi_Planning_read_doc({ path: 'DESIGN_IDEOLOGY.md' })` - Craftsmanship philosophy, custom component library approach, Unreal Engine metaphor
-- **Design Vision**: Read via `mcp_runi_Planning_read_doc({ path: 'runi-design-vision-v8.1.md' })`
+- **Design Ideology**: Read via runi Planning MCP `process_doc({ path: 'DESIGN_IDEOLOGY.md', code: 'doc.content' })` - Craftsmanship philosophy, custom component library approach, Unreal Engine metaphor
+- **Design Vision**: Read via runi Planning MCP `process_doc({ path: 'runi-design-vision-v8.1.md', code: 'doc.content' })`
 - **Component Library**: `src/components/ui/`
 - **Stores**: `src/stores/`
 - **CSS Variables**: `src/index.css`

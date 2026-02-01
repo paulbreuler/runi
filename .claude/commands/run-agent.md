@@ -7,8 +7,7 @@ replaced with minimal wrapper scripts.
 
 ## LLM Execution Rules
 
-- Do not open or modify an agent file before successfully claiming the task.
-- If task claim fails, stop and report the failure.
+- Prefer MCP when the planning server is available: use `get_next_task` for task selection and `get_plan_status` for status/assess (server from `.mcp.json`, e.g. `runi-Planning`). Otherwise use `npx limps next-task` and `npx limps status`. Task status is stored in agent file frontmatter (no claim/release).
 - Only operate on agent files under `../runi-planning-docs/plans/`.
 - Do not include secrets in GitHub issue bodies or logs.
 - Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
@@ -24,8 +23,7 @@ replaced with minimal wrapper scripts.
 
 ## What This Command Does
 
-1. **Selects next best task** (if plan name provided) - Uses `npx limps next-task` which
-   implements scoring algorithm based on:
+1. **Selects next best task** (if plan name provided) - Uses MCP `get_next_task` (when planning server available) or `npx limps next-task`, which implement scoring based on:
    - Dependencies (40%): Features with all dependencies PASS get highest score
    - Workload balance (30%): Agents with fewer remaining tasks get higher score
    - Priority (30%): Lower feature IDs (earlier in plan) get higher score
@@ -42,7 +40,7 @@ replaced with minimal wrapper scripts.
    - **Stores issue numbers**: Agent issue number and feature subissue numbers stored in agent file
    - **Relationship**: Agent issue is parent, feature subissues are children; local agent file is source of truth
 
-3. **Assesses agent status** - Uses `npx limps status` to check completion state and file organization
+3. **Assesses agent status** - Uses MCP `get_plan_status` (when planning server available) or `npx limps status` to check completion state and file organization
 
 4. **Opens agent file in Cursor** - Opens the selected or specified agent file with context
 
@@ -113,50 +111,17 @@ Assesses all agents in the plan for completion status and file organization.
 **When this command is invoked, you must:**
 
 1. **Parse arguments:**
-   - If `--auto` provided: Auto-detect plan from last PR, then use `npx limps next-task <plan-name>` to get next task
-   - If `--plan` or plan name provided: Use `npx limps next-task <plan-name>` to get next task, then open the agent file with `cursor`
-   - If `--agent` provided: Open the specified agent file directly with `cursor <agent-path>`
-   - If `--assess` provided: Use `npx limps status <plan-name>` to assess agent status
+   - If planning MCP is available: use `get_next_task` (with `planId`) for task selection and `get_plan_status` for assess; otherwise use `npx limps next-task` and `npx limps status`.
+   - If `--auto` provided: Auto-detect plan from last PR, then get next task (MCP `get_next_task` or `npx limps next-task <plan-name>`), then open the agent file with `cursor`.
+   - If `--plan` or plan name provided: Get next task (MCP or CLI), then open the agent file with `cursor`.
+   - If `--agent` provided: Open the specified agent file directly with `cursor <agent-path>`.
+   - If `--assess` provided: Get plan status (MCP `get_plan_status` or `npx limps status <plan-name>`).
 
 **Note**: The workflow now uses `limps` CLI directly. All justfile wrapper commands have been removed.
 
 **Note**: The `--auto` flag supports auto-detection from PR context, making it easy to resume work after a PR merge.
 
-1. **Claim Task (CRITICAL - Do this first):**
-   - After determining which agent file will be opened, **immediately claim the task** using MCP
-     `claim_task` tool
-   - **Extract plan name** from agent file path: `plans/<plan-name>/agents/...` → `<plan-name>` (e.g., `0023-memory-metrics-ui`)
-   - **Extract feature number(s)** from agent file content: Look for `### Feature #<number>:` patterns (e.g., `#1`, `#2`)
-   - **Construct taskId**: Format is `<plan-name>#<feature-number>` (e.g.,
-     `0023-memory-metrics-ui#1`)
-   - **Extract agentId** from agent file name: `<agent-file-name>` (e.g., `000_agent_memory_warning.agent.md`)
-   - **For agents with multiple features**: Claim each feature separately, or claim the first/primary feature
-
-- Call: `call_mcp_tool` with server `<planning-mcp-server>`, tool `claim_task`, arguments:
-
-  ```json
-  {
-    "taskId": "<plan-name>#<feature-number>",
-    "agentId": "<agent-file-name>",
-    "persona": "coder"
-  }
-  ```
-
-- **Example**: For agent file `plans/0023-memory-metrics-ui/agents/000_agent_memory_warning.agent.md` with Feature #1:
-
-  ```json
-  {
-    "taskId": "0023-memory-metrics-ui#1",
-    "agentId": "000_agent_memory_warning.agent.md",
-    "persona": "coder"
-  }
-  ```
-
-- **This must happen BEFORE opening the file or starting work** to prevent conflicts
-- **Note**: Server name is resolved from `.mcp.json` (planning MCP server)
-- **Note**: The server expects taskId format `<plan-name>#<feature-number>`, not the agent file path
-
-2. **GitHub Issue Creation:**
+1. **GitHub Issue Creation:**
    - The script automatically creates GitHub issues when an agent file is opened (if issues don't exist)
    - **Agent Issue (parent)**: Created first, represents the agent work
    - **Feature Subissues (children)**: Created for each feature using `gh sub-issue create --parent <agent-issue>`
@@ -167,25 +132,29 @@ Assesses all agents in the plan for completion status and file organization.
    - Agent issue remains open (parent issue, not closed by PR)
    - If GitHub CLI or `gh sub-issue` extension is not available, issue creation is skipped (non-blocking)
 
-3. **Display output:**
+2. **Display output:**
    - Show task selection results (if applicable)
    - Show agent status assessment
    - Show context and instructions
    - Display clickable file links
 
-4. **Provide guidance:**
+3. **Provide guidance:**
    - Explain next steps for the agent
    - Reference related commands (`/close-feature-agent`, `npx limps status`, `npx limps next-task`, `just heal`)
    - Show how to verify completion
 
+**Execution context note**: Agent files are self-contained for execution. If
+details must live elsewhere, use scoped references (exact file + section/heading).
+Open-ended searching during execution indicates the agent file needs improvement.
+
 ## Integration with Other Commands
 
-- **next-task**: Use `npx limps next-task <plan-name>` to get the next best task, then open the agent file with `cursor`
-- **plan-list-agents**: Use `npx limps list-agents <plan-name>` to find and see all agents in a plan, then open the specific one with `cursor <path>`
+- **next-task**: Use MCP `get_next_task` or `npx limps next-task <plan-name>` to get the next best task, then open the agent file with `cursor`
+- **plan-list-agents**: Use MCP `list_agents` or `npx limps list-agents <plan-name>` to find agents, then open with `cursor <path>`
 - **heal**: After completing work, use `/heal` or `just heal` to auto-cleanup completed agents
-- **list-feature-plans**: Use to discover plans, then use `npx limps next-task <plan-name>` to get next task
-- **close-feature-agent**: After closing, use `npx limps status <plan-name>` to assess overall status
-- **update-feature-plan**: After updating, use `npx limps next-task <plan-name>` to get next task
+- **list-feature-plans**: Use MCP `list_plans` or `npx limps list-plans` to discover plans, then get next task (MCP `get_next_task` or CLI)
+- **close-feature-agent**: After closing, use MCP `get_plan_status` or `npx limps status <plan-name>` to assess overall status
+- **update-feature-plan**: After updating, use MCP `get_next_task` or `npx limps next-task <plan-name>` to get next task
 
 ## Workflow
 
@@ -211,7 +180,7 @@ Assesses all agents in the plan for completion status and file organization.
 6. Repeat from step 1
 ```
 
-The workflow uses limps CLI directly for task selection, then opens files with `cursor`.
+The workflow uses limps MCP tools (get_next_task, get_plan_status) when available, otherwise CLI, then opens files with `cursor`.
 
 ## Output Format
 

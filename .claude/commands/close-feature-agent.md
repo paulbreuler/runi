@@ -47,7 +47,11 @@ Read the agent's `.agent.md` and extract:
 - Files that should exist
 - Gotchas section
 
-Use MCP planning tools (`read_doc` / `rlm_query`) when available to avoid manual file parsing.
+Use MCP planning tools (`process_doc` / `process_docs`) when available to avoid manual file parsing.
+
+If the agent required broad searching outside the `.agent.md`, note this as a
+plan quality issue and recommend updating the agent file with scoped references
+(exact file + section/heading).
 
 ### Step 2: Verify Completion
 
@@ -165,7 +169,7 @@ Next Steps
 
 - Agent columns work complete
 - Agent rows can continue (was blocked on #2)
-- Run `npx limps status <plan-name>` to assess overall plan status
+- Run MCP `get_plan_status` or `npx limps status <plan-name>` to assess overall plan status
 - Run /heal if cleanup is needed
 ```
 
@@ -236,21 +240,31 @@ close-feature-agent
 
 After closing an agent, use these commands to continue work:
 
-1. **Assess overall plan status**: Run `npx limps status <plan-name>` to assess
-   all agent statuses and identify cleanup needs
-2. **Auto-cleanup if needed**: If status shows completed agents that need
-   cleanup, run `/heal` or `just heal` to move agents to `completed/`
-3. **Start next task**: Use `npx limps next-task <plan-name>` to get the next
-   task, then open the agent file with `cursor`
+1. **Assess overall plan status**: Use MCP `get_plan_status` (when planning server available) or `npx limps status <plan-name>` to assess all agent statuses and identify cleanup needs
+2. **Auto-cleanup if needed**: If status shows completed agents that need cleanup, run `/heal` or `just heal` to move agents to `completed/`
+3. **Start next task**: Use MCP `get_next_task` or `npx limps next-task <plan-name>` to get the next task, then open the agent file with `cursor`
 
 ### Recommended Post-Close Workflow
 
 ```text
 1. Close agent: /close-feature-agent [agent-path]
-2. Assess status: `npx limps status <plan-name>` (check overall plan status)
+2. Assess status: MCP get_plan_status or npx limps status <plan-name>
 3. Cleanup if needed: /heal (auto-fixes completed agents)
-4. Start next task: `npx limps next-task <plan-name>` then open agent file with `cursor`
+4. Start next task: MCP get_next_task or npx limps next-task <plan-name> then open agent file with cursor
 ```
+
+## Closing a whole plan (agent-per-file layout)
+
+When the plan uses **one agent file per task** (e.g. runi-planning-docs) and MCP `update_task_status` fails (it expects "Feature #N" sections in plan.md, not agent files):
+
+1. **Config:** Run `npx limps config migrate` to ensure project configs are under limps/projects/ (optional; usually already done).
+2. **Set all agents to PASS** from the planning-docs repo root (e.g. runi-planning-docs):
+   ```bash
+   for f in plans/0004-datagrid-overhaul/agents/*.agent.md; do
+     sed -i '' 's/Status: `GAP`/Status: `PASS`/g; s/Status: GAP/Status: PASS/g' "$f"
+   done
+   ```
+3. **Verify:** Run `npx limps config use runi-planning-docs` then `npx limps status 0004-datagrid-overhaul` to confirm 100% complete.
 
 ## Command Flags
 

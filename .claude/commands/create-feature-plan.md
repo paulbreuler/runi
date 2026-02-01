@@ -6,8 +6,7 @@ Generate a TDD plan with verbose planning docs and minimal agent execution files
 
 - Use MCP planning tools for all reads/writes; do not write files directly.
 - Do not include secrets, tokens, or credentials in plan content.
-- Keep agent files distilled and ≤ 500 lines.
-- Only run `rlm_query`/`rlm_multi_query` with code you authored or reviewed.
+- Only run `process_doc`/`process_docs` with code you authored or reviewed.
 
 ## Invocation
 
@@ -26,11 +25,8 @@ This command uses MCP planning tools for document management:
   - `create_plan` - Create the plan structure
   - `create_doc` - Create planning documents ({plan-name}-plan.md, interfaces.md, README.md, gotchas.md)
   - `list_docs` - List existing plans to determine next plan number
-  - `process_doc` - Read and analyze a single document (preferred over read_doc for reading with extraction)
-  - `process_docs` - Analyze multiple documents (e.g., all plan files for duplicate scan)
-  - `read_doc` - Read existing documents for reference (use process_doc when extraction needed)
-  - `rlm_query` - Query single documents with JavaScript (extract features, analyze structure)
-  - `rlm_multi_query` - Query multiple documents with JavaScript (analyze patterns across plans)
+  - `process_doc` - Read or query a single document (full read: `code: 'doc.content'`; or extract features, analyze structure)
+  - `process_docs` - Query multiple documents (use `pattern` or `paths`; analyze patterns across plans)
 
 **Usage**: Call tools via `call_mcp_tool` with the resolved server name (see above) and the tool name
 (e.g., `create_plan`, `create_doc`, etc.)
@@ -216,28 +212,25 @@ compatibility, but new agents should use zero-padding.
 - Methodology (agent knows TDD)
 - Other agents' details
 
-**Target**: ~200-400 lines per agent file
-
 ### Phase 5: Validate
 
-- [ ] Agent files are self-contained (no required searching)
+- [ ] Agent files are self-contained for execution (scoped references allowed; see skill)
 - [ ] Interface contracts match between agents
 - [ ] Dependency graph is accurate
 - [ ] File ownership has no conflicts
-- [ ] Each agent file < 500 lines
 
 ## Output Structure
 
 ```text
 NNNN-descriptive-name/
 ├── README.md              # Index, graph, status
-├── {plan-name}-plan.md    # Full specs (verbose, ~1000+ lines OK)
-├── interfaces.md          # Contracts (~200-500 lines)
+├── {plan-name}-plan.md    # Full specs (verbose)
+├── interfaces.md          # Contracts
 ├── gotchas.md             # Empty template
 └── agents/
-    ├── 000_agent_infrastructure.agent.md      # ~200-400 lines
-    ├── 001_agent_testing_utilities.agent.md  # ~200-400 lines
-    └── 002_agent_ui_components.agent.md      # ~200-400 lines
+    ├── 000_agent_infrastructure.agent.md
+    ├── 001_agent_testing_utilities.agent.md
+    └── 002_agent_ui_components.agent.md
 ```
 
 ## Agent File Format
@@ -359,7 +352,6 @@ Gotchas:
 
 Before presenting plan:
 
-- [ ] Each agent file < 500 lines
 - [ ] No duplicate info across agent files
 - [ ] Interfaces match (export = receive)
 - [ ] Dependency graph complete
@@ -495,20 +487,9 @@ const interfaces = await call_mcp_tool({
 });
 ```
 
-**Alternative**: Use `read_doc` for simple reads:
+**Simple full read**: Use `process_doc` with `code: 'doc.content'` for the same document.
 
-```typescript
-// Simple read without extraction
-const plan = await call_mcp_tool({
-  server: 'runi-Planning',
-  toolName: 'read_doc',
-  arguments: {
-    path: 'plans/0005-storybook-testing-overhaul/0005-storybook-testing-overhaul-plan.md',
-  },
-});
-```
-
-### Querying Documents with RLM Tools
+### Querying Documents with process_doc / process_docs
 
 ```typescript
 // Extract all GAP features from a plan (using process_doc - preferred)
@@ -544,19 +525,6 @@ const planSummary = await call_mcp_tool({
     `,
   },
 });
-
-// Alternative: Use rlm_query/rlm_multi_query for complex queries
-const gapFeaturesAlt = await call_mcp_tool({
-  server: 'runi-Planning',
-  toolName: 'rlm_query',
-  arguments: {
-    path: 'plans/0008-storybook-testing-overhaul/0008-storybook-testing-overhaul-plan.md',
-    code: `
-      const features = extractFeatures(doc.content);
-      return features.filter(f => f.status === 'GAP');
-    `,
-  },
-});
 ```
 
 ## Notes
@@ -567,8 +535,7 @@ const gapFeaturesAlt = await call_mcp_tool({
   `plans/NNNN-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
 - **Plan file naming** - Use `{plan-name}-plan.md` format
   (e.g., `0008-storybook-testing-overhaul-plan.md`) for consistency with limps standards
-- **Reading documents** - Prefer `process_doc`/`process_docs` over `read_doc` when extraction
-  or filtering is needed
+- **Reading documents** - Use `process_doc({ path, code: 'doc.content' })` for full read; use `process_doc`/`process_docs` with extraction code when filtering or aggregating
 - **Storybook skill** - Automatically activated when features involve Storybook stories;
   reference templates and utilities in agent files. **Critical**: Follow controls-first approach
   (1-3 stories per component, use controls for variations) - see `storybook-testing` skill

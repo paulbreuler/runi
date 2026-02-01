@@ -4,8 +4,9 @@ List all agents in a plan with their status, features, and clickable links. Help
 
 ## LLM Execution Rules
 
-- Use `npx limps list-agents` as the source of truth.
-- If auto-detection fails, run `npx limps list-plans` and ask the user to choose.
+- Prefer MCP when the planning server is available: use `list_agents` (server from `.mcp.json`, e.g. `runi-Planning`). Otherwise use `npx limps list-agents`.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
+- If plan is unknown, use `list_plans` (MCP) or `npx limps list-plans` (CLI), then ask the user to choose.
 
 ## Invocation
 
@@ -53,9 +54,9 @@ Bypasses auto-detection and uses the specified plan.
 
 **When this command is invoked, you must:**
 
-1. **Run the list-agents command:**
-   - If `--plan` provided: `npx limps list-agents <plan-number>`
-   - Otherwise: `npx limps list-agents` (auto-detects plan)
+1. **List agents:**
+   - If planning MCP is available: call `list_agents` via `call_mcp_tool` with `planId` (server from `.mcp.json`). Use `list_plans` first if plan is unknown.
+   - Otherwise: run `npx limps list-agents <plan-number>` or `npx limps list-agents` (auto-detects plan when no `--plan`).
 
 2. **Display the output:**
    - Show the formatted list of agents
@@ -137,3 +138,4 @@ Agent 2: Status & Timing Columns
 - Agent files should use zero-padded 3-digit format (000, 001, 002, ...) for proper lexicographical ordering
 - Status is parsed from agent file `**Status:**` markers
 - Use this to find agents, then run with `/run-agent --agent [path]`
+- Agent files are self-contained execution context; scoped cross-file references are allowed (exact file + section/heading)

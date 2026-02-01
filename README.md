@@ -57,7 +57,7 @@
   <a href="#why-runi">Why runi?</a> •
   <a href="#features">Features</a> •
   <a href="#quick-start">Quick Start</a> •
-  <a href="#roadmap">Roadmap</a> •
+  <a href="#project-status">Project Status</a> •
   <a href="#contributing">Contributing</a>
 </p>
 <!-- markdownlint-enable MD033 MD041 -->
@@ -257,32 +257,38 @@ just dev
 
 ---
 
-## Roadmap
+## Project Status
 
-### Now
+**Rung 1 (HTTP client) is in place:** request/response, network history, timing
+waterfall, metrics, and signal UI. Next we harden that and move to spec +
+collections, then drift, then AI verification.
+
+### Now (Phase 1 — Polish & quick wins)
 
 - [x] HTTP client core
 - [x] Network history panel with filtering
 - [x] Timing waterfall visualization
+- [x] Metrics and signal system UI
+- [x] Code display unification (ResponseViewer → CodeSnippet)
+- [ ] Any remaining Rung 1 cleanup
+
+### Next (Phase 2–4 — Spec intelligence)
+
 - [ ] Collections as YAML
-- [ ] Import/export (Postman, Bruno, OpenAPI)
+- [ ] OpenAPI spec import and spec-aware UI
 - [ ] Spec binding and drift detection
 - [ ] Response validation
-
-### Next
-
 - [ ] AI verification against bound specs
+- [ ] [MCP](https://modelcontextprotocol.io/) control surface
 - [ ] Temporal awareness (spec version history)
 - [ ] Semantic links between specs
-- [ ] [MCP](https://modelcontextprotocol.io/) server generation
 
 ### Later
 
+- [ ] Import/export (Postman, Bruno, Insomnia)
 - [ ] Spatial canvas view
 - [ ] Collaborative features (local-first sync)
 - [ ] Plugin system
-
-See the full [roadmap](./docs/ROADMAP.md) for details.
 
 ---
 

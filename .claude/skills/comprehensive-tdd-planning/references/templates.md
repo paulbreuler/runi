@@ -2,7 +2,7 @@
 
 ## Agent Execution File Template
 
-**Target: ~200-400 lines. Minimal. Dense. No prose.**
+**Target: typically ~200-400 lines. Minimal. Dense. No prose.**
 
 ````markdown
 # Agent: [Name]
