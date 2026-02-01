@@ -32,30 +32,15 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 > **Planning Documents:** Access design and planning documents via MCP tools (separate repository at `../runi-planning-docs/`):
 >
-> **Use MCP server `mcp-planning-server` (located at `../mcp-planning-server`) with tool `read_doc` to read:**
+> **Use the runi Planning MCP (server from `.mcp.json`, e.g. `runi-Planning`) with `process_doc` and `process_docs`:**
 >
-> - `VISION.md` — North star document
-> - `runi-design-vision-v8.1.md` — Complete design specification
-> - `DESIGN_IDEOLOGY.md` — Component craftsmanship philosophy, custom component library approach, and the Unreal Engine metaphor (craftsmanship, not gamification)
-> - `addendums/001-ai-architecture.md` — AI provider abstraction and verification
-> - `addendums/002-adoption-positioning.md` — Go-to-market and adoption ladder
-> - `addendums/003-enterprise-mcp-strategy.md` — Enterprise MCP strategy
-> - `next-frontier-in-api.md` — Research on API landscape, knowledge graphs, visualization, security, and AI-native patterns
-> - `research/competitor-analysis.md` — Analysis of most requested and hated features in competitor tools
-> - `MANIFEST.md` — Complete document hierarchy
-> - `plans/0018-component-design-principles-audit/plan.md` — Component design principles audit (systematic analysis of all components for DESIGN-PRINCIPLES.md compliance)
+> - **Read a document:** `process_doc({ path: 'VISION.md', code: 'doc.content' })`
+> - **Single-doc query:** `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractFeatures(doc.content).filter(f => f.status === 'GAP')" })`
+> - **Multi-doc query:** `process_docs({ pattern: 'plans/*/*-plan.md', code: "docs.map(d => ({ name: extractFrontmatter(d.content).meta.name, featureCount: extractFeatures(d.content).length }))" })`
 >
-> **Use RLM query tools for advanced queries:**
+> **Key documents:** `VISION.md`, `runi-design-vision-v8.1.md`, `DESIGN_IDEOLOGY.md`, `addendums/001-ai-architecture.md`, `addendums/002-adoption-positioning.md`, `addendums/003-enterprise-mcp-strategy.md`, `next-frontier-in-api.md`, `research/competitor-analysis.md`, `MANIFEST.md`, `plans/0018-component-design-principles-audit/plan.md`
 >
-> - `rlm_query` — Execute JavaScript code on a single document (extract features, filter by status, analyze structure)
-> - `rlm_multi_query` — Execute JavaScript code on multiple documents (summarize plans, aggregate data across plans)
->
-> **Example RLM queries:**
->
-> - Extract all features with status 'GAP': `rlm_query({ path: 'plans/0013-rlm-query-tool/plan.md', code: "extractFeatures(doc.content).filter(f => f.status === 'GAP')" })`
-> - Summarize all plans: `rlm_multi_query({ pattern: 'plans/*/plan.md', code: "docs.map(d => ({ name: extractFrontmatter(d.content).meta.name, featureCount: extractFeatures(d.content).length }))" })`
->
-> **Example:** `mcp_runi_Planning_read_doc({ path: 'VISION.md' })` or `mcp_runi_Planning_read_doc({ path: 'DESIGN_IDEOLOGY.md' })`
+> **Example:** `process_doc({ path: 'VISION.md', code: 'doc.content' })` or `process_doc({ path: 'DESIGN_IDEOLOGY.md', code: 'doc.content' })`
 
 ---
 

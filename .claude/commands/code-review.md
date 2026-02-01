@@ -68,10 +68,10 @@ This command can leverage specialized review skills:
 - ✅ Zustand for global state (not Redux, not Context for shared state)
 - ✅ Motion 12 for animations (import from `motion/react`)
 - ✅ **Design Principles**: Components follow DESIGN-PRINCIPLES.md criteria
-  (see `mcp_runi_Planning_read_doc({ path: 'plans/0018-component-design-principles-audit/plan.md' })`
+  (see runi Planning MCP `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md', code: 'doc.content' })`
   for audit methodology)
-- ✅ **Design Principles (RLM)**: For component-specific audit findings, use
-  `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md',
+- ✅ **Design Principles (process_doc)**: For component-specific audit findings, use
+  runi Planning MCP `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md',
 code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'))
 .flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })`
   to get targeted findings
@@ -150,8 +150,8 @@ code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'
 - [ ] **Test Selectors**: Components include `data-test-id` attributes on interactive elements and test targets
 - [ ] **Test Queries**: Tests use `getByTestId` for element selection (not generic selectors for component identification)
 - [ ] **Storybook**: Component stories created (for UI components)
-- [ ] **Design Principles (RLM)**: For reviewed components, query audit findings using RLM:
-      `mcp_runi_Planning_rlm_query({ path: 'plans/0018-component-design-principles-audit/plan.md',
+- [ ] **Design Principles (process_doc)**: For reviewed components, query audit findings using runi Planning MCP:
+      `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md',
 code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'))
 .flatMap(s => extractFeatures(s.content)).filter(f => f.status === 'GAP')" })`
 
@@ -367,12 +367,12 @@ Reviews all changes compared to main branch.
 
 ### Component-Specific Design Principles Audit
 
-When reviewing a specific component, use RLM queries to fetch targeted audit findings
+When reviewing a specific component, use runi Planning MCP `process_doc` to fetch targeted audit findings
 instead of reading the entire audit plan:
 
 ```javascript
-// Get audit findings for a specific component
-mcp_runi_Planning_rlm_query({
+// Get audit findings for a specific component (runi Planning MCP: process_doc)
+process_doc({
   path: 'plans/0018-component-design-principles-audit/plan.md',
   code: `
     const componentName = 'ComponentName'; // Extract from reviewed files
@@ -398,11 +398,11 @@ mcp_runi_Planning_rlm_query({
 
 ### Cross-Component Compliance Check
 
-For reviews that touch multiple components, use RLM to check compliance across all:
+For reviews that touch multiple components, use runi Planning MCP `process_doc` to check compliance across all:
 
 ```javascript
-// Check design principles compliance for multiple components
-mcp_runi_Planning_rlm_query({
+// Check design principles compliance for multiple components (runi Planning MCP: process_doc)
+process_doc({
   path: 'plans/0018-component-design-principles-audit/plan.md',
   code: `
     const modifiedComponents = ['Component1', 'Component2']; // from git diff

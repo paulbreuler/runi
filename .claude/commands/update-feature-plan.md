@@ -7,7 +7,7 @@ Apply feedback to an existing plan, regenerate affected agent files, and commit 
 - Use MCP planning tools for all reads/writes; do not edit files directly.
 - Preserve existing GitHub issue numbers in agent files.
 - Do not include secrets or tokens in plan documents.
-- Only run `rlm_query` with code you authored or reviewed.
+- Only run `process_doc` / `process_docs` with code you authored or reviewed.
 - Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
 
 ## Key Change from v1.x
@@ -36,16 +36,16 @@ Agent files are **distilled**, not copied. When plan changes, affected agent fil
 8. Regenerate affected agent files (distill, don't copy)
 9. Verify consistency
 10. Commit
-11. Assess status: `npx limps next-task <plan-name>` (optional, see next task)
+11. Assess status: MCP `get_next_task` or `npx limps next-task <plan-name>` (optional, see next task)
 ```
 
 ## After Update
 
 After updating a plan and regenerating agent files:
 
-1. **Assess plan status**: Run `npx limps status <plan-name>` to see overall plan status and identify cleanup needs
+1. **Assess plan status**: Use MCP `get_plan_status` or `npx limps status <plan-name>` to see overall plan status and identify cleanup needs
 2. **Auto-cleanup if needed**: If cleanup is needed, run `/heal --plan <plan-name>` to auto-fix completed agents
-3. **Start next work**: Use `npx limps next-task <plan-name>` to get the next task, then open the agent file with `cursor`
+3. **Start next work**: Use MCP `get_next_task` or `npx limps next-task <plan-name>` to get the next task, then open the agent file with `cursor`
 
 This helps ensure the plan is in a good state after updates and ready for continued work.
 
@@ -54,7 +54,7 @@ This helps ensure the plan is in a good state after updates and ready for contin
 ### 1. Identify the Plan
 
 - Ask: "Which plan to update?"
-- If unsure: `npx limps list-plans`
+- If unsure: use MCP `list_plans` or `npx limps list-plans`
 - Confirm plan directory exists
 
 ### 2. Gather Feedback
@@ -148,7 +148,7 @@ For each feedback item, classify:
 **Agent files** (distilled):
 - **Regenerate** affected agent files using `create_doc` or `update_doc` (server: `runi-Planning`), don't patch
 - Distill from updated {plan-name}-plan.md
-- Target ~200-400 lines per agent
+- Use scoped cross-file references (exact file + section/heading) for details that must live elsewhere
 
 ### 7. Identify Affected Agents
 
@@ -186,7 +186,6 @@ An agent file needs regeneration if:
 - **Do not create new issues** when regenerating (keep existing agent issue and feature subissues)
 - If no issues exist in old file, leave issue number fields empty (will be created by `/run-agent` or `/pr`)
 
-Target: ~200-400 lines for 2-4 features.
 
 ### 9. Verify Consistency
 

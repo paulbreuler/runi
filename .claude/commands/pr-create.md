@@ -23,8 +23,8 @@ Create a pull request on GitHub with a comprehensive description from staged cha
    - MCP/LLM review: run `/review-mcp` or invoke `/mcp-code-review` skill if MCP/LLM tools or security-critical areas changed
 
 3. **Detect plan/agent context (if applicable):**
-   - Use limps MCP tools when available:
-     - `list_plans`, `list_agents`, `get_plan_status`, `process_doc`
+   - Use limps MCP tools when available (server from `.mcp.json`):
+     - `list_plans`, `list_agents`, `get_plan_status`, `get_next_task`, `process_doc`
    - If a plan is inferred (modified files under `plans/`, branch/commit context), locate the agent file
    - Extract agent title, feature list, and GitHub issue numbers from the agent file
 
@@ -376,11 +376,11 @@ PR creation proceeds automatically...
 
 ### Agent Status Validation (Alternative to Limps CLI)
 
-When MCP tools are available, RLM queries can be used as an alternative to `npx limps status`:
+When MCP tools are available, runi Planning MCP `process_doc` can be used as an alternative to `npx limps status`:
 
 ```javascript
-// Validate agent status before PR creation
-mcp_runi_Planning_rlm_query({
+// Validate agent status before PR creation (runi Planning MCP: process_doc)
+process_doc({
   path: 'plans/datagrid_overhaul_4a5b9879/agents/0_agent_accessibility_foundation_early.agent.md',
   code: `
     const features = extractFeatures(doc.content);
@@ -408,8 +408,8 @@ mcp_runi_Planning_rlm_query({
 For PRs that modify components, check design principles compliance:
 
 ```javascript
-// Check design principles compliance for modified components
-mcp_runi_Planning_rlm_query({
+// Check design principles compliance for modified components (runi Planning MCP: process_doc)
+process_doc({
   path: 'plans/0018-component-design-principles-audit/plan.md',
   code: `
     const modifiedComponents = ['Component1', 'Component2']; // from git diff
@@ -429,11 +429,11 @@ Include compliance status in PR description under "Testing" section.
 
 ### Multi-Agent Status Check
 
-For plans with multiple agents, use RLM multi-query to check all agent statuses:
+For plans with multiple agents, use runi Planning MCP `process_docs` to check all agent statuses:
 
 ```javascript
-// Get all agents with their feature status
-mcp_runi_Planning_rlm_multi_query({
+// Get all agents with their feature status (runi Planning MCP: process_docs)
+process_docs({
   pattern: 'plans/datagrid_overhaul_4a5b9879/agents/*.agent.md',
   code: `
     docs.map(d => {
@@ -463,4 +463,4 @@ mcp_runi_Planning_rlm_multi_query({
 - **Review Checklist:** Helps maintainers review efficiently
 - **GitHub CLI Required:** This command uses `gh pr create` to actually create the PR
 - **Graceful Fallback:** Works correctly even when no agent is detected (for non-agent work)
-- **RLM Queries:** Use RLM queries for targeted planning document access (faster than reading full documents)
+- **process_doc/process_docs:** Use runi Planning MCP for targeted planning document access (faster than reading full documents)

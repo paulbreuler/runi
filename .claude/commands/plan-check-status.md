@@ -4,9 +4,9 @@ Simple entry point: "I want to check plan status". Shows plan status without ove
 
 ## LLM Execution Rules
 
-- Prefer `npx limps next-task` for auto-detect; fall back to `npx limps list-plans` on failure.
-- If no plan can be determined, stop and ask the user to choose.
+- Prefer MCP when the planning server is available: use `get_plan_status` and `get_next_task` (server from `.mcp.json`, e.g. `runi-Planning`). Otherwise use `npx limps status` and `npx limps next-task`. Fall back to `list_plans` (MCP) or `npx limps list-plans` (CLI) if plan is unknown.
 - Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
+- If no plan can be determined, stop and ask the user to choose.
 
 ## Invocation
 
@@ -50,9 +50,9 @@ Bypasses auto-detection and uses the specified plan.
 **When this command is invoked, you must:**
 
 1. **Check plan status:**
-   - If `--plan` provided: `npx limps status <plan-name>` and `npx limps next-task <plan-name>`
-   - Otherwise: Use `npx limps next-task` to auto-detect plan and get next task
-   - If auto-detect fails: run `npx limps list-plans` and ask user to pick a plan
+   - If planning MCP is available: call `get_plan_status` and `get_next_task` with `planId` (server from `.mcp.json`). If plan unknown, call `list_plans` first or use auto-detect.
+   - Otherwise: run `npx limps status <plan-name>` and `npx limps next-task <plan-name>` (or `npx limps next-task` to auto-detect).
+   - If plan cannot be determined: run `list_plans` (MCP) or `npx limps list-plans` (CLI) and ask user to pick a plan.
 
 2. **Display the output:**
    - Show QUICK DECISION section

@@ -8,10 +8,10 @@ description: TDD planning with agent-per-file execution. Planning is verbose. Ag
 
 ## Architecture
 
-| Phase                        | Verbosity | Purpose                                     |
-| ---------------------------- | --------- | ------------------------------------------- |
-| **Planning** (`plan.md`)     | Verbose   | Figure things out, iterate, full specs      |
-| **Execution** (`*.agent.md`) | Minimal   | Distilled context for agent, ~200-400 lines |
+| Phase                        | Verbosity | Purpose                                               |
+| ---------------------------- | --------- | ----------------------------------------------------- |
+| **Planning** (`plan.md`)     | Verbose   | Figure things out, iterate, full specs                |
+| **Execution** (`*.agent.md`) | Minimal   | Distilled context for agent, typically ~200-400 lines |
 
 ## Directory Structure
 
@@ -49,11 +49,40 @@ Agent files are **distilled execution context**, not documentation.
 
 ### Target Size
 
-~200-400 lines for 2-4 features. Larger = split agent.
+~200-400 lines for 2-4 features. This is a guideline, not a hard limit.
+If an agent cannot be self-contained within this range:
+
+- Prefer splitting into multiple agents.
+- If the interface itself is the deliverable, expand to ~400-600 lines (see below).
 
 ### Searching is Failure
 
-If agent files are well-constructed, searching `plan.md` is rare—only for unexpected edge cases. Frequent searching means agent files need improvement.
+If agent files are well-constructed, open-ended searching is rare—only for
+unexpected edge cases. Frequent or broad searching means agent files need
+improvement.
+
+### Self-Contained Scope (Scoped Search Allowed)
+
+Each `.agent.md` should be self-contained for execution. When details must live
+elsewhere, include explicit cross-file references (exact file + section/heading
+or anchors) so the agent can do **scoped lookup**, not open-ended search.
+If an agent requires broad cross-file context, inline the relevant excerpts
+(distilled) or split the work so each agent remains self-contained.
+
+**Example (scoped reference):**
+
+- "Detailed request validation rules → `plan.md` → `## Validation Rules`"
+- "Type shape source of truth → `interfaces.md` → `### Collection`"
+- "Edge case history → `gotchas.md` → `#### 2026-01-12`"
+
+### When Interface Is the Deliverable
+
+For agents whose primary output is foundational types or interfaces:
+
+- Include full type definitions inline (they are the deliverable).
+- Expand target size to ~400-600 lines if needed for dense types.
+- Include concrete test assertions, not descriptions.
+- "Distill" means remove methodology and commentary, keep exact code.
 
 ## Workflow
 
@@ -101,12 +130,12 @@ Copy agents/columns.agent.md → paste to agent → done
 | `next-task <plan>`     | Select next task (no run)                               | Preview next task selection             |
 | `assess-agents <plan>` | Assess agent completion status                          | Check status, find cleanup needs        |
 
-## RLM Query Tools
+## Document Query Tools (runi Planning MCP)
 
-RLM (Run Language Model) query tools enable JavaScript-based queries on planning documents:
+Use `process_doc` and `process_docs` for JavaScript-based queries on planning documents:
 
-- **`rlm_query`** - Query a single document (extract features, filter by status, analyze structure)
-- **`rlm_multi_query`** - Query multiple documents (aggregate data, find patterns)
+- **`process_doc`** - Single document (read full: `code: 'doc.content'`; or extract features, filter by status, analyze structure)
+- **`process_docs`** - Multiple documents (aggregate data, find patterns; use `pattern` or `paths`)
 
 **Use cases:**
 
@@ -182,10 +211,10 @@ Use `just heal` to:
 - Identify dependency bottlenecks
 - Learn from patterns and suggest improvements
 
-Use limps CLI directly for all planning operations:
+CLI equivalents (when working outside Cursor commands):
 
-- `npx limps next-task <plan-name>` - Get next best task
 - `npx limps status <plan-name>` - Assess agent status
+- `npx limps next-task <plan-name>` - Get next best task
 - `npx limps list-agents <plan-name>` - List all agents
 
 ### close-feature-agent
@@ -212,27 +241,11 @@ See `workflow.md` for complete workflow documentation including:
 
 ### Quick Reference: When to Use Which Command
 
-**Primary Entry Point**:
+Use the **Commands** table above for the full list and intent. The usual flow:
 
-- `npx limps status <plan>` and `npx limps next-task <plan>` - After PR merge, starting work session, need status overview (replaces removed `/work` command)
-
-**Focused Entry Points**:
-
-- `/run-agent <plan>` or `/run-agent --auto` - Ready to start working, auto-selects next best agent
-- `/plan-list-agents <plan>` - Want to see all agents and choose which one to run
-- `/plan-cleanup` or `/heal` - Cleanup needed, want to auto-fix
-- `/plan-check-status` or `/assess-agents <plan>` - Need detailed status, troubleshooting
-- `/list-feature-plans` - Need to find a plan
-
-**After Work**:
-
-- `/close-feature-agent <agent-path>` - Verify completion, sync status
-
-**Plan Management**:
-
-- `/create-feature-plan` - Create new plan
-- `/update-feature-plan <plan>` - Modify existing plan
-- `/list-feature-plans` - List all plans
+- Start a session with `npx limps status <plan>` and `npx limps next-task <plan>`
+- Run work via `/run-agent` (or pick from `/plan-list-agents`)
+- Close with `/close-feature-agent` and update with `/update-feature-plan` when interfaces shift
 
 ## Key Principles
 

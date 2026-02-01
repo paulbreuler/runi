@@ -22,7 +22,7 @@ Ralph files are discovered dynamically:
 - All `prompts/*.md` files (automatically found)
 - No hardcoded file lists - adapts to project structure
 
-**Planning Documents:** Strategic planning documents are in a separate repository accessed via MCP tools. Use MCP server `mcp-planning-server` (located at `../mcp-planning-server`) with tools `read_doc`, `rlm_query`/`rlm_multi_query` for JavaScript-based queries. See `CLAUDE.md` for references to planning docs.
+**Planning Documents:** Strategic planning documents are in a separate repository accessed via MCP tools. Use the runi Planning MCP (server from `.mcp.json`, e.g. `runi-Planning`) with tools `process_doc` (single-doc read/query) and `process_docs` (multi-doc queries). See `CLAUDE.md` for references to planning docs.
 
 ---
 

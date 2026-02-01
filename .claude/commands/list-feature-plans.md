@@ -4,16 +4,18 @@ List all available TDD plans in the runi-planning-docs repository with their wor
 
 ## LLM Execution Rules
 
-- Prefer `npx limps list-plans` output over manual filesystem scans.
-- If the command fails, report the error and stop.
+- Prefer MCP when the planning server is available: use `list_plans` (server from `.mcp.json`, e.g. `runi-Planning`). Otherwise use `npx limps list-plans`. Do not rely on manual filesystem scans.
+- Resolve the MCP server name from `.mcp.json` (repo root) before calling tools.
+- If both MCP and CLI fail, report the error and stop.
 
 ## Instructions for Claude
 
 **When this command is invoked, you must:**
 
-1. **Run the list-plans command:**
-   - Execute: `npx limps list-plans`
-   - The command will display all plans in `../runi-planning-docs/plans/`
+1. **List plans:**
+   - If planning MCP is available: call `list_plans` via `call_mcp_tool` (server from `.mcp.json`).
+   - Otherwise: execute `npx limps list-plans`.
+   - Plans live under `../runi-planning-docs/plans/`.
 
 2. **Display the output:**
    - Show the formatted list of plans
