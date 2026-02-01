@@ -9,7 +9,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 import { useEffect } from 'react';
 import { MainLayout, type MainLayoutProps } from './MainLayout';
 import { usePanelStore } from '@/stores/usePanelStore';
@@ -99,8 +99,16 @@ export const Playground: Story = {
       );
     },
   ],
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByTestId('main-layout')).toBeInTheDocument();
+    await step('Render main layout', async () => {
+      await expect(canvas.getByTestId('main-layout')).toBeInTheDocument();
+    });
+
+    await step('Toggle sidebar with keyboard shortcut', async () => {
+      const initialVisibility = useSettingsStore.getState().sidebarVisible;
+      await userEvent.keyboard('{Control>}b{/Control}');
+      await expect(useSettingsStore.getState().sidebarVisible).toBe(!initialVisibility);
+    });
   },
 };
