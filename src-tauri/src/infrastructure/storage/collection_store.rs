@@ -1,4 +1,4 @@
-use crate::domain::collection::Collection;
+use crate::domain::collection::{Collection, CollectionMetadata};
 use crate::infrastructure::storage::get_data_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
