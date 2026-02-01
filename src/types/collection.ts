@@ -15,7 +15,9 @@ export const SCHEMA_URL = 'https://runi.dev/schema/collection/v1.json';
 /** Current schema version - integer, not semver */
 export const SCHEMA_VERSION = 1;
 
-export interface Collection {
+export type ExtensionFields = Record<`x-${string}`, unknown>;
+
+export interface Collection extends ExtensionFields {
   $schema: string;
   version: number;
   id: string;
@@ -23,7 +25,6 @@ export interface Collection {
   source: CollectionSource;
   auth?: AuthConfig;
   variables: Record<string, string>;
-  extensions?: Record<string, unknown>;
   requests: CollectionRequest[];
 }
 
@@ -46,7 +47,7 @@ export interface CollectionSource {
 
 export type SourceType = 'openapi' | 'postman' | 'bruno' | 'insomnia' | 'curl' | 'manual';
 
-export interface CollectionRequest {
+export interface CollectionRequest extends ExtensionFields {
   id: string;
   name: string;
   seq: number;
@@ -61,7 +62,6 @@ export interface CollectionRequest {
   binding: SpecBinding;
   intelligence: IntelligenceMetadata;
   tags: string[];
-  extensions?: Record<string, unknown>;
 }
 
 export interface RequestParam {

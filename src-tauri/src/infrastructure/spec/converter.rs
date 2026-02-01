@@ -40,7 +40,7 @@ pub fn convert_to_collection(
         .enumerate()
         .map(|(idx, op)| {
             let path = &op.path;
-            let url = format!("{base_url}{path}");
+            let url = join_url(&base_url, path);
             let params = extract_query_params(&op.parameters);
 
             CollectionRequest {
@@ -90,6 +90,16 @@ pub fn convert_to_collection(
         extensions: BTreeMap::new(),
         requests,
     }
+}
+
+fn join_url(base_url: &str, path: &str) -> String {
+    if path.is_empty() {
+        return base_url.to_string();
+    }
+
+    let normalized_base = base_url.trim_end_matches('/');
+    let normalized_path = path.trim_start_matches('/');
+    format!("{normalized_base}/{normalized_path}")
 }
 
 fn extract_query_params(parameters: &[ParsedParameter]) -> Vec<RequestParam> {
@@ -192,6 +202,16 @@ mod tests {
         let collection = convert_to_collection(&parsed, "{}", "https://test.com/spec.json");
         // This compiles only if headers is BTreeMap, not HashMap
         let _: &BTreeMap<String, String> = &collection.requests[0].headers;
+    }
+
+    #[test]
+    fn test_convert_normalizes_double_slash_urls() {
+        let mut parsed = minimal_parsed_spec();
+        parsed.servers[0].url = "https://api.test.com/".to_string();
+        parsed.operations[0].path = "/users".to_string();
+
+        let collection = convert_to_collection(&parsed, "{}", "https://test.com/spec.json");
+        assert_eq!(collection.requests[0].url, "https://api.test.com/users");
     }
 
     #[test]
