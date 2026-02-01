@@ -19,6 +19,7 @@ use crate::infrastructure::storage::traits::HistoryStorage;
 use std::sync::{Arc, LazyLock};
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
+use tracing::error;
 
 /// Global history storage instance (in-memory by default).
 ///
@@ -395,6 +396,35 @@ pub fn set_log_level(level: String) -> Result<(), String> {
     };
 
     set_level(log_level);
+    Ok(())
+}
+
+/// Log a frontend crash report to the terminal logger.
+#[tauri::command]
+pub async fn cmd_log_frontend_error(report_json: String) -> Result<(), String> {
+    error!("frontend-crash: {report_json}");
+    Ok(())
+}
+
+/// Write a frontend crash report to a user-selected path.
+#[tauri::command]
+pub async fn cmd_write_frontend_error_report(
+    path: String,
+    report_json: String,
+) -> Result<(), String> {
+    let report_value: serde_json::Value =
+        serde_json::from_str(&report_json).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let pretty = serde_json::to_string_pretty(&report_value)
+        .map_err(|e| format!("Failed to format JSON: {e}"))?;
+    let path_buf = std::path::PathBuf::from(&path);
+    if let Some(parent) = path_buf.parent() {
+        tokio::fs::create_dir_all(parent)
+            .await
+            .map_err(|e| format!("Failed to create report directory: {e}"))?;
+    }
+    tokio::fs::write(&path_buf, pretty)
+        .await
+        .map_err(|e| format!("Failed to write report: {e}"))?;
     Ok(())
 }
 

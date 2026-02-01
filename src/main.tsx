@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom/client';
 import { initializeConsoleService, getConsoleService } from '@/services/console-service';
 // Import Toast module early to ensure event bridge is set up before any components can emit events
 import '@/components/ui/Toast/useToast';
+import { createCrashReport, type FrontendCrashReport } from '@/types/errors';
 import { App } from './App';
 import './app.css';
 
@@ -60,12 +61,148 @@ if (document.readyState !== 'complete') {
 }
 
 const rootElement = document.getElementById('root');
-if (rootElement !== null) {
-  ReactDOM.createRoot(rootElement).render(
+let root: ReactDOM.Root | null = null;
+let hasCrashed = false;
+
+const renderApp = (): void => {
+  if (root === null || hasCrashed) {
+    return;
+  }
+  root.render(
     <React.StrictMode>
       <App />
     </React.StrictMode>
   );
+};
+
+const logCrashReport = async (report: FrontendCrashReport): Promise<void> => {
+  if (typeof window === 'undefined' || !('__TAURI__' in window)) {
+    return;
+  }
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    const reportJson = JSON.stringify(report);
+    await invoke('cmd_log_frontend_error', { reportJson });
+  } catch (error) {
+    if (isDev) {
+      console.warn('Failed to log frontend crash report:', error);
+    }
+  }
+};
+
+const CrashScreen = ({ report }: { report: FrontendCrashReport }): React.JSX.Element => {
+  const pickSavePath = async (): Promise<string | null> => {
+    const module: unknown = await import('@tauri-apps/plugin-dialog');
+    const dialogModule = module as {
+      save?: (options?: {
+        defaultPath?: string;
+        filters?: Array<{ name: string; extensions: string[] }>;
+      }) => Promise<unknown>;
+    };
+    if (typeof dialogModule.save !== 'function') {
+      return null;
+    }
+    const result = await dialogModule.save({
+      defaultPath: 'runi-crash-report.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    return typeof result === 'string' ? result : null;
+  };
+
+  const handleSaveReport = async (): Promise<void> => {
+    if (typeof window === 'undefined' || !('__TAURI__' in window)) {
+      return;
+    }
+    const reportJson = JSON.stringify(report, null, 2);
+    try {
+      const path = await pickSavePath();
+      if (path === null || path.length === 0) {
+        return;
+      }
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('cmd_write_frontend_error_report', { path, reportJson });
+    } catch (error) {
+      if (isDev) {
+        console.warn('Failed to save crash report:', error);
+      }
+    }
+  };
+
+  return (
+    <div className="flex h-screen w-screen items-center justify-center bg-bg-app text-text-primary">
+      <div className="max-w-xl rounded-lg border border-border-subtle bg-bg-surface p-6">
+        <h1 className="text-lg font-semibold">Something went wrong</h1>
+        <p className="mt-2 text-sm text-text-secondary">
+          runi ran into a crash. You can save a report and share it with the team for analysis.
+        </p>
+        <div className="mt-4 rounded-md bg-bg-raised p-3 text-xs text-text-muted">
+          <div>Message: {report.message}</div>
+          <div>Path: {report.pathname}</div>
+          <div>Time: {report.timestamp}</div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            className="rounded-md bg-accent-blue px-3 py-2 text-sm text-accent-contrast"
+            onClick={() => {
+              void handleSaveReport();
+            }}
+          >
+            Save report
+          </button>
+          <button
+            type="button"
+            className="rounded-md border border-border-subtle px-3 py-2 text-sm text-text-secondary"
+            onClick={() => {
+              window.location.reload();
+            }}
+          >
+            Reload app
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const handleCrash = async (error: Error, componentStack?: string): Promise<void> => {
+  if (hasCrashed) {
+    return;
+  }
+  hasCrashed = true;
+  const report = createCrashReport({
+    message: error.message,
+    stack: error.stack,
+    componentStack,
+    pathname: window.location.pathname,
+    buildMode: isDev ? 'dev' : 'release',
+  });
+  await logCrashReport(report);
+  if (root !== null) {
+    root.render(<CrashScreen report={report} />);
+  }
+};
+
+const installCrashHandlers = (): void => {
+  window.addEventListener('error', (event) => {
+    const error = event.error instanceof Error ? event.error : new Error(event.message);
+    void handleCrash(error);
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason: unknown = event.reason;
+    const error =
+      reason instanceof Error
+        ? reason
+        : new Error(typeof reason === 'string' ? reason : 'Unhandled rejection');
+    void handleCrash(error);
+  });
+};
+
+if (rootElement !== null) {
+  root = ReactDOM.createRoot(rootElement);
+  installCrashHandlers();
+  renderApp();
 
   // Track React mount (after first render)
   requestAnimationFrame(() => {

@@ -10,3 +10,12 @@
  * This is set from package.json version at build time.
  */
 declare const __APP_VERSION__: string;
+
+declare module '@tauri-apps/plugin-dialog' {
+  export interface SaveDialogOptions {
+    defaultPath?: string;
+    filters?: Array<{ name: string; extensions: string[] }>;
+  }
+
+  export function save(options?: SaveDialogOptions): Promise<string | null>;
+}

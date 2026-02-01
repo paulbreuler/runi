@@ -32,6 +32,20 @@ export interface AppError {
 }
 
 /**
+ * Minimal crash report payload for frontend failures.
+ *
+ * Intentionally excludes PII (no user agent, IP, or request content).
+ */
+export interface FrontendCrashReport {
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  timestamp: string;
+  pathname: string;
+  buildMode: 'dev' | 'release';
+}
+
+/**
  * Create a frontend AppError.
  *
  * @param code - Error code
@@ -56,6 +70,26 @@ export function createFrontendError(
   };
 }
 
+/**
+ * Create a minimal frontend crash report payload.
+ */
+export function createCrashReport(input: {
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  timestamp?: string;
+  pathname?: string;
+  buildMode?: 'dev' | 'release';
+}): FrontendCrashReport {
+  return {
+    message: input.message,
+    stack: input.stack,
+    componentStack: input.componentStack,
+    timestamp: input.timestamp ?? new Date().toISOString(),
+    pathname: input.pathname ?? window.location.pathname,
+    buildMode: input.buildMode ?? 'release',
+  };
+}
 /**
  * Convert a backend AppError (from Rust) to frontend AppError.
  *
