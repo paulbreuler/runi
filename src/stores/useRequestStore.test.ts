@@ -57,6 +57,16 @@ describe('useRequestStore', () => {
     expect(result.current.headers).toEqual({ 'Content-Type': 'application/json' });
   });
 
+  it('defaults headers when undefined is provided', () => {
+    const { result } = renderHook(() => useRequestStore());
+
+    act(() => {
+      result.current.setHeaders(undefined);
+    });
+
+    expect(result.current.headers).toEqual({});
+  });
+
   it('sets body', () => {
     const { result } = renderHook(() => useRequestStore());
 
