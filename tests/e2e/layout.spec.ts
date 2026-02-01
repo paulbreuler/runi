@@ -2,16 +2,26 @@ import { test, expect } from '@playwright/test';
 
 test.describe('MainLayout', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-
-    // Mock Tauri IPC for these tests
-    await page.evaluate(() => {
-      // Simple mock setup - intercept any Tauri invokes
+    await page.addInitScript(() => {
+      window.localStorage.removeItem('runi-panel-state');
       (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
-        invoke: (): Promise<{ status: number; body: string; headers: Record<string, string> }> =>
-          Promise.resolve({ status: 200, body: '{}', headers: {} }),
+        invoke: (cmd: string): Promise<unknown> => {
+          if (cmd === 'load_request_history') {
+            return Promise.resolve([]);
+          }
+          if (cmd === 'get_platform') {
+            return Promise.resolve('linux');
+          }
+          if (cmd === 'cmd_list_collections') {
+            return Promise.resolve([]);
+          }
+          return Promise.resolve({ status: 200, body: '{}', headers: {} });
+        },
       };
+      delete (window as unknown as Record<string, unknown>).__TAURI__;
     });
+
+    await page.goto('/');
   });
 
   test('renders all layout components', async ({ page }) => {
@@ -25,8 +35,26 @@ test.describe('MainLayout', () => {
         (navigator.userAgentData as { platform?: string } | undefined)?.platform === 'macOS'
       );
     });
-    const modifier = isMac ? 'Meta' : 'Control';
-    await page.keyboard.press(`${modifier}+b`);
+    await page.focus('body');
+    await page.waitForTimeout(100);
+    await page.evaluate(
+      ({ meta, ctrl }) => {
+        const event = new KeyboardEvent('keydown', {
+          key: 'b',
+          code: 'KeyB',
+          keyCode: 66,
+          which: 66,
+          metaKey: meta,
+          ctrlKey: ctrl,
+          shiftKey: false,
+          altKey: false,
+          bubbles: true,
+          cancelable: true,
+        });
+        window.dispatchEvent(event);
+      },
+      { meta: isMac, ctrl: !isMac }
+    );
 
     // Verify sidebar is now visible
     await expect(page.getByTestId('sidebar')).toBeVisible();

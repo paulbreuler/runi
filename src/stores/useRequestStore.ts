@@ -18,7 +18,7 @@ interface RequestState {
   // Actions
   setMethod: (method: string) => void;
   setUrl: (url: string) => void;
-  setHeaders: (headers: Record<string, string>) => void;
+  setHeaders: (headers: Record<string, string> | undefined) => void;
   setBody: (body: string) => void;
   setResponse: (response: HttpResponse | null) => void;
   setLoading: (loading: boolean) => void;
@@ -40,7 +40,7 @@ export const useRequestStore = create<RequestState>((set) => ({
     set({ url });
   },
   setHeaders: (headers): void => {
-    set({ headers });
+    set({ headers: headers ?? {} });
   },
   setBody: (body): void => {
     set({ body });

@@ -3,6 +3,7 @@
 
 // Storage infrastructure for pluggable storage backends
 
+pub mod collection_store;
 pub mod encryption;
 pub mod file_storage;
 pub mod history;

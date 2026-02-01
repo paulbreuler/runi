@@ -47,6 +47,16 @@ const MIN_SIDEBAR_WIDTH = 256;
 const MAX_SIDEBAR_WIDTH = 500;
 const DEFAULT_SIDEBAR_WIDTH = 256;
 const COLLAPSED_SIDEBAR_WIDTH = 8; // Slim page edge when collapsed
+const SIDEBAR_COLLAPSE_BUFFER = 24; // Pixels below min before collapsing
+
+interface LayoutBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
 
 const overlayVariants = {
   hidden: { opacity: 0, pointerEvents: 'none' as const },
@@ -93,7 +103,7 @@ export const MainLayout = ({
   responseContent,
   initialSidebarVisible = false, // Default collapsed since collections aren't supported yet
 }: MainLayoutProps): React.JSX.Element => {
-  const { sidebarVisible, toggleSidebar, setSidebarVisible } = useSettingsStore();
+  const { sidebarVisible, sidebarEdge, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const {
     position: panelPosition,
     isVisible: panelVisible,
@@ -106,6 +116,7 @@ export const MainLayout = ({
   // Pane state
   const [requestPaneSize, setRequestPaneSize] = useState(DEFAULT_SPLIT);
   const [isPaneDragging, setIsPaneDragging] = useState(false);
+  const layoutRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Panel tab state
@@ -116,8 +127,9 @@ export const MainLayout = ({
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
   const isSidebarDraggingRef = useRef(false); // Sync ref for pointer handlers (state is async)
-  const sidebarDragStartWidth = useRef(DEFAULT_SIDEBAR_WIDTH);
   const sidebarDragCurrentWidth = useRef(DEFAULT_SIDEBAR_WIDTH); // Track actual drag position (spring lags)
+  const [isSidebarCollapseHint, setIsSidebarCollapseHint] = useState(false);
+  const isSidebarCollapseHintRef = useRef(false);
   const isInitialMount = useRef(true);
 
   // Initialize sidebar visibility on mount only
@@ -240,11 +252,13 @@ export const MainLayout = ({
     }
   }, [sidebarVisible, sidebarWidth, sidebarWidthSpring, isSidebarDragging]);
 
-  // Sidebar content opacity - fade out when collapsing
+  const collapseThreshold = MIN_SIDEBAR_WIDTH - SIDEBAR_COLLAPSE_BUFFER;
+
+  // Sidebar content opacity - fade out with stronger cue past collapse threshold
   const sidebarContentOpacity = useTransform(
     sidebarWidthSpring,
-    [COLLAPSED_SIDEBAR_WIDTH, COLLAPSED_SIDEBAR_WIDTH + 50, MIN_SIDEBAR_WIDTH],
-    [0, 0, 1]
+    [COLLAPSED_SIDEBAR_WIDTH, COLLAPSED_SIDEBAR_WIDTH + 50, collapseThreshold, MIN_SIDEBAR_WIDTH],
+    [0, 0, 0.45, 1]
   );
 
   // Prevent text selection during any drag
@@ -262,6 +276,46 @@ export const MainLayout = ({
       document.body.style.cursor = '';
     };
   }, [isPaneDragging, isSidebarDragging]);
+
+  const getLayoutBounds = useCallback((): LayoutBounds => {
+    if (layoutRef.current !== null) {
+      const rect = layoutRef.current.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    return {
+      left: 0,
+      right: width,
+      top: 0,
+      bottom: height,
+      width,
+      height,
+    };
+  }, []);
+
+  const getSidebarDragSize = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>): number => {
+      const bounds = getLayoutBounds();
+      switch (sidebarEdge) {
+        case 'right':
+          return bounds.right - event.clientX;
+        case 'bottom':
+          return bounds.bottom - event.clientY;
+        default:
+          return event.clientX - bounds.left;
+      }
+    },
+    [getLayoutBounds, sidebarEdge]
+  );
 
   // Pane resizer handlers
   const handlePanePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -319,10 +373,11 @@ export const MainLayout = ({
       isSidebarDraggingRef.current = true;
       setIsSidebarDragging(true);
 
-      // Track where we started for collapse detection
+      // Track where we started for drag feedback
       const startWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
-      sidebarDragStartWidth.current = startWidth;
       sidebarDragCurrentWidth.current = startWidth;
+      isSidebarCollapseHintRef.current = false;
+      setIsSidebarCollapseHint(false);
 
       // If collapsed, immediately set to visible so drag feels responsive
       if (!sidebarVisible) {
@@ -339,13 +394,18 @@ export const MainLayout = ({
         return;
       }
 
-      const newWidth = e.clientX;
+      const newWidth = getSidebarDragSize(e);
       // Allow dragging below MIN for the "page turning" feel
       const clamped = Math.max(COLLAPSED_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
       sidebarDragCurrentWidth.current = clamped; // Track actual position (spring lags behind)
+      const shouldHint = clamped <= collapseThreshold;
+      if (shouldHint !== isSidebarCollapseHintRef.current) {
+        isSidebarCollapseHintRef.current = shouldHint;
+        setIsSidebarCollapseHint(shouldHint);
+      }
       sidebarWidthSpring.set(clamped);
     },
-    [sidebarWidthSpring]
+    [collapseThreshold, getSidebarDragSize, sidebarWidthSpring]
   );
 
   const handleSidebarPointerUp = useCallback(
@@ -359,23 +419,21 @@ export const MainLayout = ({
 
       // Use tracked position, not spring (spring animates and lags behind actual drag)
       const finalWidth = sidebarDragCurrentWidth.current;
-      const startWidth = sidebarDragStartWidth.current;
 
-      // Direction-based: dragging LEFT = close intent, dragging RIGHT = resize
-      if (finalWidth < startWidth) {
-        // User dragged left from start position → collapse
+      if (finalWidth <= collapseThreshold) {
         setSidebarVisible(false);
       } else {
-        // User dragged right from start position → resize, clamp to valid range
         const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
         setSidebarWidth(clamped);
       }
 
       // Clear both ref and state
       isSidebarDraggingRef.current = false;
+      isSidebarCollapseHintRef.current = false;
+      setIsSidebarCollapseHint(false);
       setIsSidebarDragging(false);
     },
-    [setSidebarVisible]
+    [collapseThreshold, setSidebarVisible]
   );
 
   // Double-click on sash to toggle sidebar
@@ -458,7 +516,11 @@ export const MainLayout = ({
   const isSidebarOverlay = sidebarVisible && isCompact;
 
   return (
-    <div className="relative z-0 flex h-screen flex-col bg-bg-app" data-test-id="main-layout">
+    <div
+      ref={layoutRef}
+      className="relative z-0 flex h-screen flex-col bg-bg-app"
+      data-test-id="main-layout"
+    >
       <div className="flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
@@ -476,6 +538,8 @@ export const MainLayout = ({
                 <motion.div
                   className="flex-1 overflow-hidden"
                   style={{ opacity: sidebarContentOpacity }}
+                  data-test-id="sidebar-wrapper"
+                  data-collapse-hint={isSidebarCollapseHint}
                 >
                   <Sidebar />
                 </motion.div>

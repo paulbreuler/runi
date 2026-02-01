@@ -11,6 +11,9 @@ test.describe('Sidebar', () => {
           if (cmd === 'load_request_history') {
             return Promise.resolve([]);
           }
+          if (cmd === 'cmd_list_collections') {
+            return Promise.resolve([]);
+          }
           // Default mock for other commands (like execute_http_request)
           return Promise.resolve({ status: 200, body: '{}', headers: {} });
         },
@@ -30,8 +33,26 @@ test.describe('Sidebar', () => {
         (navigator.userAgentData as { platform?: string } | undefined)?.platform === 'macOS'
       );
     });
-    const modifier = isMac ? 'Meta' : 'Control';
-    await page.keyboard.press(`${modifier}+b`);
+    await page.focus('body');
+    await page.waitForTimeout(100);
+    await page.evaluate(
+      ({ meta, ctrl }) => {
+        const event = new KeyboardEvent('keydown', {
+          key: 'b',
+          code: 'KeyB',
+          keyCode: 66,
+          which: 66,
+          metaKey: meta,
+          ctrlKey: ctrl,
+          shiftKey: false,
+          altKey: false,
+          bubbles: true,
+          cancelable: true,
+        });
+        window.dispatchEvent(event);
+      },
+      { meta: isMac, ctrl: !isMac }
+    );
 
     // Wait for sidebar to be visible and animation to complete
     await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 10000 });
@@ -48,16 +69,12 @@ test.describe('Sidebar', () => {
     // Verify Collections section header is visible
     await expect(page.getByText('Collections', { exact: true })).toBeVisible();
 
-    // Collections drawer is collapsed by default, so expand it first
+    // Collections drawer is open by default
     const collectionsDrawer = page.getByTestId('collections-drawer');
-    const toggleButton = collectionsDrawer.locator('button').first();
-    await toggleButton.click();
-
-    // Wait for drawer to expand
-    await page.waitForTimeout(300);
+    await expect(collectionsDrawer).toBeVisible();
 
     // Now verify the content is visible
-    await expect(page.getByText('No collections yet')).toBeVisible();
+    await expect(page.getByTestId('collection-list-empty')).toBeVisible();
 
     // History section was removed - it's now in Network History Panel instead
   });
@@ -119,16 +136,7 @@ test.describe('Sidebar', () => {
   });
 
   test('sidebar sections have hover effects', async ({ page }) => {
-    // Collections drawer is collapsed by default, so expand it first
-    const collectionsDrawer = page.getByTestId('collections-drawer');
-    const toggleButton = collectionsDrawer.locator('button').first();
-    await toggleButton.click();
-
-    // Wait for drawer to expand
-    await page.waitForTimeout(300);
-
-    // Now find the collections item
-    const collectionsItem = page.getByText('No collections yet');
+    const collectionsItem = page.getByTestId('collection-list-empty');
 
     // Hover over the collections item
     await collectionsItem.hover();

@@ -3,6 +3,25 @@ import { openPanel, isCI } from '../helpers/panel';
 
 test.describe('Network Panel', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.removeItem('runi-panel-state');
+      (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
+        invoke: (cmd: string): Promise<unknown> => {
+          if (cmd === 'load_request_history') {
+            return Promise.resolve([]);
+          }
+          if (cmd === 'get_platform') {
+            return Promise.resolve('linux');
+          }
+          if (cmd === 'cmd_list_collections') {
+            return Promise.resolve([]);
+          }
+          return Promise.resolve({ status: 200, body: '{}', headers: {} });
+        },
+      };
+      delete (window as unknown as Record<string, unknown>).__TAURI__;
+    });
+
     // Navigate to the app
     await page.goto('/');
   });

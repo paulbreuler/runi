@@ -24,6 +24,7 @@ import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 export const HomePage = (): React.JSX.Element => {
   const {
     method,
+    url,
     headers,
     body,
     response,
@@ -38,8 +39,19 @@ export const HomePage = (): React.JSX.Element => {
 
   const { addEntry, loadHistory } = useHistoryStore();
 
+  const initialSidebarVisible =
+    typeof window !== 'undefined' &&
+    (window.location.search.includes('e2eSidebar=1') ||
+      (window as { __RUNI_E2E__?: { sidebarVisible?: boolean } }).__RUNI_E2E__?.sidebarVisible ===
+        true);
+
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
+
+  useEffect(() => {
+    setLocalUrl(url);
+    setLocalMethod(method as HttpMethod);
+  }, [method, url]);
 
   // Load history on mount
   useEffect(() => {
@@ -178,6 +190,7 @@ export const HomePage = (): React.JSX.Element => {
 
   return (
     <MainLayout
+      initialSidebarVisible={initialSidebarVisible}
       headerContent={
         <RequestHeader
           method={localMethod}

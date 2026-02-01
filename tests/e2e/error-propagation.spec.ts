@@ -5,13 +5,32 @@ test.describe('Error Propagation with Correlation IDs', () => {
   test.beforeEach(async ({ page }) => {
     // Mock Tauri IPC to return errors with correlation IDs for error propagation tests
     await page.addInitScript(() => {
-      // Mark Tauri as available
-      (window as unknown as Record<string, unknown>).__TAURI__ = true;
+      window.localStorage.removeItem('runi-panel-state');
       (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
         invoke: (cmd: string, args?: { params?: { url?: string } }): Promise<unknown> => {
           // Handle load_request_history - return empty array for empty history
           if (cmd === 'load_request_history') {
             return Promise.resolve([]);
+          }
+          if (cmd === 'get_platform') {
+            return Promise.resolve('linux');
+          }
+          if (cmd === 'cmd_list_collections') {
+            return Promise.resolve([]);
+          }
+          if (cmd === 'get_process_startup_time') {
+            return Promise.resolve(0);
+          }
+          if (cmd === 'get_system_specs') {
+            return Promise.resolve({
+              cpuModel: 'unknown',
+              cpuCores: 0,
+              totalMemoryGb: 0,
+              platform: 'linux',
+              architecture: 'x64',
+              buildMode: 'dev',
+              bundleSizeMb: 0,
+            });
           }
           // Handle execute_request - return error with correlation ID for invalid URLs
           if (cmd === 'execute_request') {
@@ -39,6 +58,14 @@ test.describe('Error Propagation with Correlation IDs', () => {
           }
           // Default mock for other commands
           return Promise.resolve({ status: 200, body: '{}', headers: {} });
+        },
+      };
+      (window as unknown as Record<string, unknown>).__TAURI__ = {
+        invoke: (cmd: string, args?: unknown): Promise<unknown> => {
+          const tauri = window as unknown as {
+            __TAURI_INTERNALS__?: { invoke: (cmd: string, args?: unknown) => Promise<unknown> };
+          };
+          return tauri.__TAURI_INTERNALS__?.invoke(cmd, args) ?? Promise.resolve({});
         },
       };
     });

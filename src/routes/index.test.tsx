@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HomePage } from './index';
 import { useRequestStore } from '@/stores/useRequestStore';
@@ -255,6 +255,35 @@ describe('HomePage - Auto-save to history', () => {
     });
   });
 
+  it('syncs URL and method from request store updates', async () => {
+    const { rerender } = render(<HomePage />);
+    const urlInput = screen.getByLabelText<HTMLInputElement>('Request URL');
+
+    expect(urlInput.value).toBe('https://httpbin.org/get');
+
+    vi.mocked(useRequestStore).mockReturnValue({
+      method: 'POST',
+      url: 'https://api.example.com/test',
+      headers: {},
+      body: '',
+      response: null,
+      isLoading: false,
+      setMethod: mockSetMethod,
+      setUrl: mockSetUrl,
+      setHeaders: mockSetHeaders,
+      setBody: mockSetBody,
+      setResponse: mockSetResponse,
+      setLoading: mockSetLoading,
+      reset: vi.fn(),
+    });
+
+    rerender(<HomePage />);
+
+    await waitFor(() => {
+      expect(urlInput.value).toBe('https://api.example.com/test');
+    });
+  });
+
   describe('History entry selection (event-driven)', () => {
     const mockHistoryEntry: HistoryEntry = {
       id: 'hist_123',
@@ -311,12 +340,14 @@ describe('HomePage - Auto-save to history', () => {
       }
 
       // Call all registered handlers (simulating event emission)
-      handlers.forEach((handler) => {
-        handler({
-          type: 'history.entry-selected',
-          payload: mockHistoryEntry,
-          timestamp: Date.now(),
-          source: 'HistoryDrawer',
+      act(() => {
+        handlers.forEach((handler) => {
+          handler({
+            type: 'history.entry-selected',
+            payload: mockHistoryEntry,
+            timestamp: Date.now(),
+            source: 'HistoryDrawer',
+          });
         });
       });
 
@@ -353,12 +384,14 @@ describe('HomePage - Auto-save to history', () => {
       }
 
       // Call all registered handlers (simulating event emission)
-      handlers.forEach((handler) => {
-        handler({
-          type: 'history.entry-selected',
-          payload: entryWithoutBody,
-          timestamp: Date.now(),
-          source: 'HistoryDrawer',
+      act(() => {
+        handlers.forEach((handler) => {
+          handler({
+            type: 'history.entry-selected',
+            payload: entryWithoutBody,
+            timestamp: Date.now(),
+            source: 'HistoryDrawer',
+          });
         });
       });
 

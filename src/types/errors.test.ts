@@ -4,7 +4,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { type AppError, createFrontendError, fromBackendError, isAppError } from './errors';
+import {
+  type AppError,
+  createCrashReport,
+  createFrontendError,
+  fromBackendError,
+  isAppError,
+} from './errors';
 
 describe('errors', () => {
   describe('createFrontendError', () => {
@@ -72,6 +78,48 @@ describe('errors', () => {
       };
       const error = fromBackendError(backendError);
       expect(error.correlationId).toBe('test-id');
+    });
+  });
+
+  describe('createCrashReport', () => {
+    it('creates a minimal non-PII report', () => {
+      const report = createCrashReport({
+        message: 'Crash',
+        stack: 'stack',
+        componentStack: 'component stack',
+        pathname: '/test',
+        buildMode: 'dev',
+      });
+
+      expect(report.message).toBe('Crash');
+      expect(report.stack).toBe('stack');
+      expect(report.componentStack).toBe('component stack');
+      expect(report.pathname).toBe('/test');
+      expect(report.buildMode).toBe('dev');
+      expect(typeof report.timestamp).toBe('string');
+      expect((report as { userAgent?: string }).userAgent).toBeUndefined();
+    });
+
+    it('uses defaults when optional fields are missing', () => {
+      const report = createCrashReport({ message: 'Crash' });
+      expect(report.message).toBe('Crash');
+      expect(typeof report.timestamp).toBe('string');
+      expect(report.pathname.length).toBeGreaterThan(0);
+      expect(report.buildMode).toBe('release');
+    });
+
+    it('redacts filesystem paths from stacks', () => {
+      const report = createCrashReport({
+        message: 'Crash',
+        stack: 'at /Users/paul/Documents/runi-crash-report.json:1:2',
+        componentStack: 'at C:\\Users\\paul\\Documents\\runi-crash-report.json:1:2',
+        pathname: '/',
+        buildMode: 'dev',
+      });
+      expect(report.stack).toContain('[redacted-path]');
+      expect(report.stack).not.toContain('/Users/paul/Documents');
+      expect(report.componentStack).toContain('[redacted-path]');
+      expect(report.componentStack).not.toContain('C:\\Users\\paul\\Documents');
     });
   });
 

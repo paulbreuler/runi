@@ -103,7 +103,7 @@ vi.mock('motion/react', async () => {
 describe('MainLayout', () => {
   beforeEach(() => {
     // Reset store state
-    useSettingsStore.setState({ sidebarVisible: true });
+    useSettingsStore.setState({ sidebarVisible: true, sidebarEdge: 'left' });
     usePanelStore.setState({
       position: 'bottom',
       isVisible: false,
@@ -369,7 +369,7 @@ describe('MainLayout', () => {
   });
 
   describe('Sidebar Drag-to-Close', () => {
-    it('collapses sidebar when dragged left by any amount (direction-based)', () => {
+    it('does not collapse when dragged slightly toward the edge', () => {
       render(<MainLayout />);
 
       // Verify sidebar starts visible
@@ -385,14 +385,56 @@ describe('MainLayout', () => {
       fireEvent.pointerDown(resizer, { clientX: 256, pointerId: 1 });
 
       // Drag left by just 10px (to x=246)
-      // This is a small leftward drag that should collapse with direction-based logic
+      // Small drag should not collapse (threshold-based)
       fireEvent.pointerMove(resizer, { clientX: 246 });
 
       // End drag
       fireEvent.pointerUp(resizer, { clientX: 246, pointerId: 1 });
 
-      // With direction-based logic: any leftward drag should collapse
-      // With old threshold logic: 10px left would NOT collapse (needs 50px + below MIN_SIDEBAR_WIDTH)
+      expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+    });
+
+    it('shows collapse hint when dragged past threshold', () => {
+      render(<MainLayout />);
+
+      const resizer = screen.getByTestId('sidebar-resizer');
+      const sidebarContent = screen.getByTestId('sidebar-wrapper');
+
+      resizer.setPointerCapture = vi.fn();
+      resizer.releasePointerCapture = vi.fn();
+
+      expect(sidebarContent).toHaveAttribute('data-collapse-hint', 'false');
+
+      fireEvent.pointerDown(resizer, { clientX: 256, pointerId: 1 });
+      fireEvent.pointerMove(resizer, { clientX: 200 });
+
+      expect(sidebarContent).toHaveAttribute('data-collapse-hint', 'true');
+
+      fireEvent.pointerUp(resizer, { clientX: 200, pointerId: 1 });
+      expect(useSettingsStore.getState().sidebarVisible).toBe(false);
+    });
+
+    it('collapses when dragged past the minimum threshold', () => {
+      render(<MainLayout />);
+
+      // Verify sidebar starts visible
+      expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+
+      const resizer = screen.getByTestId('sidebar-resizer');
+
+      // Mock setPointerCapture/releasePointerCapture
+      resizer.setPointerCapture = vi.fn();
+      resizer.releasePointerCapture = vi.fn();
+
+      // Start drag at x=256 (default sidebar width)
+      fireEvent.pointerDown(resizer, { clientX: 256, pointerId: 1 });
+
+      // Drag left past threshold (to x=200)
+      fireEvent.pointerMove(resizer, { clientX: 200 });
+
+      // End drag
+      fireEvent.pointerUp(resizer, { clientX: 200, pointerId: 1 });
+
       expect(useSettingsStore.getState().sidebarVisible).toBe(false);
     });
 
@@ -419,6 +461,31 @@ describe('MainLayout', () => {
 
       // Should remain visible (dragging right = resize intent)
       expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+    });
+
+    it('uses right-edge sizing when sidebarEdge is right', () => {
+      useSettingsStore.setState({ sidebarEdge: 'right' });
+      render(<MainLayout />);
+
+      // Verify sidebar starts visible
+      expect(useSettingsStore.getState().sidebarVisible).toBe(true);
+
+      const resizer = screen.getByTestId('sidebar-resizer');
+
+      // Mock setPointerCapture/releasePointerCapture
+      resizer.setPointerCapture = vi.fn();
+      resizer.releasePointerCapture = vi.fn();
+
+      // Start drag at x=256 (default sidebar width)
+      fireEvent.pointerDown(resizer, { clientX: 256, pointerId: 1 });
+
+      // Drag so right edge size is 200px (bounds.right=1200 -> clientX=1000)
+      fireEvent.pointerMove(resizer, { clientX: 1000 });
+
+      // End drag
+      fireEvent.pointerUp(resizer, { clientX: 1000, pointerId: 1 });
+
+      expect(useSettingsStore.getState().sidebarVisible).toBe(false);
     });
   });
 
