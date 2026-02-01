@@ -44,7 +44,8 @@ const deepMerge = (defaults: FeatureFlags, partial: DeepPartial<FeatureFlags>): 
       for (const flagKey of Object.keys(layerValue) as Array<keyof typeof layerValue>) {
         const flagValue = layerValue[flagKey];
         if (typeof flagValue === 'boolean' && flagKey in result[layerKey]) {
-          (result[layerKey] as Record<string, boolean>)[flagKey as string] = flagValue;
+          const layerRecord = result[layerKey] as unknown as Record<string, boolean>;
+          layerRecord[flagKey as string] = flagValue;
         }
       }
     }

@@ -60,31 +60,33 @@ describe('useFeatureFlagStore', () => {
   test('hydrateFlags ignores unknown flags silently', () => {
     const store = useFeatureFlagStore.getState();
 
-    store.hydrateFlags({
+    const config = {
       canvas: { enabled: true },
-      // @ts-expect-error - testing unknown layer
       unknownLayer: { someFlag: true },
-    } as never);
+    } as unknown as Parameters<typeof store.hydrateFlags>[0];
+
+    store.hydrateFlags(config);
 
     const { flags } = useFeatureFlagStore.getState();
     expect(flags.canvas.enabled).toBe(true);
-    expect((flags as Record<string, unknown>).unknownLayer).toBeUndefined();
+    expect((flags as unknown as Record<string, unknown>).unknownLayer).toBeUndefined();
   });
 
   test('hydrateFlags ignores unknown flags within known layers', () => {
     const store = useFeatureFlagStore.getState();
 
-    store.hydrateFlags({
+    const config = {
       canvas: {
         enabled: true,
-        // @ts-expect-error - testing unknown flag
         unknownFlag: true,
       },
-    } as never);
+    } as unknown as Parameters<typeof store.hydrateFlags>[0];
+
+    store.hydrateFlags(config);
 
     const { flags } = useFeatureFlagStore.getState();
     expect(flags.canvas.enabled).toBe(true);
-    expect((flags.canvas as Record<string, unknown>).unknownFlag).toBeUndefined();
+    expect((flags.canvas as unknown as Record<string, unknown>).unknownFlag).toBeUndefined();
   });
 
   test('resetToDefaults restores DEFAULT_FLAGS', () => {

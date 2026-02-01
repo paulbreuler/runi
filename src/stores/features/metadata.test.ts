@@ -26,8 +26,12 @@ describe('flag metadata registry', () => {
   });
 
   it('covers every default flag', () => {
-    const defaultKeys = extractFlagKeys(DEFAULT_FLAGS as Record<string, Record<string, unknown>>);
-    const metadataKeys = extractFlagKeys(FLAG_METADATA as Record<string, Record<string, unknown>>);
+    const defaultKeys = extractFlagKeys(
+      DEFAULT_FLAGS as unknown as Record<string, Record<string, unknown>>
+    );
+    const metadataKeys = extractFlagKeys(
+      FLAG_METADATA as unknown as Record<string, Record<string, unknown>>
+    );
     expect(metadataKeys).toEqual(defaultKeys);
   });
 });
