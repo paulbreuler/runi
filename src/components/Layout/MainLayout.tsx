@@ -538,7 +538,7 @@ export const MainLayout = ({
                 <motion.div
                   className="flex-1 overflow-hidden"
                   style={{ opacity: sidebarContentOpacity }}
-                  data-test-id="sidebar-content"
+                  data-test-id="sidebar-wrapper"
                   data-collapse-hint={isSidebarCollapseHint}
                 >
                   <Sidebar />

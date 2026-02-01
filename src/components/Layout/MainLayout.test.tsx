@@ -398,7 +398,7 @@ describe('MainLayout', () => {
       render(<MainLayout />);
 
       const resizer = screen.getByTestId('sidebar-resizer');
-      const sidebarContent = screen.getByTestId('sidebar-content');
+      const sidebarContent = screen.getByTestId('sidebar-wrapper');
 
       resizer.setPointerCapture = vi.fn();
       resizer.releasePointerCapture = vi.fn();
