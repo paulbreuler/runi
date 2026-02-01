@@ -29,7 +29,10 @@ const DrawerSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-border-subtle last:border-b-0" data-test-id={testId}>
+    <div
+      className="border-b border-border-subtle last:border-b-0 flex flex-col min-h-0"
+      data-test-id={testId}
+    >
       <button
         type="button"
         className={cn(
@@ -51,13 +54,18 @@ const DrawerSection = ({
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="overflow-hidden"
+            className="flex-1 min-h-0"
           >
-            <div className="px-3 pb-3">{children}</div>
+            <div
+              className="px-3 pb-3 h-full overflow-y-auto overflow-x-hidden"
+              data-scroll-container
+            >
+              {children}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -68,18 +76,16 @@ const DrawerSection = ({
 export const Sidebar = (): React.JSX.Element => {
   return (
     <aside className="w-full h-full bg-bg-surface flex flex-col" data-test-id="sidebar-content">
-      {/* Collections Drawer */}
-      <DrawerSection
-        title="Collections"
-        icon={<Folder size={14} />}
-        defaultOpen
-        testId="collections-drawer"
-      >
-        <CollectionList />
-      </DrawerSection>
-
-      {/* Spacer to push content up */}
-      <div className="flex-1" />
+      <div className="flex-1 min-h-0">
+        <DrawerSection
+          title="Collections"
+          icon={<Folder size={14} />}
+          defaultOpen
+          testId="collections-drawer"
+        >
+          <CollectionList />
+        </DrawerSection>
+      </div>
     </aside>
   );
 };
