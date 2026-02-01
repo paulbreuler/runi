@@ -411,7 +411,7 @@ describe('MainLayout', () => {
       expect(sidebarContent).toHaveAttribute('data-collapse-hint', 'true');
 
       fireEvent.pointerUp(resizer, { clientX: 200, pointerId: 1 });
-      expect(sidebarContent).toHaveAttribute('data-collapse-hint', 'false');
+      expect(useSettingsStore.getState().sidebarVisible).toBe(false);
     });
 
     it('collapses when dragged past the minimum threshold', () => {
