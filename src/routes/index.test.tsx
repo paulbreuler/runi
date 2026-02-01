@@ -257,7 +257,7 @@ describe('HomePage - Auto-save to history', () => {
 
   it('syncs URL and method from request store updates', async () => {
     const { rerender } = render(<HomePage />);
-    const urlInput = screen.getByLabelText('Request URL');
+    const urlInput = screen.getByLabelText<HTMLInputElement>('Request URL');
 
     expect(urlInput.value).toBe('https://httpbin.org/get');
 
