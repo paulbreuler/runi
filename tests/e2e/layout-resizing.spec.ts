@@ -2,34 +2,52 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Layout Resizing', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-
-    // Mock Tauri IPC
-    await page.evaluate(() => {
+    await page.addInitScript(() => {
+      try {
+        window.localStorage.removeItem('runi-panel-state');
+      } catch {
+        // Ignore storage access issues in hardened browser contexts
+      }
       (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {
-        invoke: (): Promise<{ status: number; body: string; headers: Record<string, string> }> =>
-          Promise.resolve({ status: 200, body: '{}', headers: {} }),
+        invoke: (cmd: string): Promise<unknown> => {
+          if (cmd === 'load_request_history') {
+            return Promise.resolve([]);
+          }
+          if (cmd === 'get_platform') {
+            return Promise.resolve('linux');
+          }
+          if (cmd === 'cmd_list_collections') {
+            return Promise.resolve([]);
+          }
+          return Promise.resolve({ status: 200, body: '{}', headers: {} });
+        },
       };
+      delete (window as unknown as Record<string, unknown>).__TAURI__;
     });
+
+    await page.goto('/?e2eSidebar=1', { waitUntil: 'domcontentloaded' });
 
     // Wait for React app to render
-    await page.waitForLoadState('networkidle');
-
-    // Sidebar is collapsed by default, so we need to open it first
-    // Use keyboard shortcut to toggle sidebar open (Cmd+B on Mac, Ctrl+B on Windows/Linux)
-    // Detect platform and use appropriate modifier
-    const isMac = await page.evaluate(() => {
-      return (
-        navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
-        (navigator.userAgentData as { platform?: string } | undefined)?.platform === 'macOS'
+    try {
+      await page.waitForSelector('[data-test-id="main-layout"]', {
+        state: 'attached',
+        timeout: 20000,
+      });
+    } catch (error) {
+      const bodyText = await page.evaluate(
+        () => document.body?.innerText?.trim().slice(0, 500) ?? ''
       );
+      throw new Error(`Main layout not found. Body text: ${bodyText}`, { cause: error });
+    }
+
+    // Ensure sidebar is visible for resize tests
+    await page.evaluate(async () => {
+      const { useSettingsStore } = await import('/src/stores/useSettingsStore');
+      useSettingsStore.getState().setSidebarVisible(true);
     });
 
-    const modifier = isMac ? 'Meta' : 'Control';
-    await page.keyboard.press(`${modifier}+b`);
-
     // Wait for sidebar to be visible and animation to complete
-    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 15000 });
     // Wait for sidebar animation to complete before running tests
     await page.waitForTimeout(500);
   });

@@ -15,6 +15,8 @@ import type { Page } from '@playwright/test';
  * Returns true if panel was opened successfully, false if it couldn't be opened.
  */
 export async function openPanel(page: Page): Promise<boolean> {
+  await page.waitForSelector('[data-test-id="main-layout"]', { timeout: 10000 });
+
   // Helper function to try opening panel with specific modifiers
   const tryOpenPanel = async (metaKey: boolean, ctrlKey: boolean): Promise<boolean> => {
     const panelOpened = await page.evaluate(
@@ -50,6 +52,16 @@ export async function openPanel(page: Page): Promise<boolean> {
     if (panelOpened) {
       try {
         await page.waitForSelector('[data-test-id="dockable-panel"]', { timeout: 3000 });
+        const expanded = await page.$('[data-test-id="panel-expanded-container"]');
+        if (expanded === null) {
+          const collapsedEdge = await page.$('[data-test-id="panel-collapsed-edge"]');
+          if (collapsedEdge !== null) {
+            await collapsedEdge.click();
+          }
+          await page.waitForSelector('[data-test-id="panel-expanded-container"]', {
+            timeout: 3000,
+          });
+        }
         return true;
       } catch {
         return false;

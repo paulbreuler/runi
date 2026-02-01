@@ -22,8 +22,20 @@ interface SettingsState {
   setMetricsVisible: (visible: boolean) => void;
 }
 
+interface RuniE2EConfig {
+  sidebarVisible?: boolean;
+}
+
+const getInitialSidebarVisible = (): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const config = (window as { __RUNI_E2E__?: RuniE2EConfig }).__RUNI_E2E__;
+  return config?.sidebarVisible === true;
+};
+
 export const useSettingsStore = create<SettingsState>((set) => ({
-  sidebarVisible: false, // Default collapsed since collections aren't supported yet
+  sidebarVisible: getInitialSidebarVisible(), // Default collapsed unless E2E overrides
   sidebarEdge: 'left',
   logLevel: 'info',
   metricsVisible: false, // Default hidden to save space
