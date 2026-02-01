@@ -44,6 +44,30 @@ describe('HeaderEditor', () => {
     expect(screen.getByText('Add headers to customize your request')).toBeInTheDocument();
   });
 
+  it('renders empty state when headers are undefined', () => {
+    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      url: 'https://example.com',
+      method: 'GET',
+      headers: undefined,
+      setHeaders: mockSetHeaders,
+      body: '',
+      response: null,
+      isLoading: false,
+      error: null,
+      setMethod: vi.fn(),
+      setUrl: vi.fn(),
+      setBody: vi.fn(),
+      setResponse: vi.fn(),
+      setLoading: vi.fn(),
+      setError: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(<HeaderEditor />);
+
+    expect(screen.getByText('No headers configured')).toBeInTheDocument();
+  });
+
   it('renders existing headers', () => {
     (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       url: 'https://example.com',
