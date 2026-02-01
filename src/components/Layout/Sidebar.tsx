@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { CollectionList } from '@/components/Sidebar/CollectionList';
 import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 
@@ -68,14 +68,14 @@ const DrawerSection = ({
 export const Sidebar = (): React.JSX.Element => {
   return (
     <aside className="w-full h-full bg-bg-surface flex flex-col" data-test-id="sidebar-content">
-      {/* Collections Drawer - Default collapsed since collections aren't supported yet */}
+      {/* Collections Drawer */}
       <DrawerSection
         title="Collections"
         icon={<Folder size={14} />}
-        defaultOpen={false}
+        defaultOpen
         testId="collections-drawer"
       >
-        <EmptyState variant="muted" size="sm" title="No collections yet" />
+        <CollectionList />
       </DrawerSection>
 
       {/* Spacer to push content up */}

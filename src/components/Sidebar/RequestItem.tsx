@@ -1,0 +1,108 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+import { Radio, Sparkles } from 'lucide-react';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { useRequestStore } from '@/stores/useRequestStore';
+import type { CollectionRequest } from '@/types/collection';
+import { isAiGenerated, isBound } from '@/types/collection';
+import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
+import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
+
+interface RequestItemProps {
+  request: CollectionRequest;
+  collectionId: string;
+}
+
+interface CollectionItemRequestListProps {
+  requests: CollectionRequest[];
+  collectionId: string;
+}
+
+export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
+  const selectRequest = useCollectionStore((state) => state.selectRequest);
+  const setMethod = useRequestStore((state) => state.setMethod);
+  const setUrl = useRequestStore((state) => state.setUrl);
+  const setHeaders = useRequestStore((state) => state.setHeaders);
+  const setBody = useRequestStore((state) => state.setBody);
+
+  const methodKey = request.method as HttpMethod;
+  const methodClass =
+    methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
+
+  return (
+    <button
+      type="button"
+      className={cn(
+        focusRingClasses,
+        'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-bg-raised/50 transition-colors'
+      )}
+      data-test-id={`collection-request-${request.id}`}
+      onClick={() => {
+        selectRequest(collectionId, request.id);
+        setMethod(request.method);
+        setUrl(request.url);
+        setHeaders(request.headers);
+        setBody(request.body?.content ?? '');
+      }}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        {isBound(request) && (
+          <span
+            className="h-2 w-2 rounded-full bg-green-500"
+            aria-label="Bound to spec"
+            data-test-id="request-bound-indicator"
+          />
+        )}
+        <span className={cn('text-[11px] font-semibold uppercase tracking-wider', methodClass)}>
+          {request.method}
+        </span>
+        <span className="text-sm text-text-primary truncate">{request.name}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {request.is_streaming && (
+          <span
+            className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-[11px] text-purple-500"
+            data-test-id="request-streaming-badge"
+          >
+            <Radio size={12} />
+            Streaming
+          </span>
+        )}
+        {isAiGenerated(request) && (
+          <span
+            className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-[11px] text-[#6EB1D1]"
+            data-test-id="request-ai-badge"
+          >
+            <Sparkles size={12} />
+            AI
+          </span>
+        )}
+      </div>
+    </button>
+  );
+};
+
+export const CollectionItemRequestList = ({
+  requests,
+  collectionId,
+}: CollectionItemRequestListProps): React.JSX.Element => {
+  if (requests.length === 0) {
+    return (
+      <div className="px-3 py-2 text-xs text-text-muted" data-test-id="collection-empty-requests">
+        No requests yet
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col">
+      {requests.map((request) => (
+        <RequestItem key={request.id} request={request} collectionId={collectionId} />
+      ))}
+    </div>
+  );
+};

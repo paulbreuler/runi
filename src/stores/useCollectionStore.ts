@@ -1,0 +1,203 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+import { invoke } from '@tauri-apps/api/core';
+import { useMemo } from 'react';
+import { create } from 'zustand';
+import type { Collection, CollectionRequest, CollectionSummary } from '@/types/collection';
+import { sortRequests } from '@/types/collection';
+
+interface CollectionState {
+  collections: Collection[];
+  summaries: CollectionSummary[];
+  selectedCollectionId: string | null;
+  selectedRequestId: string | null;
+  expandedCollectionIds: Set<string>;
+  isLoading: boolean;
+  error: string | null;
+
+  loadCollections: () => Promise<void>;
+  loadCollection: (id: string) => Promise<void>;
+  addHttpbinCollection: () => Promise<Collection | null>;
+  deleteCollection: (id: string) => Promise<void>;
+  selectCollection: (id: string | null) => void;
+  selectRequest: (collectionId: string, requestId: string) => void;
+  toggleExpanded: (id: string) => void;
+  clearError: () => void;
+}
+
+export const useCollectionStore = create<CollectionState>((set) => ({
+  collections: [],
+  summaries: [],
+  selectedCollectionId: null,
+  selectedRequestId: null,
+  expandedCollectionIds: new Set(),
+  isLoading: false,
+  error: null,
+
+  loadCollections: async (): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const summaries = await invoke<CollectionSummary[]>('cmd_list_collections');
+      set({ summaries, isLoading: false });
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  loadCollection: async (id: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const collection = await invoke<Collection>('cmd_load_collection', {
+        collectionId: id,
+      });
+
+      set((state) => {
+        const existing = state.collections.findIndex((item) => item.id === id);
+        const collections = [...state.collections];
+        if (existing >= 0) {
+          collections[existing] = collection;
+        } else {
+          collections.push(collection);
+        }
+        return { collections, isLoading: false };
+      });
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  addHttpbinCollection: async (): Promise<Collection | null> => {
+    set({ isLoading: true, error: null });
+    try {
+      const collection = await invoke<Collection>('cmd_add_httpbin_collection');
+
+      set((state) => ({
+        collections: [...state.collections, collection],
+        summaries: [
+          ...state.summaries,
+          {
+            id: collection.id,
+            name: collection.metadata.name,
+            request_count: collection.requests.length,
+            source_type: collection.source.source_type,
+            modified_at: collection.metadata.modified_at,
+          },
+        ],
+        selectedCollectionId: collection.id,
+        expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
+        isLoading: false,
+      }));
+
+      return collection;
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+      return null;
+    }
+  },
+
+  deleteCollection: async (id: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      await invoke('cmd_delete_collection', { collectionId: id });
+
+      set((state) => ({
+        collections: state.collections.filter((collection) => collection.id !== id),
+        summaries: state.summaries.filter((summary) => summary.id !== id),
+        selectedCollectionId: state.selectedCollectionId === id ? null : state.selectedCollectionId,
+        selectedRequestId: state.selectedCollectionId === id ? null : state.selectedRequestId,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  selectCollection: (id: string | null): void => {
+    set({ selectedCollectionId: id, selectedRequestId: null });
+  },
+
+  selectRequest: (collectionId: string, requestId: string): void => {
+    set({ selectedCollectionId: collectionId, selectedRequestId: requestId });
+  },
+
+  toggleExpanded: (id: string): void => {
+    set((state) => {
+      const expanded = new Set(state.expandedCollectionIds);
+      if (expanded.has(id)) {
+        expanded.delete(id);
+      } else {
+        expanded.add(id);
+      }
+      return { expandedCollectionIds: expanded };
+    });
+  },
+
+  clearError: (): void => {
+    set({ error: null });
+  },
+}));
+
+// ============================================
+// Selector Hooks
+// ============================================
+
+/** Get currently selected collection */
+export function useSelectedCollection(): Collection | undefined {
+  return useCollectionStore((state) =>
+    state.collections.find((collection) => collection.id === state.selectedCollectionId)
+  );
+}
+
+/**
+ * Get sorted requests for a collection.
+ * Uses sortRequests() which handles duplicate seq values.
+ */
+export function useSortedRequests(collectionId: string): CollectionRequest[] {
+  const requests = useCollectionStore((state) => {
+    const collection = state.collections.find((item) => item.id === collectionId);
+    return collection?.requests;
+  });
+
+  return useMemo(() => {
+    if (requests === undefined) {
+      return [];
+    }
+    return sortRequests(requests);
+  }, [requests]);
+}
+
+/** Get currently selected request */
+export function useSelectedRequest(): CollectionRequest | undefined {
+  return useCollectionStore((state) => {
+    const collection = state.collections.find((item) => item.id === state.selectedCollectionId);
+    if (collection === undefined) {
+      return undefined;
+    }
+    return collection.requests.find((request) => request.id === state.selectedRequestId);
+  });
+}
+
+/** Check if a collection is expanded */
+export function useIsExpanded(collectionId: string): boolean {
+  return useCollectionStore((state) => state.expandedCollectionIds.has(collectionId));
+}
+
+/** Get collection by ID */
+export function useCollection(id: string): Collection | undefined {
+  return useCollectionStore((state) =>
+    state.collections.find((collection) => collection.id === id)
+  );
+}
+
+/** Get loading state */
+export function useIsLoading(): boolean {
+  return useCollectionStore((state) => state.isLoading);
+}
+
+/** Get error state */
+export function useError(): string | null {
+  return useCollectionStore((state) => state.error);
+}

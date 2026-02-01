@@ -20,7 +20,7 @@ use serde_json::Value;
 /// - Detect streaming from produces/responses
 pub fn parse_openapi_spec(content: &str) -> Result<ParsedSpec, String> {
     let doc: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
-    let _validated = validate_openapi_value(&doc)?;
+    validate_openapi_value(&doc)?;
 
     // Extract info
     let info = doc.get("info").ok_or("Missing 'info' object")?;
@@ -54,15 +54,24 @@ pub fn parse_openapi_spec(content: &str) -> Result<ParsedSpec, String> {
     })
 }
 
-/// Validate the spec against the `OpenAPI` schema.
-pub fn validate_openapi_spec(content: &str) -> Result<OpenAPI, String> {
+/// Validate the spec against the `OpenAPI` schema when applicable.
+pub fn validate_openapi_spec(content: &str) -> Result<(), String> {
     let doc: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
     validate_openapi_value(&doc)
 }
 
-fn validate_openapi_value(doc: &Value) -> Result<OpenAPI, String> {
-    serde_json::from_value::<OpenAPI>(doc.clone())
-        .map_err(|e| format!("OpenAPI validation failed: {e}"))
+fn validate_openapi_value(doc: &Value) -> Result<(), String> {
+    if doc.get("openapi").is_some() {
+        serde_json::from_value::<OpenAPI>(doc.clone())
+            .map_err(|e| format!("OpenAPI validation failed: {e}"))?;
+        return Ok(());
+    }
+
+    if doc.get("swagger").and_then(Value::as_str) == Some("2.0") {
+        return Ok(());
+    }
+
+    Err("Missing OpenAPI or Swagger version field".to_string())
 }
 
 fn parse_servers(doc: &Value) -> Vec<Server> {
@@ -339,5 +348,16 @@ mod tests {
         let result = validate_openapi_spec("not json");
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Invalid JSON"));
+    }
+
+    #[test]
+    fn test_validate_openapi_spec_accepts_swagger_2() {
+        let swagger = r#"{
+            "swagger": "2.0",
+            "info": { "title": "Test API", "version": "1.0.0" },
+            "paths": {}
+        }"#;
+        let result = validate_openapi_spec(swagger);
+        assert!(result.is_ok());
     }
 }

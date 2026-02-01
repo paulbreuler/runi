@@ -4,8 +4,15 @@
 // Tauri command handlers
 
 use crate::application::proxy_service::ProxyService;
+use crate::domain::collection::Collection;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::models::HelloWorldResponse;
+use crate::infrastructure::spec::converter::convert_to_collection;
+use crate::infrastructure::spec::fetcher::fetch_openapi_spec;
+use crate::infrastructure::spec::parser::parse_openapi_spec;
+use crate::infrastructure::storage::collection_store::{
+    CollectionSummary, delete_collection, list_collections, load_collection, save_collection,
+};
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
@@ -22,6 +29,8 @@ use tokio::sync::Mutex;
 /// via feature flags or configuration in the future.
 static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
     LazyLock::new(|| Arc::new(MemoryHistoryStorage::new()));
+
+const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
 
 /// Initialize the proxy service
 pub fn create_proxy_service() -> Arc<Mutex<ProxyService>> {
@@ -191,6 +200,49 @@ pub fn get_system_specs() -> Result<SystemSpecs, String> {
         build_mode,
         bundle_size_mb,
     })
+}
+
+/// Save a collection to disk.
+#[tauri::command]
+pub async fn cmd_save_collection(collection: Collection) -> Result<String, String> {
+    let path = save_collection(&collection)?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+/// Load a collection by ID.
+#[tauri::command]
+pub async fn cmd_load_collection(collection_id: String) -> Result<Collection, String> {
+    load_collection(&collection_id)
+}
+
+/// List all saved collections.
+#[tauri::command]
+pub async fn cmd_list_collections() -> Result<Vec<CollectionSummary>, String> {
+    list_collections()
+}
+
+/// Delete a collection by ID.
+#[tauri::command]
+pub async fn cmd_delete_collection(collection_id: String) -> Result<(), String> {
+    delete_collection(&collection_id)
+}
+
+/// Convenience command: Add httpbin.org collection.
+///
+/// # Flow
+/// 1. Fetch OpenAPI spec from httpbin.org (or use bundled fallback)
+/// 2. Parse spec into internal types
+/// 3. Convert to Collection format
+/// 4. Save to disk
+/// 5. Return the new collection
+#[tauri::command]
+pub async fn cmd_add_httpbin_collection() -> Result<Collection, String> {
+    let fetch_result = fetch_openapi_spec(HTTPBIN_SPEC_URL).await?;
+    let parsed = parse_openapi_spec(&fetch_result.content)?;
+    let collection =
+        convert_to_collection(&parsed, &fetch_result.content, &fetch_result.source_url);
+    save_collection(&collection)?;
+    Ok(collection)
 }
 
 /// Save a request and response to history.
@@ -766,8 +818,10 @@ pub async fn write_startup_timing(
 mod tests {
     use super::*;
     use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
+    use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
     use serial_test::serial;
     use std::collections::HashMap;
+    use tempfile::TempDir;
     use uuid::{NoContext, Timestamp, Uuid};
 
     /// Create a test startup timing entry.
@@ -1109,5 +1163,17 @@ mod tests {
         assert_eq!(batch.len(), 2);
         assert!(batch.iter().any(|e| e.id == saved_ids[1]));
         assert!(batch.iter().any(|e| e.id == saved_ids[3]));
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_add_httpbin_collection_returns_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            cmd_add_httpbin_collection().await
+        })
+        .await;
+        let collection = result.unwrap();
+        assert!(collection.metadata.name.to_lowercase().contains("httpbin"));
     }
 }
