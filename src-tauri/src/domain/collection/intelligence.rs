@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 
 /// AI attribution and drift status (stubs for future features).
@@ -11,7 +13,7 @@ use serde::{Deserialize, Serialize};
 /// - AI verification badge in UI
 /// - Drift detection overlay
 /// - Hallucination warning panel
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IntelligenceMetadata {
     /// True if this request was AI-generated.
     #[serde(default)]
@@ -53,7 +55,7 @@ impl IntelligenceMetadata {
 /// - Clean: Request matches current spec
 /// - Warning: Spec changed, request still valid but different
 /// - Error: Request no longer valid against spec
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DriftStatus {
     /// Request matches current spec.

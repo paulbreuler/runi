@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 
 /// Provenance tracking for drift detection.
@@ -8,7 +10,7 @@ use serde::{Deserialize, Serialize};
 /// - 75% of APIs don't match their specs (Salt Security 2024)
 /// - No existing tool tracks spec source URL for re-fetch
 /// - SHA-256 hash enables cheap "did spec change?" detection
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CollectionSource {
     /// How this collection was created.
     pub source_type: SourceType,
@@ -56,10 +58,10 @@ impl Default for CollectionSource {
 /// - insomnia: Users fleeing Kong's forced-login
 /// - curl: Import from cURL commands
 /// - manual: User created from scratch
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum SourceType {
-    /// Imported from an OpenAPI specification.
+    /// Imported from an `OpenAPI` specification.
     Openapi,
     /// Imported from a Postman collection.
     Postman,
@@ -70,13 +72,8 @@ pub enum SourceType {
     /// Imported from a cURL command.
     Curl,
     /// Created manually by the user.
+    #[default]
     Manual,
-}
-
-impl Default for SourceType {
-    fn default() -> Self {
-        Self::Manual
-    }
 }
 
 #[cfg(test)]

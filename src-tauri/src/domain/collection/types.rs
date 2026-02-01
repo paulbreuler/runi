@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_yml::Value;
 use std::collections::BTreeMap;
@@ -18,7 +21,7 @@ pub const SCHEMA_VERSION: u32 = 1;
 ///
 /// # Deterministic Serialization
 /// - Fields serialize in declaration order (serde default)
-/// - All maps use BTreeMap (alphabetical key ordering)
+/// - All maps use `BTreeMap` (alphabetical key ordering)
 /// - Timestamps use RFC 3339 UTC with Z suffix
 ///
 /// # Forward Compatibility
@@ -66,10 +69,8 @@ impl Collection {
             .chars()
             .map(|c| if c.is_alphanumeric() { c } else { '_' })
             .collect::<String>();
-        let random: String = (0..6)
-            .map(|_| format!("{:x}", rand::random::<u8>() % 16))
-            .collect();
-        format!("col_{}_{}", slug, random)
+        let random = random_hex_suffix();
+        format!("col_{slug}_{random}")
     }
 
     /// Get requests sorted by seq with id tiebreaker for deterministic ordering.
@@ -113,7 +114,7 @@ impl Collection {
 }
 
 /// Collection metadata (name, description, timestamps).
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CollectionMetadata {
     /// Human-readable collection name.
     pub name: String,
@@ -139,6 +140,7 @@ pub struct CollectionMetadata {
 /// The `seq` field controls display order. This prevents Git conflicts
 /// from array reordering — each request has an explicit position.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[allow(clippy::derive_partial_eq_without_eq)]
 pub struct CollectionRequest {
     /// Unique request identifier.
     pub id: String,
@@ -180,7 +182,7 @@ pub struct CollectionRequest {
     #[serde(default)]
     pub is_streaming: bool,
 
-    /// Link to OpenAPI operation (for drift detection).
+    /// Link to `OpenAPI` operation (for drift detection).
     #[serde(default)]
     pub binding: SpecBinding,
 
@@ -206,15 +208,13 @@ impl CollectionRequest {
             .take(10)
             .map(|c| if c.is_alphanumeric() { c } else { '_' })
             .collect::<String>();
-        let random: String = (0..6)
-            .map(|_| format!("{:x}", rand::random::<u8>() % 16))
-            .collect();
-        format!("req_{}_{}", slug, random)
+        let random = random_hex_suffix();
+        format!("req_{slug}_{random}")
     }
 }
 
 /// Query parameter with explicit enabled flag.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RequestParam {
     /// Parameter key (name).
     pub key: String,
@@ -227,12 +227,12 @@ pub struct RequestParam {
     pub enabled: bool,
 }
 
-fn default_true() -> bool {
+const fn default_true() -> bool {
     true
 }
 
 /// Request body definition.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RequestBody {
     /// Body type (json, form, raw, etc).
     #[serde(rename = "type")]
@@ -248,10 +248,11 @@ pub struct RequestBody {
 }
 
 /// Supported request body types.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum BodyType {
     /// No body.
+    #[default]
     None,
     /// JSON body.
     Json,
@@ -265,16 +266,10 @@ pub enum BodyType {
     Xml,
 }
 
-impl Default for BodyType {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
 /// Authentication configuration for requests and collections.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthConfig {
-    /// Auth type (bearer, basic, api_key, etc).
+    /// Auth type (bearer, basic, `api_key`, etc).
     #[serde(rename = "type")]
     pub auth_type: AuthType,
 
@@ -296,10 +291,11 @@ pub struct AuthConfig {
 }
 
 /// Supported auth types.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum AuthType {
     /// No authentication.
+    #[default]
     None,
     /// Bearer token authentication.
     Bearer,
@@ -309,10 +305,14 @@ pub enum AuthType {
     ApiKey,
 }
 
-impl Default for AuthType {
-    fn default() -> Self {
-        Self::None
+fn random_hex_suffix() -> String {
+    let mut rng = rand::thread_rng();
+    let mut random = String::with_capacity(6);
+    for _ in 0..6 {
+        let nibble: u8 = rng.gen_range(0..16);
+        random.push(std::char::from_digit(u32::from(nibble), 16).unwrap_or('0'));
     }
+    random
 }
 
 #[cfg(test)]

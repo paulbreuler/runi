@@ -1,10 +1,12 @@
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 
-/// Links a request to its OpenAPI operation for drift detection.
+/// Links a request to its `OpenAPI` operation for drift detection.
 ///
 /// # Why This Matters
 /// This is the bridge between "HTTP client" and "comprehension layer".
-/// When a request is bound to an operation_id, we can:
+/// When a request is bound to an `operation_id`, we can:
 /// - Detect when the spec changes
 /// - Verify AI-generated code matches the spec
 /// - Show deprecation warnings
@@ -16,13 +18,13 @@ use serde::{Deserialize, Serialize};
 ///   path: /users/{id}
 ///   method: GET
 /// ```
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SpecBinding {
-    /// OpenAPI operationId for the bound request.
+    /// `OpenAPI` `operationId` for the bound request.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub operation_id: Option<String>,
 
-    /// OpenAPI path template for the bound operation.
+    /// `OpenAPI` path template for the bound operation.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
 
@@ -40,7 +42,7 @@ pub struct SpecBinding {
 }
 
 impl SpecBinding {
-    /// Create a binding from an OpenAPI operation.
+    /// Create a binding from an `OpenAPI` operation.
     pub fn from_operation(operation_id: &str, path: &str, method: &str) -> Self {
         let now = chrono::Utc::now();
         Self {
@@ -53,7 +55,7 @@ impl SpecBinding {
     }
 
     /// Check if this binding has any data.
-    pub fn is_bound(&self) -> bool {
+    pub const fn is_bound(&self) -> bool {
         self.operation_id.is_some() || self.path.is_some()
     }
 }
