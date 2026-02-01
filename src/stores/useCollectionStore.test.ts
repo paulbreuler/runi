@@ -123,7 +123,11 @@ describe('useCollectionStore', () => {
     });
 
     expect(result.current.collections).toHaveLength(1);
-    expect(result.current.collections[0].metadata.name).toBe('Updated');
+    const updatedCollection = result.current.collections[0];
+    if (updatedCollection === undefined) {
+      throw new Error('Collection not found after loadCollection');
+    }
+    expect(updatedCollection.metadata.name).toBe('Updated');
   });
 
   it('clears selection when deleting selected collection', async () => {
