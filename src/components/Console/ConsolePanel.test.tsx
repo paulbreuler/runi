@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ConsolePanel } from './ConsolePanel';
 import { getConsoleService } from '@/services/console-service';
@@ -867,16 +867,13 @@ describe('ConsolePanel', () => {
       fireEvent.click(chevronButton!);
     });
 
-    // Wait for expanded row's code-editor to have content (VirtualDataGrid may defer rendering).
-    // Re-query expandedRow inside waitFor so we see it after React commits; use longer timeout for CI.
+    const expandedSection = await screen.findByTestId('expanded-section', {}, { timeout: 10000 });
     await waitFor(
       () => {
-        const expandedRow = logEntry.nextElementSibling;
-        expect(expandedRow).toBeInTheDocument();
-        const editor = expandedRow?.querySelector('[data-test-id="code-editor"]');
-        expect(editor?.textContent).toMatch(/"code":\s*123/);
-        expect(editor?.textContent).toMatch(/"message":\s*"boom"/);
-        expect(editor?.textContent).toMatch(/"error":/);
+        const editor = within(expandedSection).getByTestId('code-editor');
+        expect(editor.textContent).toMatch(/"code":\s*123/);
+        expect(editor.textContent).toMatch(/"message":\s*"boom"/);
+        expect(editor.textContent).toMatch(/"error":/);
       },
       { timeout: 10000 }
     );
