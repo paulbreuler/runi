@@ -24,6 +24,7 @@ import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 export const HomePage = (): React.JSX.Element => {
   const {
     method,
+    url,
     headers,
     body,
     response,
@@ -40,6 +41,11 @@ export const HomePage = (): React.JSX.Element => {
 
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
+
+  useEffect(() => {
+    setLocalUrl(url);
+    setLocalMethod(method as HttpMethod);
+  }, [method, url]);
 
   // Load history on mount
   useEffect(() => {

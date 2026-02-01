@@ -28,6 +28,17 @@ interface CollectionState {
   clearError: () => void;
 }
 
+const normalizeCollection = (collection: Collection): Collection => ({
+  ...collection,
+  requests: collection.requests.map((request) => {
+    const headers = Object.prototype.hasOwnProperty.call(request, 'headers') ? request.headers : {};
+    return {
+      ...request,
+      headers,
+    };
+  }),
+});
+
 export const useCollectionStore = create<CollectionState>((set) => ({
   collections: [],
   summaries: [],
@@ -50,9 +61,11 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   loadCollection: async (id: string): Promise<void> => {
     set({ isLoading: true, error: null });
     try {
-      const collection = await invoke<Collection>('cmd_load_collection', {
-        collectionId: id,
-      });
+      const collection = normalizeCollection(
+        await invoke<Collection>('cmd_load_collection', {
+          collectionId: id,
+        })
+      );
 
       set((state) => {
         const existing = state.collections.findIndex((item) => item.id === id);
@@ -72,7 +85,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   addHttpbinCollection: async (): Promise<Collection | null> => {
     set({ isLoading: true, error: null });
     try {
-      const collection = await invoke<Collection>('cmd_add_httpbin_collection');
+      const collection = normalizeCollection(
+        await invoke<Collection>('cmd_add_httpbin_collection')
+      );
 
       set((state) => ({
         collections: [...state.collections, collection],
