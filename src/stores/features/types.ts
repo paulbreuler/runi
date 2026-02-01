@@ -14,6 +14,8 @@ export interface FeatureFlags {
 }
 
 export interface HttpFlags {
+  collectionsEnabled: boolean;
+  collectionsSaving: boolean;
   importBruno: boolean;
   importPostman: boolean;
   importOpenAPI: boolean;

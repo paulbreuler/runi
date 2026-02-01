@@ -18,6 +18,8 @@ describe('feature flag types', () => {
   it('has the expected http flags', () => {
     const flags: FeatureFlags = DEFAULT_FLAGS;
     expect(Object.keys(flags.http).sort()).toEqual([
+      'collectionsEnabled',
+      'collectionsSaving',
       'exportCurl',
       'exportJavaScript',
       'exportPython',

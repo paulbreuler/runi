@@ -42,6 +42,18 @@ export const isStaleFlag = (metadata: FlagMetadata, currentVersion: string): boo
 
 export const FLAG_METADATA: FlagMetadataRegistry = {
   http: {
+    collectionsEnabled: {
+      addedVersion: '0.5.0',
+      expectedGraduation: '0.7.0',
+      description: 'Enable collections navigation in the sidebar.',
+      state: 'experimental',
+    },
+    collectionsSaving: {
+      addedVersion: '0.5.0',
+      expectedGraduation: '0.7.0',
+      description: 'Allow saving and persisting collection changes.',
+      state: 'experimental',
+    },
     importBruno: {
       addedVersion: '0.3.0',
       expectedGraduation: 'never',
