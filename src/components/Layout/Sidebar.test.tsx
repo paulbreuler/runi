@@ -3,18 +3,41 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen } from '@testing-library/react';
-import type { JSX } from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import type { Collection, CollectionSummary } from '@/types/collection';
+import { CollectionList } from '@/components/Sidebar/CollectionList';
+import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
 import { Sidebar } from './Sidebar';
 
-vi.mock('@/components/Sidebar/CollectionList', (): { CollectionList: () => JSX.Element } => ({
-  CollectionList: (): JSX.Element => (
-    <div data-test-id="collection-list-stub">No collections yet</div>
-  ),
+interface MockCollectionStoreState {
+  summaries: CollectionSummary[];
+  isLoading: boolean;
+  error: string | null;
+  loadCollections: () => Promise<void>;
+  addHttpbinCollection: () => Promise<Collection | null>;
+}
+
+let mockCollectionState: MockCollectionStoreState;
+
+const createCollectionState = (): MockCollectionStoreState => ({
+  summaries: [],
+  isLoading: false,
+  error: null,
+  loadCollections: vi.fn(async (): Promise<void> => undefined),
+  addHttpbinCollection: vi.fn(async (): Promise<Collection | null> => null),
+});
+
+vi.mock('@/stores/useCollectionStore', () => ({
+  useCollectionStore: (selector: (state: MockCollectionStoreState) => unknown): unknown =>
+    selector(mockCollectionState),
 }));
 
 describe('Sidebar', (): void => {
+  beforeEach((): void => {
+    useFeatureFlagStore.getState().resetToDefaults();
+    mockCollectionState = createCollectionState();
+  });
   it('renders sidebar with proper structure', (): void => {
     render(<Sidebar />);
 
@@ -37,12 +60,12 @@ describe('Sidebar', (): void => {
       throw new Error('Collections button not found');
     }
     expect(collectionsButton).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('No collections yet')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-list-disabled')).toBeInTheDocument();
   });
 
   it('renders the collections list content', (): void => {
     render(<Sidebar />);
-    expect(screen.getByTestId('collection-list-stub')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-list-disabled')).toBeInTheDocument();
   });
 
   it('fills its container width', (): void => {
@@ -71,5 +94,37 @@ describe('Sidebar', (): void => {
     const { container } = render(<Sidebar />);
     const scrollContainer = container.querySelector('[data-scroll-container]');
     expect(scrollContainer).toBeInTheDocument();
+  });
+});
+
+describe('CollectionList', (): void => {
+  beforeEach((): void => {
+    useFeatureFlagStore.getState().resetToDefaults();
+    mockCollectionState = createCollectionState();
+  });
+
+  it('shows disabled state when collections flag is off', (): void => {
+    render(<CollectionList />);
+
+    expect(screen.getByTestId('collection-list-disabled')).toBeInTheDocument();
+    expect(mockCollectionState.loadCollections).not.toHaveBeenCalled();
+  });
+
+  it('loads collections when flag is enabled', async (): Promise<void> => {
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
+
+    render(<CollectionList />);
+
+    await waitFor(() => {
+      expect(mockCollectionState.loadCollections).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('renders empty state when enabled with no summaries', (): void => {
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
+
+    render(<CollectionList />);
+
+    expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();
   });
 });

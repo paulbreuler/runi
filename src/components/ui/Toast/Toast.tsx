@@ -4,15 +4,16 @@
  */
 
 import * as React from 'react';
-import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
-import { Toast as ToastPrimitives } from 'radix-ui';
+import { motion, useReducedMotion } from 'motion/react';
+import { Toast as BaseUIToast } from '@base-ui/react/toast';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { X, AlertCircle, CheckCircle, AlertTriangle, Info, Terminal } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { Button } from '@/components/ui/button';
 import { globalEventBus } from '@/events/bus';
-import type { ToastData, ToastVariant } from './toast.types';
+import type { ToastVariant } from './toast.types';
+import type { ToastManagerData } from './useToast';
 
 /**
  * CVA variants for toast styling.
@@ -101,126 +102,115 @@ const reducedMotionVariants = {
 
 export interface ToastProps extends VariantProps<typeof toastVariants> {
   /** Toast data */
-  toast: ToastData;
-  /** Callback when toast is dismissed */
-  onDismiss: (id: string) => void;
+  toast: ReturnType<typeof BaseUIToast.useToastManager>['toasts'][number];
 }
 
 /**
  * Individual toast component with animations and interactions.
  */
-export const Toast = React.forwardRef<HTMLLIElement, ToastProps>(
-  ({ toast, variant, onDismiss }, ref) => {
-    const shouldReduceMotion = useReducedMotion();
-    const [isOpen, setIsOpen] = React.useState(true);
-    const toastVariant = variant ?? toast.variant;
-    const Icon = variantIcons[toastVariant];
-
-    // Handle open state change from Radix (e.g., auto-dismiss timer)
-    const handleOpenChange = (open: boolean): void => {
-      setIsOpen(open);
-      if (!open) {
-        onDismiss(toast.id);
+export const Toast = React.forwardRef<HTMLDivElement, ToastProps>(({ toast, variant }, ref) => {
+  const shouldReduceMotion = useReducedMotion();
+  const toastData = toast.data as ToastManagerData | undefined;
+  const toastVariant = variant ?? ((toast.type ?? 'info') as ToastVariant);
+  const Icon = variantIcons[toastVariant];
+  const useMotion = process.env.NODE_ENV !== 'test';
+  const MotionContainer = useMotion ? motion.div : 'div';
+  const motionProps = useMotion
+    ? {
+        layout: true,
+        variants: shouldReduceMotion === true ? reducedMotionVariants : toastMotionVariants,
+        initial: 'initial',
+        animate: 'animate',
       }
-    };
+    : {};
 
-    // Handle "View Console" click for error toasts
-    const handleViewConsole = (): void => {
-      globalEventBus.emit(
-        'panel.console-requested',
-        { correlationId: toast.correlationId },
-        'Toast'
-      );
-    };
-
-    // Determine if we should show "View Console" action
-    const showConsoleAction = toastVariant === 'error' && toast.correlationId !== undefined;
-
-    return (
-      <AnimatePresence mode="popLayout">
-        {isOpen && (
-          <ToastPrimitives.Root
-            ref={ref}
-            open={isOpen}
-            onOpenChange={handleOpenChange}
-            duration={toast.duration}
-            asChild
-            forceMount
-          >
-            <motion.li
-              layout
-              variants={shouldReduceMotion === true ? reducedMotionVariants : toastMotionVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className={cn(toastVariants({ variant: toastVariant }))}
-              data-test-id={toast.testId ?? `toast-${toast.id}`}
-              data-variant={toastVariant}
-            >
-              {/* Icon */}
-              <Icon
-                className={cn('h-4 w-4 shrink-0', iconColorClasses[toastVariant])}
-                aria-hidden="true"
-              />
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-1.5">
-                  <ToastPrimitives.Title className="text-xs font-medium text-text-primary line-clamp-2">
-                    {toast.message}
-                  </ToastPrimitives.Title>
-                  {toast.count > 1 && (
-                    <span
-                      className="shrink-0 text-xs text-text-muted font-normal"
-                      data-test-id={`toast-count-${toast.id}`}
-                    >
-                      (x{toast.count})
-                    </span>
-                  )}
-                </div>
-
-                {toast.details !== undefined && (
-                  <ToastPrimitives.Description className="mt-0.5 text-xs text-text-secondary line-clamp-1">
-                    {toast.details}
-                  </ToastPrimitives.Description>
-                )}
-              </div>
-
-              {/* Action button (right side) */}
-              {showConsoleAction && (
-                <ToastPrimitives.Action asChild altText="View error in console">
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    noScale
-                    onClick={handleViewConsole}
-                    data-test-id={`toast-view-console-${toast.id}`}
-                  >
-                    <Terminal className="h-3 w-3" />
-                    Console
-                  </Button>
-                </ToastPrimitives.Action>
-              )}
-
-              {/* Close button */}
-              <ToastPrimitives.Close
-                className={cn(
-                  'shrink-0 rounded p-0.5',
-                  'text-text-muted hover:text-text-primary hover:bg-bg-elevated',
-                  'transition-colors',
-                  focusRingClasses
-                )}
-                aria-label="Dismiss notification"
-                data-test-id={`toast-close-${toast.id}`}
-              >
-                <X className="h-3.5 w-3.5" />
-              </ToastPrimitives.Close>
-            </motion.li>
-          </ToastPrimitives.Root>
-        )}
-      </AnimatePresence>
+  // Handle "View Console" click for error toasts
+  const handleViewConsole = (): void => {
+    globalEventBus.emit(
+      'panel.console-requested',
+      { correlationId: toastData?.correlationId },
+      'Toast'
     );
-  }
-);
+  };
+
+  // Determine if we should show "View Console" action
+  const showConsoleAction = toastVariant === 'error' && toastData?.correlationId !== undefined;
+
+  return (
+    <BaseUIToast.Root
+      ref={ref}
+      toast={toast}
+      swipeDirection="right"
+      data-test-id={toastData?.testId ?? `toast-${toast.id}`}
+      data-variant={toastVariant}
+    >
+      <MotionContainer {...motionProps} className={cn(toastVariants({ variant: toastVariant }))}>
+        <BaseUIToast.Content className="flex w-full items-start gap-2">
+          {/* Icon */}
+          <Icon
+            className={cn('h-4 w-4 shrink-0', iconColorClasses[toastVariant])}
+            aria-hidden="true"
+          />
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start gap-1.5">
+              <BaseUIToast.Title className="text-xs font-medium text-text-primary line-clamp-2" />
+              {toastData !== undefined && toastData.count > 1 && (
+                <span
+                  className="shrink-0 text-xs text-text-muted font-normal"
+                  data-test-id={`toast-count-${toast.id}`}
+                >
+                  (x{toastData.count})
+                </span>
+              )}
+            </div>
+
+            <BaseUIToast.Description className="mt-0.5 text-xs text-text-secondary line-clamp-1" />
+          </div>
+
+          {/* Action button (right side) */}
+          {showConsoleAction && (
+            <BaseUIToast.Action
+              data-test-id={`toast-view-console-${toast.id}`}
+              render={(renderProps) => (
+                <Button
+                  {...renderProps}
+                  variant="secondary"
+                  size="xs"
+                  noScale
+                  onClick={(event) => {
+                    renderProps.onClick?.(event);
+                    handleViewConsole();
+                  }}
+                  data-test-id={`toast-view-console-${toast.id}`}
+                >
+                  {renderProps.children}
+                </Button>
+              )}
+            >
+              <Terminal className="h-3 w-3" />
+              Console
+            </BaseUIToast.Action>
+          )}
+
+          {/* Close button */}
+          <BaseUIToast.Close
+            className={cn(
+              'shrink-0 rounded p-0.5',
+              'text-text-muted hover:text-text-primary hover:bg-bg-elevated',
+              'transition-colors',
+              focusRingClasses
+            )}
+            aria-label="Dismiss notification"
+            data-test-id={`toast-close-${toast.id}`}
+          >
+            <X className="h-3.5 w-3.5" />
+          </BaseUIToast.Close>
+        </BaseUIToast.Content>
+      </MotionContainer>
+    </BaseUIToast.Root>
+  );
+});
 
 Toast.displayName = 'Toast';

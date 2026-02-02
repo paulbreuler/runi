@@ -6,12 +6,14 @@
 import type { Decorator } from '@storybook/react';
 import type { FeatureFlags, DeepPartial } from '@/stores/features/types';
 import { FeatureFlagProvider } from '@/providers/FeatureFlagProvider';
+import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
 
 export interface FeatureFlagDecoratorArgs {
   featureFlags?: DeepPartial<FeatureFlags>;
 }
 
 export const FeatureFlagDecorator: Decorator = (Story, context) => {
+  useFeatureFlagStore.getState().resetToDefaults();
   const { featureFlags } = context.args as FeatureFlagDecoratorArgs;
 
   return (

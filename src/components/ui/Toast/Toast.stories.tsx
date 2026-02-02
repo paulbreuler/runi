@@ -18,7 +18,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within, waitFor } from 'storybook/test';
 import { ToastProvider } from './ToastProvider';
 import { ToastBell } from './ToastBell';
-import { toast, useToastStore } from './useToast';
+import { toast } from './useToast';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -132,7 +132,7 @@ globalEventBus.emit('toast.show', {
   tags: ['autodocs'],
   // Clear toasts before each story
   beforeEach: () => {
-    useToastStore.getState().clearAll();
+    toast.dismissAll();
   },
 } satisfies Meta<typeof ToastDemo>;
 

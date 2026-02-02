@@ -29,6 +29,7 @@ const renderDecorator = (args: Record<string, unknown>): void => {
 
   const rendered = FeatureFlagDecorator(Story, {
     args,
+    id: 'test-story',
   } as unknown as StoryContext) as ReactElement;
   render(rendered);
 };

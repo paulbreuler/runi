@@ -35,7 +35,7 @@ export default defineConfig({
       headless: true,
       instances: [{ browser: 'chromium' }],
     },
-    setupFiles: ['./.storybook/vitest.setup.ts'],
+    setupFiles: [path.resolve(__dirname, '.storybook/vitest.setup.ts')],
     testTimeout: 30000, // 30 seconds for browser tests
     hookTimeout: 30000,
     globals: true,

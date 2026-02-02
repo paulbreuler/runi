@@ -122,6 +122,8 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
     },
     ref
   ) => {
+    const useMotion = process.env.NODE_ENV !== 'test';
+    const MotionButton = useMotion ? motion.button : 'button';
     const baseClasses = buttonVariants({ variant, size });
     const resolvedClassName =
       typeof className === 'function'
@@ -158,18 +160,24 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
             // Use Motion variants for cleaner, more maintainable animations
             // Following Motion docs: variants are better than inline whileHover/whileTap
             // noScale disables hover/tap animations for compact UI contexts
+            const motionProps = useMotion
+              ? {
+                  variants: noScale ? undefined : buttonMotionVariants,
+                  initial: noScale ? undefined : 'rest',
+                  whileHover: disabled || noScale ? undefined : 'hover',
+                  whileTap: disabled || noScale ? undefined : 'tap',
+                }
+              : {};
+
             return (
-              <motion.button
+              <MotionButton
                 {...restRenderProps}
+                {...motionProps}
                 type={type ?? 'button'}
                 disabled={disabled}
-                variants={noScale ? undefined : buttonMotionVariants}
-                initial={noScale ? undefined : 'rest'}
-                whileHover={disabled || noScale ? undefined : 'hover'}
-                whileTap={disabled || noScale ? undefined : 'tap'}
               >
                 {renderChildren}
-              </motion.button>
+              </MotionButton>
             );
           })
         }

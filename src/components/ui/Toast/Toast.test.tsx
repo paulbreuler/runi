@@ -4,16 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, screen, act, waitFor, renderHook } from '@testing-library/react';
+import type { RenderHookResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Toast as BaseUIToast } from '@base-ui/react/toast';
 import { ToastProvider } from './ToastProvider';
 import { ToastBell } from './ToastBell';
-import {
-  toast,
-  useToastStore,
-  setupToastEventBridge,
-  __resetEventBridgeForTesting,
-} from './useToast';
+import { toast, setupToastEventBridge, __resetEventBridgeForTesting } from './useToast';
 import { globalEventBus } from '@/events/bus';
 
 // Mock Motion to avoid animation timing issues in tests
@@ -42,199 +39,306 @@ vi.mock('motion/react', async (importOriginal) => {
   };
 });
 
+const ToastProviderWrapper = ({ children }: { children: React.ReactNode }): React.JSX.Element => {
+  return <ToastProvider>{children}</ToastProvider>;
+};
+
 // Helper to render with provider
 const renderWithProvider = (ui: React.ReactElement): ReturnType<typeof render> => {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(<ToastProviderWrapper>{ui}</ToastProviderWrapper>);
 };
+
+type ToastManagerHook = ReturnType<typeof BaseUIToast.useToastManager>;
+
+const renderToastManager = (): RenderHookResult<ToastManagerHook, unknown> =>
+  renderHook(() => BaseUIToast.useToastManager(), { wrapper: ToastProviderWrapper });
 
 describe('Toast Store', () => {
   beforeEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
   });
 
   afterEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
     vi.clearAllMocks();
   });
 
   describe('toast API', () => {
-    it('toast.success() creates a success toast', () => {
-      const id = toast.success({ message: 'Success message' });
+    it('toast.success() creates a success toast', async () => {
+      const { result } = renderToastManager();
+      let id = '';
+      act(() => {
+        id = toast.success({ message: 'Success message' });
+      });
 
       expect(id).toBeDefined();
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0]?.variant).toBe('success');
-      expect(toasts[0]?.message).toBe('Success message');
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(1);
+      });
+      expect(result.current.toasts[0]?.type).toBe('success');
+      expect(result.current.toasts[0]?.title).toBe('Success message');
     });
 
-    it('toast.error() creates an error toast', () => {
-      const id = toast.error({ message: 'Error message', details: 'Error details' });
+    it('toast.error() creates an error toast', async () => {
+      const { result } = renderToastManager();
+      let id = '';
+      act(() => {
+        id = toast.error({ message: 'Error message', details: 'Error details' });
+      });
 
       expect(id).toBeDefined();
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0]?.variant).toBe('error');
-      expect(toasts[0]?.message).toBe('Error message');
-      expect(toasts[0]?.details).toBe('Error details');
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(1);
+      });
+      expect(result.current.toasts[0]?.type).toBe('error');
+      expect(result.current.toasts[0]?.title).toBe('Error message');
+      expect(result.current.toasts[0]?.description).toBe('Error details');
     });
 
-    it('toast.warning() creates a warning toast', () => {
-      const id = toast.warning({ message: 'Warning message' });
+    it('toast.warning() creates a warning toast', async () => {
+      const { result } = renderToastManager();
+      let id = '';
+      act(() => {
+        id = toast.warning({ message: 'Warning message' });
+      });
 
       expect(id).toBeDefined();
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0]?.variant).toBe('warning');
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(1);
+      });
+      expect(result.current.toasts[0]?.type).toBe('warning');
     });
 
-    it('toast.info() creates an info toast', () => {
-      const id = toast.info({ message: 'Info message' });
+    it('toast.info() creates an info toast', async () => {
+      const { result } = renderToastManager();
+      let id = '';
+      act(() => {
+        id = toast.info({ message: 'Info message' });
+      });
 
       expect(id).toBeDefined();
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0]?.variant).toBe('info');
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(1);
+      });
+      expect(result.current.toasts[0]?.type).toBe('info');
     });
 
-    it('toast.dismiss() removes a specific toast', () => {
-      const id = toast.success({ message: 'Test' });
-      expect(useToastStore.getState().getToasts()).toHaveLength(1);
+    it('toast.dismiss() removes a specific toast', async () => {
+      const { result } = renderToastManager();
+      let id = '';
+      act(() => {
+        id = toast.success({ message: 'Test' });
+      });
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(1);
+      });
 
-      toast.dismiss(id);
-      expect(useToastStore.getState().getToasts()).toHaveLength(0);
+      act(() => {
+        toast.dismiss(id);
+      });
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(0);
+      });
     });
 
-    it('toast.dismissAll() removes all toasts', () => {
-      toast.success({ message: 'Test 1' });
-      toast.error({ message: 'Test 2' });
-      toast.warning({ message: 'Test 3' });
-      expect(useToastStore.getState().getToasts()).toHaveLength(3);
+    it('toast.dismissAll() removes all toasts', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.success({ message: 'Test 1' });
+        toast.error({ message: 'Test 2' });
+        toast.warning({ message: 'Test 3' });
+      });
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(3);
+      });
 
-      toast.dismissAll();
-      expect(useToastStore.getState().getToasts()).toHaveLength(0);
+      act(() => {
+        toast.dismissAll();
+      });
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(0);
+      });
     });
   });
 
   describe('default durations', () => {
-    it('success toast has 3000ms duration', () => {
-      toast.success({ message: 'Test' });
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts[0]?.duration).toBe(3000);
+    it('success toast has 3000ms duration', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.success({ message: 'Test' });
+      });
+      await waitFor(() => {
+        expect(result.current.toasts[0]?.timeout).toBe(3000);
+      });
     });
 
-    it('info toast has 4000ms duration', () => {
-      toast.info({ message: 'Test' });
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts[0]?.duration).toBe(4000);
+    it('info toast has 4000ms duration', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.info({ message: 'Test' });
+      });
+      await waitFor(() => {
+        expect(result.current.toasts[0]?.timeout).toBe(4000);
+      });
     });
 
-    it('warning toast has 5000ms duration', () => {
-      toast.warning({ message: 'Test' });
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts[0]?.duration).toBe(5000);
+    it('warning toast has 5000ms duration', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.warning({ message: 'Test' });
+      });
+      await waitFor(() => {
+        expect(result.current.toasts[0]?.timeout).toBe(5000);
+      });
     });
 
-    it('error toast has Infinity duration (no auto-dismiss)', () => {
-      toast.error({ message: 'Test' });
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts[0]?.duration).toBe(Infinity);
+    it('error toast has 0ms timeout (no auto-dismiss)', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.error({ message: 'Test' });
+      });
+      await waitFor(() => {
+        expect(result.current.toasts[0]?.timeout).toBe(0);
+      });
     });
 
-    it('custom duration overrides default', () => {
-      toast.success({ message: 'Test', duration: 10000 });
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts[0]?.duration).toBe(10000);
+    it('custom duration overrides default', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.success({ message: 'Test', duration: 10000 });
+      });
+      await waitFor(() => {
+        expect(result.current.toasts[0]?.timeout).toBe(10000);
+      });
     });
   });
 
   describe('deduplication', () => {
-    it('same message increments count instead of creating new toast', () => {
-      toast.success({ message: 'Duplicate message' });
-      toast.success({ message: 'Duplicate message' });
-      toast.success({ message: 'Duplicate message' });
+    it('same message increments count instead of creating new toast', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.success({ message: 'Duplicate message' });
+        toast.success({ message: 'Duplicate message' });
+        toast.success({ message: 'Duplicate message' });
+      });
 
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0]?.count).toBe(3);
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(1);
+      });
+      expect(result.current.toasts[0]?.data?.count).toBe(3);
     });
 
-    it('different messages create separate toasts', () => {
-      toast.success({ message: 'Message 1' });
-      toast.success({ message: 'Message 2' });
+    it('different messages create separate toasts', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.success({ message: 'Message 1' });
+        toast.success({ message: 'Message 2' });
+      });
 
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(2);
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(2);
+      });
     });
 
-    it('same message with different variant creates separate toasts', () => {
-      toast.success({ message: 'Same message' });
-      toast.error({ message: 'Same message' });
+    it('same message with different variant creates separate toasts', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.success({ message: 'Same message' });
+        toast.error({ message: 'Same message' });
+      });
 
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(2);
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(2);
+      });
     });
 
-    it('same message with different details creates separate toasts', () => {
-      toast.error({ message: 'Error', details: 'Details 1' });
-      toast.error({ message: 'Error', details: 'Details 2' });
+    it('same message with different details creates separate toasts', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.error({ message: 'Error', details: 'Details 1' });
+        toast.error({ message: 'Error', details: 'Details 2' });
+      });
 
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(2);
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(2);
+      });
     });
 
-    it('deduplication key includes variant, message, and details', () => {
+    it('deduplication key includes variant, message, and details', async () => {
+      const { result } = renderToastManager();
       // First toast
-      toast.error({ message: 'Error', details: 'Network failure' });
+      act(() => {
+        toast.error({ message: 'Error', details: 'Network failure' });
+      });
       // Duplicate
-      toast.error({ message: 'Error', details: 'Network failure' });
+      act(() => {
+        toast.error({ message: 'Error', details: 'Network failure' });
+      });
 
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts).toHaveLength(1);
-      expect(toasts[0]?.count).toBe(2);
+      await waitFor(() => {
+        expect(result.current.toasts).toHaveLength(1);
+      });
+      expect(result.current.toasts[0]?.data?.count).toBe(2);
     });
   });
 
   describe('correlation ID', () => {
-    it('stores correlation ID on toast', () => {
-      toast.error({
-        message: 'Error',
-        correlationId: 'test-correlation-123',
+    it('stores correlation ID on toast', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.error({
+          message: 'Error',
+          correlationId: 'test-correlation-123',
+        });
       });
 
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts[0]?.correlationId).toBe('test-correlation-123');
+      await waitFor(() => {
+        expect(result.current.toasts[0]?.data?.correlationId).toBe('test-correlation-123');
+      });
     });
   });
 
   describe('test ID', () => {
-    it('stores test ID on toast', () => {
-      toast.success({
-        message: 'Test',
-        testId: 'custom-test-id',
+    it('stores test ID on toast', async () => {
+      const { result } = renderToastManager();
+      act(() => {
+        toast.success({
+          message: 'Test',
+          testId: 'custom-test-id',
+        });
       });
 
-      const toasts = useToastStore.getState().getToasts();
-      expect(toasts[0]?.testId).toBe('custom-test-id');
+      await waitFor(() => {
+        expect(result.current.toasts[0]?.data?.testId).toBe('custom-test-id');
+      });
     });
   });
 });
 
 describe('Event Bus Bridge', () => {
   beforeEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
     // Reset event bridge to clean state for each test
     __resetEventBridgeForTesting();
   });
 
   afterEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
     // Reset event bridge to clean state
     __resetEventBridgeForTesting();
     vi.clearAllMocks();
   });
 
-  it('toast.show event creates a toast', () => {
+  it('toast.show event creates a toast', async () => {
+    const { result } = renderToastManager();
     // Set up the event bridge for this test
     setupToastEventBridge();
 
@@ -245,13 +349,15 @@ describe('Event Bus Bridge', () => {
       });
     });
 
-    const toasts = useToastStore.getState().getToasts();
-    expect(toasts).toHaveLength(1);
-    expect(toasts[0]?.variant).toBe('success');
-    expect(toasts[0]?.message).toBe('Event bus message');
+    await waitFor(() => {
+      expect(result.current.toasts).toHaveLength(1);
+    });
+    expect(result.current.toasts[0]?.type).toBe('success');
+    expect(result.current.toasts[0]?.title).toBe('Event bus message');
   });
 
-  it('toast.show with all fields', () => {
+  it('toast.show with all fields', async () => {
+    const { result } = renderToastManager();
     // Set up the event bridge for this test
     setupToastEventBridge();
 
@@ -266,14 +372,18 @@ describe('Event Bus Bridge', () => {
       });
     });
 
-    const toasts = useToastStore.getState().getToasts();
-    expect(toasts[0]).toMatchObject({
-      variant: 'error',
-      message: 'Full error',
-      details: 'Error details',
-      correlationId: 'corr-123',
-      duration: 10000,
-      testId: 'test-123',
+    await waitFor(() => {
+      expect(result.current.toasts).toHaveLength(1);
+    });
+    expect(result.current.toasts[0]).toMatchObject({
+      type: 'error',
+      title: 'Full error',
+      description: 'Error details',
+      timeout: 10000,
+      data: {
+        correlationId: 'corr-123',
+        testId: 'test-123',
+      },
     });
   });
 
@@ -281,11 +391,7 @@ describe('Event Bus Bridge', () => {
     // Re-initialize the event bridge (simulates module load)
     setupToastEventBridge();
 
-    render(
-      <ToastProvider>
-        <div>Content</div>
-      </ToastProvider>
-    );
+    const { result } = renderToastManager();
 
     act(() => {
       globalEventBus.emit('toast.show', {
@@ -294,19 +400,24 @@ describe('Event Bus Bridge', () => {
       });
     });
 
-    const toasts = useToastStore.getState().getToasts();
-    expect(toasts).toHaveLength(1);
-    expect(toasts[0]?.message).toBe('Provider test');
+    await waitFor(() => {
+      expect(result.current.toasts).toHaveLength(1);
+    });
+    expect(result.current.toasts[0]?.title).toBe('Provider test');
   });
 });
 
 describe('Toast Component', () => {
   beforeEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
   });
 
   afterEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
     vi.clearAllMocks();
   });
 
@@ -362,7 +473,7 @@ describe('Toast Component', () => {
       expect(screen.getByText('Dismissable')).toBeInTheDocument();
     });
 
-    const closeButton = screen.getByRole('button', { name: /dismiss notification/i });
+    const closeButton = document.querySelector('[data-test-id^="toast-close-"]')!;
     await user.click(closeButton);
 
     await waitFor(() => {
@@ -453,36 +564,39 @@ describe('Toast Component', () => {
 
 describe('ToastBell', () => {
   beforeEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
   });
 
   afterEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
     vi.clearAllMocks();
   });
 
   it('renders bell icon', () => {
-    render(<ToastBell />);
+    renderWithProvider(<ToastBell />);
     expect(screen.getByTestId('toast-bell')).toBeInTheDocument();
   });
 
   it('shows no badge when count is 0', () => {
-    render(<ToastBell />);
+    renderWithProvider(<ToastBell />);
     expect(screen.queryByTestId('toast-bell-badge')).not.toBeInTheDocument();
   });
 
   it('shows badge when count > 0', () => {
+    renderWithProvider(<ToastBell />);
     act(() => {
       toast.success({ message: 'Test' });
     });
-
-    render(<ToastBell />);
     expect(screen.getByTestId('toast-bell-badge')).toBeInTheDocument();
     expect(screen.getByTestId('toast-bell-badge')).toHaveTextContent('1');
   });
 
   it('updates badge count dynamically', async () => {
-    const { rerender } = render(<ToastBell />);
+    renderWithProvider(<ToastBell />);
 
     act(() => {
       toast.success({ message: 'Test 1' });
@@ -490,14 +604,13 @@ describe('ToastBell', () => {
       toast.warning({ message: 'Test 3' });
     });
 
-    rerender(<ToastBell />);
-
     await waitFor(() => {
       expect(screen.getByTestId('toast-bell-badge')).toHaveTextContent('3');
     });
   });
 
   it('shows 99+ for counts above 99', () => {
+    renderWithProvider(<ToastBell />);
     // Add 100 unique toasts
     act(() => {
       for (let i = 0; i < 100; i++) {
@@ -505,22 +618,19 @@ describe('ToastBell', () => {
       }
     });
 
-    render(<ToastBell />);
-
     expect(screen.getByTestId('toast-bell-badge')).toHaveTextContent('99+');
   });
 
   it('has correct aria-label for count', () => {
+    renderWithProvider(<ToastBell />);
     act(() => {
       toast.success({ message: 'Test' });
     });
-
-    render(<ToastBell />);
     expect(screen.getByTestId('toast-bell')).toHaveAttribute('aria-label', '1 notification');
   });
 
   it('has correct aria-label for no notifications', () => {
-    render(<ToastBell />);
+    renderWithProvider(<ToastBell />);
     expect(screen.getByTestId('toast-bell')).toHaveAttribute('aria-label', 'No notifications');
   });
 
@@ -528,7 +638,7 @@ describe('ToastBell', () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
 
-    render(<ToastBell onClick={handleClick} />);
+    renderWithProvider(<ToastBell onClick={handleClick} />);
     await user.click(screen.getByTestId('toast-bell'));
 
     expect(handleClick).toHaveBeenCalledTimes(1);
@@ -537,11 +647,15 @@ describe('ToastBell', () => {
 
 describe('Accessibility', () => {
   beforeEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
   });
 
   afterEach(() => {
-    useToastStore.getState().clearAll();
+    act(() => {
+      toast.dismissAll();
+    });
     vi.clearAllMocks();
   });
 
@@ -553,8 +667,9 @@ describe('Accessibility', () => {
     });
 
     await waitFor(() => {
-      const closeButton = screen.getByRole('button', { name: /dismiss notification/i });
+      const closeButton = document.querySelector('[data-test-id^="toast-close-"]');
       expect(closeButton).toBeInTheDocument();
+      expect(closeButton).toHaveAttribute('aria-label', 'Dismiss notification');
     });
   });
 

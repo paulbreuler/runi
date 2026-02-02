@@ -1,5 +1,8 @@
 import type { Preview } from '@storybook/react';
+import { configure } from '@testing-library/dom';
 import '../src/app.css';
+// Align Storybook play functions with data-test-id convention.
+configure({ testIdAttribute: 'data-test-id' });
 
 // Storybook 10: Module automocking with sb.mock
 // Example usage (commented out - uncomment to use):
