@@ -51,10 +51,10 @@ test.describe('Storybook Visual Regression', () => {
   test('RequestBuilder body panel fills height', async ({ page }) => {
     await page.goto('/?path=/story/request-requestbuilder--playground');
     const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
-    // Wait for the story to mount before querying tabs
+    // Wait for the story to mount before querying tabs (CI can be slow)
     await iframe.locator('[data-test-id="request-builder"]').waitFor({
       state: 'visible',
-      timeout: 15000,
+      timeout: 25000,
     });
     const bodyTab = iframe.locator('[data-test-id="request-tab-body"]');
     await bodyTab.waitFor({ state: 'visible', timeout: 10000 });
