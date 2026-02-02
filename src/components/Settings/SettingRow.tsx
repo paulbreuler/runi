@@ -177,7 +177,7 @@ export function SettingRow<C extends SettingsCategory>({
             <Select.SelectContent
               data-test-id={`setting-${categoryKey}-${String(settingKey)}-list`}
             >
-              {schema.options.map((opt) => (
+              {(schema.options ?? []).map((opt) => (
                 <Select.SelectItem
                   key={opt.value}
                   value={opt.value}

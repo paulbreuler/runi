@@ -76,7 +76,8 @@ describe('SettingsPanel', () => {
     fireEvent.change(editor, { target: { value: '{"http":{"timeout":1000}}' } });
 
     expect(onSettingsChange).toHaveBeenCalled();
-    const lastCall = onSettingsChange.mock.calls.at(-1)?.[0];
+    const calls = onSettingsChange.mock.calls;
+    const lastCall = calls[calls.length - 1]?.[0];
     expect(lastCall.http.timeout).toBe(1000);
   });
 
