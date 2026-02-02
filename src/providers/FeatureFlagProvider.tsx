@@ -31,13 +31,13 @@ export const FeatureFlagProvider = ({
 
     hydrationAttempted.current = true;
 
-    if (skipHydration) {
+    if (overrides !== undefined) {
+      hydrateFlags(overrides);
       setHydrated(true);
       return;
     }
 
-    if (overrides !== undefined) {
-      hydrateFlags(overrides);
+    if (skipHydration) {
       setHydrated(true);
       return;
     }
