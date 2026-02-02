@@ -13,9 +13,10 @@ mod infrastructure;
 use infrastructure::commands::{
     clear_request_history, cmd_add_httpbin_collection, cmd_delete_collection, cmd_list_collections,
     cmd_load_collection, cmd_log_frontend_error, cmd_save_collection,
-    cmd_write_frontend_error_report, create_proxy_service, delete_history_entry, get_history_batch,
-    get_history_count, get_history_ids, get_platform, get_process_startup_time, get_system_specs,
-    hello_world, load_request_history, save_request_history, set_log_level, write_startup_timing,
+    cmd_write_frontend_error_report, create_proxy_service, delete_history_entry, get_config_dir,
+    get_history_batch, get_history_count, get_history_ids, get_platform, get_process_startup_time,
+    get_system_specs, hello_world, load_feature_flags, load_request_history, save_request_history,
+    set_log_level, write_startup_timing,
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
@@ -77,6 +78,8 @@ pub fn run() {
             get_platform,
             get_process_startup_time,
             get_system_specs,
+            load_feature_flags,
+            get_config_dir,
             get_ram_stats,
             collect_ram_sample,
             set_memory_monitoring_enabled,

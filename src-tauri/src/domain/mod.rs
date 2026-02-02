@@ -5,5 +5,6 @@
 
 pub mod collection;
 pub mod errors;
+pub mod features;
 pub mod http;
 pub mod models;
