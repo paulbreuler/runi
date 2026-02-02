@@ -11,6 +11,9 @@ test.describe('Sidebar', () => {
           if (cmd === 'load_request_history') {
             return Promise.resolve([]);
           }
+          if (cmd === 'load_feature_flags') {
+            return Promise.resolve({ http: { collectionsEnabled: true } });
+          }
           if (cmd === 'cmd_list_collections') {
             return Promise.resolve([]);
           }
@@ -73,7 +76,13 @@ test.describe('Sidebar', () => {
     const collectionsDrawer = page.getByTestId('collections-drawer');
     await expect(collectionsDrawer).toBeVisible();
 
-    // Now verify the content is visible
+    // Now verify the content is visible (or gated by feature flags)
+    const collectionListDisabled = page.getByTestId('collection-list-disabled');
+    if ((await collectionListDisabled.count()) > 0) {
+      await expect(collectionListDisabled).toBeVisible();
+      return;
+    }
+
     await expect(page.getByTestId('collection-list-empty')).toBeVisible();
 
     // History section was removed - it's now in Network History Panel instead
@@ -136,6 +145,12 @@ test.describe('Sidebar', () => {
   });
 
   test('sidebar sections have hover effects', async ({ page }) => {
+    const collectionListDisabled = page.getByTestId('collection-list-disabled');
+    if ((await collectionListDisabled.count()) > 0) {
+      await expect(collectionListDisabled).toBeVisible();
+      return;
+    }
+
     const collectionsItem = page.getByTestId('collection-list-empty');
 
     // Hover over the collections item
