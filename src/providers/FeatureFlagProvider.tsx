@@ -23,24 +23,36 @@ export const FeatureFlagProvider = ({
   const hydrateFlags = useFeatureFlagStore((state) => state.hydrateFlags);
   const setHydrated = useFeatureFlagStore((state) => state.setHydrated);
   const hydrationAttempted = useRef(false);
+  const lastOverrides = useRef<DeepPartial<FeatureFlags> | undefined>(undefined);
 
   useEffect(() => {
-    if (hydrationAttempted.current) {
+    const previousOverrides = lastOverrides.current;
+    if (previousOverrides !== overrides) {
+      lastOverrides.current = overrides;
+    }
+
+    if (overrides !== undefined) {
+      if (previousOverrides !== overrides) {
+        hydrateFlags(overrides);
+        setHydrated(true);
+      }
       return;
     }
 
-    hydrationAttempted.current = true;
-
-    if (overrides !== undefined) {
-      hydrateFlags(overrides);
-      setHydrated(true);
-      return;
+    if (previousOverrides !== undefined) {
+      hydrationAttempted.current = false;
     }
 
     if (skipHydration) {
       setHydrated(true);
       return;
     }
+
+    if (hydrationAttempted.current) {
+      return;
+    }
+
+    hydrationAttempted.current = true;
 
     invoke<Record<string, unknown>>('load_feature_flags')
       .then((config) => {

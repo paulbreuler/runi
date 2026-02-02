@@ -6,8 +6,8 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useFeatureFlag, useFeatureFlags, useFeatureFlagActions } from './useFeatureFlag';
-import { useFeatureFlagStore } from '../stores/features/useFeatureFlagStore';
-import { FLAG_METADATA } from '../stores/features/metadata';
+import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
+import { FLAG_METADATA } from '@/stores/features/metadata';
 
 describe('useFeatureFlag', () => {
   beforeEach(() => {

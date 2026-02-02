@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { CollectionEmptyState } from '@/components/Sidebar/CollectionEmptyState';
 import { CollectionItem } from '@/components/Sidebar/CollectionItem';
 import { useCollectionStore } from '@/stores/useCollectionStore';
-import { DEFAULT_FLAGS } from '@/stores/features';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { cn } from '@/utils/cn';
 
 export const CollectionList = (): React.JSX.Element => {
@@ -17,11 +17,15 @@ export const CollectionList = (): React.JSX.Element => {
   const loadCollections = useCollectionStore((state) => state.loadCollections);
   const addHttpbinCollection = useCollectionStore((state) => state.addHttpbinCollection);
   const showError = error !== null && error.length > 0;
-  const collectionsEnabled = DEFAULT_FLAGS.http.collectionsEnabled;
+  const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
 
   useEffect(() => {
+    if (!collectionsEnabled) {
+      return;
+    }
+
     void loadCollections();
-  }, [loadCollections]);
+  }, [collectionsEnabled, loadCollections]);
 
   if (!collectionsEnabled) {
     return (

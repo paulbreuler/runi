@@ -4,11 +4,11 @@
  */
 
 import { useCallback } from 'react';
-import { useFeatureFlagStore } from '../stores/features/useFeatureFlagStore';
-import type { FeatureFlagState } from '../stores/features/useFeatureFlagStore';
-import { FLAG_METADATA } from '../stores/features/metadata';
-import { isFeatureInteractive, isFeatureVisible } from '../stores/features/types';
-import type { FeatureFlags, FeatureState } from '../stores/features/types';
+import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
+import type { FeatureFlagState } from '@/stores/features/useFeatureFlagStore';
+import { FLAG_METADATA } from '@/stores/features/metadata';
+import { isFeatureInteractive, isFeatureVisible } from '@/stores/features/types';
+import type { FeatureFlags, FeatureState } from '@/stores/features/types';
 
 export interface UseFeatureFlagResult {
   /** Whether the flag is enabled */
