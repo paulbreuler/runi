@@ -42,7 +42,7 @@ export function validateSetting<C extends SettingsCategory>(
     const min = schema.min;
     if (min !== undefined && typeof value === 'number' && value < min) {
       const mult = schema.displayMultiplier;
-      const display = mult !== undefined ? min * mult : min;
+      const display = mult !== undefined && mult !== 0 ? min * mult : min;
       const unit = schema.displayUnit ?? schema.unit ?? '';
       return {
         valid: false,
@@ -52,7 +52,7 @@ export function validateSetting<C extends SettingsCategory>(
     const max = schema.max;
     if (max !== undefined && typeof value === 'number' && value > max) {
       const mult = schema.displayMultiplier;
-      const display = mult !== undefined ? max * mult : max;
+      const display = mult !== undefined && mult !== 0 ? max * mult : max;
       const unit = schema.displayUnit ?? schema.unit ?? '';
       return {
         valid: false,

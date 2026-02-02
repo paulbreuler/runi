@@ -40,9 +40,7 @@ export function SettingsSection({
   const [isExpanded, setIsExpanded] = useState(forceExpand || category === 'http');
 
   useEffect(() => {
-    if (forceExpand) {
-      setIsExpanded(true);
-    }
+    setIsExpanded(forceExpand);
   }, [forceExpand]);
 
   const schemaKeys = Object.keys(schema);

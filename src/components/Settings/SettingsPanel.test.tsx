@@ -53,7 +53,9 @@ describe('SettingsPanel', () => {
 
     await user.click(screen.getByTestId('settings-reset'));
     expect(onSettingsChange).toHaveBeenCalled();
-    expect(onSettingsChange).toHaveBeenCalledWith(DEFAULT_SETTINGS);
+    const calls = onSettingsChange.mock.calls;
+    const lastCall = calls[calls.length - 1]?.[0];
+    expect(lastCall).toEqual(DEFAULT_SETTINGS);
   });
 
   it('toggles JSON mode', async () => {

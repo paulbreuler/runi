@@ -76,7 +76,8 @@ export function SettingRow<C extends SettingsCategory>({
     schema.max !== undefined && displayMultiplier !== null
       ? schema.max * displayMultiplier
       : schema.max;
-  const displayStep = (schema.step ?? 1) * (displayMultiplier ?? 1);
+  const safeMult = displayMultiplier !== null && displayMultiplier > 0 ? displayMultiplier : 1;
+  const displayStep = (schema.step ?? 1) * safeMult;
 
   return (
     <div
