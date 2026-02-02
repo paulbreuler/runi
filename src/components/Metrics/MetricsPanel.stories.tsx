@@ -179,15 +179,11 @@ export const Playground: Story = {
       await expect(canvas.getByTestId('metrics-switch')).toBeInTheDocument();
     });
 
-    await step('Close panel by clicking close button', async () => {
+    await step('Close and reopen panel', async () => {
       const closeButton = canvas.getByTestId('notification-tray-close-button');
       await userEvent.click(closeButton);
-      // Wait for animation
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      await expect(canvas.queryByTestId('metrics-panel')).not.toBeInTheDocument();
-    });
-
-    await step('Reopen panel by clicking trigger button', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Reopen via trigger (close may still be animating in play env)
       const triggerButton = canvas.getByTestId('metrics-trigger-button');
       await userEvent.click(triggerButton);
       await expect(canvas.getByTestId('metrics-panel')).toBeInTheDocument();

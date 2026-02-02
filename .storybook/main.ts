@@ -1,4 +1,5 @@
 // This file has been automatically migrated to valid ESM format by Storybook.
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { StorybookConfig } from '@storybook/react-vite';
 import { mergeConfig } from 'vite';
@@ -7,6 +8,8 @@ import path, { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, '../package.json'), 'utf-8'));
 
 const config: StorybookConfig = {
   framework: {
@@ -60,6 +63,9 @@ const config: StorybookConfig = {
 
   async viteFinal(config) {
     return mergeConfig(config, {
+      define: {
+        __APP_VERSION__: JSON.stringify(packageJson.version),
+      },
       plugins: [tailwindcss()],
       resolve: {
         alias: {

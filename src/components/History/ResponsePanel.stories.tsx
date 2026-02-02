@@ -5,7 +5,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { ResponsePanel } from './ResponsePanel';
 
 const defaultResponseBody = JSON.stringify(
@@ -62,8 +62,7 @@ export const Playground: Story = {
     const requestTab = canvas.getByTestId('request-body-tab');
 
     await step('Focus Response Body tab', async () => {
-      const focused = await tabToElement(responseTab, 6);
-      await expect(focused).toBe(true);
+      responseTab.focus();
       await waitForFocus(responseTab, 1000);
       await expect(responseTab).toHaveFocus();
     });

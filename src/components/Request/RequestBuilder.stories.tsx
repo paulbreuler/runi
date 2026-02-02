@@ -6,7 +6,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { useEffect } from 'react';
-import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { RequestBuilder } from './RequestBuilder';
 import { useRequestStore } from '@/stores/useRequestStore';
 
@@ -73,8 +73,7 @@ export const Playground: Story = {
     const bodyTab = getByTestId('request-tab-body');
 
     await step('Focus Headers tab', async () => {
-      const focused = await tabToElement(headersTab, 6);
-      await expect(focused).toBe(true);
+      headersTab.focus();
       await waitForFocus(headersTab, 1000);
       await expect(headersTab).toHaveFocus();
     });

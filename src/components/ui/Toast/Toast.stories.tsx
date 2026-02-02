@@ -280,7 +280,7 @@ export const NotificationBell: Story = {
     const canvas = within(canvasElement);
 
     await step('Verify bell is visible', async () => {
-      const bell = canvas.getByTestId('toast-bell');
+      const bell = await canvas.findByTestId('toast-bell', {}, { timeout: 3000 });
       await expect(bell).toBeInTheDocument();
     });
 

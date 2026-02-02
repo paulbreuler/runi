@@ -1,5 +1,5 @@
 import { setProjectAnnotations } from '@storybook/react-vite';
-import { configure } from '@testing-library/react';
+import { configure } from '@testing-library/dom';
 import * as previewAnnotations from './preview';
 
 // Configure Testing Library to use data-test-id attribute (matches CLAUDE.md standard)

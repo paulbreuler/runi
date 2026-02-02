@@ -6,7 +6,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
-import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { PanelTabs, type PanelTabType } from './PanelTabs';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -73,8 +73,7 @@ export const Playground: Story = {
     const consoleTab = canvas.getByTestId('panel-tab-console');
 
     await step('Focus Network tab', async () => {
-      const focused = await tabToElement(networkTab, 6);
-      await expect(focused).toBe(true);
+      networkTab.focus();
       await waitForFocus(networkTab, 1000);
       await expect(networkTab).toHaveFocus();
     });

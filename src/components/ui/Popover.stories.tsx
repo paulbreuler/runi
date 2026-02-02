@@ -9,7 +9,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, within, waitFor } from 'storybook/test';
 import {
   Popover,
   PopoverTrigger,
@@ -113,15 +113,23 @@ export const Playground: Story = {
     await step('Open popover on click', async () => {
       const trigger = canvas.getByTestId('popover-trigger');
       await userEvent.click(trigger);
-      const content = await canvas.findByTestId('popover-content', {}, { timeout: 2000 });
+      // Popover content renders in a portal (document.body), not inside canvas
+      const doc = within(document.body);
+      const content = await doc.findByTestId('popover-content', {}, { timeout: 2000 });
       await expect(content).toBeInTheDocument();
       await expect(content).toHaveTextContent('Popover title');
     });
 
     await step('Close via Close button', async () => {
-      const closeBtn = canvas.getByRole('button', { name: 'Close' });
+      const doc = within(document.body);
+      const closeBtn = doc.getByRole('button', { name: 'Close' });
       await userEvent.click(closeBtn);
-      await expect(canvas.queryByTestId('popover-content')).not.toBeInTheDocument();
+      await waitFor(
+        async () => {
+          await expect(doc.queryByTestId('popover-content')).not.toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
     });
   },
   parameters: {

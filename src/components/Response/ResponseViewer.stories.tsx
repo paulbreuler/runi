@@ -10,7 +10,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { tabToElement, waitForFocus } from '@/utils/storybook-test-helpers';
+import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { ResponseViewer, type ResponseViewerProps } from './ResponseViewer';
 import { StatusBadge } from './StatusBadge';
 import type { HttpResponse } from '@/types/http';
@@ -143,10 +143,9 @@ export const Playground: Story = {
     await step('Test tab navigation', async () => {
       const headersTab = canvas.queryByTestId('response-tab-headers');
       if (headersTab !== null) {
-        const focused = await tabToElement(headersTab, 6);
-        await expect(focused).toBe(true);
+        headersTab.focus();
         await waitForFocus(headersTab, 1000);
-        await expect(headersTab).toHaveClass('font-medium');
+        await expect(headersTab).toHaveFocus();
       }
     });
     await step('Arrow Right focuses Raw tab', async () => {

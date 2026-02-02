@@ -86,7 +86,9 @@ export const Playground: Story = {
     await step('Show tooltip on hover', async () => {
       const trigger = canvas.getByTestId('tooltip-trigger');
       await userEvent.hover(trigger);
-      const content = await canvas.findByTestId('tooltip-content', {}, { timeout: 2000 });
+      // Tooltip content renders in a portal (document.body)
+      const doc = within(document.body);
+      const content = await doc.findByTestId('tooltip-content', {}, { timeout: 2000 });
       await expect(content).toBeInTheDocument();
     });
   },

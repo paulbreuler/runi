@@ -121,7 +121,6 @@ jobs:
         # locally but fail intermittently in CI. We're skipping them for now to unblock
         # this PR. See: https://github.com/paulbreuler/runi/issues/<issue-number>
         # TODO: Address Storybook test reliability in CI in a follow-up PR
-        continue-on-error: true
         run: npm run test-storybook
         env:
           # Storybook tests run in browser mode, may need longer timeout
@@ -215,10 +214,6 @@ jobs:
         uses: ./.github/actions/setup-playwright
 
       - name: Run visual tests
-        # Note: continue-on-error is intentional during initial setup phase.
-        # Visual tests are informational until baselines are established.
-        # TODO: Remove continue-on-error once visual test baselines are stable.
-        continue-on-error: true
         env:
           CI: true
         run: |
