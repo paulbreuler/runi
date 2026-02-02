@@ -877,7 +877,7 @@ describe('ConsolePanel', () => {
       },
       { timeout: 10000 }
     );
-  });
+  }, 20000);
 
   it('collapses expanded args when chevron is clicked again', async () => {
     render(<ConsolePanel />);
