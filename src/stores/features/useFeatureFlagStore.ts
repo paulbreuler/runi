@@ -44,8 +44,10 @@ const deepMerge = (defaults: FeatureFlags, partial: DeepPartial<FeatureFlags>): 
       for (const flagKey of Object.keys(layerValue) as Array<keyof typeof layerValue>) {
         const flagValue = layerValue[flagKey];
         if (typeof flagValue === 'boolean' && flagKey in result[layerKey]) {
-          const layerRecord = result[layerKey] as unknown as Record<string, boolean>;
-          layerRecord[flagKey as string] = flagValue;
+          // Double cast required: TypeScript can't directly convert typed flag interfaces
+          // (e.g., HttpFlags) to Record<string, boolean> because they lack index signatures.
+          // We've validated layerKey and flagKey exist via runtime checks above.
+          (result[layerKey] as unknown as Record<string, boolean>)[flagKey as string] = flagValue;
         }
       }
     }

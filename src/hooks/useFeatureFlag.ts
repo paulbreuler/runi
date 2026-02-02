@@ -64,12 +64,23 @@ export function useFeatureFlag<L extends keyof FeatureFlags>(
  * Hook to access multiple flags at once.
  *
  * Use sparingly - prefer individual useFeatureFlag calls for
- * better render optimization.
+ * better render optimization. This hook re-renders on any flag change.
+ *
+ * @returns The complete feature flags object with all layers
  *
  * @example
  * ```tsx
  * const flags = useFeatureFlags();
  * const canvasEnabled = flags.canvas.enabled;
+ * const httpFlags = flags.http;
+ * ```
+ *
+ * @example Conditional rendering based on multiple flags
+ * ```tsx
+ * const flags = useFeatureFlags();
+ * if (flags.debug.forceAllExperimental) {
+ *   // Show all experimental features
+ * }
  * ```
  */
 export function useFeatureFlags(): FeatureFlags {
@@ -77,22 +88,54 @@ export function useFeatureFlags(): FeatureFlags {
 }
 
 /**
- * Hook to access feature flag actions.
- *
- * Actions are stable and don't cause re-renders.
- *
- * @example
- * ```tsx
- * const { setFlag, resetToDefaults } = useFeatureFlagActions();
- * setFlag('canvas', 'enabled', true);
- * ```
+ * Actions for modifying feature flag state.
  */
 export interface FeatureFlagActions {
+  /** Set a single flag value by layer and flag name */
   setFlag: FeatureFlagState['setFlag'];
+  /** Bulk update flags from a partial config (used during hydration) */
   hydrateFlags: FeatureFlagState['hydrateFlags'];
+  /** Reset all flags to their default values */
   resetToDefaults: FeatureFlagState['resetToDefaults'];
 }
 
+/**
+ * Hook to access feature flag actions.
+ *
+ * Actions are stable references and don't cause re-renders when called.
+ * Use this hook when you need to modify flags programmatically.
+ *
+ * @returns Object containing setFlag, hydrateFlags, and resetToDefaults actions
+ *
+ * @example Toggle a single flag
+ * ```tsx
+ * const { setFlag } = useFeatureFlagActions();
+ *
+ * const handleToggle = () => {
+ *   setFlag('canvas', 'enabled', true);
+ * };
+ * ```
+ *
+ * @example Reset all flags (e.g., in settings panel)
+ * ```tsx
+ * const { resetToDefaults } = useFeatureFlagActions();
+ *
+ * const handleReset = () => {
+ *   resetToDefaults();
+ * };
+ * ```
+ *
+ * @example Bulk update from external config
+ * ```tsx
+ * const { hydrateFlags } = useFeatureFlagActions();
+ *
+ * useEffect(() => {
+ *   fetchConfig().then((config) => {
+ *     hydrateFlags(config);
+ *   });
+ * }, [hydrateFlags]);
+ * ```
+ */
 export function useFeatureFlagActions(): FeatureFlagActions {
   const setFlag = useFeatureFlagStore((state) => state.setFlag);
   const hydrateFlags = useFeatureFlagStore((state) => state.hydrateFlags);

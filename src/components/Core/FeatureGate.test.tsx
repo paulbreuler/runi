@@ -5,21 +5,42 @@
 
 import type { ComponentType } from 'react';
 import { render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { FeatureGate } from './FeatureGate';
 import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
-import { FLAG_METADATA } from '@/stores/features/metadata';
 import type { FeatureState } from '@/stores/features/types';
 
-const originalImportBrunoState = FLAG_METADATA.http.importBruno.state;
+// Mock the metadata module to control feature states in tests
+vi.mock('@/stores/features/metadata', async (importOriginal) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+  const original = await importOriginal<typeof import('@/stores/features/metadata')>();
+  return {
+    ...original,
+    FLAG_METADATA: {
+      ...original.FLAG_METADATA,
+      http: {
+        ...original.FLAG_METADATA.http,
+        // Override importBruno to be teaser for specific test
+        importBruno: {
+          ...original.FLAG_METADATA.http.importBruno,
+          // Default to stable, individual tests can override via mockReturnValue
+          get state(): FeatureState {
+            return mockImportBrunoState;
+          },
+        },
+      },
+    },
+  };
+});
+
+// Mutable state for the mock - controlled by tests
+let mockImportBrunoState: FeatureState = 'stable';
 
 describe('FeatureGate', () => {
   beforeEach(() => {
     useFeatureFlagStore.getState().resetToDefaults();
-  });
-
-  afterEach(() => {
-    FLAG_METADATA.http.importBruno.state = originalImportBrunoState;
+    // Reset mock state to default
+    mockImportBrunoState = 'stable';
   });
 
   it('renders children when flag is enabled and interactive', () => {
@@ -62,7 +83,8 @@ describe('FeatureGate', () => {
   });
 
   it('renders fallback for teaser state even when enabled', () => {
-    FLAG_METADATA.http.importBruno.state = 'teaser';
+    // Set mock state to teaser for this test
+    mockImportBrunoState = 'teaser';
 
     render(
       <FeatureGate

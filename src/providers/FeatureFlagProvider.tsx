@@ -26,6 +26,10 @@ export const FeatureFlagProvider = ({
   const lastOverrides = useRef<DeepPartial<FeatureFlags> | undefined>(undefined);
 
   useEffect(() => {
+    // Track previous overrides using reference equality. This is intentional:
+    // consumers should memoize or define overrides outside render to avoid
+    // unnecessary hydration cycles. Deep comparison would mask performance
+    // issues in consumer code.
     const previousOverrides = lastOverrides.current;
     if (previousOverrides !== overrides) {
       lastOverrides.current = overrides;
