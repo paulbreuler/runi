@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.0](https://github.com/paulbreuler/runi/compare/runi-v0.5.0...runi-v0.6.0) (2026-02-02)
+
+
+### Features
+
+* **collection:** Collection Format Types - collection domain schema ([#98](https://github.com/paulbreuler/runi/issues/98)) ([2794b78](https://github.com/paulbreuler/runi/commit/2794b78843cc9d8820e5694e167f6c3feb0f1bf9))
+* **collections:** Update collections and add sample httpbin OpenAPI collection integration ([#99](https://github.com/paulbreuler/runi/issues/99)) ([29b3e81](https://github.com/paulbreuler/runi/commit/29b3e817735e4e32190484100e428412b4e9f764))
+* **features:** feature flags system and require storybook tests in CI ([#100](https://github.com/paulbreuler/runi/issues/100)) ([647be76](https://github.com/paulbreuler/runi/commit/647be76886b8b8595744178515adee26042a4b29))
+
+
+### Tests
+
+* **console:** remove flaky row click selection tests ([#95](https://github.com/paulbreuler/runi/issues/95)) ([f4a088c](https://github.com/paulbreuler/runi/commit/f4a088c5c0666297b2815d68329226a34bf7b696))
+
+
+### Documentation
+
+* consolidate readme status and commit commands/skills as-is ([#97](https://github.com/paulbreuler/runi/issues/97)) ([7a25006](https://github.com/paulbreuler/runi/commit/7a2500618644e7399f01d118971e92d20bbc06d7))
+
 ## [0.5.0](https://github.com/paulbreuler/runi/compare/runi-v0.4.0...runi-v0.5.0) (2026-01-31)
 
 
