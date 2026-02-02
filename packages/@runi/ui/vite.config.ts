@@ -26,7 +26,6 @@ export default defineConfig({
         'react',
         'react-dom',
         'react/jsx-runtime',
-        'radix-ui',
         'class-variance-authority',
         'clsx',
         'lucide-react',

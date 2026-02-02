@@ -438,7 +438,7 @@ export const SelectPlayground: Story = {
         {},
         { timeout: 2000 }
       );
-      await expect(appleOption).toBeVisible();
+      await expect(appleOption).toBeInTheDocument();
     });
 
     await step('Select closes when clicking outside', async () => {

@@ -68,7 +68,7 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Polyfill for PointerEvent APIs used by Radix UI
+// Polyfill for PointerEvent APIs used by UI primitives in tests
 if (typeof window !== 'undefined' && typeof Element !== 'undefined') {
   // These need to be assigned dynamically only if not present
   // Using ??= to satisfy ESLint prefer-nullish-coalescing

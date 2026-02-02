@@ -1,5 +1,62 @@
 import type { Preview } from '@storybook/react';
+import { configure } from '@testing-library/dom';
 import '../src/app.css';
+// Align Storybook play functions with data-test-id convention.
+configure({ testIdAttribute: 'data-test-id' });
+
+declare global {
+  interface Window {
+    __runiTestIdMirror?: boolean;
+  }
+}
+
+const mirrorTestIds = (): void => {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const syncElement = (element: Element): void => {
+    if (!(element instanceof HTMLElement)) {
+      return;
+    }
+    const testId = element.getAttribute('data-test-id');
+    if (testId !== null && element.getAttribute('data-testid') !== testId) {
+      element.setAttribute('data-testid', testId);
+    }
+  };
+
+  document.querySelectorAll('[data-test-id]').forEach(syncElement);
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'attributes') {
+        syncElement(mutation.target);
+        continue;
+      }
+      for (const node of Array.from(mutation.addedNodes)) {
+        if (!(node instanceof HTMLElement)) {
+          continue;
+        }
+        if (node.hasAttribute('data-test-id')) {
+          syncElement(node);
+        }
+        node.querySelectorAll?.('[data-test-id]').forEach(syncElement);
+      }
+    }
+  });
+
+  observer.observe(document.documentElement, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ['data-test-id'],
+  });
+};
+
+if (typeof window !== 'undefined' && window.__runiTestIdMirror !== true) {
+  window.__runiTestIdMirror = true;
+  window.requestAnimationFrame(mirrorTestIds);
+}
 
 // Storybook 10: Module automocking with sb.mock
 // Example usage (commented out - uncomment to use):

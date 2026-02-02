@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { CollectionEmptyState } from '@/components/Sidebar/CollectionEmptyState';
 import { CollectionItem } from '@/components/Sidebar/CollectionItem';
 import { useCollectionStore } from '@/stores/useCollectionStore';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { cn } from '@/utils/cn';
 
 export const CollectionList = (): React.JSX.Element => {
@@ -16,10 +17,23 @@ export const CollectionList = (): React.JSX.Element => {
   const loadCollections = useCollectionStore((state) => state.loadCollections);
   const addHttpbinCollection = useCollectionStore((state) => state.addHttpbinCollection);
   const showError = error !== null && error.length > 0;
+  const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
 
   useEffect(() => {
+    if (!collectionsEnabled) {
+      return;
+    }
+
     void loadCollections();
-  }, [loadCollections]);
+  }, [collectionsEnabled, loadCollections]);
+
+  if (!collectionsEnabled) {
+    return (
+      <div className="px-3 pb-3 text-xs text-text-muted" data-test-id="collection-list-disabled">
+        Collections are experimental and currently disabled.
+      </div>
+    );
+  }
 
   if (summaries.length === 0) {
     return (

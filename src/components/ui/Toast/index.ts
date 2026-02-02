@@ -4,7 +4,7 @@
  */
 
 /**
- * Toast notification system using Radix UI and Motion.
+ * Toast notification system using Base UI and Motion.
  *
  * @example
  * ```tsx
@@ -32,6 +32,6 @@
 export { ToastProvider } from './ToastProvider';
 export { Toast } from './Toast';
 export { ToastBell } from './ToastBell';
-export { toast, useToastStore, useToastCount, setupToastEventBridge } from './useToast';
+export { toast, useToastCount, setupToastEventBridge } from './useToast';
 export type { ToastData, ToastVariant, ToastOptions } from './toast.types';
 export { DEFAULT_DURATIONS, DEDUPLICATION_WINDOW_MS } from './toast.types';

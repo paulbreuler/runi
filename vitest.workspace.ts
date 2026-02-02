@@ -14,5 +14,8 @@ export default defineWorkspace([
   // Unit tests (jsdom environment) - project name: 'unit'
   'vitest.config.ts',
   // Storybook browser tests - project name: 'storybook'
-  'vitest.config.storybook.ts',
+  {
+    extends: './vitest.config.storybook.ts',
+    root: '.storybook',
+  },
 ]);

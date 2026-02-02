@@ -20,7 +20,10 @@ export default defineConfig({
   expect: {
     toHaveScreenshot: {
       threshold: 0.2, // Per-pixel color difference tolerance (0–1 scale)
-      mode: 'strict', // Strict comparison mode
+      // Allow up to 3% pixel difference for cross-platform (Linux CI vs darwin baselines)
+      maxDiffPixelRatio: 0.03,
+      // Platform-agnostic path so CI (Linux) and local (darwin) share the same baselines
+      pathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
     },
   },
 

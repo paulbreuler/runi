@@ -166,6 +166,7 @@ export const RequestBuilder = (): React.JSX.Element => {
         <div className="flex-1 min-h-0 overflow-hidden">
           <Tabs.Panel value="headers" className="h-full min-h-0">
             <motion.div
+              data-test-id="request-tab-panel-headers"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -179,6 +180,7 @@ export const RequestBuilder = (): React.JSX.Element => {
 
           <Tabs.Panel value="body" className="h-full min-h-0">
             <motion.div
+              data-test-id="request-tab-panel-body"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -201,6 +203,7 @@ export const RequestBuilder = (): React.JSX.Element => {
 
           <Tabs.Panel value="params" className="h-full min-h-0">
             <motion.div
+              data-test-id="request-tab-panel-params"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -214,6 +217,7 @@ export const RequestBuilder = (): React.JSX.Element => {
 
           <Tabs.Panel value="auth" className="h-full min-h-0">
             <motion.div
+              data-test-id="request-tab-panel-auth"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

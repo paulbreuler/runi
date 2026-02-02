@@ -193,6 +193,9 @@ export const EditPlayground: Story = {
 
     await step('Verify JSON validation indicator', async () => {
       const validIndicator = canvas.getByTestId('json-valid-indicator');
+      await expect(validIndicator).toBeInTheDocument();
+      // Allow animation to finish before visibility check
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(validIndicator).toBeVisible();
     });
 
@@ -270,6 +273,8 @@ export const EditInvalidJson: Story = {
 
     await step('Verify Invalid JSON indicator is shown', async () => {
       const invalidIndicator = canvas.getByTestId('json-invalid-indicator');
+      await expect(invalidIndicator).toBeInTheDocument();
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await expect(invalidIndicator).toBeVisible();
       await expect(canvas.getByText('Invalid JSON')).toBeVisible();
     });

@@ -5,6 +5,7 @@
 
 use crate::application::proxy_service::ProxyService;
 use crate::domain::collection::Collection;
+use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::models::HelloWorldResponse;
 use crate::infrastructure::spec::converter::convert_to_collection;
@@ -201,6 +202,27 @@ pub fn get_system_specs() -> Result<SystemSpecs, String> {
         build_mode,
         bundle_size_mb,
     })
+}
+
+/// Load feature flag configuration from disk.
+///
+/// # Errors
+///
+/// Returns an error if a config file exists but cannot be read or parsed.
+#[tauri::command]
+pub async fn load_feature_flags() -> Result<serde_json::Value, String> {
+    feature_config::load_feature_flags().await
+}
+
+/// Get the feature flag config directory path.
+///
+/// # Errors
+///
+/// Returns an error if the home directory cannot be resolved.
+#[tauri::command]
+pub fn get_config_dir() -> Result<String, String> {
+    let dir = feature_config::get_config_dir()?;
+    Ok(dir.to_string_lossy().to_string())
 }
 
 /// Save a collection to disk.
