@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { getFlag, resetFeatureFlags, setFlag, withFeatureFlags } from './featureFlags';
@@ -14,30 +14,18 @@ describe('feature flag test utils', () => {
   });
 
   it('withFeatureFlags wraps component with overrides', () => {
-    let wrapper: ReturnType<typeof withFeatureFlags>;
-    act(() => {
-      wrapper = withFeatureFlags({ canvas: { enabled: true } });
-    });
-    let result: ReturnType<typeof renderHook>['result'];
-    act(() => {
-      ({ result } = renderHook(() => useFeatureFlag('canvas', 'enabled'), {
-        wrapper: wrapper!,
-      }));
+    const wrapper = withFeatureFlags({ canvas: { enabled: true } });
+    const { result } = renderHook(() => useFeatureFlag('canvas', 'enabled'), {
+      wrapper,
     });
 
     expect(result.current.enabled).toBe(true);
   });
 
   it('withFeatureFlags merges with defaults', () => {
-    let wrapper: ReturnType<typeof withFeatureFlags>;
-    act(() => {
-      wrapper = withFeatureFlags({ canvas: { enabled: true } });
-    });
-    let result: ReturnType<typeof renderHook>['result'];
-    act(() => {
-      ({ result } = renderHook(() => useFeatureFlag('http', 'importBruno'), {
-        wrapper: wrapper!,
-      }));
+    const wrapper = withFeatureFlags({ canvas: { enabled: true } });
+    const { result } = renderHook(() => useFeatureFlag('http', 'importBruno'), {
+      wrapper,
     });
 
     expect(result.current.enabled).toBe(true);

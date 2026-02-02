@@ -6,6 +6,7 @@
 import type { ReactElement } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { StoryContext } from '@storybook/react';
 import { FeatureFlagDecorator } from './FeatureFlagDecorator';
 import { FeatureGate } from '@/components/Core/FeatureGate';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
@@ -26,7 +27,9 @@ const renderDecorator = (args: Record<string, unknown>): void => {
     );
   };
 
-  const rendered = FeatureFlagDecorator(Story, { args }) as ReactElement;
+  const rendered = FeatureFlagDecorator(Story, {
+    args,
+  } as unknown as StoryContext) as ReactElement;
   render(rendered);
 };
 
