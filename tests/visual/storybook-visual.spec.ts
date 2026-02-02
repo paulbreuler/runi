@@ -51,6 +51,11 @@ test.describe('Storybook Visual Regression', () => {
   test('RequestBuilder body panel fills height', async ({ page }) => {
     await page.goto('/?path=/story/request-requestbuilder--playground');
     const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
+    // Wait for the story to mount before querying tabs
+    await iframe.locator('[data-test-id="request-builder"]').waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
     const bodyTab = iframe.locator('[data-test-id="request-tab-body"]');
     await bodyTab.waitFor({ state: 'visible', timeout: 10000 });
     await bodyTab.click();
@@ -63,6 +68,11 @@ test.describe('Storybook Visual Regression', () => {
   test('ResponseViewer raw panel layout', async ({ page }) => {
     await page.goto('/?path=/story/response-responseviewer--playground');
     const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
+    // Wait for the story to mount before querying tabs
+    await iframe.locator('[data-test-id="response-viewer"]').waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
     const rawTab = iframe.locator('[data-test-id="response-tab-raw"]');
     await rawTab.waitFor({ state: 'visible', timeout: 10000 });
     await rawTab.click();
