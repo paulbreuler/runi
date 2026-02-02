@@ -18,9 +18,11 @@ describe('feature flag test utils', () => {
     act(() => {
       wrapper = withFeatureFlags({ canvas: { enabled: true } });
     });
-
-    const { result } = renderHook(() => useFeatureFlag('canvas', 'enabled'), {
-      wrapper: wrapper!,
+    let result: ReturnType<typeof renderHook>['result'];
+    act(() => {
+      ({ result } = renderHook(() => useFeatureFlag('canvas', 'enabled'), {
+        wrapper: wrapper!,
+      }));
     });
 
     expect(result.current.enabled).toBe(true);
@@ -31,9 +33,11 @@ describe('feature flag test utils', () => {
     act(() => {
       wrapper = withFeatureFlags({ canvas: { enabled: true } });
     });
-
-    const { result } = renderHook(() => useFeatureFlag('http', 'importBruno'), {
-      wrapper: wrapper!,
+    let result: ReturnType<typeof renderHook>['result'];
+    act(() => {
+      ({ result } = renderHook(() => useFeatureFlag('http', 'importBruno'), {
+        wrapper: wrapper!,
+      }));
     });
 
     expect(result.current.enabled).toBe(true);
