@@ -6,6 +6,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MemoryWarningListener } from './components/Memory/MemoryWarningListener';
+import { FeatureFlagProvider } from './providers/FeatureFlagProvider';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastProvider } from './components/ui/Toast';
 
@@ -18,23 +19,25 @@ const DevToolsPopout = lazy(() =>
 export const App = (): React.JSX.Element => {
   return (
     <ThemeProvider appearance="dark" accentColor="blue" grayColor="gray">
-      <ToastProvider>
-        <MemoryWarningListener />
-        <BrowserRouter>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
-                Loading...
-              </div>
-            }
-          >
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/devtools-popout" element={<DevToolsPopout />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </ToastProvider>
+      <FeatureFlagProvider>
+        <ToastProvider>
+          <MemoryWarningListener />
+          <BrowserRouter>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
+                  Loading...
+                </div>
+              }
+            >
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/devtools-popout" element={<DevToolsPopout />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </ToastProvider>
+      </FeatureFlagProvider>
     </ThemeProvider>
   );
 };

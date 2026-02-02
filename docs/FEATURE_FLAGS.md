@@ -96,7 +96,7 @@ const { enabled, state, isVisible } = useFeatureFlag('canvas', 'minimap');
 ### Team Config (`~/.runi/flags.yaml`)
 
 ```yaml
-$schema: 'runi://feature-flags/v1'
+$schema: 'https://runi.dev/schema/flags/v1.json'
 
 http:
   exportPython: true
