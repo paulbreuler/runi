@@ -278,13 +278,13 @@ mod tests {
 
     #[test]
     fn test_config_parses_camel_case_fields() {
-        let yaml = r#"
+        let yaml = r"
 http:
   importBruno: true
   exportJavaScript: false
 canvas:
   connectionLines: true
-"#;
+";
         let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
@@ -295,10 +295,10 @@ canvas:
 
     #[test]
     fn test_config_handles_missing_optional_fields() {
-        let yaml = r#"
+        let yaml = r"
 http:
   importBruno: true
-"#;
+";
         let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
@@ -307,13 +307,13 @@ http:
 
     #[test]
     fn test_config_ignores_unknown_fields() {
-        let yaml = r#"
+        let yaml = r"
 http:
   importBruno: true
   unknownFlag: true
 unknownLayer:
   foo: true
-"#;
+";
         let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
@@ -321,11 +321,11 @@ unknownLayer:
 
     #[test]
     fn test_schema_field_is_optional() {
-        let yaml = r#"
+        let yaml = r"
 $schema: https://runi.dev/schema/flags/v1.json
 http:
   importBruno: true
-"#;
+";
         let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
         assert_eq!(
             parsed.schema.as_deref(),
@@ -432,10 +432,10 @@ http:
         let flags_path = dir.path().join(FLAGS_FILE_NAME);
         tokio::fs::write(
             &flags_path,
-            r#"
+            r"
 http:
   importBruno: true
-"#,
+",
         )
         .await
         .unwrap();
@@ -461,10 +461,10 @@ http:
         let flags_path = dir.path().join(FLAGS_FILE_NAME);
         tokio::fs::write(
             &flags_path,
-            r#"
+            r"
 canvas:
   enabled: true
-"#,
+",
         )
         .await
         .unwrap();
