@@ -16,6 +16,7 @@ import {
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { DockablePanel } from './DockablePanel';
+import { TitleBar } from './TitleBar';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -31,6 +32,7 @@ import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
+import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -122,6 +124,7 @@ export const MainLayout = ({
   // Panel tab state
   const [activeTab, setActiveTab] = useState<PanelTabType>('network');
   const { entries } = useHistoryStore();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -521,6 +524,13 @@ export const MainLayout = ({
       className="relative z-0 flex h-screen flex-col bg-bg-app"
       data-test-id="main-layout"
     >
+      <div className="shrink-0">
+        <TitleBar
+          onSettingsClick={() => {
+            setIsSettingsOpen(true);
+          }}
+        />
+      </div>
       <div className="flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
@@ -782,6 +792,27 @@ export const MainLayout = ({
       )}
 
       <StatusBar />
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-80 flex" data-test-id="settings-overlay">
+          <button
+            type="button"
+            className="absolute inset-0 bg-bg-app/70 backdrop-blur-sm"
+            onClick={() => {
+              setIsSettingsOpen(false);
+            }}
+            aria-label="Close settings"
+            data-test-id="settings-overlay-backdrop"
+          />
+          <div className="ml-auto h-full shadow-2xl relative z-81">
+            <SettingsPanel
+              isOpen
+              onClose={() => {
+                setIsSettingsOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

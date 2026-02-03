@@ -13,9 +13,9 @@ import { McpTab } from './McpTab';
 import { AboutTab } from './AboutTab';
 import { SettingsSearchBar } from './SettingsSearchBar';
 import { searchSettings } from './settingsSearch';
-import { DEFAULT_SETTINGS } from '@/types/settings-defaults';
 import type { SettingsSchema, SettingsCategory, SettingKey } from '@/types/settings';
 import { SettingsJsonEditor } from './SettingsJsonEditor';
+import { useSettings } from '@/stores/settings-store';
 
 export type SettingsTabId = 'general' | 'features' | 'mcp' | 'about';
 
@@ -53,9 +53,10 @@ export function SettingsPanel({
   className,
   children,
 }: SettingsPanelProps): ReactElement | null {
-  const [settings, setSettings] = useState<SettingsSchema>(
-    () => initialSettings ?? structuredClone(DEFAULT_SETTINGS)
-  );
+  const settings = useSettings((state) => state.settings);
+  const setSettings = useSettings((state) => state.setSettings);
+  const updateSettingAction = useSettings((state) => state.updateSetting);
+  const resetToDefaultsAction = useSettings((state) => state.resetToDefaults);
   const [activeTab, setActiveTab] = useState<SettingsTabId>('general');
   const [searchQuery, setSearchQuery] = useState('');
   const [isJsonMode, setIsJsonMode] = useState(false);
@@ -70,25 +71,16 @@ export function SettingsPanel({
       key: SettingKey<C>,
       value: SettingsSchema[C][SettingKey<C>]
     ) => {
-      setSettings((prev) => {
-        const next: SettingsSchema = {
-          ...prev,
-          [category]: {
-            ...prev[category],
-            [key]: value,
-          },
-        };
-        onSettingsChange?.(next);
-        return next;
-      });
+      const next = updateSettingAction(category, key, value);
+      onSettingsChange?.(next);
     },
-    [onSettingsChange]
+    [onSettingsChange, updateSettingAction]
   );
 
   const handleResetToDefaults = useCallback(() => {
-    setSettings(structuredClone(DEFAULT_SETTINGS));
-    onSettingsChange?.(structuredClone(DEFAULT_SETTINGS));
-  }, [onSettingsChange]);
+    const next = resetToDefaultsAction();
+    onSettingsChange?.(next);
+  }, [onSettingsChange, resetToDefaultsAction]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -102,6 +94,12 @@ export function SettingsPanel({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (initialSettings !== undefined) {
+      setSettings(structuredClone(initialSettings));
+    }
+  }, [initialSettings, setSettings]);
 
   if (!isOpen) {
     return null;

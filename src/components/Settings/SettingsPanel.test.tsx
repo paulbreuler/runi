@@ -3,13 +3,18 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsPanel } from './SettingsPanel';
 import { DEFAULT_SETTINGS } from '@/types/settings-defaults';
+import { useSettings } from '@/stores/settings-store';
 
 describe('SettingsPanel', () => {
+  beforeEach(() => {
+    useSettings.getState().setSettings(structuredClone(DEFAULT_SETTINGS));
+  });
+
   it('renders when open', () => {
     render(<SettingsPanel isOpen />);
     expect(screen.getByTestId('settings-panel')).toBeInTheDocument();

@@ -105,6 +105,19 @@ describe('TitleBar', () => {
       expect(screen.getByTestId('custom-content')).toBeInTheDocument();
       expect(screen.queryByText('Runi')).not.toBeInTheDocument();
     });
+
+    it('renders settings button when onSettingsClick is provided', () => {
+      const onSettingsClick = vi.fn();
+      render(<TitleBar onSettingsClick={onSettingsClick} />);
+
+      expect(screen.getByTestId('titlebar-settings')).toBeInTheDocument();
+    });
+
+    it('does not render settings button when onSettingsClick is missing', () => {
+      render(<TitleBar />);
+
+      expect(screen.queryByTestId('titlebar-settings')).not.toBeInTheDocument();
+    });
   });
 
   describe('window control actions', () => {
@@ -175,6 +188,14 @@ describe('TitleBar', () => {
 
       expect(mockClose).toHaveBeenCalledTimes(1);
     });
+
+    it('calls settings handler when settings button is clicked', () => {
+      const onSettingsClick = vi.fn();
+      render(<TitleBar onSettingsClick={onSettingsClick} />);
+
+      fireEvent.click(screen.getByTestId('titlebar-settings'));
+      expect(onSettingsClick).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('accessibility', () => {
@@ -194,9 +215,10 @@ describe('TitleBar', () => {
 
     it('has data-test-id attributes for testing', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
-      render(<TitleBar />);
+      render(<TitleBar onSettingsClick={vi.fn()} />);
 
       expect(screen.getByTestId('titlebar')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-settings')).toBeInTheDocument();
       // On Windows/Linux, controls should have testids
       expect(screen.getByTestId('titlebar-close')).toBeInTheDocument();
       expect(screen.getByTestId('titlebar-minimize')).toBeInTheDocument();
