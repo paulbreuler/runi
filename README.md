@@ -66,7 +66,13 @@
 
 > **Pre-alpha.** runi is under active development. The vision is solidifying,
 > the foundations are being laid. Expect rough edges — and rapid evolution.
-> Star the repo to follow along.
+> Star the repo to follow along the learning journey.
+>
+> This repo started as an experiment and will continue to push boundaries.
+> It may not be for you. If you think handcrafted code is gold, you should travel
+> back in time to a time when people had to punch cards to write code.
+>
+> Feedback always welcome! Join the run if you wish, fork and PR.
 
 ---
 
