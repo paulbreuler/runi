@@ -8,6 +8,7 @@ import type { ReactElement } from 'react';
 import { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import { SettingRow } from './SettingRow';
 import { SETTINGS_SCHEMA, type SettingMeta } from '@/types/settings-meta';
 import type { SettingsSchema, SettingsCategory, SettingKey } from '@/types/settings';
@@ -70,6 +71,7 @@ export function SettingsSection({
           setIsExpanded((e) => !e);
         }}
         className={cn(
+          focusRingClasses,
           'w-full flex items-center gap-2 py-3 px-4 rounded-lg transition-colors',
           'hover:bg-bg-raised/50 text-left'
         )}

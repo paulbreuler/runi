@@ -79,4 +79,21 @@ test.describe('Storybook Visual Regression', () => {
     await expect(iframe.locator('[data-test-id="response-raw"]')).toBeVisible();
     await expect(iframe.locator('body')).toHaveScreenshot('response-viewer-raw-panel.png');
   });
+
+  test('CodeEditor search highlight', async ({ page }) => {
+    await page.goto('/?path=/story/codehighlighting-codeeditor--search-highlight-test');
+    const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
+    await iframe.locator('[data-test-id="code-editor"]').waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
+    const textarea = iframe.locator('[data-test-id="code-editor-textarea"]');
+    await textarea.click();
+    await textarea.press('Control+F');
+    const searchInput = iframe.locator('[data-test-id="code-editor-search-input"]');
+    await searchInput.waitFor({ state: 'visible', timeout: 10000 });
+    await searchInput.fill('runi');
+    await expect(iframe.locator('[data-test-id="code-editor-highlight"]').first()).toBeVisible();
+    await expect(iframe.locator('body')).toHaveScreenshot('code-editor-search-highlight.png');
+  });
 });

@@ -26,10 +26,10 @@ describe('SettingRow', () => {
     );
 
     expect(screen.getByText('Follow Redirects')).toBeInTheDocument();
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
 
     await user.click(screen.getByTestId('setting-http-followRedirects'));
-    expect(onChange).toHaveBeenCalled();
-    expect(onChange).toHaveBeenLastCalledWith(false);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('shows validation error for invalid number input', async () => {
@@ -39,7 +39,7 @@ describe('SettingRow', () => {
       <SettingRow
         category="http"
         settingKey="timeout"
-        schema={SETTINGS_SCHEMA.http.timeout}
+        schema={{ ...SETTINGS_SCHEMA.http.timeout, availability: 'supported' }}
         value={30000}
         onChange={onChange}
         categoryKey="http"

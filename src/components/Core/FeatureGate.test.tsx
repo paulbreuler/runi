@@ -44,8 +44,10 @@ describe('FeatureGate', () => {
   });
 
   it('renders children when flag is enabled and interactive', () => {
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
+
     render(
-      <FeatureGate layer="http" flag="importBruno">
+      <FeatureGate layer="http" flag="collectionsEnabled">
         <div data-test-id="feature-gate-child">Allowed</div>
       </FeatureGate>
     );
@@ -54,10 +56,10 @@ describe('FeatureGate', () => {
   });
 
   it('renders nothing when flag is disabled and no fallback is provided', () => {
-    useFeatureFlagStore.getState().setFlag('http', 'importBruno', false);
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', false);
 
     render(
-      <FeatureGate layer="http" flag="importBruno">
+      <FeatureGate layer="http" flag="collectionsEnabled">
         <div data-test-id="feature-gate-child">Blocked</div>
       </FeatureGate>
     );
@@ -67,12 +69,12 @@ describe('FeatureGate', () => {
   });
 
   it('renders fallback when flag is disabled', () => {
-    useFeatureFlagStore.getState().setFlag('http', 'importBruno', false);
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', false);
 
     render(
       <FeatureGate
         layer="http"
-        flag="importBruno"
+        flag="collectionsEnabled"
         fallback={<div data-test-id="feature-gate-fallback">Fallback</div>}
       >
         <div data-test-id="feature-gate-child">Blocked</div>
@@ -101,10 +103,11 @@ describe('FeatureGate', () => {
   });
 
   it('renders children with badge for experimental state', () => {
-    useFeatureFlagStore.getState().setFlag('canvas', 'enabled', true);
+    mockImportBrunoState = 'experimental';
+    useFeatureFlagStore.getState().setFlag('http', 'importBruno', true);
 
     render(
-      <FeatureGate layer="canvas" flag="enabled">
+      <FeatureGate layer="http" flag="importBruno">
         <div data-test-id="feature-gate-child">Experimental</div>
       </FeatureGate>
     );
@@ -114,10 +117,11 @@ describe('FeatureGate', () => {
   });
 
   it('omits badge when showBadge is false', () => {
-    useFeatureFlagStore.getState().setFlag('canvas', 'enabled', true);
+    mockImportBrunoState = 'experimental';
+    useFeatureFlagStore.getState().setFlag('http', 'importBruno', true);
 
     render(
-      <FeatureGate layer="canvas" flag="enabled" showBadge={false}>
+      <FeatureGate layer="http" flag="importBruno" showBadge={false}>
         <div data-test-id="feature-gate-child">Experimental</div>
       </FeatureGate>
     );
@@ -127,14 +131,15 @@ describe('FeatureGate', () => {
   });
 
   it('accepts a custom badge component', () => {
-    useFeatureFlagStore.getState().setFlag('canvas', 'enabled', true);
+    mockImportBrunoState = 'experimental';
+    useFeatureFlagStore.getState().setFlag('http', 'importBruno', true);
 
     const CustomBadge: ComponentType<{ state: FeatureState }> = ({ state }) => (
       <div data-test-id="custom-badge">{state}</div>
     );
 
     render(
-      <FeatureGate layer="canvas" flag="enabled" BadgeComponent={CustomBadge}>
+      <FeatureGate layer="http" flag="importBruno" BadgeComponent={CustomBadge}>
         <div data-test-id="feature-gate-child">Experimental</div>
       </FeatureGate>
     );

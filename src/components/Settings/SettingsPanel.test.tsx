@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsPanel } from './SettingsPanel';
 import { DEFAULT_SETTINGS } from '@/types/settings-defaults';
@@ -78,9 +78,10 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel isOpen onSettingsChange={onSettingsChange} />);
 
     await user.click(screen.getByTestId('settings-json-toggle'));
-    const editor = screen.getByTestId('settings-json-editor');
+    const wrapper = screen.getByTestId('settings-json-editor');
+    const textarea = within(wrapper).getByTestId('code-editor-textarea');
 
-    fireEvent.change(editor, { target: { value: '{"http":{"timeout":1000}}' } });
+    fireEvent.change(textarea, { target: { value: '{"http":{"timeout":1000}}' } });
 
     expect(onSettingsChange).toHaveBeenCalled();
     const calls = onSettingsChange.mock.calls;
@@ -95,9 +96,10 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel isOpen onSettingsChange={onSettingsChange} />);
 
     await user.click(screen.getByTestId('settings-json-toggle'));
-    const editor = screen.getByTestId('settings-json-editor');
+    const wrapper = screen.getByTestId('settings-json-editor');
+    const textarea = within(wrapper).getByTestId('code-editor-textarea');
 
-    fireEvent.change(editor, { target: { value: '{' } });
+    fireEvent.change(textarea, { target: { value: '{' } });
 
     expect(screen.getByTestId('settings-json-error')).toBeInTheDocument();
   });

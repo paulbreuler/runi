@@ -531,7 +531,29 @@ export const MainLayout = ({
           }}
         />
       </div>
-      <div className="flex flex-1 min-h-0 overflow-hidden gap-0">
+      <div className="relative flex flex-1 min-h-0 overflow-hidden gap-0">
+        {/* Settings overlay: contained between title bar and status bar */}
+        {isSettingsOpen && (
+          <div className="absolute inset-0 z-80 flex" data-test-id="settings-overlay">
+            <button
+              type="button"
+              className="absolute inset-0 bg-transparent"
+              onClick={() => {
+                setIsSettingsOpen(false);
+              }}
+              aria-label="Close settings"
+              data-test-id="settings-overlay-backdrop"
+            />
+            <div className="ml-auto h-full shadow-2xl relative z-81">
+              <SettingsPanel
+                isOpen
+                onClose={() => {
+                  setIsSettingsOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
           <AnimatePresence>
@@ -792,27 +814,6 @@ export const MainLayout = ({
       )}
 
       <StatusBar />
-      {isSettingsOpen && (
-        <div className="fixed inset-0 z-80 flex" data-test-id="settings-overlay">
-          <button
-            type="button"
-            className="absolute inset-0 bg-bg-app/70 backdrop-blur-sm"
-            onClick={() => {
-              setIsSettingsOpen(false);
-            }}
-            aria-label="Close settings"
-            data-test-id="settings-overlay-backdrop"
-          />
-          <div className="ml-auto h-full shadow-2xl relative z-81">
-            <SettingsPanel
-              isOpen
-              onClose={() => {
-                setIsSettingsOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

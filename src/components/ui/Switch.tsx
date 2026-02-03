@@ -50,6 +50,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
             className={cn(
               focusRingClasses,
               'relative flex h-[18px] w-[32px] cursor-pointer items-center rounded-full p-[2px]',
+              'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60',
               className
             )}
             style={{
@@ -57,7 +58,12 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
             }}
             initial={false}
             animate={{
-              backgroundColor: checked ? 'var(--color-accent-blue)' : 'var(--color-bg-raised)',
+              backgroundColor:
+                rootProps['data-disabled'] !== undefined
+                  ? 'var(--color-bg-raised)'
+                  : checked
+                    ? 'var(--color-accent-blue)'
+                    : 'var(--color-bg-raised)',
               justifyContent: checked ? 'flex-end' : 'flex-start',
             }}
             onMouseDown={(e): void => {

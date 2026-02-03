@@ -45,7 +45,6 @@ describe('SettingsSection', () => {
     await user.click(screen.getByTestId('settings-section-toggle-storage'));
     await user.click(screen.getByTestId('setting-storage-autoSave'));
 
-    expect(onUpdate).toHaveBeenCalled();
-    expect(onUpdate).toHaveBeenCalledWith('storage', 'autoSave', false);
+    expect(onUpdate).not.toHaveBeenCalled();
   });
 });

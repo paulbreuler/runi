@@ -10,7 +10,7 @@ import { cn } from '@/utils/cn';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/Switch';
 import * as Select from '@/components/ui/select';
-import type { SettingMeta } from '@/types/settings-meta';
+import type { SettingAvailability, SettingMeta } from '@/types/settings-meta';
 import { validateSetting } from '@/types/settings-validation';
 import type { SettingsCategory, SettingKey } from '@/types/settings';
 
@@ -41,7 +41,8 @@ export function SettingRow<C extends SettingsCategory>({
   parentDisabled = false,
   categoryKey,
 }: SettingRowProps<C>): ReactElement {
-  const isDisabled = parentDisabled;
+  const availability: SettingAvailability = schema.availability ?? 'supported';
+  const isDisabled = parentDisabled || availability === 'teaser' || availability === 'hidden';
   const rawValue = value ?? schema.default;
   const showWarning =
     schema.warning !== undefined &&
@@ -91,6 +92,19 @@ export function SettingRow<C extends SettingsCategory>({
       <div className="flex-1 min-w-0 pr-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-fg-default font-medium">{schema.label}</span>
+          {availability !== 'supported' && (
+            <span
+              className={cn(
+                'text-[9px] font-medium px-1.5 py-0.5 rounded-full uppercase tracking-[0.08em]',
+                availability === 'teaser'
+                  ? 'bg-amber-3 text-amber-11'
+                  : 'bg-bg-elevated text-fg-muted'
+              )}
+              data-test-id={`setting-availability-${categoryKey}-${String(settingKey)}`}
+            >
+              {availability === 'teaser' ? 'Coming soon' : 'Hidden'}
+            </span>
+          )}
         </div>
         <p className="text-xs text-fg-muted mt-0.5">{schema.description}</p>
         {showWarning && (
@@ -100,7 +114,7 @@ export function SettingRow<C extends SettingsCategory>({
           </p>
         )}
       </div>
-      <div className="flex-shrink-0 flex flex-col items-end gap-1">
+      <div className="shrink-0 flex flex-col items-end gap-1">
         {schema.type === 'boolean' && (
           <Switch
             checked={Boolean(rawValue)}
