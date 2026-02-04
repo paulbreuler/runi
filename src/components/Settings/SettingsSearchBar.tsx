@@ -6,7 +6,9 @@
 import type { ReactElement } from 'react';
 import { useEffect, useRef } from 'react';
 import { CaseSensitive, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { Toggle } from '@base-ui/react/toggle';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -160,20 +162,31 @@ export function SettingsSearchBar({
             )}
           </>
         )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          onClick={() => {
-            onCaseSensitiveChange?.(!caseSensitive);
+        <Toggle
+          pressed={caseSensitive}
+          onPressedChange={(next) => {
+            onCaseSensitiveChange?.(next);
           }}
           aria-label="Match case"
           data-test-id="settings-search-case"
           disabled={onCaseSensitiveChange === undefined}
-          className={cn('text-fg-muted hover:text-fg-default', caseSensitive && 'text-accent-11')}
-        >
-          <CaseSensitive className="h-3 w-3" />
-        </Button>
+          render={(props, state) => (
+            <button
+              type="button"
+              {...props}
+              className={cn(
+                props.className,
+                focusRingClasses,
+                'inline-flex items-center justify-center size-7 rounded border border-border-subtle',
+                'text-fg-muted bg-bg-raised/50 hover:text-fg-default hover:bg-bg-raised',
+                state.pressed && 'bg-pressed text-pressed-text border-pressed-border',
+                state.disabled && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              <CaseSensitive className="h-3 w-3" aria-hidden />
+            </button>
+          )}
+        />
         {value.length > 0 && (
           <Button
             type="button"

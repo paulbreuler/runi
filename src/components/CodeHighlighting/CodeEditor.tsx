@@ -22,6 +22,7 @@ import {
 } from '@/components/CodeHighlighting/syntaxHighlighting';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { Toggle } from '@base-ui/react/toggle';
 
 export interface CodeEditorProps {
   /** Display mode shows read-only code, edit mode allows editing */
@@ -313,33 +314,56 @@ export const CodeEditor = ({
       closeSearch();
       return;
     }
-    if (enableSearch && showSearch && e.key === 'Enter' && searchMatches.length > 0) {
-      e.preventDefault();
-      if (e.shiftKey) {
-        goToPreviousMatch();
-      } else {
-        goToNextMatch();
-      }
-      return;
-    }
+    // Note: Enter for match navigation is handled by the search input's onKeyDown.
+    // Don't intercept Enter here - allow normal newline insertion in the textarea.
     if (e.key === 'Tab') {
       e.preventDefault();
       const textarea = e.currentTarget;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const newValue = code.substring(0, start) + '  ' + code.substring(end);
-      onChange?.(newValue);
-      setTimeout(() => {
-        // Check if textarea still exists and is mounted before setting selection
-        if (
-          textareaRef.current !== null &&
-          textareaRef.current === textarea &&
-          document.contains(textarea)
-        ) {
-          textarea.selectionStart = start + 2;
-          textarea.selectionEnd = start + 2;
+
+      if (e.shiftKey) {
+        // Shift+Tab: un-indent (remove up to 2 spaces from start of current line)
+        const lineStart = code.lastIndexOf('\n', start - 1) + 1;
+        const lineContent = code.substring(lineStart);
+        const spacesToRemove = lineContent.startsWith('  ')
+          ? 2
+          : lineContent.startsWith(' ')
+            ? 1
+            : 0;
+
+        if (spacesToRemove > 0) {
+          const newValue =
+            code.substring(0, lineStart) + code.substring(lineStart + spacesToRemove);
+          onChange?.(newValue);
+          setTimeout(() => {
+            if (
+              textareaRef.current !== null &&
+              textareaRef.current === textarea &&
+              document.contains(textarea)
+            ) {
+              const newStart = Math.max(lineStart, start - spacesToRemove);
+              const newEnd = Math.max(lineStart, end - spacesToRemove);
+              textarea.selectionStart = newStart;
+              textarea.selectionEnd = newEnd;
+            }
+          }, 0);
         }
-      }, 0);
+      } else {
+        // Tab: indent (add 2 spaces at cursor)
+        const newValue = code.substring(0, start) + '  ' + code.substring(end);
+        onChange?.(newValue);
+        setTimeout(() => {
+          if (
+            textareaRef.current !== null &&
+            textareaRef.current === textarea &&
+            document.contains(textarea)
+          ) {
+            textarea.selectionStart = start + 2;
+            textarea.selectionEnd = start + 2;
+          }
+        }, 0);
+      }
     }
   };
 
@@ -354,7 +378,6 @@ export const CodeEditor = ({
       return;
     }
     const ta = textareaRef.current;
-    ta.setSelectionRange(match.start, match.end);
     const parsedLineHeight = Number.parseInt(getComputedStyle(ta).lineHeight, 10);
     const lineHeight = Number.isNaN(parsedLineHeight) ? 20 : parsedLineHeight;
     const lines = code.slice(0, match.start).split('\n').length;
@@ -378,7 +401,7 @@ export const CodeEditor = ({
       parts.push(
         <mark
           key={`match-${String(index)}`}
-          className="rounded-sm text-transparent outline"
+          className="text-transparent outline"
           style={{
             backgroundColor: isCurrent
               ? 'var(--color-accent-9, #1d4ed8)'
@@ -387,7 +410,8 @@ export const CodeEditor = ({
               ? 'var(--color-accent-10, #1e40af)'
               : 'var(--color-accent-7, #60a5fa)',
             opacity: isCurrent ? 0.4 : 0.28,
-            paddingInline: '0.125rem',
+            paddingInlineStart: '0',
+            paddingInlineEnd: '0',
           }}
           data-test-id="code-editor-highlight"
         >
@@ -517,21 +541,27 @@ export const CodeEditor = ({
           >
             <ChevronDown className="h-3.5 w-3.5" aria-hidden />
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setCaseSensitive((prev) => !prev);
-            }}
-            className={cn(
-              focusRingClasses,
-              'p-1.5 rounded text-fg-muted hover:text-fg-default hover:bg-bg-raised/50',
-              caseSensitive && 'bg-accent-9/20 text-accent-11'
-            )}
+          <Toggle
+            pressed={caseSensitive}
+            onPressedChange={setCaseSensitive}
             aria-label="Match case"
             data-test-id="code-editor-search-case"
-          >
-            <CaseSensitive className="h-3.5 w-3.5" aria-hidden />
-          </button>
+            render={(props, state) => (
+              <button
+                type="button"
+                {...props}
+                className={cn(
+                  props.className,
+                  focusRingClasses,
+                  'inline-flex items-center justify-center size-7 rounded border border-border-subtle',
+                  'text-fg-muted bg-bg-raised/50 hover:text-fg-default hover:bg-bg-raised',
+                  state.pressed && 'bg-pressed text-pressed-text border-pressed-border'
+                )}
+              >
+                <CaseSensitive className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            )}
+          />
           <button
             type="button"
             onClick={closeSearch}

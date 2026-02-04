@@ -43,6 +43,36 @@
   /* Focus tokens (derived from accent) */
   --focus-8: var(--accent-8);
 
+  /* ============================================
+     Interactive State Tokens - Dark Theme
+     Uses "emphasis direction" thinking:
+     - In dark mode, pressed = accent tint (lighter/colored)
+     - Provides clear visual distinction without going darker
+     ============================================ */
+
+  /* Pressed State (toggles, buttons when activated) */
+  --pressed-bg: var(--accent-a4);
+  --pressed-bg-subtle: var(--accent-a3);
+  --pressed-border: var(--accent-7);
+  --pressed-text: var(--gray-12);
+
+  /* Selected State (multi-select, active tabs, current nav) */
+  --selected-bg: var(--accent-a3);
+  --selected-bg-solid: var(--accent-4);
+  --selected-border: var(--accent-6);
+  --selected-text: var(--accent-11);
+
+  /* Active State (navigation current item, active filters) */
+  --active-bg: var(--accent-a2);
+  --active-border: var(--accent-5);
+  --active-text: var(--accent-11);
+  --active-indicator: var(--accent-9);
+
+  /* Hover State (for consistency, though often inline) */
+  --hover-bg: var(--gray-a3);
+  --hover-bg-accent: var(--accent-a3);
+  --hover-border: var(--gray-7);
+
   /* Semantic Background Tokens - Dark Theme (default) */
   --color-background: var(--gray-1);
   --color-surface: var(--gray-2);
@@ -56,11 +86,39 @@
    ============================================ */
 .light,
 .light-theme {
-  /* Background: white in light theme (matches Radix pattern) */
+  /* Background: white in light theme */
   --color-background: #fff;
   /* Surface and panel tokens use gray scale which switches automatically */
   --color-surface: var(--gray-2);
   --color-panel-solid: var(--gray-3);
   --color-panel-translucent: var(--gray-a3);
   --color-overlay: var(--gray-a8);
+
+  /* ============================================
+     Interactive State Tokens - Light Theme
+     In light mode, pressed = darker/more saturated accent
+     ============================================ */
+
+  /* Pressed State */
+  --pressed-bg: var(--accent-4);
+  --pressed-bg-subtle: var(--accent-3);
+  --pressed-border: var(--accent-7);
+  --pressed-text: var(--gray-12);
+
+  /* Selected State */
+  --selected-bg: var(--accent-3);
+  --selected-bg-solid: var(--accent-4);
+  --selected-border: var(--accent-6);
+  --selected-text: var(--accent-11);
+
+  /* Active State */
+  --active-bg: var(--accent-2);
+  --active-border: var(--accent-5);
+  --active-text: var(--accent-11);
+  --active-indicator: var(--accent-9);
+
+  /* Hover State */
+  --hover-bg: var(--gray-a3);
+  --hover-bg-accent: var(--accent-a3);
+  --hover-border: var(--gray-7);
 }

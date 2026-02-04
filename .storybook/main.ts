@@ -67,6 +67,9 @@ const config: StorybookConfig = {
         __APP_VERSION__: JSON.stringify(packageJson.version),
       },
       plugins: [tailwindcss()],
+      optimizeDeps: {
+        include: ['@base-ui/react/toggle'],
+      },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '../src'),
