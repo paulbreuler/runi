@@ -326,11 +326,12 @@ export const CodeEditor = ({
         // Shift+Tab: un-indent (remove up to 2 spaces from start of current line)
         const lineStart = code.lastIndexOf('\n', start - 1) + 1;
         const lineContent = code.substring(lineStart);
-        const spacesToRemove = lineContent.startsWith('  ')
-          ? 2
-          : lineContent.startsWith(' ')
-            ? 1
-            : 0;
+        let spacesToRemove = 0;
+        if (lineContent.startsWith('  ')) {
+          spacesToRemove = 2;
+        } else if (lineContent.startsWith(' ')) {
+          spacesToRemove = 1;
+        }
 
         if (spacesToRemove > 0) {
           const newValue =

@@ -41,6 +41,8 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
             onDrag: _onDrag,
             onDragStart: _onDragStart,
             onDragEnd: _onDragEnd,
+            onAnimationStart: _onAnimStart,
+            onAnimationEnd: _onAnimEnd,
             ...filteredRootProps
           } = rootProps;
           return (
@@ -58,11 +60,10 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
               }}
               initial={false}
               animate={{
-                backgroundColor: state.disabled
-                  ? 'var(--color-bg-raised)'
-                  : checked
-                    ? 'var(--color-accent-blue)'
-                    : 'var(--color-bg-raised)',
+                backgroundColor:
+                  state.disabled || !checked
+                    ? 'var(--color-bg-raised)'
+                    : 'var(--color-accent-blue)',
                 justifyContent: checked ? 'flex-end' : 'flex-start',
               }}
               onMouseDown={(e): void => {
