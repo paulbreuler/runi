@@ -5,6 +5,7 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { Tabs } from '@base-ui/react/tabs';
 import { Settings as SettingsIcon, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GeneralTab } from './GeneralTab';
@@ -13,9 +14,12 @@ import { McpTab } from './McpTab';
 import { AboutTab } from './AboutTab';
 import { SettingsSearchBar } from './SettingsSearchBar';
 import { searchSettings } from './settingsSearch';
-import { DEFAULT_SETTINGS } from '@/types/settings-defaults';
 import type { SettingsSchema, SettingsCategory, SettingKey } from '@/types/settings';
 import { SettingsJsonEditor } from './SettingsJsonEditor';
+import { useSettings } from '@/stores/settings-store';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/Switch';
+import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
 export type SettingsTabId = 'general' | 'features' | 'mcp' | 'about';
 
@@ -53,16 +57,31 @@ export function SettingsPanel({
   className,
   children,
 }: SettingsPanelProps): ReactElement | null {
-  const [settings, setSettings] = useState<SettingsSchema>(
-    () => initialSettings ?? structuredClone(DEFAULT_SETTINGS)
-  );
+  const settings = useSettings((state) => state.settings);
+  const setSettings = useSettings((state) => state.setSettings);
+  const updateSettingAction = useSettings((state) => state.updateSetting);
+  const resetToDefaultsAction = useSettings((state) => state.resetToDefaults);
   const [activeTab, setActiveTab] = useState<SettingsTabId>('general');
   const [searchQuery, setSearchQuery] = useState('');
   const [isJsonMode, setIsJsonMode] = useState(false);
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonMatchCount, setJsonMatchCount] = useState(0);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [caseSensitive, setCaseSensitive] = useState(false);
 
-  const searchResults = useMemo(() => searchSettings(searchQuery), [searchQuery]);
-  const resultCount = searchResults?.size ?? 0;
+  const searchResults = useMemo(
+    () => searchSettings(searchQuery, { caseSensitive }),
+    [searchQuery, caseSensitive]
+  );
+  const formResultCount = searchResults?.size ?? 0;
+  const resultCount = isJsonMode ? jsonMatchCount : formResultCount;
+
+  // Reset to first match when search query changes in JSON mode
+  useEffect(() => {
+    if (isJsonMode) {
+      setCurrentMatchIndex(0);
+    }
+  }, [searchQuery, isJsonMode, caseSensitive]);
 
   const updateSetting = useCallback(
     <C extends SettingsCategory>(
@@ -70,25 +89,30 @@ export function SettingsPanel({
       key: SettingKey<C>,
       value: SettingsSchema[C][SettingKey<C>]
     ) => {
-      setSettings((prev) => {
-        const next: SettingsSchema = {
-          ...prev,
-          [category]: {
-            ...prev[category],
-            [key]: value,
-          },
-        };
-        onSettingsChange?.(next);
-        return next;
-      });
+      const next = updateSettingAction(category, key, value);
+      onSettingsChange?.(next);
     },
-    [onSettingsChange]
+    [onSettingsChange, updateSettingAction]
   );
 
   const handleResetToDefaults = useCallback(() => {
-    setSettings(structuredClone(DEFAULT_SETTINGS));
-    onSettingsChange?.(structuredClone(DEFAULT_SETTINGS));
-  }, [onSettingsChange]);
+    const next = resetToDefaultsAction();
+    onSettingsChange?.(next);
+  }, [onSettingsChange, resetToDefaultsAction]);
+
+  const handlePrevMatch = useCallback((): void => {
+    if (jsonMatchCount === 0) {
+      return;
+    }
+    setCurrentMatchIndex((i) => (i <= 0 ? jsonMatchCount - 1 : i - 1));
+  }, [jsonMatchCount]);
+
+  const handleNextMatch = useCallback((): void => {
+    if (jsonMatchCount === 0) {
+      return;
+    }
+    setCurrentMatchIndex((i) => (i + 1) % jsonMatchCount);
+  }, [jsonMatchCount]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -102,6 +126,12 @@ export function SettingsPanel({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (initialSettings !== undefined) {
+      setSettings(structuredClone(initialSettings));
+    }
+  }, [initialSettings, setSettings]);
 
   if (!isOpen) {
     return null;
@@ -123,74 +153,71 @@ export function SettingsPanel({
               </h1>
             </div>
             {onClose !== undefined ? (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-bg-raised text-fg-muted hover:text-fg-default transition-colors"
                 aria-label="Close settings"
                 data-test-id="settings-close"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             ) : null}
           </div>
-          <div className="flex items-center justify-between gap-2">
-            {!isJsonMode && (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
               <SettingsSearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
                 resultCount={resultCount}
+                jsonMode={isJsonMode}
+                currentMatchIndex={currentMatchIndex}
+                caseSensitive={caseSensitive}
+                onCaseSensitiveChange={setCaseSensitive}
+                onPrevMatch={isJsonMode && jsonMatchCount > 0 ? handlePrevMatch : undefined}
+                onNextMatch={isJsonMode && jsonMatchCount > 0 ? handleNextMatch : undefined}
               />
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setIsJsonMode((prev) => !prev);
-              }}
-              className={cn(
-                'px-2 py-1 rounded-lg text-xs transition-colors',
-                isJsonMode
-                  ? 'bg-accent-3/20 text-accent-11'
-                  : 'text-fg-muted hover:text-fg-default hover:bg-bg-raised'
-              )}
-              data-test-id="settings-json-toggle"
-            >
-              JSON
-            </button>
+            </div>
+            <label className="flex shrink-0 items-center gap-2 text-xs text-fg-muted">
+              <span>JSON</span>
+              <Switch
+                checked={isJsonMode}
+                onCheckedChange={setIsJsonMode}
+                aria-label="Toggle JSON mode"
+                data-test-id="settings-json-toggle"
+              />
+            </label>
           </div>
         </div>
 
         {/* Tabs */}
         {!isJsonMode && (
-          <div
-            className="flex border-b border-border-subtle"
-            role="tablist"
-            aria-label="Settings sections"
+          <Tabs.Root
+            value={activeTab}
+            onValueChange={(value) => {
+              setActiveTab(value as SettingsTabId);
+            }}
           >
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab.id}
-                aria-controls={`settings-tabpanel-${tab.id}`}
-                id={`settings-tab-${tab.id}`}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                }}
-                className={cn(
-                  'flex-1 py-2.5 text-xs font-medium transition-colors relative',
-                  activeTab === tab.id ? 'text-accent-11' : 'text-fg-muted hover:text-fg-default'
-                )}
-                data-test-id={`settings-tab-${tab.id}`}
-              >
-                {tab.label}
-                {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-9" aria-hidden />
-                )}
-              </button>
-            ))}
-          </div>
+            <BaseTabsList
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              tabs={TABS.map((tab) => ({
+                value: tab.id,
+                label: tab.label,
+                testId: `settings-tab-${tab.id}`,
+              }))}
+              listClassName="flex border-b border-border-subtle"
+              listAriaLabel="Settings sections"
+              tabClassName="flex-1 py-2.5 text-xs font-medium transition-colors relative"
+              activeTabClassName="text-accent-11"
+              inactiveTabClassName="text-fg-muted hover:text-fg-default"
+              indicatorLayoutId="settings-tab-indicator"
+              indicatorClassName="bottom-0 left-0 right-0 h-0.5 bg-accent-9"
+              listTestId="settings-tabs"
+              indicatorTestId="settings-tab-indicator"
+            />
+          </Tabs.Root>
         )}
 
         {/* Content */}
@@ -203,6 +230,10 @@ export function SettingsPanel({
                 onSettingsChange?.(next);
               }}
               onError={setJsonError}
+              searchQuery={searchQuery}
+              caseSensitive={caseSensitive}
+              currentMatchIndex={currentMatchIndex}
+              onMatchCountChange={setJsonMatchCount}
             />
           )}
           {!isJsonMode && activeTab === 'general' && (
@@ -256,14 +287,16 @@ export function SettingsPanel({
 
         {/* Footer */}
         <div className="p-3 border-t border-border-subtle flex items-center justify-between">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="xs"
             onClick={handleResetToDefaults}
-            className="text-xs text-fg-muted hover:text-fg-default transition-colors"
+            className="text-fg-muted hover:text-fg-default"
             data-test-id="settings-reset"
           >
             Reset to defaults
-          </button>
+          </Button>
           <span className="text-[10px] text-fg-muted">
             {jsonError !== null && jsonError !== '' ? 'Invalid JSON' : 'Local preferences'}
           </span>

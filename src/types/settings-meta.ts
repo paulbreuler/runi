@@ -14,9 +14,11 @@
 import type { SettingsSchema, SettingsCategory, SettingKey } from './settings';
 
 export type SettingType = 'boolean' | 'number' | 'string' | 'select';
+export type SettingAvailability = 'supported' | 'teaser' | 'hidden';
 
 export interface SettingMeta<T = unknown> {
   type: SettingType;
+  availability?: SettingAvailability;
   default: T;
   label: string;
   description: string;
@@ -58,6 +60,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     timeout: {
       type: 'number',
+      availability: 'teaser',
       default: 30000,
       min: 1000,
       max: 300000,
@@ -71,13 +74,15 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     followRedirects: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Follow Redirects',
       description: 'Automatically follow HTTP redirects (3xx responses)',
       keywords: ['redirect', '301', '302', '307', 'location'],
     },
     maxRedirects: {
       type: 'number',
+      availability: 'teaser',
       default: 10,
       min: 1,
       max: 50,
@@ -88,7 +93,8 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     validateSSL: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Validate SSL Certificates',
       description: 'Reject self-signed or invalid certificates',
       keywords: ['ssl', 'tls', 'certificate', 'https', 'security'],
@@ -96,6 +102,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     userAgent: {
       type: 'string',
+      availability: 'teaser',
       default: 'runi/1.0.0',
       label: 'User Agent',
       description: 'Default User-Agent header for requests',
@@ -112,13 +119,15 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     autoSave: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Auto-save Collections',
       description: 'Automatically save changes to disk',
       keywords: ['save', 'auto', 'persist', 'write'],
     },
     autoSaveDelay: {
       type: 'number',
+      availability: 'teaser',
       default: 2000,
       min: 500,
       max: 30000,
@@ -133,6 +142,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     collectionFormat: {
       type: 'select',
+      availability: 'teaser',
       default: 'yaml',
       options: [
         {
@@ -148,6 +158,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     backupOnChange: {
       type: 'boolean',
+      availability: 'teaser',
       default: false,
       label: 'Backup on Change',
       description: 'Create .bak files before overwriting',
@@ -163,6 +174,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     fontSize: {
       type: 'number',
+      availability: 'teaser',
       default: 13,
       min: 10,
       max: 18,
@@ -173,27 +185,31 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     responsePrettyPrint: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Pretty Print Responses',
       description: 'Format JSON/XML responses with indentation',
       keywords: ['pretty', 'format', 'json', 'xml', 'indent'],
     },
     responseLineWrap: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Wrap Response Lines',
       description: 'Wrap long lines in response viewer',
       keywords: ['wrap', 'line', 'response', 'viewer'],
     },
     showMethodBadges: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Show Method Badges',
       description: 'Show colored method badges (GET/POST) in sidebar',
       keywords: ['method', 'badge', 'get', 'post', 'sidebar'],
     },
     compactMode: {
       type: 'boolean',
+      availability: 'teaser',
       default: false,
       label: 'Compact Mode',
       description: 'Reduce padding throughout UI',
@@ -201,6 +217,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     sidebarWidth: {
       type: 'number',
+      availability: 'teaser',
       default: 384,
       min: 280,
       max: 600,
@@ -220,14 +237,16 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     enabled: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Enable MCP Server',
       description: 'Allow AI assistants to interact via Model Context Protocol',
       keywords: ['mcp', 'ai', 'claude', 'assistant', 'automation'],
     },
     allowSettingsModification: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Allow AI Settings Changes',
       description: 'Let AI assistants modify feature flags and preferences',
       keywords: ['ai', 'modify', 'settings', 'permission'],
@@ -236,7 +255,8 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     allowCollectionEdits: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'Allow AI Collection Edits',
       description: 'Let AI create, modify, and delete requests in collections',
       keywords: ['ai', 'collection', 'request', 'edit', 'create'],
@@ -244,6 +264,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     allowRequestExecution: {
       type: 'boolean',
+      availability: 'teaser',
       default: false,
       label: 'Allow AI to Execute Requests',
       description: 'Let AI send HTTP requests on your behalf',
@@ -253,7 +274,8 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
     },
     auditLog: {
       type: 'boolean',
-      default: true,
+      availability: 'teaser',
+      default: false,
       label: 'MCP Audit Log',
       description: 'Log all AI actions for review',
       keywords: ['audit', 'log', 'history', 'ai', 'track'],

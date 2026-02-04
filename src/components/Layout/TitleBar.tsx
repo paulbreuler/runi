@@ -5,7 +5,7 @@
 
 import React, { useMemo, useEffect, useState } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
-import { Minimize2, Maximize2, X } from 'lucide-react';
+import { Minimize2, Maximize2, Settings, X } from 'lucide-react';
 import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
@@ -169,10 +169,16 @@ const TitleBarControls = (): React.JSX.Element | null => {
 interface TitleBarProps {
   title?: string;
   children?: React.ReactNode;
+  onSettingsClick?: () => void;
 }
 
-export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX.Element => {
+export const TitleBar = ({
+  title = 'runi',
+  children,
+  onSettingsClick,
+}: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
+  const showSettingsButton = onSettingsClick !== undefined;
 
   return (
     <div
@@ -196,8 +202,22 @@ export const TitleBar = ({ title = 'runi', children }: TitleBarProps): React.JSX
         {children ?? <span className="font-medium">{title}</span>}
       </div>
 
-      {/* Custom controls - only on Windows/Linux (macOS uses native traffic lights) */}
-      <div className="ml-auto">
+      {/* Right actions */}
+      <div className="ml-auto flex items-center h-full gap-1">
+        {showSettingsButton && (
+          <button
+            type="button"
+            onClick={onSettingsClick}
+            className={cn(
+              focusRingClasses,
+              'w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors'
+            )}
+            aria-label="Open settings"
+            data-test-id="titlebar-settings"
+          >
+            <Settings size={12} className="text-text-muted" />
+          </button>
+        )}
         <TitleBarControls />
       </div>
     </div>

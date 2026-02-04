@@ -85,7 +85,7 @@ export function FeaturesTab(): ReactElement {
                               stateBadgeClasses[meta.state]
                             )}
                           >
-                            {meta.state}
+                            {meta.state === 'teaser' ? 'Coming soon' : meta.state}
                           </span>
                         )}
                       </div>

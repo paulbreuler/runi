@@ -103,8 +103,8 @@ describe('mergeWithDefaults', () => {
     };
     const merged = mergeWithDefaults(partial);
     expect(merged.http.timeout).toBe(5000);
-    expect(merged.http.validateSSL).toBe(true);
-    expect(merged.storage.autoSave).toBe(true);
+    expect(merged.http.validateSSL).toBe(false);
+    expect(merged.storage.autoSave).toBe(false);
   });
 
   it('keeps version 1', () => {

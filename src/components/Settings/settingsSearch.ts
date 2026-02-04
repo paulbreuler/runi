@@ -7,9 +7,9 @@
 import { SETTINGS_SCHEMA } from '@/types/settings-meta';
 import type { SettingsCategory } from '@/types/settings';
 
-function fuzzyMatch(query: string, text: string): boolean {
-  const q = query.toLowerCase();
-  const t = text.toLowerCase();
+function fuzzyMatch(query: string, text: string, caseSensitive: boolean): boolean {
+  const q = caseSensitive ? query : query.toLowerCase();
+  const t = caseSensitive ? text : text.toLowerCase();
   if (t.includes(q)) {
     return true;
   }
@@ -26,21 +26,25 @@ function fuzzyMatch(query: string, text: string): boolean {
  * Returns set of matching keys: category (e.g. "http") or "category.key" (e.g. "http.timeout").
  * Returns null when query is empty (show all).
  */
-export function searchSettings(query: string): Set<string> | null {
+export function searchSettings(
+  query: string,
+  options: { caseSensitive?: boolean } = {}
+): Set<string> | null {
   const trimmed = query.trim();
   if (trimmed.length === 0) {
     return null;
   }
 
   const results = new Set<string>();
-  const q = trimmed.toLowerCase();
+  const caseSensitive = options.caseSensitive ?? false;
+  const q = caseSensitive ? trimmed : trimmed.toLowerCase();
 
   for (const category of Object.keys(SETTINGS_SCHEMA) as SettingsCategory[]) {
     const fields = SETTINGS_SCHEMA[category];
     const meta = fields._meta;
 
     const desc = (meta as { description?: string }).description ?? '';
-    if (fuzzyMatch(q, meta.label) || fuzzyMatch(q, desc)) {
+    if (fuzzyMatch(q, meta.label, caseSensitive) || fuzzyMatch(q, desc, caseSensitive)) {
       results.add(category);
       continue;
     }
@@ -56,7 +60,7 @@ export function searchSettings(query: string): Set<string> | null {
         continue;
       }
       const searchable = [config.label, config.description, ...(config.keywords ?? [])].join(' ');
-      if (fuzzyMatch(q, searchable)) {
+      if (fuzzyMatch(q, searchable, caseSensitive)) {
         results.add(`${category}.${key}`);
       }
     }

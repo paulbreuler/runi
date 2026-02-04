@@ -237,5 +237,20 @@ describe('CodeEditor', () => {
         expect(languageDiv).toHaveAttribute('data-language', 'text');
       });
     });
+
+    describe('search', () => {
+      it('opens search bar with Cmd/Ctrl+F and closes with Escape', () => {
+        render(<CodeEditor mode="edit" code="find me" />);
+
+        const textarea = screen.getByTestId('code-editor-textarea');
+        fireEvent.keyDown(textarea, { key: 'f', metaKey: true });
+
+        const searchInput = screen.getByTestId('code-editor-search-input');
+        expect(searchInput).toBeInTheDocument();
+
+        fireEvent.keyDown(searchInput, { key: 'Escape' });
+        expect(screen.queryByTestId('code-editor-search-input')).not.toBeInTheDocument();
+      });
+    });
   });
 });

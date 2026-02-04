@@ -49,14 +49,14 @@ describe('FeatureFlagDecorator', () => {
   it('merges overrides with defaults', async () => {
     renderDecorator({ featureFlags: { canvas: { enabled: true } } });
     await waitFor(() => {
-      expect(screen.getByTestId('import-bruno')).toHaveTextContent('on');
+      expect(screen.getByTestId('import-bruno')).toHaveTextContent('off');
     });
   });
 
   it('works with FeatureGate', async () => {
     renderDecorator({ featureFlags: { canvas: { enabled: true } } });
     await waitFor(() => {
-      expect(screen.getByTestId('gated-child')).toBeInTheDocument();
+      expect(screen.getByTestId('fallback')).toBeInTheDocument();
     });
   });
 });

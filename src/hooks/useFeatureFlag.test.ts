@@ -16,7 +16,7 @@ describe('useFeatureFlag', () => {
 
   test('returns correct enabled value', () => {
     const { result } = renderHook(() => useFeatureFlag('http', 'importBruno'));
-    expect(result.current.enabled).toBe(true);
+    expect(result.current.enabled).toBe(false);
 
     const { result: result2 } = renderHook(() => useFeatureFlag('canvas', 'enabled'));
     expect(result2.current.enabled).toBe(false);
@@ -25,37 +25,33 @@ describe('useFeatureFlag', () => {
   test('returns state from metadata', () => {
     const { result } = renderHook(() => useFeatureFlag('http', 'importBruno'));
     expect(result.current.state).toBe(FLAG_METADATA.http.importBruno.state);
-    expect(result.current.state).toBe('stable');
+    expect(result.current.state).toBe('teaser');
 
     const { result: result2 } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
-    expect(result2.current.state).toBe('hidden');
+    expect(result2.current.state).toBe('teaser');
   });
 
   test('returns isVisible correctly', () => {
-    // Hidden feature
-    const { result: hidden } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
-    expect(hidden.current.isVisible).toBe(false);
-
-    // Experimental feature
-    const { result: experimental } = renderHook(() => useFeatureFlag('canvas', 'enabled'));
-    expect(experimental.current.isVisible).toBe(true);
+    // Teaser feature
+    const { result: teaser } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
+    expect(teaser.current.isVisible).toBe(true);
 
     // Stable feature
-    const { result: stable } = renderHook(() => useFeatureFlag('http', 'importBruno'));
+    const { result: stable } = renderHook(() => useFeatureFlag('http', 'collectionsEnabled'));
     expect(stable.current.isVisible).toBe(true);
   });
 
   test('returns isInteractive correctly', () => {
-    // Hidden feature - not interactive
-    const { result: hidden } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
-    expect(hidden.current.isInteractive).toBe(false);
+    // Teaser feature - not interactive
+    const { result: teaser } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
+    expect(teaser.current.isInteractive).toBe(false);
 
-    // Experimental feature - interactive
-    const { result: experimental } = renderHook(() => useFeatureFlag('canvas', 'enabled'));
-    expect(experimental.current.isInteractive).toBe(true);
+    // Teaser feature - not interactive
+    const { result: teaser2 } = renderHook(() => useFeatureFlag('canvas', 'enabled'));
+    expect(teaser2.current.isInteractive).toBe(false);
 
     // Stable feature - interactive
-    const { result: stable } = renderHook(() => useFeatureFlag('http', 'importBruno'));
+    const { result: stable } = renderHook(() => useFeatureFlag('http', 'collectionsEnabled'));
     expect(stable.current.isInteractive).toBe(true);
   });
 

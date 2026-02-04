@@ -25,4 +25,11 @@ describe('searchSettings', () => {
       (results?.has('http.maxRedirects') ?? false);
     expect(hasMatch).toBe(true);
   });
+
+  it('respects case sensitivity when enabled', () => {
+    const lowerResults = searchSettings('timeout', { caseSensitive: true });
+    const upperResults = searchSettings('TIMEOUT', { caseSensitive: true });
+    expect(lowerResults?.has('http.timeout')).toBe(true);
+    expect(upperResults?.has('http.timeout')).toBe(false);
+  });
 });

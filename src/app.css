@@ -80,6 +80,35 @@
   --color-accent-amber: oklch(0.769 0.188 70.08);
   --color-accent-red: oklch(0.637 0.237 25.33);
 
+  /* ============================================
+     Interactive State Tokens
+     Usage: bg-pressed, border-pressed, text-pressed, etc.
+     These tokens switch automatically based on .light class
+     ============================================ */
+
+  /* Pressed State (toggles, buttons when activated) */
+  --color-pressed: var(--pressed-bg);
+  --color-pressed-subtle: var(--pressed-bg-subtle);
+  --color-pressed-border: var(--pressed-border);
+  --color-pressed-text: var(--pressed-text);
+
+  /* Selected State (multi-select, active tabs) */
+  --color-selected: var(--selected-bg);
+  --color-selected-solid: var(--selected-bg-solid);
+  --color-selected-border: var(--selected-border);
+  --color-selected-text: var(--selected-text);
+
+  /* Active State (navigation, current item) */
+  --color-active: var(--active-bg);
+  --color-active-border: var(--active-border);
+  --color-active-text: var(--active-text);
+  --color-active-indicator: var(--active-indicator);
+
+  /* Hover State */
+  --color-hover: var(--hover-bg);
+  --color-hover-accent: var(--hover-bg-accent);
+  --color-hover-border: var(--hover-border);
+
   /* shadcn/ui compatibility layer */
   --color-foreground: var(--gray-12);
   --color-card: var(--color-surface);

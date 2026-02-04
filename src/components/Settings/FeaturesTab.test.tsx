@@ -29,14 +29,23 @@ describe('FeaturesTab', () => {
     render(<FeaturesTab />);
 
     expect(screen.getByTestId('feature-flag-http-importBruno')).toBeInTheDocument();
-    expect(screen.queryByTestId('feature-flag-canvas-connectionLines')).not.toBeInTheDocument();
+    expect(screen.getByTestId('feature-flag-canvas-connectionLines')).toBeInTheDocument();
   });
 
-  it('toggles flags via setFlag', async () => {
+  it('disables toggles for teaser flags', () => {
+    render(<FeaturesTab />);
+
+    expect(screen.getByTestId('feature-toggle-http-importBruno')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+  });
+
+  it('toggles interactive flags via setFlag', async () => {
     const user = userEvent.setup();
     render(<FeaturesTab />);
 
-    await user.click(screen.getByTestId('feature-toggle-http-importBruno'));
-    expect(setFlagMock).toHaveBeenCalledWith('http', 'importBruno', false);
+    await user.click(screen.getByTestId('feature-toggle-http-collectionsEnabled'));
+    expect(setFlagMock).toHaveBeenCalledWith('http', 'collectionsEnabled', true);
   });
 });

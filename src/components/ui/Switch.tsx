@@ -36,59 +36,66 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
       <SwitchPrimitive.Root
         checked={checked}
         onCheckedChange={onCheckedChange}
-        render={({
-          onDrag: _onDrag,
-          onDragStart: _onDragStart,
-          onDragEnd: _onDragEnd,
-          onAnimationStart: _onAnimStart,
-          onAnimationEnd: _onAnimEnd,
-          ...rootProps
-        }) => (
-          <motion.button
-            {...rootProps}
-            ref={ref}
-            className={cn(
-              focusRingClasses,
-              'relative flex h-[18px] w-[32px] cursor-pointer items-center rounded-full p-[2px]',
-              className
-            )}
-            style={{
-              WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
-            }}
-            initial={false}
-            animate={{
-              backgroundColor: checked ? 'var(--color-accent-blue)' : 'var(--color-bg-raised)',
-              justifyContent: checked ? 'flex-end' : 'flex-start',
-            }}
-            onMouseDown={(e): void => {
-              e.stopPropagation(); // Prevent dialog from closing
-              rootProps.onMouseDown?.(e);
-            }}
-            data-test-id={testId}
-          >
-            <SwitchPrimitive.Thumb
-              render={({
-                onDrag: _onDrag,
-                onDragStart: _onDragStart,
-                onDragEnd: _onDragEnd,
-                onAnimationStart: _onAnimStart,
-                onAnimationEnd: _onAnimEnd,
-                ...thumbProps
-              }) => (
-                <motion.div
-                  {...thumbProps}
-                  className="block size-[14px] rounded-full bg-white shadow-sm"
-                  layout
-                  transition={{
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 30,
-                  }}
-                />
+        render={(rootProps, state) => {
+          const {
+            onDrag: _onDrag,
+            onDragStart: _onDragStart,
+            onDragEnd: _onDragEnd,
+            onAnimationStart: _onAnimStart,
+            onAnimationEnd: _onAnimEnd,
+            ...filteredRootProps
+          } = rootProps;
+          return (
+            <motion.button
+              {...filteredRootProps}
+              ref={ref}
+              className={cn(
+                focusRingClasses,
+                'relative flex h-[18px] w-[32px] cursor-pointer items-center rounded-full p-[2px]',
+                'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60',
+                className
               )}
-            />
-          </motion.button>
-        )}
+              style={{
+                WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+              }}
+              initial={false}
+              animate={{
+                backgroundColor:
+                  state.disabled || !checked
+                    ? 'var(--color-bg-raised)'
+                    : 'var(--color-accent-blue)',
+                justifyContent: checked ? 'flex-end' : 'flex-start',
+              }}
+              onMouseDown={(e): void => {
+                e.stopPropagation(); // Prevent dialog from closing
+                filteredRootProps.onMouseDown?.(e);
+              }}
+              data-test-id={testId}
+            >
+              <SwitchPrimitive.Thumb
+                render={({
+                  onDrag: _onDrag,
+                  onDragStart: _onDragStart,
+                  onDragEnd: _onDragEnd,
+                  onAnimationStart: _onAnimStart,
+                  onAnimationEnd: _onAnimEnd,
+                  ...thumbProps
+                }) => (
+                  <motion.div
+                    {...thumbProps}
+                    className="block size-[14px] rounded-full bg-white shadow-sm"
+                    layout
+                    transition={{
+                      type: 'spring',
+                      stiffness: 500,
+                      damping: 30,
+                    }}
+                  />
+                )}
+              />
+            </motion.button>
+          );
+        }}
         {...props}
       />
     );

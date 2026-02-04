@@ -327,3 +327,47 @@ export const EditInteractionTest: Story = {
     });
   },
 };
+
+/**
+ * Search highlight interaction test - open search and verify highlights render.
+ */
+export const SearchHighlightTest: Story = {
+  args: {
+    mode: 'edit',
+    code: `{
+  "name": "runi",
+  "description": "runi search highlight demo",
+  "features": ["search", "highlight", "search"]
+}`,
+    enableJsonValidation: false,
+    enableJsonFormatting: false,
+  },
+  render: (args) => (
+    <div className="h-64 border border-border-default bg-bg-app">
+      <EditableCodeEditor
+        mode="edit"
+        initialCode={args.code}
+        enableJsonValidation={args.enableJsonValidation}
+        enableJsonFormatting={args.enableJsonFormatting}
+      />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Open find-in-editor', async () => {
+      const textarea = canvas.getByTestId('code-editor-textarea');
+      await userEvent.click(textarea);
+      await userEvent.keyboard('{Control>}f{/Control}');
+      const searchInput = await canvas.findByTestId('code-editor-search-input');
+      await expect(searchInput).toBeVisible();
+    });
+
+    await step('Type search term and verify highlight', async () => {
+      const searchInput = canvas.getByTestId('code-editor-search-input');
+      await userEvent.type(searchInput, 'runi');
+      const highlights = canvas.getAllByTestId('code-editor-highlight');
+      await expect(highlights.length).toBeGreaterThan(0);
+    });
+  },
+};

@@ -36,7 +36,7 @@ describe('useFeatureFlagStore', () => {
     expect(updated.flags.canvas.enabled).toBe(true);
     // Other flags unchanged
     expect(updated.flags.canvas.minimap).toBe(false);
-    expect(updated.flags.http.importBruno).toBe(true);
+    expect(updated.flags.http.importBruno).toBe(false);
   });
 
   test('hydrateFlags merges partial config with defaults', () => {
@@ -54,7 +54,7 @@ describe('useFeatureFlagStore', () => {
     expect(flags.debug.verboseLogging).toBe(true);
     // Defaults preserved
     expect(flags.canvas.connectionLines).toBe(false);
-    expect(flags.http.importBruno).toBe(true);
+    expect(flags.http.importBruno).toBe(false);
   });
 
   test('hydrateFlags ignores unknown flags silently', () => {

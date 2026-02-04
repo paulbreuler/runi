@@ -28,7 +28,7 @@ describe('feature flag test utils', () => {
       wrapper,
     });
 
-    expect(result.current.enabled).toBe(true);
+    expect(result.current.enabled).toBe(false);
   });
 
   it('resetFeatureFlags restores defaults', () => {

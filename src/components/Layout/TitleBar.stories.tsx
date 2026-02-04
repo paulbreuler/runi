@@ -43,7 +43,7 @@ type Story = StoryObj<typeof meta>;
 export const Playground: Story = {
   render: (args) => (
     <div className="w-full border border-border-default bg-bg-app">
-      <TitleBar title={args.title} />
+      <TitleBar title={args.title} onSettingsClick={() => undefined} />
     </div>
   ),
 };
