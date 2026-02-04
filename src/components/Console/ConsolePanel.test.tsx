@@ -863,21 +863,27 @@ describe('ConsolePanel', () => {
     const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.click(chevronButton!);
-    });
+    // Click chevron to expand (matching pattern from 'collapses expanded args' test)
+    fireEvent.click(chevronButton as HTMLElement);
 
-    const expandedSection = await screen.findByTestId('expanded-section', {}, { timeout: 10000 });
+    // Wait for the parsed JSON content to appear (more reliable than waiting for expanded-section)
+    // The JSON string '{"error":{"code":123,"message":"boom"}}' will be pretty-printed
     await waitFor(
       () => {
-        const editor = within(expandedSection).getByTestId('code-editor');
-        expect(editor.textContent).toMatch(/"code":\s*123/);
-        expect(editor.textContent).toMatch(/"message":\s*"boom"/);
-        expect(editor.textContent).toMatch(/"error":/);
+        // Look for the pretty-printed JSON structure
+        expect(screen.getByText(/"code"/)).toBeInTheDocument();
+        expect(screen.getByText(/123/)).toBeInTheDocument();
       },
       { timeout: 10000 }
     );
-  }, 20000);
+
+    // Verify the full JSON structure is visible
+    const expandedSection = screen.getByTestId('expanded-section');
+    const editor = within(expandedSection).getByTestId('code-editor');
+    expect(editor.textContent).toMatch(/"code":\s*123/);
+    expect(editor.textContent).toMatch(/"message":\s*"boom"/);
+    expect(editor.textContent).toMatch(/"error":/);
+  }, 15000);
 
   it('collapses expanded args when chevron is clicked again', async () => {
     render(<ConsolePanel />);
