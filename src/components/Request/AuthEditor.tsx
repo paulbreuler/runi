@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
@@ -54,6 +54,10 @@ export const AuthEditor = (): React.JSX.Element => {
     return '';
   });
   const [showPassword, setShowPassword] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  const springTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
+  const transition = shouldReduceMotion === true ? { duration: 0.1 } : springTransition;
 
   const updateAuth = (type: AuthType, value: string): void => {
     const updatedHeaders = { ...headers };
@@ -148,12 +152,11 @@ export const AuthEditor = (): React.JSX.Element => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={transition}
               className="space-y-2"
             >
               <label className="text-sm font-medium text-text-secondary">Token</label>
               <Input
-                glass={true}
                 type="text"
                 value={token}
                 onChange={(e) => {
@@ -171,13 +174,12 @@ export const AuthEditor = (): React.JSX.Element => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={transition}
               className="space-y-4"
             >
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-secondary">Username</label>
                 <Input
-                  glass={true}
                   type="text"
                   value={username}
                   onChange={(e) => {
@@ -192,7 +194,6 @@ export const AuthEditor = (): React.JSX.Element => {
                 <label className="text-sm font-medium text-text-secondary">Password</label>
                 <div className="relative">
                   <Input
-                    glass={true}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => {
@@ -223,14 +224,13 @@ export const AuthEditor = (): React.JSX.Element => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={transition}
               className="space-y-2"
             >
               <label className="text-sm font-medium text-text-secondary">
                 Authorization Header
               </label>
               <Input
-                glass={true}
                 type="text"
                 value={customHeader}
                 onChange={(e) => {

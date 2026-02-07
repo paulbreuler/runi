@@ -4,12 +4,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Plus, X } from 'lucide-react';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 /**
  * ParamsEditor component for managing URL query parameters.
@@ -20,6 +22,10 @@ export const ParamsEditor = (): React.JSX.Element => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
+  const shouldReduceMotion = useReducedMotion();
+
+  const springTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
+  const transition = shouldReduceMotion === true ? { duration: 0.1 } : springTransition;
 
   // Parse URL to extract query parameters
   useEffect(() => {
@@ -122,13 +128,12 @@ export const ParamsEditor = (): React.JSX.Element => {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
+              transition={transition}
               className="flex items-center gap-2 group"
             >
               {editingIndex === index ? (
                 <>
                   <Input
-                    glass={true}
                     value={newKey}
                     onChange={(e) => {
                       setNewKey(e.target.value);
@@ -138,10 +143,10 @@ export const ParamsEditor = (): React.JSX.Element => {
                     className="flex-1 font-mono text-sm"
                     autoFocus
                     data-test-id={`param-key-input-${String(index)}`}
+                    aria-label="Parameter name"
                   />
                   <span className="text-text-muted">=</span>
                   <Input
-                    glass={true}
                     value={newValue}
                     onChange={(e) => {
                       setNewValue(e.target.value);
@@ -150,6 +155,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                     placeholder="Parameter value"
                     className="flex-1 font-mono text-sm"
                     data-test-id={`param-value-input-${String(index)}`}
+                    aria-label="Parameter value"
                   />
                   <Button
                     variant="ghost"
@@ -157,6 +163,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                     onClick={handleSaveParam}
                     className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
                     data-test-id="save-param-button"
+                    aria-label="Save parameter"
                   >
                     <X className="rotate-45" />
                   </Button>
@@ -166,6 +173,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                     onClick={handleCancelEdit}
                     className="text-text-muted hover:text-text-primary"
                     data-test-id="cancel-param-button"
+                    aria-label="Cancel editing"
                   >
                     <X />
                   </Button>
@@ -173,10 +181,23 @@ export const ParamsEditor = (): React.JSX.Element => {
               ) : (
                 <>
                   <div
-                    className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-raised border border-border-subtle hover:border-border-default transition-colors cursor-pointer"
+                    className={cn(
+                      'flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-raised border border-border-subtle hover:border-border-default transition-colors cursor-pointer',
+                      focusRingClasses
+                    )}
                     onClick={() => {
                       handleEditParam(index);
                     }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleEditParam(index);
+                      }
+                    }}
+                    data-test-id={`param-row-${String(index)}`}
+                    aria-label={`Edit ${param.key} parameter`}
                   >
                     <span className="text-accent-blue font-mono text-sm font-medium">
                       {param.key}
@@ -194,6 +215,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
                     data-test-id={`remove-param-${String(index)}`}
+                    aria-label={`Remove ${param.key} parameter`}
                   >
                     <X />
                   </Button>
@@ -207,11 +229,10 @@ export const ParamsEditor = (): React.JSX.Element => {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
+              transition={transition}
               className="flex items-center gap-2"
             >
               <Input
-                glass={true}
                 value={newKey}
                 onChange={(e) => {
                   setNewKey(e.target.value);
@@ -221,10 +242,10 @@ export const ParamsEditor = (): React.JSX.Element => {
                 className="flex-1 font-mono text-sm"
                 autoFocus
                 data-test-id="new-param-key-input"
+                aria-label="New parameter name"
               />
               <span className="text-text-muted">=</span>
               <Input
-                glass={true}
                 value={newValue}
                 onChange={(e) => {
                   setNewValue(e.target.value);
@@ -233,6 +254,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                 placeholder="Parameter value"
                 className="flex-1 font-mono text-sm"
                 data-test-id="new-param-value-input"
+                aria-label="New parameter value"
               />
               <Button
                 variant="ghost"
@@ -240,6 +262,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                 onClick={handleSaveParam}
                 className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
                 data-test-id="save-new-param-button"
+                aria-label="Save new parameter"
               >
                 <X className="rotate-45" />
               </Button>
@@ -249,6 +272,7 @@ export const ParamsEditor = (): React.JSX.Element => {
                 onClick={handleCancelEdit}
                 className="text-text-muted hover:text-text-primary"
                 data-test-id="cancel-new-param-button"
+                aria-label="Cancel new parameter"
               >
                 <X />
               </Button>

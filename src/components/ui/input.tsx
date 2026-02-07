@@ -4,13 +4,7 @@
  */
 
 import * as React from 'react';
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useMotionTemplate,
-  useReducedMotion,
-} from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
@@ -18,48 +12,13 @@ export interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd'
 > {
-  /** Enable glass-morphism effect (Apple 2025 aesthetic) */
-  glass?: boolean;
   /** Disable scale animations on hover/focus (useful for compact UI) */
   noScale?: boolean;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, glass = false, noScale = false, onFocus, onBlur, ...props }, ref) => {
+  ({ className, type, noScale = false, ...props }, ref) => {
     const prefersReducedMotion = useReducedMotion() === true;
-
-    // Motion values for smooth animations
-    const bgOpacity = useMotionValue(glass ? 0.05 : 1);
-    const borderOpacity = useMotionValue(0.1);
-    const blurAmount = useMotionValue(glass ? 8 : 0);
-
-    // Spring animations for smooth transitions
-    const bgOpacitySpring = useSpring(bgOpacity, { stiffness: 200, damping: 25 });
-    const borderOpacitySpring = useSpring(borderOpacity, { stiffness: 200, damping: 25 });
-    const blurSpring = useSpring(blurAmount, { stiffness: 200, damping: 25 });
-
-    // Transform values to CSS strings using useMotionTemplate
-    const backgroundColor = useMotionTemplate`rgba(255, 255, 255, ${bgOpacitySpring})`;
-    const borderColor = useMotionTemplate`rgba(255, 255, 255, ${borderOpacitySpring})`;
-    const backdropBlur = useMotionTemplate`blur(${blurSpring}px)`;
-
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>): void => {
-      if (glass && !prefersReducedMotion) {
-        bgOpacity.set(0.12);
-        borderOpacity.set(0.3);
-        blurAmount.set(12);
-      }
-      onFocus?.(e);
-    };
-
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>): void => {
-      if (glass && !prefersReducedMotion) {
-        bgOpacity.set(0.05);
-        borderOpacity.set(0.1);
-        blurAmount.set(8);
-      }
-      onBlur?.(e);
-    };
 
     const baseClasses = cn(
       focusRingClasses,
@@ -67,55 +26,28 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       'flex h-9 w-full min-w-0 rounded-lg px-3 py-1 text-sm',
       'disabled:cursor-not-allowed disabled:opacity-50',
       'aria-invalid:ring-signal-error/20 aria-invalid:border-signal-error',
-      // Glass-morphism base styles (Apple 2025 aesthetic)
-      glass && ['border', 'shadow-sm shadow-black/5'],
-      // Non-glass fallback styles (matches Radix TextField variant-surface pattern)
-      !glass && [
-        'bg-bg-surface border border-border-subtle',
-        'transition-colors duration-200',
-        'hover:border-border-default',
-      ],
+      'bg-bg-surface border border-border-subtle',
+      'transition-colors duration-200',
+      'hover:border-border-default',
       className
     );
 
-    // Use motion.input for glass effect, regular input otherwise
-    if (glass) {
+    // Use motion.input for scale effects if not reduced motion
+    if (!prefersReducedMotion && !noScale) {
       return (
         <motion.input
           type={type}
           className={baseClasses}
           ref={ref}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          style={{
-            backgroundColor: prefersReducedMotion ? undefined : backgroundColor,
-            borderColor: prefersReducedMotion ? undefined : borderColor,
-            backdropFilter: prefersReducedMotion ? undefined : backdropBlur,
-            WebkitBackdropFilter: prefersReducedMotion ? undefined : backdropBlur,
-          }}
-          data-motion-component="input"
-          whileHover={noScale || prefersReducedMotion ? undefined : { scale: 1.005 }}
-          whileFocus={noScale || prefersReducedMotion ? undefined : { scale: 1.01 }}
-          transition={
-            noScale || prefersReducedMotion
-              ? undefined
-              : { type: 'spring', stiffness: 300, damping: 30 }
-          }
+          whileHover={{ scale: 1.005 }}
+          whileFocus={{ scale: 1.01 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           {...props}
         />
       );
     }
 
-    return (
-      <input
-        type={type}
-        className={baseClasses}
-        ref={ref}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        {...props}
-      />
-    );
+    return <input type={type} className={baseClasses} ref={ref} {...props} />;
   }
 );
 Input.displayName = 'Input';

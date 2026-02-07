@@ -45,7 +45,7 @@ const meta = {
 - **Body Editor** - Uses \`CodeEditor mode="edit"\` with JSON validation and formatting
 - **AuthEditor** - Authentication editor for Bearer tokens, Basic auth, and custom headers
 
-All editors use \`useRequestStore\` for state management and support glass styling for consistent focus and hover treatments.`,
+All editors use \`useRequestStore\` for state management and follow the design system for consistent focus and hover treatments.`,
       },
     },
   },

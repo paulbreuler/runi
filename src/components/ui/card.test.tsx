@@ -25,13 +25,6 @@ describe('Card', () => {
     expect(card.className).toContain('bg-bg-surface');
   });
 
-  it('applies glass styling when glass prop is true', () => {
-    const { container } = render(<Card glass>Content</Card>);
-    const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain('glass');
-    expect(card.className).not.toContain('bg-bg-surface');
-  });
-
   it('disables hover effect when hover prop is false', () => {
     const { container } = render(<Card hover={false}>Content</Card>);
     const card = container.firstChild as HTMLElement;

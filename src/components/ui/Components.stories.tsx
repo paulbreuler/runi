@@ -39,7 +39,7 @@ const meta = {
 **Components:**
 - **Button** - Multiple variants, sizes, and Motion animations
 - **Checkbox** - Base UI Checkbox with Motion animations, supports indeterminate state
-- **Input** - Text input with glass-morphism support
+- **Input** - Standard text input with focus and error states
 - **Select** - Radix UI Select with groups and custom styling
 - **Card** - Container component with header, content, and footer
 - **Separator** - Horizontal or vertical divider
@@ -309,13 +309,6 @@ export const InputDefault: Story = {
 };
 
 /**
- * Input with glass effect.
- */
-export const InputGlass: Story = {
-  render: () => <Input placeholder="Glass input" glass />,
-};
-
-/**
  * Input types showcase.
  */
 export const InputTypes: Story = {
@@ -331,13 +324,12 @@ export const InputTypes: Story = {
 };
 
 /**
- * Input states: normal, glass, disabled, invalid.
+ * Input states: normal, disabled, invalid.
  */
 export const InputStates: Story = {
   render: () => (
     <div className="flex flex-col gap-3 w-64">
       <Input placeholder="Normal input" />
-      <Input placeholder="Glass input" glass />
       <Input placeholder="Disabled input" disabled />
       <Input placeholder="Invalid input" aria-invalid="true" />
     </div>
@@ -575,23 +567,6 @@ export const CardDefault: Story = {
       <CardFooter>
         <Button>Action</Button>
       </CardFooter>
-    </Card>
-  ),
-};
-
-/**
- * Card with glass effect.
- */
-export const CardGlassEffect: Story = {
-  render: () => (
-    <Card glass className="w-96">
-      <CardHeader>
-        <CardTitle>Glass Card</CardTitle>
-        <CardDescription>Card with glass effect</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-text-secondary">This card uses the glass effect styling.</p>
-      </CardContent>
     </Card>
   ),
 };
