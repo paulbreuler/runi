@@ -287,25 +287,32 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           >
             <div
               className={cn(
-                'flex items-center gap-2 px-3 h-full rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md',
+                'flex items-center gap-2 px-3 h-full rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md min-w-0',
                 isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
               )}
             >
               {isBound(request) && (
-                <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
+                <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
               )}
-              <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
+              <span
+                className={cn(
+                  'text-xs font-semibold uppercase tracking-wider shrink-0',
+                  methodClass
+                )}
+              >
                 {request.method}
               </span>
-              <span className="text-sm text-text-primary whitespace-nowrap">{request.name}</span>
+              <span className="text-sm text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
+                {request.name}
+              </span>
               {request.is_streaming && (
-                <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500">
+                <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0">
                   <Radio size={12} />
                   Streaming
                 </span>
               )}
               {isAiGenerated(request) && (
-                <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]">
+                <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1] shrink-0">
                   <Sparkles size={12} />
                   AI
                 </span>

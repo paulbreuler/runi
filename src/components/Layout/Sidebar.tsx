@@ -64,10 +64,7 @@ const DrawerSection = ({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="flex-1 min-h-0"
           >
-            <div
-              className="px-3 pb-3 h-full overflow-y-auto overflow-x-hidden"
-              data-scroll-container
-            >
+            <div className="px-3 pb-3 flex-1 min-h-0 overflow-y-auto" data-scroll-container>
               {children}
             </div>
           </motion.div>
