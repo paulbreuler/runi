@@ -26,6 +26,8 @@ interface CollectionItemRequestListProps {
 }
 
 export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
+  const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
+  const isSelected = selectedRequestId === request.id;
   const selectRequest = useCollectionStore((state) => state.selectRequest);
   const setMethod = useRequestStore((state) => state.setMethod);
   const setUrl = useRequestStore((state) => state.setUrl);
@@ -204,13 +206,14 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         type="button"
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left transition-colors',
-          'hover:bg-bg-raised/50',
+          isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/50',
           !isExpanded && containedFocusRingClasses,
           // Suppress all focus ring/outline when expanded so it doesn't "cut" the popout
           isExpanded && 'outline-none ring-0 shadow-none',
           isExpanded && !isFocused && 'bg-bg-raised/30'
         )}
         data-test-id={`collection-request-${request.id}`}
+        data-active={isSelected || undefined}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onFocus={handleFocus}

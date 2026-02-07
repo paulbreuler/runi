@@ -24,6 +24,7 @@ export const CollectionList = (): React.JSX.Element => {
   const { handleKeyDown } = useListNavigation({
     // Selector covers both collection headers and individual request items
     itemSelector: '[data-test-id^="collection-item-"], [data-test-id^="collection-request-"]',
+    activeItemSelector: '[data-active="true"]',
   });
 
   useEffect(() => {

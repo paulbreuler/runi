@@ -8,6 +8,22 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import type { CollectionRequest } from '@/types/collection';
 import { RequestItem } from './RequestItem';
 
+// Mock motion components to avoid animation delays in tests
+vi.mock('motion/react', () => ({
+  motion: {
+    div: ({ children, ...props }: React.PropsWithChildren<any>): React.JSX.Element => (
+      <div {...props}>{children}</div>
+    ),
+    span: ({ children, ...props }: React.PropsWithChildren<any>): React.JSX.Element => (
+      <span {...props}>{children}</span>
+    ),
+  },
+  AnimatePresence: ({ children }: React.PropsWithChildren<any>): React.JSX.Element => (
+    <>{children}</>
+  ),
+  useReducedMotion: (): boolean => true,
+}));
+
 const baseRequest: CollectionRequest = {
   id: 'req_1',
   name: 'A very long request name that should truncate in the UI',
@@ -27,7 +43,7 @@ describe('RequestItem', () => {
     vi.useRealTimers();
   });
 
-  it('shows a popout after hover delay when truncated', () => {
+  it('shows a popout after hover delay when truncated', async () => {
     vi.useFakeTimers();
     render(<RequestItem request={baseRequest} collectionId="col_1" />);
 
@@ -46,11 +62,13 @@ describe('RequestItem', () => {
       vi.advanceTimersByTime(260);
     });
 
-    expect(screen.getByTestId('request-popout')).toBeInTheDocument();
+    const popout = screen.getByTestId('request-popout');
+    expect(popout).toBeInTheDocument();
 
     act(() => {
       fireEvent.mouseLeave(row);
     });
+
     expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
   });
 

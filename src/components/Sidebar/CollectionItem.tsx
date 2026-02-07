@@ -22,6 +22,8 @@ interface CollectionItemProps {
 
 export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Element => {
   const isExpanded = useIsExpanded(summary.id);
+  const selectedCollectionId = useCollectionStore((state) => state.selectedCollectionId);
+  const isSelected = selectedCollectionId === summary.id;
   const toggleExpanded = useCollectionStore((state) => state.toggleExpanded);
   const loadCollection = useCollectionStore((state) => state.loadCollection);
   const selectCollection = useCollectionStore((state) => state.selectCollection);
@@ -44,9 +46,11 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
         type="button"
         className={cn(
           containedFocusRingClasses,
-          'w-full flex items-center justify-between gap-3 px-2 py-2 text-left hover:bg-bg-raised/40 transition-colors'
+          'w-full flex items-center justify-between gap-3 px-2 py-2 text-left transition-colors',
+          isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40'
         )}
         data-test-id={`collection-item-${summary.id}`}
+        data-active={isSelected || undefined}
         onClick={handleToggle}
         aria-expanded={isExpanded}
       >

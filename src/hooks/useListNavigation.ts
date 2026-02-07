@@ -9,6 +9,8 @@ import { focusWithVisibility } from '@/utils/focusVisibility';
 interface ListNavigationOptions {
   /** Selector to find focusable items within the container */
   itemSelector: string;
+  /** Optional selector to find the "active" or "selected" item if nothing is focused */
+  activeItemSelector?: string;
   /** Whether to loop from end to beginning */
   loop?: boolean;
 }
@@ -19,7 +21,7 @@ interface ListNavigationOptions {
 export function useListNavigation(options: ListNavigationOptions): {
   handleKeyDown: (e: React.KeyboardEvent) => void;
 } {
-  const { itemSelector, loop = true } = options;
+  const { itemSelector, activeItemSelector, loop = true } = options;
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -35,15 +37,30 @@ export function useListNavigation(options: ListNavigationOptions): {
         return;
       }
 
-      const activeElement = document.activeElement as HTMLElement;
-      const currentIndex = items.indexOf(activeElement);
+      // 1. Try to find focus via e.target (more robust than document.activeElement)
+      const target = e.target as HTMLElement;
+      const focusedItem = items.includes(target)
+        ? target
+        : target.closest<HTMLElement>(itemSelector);
+
+      let currentIndex = focusedItem !== null ? items.indexOf(focusedItem) : -1;
+
+      // 2. If nothing focused, try to find the "active" or "selected" item
+      if (currentIndex === -1 && activeItemSelector !== undefined && activeItemSelector !== '') {
+        const activeItem = container.querySelector<HTMLElement>(activeItemSelector);
+        if (activeItem !== null) {
+          currentIndex = items.indexOf(activeItem);
+        }
+      }
 
       let targetIndex = -1;
 
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          if (currentIndex === -1 || currentIndex === items.length - 1) {
+          if (currentIndex === -1) {
+            targetIndex = 0;
+          } else if (currentIndex === items.length - 1) {
             targetIndex = loop ? 0 : items.length - 1;
           } else {
             targetIndex = currentIndex + 1;
@@ -51,7 +68,9 @@ export function useListNavigation(options: ListNavigationOptions): {
           break;
         case 'ArrowUp':
           e.preventDefault();
-          if (currentIndex <= 0) {
+          if (currentIndex === -1) {
+            targetIndex = items.length - 1;
+          } else if (currentIndex <= 0) {
             targetIndex = loop ? items.length - 1 : 0;
           } else {
             targetIndex = currentIndex - 1;
@@ -76,7 +95,7 @@ export function useListNavigation(options: ListNavigationOptions): {
         }
       }
     },
-    [itemSelector, loop]
+    [itemSelector, activeItemSelector, loop]
   );
 
   return { handleKeyDown };
