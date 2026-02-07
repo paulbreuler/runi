@@ -275,16 +275,15 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             initial={{ opacity: 0, scaleX: 0.7, originX: 0 }}
             animate={{ opacity: 1, scaleX: 1, originX: 0 }}
             exit={{ opacity: 0, scaleX: 0.7, originX: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
             role="tooltip"
             className="pointer-events-none overflow-visible"
             data-test-id="request-popout"
             style={{
               position: 'fixed',
               top: popoutPosition.top,
-              // Move slightly left to visually connect with the hierarchy line
-              left: popoutPosition.left - 2,
-              minWidth: popoutPosition.width + 2,
+              left: popoutPosition.left,
+              minWidth: popoutPosition.width,
               height: popoutPosition.height,
               maxWidth: 'min(600px, calc(100vw - 40px))',
               zIndex: 60,
