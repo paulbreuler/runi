@@ -4,12 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Plus, X } from 'lucide-react';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 /**
  * HeaderEditor component for managing HTTP request headers.
@@ -19,8 +21,12 @@ export const HeaderEditor = (): React.JSX.Element => {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
+  const shouldReduceMotion = useReducedMotion();
 
   const headerEntries = Object.entries(headers);
+
+  const springTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
+  const transition = shouldReduceMotion === true ? { duration: 0.1 } : springTransition;
 
   const handleAddHeader = (): void => {
     setEditingKey('new');
@@ -95,7 +101,7 @@ export const HeaderEditor = (): React.JSX.Element => {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
+              transition={transition}
               className="flex items-center gap-2 group"
             >
               {editingKey === key ? (
@@ -111,6 +117,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     className="flex-1 font-mono text-sm"
                     autoFocus
                     data-test-id={`header-key-input-${key}`}
+                    aria-label="Header name"
                   />
                   <span className="text-text-muted">:</span>
                   <Input
@@ -123,6 +130,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     placeholder="Header value"
                     className="flex-1 font-mono text-sm"
                     data-test-id={`header-value-input-${key}`}
+                    aria-label="Header value"
                   />
                   <Button
                     variant="ghost"
@@ -130,6 +138,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     onClick={handleSaveHeader}
                     className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
                     data-test-id={`save-header-button-${key}`}
+                    aria-label="Save header"
                   >
                     <X className="rotate-45" />
                   </Button>
@@ -139,6 +148,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     onClick={handleCancelEdit}
                     className="text-text-muted hover:text-text-primary"
                     data-test-id={`cancel-header-button-${key}`}
+                    aria-label="Cancel editing"
                   >
                     <X />
                   </Button>
@@ -146,10 +156,23 @@ export const HeaderEditor = (): React.JSX.Element => {
               ) : (
                 <>
                   <div
-                    className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-raised border border-border-subtle hover:border-border-default transition-colors cursor-pointer"
+                    className={cn(
+                      'flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-raised border border-border-subtle hover:border-border-default transition-colors cursor-pointer',
+                      focusRingClasses
+                    )}
                     onClick={() => {
                       handleEditHeader(key);
                     }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleEditHeader(key);
+                      }
+                    }}
+                    data-test-id={`header-row-${key}`}
+                    aria-label={`Edit ${key} header`}
                   >
                     <span className="text-accent-blue font-mono text-sm font-medium">{key}</span>
                     <span className="text-text-muted">:</span>
@@ -165,6 +188,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
                     data-test-id={`remove-header-${key}`}
+                    aria-label={`Remove ${key} header`}
                   >
                     <X />
                   </Button>
@@ -178,7 +202,7 @@ export const HeaderEditor = (): React.JSX.Element => {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
+              transition={transition}
               className="flex items-center gap-2"
             >
               <Input
@@ -192,6 +216,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 className="flex-1 font-mono text-sm"
                 autoFocus
                 data-test-id="new-header-key-input"
+                aria-label="New header name"
               />
               <span className="text-text-muted">:</span>
               <Input
@@ -204,6 +229,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 placeholder="Header value"
                 className="flex-1 font-mono text-sm"
                 data-test-id="new-header-value-input"
+                aria-label="New header value"
               />
               <Button
                 variant="ghost"
@@ -211,6 +237,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 onClick={handleSaveHeader}
                 className="text-signal-success hover:text-signal-success hover:bg-signal-success/10"
                 data-test-id="save-new-header-button"
+                aria-label="Save new header"
               >
                 <X className="rotate-45" />
               </Button>
@@ -220,6 +247,7 @@ export const HeaderEditor = (): React.JSX.Element => {
                 onClick={handleCancelEdit}
                 className="text-text-muted hover:text-text-primary"
                 data-test-id="cancel-new-header-button"
+                aria-label="Cancel new header"
               >
                 <X />
               </Button>

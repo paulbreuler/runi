@@ -245,15 +245,24 @@ export const EmptyState = ({
         animate="visible"
         className={containerClasses}
         {...getAriaProps()}
+        data-test-id="empty-state"
       >
         <motion.div variants={itemVariants} className="text-text-muted/50 max-w-md px-6">
-          <p className="text-sm leading-relaxed">{title}</p>
+          <p className="text-sm leading-relaxed" data-test-id="empty-state-title">
+            {title}
+          </p>
           {description !== undefined && (
-            <p className="text-xs mt-2 leading-relaxed">{description}</p>
+            <p className="text-xs mt-2 leading-relaxed" data-test-id="empty-state-description">
+              {description}
+            </p>
           )}
         </motion.div>
         {children}
-        {action !== undefined && <motion.div variants={itemVariants}>{action}</motion.div>}
+        {action !== undefined && (
+          <motion.div variants={itemVariants} data-test-id="empty-state-action">
+            {action}
+          </motion.div>
+        )}
       </motion.div>
     );
   }
@@ -266,12 +275,14 @@ export const EmptyState = ({
       animate="visible"
       className={containerClasses}
       {...getAriaProps()}
+      data-test-id="empty-state"
     >
       {/* Icon - subtle, soft, Apple-style (only show in prominent variant) */}
       {icon !== undefined && (
         <motion.div
           variants={iconVariants}
           className={cn('flex items-center justify-center mb-8', sizeStyles.icon)}
+          data-test-id="empty-state-icon"
         >
           {icon}
         </motion.div>
@@ -285,6 +296,7 @@ export const EmptyState = ({
             sizeStyles.title,
             sizeStyles.spacing
           )}
+          data-test-id="empty-state-title"
         >
           {title}
         </HeadingTag>
@@ -298,16 +310,25 @@ export const EmptyState = ({
             'text-text-secondary max-w-md leading-relaxed mb-8',
             sizeStyles.description
           )}
+          data-test-id="empty-state-description"
         >
           {description}
         </motion.p>
       )}
 
       {/* Custom children content */}
-      {children !== undefined && <motion.div variants={itemVariants}>{children}</motion.div>}
+      {children !== undefined && (
+        <motion.div variants={itemVariants} data-test-id="empty-state-children">
+          {children}
+        </motion.div>
+      )}
 
       {/* Action - clear CTA */}
-      {action !== undefined && <motion.div variants={itemVariants}>{action}</motion.div>}
+      {action !== undefined && (
+        <motion.div variants={itemVariants} data-test-id="empty-state-action">
+          {action}
+        </motion.div>
+      )}
     </motion.div>
   );
 };
