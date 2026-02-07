@@ -49,7 +49,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
         type="button"
         className={cn(
           containedFocusRingClasses,
-          'w-full flex items-center justify-between gap-3 px-2 py-2 text-left transition-colors',
+          'w-full flex items-center justify-between gap-3 px-3 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40'
         )}
         data-test-id={`collection-item-${summary.id}`}

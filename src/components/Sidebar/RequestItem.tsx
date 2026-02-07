@@ -239,7 +239,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         ref={rowRef}
         type="button"
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left transition-colors',
+          'w-full flex items-center justify-between gap-2 px-3 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/50',
           !actuallyVisible && containedFocusRingClasses,
           actuallyVisible && 'outline-none ring-0 shadow-none',
@@ -262,13 +262,16 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       >
         <div className="flex items-center gap-2 min-w-0">
           {isBound(request) && (
-            <span
-              className="h-2 w-2 rounded-full bg-green-500"
-              aria-label="Bound to spec"
-              data-test-id="request-bound-indicator"
-            />
+            <div className="flex items-center justify-center shrink-0 w-3" aria-hidden="true">
+              <span className="h-2 w-2 rounded-full bg-green-500" />
+            </div>
           )}
-          <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
+          <span
+            className={cn(
+              'text-xs font-semibold uppercase tracking-wider shrink-0 min-w-[28px]',
+              methodClass
+            )}
+          >
             {request.method}
           </span>
           <span
@@ -280,10 +283,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             {displayName}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {request.is_streaming && (
             <span
-              className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500"
+              className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0"
               data-test-id="request-streaming-badge"
             >
               <Radio size={12} />
@@ -292,7 +295,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           )}
           {isAiGenerated(request) && (
             <span
-              className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]"
+              className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1] shrink-0"
               data-test-id="request-ai-badge"
             >
               <Sparkles size={12} />
@@ -346,23 +349,31 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 animate: { opacity: 1 },
                 exit: { opacity: 0 },
               }}
+              initial="initial"
+              animate="animate"
+              exit="exit"
               transition={{ duration: 0.2 }}
+              style={{ scaleX: 1 }} // Explicitly lock scale to prevent squishing from parent context
               className="relative flex items-center gap-2 px-3 h-full min-w-0"
             >
               {isBound(request) && (
-                <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
+                <div className="flex items-center justify-center shrink-0 w-3" aria-hidden="true">
+                  <span className="h-2 w-2 rounded-full bg-green-500" />
+                </div>
               )}
               <span
                 className={cn(
-                  'text-xs font-semibold uppercase tracking-wider shrink-0',
+                  'text-xs font-semibold uppercase tracking-wider shrink-0 min-w-[28px]',
                   methodClass
                 )}
               >
                 {request.method}
               </span>
-              <span className="text-sm text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
-                {request.name}
-              </span>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm text-text-primary whitespace-nowrap block overflow-hidden text-ellipsis">
+                  {request.name}
+                </span>
+              </div>
               {request.is_streaming && (
                 <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0">
                   <Radio size={12} />
