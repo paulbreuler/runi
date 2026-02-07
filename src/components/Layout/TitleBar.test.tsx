@@ -106,14 +106,14 @@ describe('TitleBar', () => {
     it('displays default title "runi"', () => {
       render(<TitleBar />);
 
-      expect(screen.getByText('runi')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-title')).toHaveTextContent('runi');
     });
 
     it('displays custom title when provided', () => {
       render(<TitleBar title="Custom Title" />);
 
-      expect(screen.getByText('Custom Title')).toBeInTheDocument();
-      expect(screen.queryByText('runi')).not.toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-title')).toHaveTextContent('Custom Title');
+      expect(screen.getByTestId('titlebar-title')).not.toHaveTextContent('runi');
     });
 
     it('renders children when provided', () => {
@@ -124,7 +124,7 @@ describe('TitleBar', () => {
       );
 
       expect(screen.getByTestId('custom-content')).toBeInTheDocument();
-      expect(screen.queryByText('Runi')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('titlebar-title')).not.toBeInTheDocument();
     });
 
     it('renders settings button when onSettingsClick is provided', () => {
@@ -233,13 +233,16 @@ describe('TitleBar', () => {
 
       render(<TitleBar />);
 
-      const closeButton = screen.getByLabelText('Close window');
-      const minimizeButton = screen.getByLabelText('Minimize window');
-      const maximizeButton = screen.getByLabelText('Maximize window');
+      const closeButton = screen.getByTestId('titlebar-close');
+      const minimizeButton = screen.getByTestId('titlebar-minimize');
+      const maximizeButton = screen.getByTestId('titlebar-maximize');
 
       expect(closeButton).toBeInTheDocument();
       expect(minimizeButton).toBeInTheDocument();
       expect(maximizeButton).toBeInTheDocument();
+      expect(closeButton).toHaveAttribute('aria-label', 'Close window');
+      expect(minimizeButton).toHaveAttribute('aria-label', 'Minimize window');
+      expect(maximizeButton).toHaveAttribute('aria-label', 'Maximize window');
     });
 
     it('has data-test-id attributes for testing', () => {

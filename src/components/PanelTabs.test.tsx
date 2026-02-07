@@ -163,21 +163,20 @@ describe('PanelTabs', () => {
     it('displays network count badge when provided', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} networkCount={5} />);
 
-      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-network-count')).toHaveTextContent('5');
     });
 
     it('displays console count badge when provided', () => {
       render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} consoleCount={3} />);
 
-      expect(screen.getByText('3')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-console-count')).toHaveTextContent('3');
     });
 
     it('does not display count badge when count is 0', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} networkCount={0} />);
 
-      const badges = screen.queryAllByText('0');
-      // Should not show badge for 0
-      expect(badges.length).toBe(0);
+      expect(screen.queryByTestId('panel-tab-network-count')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('panel-tab-console-count')).not.toBeInTheDocument();
     });
   });
 

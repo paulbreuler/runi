@@ -31,9 +31,9 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     expect(screen.getByTestId('response-viewer')).toBeInTheDocument();
-    expect(screen.getByText('Body')).toBeInTheDocument();
-    expect(screen.getByText('Headers')).toBeInTheDocument();
-    expect(screen.getByText('Raw')).toBeInTheDocument();
+    expect(screen.getByTestId('response-tab-body')).toBeInTheDocument();
+    expect(screen.getByTestId('response-tab-headers')).toBeInTheDocument();
+    expect(screen.getByTestId('response-tab-raw')).toBeInTheDocument();
   });
 
   it('formats JSON with 2-space indentation', () => {
@@ -52,13 +52,13 @@ describe('ResponseViewer', () => {
   it('displays header count', () => {
     render(<ResponseViewer response={mockResponse} />);
 
-    expect(screen.getByText('(2)')).toBeInTheDocument();
+    expect(screen.getByTestId('response-headers-count')).toHaveTextContent('(2)');
   });
 
   it('displays body size and timing', () => {
     render(<ResponseViewer response={mockResponse} />);
 
-    expect(screen.getByText('150ms')).toBeInTheDocument();
+    expect(screen.getByTestId('response-total-time')).toHaveTextContent('150ms');
     // Body size should be calculated and displayed
   });
 
@@ -85,8 +85,7 @@ describe('ResponseViewer', () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
 
-    const headersTabLabel = screen.getByText('Headers');
-    const headersTab = headersTabLabel.closest('[role="tab"]') ?? headersTabLabel;
+    const headersTab = screen.getByTestId('response-tab-headers');
     await user.click(headersTab);
 
     // Headers tab should be active
@@ -98,7 +97,7 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click headers tab
-    const headersTab = screen.getByText('Headers');
+    const headersTab = screen.getByTestId('response-tab-headers');
     await user.click(headersTab);
 
     // Should show HTTP status line (react-syntax-highlighter renders in code elements)
@@ -114,8 +113,7 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTabLabel = screen.getByText('Raw');
-    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
+    const rawTab = screen.getByTestId('response-tab-raw');
     await user.click(rawTab);
 
     // Raw tab should be active
@@ -128,7 +126,7 @@ describe('ResponseViewer', () => {
   it('shows right overflow cue when tabs overflow', () => {
     render(<ResponseViewer response={mockResponse} />);
 
-    const tabScroller = screen.getByLabelText('Response tabs');
+    const tabScroller = screen.getByTestId('response-tabs-scroll');
     Object.defineProperty(tabScroller, 'scrollWidth', { value: 420, configurable: true });
     Object.defineProperty(tabScroller, 'clientWidth', { value: 160, configurable: true });
     Object.defineProperty(tabScroller, 'scrollLeft', {
@@ -146,7 +144,7 @@ describe('ResponseViewer', () => {
   it('shows left overflow cue after scrolling tabs', () => {
     render(<ResponseViewer response={mockResponse} />);
 
-    const tabScroller = screen.getByLabelText('Response tabs');
+    const tabScroller = screen.getByTestId('response-tabs-scroll');
     Object.defineProperty(tabScroller, 'scrollWidth', { value: 420, configurable: true });
     Object.defineProperty(tabScroller, 'clientWidth', { value: 160, configurable: true });
     Object.defineProperty(tabScroller, 'scrollLeft', {
@@ -164,7 +162,9 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Body tab is active by default
-    expect(screen.getByLabelText('Copy json code')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('response-body')).getByTestId('copy-button')
+    ).toBeInTheDocument();
   });
 
   it('displays copy button in raw tab', async () => {
@@ -172,12 +172,13 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTabLabel = screen.getByText('Raw');
-    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
+    const rawTab = screen.getByTestId('response-tab-raw');
     await user.click(rawTab);
 
     // Copy button should be visible with http language label
-    expect(screen.getByLabelText('Copy http code')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('response-raw')).getByTestId('copy-button')
+    ).toBeInTheDocument();
   });
 
   it('uses CodeSnippet component in body tab', () => {
@@ -192,8 +193,7 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTabLabel = screen.getByText('Raw');
-    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
+    const rawTab = screen.getByTestId('response-tab-raw');
     await user.click(rawTab);
 
     // CodeSnippet should be rendered
@@ -217,8 +217,7 @@ describe('ResponseViewer', () => {
     render(<ResponseViewer response={mockResponse} />);
 
     // Click raw tab
-    const rawTabLabel = screen.getByText('Raw');
-    const rawTab = rawTabLabel.closest('[role="tab"]') ?? rawTabLabel;
+    const rawTab = screen.getByTestId('response-tab-raw');
     await user.click(rawTab);
 
     const codeBox = screen.getByTestId('code-box');
@@ -234,10 +233,8 @@ describe('ResponseViewer', () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
 
-    const bodyTabLabel = screen.getByText('Body');
-    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
-    const headersTabLabel = screen.getByText('Headers');
-    const headersTab = headersTabLabel.closest('[role="tab"]') ?? headersTabLabel;
+    const bodyTab = screen.getByTestId('response-tab-body');
+    const headersTab = screen.getByTestId('response-tab-headers');
 
     await user.click(bodyTab);
     expect(bodyTab).toHaveFocus();
@@ -254,6 +251,6 @@ describe('ResponseViewer', () => {
     expect(bodyTab).toHaveFocus();
 
     await user.tab();
-    expect(screen.getByLabelText('Copy json code')).toHaveFocus();
+    expect(within(screen.getByTestId('response-body')).getByTestId('copy-button')).toHaveFocus();
   });
 });

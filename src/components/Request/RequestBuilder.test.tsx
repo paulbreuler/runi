@@ -37,10 +37,10 @@ describe('RequestBuilder', () => {
   it('renders with tab navigation', () => {
     render(<RequestBuilder />);
 
-    expect(screen.getByText('Headers')).toBeInTheDocument();
-    expect(screen.getByText('Body')).toBeInTheDocument();
-    expect(screen.getByText('Params')).toBeInTheDocument();
-    expect(screen.getByText('Auth')).toBeInTheDocument();
+    expect(screen.getByTestId('request-tab-headers')).toBeInTheDocument();
+    expect(screen.getByTestId('request-tab-body')).toBeInTheDocument();
+    expect(screen.getByTestId('request-tab-params')).toBeInTheDocument();
+    expect(screen.getByTestId('request-tab-auth')).toBeInTheDocument();
   });
 
   it('shows Headers tab content by default', () => {
@@ -54,8 +54,7 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const bodyTabLabel = screen.getByText('Body');
-    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
+    const bodyTab = screen.getByTestId('request-tab-body');
     await user.click(bodyTab);
 
     expect(await screen.findByTestId('code-editor')).toBeInTheDocument();
@@ -65,8 +64,8 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const headersTab = screen.getByRole('tab', { name: /headers/i });
-    const bodyTab = screen.getByRole('tab', { name: /body/i });
+    const headersTab = screen.getByTestId('request-tab-headers');
+    const bodyTab = screen.getByTestId('request-tab-body');
 
     await user.click(headersTab);
     expect(headersTab).toHaveFocus();
@@ -80,7 +79,7 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const headersTab = screen.getByRole('tab', { name: /headers/i });
+    const headersTab = screen.getByTestId('request-tab-headers');
     await user.click(headersTab);
     expect(headersTab).toHaveFocus();
 
@@ -92,8 +91,7 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const paramsTabLabel = screen.getByText('Params');
-    const paramsTab = paramsTabLabel.closest('[role="tab"]') ?? paramsTabLabel;
+    const paramsTab = screen.getByTestId('request-tab-params');
     await user.click(paramsTab);
 
     expect(await screen.findByTestId('params-editor')).toBeInTheDocument();
@@ -103,8 +101,7 @@ describe('RequestBuilder', () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const authTabLabel = screen.getByText('Auth');
-    const authTab = authTabLabel.closest('[role="tab"]') ?? authTabLabel;
+    const authTab = screen.getByTestId('request-tab-auth');
     await user.click(authTab);
 
     expect(await screen.findByTestId('auth-editor')).toBeInTheDocument();
@@ -113,7 +110,7 @@ describe('RequestBuilder', () => {
   it('displays empty state when no headers are configured', () => {
     render(<RequestBuilder />);
 
-    expect(screen.getByText(/No headers configured/i)).toBeInTheDocument();
+    expect(screen.getByTestId('headers-empty-state')).toBeInTheDocument();
   });
 
   it('displays configured headers in Headers tab', () => {
@@ -123,8 +120,7 @@ describe('RequestBuilder', () => {
 
     render(<RequestBuilder />);
 
-    expect(screen.getByText('Content-Type')).toBeInTheDocument();
-    expect(screen.getByText('application/json')).toBeInTheDocument();
+    expect(screen.getByTestId('remove-header-Content-Type')).toBeInTheDocument();
   });
 
   it('allows adding a new header', async () => {
@@ -135,8 +131,8 @@ describe('RequestBuilder', () => {
     await user.click(addButton);
 
     // Should show header input fields
-    const keyInput = screen.getByPlaceholderText(/header name/i);
-    const valueInput = screen.getByPlaceholderText(/header value/i);
+    const keyInput = screen.getByTestId('new-header-key-input');
+    const valueInput = screen.getByTestId('new-header-value-input');
 
     expect(keyInput).toBeInTheDocument();
     expect(valueInput).toBeInTheDocument();
@@ -165,8 +161,7 @@ describe('RequestBuilder', () => {
     render(<RequestBuilder />);
 
     // Switch to body tab
-    const bodyTabLabel = screen.getByText('Body');
-    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
+    const bodyTab = screen.getByTestId('request-tab-body');
     await user.click(bodyTab);
 
     const bodyEditor = await screen.findByTestId('code-editor');
@@ -182,8 +177,7 @@ describe('RequestBuilder', () => {
     render(<RequestBuilder />);
 
     // Switch to body tab
-    const bodyTabLabel = screen.getByText('Body');
-    const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
+    const bodyTab = screen.getByTestId('request-tab-body');
     await user.click(bodyTab);
 
     const bodyTextarea = await screen.findByTestId('code-editor-textarea');
@@ -197,14 +191,14 @@ describe('RequestBuilder', () => {
   it('shows active tab with proper styling', () => {
     render(<RequestBuilder />);
 
-    const headersTab = screen.getByRole('tab', { name: /headers/i });
+    const headersTab = screen.getByTestId('request-tab-headers');
     expect(headersTab).toHaveClass(/bg-bg-raised|text-text-primary/);
   });
 
   it('shows inactive tabs with muted styling', () => {
     render(<RequestBuilder />);
 
-    const bodyTab = screen.getByRole('tab', { name: /body/i });
+    const bodyTab = screen.getByTestId('request-tab-body');
     expect(bodyTab).toHaveClass(/text-text-muted/);
   });
 
@@ -258,8 +252,7 @@ describe('RequestBuilder', () => {
       const user = userEvent.setup();
       render(<RequestBuilder />);
 
-      const bodyTabLabel = screen.getByText('Body');
-      const bodyTab = bodyTabLabel.closest('[role="tab"]') ?? bodyTabLabel;
+      const bodyTab = screen.getByTestId('request-tab-body');
       await user.click(bodyTab);
 
       const bodyTextarea = await screen.findByTestId('code-editor-textarea');

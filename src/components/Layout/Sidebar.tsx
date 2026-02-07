@@ -43,11 +43,15 @@ const DrawerSection = ({
           setIsOpen(!isOpen);
         }}
         aria-expanded={isOpen}
+        data-test-id={testId !== undefined ? `${testId}-toggle` : undefined}
       >
         <span className="text-text-muted group-hover:text-text-primary transition-colors">
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </span>
-        <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider group-hover:text-text-primary transition-colors">
+        <span
+          className="text-xs font-semibold text-text-secondary uppercase tracking-wider group-hover:text-text-primary transition-colors"
+          data-test-id={testId !== undefined ? `${testId}-title` : undefined}
+        >
           {title}
         </span>
       </button>

@@ -601,8 +601,8 @@ describe('MainLayout', () => {
       render(<MainLayout />);
 
       // Panel shows tabs for Network and Console views
-      expect(screen.getByRole('tab', { name: /network/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /console/i })).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-network')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-console')).toBeInTheDocument();
     });
 
     it('panel visibility can be toggled via store', () => {

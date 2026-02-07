@@ -188,6 +188,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
               ref={tabScrollRef}
               className="overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
               aria-label="Response tabs"
+              data-test-id="response-tabs-scroll"
             >
               <BaseTabsList
                 activeTab={activeTab}
@@ -199,7 +200,12 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                     <span className="flex items-center gap-1.5">
                       <span>{tab.label}</span>
                       {tab.id === 'headers' && (
-                        <span className="text-xs text-text-muted">({headerCount})</span>
+                        <span
+                          className="text-xs text-text-muted"
+                          data-test-id="response-headers-count"
+                        >
+                          ({headerCount})
+                        </span>
                       )}
                     </span>
                   ),
@@ -241,8 +247,8 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             className="flex items-center gap-3 text-xs text-text-muted font-mono shrink-0"
             data-test-id="response-header-meta"
           >
-            <span>{bodySize}</span>
-            <span>{response.timing.total_ms}ms</span>
+            <span data-test-id="response-body-size">{bodySize}</span>
+            <span data-test-id="response-total-time">{response.timing.total_ms}ms</span>
             <StatusBadge status={response.status} statusText={response.status_text} />
           </div>
         </div>
