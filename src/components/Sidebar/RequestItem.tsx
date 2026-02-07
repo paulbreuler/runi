@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useRequestStore } from '@/stores/useRequestStore';
 import type { CollectionRequest } from '@/types/collection';
@@ -102,17 +103,14 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const handleMouseLeave = useCallback((): void => {
     if (hoverTimeoutRef.current !== null) {
       window.clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
     }
+    hoverTimeoutRef.current = null;
     hidePopout();
   }, [hidePopout]);
 
   const handleFocus = useCallback((): void => {
     setIsFocused(true);
-    // Small delay to allow potential scroll-into-view to complete
-    requestAnimationFrame(() => {
-      showPopout();
-    });
+    showPopout();
   }, [showPopout]);
 
   const handleBlur = useCallback((): void => {
@@ -120,6 +118,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     setIsExpanded(false);
     setPopoutPosition(null);
   }, []);
+
+  useLayoutEffect(() => {
+    if (isExpanded) {
+      updatePopoutPosition();
+    }
+  }, [isExpanded, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     evaluateTruncation();
@@ -170,8 +174,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         ref={rowRef}
         type="button"
         className={cn(
-          containedFocusRingClasses,
           'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-bg-raised/50 transition-colors',
+          !isExpanded && containedFocusRingClasses,
+          isExpanded && 'outline-none',
           isExpanded && !isFocused && 'bg-bg-raised/30'
         )}
         data-test-id={`collection-request-${request.id}`}
@@ -228,48 +233,54 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           )}
         </div>
       </button>
-      {isExpanded && popoutPosition !== null && (
-        <div
-          role="tooltip"
-          className="pointer-events-none"
-          data-test-id="request-popout"
-          style={{
-            position: 'fixed',
-            top: popoutPosition.top,
-            left: popoutPosition.left,
-            minWidth: popoutPosition.width,
-            maxWidth: 'min(600px, calc(100vw - 40px))',
-            zIndex: 60,
-          }}
-        >
-          <div
-            className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md',
-              isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
-            )}
+      <AnimatePresence>
+        {isExpanded && popoutPosition !== null && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            role="tooltip"
+            className="pointer-events-none"
+            data-test-id="request-popout"
+            style={{
+              position: 'fixed',
+              top: popoutPosition.top,
+              left: popoutPosition.left,
+              minWidth: popoutPosition.width,
+              maxWidth: 'min(600px, calc(100vw - 40px))',
+              zIndex: 60,
+            }}
           >
-            {isBound(request) && (
-              <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
-            )}
-            <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
-              {request.method}
-            </span>
-            <span className="text-sm text-text-primary whitespace-nowrap">{request.name}</span>
-            {request.is_streaming && (
-              <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500">
-                <Radio size={12} />
-                Streaming
+            <div
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md',
+                isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
+              )}
+            >
+              {isBound(request) && (
+                <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
+              )}
+              <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
+                {request.method}
               </span>
-            )}
-            {isAiGenerated(request) && (
-              <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]">
-                <Sparkles size={12} />
-                AI
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+              <span className="text-sm text-text-primary whitespace-nowrap">{request.name}</span>
+              {request.is_streaming && (
+                <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500">
+                  <Radio size={12} />
+                  Streaming
+                </span>
+              )}
+              {isAiGenerated(request) && (
+                <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]">
+                  <Sparkles size={12} />
+                  AI
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
