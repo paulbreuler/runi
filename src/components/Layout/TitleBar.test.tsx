@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TitleBar } from './TitleBar';
 import * as platformUtils from '@/utils/platform';
@@ -55,6 +55,29 @@ describe('TitleBar', () => {
       expect(screen.getByTestId('titlebar-close')).toBeInTheDocument();
       expect(screen.getByTestId('titlebar-minimize')).toBeInTheDocument();
       expect(screen.getByTestId('titlebar-maximize')).toBeInTheDocument();
+    });
+
+    it('mutes macOS traffic light colors when window is unfocused', () => {
+      const listeners = new Map<string, () => void>();
+      mockListen.mockImplementation((event, handler) => {
+        listeners.set(event as string, handler as () => void);
+        return Promise.resolve(() => {});
+      });
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+
+      render(<TitleBar />);
+
+      const closeButton = screen.getByTestId('titlebar-close');
+      expect(closeButton).toHaveClass('bg-[#ff5f57]');
+
+      const blurHandler = listeners.get('tauri://blur');
+      expect(blurHandler).toBeDefined();
+
+      act(() => {
+        blurHandler?.();
+      });
+
+      expect(closeButton).toHaveClass('bg-[#8f8f8f]');
     });
 
     it('renders Windows/Linux-style window controls on non-macOS', () => {

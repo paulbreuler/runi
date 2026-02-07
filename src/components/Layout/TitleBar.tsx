@@ -117,34 +117,65 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
   }, [appWindow]);
 
   if (isMac) {
+    const runMacControlAction = async (action: () => Promise<void>): Promise<void> => {
+      if (appWindow === null) {
+        return;
+      }
+      // Match native macOS behavior: first click activates window, second click performs action.
+      if (!isFocused) {
+        try {
+          await appWindow.setFocus();
+        } catch {
+          // Ignore focus errors
+        }
+        return;
+      }
+      await action();
+    };
+
     return (
-      <div className={cn('ml-2 flex items-center h-full gap-1', !isFocused && 'opacity-60')}>
+      <div className="ml-2 flex h-full items-center gap-2">
         <button
           type="button"
-          onClick={handleClose}
+          onClick={() => {
+            void runMacControlAction(handleClose);
+          }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full border border-black/20 bg-[#ff5f57] hover:brightness-95 transition-[filter]'
+            'h-3.5 w-3.5 rounded-full transition-colors',
+            isFocused
+              ? 'border-black/20 bg-[#ff5f57] hover:brightness-95'
+              : 'cursor-default border-black/10 bg-[#8f8f8f]'
           )}
           aria-label="Close window"
           data-test-id="titlebar-close"
         />
         <button
           type="button"
-          onClick={handleMinimize}
+          onClick={() => {
+            void runMacControlAction(handleMinimize);
+          }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full border border-black/20 bg-[#febc2e] hover:brightness-95 transition-[filter]'
+            'h-3.5 w-3.5 rounded-full transition-colors',
+            isFocused
+              ? 'border-black/20 bg-[#febc2e] hover:brightness-95'
+              : 'cursor-default border-black/10 bg-[#8f8f8f]'
           )}
           aria-label="Minimize window"
           data-test-id="titlebar-minimize"
         />
         <button
           type="button"
-          onClick={handleMaximize}
+          onClick={() => {
+            void runMacControlAction(handleMaximize);
+          }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full border border-black/20 bg-[#28c840] hover:brightness-95 transition-[filter]'
+            'h-3.5 w-3.5 rounded-full transition-colors',
+            isFocused
+              ? 'border-black/20 bg-[#28c840] hover:brightness-95'
+              : 'cursor-default border-black/10 bg-[#8f8f8f]'
           )}
           aria-label="Maximize window"
           data-test-id="titlebar-maximize"

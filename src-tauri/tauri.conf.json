@@ -27,12 +27,11 @@
         "maximizable": true,
         "closable": true,
         "decorations": false,
-        "transparent": false,
+        "transparent": true,
         "alwaysOnTop": false,
         "skipTaskbar": false,
         "visible": true,
         "center": true,
-        "backgroundColor": "#0c0c0e",
         "theme": "Dark"
       }
     ],
