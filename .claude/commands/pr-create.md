@@ -84,19 +84,19 @@ This command creates a pull request on GitHub with:
 Type `/pr-create` to generate PR from staged changes:
 
 ```text
-/pr
+/pr-create
 ```
 
 Generate PR from recent commits:
 
 ```text
-/pr --commits HEAD~3..HEAD
+/pr-create --commits HEAD~3..HEAD
 ```
 
 Generate PR for specific branch:
 
 ```text
-/pr --base main
+/pr-create --base main
 ```
 
 **When invoked, this command will:**
@@ -247,7 +247,7 @@ The command analyzes:
 ### PR from Staged Changes (with Agent Detection)
 
 ```text
-/pr
+/pr-create
 ```
 
 Uses `npx limps next-task` to detect agent from git context (branch name, commit messages, modified files), then generates PR description with agent context.
@@ -260,7 +260,7 @@ Uses `npx limps next-task` to detect agent from git context (branch name, commit
 ### PR from Recent Commits
 
 ```text
-/pr --commits HEAD~3..HEAD
+/pr-create --commits HEAD~3..HEAD
 ```
 
 Same as above - uses `npx limps next-task` to detect agent from commit context.
@@ -268,7 +268,7 @@ Same as above - uses `npx limps next-task` to detect agent from commit context.
 ### PR Comparing Branches
 
 ```text
-/pr --base main
+/pr-create --base main
 ```
 
 Same as above - uses `npx limps next-task` to detect agent from branch context.

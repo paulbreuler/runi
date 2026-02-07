@@ -4,7 +4,8 @@ Pre-flight checklist for every implementation task. Invoke before writing code.
 
 ## Instructions for Claude
 
-**When this command is invoked, acknowledge all 6 disciplines below and follow them throughout the implementation. Reference this checklist before each file change.**
+**When this command is invoked, acknowledge all 6 disciplines below and follow them
+throughout the implementation. Reference this checklist before each file change.**
 
 ---
 
@@ -13,11 +14,13 @@ Pre-flight checklist for every implementation task. Invoke before writing code.
 Every implementation follows RED → GREEN → REFACTOR:
 
 1. **RED**: Write a failing test FIRST. Use `data-test-id` selectors exclusively:
+
    ```tsx
    screen.getByTestId('my-element'); // ✅ CORRECT
    screen.getByText('Submit'); // ❌ NEVER for identification
    screen.getByRole('button'); // ❌ NEVER for identification (only for a11y testing)
    ```
+
 2. **Verify the test fails** before writing implementation code
 3. **GREEN**: Write minimum code to pass the test
 4. **REFACTOR**: Clean up while tests stay green
@@ -37,7 +40,7 @@ Every implementation follows RED → GREEN → REFACTOR:
 
 **Before creating ANY component, search:**
 
-```
+```text
 src/components/ui/     — Base UI components
 src/components/        — Feature components
 ```
