@@ -293,7 +293,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           >
             <div
               className={cn(
-                'flex items-center gap-2 px-3 h-full rounded-md border border-border-subtle bg-bg-elevated shadow-2xl backdrop-blur-md min-w-0',
+                'flex items-center gap-2 px-3 h-full rounded-r-md rounded-l-none border border-border-subtle bg-bg-elevated shadow-2xl backdrop-blur-md min-w-0',
                 isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
               )}
             >
