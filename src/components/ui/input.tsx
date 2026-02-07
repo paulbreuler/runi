@@ -23,7 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const baseClasses = cn(
       focusRingClasses,
       'text-text-primary placeholder:text-text-muted',
-      'flex h-9 w-full min-w-0 rounded-lg px-3 py-1 text-sm',
+      'flex w-full min-w-0 rounded-lg px-3 py-2 text-sm leading-tight',
       'disabled:cursor-not-allowed disabled:opacity-50',
       'aria-invalid:ring-signal-error/20 aria-invalid:border-signal-error',
       'bg-bg-surface border border-border-subtle',
@@ -40,7 +40,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className={baseClasses}
           ref={ref}
           whileHover={{ scale: 1.005 }}
-          whileFocus={{ scale: 1.01 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           {...props}
         />
