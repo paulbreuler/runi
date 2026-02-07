@@ -12,6 +12,7 @@ import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface RequestItemProps {
   request: CollectionRequest;
@@ -22,15 +23,6 @@ interface CollectionItemRequestListProps {
   requests: CollectionRequest[];
   collectionId: string;
 }
-
-const MAX_NAV_LABEL_LENGTH = 120;
-
-const truncateNavLabel = (label: string, maxLength = MAX_NAV_LABEL_LENGTH): string => {
-  if (label.length <= maxLength) {
-    return label;
-  }
-  return `${label.slice(0, maxLength - 3)}...`;
-};
 
 export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
   const selectRequest = useCollectionStore((state) => state.selectRequest);
@@ -228,9 +220,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
               {request.method}
             </span>
-            <span className="text-sm text-text-primary whitespace-nowrap" title={request.name}>
-              {displayName}
-            </span>
+            <span className="text-sm text-text-primary whitespace-nowrap">{request.name}</span>
             {request.is_streaming && (
               <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500">
                 <Radio size={12} />

@@ -14,19 +14,11 @@ import {
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface CollectionItemProps {
   summary: CollectionSummary;
 }
-
-const MAX_NAV_LABEL_LENGTH = 120;
-
-const truncateNavLabel = (label: string, maxLength = MAX_NAV_LABEL_LENGTH): string => {
-  if (label.length <= maxLength) {
-    return label;
-  }
-  return `${label.slice(0, maxLength - 3)}...`;
-};
 
 export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Element => {
   const isExpanded = useIsExpanded(summary.id);

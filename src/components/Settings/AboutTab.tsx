@@ -7,14 +7,15 @@ import type { ReactElement } from 'react';
 import runiHeadIced from '../../../.github/assets/runi-head-iced.svg';
 
 interface InfoItem {
+  id: string;
   label: string;
   value: string;
 }
 
-const INFO_ITEMS: InfoItem[] = [
-  { label: 'Telemetry', value: 'None' },
-  { label: 'Cloud Sync', value: 'Never' },
-  { label: 'Offline Mode', value: 'Full' },
+const infoItems: InfoItem[] = [
+  { id: 'telemetry', label: 'Telemetry', value: 'None' },
+  { id: 'cloud-sync', label: 'Cloud Sync', value: 'Never' },
+  { id: 'offline-mode', label: 'Offline Mode', value: 'Full' },
 ];
 
 export function AboutTab(): ReactElement {
@@ -32,11 +33,11 @@ export function AboutTab(): ReactElement {
       </div>
 
       <div className="p-3 bg-bg-raised rounded-lg border border-border-subtle space-y-2">
-        {INFO_ITEMS.map((item) => (
+        {infoItems.map((item) => (
           <div
-            key={item.label}
+            key={item.id}
             className="flex items-center gap-2 text-xs text-fg-muted"
-            data-test-id={`about-info-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+            data-test-id={`about-info-${item.id}`}
           >
             <span className="text-fg-default">{item.label}:</span>
             <span>{item.value}</span>

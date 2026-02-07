@@ -19,9 +19,9 @@ describe('AboutTab', () => {
   it('renders privacy info items', () => {
     render(<AboutTab />);
 
-    expect(screen.getByTestId('about-info-telemetry')).toHaveTextContent('Telemetry:None');
-    expect(screen.getByTestId('about-info-cloud-sync')).toHaveTextContent('Cloud Sync:Never');
-    expect(screen.getByTestId('about-info-offline-mode')).toHaveTextContent('Offline Mode:Full');
+    expect(screen.getByTestId('about-info-telemetry')).toHaveTextContent(/Telemetry:\s*None/);
+    expect(screen.getByTestId('about-info-cloud-sync')).toHaveTextContent(/Cloud Sync:\s*Never/);
+    expect(screen.getByTestId('about-info-offline-mode')).toHaveTextContent(/Offline Mode:\s*Full/);
   });
 
   it('renders footer', () => {

@@ -1,0 +1,14 @@
+/**
+ * Copyright (c) 2026 BaseState LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+const maxNavLabelLength = 120;
+
+/** Truncate a navigation label to a max length, appending ellipsis if needed. */
+export const truncateNavLabel = (label: string, maxLength = maxNavLabelLength): string => {
+  if (label.length <= maxLength) {
+    return label;
+  }
+  return `${label.slice(0, maxLength - 3)}...`;
+};
