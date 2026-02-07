@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.6.0](https://github.com/paulbreuler/runi/compare/runi-v0.5.0...runi-v0.6.0) (2026-02-07)
+
+
+### Features
+
+* **collection:** Collection Format Types - collection domain schema ([#98](https://github.com/paulbreuler/runi/issues/98)) ([2794b78](https://github.com/paulbreuler/runi/commit/2794b78843cc9d8820e5694e167f6c3feb0f1bf9))
+* **collections:** Update collections and add sample httpbin OpenAPI collection integration ([#99](https://github.com/paulbreuler/runi/issues/99)) ([29b3e81](https://github.com/paulbreuler/runi/commit/29b3e817735e4e32190484100e428412b4e9f764))
+* **features:** feature flags system and require storybook tests in CI ([#100](https://github.com/paulbreuler/runi/issues/100)) ([647be76](https://github.com/paulbreuler/runi/commit/647be76886b8b8595744178515adee26042a4b29))
+* **settings:** Settings Panel UI with tabs, search, and JSON mode ([#101](https://github.com/paulbreuler/runi/issues/101)) ([b34974b](https://github.com/paulbreuler/runi/commit/b34974b874ba5abba71c10d38032e14709e5a2a8))
+* **settings:** wire settings panel entry and store stubs ([#102](https://github.com/paulbreuler/runi/issues/102)) ([b5ae4b9](https://github.com/paulbreuler/runi/commit/b5ae4b98e0dcaab732e4c60c5c11935b73365aac))
+* **ui:** add Lucide icons to TimingTab and improve SettingsSection layout ([#105](https://github.com/paulbreuler/runi/issues/105)) ([e00f5ff](https://github.com/paulbreuler/runi/commit/e00f5ff4ef7b11a24054a2100328955dc9f1491c))
+
+
+### Bug Fixes
+
+* **ui:** normalize font sizes, hide teaser flags, and clean up settings ([#104](https://github.com/paulbreuler/runi/issues/104)) ([e0ce356](https://github.com/paulbreuler/runi/commit/e0ce356ba185b7b4a487e7a6a3bb3450228b3efa))
+
+
+### Tests
+
+* **console:** remove flaky row click selection tests ([#95](https://github.com/paulbreuler/runi/issues/95)) ([f4a088c](https://github.com/paulbreuler/runi/commit/f4a088c5c0666297b2815d68329226a34bf7b696))
+
+
+### Documentation
+
+* consolidate readme status and commit commands/skills as-is ([#97](https://github.com/paulbreuler/runi/issues/97)) ([7a25006](https://github.com/paulbreuler/runi/commit/7a2500618644e7399f01d118971e92d20bbc06d7))
+
+
+### Style
+
+* polish custom titlebar layout and focus behavior ([#106](https://github.com/paulbreuler/runi/issues/106)) ([5e81d9f](https://github.com/paulbreuler/runi/commit/5e81d9f835ea546dc59c1c8d6952e4079bf03506))
+
 ## [0.5.0](https://github.com/paulbreuler/runi/compare/runi-v0.4.0...runi-v0.5.0) (2026-01-31)
 
 
