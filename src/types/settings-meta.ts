@@ -55,7 +55,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
   http: {
     _meta: {
       label: 'HTTP Client',
-      icon: '🌐',
+      icon: 'Globe',
       description: 'Request behavior and defaults',
     },
     timeout: {
@@ -114,7 +114,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
   storage: {
     _meta: {
       label: 'Storage',
-      icon: '📁',
+      icon: 'Folder',
       description: 'Collections and file handling',
     },
     autoSave: {
@@ -169,7 +169,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
   ui: {
     _meta: {
       label: 'Appearance',
-      icon: '🎨',
+      icon: 'Palette',
       description: 'Visual preferences',
     },
     fontSize: {
@@ -231,7 +231,7 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
   mcp: {
     _meta: {
       label: 'MCP Integration',
-      icon: '🤖',
+      icon: 'Bot',
       description: 'AI assistant configuration',
       badge: { text: 'AI-NATIVE', className: 'bg-purple-500/20 text-purple-400' },
     },

@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-arguments -- explicit SettingKey<typeof category> for inference */
 import type { ReactElement } from 'react';
 import { useState, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Globe, Folder, Palette, Bot } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { SettingRow } from './SettingRow';
@@ -25,6 +25,13 @@ export interface SettingsSectionProps {
   forceExpand?: boolean;
 }
 
+const ICON_MAP: Record<string, React.ElementType> = {
+  Globe,
+  Folder,
+  Palette,
+  Bot,
+};
+
 /**
  * Collapsible section for one settings category (http, storage, ui, mcp).
  * Shows _meta icon, label, optional badge; expand/collapse; list of SettingRows.
@@ -39,6 +46,8 @@ export function SettingsSection({
   const schema = SETTINGS_SCHEMA[category];
   const meta = schema._meta;
   const [isExpanded, setIsExpanded] = useState(forceExpand || category === 'http');
+
+  const Icon = ICON_MAP[meta.icon] ?? Globe;
 
   useEffect(() => {
     setIsExpanded(forceExpand);
@@ -86,8 +95,8 @@ export function SettingsSection({
         >
           <ChevronRight className="h-4 w-4" />
         </span>
-        <span className="text-base" aria-hidden>
-          {meta.icon}
+        <span className="text-fg-muted" aria-hidden>
+          <Icon className="h-4 w-4" />
         </span>
         <span className="text-fg-muted text-xs font-semibold tracking-wide uppercase">
           {meta.label}
