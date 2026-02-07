@@ -59,7 +59,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return null;
     }
     const rect = rowRef.current.getBoundingClientRect();
-    return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+    // Use Math.round to prevent sub-pixel gaps or "cutting" of the ring
+    return {
+      top: Math.round(rect.top),
+      left: Math.round(rect.left),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    };
   }, []);
 
   const evaluateTruncation = useCallback((): void => {
@@ -119,14 +125,37 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     setPopoutPosition(null);
   }, []);
 
+  // Use layout effect for truncation check to catch it before paint
+  useLayoutEffect(() => {
+    evaluateTruncation();
+  }, [evaluateTruncation, request.name]);
+
+  // Use layout effect for position updates to avoid visual jitter
   useLayoutEffect(() => {
     if (isExpanded) {
       updatePopoutPosition();
     }
   }, [isExpanded, updatePopoutPosition]);
 
+  // Continuous positioning loop while focused to handle all types of scroll/shift
+  useEffect(() => {
+    if (!isFocused || !isExpanded) {
+      return undefined;
+    }
+
+    let frameId: number;
+    const update = (): void => {
+      updatePopoutPosition();
+      frameId = requestAnimationFrame(update);
+    };
+    frameId = requestAnimationFrame(update);
+
+    return (): void => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [isFocused, isExpanded, updatePopoutPosition]);
+
   useEffect((): (() => void) | undefined => {
-    evaluateTruncation();
     const handleResize = (): void => {
       evaluateTruncation();
       if (isExpanded) {
@@ -137,7 +166,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     return (): void => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [evaluateTruncation, isExpanded, updatePopoutPosition, request.name]);
+  }, [evaluateTruncation, isExpanded, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -157,7 +186,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
     const handleScroll = (): void => {
       if (isFocused) {
-        updatePopoutPosition();
+        // Position is handled by continuous loop while focused
       } else {
         hidePopout();
       }
@@ -174,9 +203,11 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         ref={rowRef}
         type="button"
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-bg-raised/50 transition-colors',
+          'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left transition-colors',
+          'hover:bg-bg-raised/50',
           !isExpanded && containedFocusRingClasses,
-          isExpanded && 'outline-none',
+          // Suppress all focus ring/outline when expanded so it doesn't "cut" the popout
+          isExpanded && 'outline-none ring-0 shadow-none',
           isExpanded && !isFocused && 'bg-bg-raised/30'
         )}
         data-test-id={`collection-request-${request.id}`}
@@ -236,25 +267,27 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       <AnimatePresence>
         {isExpanded && popoutPosition !== null && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
+            initial={{ opacity: 0, scale: 0.99 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
+            exit={{ opacity: 0, scale: 0.99 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             role="tooltip"
-            className="pointer-events-none"
+            className="pointer-events-none overflow-visible"
             data-test-id="request-popout"
             style={{
               position: 'fixed',
               top: popoutPosition.top,
               left: popoutPosition.left,
               minWidth: popoutPosition.width,
+              height: popoutPosition.height,
               maxWidth: 'min(600px, calc(100vw - 40px))',
               zIndex: 60,
+              willChange: 'transform, opacity, top, left',
             }}
           >
             <div
               className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md',
+                'flex items-center gap-2 px-3 h-full rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md',
                 isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
               )}
             >
