@@ -173,6 +173,34 @@ export const Playground: Story = {
       scrollArea.dispatchEvent(new Event('scroll'));
       await expect(scrollArea.scrollLeft).toBeGreaterThan(0);
     });
+
+    await step('Verify StatusBadge is present', async () => {
+      const badge = canvas.getByTestId('status-badge');
+      await expect(badge).toBeVisible();
+      await expect(badge).toHaveTextContent('200');
+      await expect(badge).toHaveTextContent('OK');
+    });
+
+    await step('Verify tab panel content is accessible', async () => {
+      // Switch back to Body tab
+      const bodyTab = canvas.getByTestId('response-tab-body');
+      await userEvent.click(bodyTab);
+
+      // The body content (CodeBox) should be focusable (we added tabIndex={0})
+      // or contain focusable elements.
+      // In display mode, CodeBox usually contains syntax highlighted code which is just text.
+      // But we just added tabIndex={0} to CodeBox's content div.
+      // Let's verify we can tab into it.
+      await userEvent.tab();
+      // Focus order: Tab List -> (maybe overflow buttons) -> CodeBox content
+      // We might need to tab multiple times depending on the UI state.
+      // Let's just check if we CAN focus it.
+      const codeBoxContent = canvas.getByTestId('code-box').querySelector('.overflow-auto');
+      if (codeBoxContent instanceof HTMLElement) {
+        codeBoxContent.focus();
+        await expect(codeBoxContent).toHaveFocus();
+      }
+    });
   },
 };
 

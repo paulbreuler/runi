@@ -90,7 +90,7 @@ export const CodeBox = ({
       {/* Content */}
       <div
         className={cn(
-          'text-xs font-mono flex-1 min-h-0 overflow-auto',
+          'text-xs font-mono flex-1 min-h-0 overflow-auto focus:outline-none focus-visible:ring-1 focus-visible:ring-border-focus',
           // Padding based on variant
           isContained && 'px-3 pb-3',
           isContained && !hasCopyButton && 'pt-3',
@@ -98,6 +98,7 @@ export const CodeBox = ({
           className
         )}
         data-language={dataLanguage}
+        tabIndex={0}
       >
         {children}
       </div>
