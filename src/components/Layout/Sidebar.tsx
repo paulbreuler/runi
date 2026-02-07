@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
-import { focusRingClasses } from '@/utils/accessibility';
+import { containedFocusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 
 interface DrawerSectionProps {
@@ -36,18 +36,22 @@ const DrawerSection = ({
       <button
         type="button"
         className={cn(
-          focusRingClasses,
+          containedFocusRingClasses,
           'w-full flex items-center gap-2 px-4 py-3 hover:bg-bg-raised/30 transition-colors cursor-pointer group'
         )}
         onClick={() => {
           setIsOpen(!isOpen);
         }}
         aria-expanded={isOpen}
+        data-test-id={testId !== undefined ? `${testId}-toggle` : undefined}
       >
         <span className="text-text-muted group-hover:text-text-primary transition-colors">
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </span>
-        <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider group-hover:text-text-primary transition-colors">
+        <span
+          className="text-xs font-semibold text-text-secondary uppercase tracking-wider group-hover:text-text-primary transition-colors"
+          data-test-id={testId !== undefined ? `${testId}-title` : undefined}
+        >
           {title}
         </span>
       </button>

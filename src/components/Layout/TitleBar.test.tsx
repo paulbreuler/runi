@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TitleBar } from './TitleBar';
+import { globalEventBus } from '@/events/bus';
 import * as platformUtils from '@/utils/platform';
 
 // Mock Tauri window API
@@ -15,6 +16,7 @@ const mockUnmaximize = vi.fn().mockResolvedValue(undefined);
 const mockClose = vi.fn().mockResolvedValue(undefined);
 const mockIsMaximized = vi.fn().mockResolvedValue(false);
 const mockListen = vi.fn().mockResolvedValue(() => {});
+const mockSetFocus = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: vi.fn(() => ({
@@ -22,6 +24,7 @@ vi.mock('@tauri-apps/api/window', () => ({
     maximize: mockMaximize,
     unmaximize: mockUnmaximize,
     close: mockClose,
+    setFocus: mockSetFocus,
     isMaximized: mockIsMaximized,
     listen: mockListen,
   })),
@@ -37,6 +40,7 @@ describe('TitleBar', () => {
     vi.clearAllMocks();
     // Default to macOS for most tests
     vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -44,7 +48,7 @@ describe('TitleBar', () => {
   });
 
   describe('platform-specific rendering', () => {
-    it('does not render custom controls on macOS (uses native traffic lights)', () => {
+    it('renders custom controls on macOS for undecorated windows', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
 
       render(<TitleBar />);
@@ -52,11 +56,46 @@ describe('TitleBar', () => {
       const titlebar = screen.getByTestId('titlebar');
       expect(titlebar).toBeInTheDocument();
 
-      // macOS uses native traffic lights from titleBarStyle: Overlay
-      // Custom controls should not be rendered
+      expect(screen.getByTestId('titlebar-close')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-minimize')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-maximize')).toBeInTheDocument();
+    });
+
+    it('does not render macOS traffic-light controls when Tauri window is unavailable', async () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      vi.mocked(getCurrentWindow).mockImplementationOnce(() => {
+        throw new Error('Not in Tauri context');
+      });
+
+      render(<TitleBar />);
+
       expect(screen.queryByTestId('titlebar-close')).not.toBeInTheDocument();
       expect(screen.queryByTestId('titlebar-minimize')).not.toBeInTheDocument();
       expect(screen.queryByTestId('titlebar-maximize')).not.toBeInTheDocument();
+    });
+
+    it('mutes macOS traffic light colors when window is unfocused', () => {
+      const listeners = new Map<string, () => void>();
+      mockListen.mockImplementation((event, handler) => {
+        listeners.set(event as string, handler as () => void);
+        return Promise.resolve(() => {});
+      });
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+
+      render(<TitleBar />);
+
+      const closeButton = screen.getByTestId('titlebar-close');
+      expect(closeButton).toHaveClass('bg-[#ff5f57]');
+
+      const blurHandler = listeners.get('tauri://blur');
+      expect(blurHandler).toBeDefined();
+
+      act(() => {
+        blurHandler?.();
+      });
+
+      expect(closeButton).toHaveClass('bg-[#8f8f8f]');
     });
 
     it('renders Windows/Linux-style window controls on non-macOS', () => {
@@ -85,14 +124,14 @@ describe('TitleBar', () => {
     it('displays default title "runi"', () => {
       render(<TitleBar />);
 
-      expect(screen.getByText('runi')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-title')).toHaveTextContent('runi');
     });
 
     it('displays custom title when provided', () => {
       render(<TitleBar title="Custom Title" />);
 
-      expect(screen.getByText('Custom Title')).toBeInTheDocument();
-      expect(screen.queryByText('runi')).not.toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-title')).toHaveTextContent('Custom Title');
+      expect(screen.getByTestId('titlebar-title')).not.toHaveTextContent('runi');
     });
 
     it('renders children when provided', () => {
@@ -103,7 +142,19 @@ describe('TitleBar', () => {
       );
 
       expect(screen.getByTestId('custom-content')).toBeInTheDocument();
-      expect(screen.queryByText('Runi')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('titlebar-title')).not.toBeInTheDocument();
+    });
+
+    it('treats null and false children as no custom content', () => {
+      const { rerender } = render(<TitleBar>{null}</TitleBar>);
+
+      expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar')).toHaveClass('h-8');
+
+      rerender(<TitleBar>{false}</TitleBar>);
+
+      expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar')).toHaveClass('h-8');
     });
 
     it('renders settings button when onSettingsClick is provided', () => {
@@ -111,6 +162,15 @@ describe('TitleBar', () => {
       render(<TitleBar onSettingsClick={onSettingsClick} />);
 
       expect(screen.getByTestId('titlebar-settings')).toBeInTheDocument();
+    });
+
+    it('groups settings in a compact right utility rail', () => {
+      const onSettingsClick = vi.fn();
+      render(<TitleBar onSettingsClick={onSettingsClick} />);
+
+      const utilities = screen.getByTestId('titlebar-utilities');
+      expect(utilities).toHaveClass('pl-1');
+      expect(utilities).toHaveClass('pr-0.5');
     });
 
     it('does not render settings button when onSettingsClick is missing', () => {
@@ -121,14 +181,13 @@ describe('TitleBar', () => {
   });
 
   describe('window control actions', () => {
-    it('does not render custom minimize button on macOS (native controls used)', () => {
+    it('renders custom minimize button on macOS', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
 
       render(<TitleBar />);
 
-      // macOS uses native traffic lights, custom controls should not exist
-      const minimizeButton = screen.queryByTestId('titlebar-minimize');
-      expect(minimizeButton).not.toBeInTheDocument();
+      const minimizeButton = screen.getByTestId('titlebar-minimize');
+      expect(minimizeButton).toBeInTheDocument();
     });
 
     it('calls minimize when minimize button is clicked on Windows/Linux', () => {
@@ -196,6 +255,20 @@ describe('TitleBar', () => {
       fireEvent.click(screen.getByTestId('titlebar-settings'));
       expect(onSettingsClick).toHaveBeenCalledTimes(1);
     });
+
+    it('uses first mac traffic-light click to focus an unfocused window', async () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+
+      render(<TitleBar />);
+
+      fireEvent.click(screen.getByTestId('titlebar-close'));
+
+      await waitFor(() => {
+        expect(mockSetFocus).toHaveBeenCalledTimes(1);
+      });
+      expect(mockClose).not.toHaveBeenCalled();
+    });
   });
 
   describe('accessibility', () => {
@@ -204,13 +277,16 @@ describe('TitleBar', () => {
 
       render(<TitleBar />);
 
-      const closeButton = screen.getByLabelText('Close window');
-      const minimizeButton = screen.getByLabelText('Minimize window');
-      const maximizeButton = screen.getByLabelText('Maximize window');
+      const closeButton = screen.getByTestId('titlebar-close');
+      const minimizeButton = screen.getByTestId('titlebar-minimize');
+      const maximizeButton = screen.getByTestId('titlebar-maximize');
 
       expect(closeButton).toBeInTheDocument();
       expect(minimizeButton).toBeInTheDocument();
       expect(maximizeButton).toBeInTheDocument();
+      expect(closeButton).toHaveAttribute('aria-label', 'Close window');
+      expect(minimizeButton).toHaveAttribute('aria-label', 'Minimize window');
+      expect(maximizeButton).toHaveAttribute('aria-label', 'Maximize window');
     });
 
     it('has data-test-id attributes for testing', () => {
@@ -280,6 +356,27 @@ describe('TitleBar', () => {
       expect(() => {
         fireEvent.click(minimizeButton);
       }).not.toThrow();
+    });
+
+    it('emits toast errors when window commands fail', async () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
+      mockMinimize.mockRejectedValueOnce(new Error('Window API error'));
+      const emitSpy = vi.spyOn(globalEventBus, 'emit');
+
+      render(<TitleBar />);
+
+      fireEvent.click(screen.getByTestId('titlebar-minimize'));
+
+      await waitFor(() => {
+        expect(emitSpy).toHaveBeenCalledWith(
+          'toast.show',
+          expect.objectContaining({
+            type: 'error',
+            message: 'Failed to minimize window',
+            details: 'Window API error',
+          })
+        );
+      });
     });
   });
 

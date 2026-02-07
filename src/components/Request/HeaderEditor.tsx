@@ -79,11 +79,13 @@ export const HeaderEditor = (): React.JSX.Element => {
     <div className="h-full flex flex-col" data-test-id="headers-editor">
       <div className="flex-1 overflow-auto p-4" style={{ scrollbarGutter: 'stable' }}>
         {headerEntries.length === 0 && editingKey === null && (
-          <EmptyState
-            variant="muted"
-            title="No headers configured"
-            description="Add headers to customize your request"
-          />
+          <div data-test-id="headers-empty-state">
+            <EmptyState
+              variant="muted"
+              title="No headers configured"
+              description="Add headers to customize your request"
+            />
+          </div>
         )}
 
         <div className="space-y-2">

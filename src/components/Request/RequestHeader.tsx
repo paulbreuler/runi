@@ -8,6 +8,8 @@ import { motion } from 'motion/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
+import { cn } from '@/utils/cn';
+import { compositeFocusContainerClasses, compositeFocusItemClasses } from '@/utils/accessibility';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
 
 interface RequestHeaderProps {
@@ -98,15 +100,26 @@ export const RequestHeader = ({
   };
 
   return (
-    <div className="flex items-center px-4 py-2 border-b border-border-subtle bg-bg-surface">
-      {/* Unified command input container */}
-      <div className="flex-1 flex items-center gap-0 bg-bg-raised border border-border-subtle rounded-lg overflow-hidden transition-colors duration-200 focus-within:border-border-emphasis focus-within:outline-none">
+    <div className="flex flex-1 min-w-0 items-center gap-0">
+      {/* Inline titlebar command row (no extra panel shell) */}
+      <div
+        className={cn(
+          'flex flex-1 min-w-0 items-center gap-0 rounded-lg border border-border-subtle bg-bg-raised overflow-hidden transition-colors duration-200 hover:border-border-default',
+          compositeFocusContainerClasses
+        )}
+        data-test-id="request-control"
+      >
         {/* Method selector - appears as prefix */}
         <Select.Select value={method} onValueChange={handleMethodChange}>
           <Select.SelectTrigger
             role="button"
             aria-haspopup="listbox"
-            className={`min-w-28 w-auto h-8 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary ${methodColor}`}
+            className={cn(
+              'relative min-w-28 w-auto h-8 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
+              compositeFocusItemClasses,
+              'focus-visible:bg-bg-raised/50 [&[data-focus-visible-added]:focus]:bg-bg-raised/50',
+              methodColor
+            )}
             data-test-id="method-select"
             disabled={loading}
             aria-label="HTTP Method"
@@ -139,7 +152,10 @@ export const RequestHeader = ({
           data-test-id="url-input"
           disabled={loading}
           aria-label="Request URL"
-          className="flex-1 h-8 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted"
+          className={cn(
+            'relative h-8 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted',
+            compositeFocusItemClasses
+          )}
         />
 
         {/* Send button - appears as suffix with fixed width to prevent layout shift */}
@@ -152,7 +168,11 @@ export const RequestHeader = ({
             disabled={!isValidUrl || loading}
             data-test-id="send-button"
             aria-label="Send Request"
-            className="w-full justify-center whitespace-nowrap hover:text-accent-blue !px-2"
+            className={cn(
+              'relative w-full justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
+              compositeFocusItemClasses,
+              'focus-visible:bg-bg-raised/50 [&[data-focus-visible-added]:focus]:bg-bg-raised/50 focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
+            )}
             style={{ minWidth: '72px' }}
           >
             {loading ? renderLoadingState() : 'Send'}

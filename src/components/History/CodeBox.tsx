@@ -9,6 +9,7 @@
  */
 
 import { type ReactNode } from 'react';
+import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { CopyButton } from './CopyButton';
 
@@ -91,6 +92,7 @@ export const CodeBox = ({
       <div
         className={cn(
           'text-xs font-mono flex-1 min-h-0 overflow-auto',
+          focusRingClasses,
           // Padding based on variant
           isContained && 'px-3 pb-3',
           isContained && !hasCopyButton && 'pt-3',
@@ -98,6 +100,7 @@ export const CodeBox = ({
           className
         )}
         data-language={dataLanguage}
+        tabIndex={0}
       >
         {children}
       </div>

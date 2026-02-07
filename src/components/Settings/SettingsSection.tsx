@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- runtime guards for optional schema keys */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-arguments -- explicit SettingKey<typeof category> for inference */
-import type { ReactElement } from 'react';
+import type { ElementType, ReactElement } from 'react';
 import { useState, useEffect } from 'react';
 import { ChevronRight, Globe, Folder, Palette, Bot } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -25,7 +25,7 @@ export interface SettingsSectionProps {
   forceExpand?: boolean;
 }
 
-const ICON_MAP: Record<string, React.ElementType> = {
+const ICON_MAP: Record<string, ElementType> = {
   Globe,
   Folder,
   Palette,

@@ -119,19 +119,19 @@ test.describe('Sidebar', () => {
 
     await expect(sidebar).toBeVisible();
 
-    // Get viewport height
-    const viewport = page.viewportSize();
-    const viewportHeight = viewport ? viewport.height : 800;
+    // Sidebar should fill nearly all of its parent container height.
+    const { sidebarHeight, parentHeight } = await sidebar.evaluate((el) => {
+      const rect = el.getBoundingClientRect();
+      const parentRect = el.parentElement?.getBoundingClientRect();
+      return {
+        sidebarHeight: rect.height,
+        parentHeight: parentRect?.height ?? 0,
+      };
+    });
 
-    // Get sidebar height
-    const boundingBox = await sidebar.boundingBox();
-    expect(boundingBox).not.toBeNull();
-
-    if (boundingBox) {
-      // Sidebar should take at least 95% of viewport height
-      // (accounting for status bar and browser chrome)
-      expect(boundingBox.height).toBeGreaterThan(viewportHeight * 0.9);
-    }
+    expect(parentHeight).toBeGreaterThan(0);
+    expect(sidebarHeight).toBeGreaterThan(parentHeight - 4);
+    expect(sidebarHeight).toBeLessThanOrEqual(parentHeight + 4);
   });
 
   test('sidebar has smooth animation', async ({ page }) => {

@@ -6,15 +6,16 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 import { Minimize2, Maximize2, Settings, X } from 'lucide-react';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
-// macOS native traffic light controls are positioned at trafficLightPosition (x: 20, y: 20)
-// Add padding to prevent content from overlapping native controls
-const MACOS_TRAFFIC_LIGHT_OFFSET = 80; // Matches trafficLightPosition x:20 + native button width
+interface TitleBarControlsProps {
+  isMac: boolean;
+}
 
-const TitleBarControls = (): React.JSX.Element | null => {
+const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element => {
   // Cache window instance to avoid repeated getCurrentWindow() calls
   const appWindow = useMemo<Window | null>(() => {
     try {
@@ -25,14 +26,22 @@ const TitleBarControls = (): React.JSX.Element | null => {
     }
   }, []);
 
+  const emitWindowControlError = (message: string, error: unknown): void => {
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'error',
+      message,
+      details: error instanceof Error ? error.message : String(error),
+    });
+  };
+
   const handleMinimize = async (): Promise<void> => {
     if (appWindow === null) {
       return;
     }
     try {
       await appWindow.minimize();
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      emitWindowControlError('Failed to minimize window', error);
     }
   };
 
@@ -47,8 +56,8 @@ const TitleBarControls = (): React.JSX.Element | null => {
       } else {
         await appWindow.maximize();
       }
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      emitWindowControlError('Failed to maximize window', error);
     }
   };
 
@@ -58,13 +67,17 @@ const TitleBarControls = (): React.JSX.Element | null => {
     }
     try {
       await appWindow.close();
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      emitWindowControlError('Failed to close window', error);
     }
   };
 
   // Track window focus state (must be before early return to follow Rules of Hooks)
-  const [isFocused, setIsFocused] = useState(true);
+  const [isFocused, setIsFocused] = useState(() =>
+    typeof document !== 'undefined' && typeof document.hasFocus === 'function'
+      ? document.hasFocus()
+      : true
+  );
 
   useEffect(() => {
     if (appWindow === null) {
@@ -116,10 +129,74 @@ const TitleBarControls = (): React.JSX.Element | null => {
     };
   }, [appWindow]);
 
-  // macOS uses native traffic light controls (from titleBarStyle: Overlay)
-  // Only render custom controls for Windows/Linux
-  if (isMacSync()) {
-    return null;
+  if (isMac) {
+    if (appWindow === null) {
+      return <div className="ml-2 h-full w-[58px]" data-tauri-drag-region />;
+    }
+
+    const runMacControlAction = async (action: () => Promise<void>): Promise<void> => {
+      // Match native macOS behavior: first click activates window, second click performs action.
+      if (!isFocused) {
+        try {
+          await appWindow.setFocus();
+          setIsFocused(true);
+        } catch (error) {
+          emitWindowControlError('Failed to focus window', error);
+        }
+        return;
+      }
+      await action();
+    };
+
+    return (
+      <div className="ml-2 flex h-full items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            void runMacControlAction(handleClose);
+          }}
+          className={cn(
+            focusRingClasses,
+            'h-3.5 w-3.5 rounded-full border transition-colors',
+            isFocused
+              ? 'border-black/20 bg-[#ff5f57] hover:brightness-95'
+              : 'cursor-default border-black/10 bg-[#8f8f8f]'
+          )}
+          aria-label="Close window"
+          data-test-id="titlebar-close"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            void runMacControlAction(handleMinimize);
+          }}
+          className={cn(
+            focusRingClasses,
+            'h-3.5 w-3.5 rounded-full border transition-colors',
+            isFocused
+              ? 'border-black/20 bg-[#febc2e] hover:brightness-95'
+              : 'cursor-default border-black/10 bg-[#8f8f8f]'
+          )}
+          aria-label="Minimize window"
+          data-test-id="titlebar-minimize"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            void runMacControlAction(handleMaximize);
+          }}
+          className={cn(
+            focusRingClasses,
+            'h-3.5 w-3.5 rounded-full border transition-colors',
+            isFocused
+              ? 'border-black/20 bg-[#28c840] hover:brightness-95'
+              : 'cursor-default border-black/10 bg-[#8f8f8f]'
+          )}
+          aria-label="Maximize window"
+          data-test-id="titlebar-maximize"
+        />
+      </div>
+    );
   }
 
   // Windows/Linux window controls (on the right)
@@ -179,47 +256,61 @@ export const TitleBar = ({
 }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
   const showSettingsButton = onSettingsClick !== undefined;
+  const hasCustomContent = React.Children.toArray(children).length > 0;
+  const showRightActions = showSettingsButton || !isMac;
 
   return (
     <div
       className={cn(
-        // Height matches VS Code title bar (~32px) with overlay style
-        // Using bg-bg-raised for lighter appearance in color hierarchy (gray-3 vs gray-2)
-        'h-8 border-b border-border-subtle bg-bg-raised/80 backdrop-blur-sm flex items-center relative',
-        'text-xs text-text-secondary select-none',
-        // Windows/Linux: Controls on right, so add left padding
-        !isMac && 'pl-4'
+        'border-b border-border-subtle bg-bg-surface flex items-center gap-2',
+        'text-xs text-text-secondary select-none px-2',
+        hasCustomContent ? 'h-12' : 'h-8'
       )}
-      style={isMac ? { paddingLeft: `${MACOS_TRAFFIC_LIGHT_OFFSET.toString()}px` } : undefined}
       data-test-id="titlebar"
       data-tauri-drag-region
     >
-      {/* Title/content area - centered and draggable on all platforms */}
+      {isMac && <TitleBarControls isMac />}
+
+      {/* Keep explicit drag handle visible even with custom header content */}
+      <div className="h-full w-4 shrink-0" data-tauri-drag-region />
+
       <div
-        className="absolute left-1/2 top-0 h-full flex items-center -translate-x-1/2"
-        data-tauri-drag-region
+        className={cn('flex-1 min-w-0 flex items-center', !hasCustomContent && 'justify-center')}
       >
-        {children ?? <span className="font-medium">{title}</span>}
+        {hasCustomContent ? (
+          <div className="flex h-full w-full min-w-0 items-center">{children}</div>
+        ) : (
+          <span className="font-medium" data-tauri-drag-region data-test-id="titlebar-title">
+            {title}
+          </span>
+        )}
       </div>
 
-      {/* Right actions */}
-      <div className="ml-auto flex items-center h-full gap-1">
-        {showSettingsButton && (
-          <button
-            type="button"
-            onClick={onSettingsClick}
-            className={cn(
-              focusRingClasses,
-              'w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors'
-            )}
-            aria-label="Open settings"
-            data-test-id="titlebar-settings"
-          >
-            <Settings size={12} className="text-text-muted" />
-          </button>
-        )}
-        <TitleBarControls />
-      </div>
+      {hasCustomContent && <div className="h-full w-1 shrink-0" data-tauri-drag-region />}
+
+      {/* Right utility rail */}
+      {showRightActions && (
+        <div
+          className="ml-auto flex h-full items-center gap-1 pl-1 pr-0.5"
+          data-test-id="titlebar-utilities"
+        >
+          {showSettingsButton && (
+            <button
+              type="button"
+              onClick={onSettingsClick}
+              className={cn(
+                focusRingClasses,
+                'flex h-[34px] w-[34px] items-center justify-center hover:bg-bg-raised/50 transition-colors'
+              )}
+              aria-label="Open settings"
+              data-test-id="titlebar-settings"
+            >
+              <Settings size={16} className="text-text-muted" />
+            </button>
+          )}
+          {!isMac && <TitleBarControls isMac={false} />}
+        </div>
+      )}
     </div>
   );
 };

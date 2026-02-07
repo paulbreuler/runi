@@ -13,7 +13,6 @@ import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { RequestHeader } from '@/components/Request/RequestHeader';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
-import { StatusBadge } from '@/components/Response/StatusBadge';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRequestStore } from '@/stores/useRequestStore';
@@ -220,12 +219,7 @@ export const HomePage = (): React.JSX.Element => {
                 transition={{ duration: 0.2 }}
                 className="flex-1 flex flex-col overflow-hidden"
               >
-                {/* Status bar */}
-                <div className="relative flex items-center px-6 py-2 border-b border-border-subtle bg-bg-surface">
-                  <StatusBadge status={response.status} statusText={response.status_text} />
-                </div>
-
-                {/* Response viewer with tabs */}
+                {/* Response viewer with integrated header (tabs + status + metrics) */}
                 <ResponseViewer response={response} />
               </motion.div>
             ) : (

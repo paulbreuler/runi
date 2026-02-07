@@ -18,13 +18,14 @@ describe('RequestHeader', () => {
     onSend: vi.fn(),
   };
 
-  it('renders with proper layout structure', () => {
+  it('renders inline titlebar layout without outer panel chrome', () => {
     const { container } = render(<RequestHeader {...defaultProps} />);
 
-    // Should have compact spacing (px-4 py-2) for unified command input
+    // Should not introduce its own panel framing when rendered in titlebar
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass('px-4');
-    expect(wrapper).toHaveClass('py-2');
+    expect(wrapper).toHaveClass('min-w-0');
+    expect(wrapper).not.toHaveClass('border-b');
+    expect(wrapper).not.toHaveClass('bg-bg-surface');
   });
 
   it('renders method select with colored text only', () => {
@@ -52,16 +53,47 @@ describe('RequestHeader', () => {
     render(<RequestHeader {...defaultProps} url="" />);
 
     const urlInput = screen.getByTestId('url-input');
-    // Should be seamless with unified container (no border, transparent background)
+    // URL input remains borderless; the full control row carries the border
     expect(urlInput).toHaveClass('border-0');
     expect(urlInput).toHaveClass('bg-transparent');
   });
 
-  it('URL input has visible focus ring for keyboard navigation', () => {
+  it('applies muted composite focus state on request control', () => {
     render(<RequestHeader {...defaultProps} url="" />);
+    const control = screen.getByTestId('request-control');
+    expect(control.className).toContain('focus-within:ring-1');
+    expect(control.className).toContain('focus-within:ring-[color:var(--color-border-default)]');
+    expect(control.className).toContain('focus-within:border-border-default');
+  });
+
+  it('applies primary focus states to inner controls', () => {
+    render(<RequestHeader {...defaultProps} url="" />);
+
+    const methodSelect = screen.getByTestId('method-select');
     const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
+
+    expect(methodSelect.className).toContain('focus-visible:ring-2');
+    expect(methodSelect.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(methodSelect.className).toContain('focus-visible:!ring-offset-0');
+    expect(methodSelect.className).toContain('focus-visible:ring-inset');
+    expect(methodSelect.className).toContain('focus-visible:z-10');
+    expect(methodSelect.className).toContain('focus-visible:bg-bg-raised/50');
+
     expect(urlInput.className).toContain('focus-visible:ring-2');
-    expect(urlInput.className).toContain('ring-[color:var(--color-ring)]');
+    expect(urlInput.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(urlInput.className).toContain('focus-visible:!ring-offset-0');
+    expect(urlInput.className).toContain('focus-visible:ring-inset');
+    expect(urlInput.className).toContain('focus-visible:z-10');
+    expect(urlInput.className).toContain('focus-visible:bg-bg-surface');
+
+    expect(sendButton.className).toContain('focus-visible:ring-2');
+    expect(sendButton.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(sendButton.className).toContain('focus-visible:!ring-offset-0');
+    expect(sendButton.className).toContain('focus-visible:ring-inset');
+    expect(sendButton.className).toContain('focus-visible:z-10');
+    expect(sendButton.className).toContain('focus-visible:bg-bg-raised/50');
+    expect(sendButton.className).toContain('focus-visible:text-accent-blue');
   });
 
   it('renders send button with proper styling', () => {
@@ -70,6 +102,9 @@ describe('RequestHeader', () => {
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeInTheDocument();
     expect(sendButton).toHaveTextContent('Send');
+    // In composite: flat left edge, rounded right edge
+    expect(sendButton).toHaveClass('rounded-none');
+    expect(sendButton).toHaveClass('rounded-r-lg');
   });
 
   it('shows loading state on send button', () => {
@@ -129,12 +164,14 @@ describe('RequestHeader', () => {
     expect(onUrlChange).toHaveBeenCalled();
   });
 
-  it('renders unified command input container', () => {
-    const { container } = render(<RequestHeader {...defaultProps} />);
+  it('renders inline command row without extra framed container', () => {
+    render(<RequestHeader {...defaultProps} />);
 
-    // Should have unified container with no gap (gap-0) for seamless appearance
-    const unifiedContainer = container.querySelector('.bg-bg-raised.border');
-    expect(unifiedContainer).toBeInTheDocument();
-    expect(unifiedContainer).toHaveClass('gap-0');
+    // One subtle border around the whole control, not around URL only
+    const control = screen.getByTestId('request-control');
+    expect(control).toBeInTheDocument();
+    expect(control).toHaveClass('border');
+    expect(control).toHaveClass('border-border-subtle');
+    expect(control).toHaveClass('bg-bg-raised');
   });
 });

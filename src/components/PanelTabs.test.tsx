@@ -163,21 +163,20 @@ describe('PanelTabs', () => {
     it('displays network count badge when provided', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} networkCount={5} />);
 
-      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-network-count')).toHaveTextContent('5');
     });
 
     it('displays console count badge when provided', () => {
       render(<PanelTabs activeTab="console" onTabChange={mockOnTabChange} consoleCount={3} />);
 
-      expect(screen.getByText('3')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-console-count')).toHaveTextContent('3');
     });
 
     it('does not display count badge when count is 0', () => {
       render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} networkCount={0} />);
 
-      const badges = screen.queryAllByText('0');
-      // Should not show badge for 0
-      expect(badges.length).toBe(0);
+      expect(screen.queryByTestId('panel-tab-network-count')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('panel-tab-console-count')).not.toBeInTheDocument();
     });
   });
 
@@ -269,6 +268,19 @@ describe('PanelTabs', () => {
       indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
     });
+
+    it('active indicator uses inset bounds without persistent edge chrome', () => {
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+
+      const indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
+      expect(indicator).toBeInTheDocument();
+      expect(indicator?.className).toContain('left-[1px]');
+      expect(indicator?.className).toContain('right-[1px]');
+      expect(indicator?.className).not.toContain('border-x');
+      expect(indicator?.className).not.toContain(
+        'shadow-[inset_1px_0_0_var(--color-border-default),inset_-1px_0_0_var(--color-border-default)]'
+      );
+    });
   });
 
   describe('keyboard navigation', () => {
@@ -315,6 +327,14 @@ describe('PanelTabs', () => {
       const values = Array.from(triggers).map((t) => t.getAttribute('data-value'));
       expect(values).toContain('network');
       expect(values).toContain('console');
+    });
+
+    it('uses contained focus ring styles to avoid clipping in panel headers', () => {
+      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+
+      const networkTab = screen.getByTestId('panel-tab-network');
+      expect(networkTab.className).toContain('focus-visible:ring-inset');
+      expect(networkTab.className).toContain('focus-visible:!ring-offset-0');
     });
   });
 

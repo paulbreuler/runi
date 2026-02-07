@@ -56,6 +56,71 @@ export const focusRingClasses = [
 ].join(' ');
 
 /**
+ * Focus ring classes for controls rendered inside clipped/overflow containers.
+ *
+ * Uses inset ring and zero offset to avoid focus clipping when parent containers
+ * use overflow constraints (common in tab strips, list rows, and compact headers).
+ */
+export const containedFocusRingClasses = [
+  'outline-none',
+  'focus-visible:outline-2',
+  'focus-visible:outline-[var(--color-ring)]',
+  'focus-visible:outline-offset-[-2px]',
+  'focus-visible:ring-2',
+  'focus-visible:ring-[color:var(--color-ring)]',
+  'focus-visible:!ring-offset-0',
+  'focus-visible:ring-inset',
+  'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:outline-2',
+  '[&[data-focus-visible-added]:focus]:outline-[var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:outline-offset-[-2px]',
+  '[&[data-focus-visible-added]:focus]:ring-2',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:!ring-offset-0',
+  '[&[data-focus-visible-added]:focus]:ring-inset',
+  '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+].join(' ');
+
+/**
+ * Muted focus treatment for composite containers.
+ *
+ * Use on the parent wrapper of grouped interactive controls
+ * (e.g. method select + URL input + send button) so users can
+ * see focus is within the composite without overpowering the
+ * active child control indicator.
+ */
+export const compositeFocusContainerClasses = [
+  'focus-within:border-border-default',
+  'focus-within:ring-1',
+  'focus-within:ring-[color:var(--color-border-default)]',
+].join(' ');
+
+/**
+ * Primary focus treatment for an active item inside a composite control.
+ *
+ * Keeps Base UI's focus semantics while tuning visuals for grouped controls:
+ * - ring offset is removed so focus stays within tight composite bounds
+ * - inset ring prevents clipping when parent uses overflow-hidden
+ * - z-index lifts focused item above separators/siblings
+ */
+export const compositeFocusItemClasses = [
+  'focus-visible:ring-2',
+  'focus-visible:ring-[color:var(--color-ring)]',
+  'focus-visible:!ring-offset-0',
+  'focus-visible:ring-inset',
+  'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+  'focus-visible:z-10',
+  'focus-visible:bg-bg-surface',
+  '[&[data-focus-visible-added]:focus]:ring-2',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:!ring-offset-0',
+  '[&[data-focus-visible-added]:focus]:ring-inset',
+  '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:z-10',
+  '[&[data-focus-visible-added]:focus]:bg-bg-surface',
+].join(' ');
+
+/**
  * Hook for hover-only elements that need to show on focus.
  *
  * Tracks focus within a container element and returns visibility state.

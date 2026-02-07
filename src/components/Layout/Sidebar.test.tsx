@@ -48,19 +48,25 @@ describe('Sidebar', (): void => {
   it('has Collections drawer section', (): void => {
     render(<Sidebar />);
 
-    expect(screen.getByText('Collections')).toBeInTheDocument();
+    expect(screen.getByTestId('collections-drawer-title')).toBeInTheDocument();
     expect(screen.getByTestId('collections-drawer')).toBeInTheDocument();
   });
 
   it('drawer sections are open by default', (): void => {
     render(<Sidebar />);
 
-    const collectionsButton = screen.getByText('Collections').closest('button');
-    if (collectionsButton === null) {
-      throw new Error('Collections button not found');
-    }
+    const collectionsButton = screen.getByTestId('collections-drawer-toggle');
     expect(collectionsButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();
+  });
+
+  it('uses contained focus ring styles on drawer headers to avoid clipping', (): void => {
+    render(<Sidebar />);
+
+    const collectionsButton = screen.getByTestId('collections-drawer-toggle');
+
+    expect(collectionsButton.className).toContain('focus-visible:ring-inset');
+    expect(collectionsButton.className).toContain('focus-visible:!ring-offset-0');
   });
 
   it('renders the collections list content', (): void => {
@@ -85,7 +91,7 @@ describe('Sidebar', (): void => {
   it('drawer headers have uppercase styling', (): void => {
     render(<Sidebar />);
 
-    const collectionsTitle = screen.getByText('Collections');
+    const collectionsTitle = screen.getByTestId('collections-drawer-title');
     expect(collectionsTitle).toHaveClass('uppercase');
     expect(collectionsTitle).toHaveClass('tracking-wider');
   });
