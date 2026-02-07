@@ -4,6 +4,7 @@
  */
 
 import { useReducedMotion } from 'motion/react';
+import { Ban, Timer, Check, Link, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { TimingWaterfall } from './TimingWaterfall';
 import type { TimingWaterfallSegments, IntelligenceInfo } from '@/types/history';
@@ -74,14 +75,15 @@ export const TimingTab = ({
             data-test-id="blocked-message"
             role="alert"
             className={cn(
-              'p-4 rounded-lg border text-center',
+              'p-4 rounded-lg border text-center flex flex-col items-center gap-2',
               'bg-signal-error/10 border-signal-error/30'
             )}
           >
-            <span className="font-semibold text-signal-error">⊘ Request Blocked</span>
-            <p className="mt-2 text-sm text-text-secondary">
-              This request was blocked by a filter rule
-            </p>
+            <div className="flex items-center gap-2 font-semibold text-signal-error">
+              <Ban className="h-4 w-4" />
+              <span>Request Blocked</span>
+            </div>
+            <p className="text-sm text-text-secondary">This request was blocked by a filter rule</p>
           </div>
         </section>
       </div>
@@ -138,7 +140,8 @@ export const TimingTab = ({
             'bg-signal-warning/10 border-signal-warning/30 text-signal-warning'
           )}
         >
-          <span className="text-sm">⏱ Throttled to {throttleRateKbps} KB/s</span>
+          <Timer className="h-4 w-4" />
+          <span className="text-sm">Throttled to {throttleRateKbps} KB/s</span>
         </div>
       )}
 
@@ -156,7 +159,8 @@ export const TimingTab = ({
                   'bg-signal-success/10 border border-signal-success/30 text-signal-success'
                 )}
               >
-                ✓ Verified against spec
+                <Check className="h-4 w-4" />
+                Verified against spec
               </span>
             )}
             {intelligence.boundToSpec && (
@@ -166,9 +170,10 @@ export const TimingTab = ({
                   'bg-accent-blue/10 border border-accent-blue/30 text-accent-blue'
                 )}
               >
-                ⎯ Bound to{' '}
+                <Link className="h-4 w-4" />
+                Bound to{' '}
                 {intelligence.specOperation !== null && intelligence.specOperation !== '' && (
-                  <code className="font-mono">{intelligence.specOperation}</code>
+                  <code className="font-mono ml-1">{intelligence.specOperation}</code>
                 )}
               </span>
             )}
@@ -189,7 +194,8 @@ export const TimingTab = ({
                   'bg-signal-ai/10 border border-signal-ai/30 text-signal-ai'
                 )}
               >
-                ✦ AI Generated
+                <Sparkles className="h-4 w-4" />
+                AI Generated
               </span>
             )}
           </div>
