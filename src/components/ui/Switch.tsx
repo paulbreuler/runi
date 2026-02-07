@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
@@ -32,6 +32,8 @@ export interface SwitchProps extends Omit<
  */
 export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
   ({ checked, onCheckedChange, className, 'data-test-id': testId = 'switch', ...props }, ref) => {
+    const prefersReducedMotion = useReducedMotion() === true;
+
     return (
       <SwitchPrimitive.Root
         checked={checked}
@@ -66,6 +68,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
                     : 'var(--color-accent-blue)',
                 justifyContent: checked ? 'flex-end' : 'flex-start',
               }}
+              transition={prefersReducedMotion ? { duration: 0 } : undefined}
               onMouseDown={(e): void => {
                 e.stopPropagation(); // Prevent dialog from closing
                 filteredRootProps.onMouseDown?.(e);
@@ -85,11 +88,15 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
                     {...thumbProps}
                     className="block size-[14px] rounded-full bg-white shadow-sm"
                     layout
-                    transition={{
-                      type: 'spring',
-                      stiffness: 500,
-                      damping: 30,
-                    }}
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : {
+                            type: 'spring',
+                            stiffness: 500,
+                            damping: 30,
+                          }
+                    }
                   />
                 )}
               />

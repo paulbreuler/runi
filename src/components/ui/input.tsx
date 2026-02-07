@@ -4,7 +4,13 @@
  */
 
 import * as React from 'react';
-import { motion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useMotionTemplate,
+  useReducedMotion,
+} from 'motion/react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
@@ -20,6 +26,8 @@ export interface InputProps extends Omit<
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, glass = false, noScale = false, onFocus, onBlur, ...props }, ref) => {
+    const prefersReducedMotion = useReducedMotion() === true;
+
     // Motion values for smooth animations
     const bgOpacity = useMotionValue(glass ? 0.05 : 1);
     const borderOpacity = useMotionValue(0.1);
@@ -36,7 +44,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const backdropBlur = useMotionTemplate`blur(${blurSpring}px)`;
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>): void => {
-      if (glass) {
+      if (glass && !prefersReducedMotion) {
         bgOpacity.set(0.12);
         borderOpacity.set(0.3);
         blurAmount.set(12);
@@ -45,7 +53,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     };
 
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>): void => {
-      if (glass) {
+      if (glass && !prefersReducedMotion) {
         bgOpacity.set(0.05);
         borderOpacity.set(0.1);
         blurAmount.set(8);
@@ -80,15 +88,19 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           onFocus={handleFocus}
           onBlur={handleBlur}
           style={{
-            backgroundColor,
-            borderColor,
-            backdropFilter: backdropBlur,
-            WebkitBackdropFilter: backdropBlur,
+            backgroundColor: prefersReducedMotion ? undefined : backgroundColor,
+            borderColor: prefersReducedMotion ? undefined : borderColor,
+            backdropFilter: prefersReducedMotion ? undefined : backdropBlur,
+            WebkitBackdropFilter: prefersReducedMotion ? undefined : backdropBlur,
           }}
           data-motion-component="input"
-          whileHover={noScale ? undefined : { scale: 1.005 }}
-          whileFocus={noScale ? undefined : { scale: 1.01 }}
-          transition={noScale ? undefined : { type: 'spring', stiffness: 300, damping: 30 }}
+          whileHover={noScale || prefersReducedMotion ? undefined : { scale: 1.005 }}
+          whileFocus={noScale || prefersReducedMotion ? undefined : { scale: 1.01 }}
+          transition={
+            noScale || prefersReducedMotion
+              ? undefined
+              : { type: 'spring', stiffness: 300, damping: 30 }
+          }
           {...props}
         />
       );
