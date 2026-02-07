@@ -98,9 +98,12 @@ export const RequestHeader = ({
   };
 
   return (
-    <div className="flex items-center px-4 py-2 border-b border-border-subtle bg-bg-surface">
-      {/* Unified command input container */}
-      <div className="flex-1 flex items-center gap-0 bg-bg-raised border border-border-subtle rounded-lg overflow-hidden transition-colors duration-200 focus-within:border-border-emphasis focus-within:outline-none">
+    <div className="flex flex-1 min-w-0 items-center gap-0">
+      {/* Inline titlebar command row (no extra panel shell) */}
+      <div
+        className="flex flex-1 min-w-0 items-center gap-0 rounded-lg border border-border-subtle bg-bg-raised overflow-hidden transition-colors duration-200 hover:border-border-default focus-within:border-border-emphasis"
+        data-test-id="request-control"
+      >
         {/* Method selector - appears as prefix */}
         <Select.Select value={method} onValueChange={handleMethodChange}>
           <Select.SelectTrigger
@@ -139,7 +142,7 @@ export const RequestHeader = ({
           data-test-id="url-input"
           disabled={loading}
           aria-label="Request URL"
-          className="flex-1 h-8 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted"
+          className="h-8 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted"
         />
 
         {/* Send button - appears as suffix with fixed width to prevent layout shift */}

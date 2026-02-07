@@ -18,13 +18,14 @@ describe('RequestHeader', () => {
     onSend: vi.fn(),
   };
 
-  it('renders with proper layout structure', () => {
+  it('renders inline titlebar layout without outer panel chrome', () => {
     const { container } = render(<RequestHeader {...defaultProps} />);
 
-    // Should have compact spacing (px-4 py-2) for unified command input
+    // Should not introduce its own panel framing when rendered in titlebar
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass('px-4');
-    expect(wrapper).toHaveClass('py-2');
+    expect(wrapper).toHaveClass('min-w-0');
+    expect(wrapper).not.toHaveClass('border-b');
+    expect(wrapper).not.toHaveClass('bg-bg-surface');
   });
 
   it('renders method select with colored text only', () => {
@@ -52,7 +53,7 @@ describe('RequestHeader', () => {
     render(<RequestHeader {...defaultProps} url="" />);
 
     const urlInput = screen.getByTestId('url-input');
-    // Should be seamless with unified container (no border, transparent background)
+    // URL input remains borderless; the full control row carries the border
     expect(urlInput).toHaveClass('border-0');
     expect(urlInput).toHaveClass('bg-transparent');
   });
@@ -129,12 +130,14 @@ describe('RequestHeader', () => {
     expect(onUrlChange).toHaveBeenCalled();
   });
 
-  it('renders unified command input container', () => {
-    const { container } = render(<RequestHeader {...defaultProps} />);
+  it('renders inline command row without extra framed container', () => {
+    render(<RequestHeader {...defaultProps} />);
 
-    // Should have unified container with no gap (gap-0) for seamless appearance
-    const unifiedContainer = container.querySelector('.bg-bg-raised.border');
-    expect(unifiedContainer).toBeInTheDocument();
-    expect(unifiedContainer).toHaveClass('gap-0');
+    // One subtle border around the whole control, not around URL only
+    const control = screen.getByTestId('request-control');
+    expect(control).toBeInTheDocument();
+    expect(control).toHaveClass('border');
+    expect(control).toHaveClass('border-border-subtle');
+    expect(control).toHaveClass('bg-bg-raised');
   });
 });

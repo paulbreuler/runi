@@ -246,9 +246,9 @@ export const TitleBar = ({
   return (
     <div
       className={cn(
-        'border-b border-border-subtle bg-bg-raised/80 backdrop-blur-sm flex items-center gap-2',
+        'border-b border-border-subtle bg-bg-surface flex items-center gap-2',
         'text-xs text-text-secondary select-none px-2',
-        hasCustomContent ? 'h-14' : 'h-8'
+        hasCustomContent ? 'h-12' : 'h-8'
       )}
       data-test-id="titlebar"
       data-tauri-drag-region
@@ -262,7 +262,7 @@ export const TitleBar = ({
         className={cn('flex-1 min-w-0 flex items-center', !hasCustomContent && 'justify-center')}
       >
         {hasCustomContent ? (
-          <div className="w-full min-w-0">{children}</div>
+          <div className="flex h-full w-full min-w-0 items-center">{children}</div>
         ) : (
           <span className="font-medium" data-tauri-drag-region>
             {title}
