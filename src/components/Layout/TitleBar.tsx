@@ -10,11 +10,11 @@ import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
-// macOS native traffic light controls are positioned at trafficLightPosition (x: 20, y: 20)
-// Add padding to prevent content from overlapping native controls
-const MACOS_TRAFFIC_LIGHT_OFFSET = 80; // Matches trafficLightPosition x:20 + native button width
+interface TitleBarControlsProps {
+  isMac: boolean;
+}
 
-const TitleBarControls = (): React.JSX.Element | null => {
+const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element => {
   // Cache window instance to avoid repeated getCurrentWindow() calls
   const appWindow = useMemo<Window | null>(() => {
     try {
@@ -116,10 +116,41 @@ const TitleBarControls = (): React.JSX.Element | null => {
     };
   }, [appWindow]);
 
-  // macOS uses native traffic light controls (from titleBarStyle: Overlay)
-  // Only render custom controls for Windows/Linux
-  if (isMacSync()) {
-    return null;
+  if (isMac) {
+    return (
+      <div className={cn('flex items-center h-full gap-1', !isFocused && 'opacity-60')}>
+        <button
+          type="button"
+          onClick={handleClose}
+          className={cn(
+            focusRingClasses,
+            'w-3 h-3 rounded-full border border-black/20 bg-[#ff5f57] hover:brightness-95 transition-[filter]'
+          )}
+          aria-label="Close window"
+          data-test-id="titlebar-close"
+        />
+        <button
+          type="button"
+          onClick={handleMinimize}
+          className={cn(
+            focusRingClasses,
+            'w-3 h-3 rounded-full border border-black/20 bg-[#febc2e] hover:brightness-95 transition-[filter]'
+          )}
+          aria-label="Minimize window"
+          data-test-id="titlebar-minimize"
+        />
+        <button
+          type="button"
+          onClick={handleMaximize}
+          className={cn(
+            focusRingClasses,
+            'w-3 h-3 rounded-full border border-black/20 bg-[#28c840] hover:brightness-95 transition-[filter]'
+          )}
+          aria-label="Maximize window"
+          data-test-id="titlebar-maximize"
+        />
+      </div>
+    );
   }
 
   // Windows/Linux window controls (on the right)
@@ -179,30 +210,38 @@ export const TitleBar = ({
 }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
   const showSettingsButton = onSettingsClick !== undefined;
+  const hasCustomContent = children !== undefined;
 
   return (
     <div
       className={cn(
-        // Height matches VS Code title bar (~32px) with overlay style
-        // Using bg-bg-raised for lighter appearance in color hierarchy (gray-3 vs gray-2)
-        'h-8 border-b border-border-subtle bg-bg-raised/80 backdrop-blur-sm flex items-center relative',
-        'text-xs text-text-secondary select-none',
-        // Windows/Linux: Controls on right, so add left padding
-        !isMac && 'pl-4'
+        'border-b border-border-subtle bg-bg-raised/80 backdrop-blur-sm flex items-center gap-2',
+        'text-xs text-text-secondary select-none px-2',
+        hasCustomContent ? 'h-14' : 'h-8'
       )}
-      style={isMac ? { paddingLeft: `${MACOS_TRAFFIC_LIGHT_OFFSET.toString()}px` } : undefined}
       data-test-id="titlebar"
       data-tauri-drag-region
     >
-      {/* Title/content area - centered and draggable on all platforms */}
+      {isMac && <TitleBarControls isMac />}
+
+      {/* Keep explicit drag handle visible even with custom header content */}
+      <div className="h-full w-4 shrink-0" data-tauri-drag-region />
+
       <div
-        className="absolute left-1/2 top-0 h-full flex items-center -translate-x-1/2"
-        data-tauri-drag-region
+        className={cn('flex-1 min-w-0 flex items-center', !hasCustomContent && 'justify-center')}
       >
-        {children ?? <span className="font-medium">{title}</span>}
+        {hasCustomContent ? (
+          <div className="w-full min-w-0">{children}</div>
+        ) : (
+          <span className="font-medium" data-tauri-drag-region>
+            {title}
+          </span>
+        )}
       </div>
 
-      {/* Right actions */}
+      <div className="h-full w-4 shrink-0" data-tauri-drag-region />
+
+      {/* Right actions (all platforms) */}
       <div className="ml-auto flex items-center h-full gap-1">
         {showSettingsButton && (
           <button
@@ -218,7 +257,7 @@ export const TitleBar = ({
             <Settings size={12} className="text-text-muted" />
           </button>
         )}
-        <TitleBarControls />
+        {!isMac && <TitleBarControls isMac={false} />}
       </div>
     </div>
   );

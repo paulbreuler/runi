@@ -44,7 +44,7 @@ describe('TitleBar', () => {
   });
 
   describe('platform-specific rendering', () => {
-    it('does not render custom controls on macOS (uses native traffic lights)', () => {
+    it('renders custom controls on macOS for undecorated windows', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
 
       render(<TitleBar />);
@@ -52,11 +52,9 @@ describe('TitleBar', () => {
       const titlebar = screen.getByTestId('titlebar');
       expect(titlebar).toBeInTheDocument();
 
-      // macOS uses native traffic lights from titleBarStyle: Overlay
-      // Custom controls should not be rendered
-      expect(screen.queryByTestId('titlebar-close')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('titlebar-minimize')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('titlebar-maximize')).not.toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-close')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-minimize')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar-maximize')).toBeInTheDocument();
     });
 
     it('renders Windows/Linux-style window controls on non-macOS', () => {
@@ -121,14 +119,13 @@ describe('TitleBar', () => {
   });
 
   describe('window control actions', () => {
-    it('does not render custom minimize button on macOS (native controls used)', () => {
+    it('renders custom minimize button on macOS', () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
 
       render(<TitleBar />);
 
-      // macOS uses native traffic lights, custom controls should not exist
-      const minimizeButton = screen.queryByTestId('titlebar-minimize');
-      expect(minimizeButton).not.toBeInTheDocument();
+      const minimizeButton = screen.getByTestId('titlebar-minimize');
+      expect(minimizeButton).toBeInTheDocument();
     });
 
     it('calls minimize when minimize button is clicked on Windows/Linux', () => {

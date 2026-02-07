@@ -529,7 +529,9 @@ export const MainLayout = ({
           onSettingsClick={() => {
             setIsSettingsOpen(true);
           }}
-        />
+        >
+          {headerContent}
+        </TitleBar>
       </div>
       <div className="relative flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Settings overlay: contained between title bar and status bar */}
@@ -638,16 +640,6 @@ export const MainLayout = ({
         </AnimatePresence>
 
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden min-w-0">
-          <div className="shrink-0" data-test-id="header-bar">
-            {headerContent !== undefined ? (
-              headerContent
-            ) : (
-              <div className="h-14 p-2 text-text-secondary flex items-center">
-                Header bar placeholder
-              </div>
-            )}
-          </div>
-
           {/* Content area with panes and dockable panel */}
           <div
             className={cn(

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MainLayout } from './MainLayout';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -153,9 +153,10 @@ describe('MainLayout', () => {
       expect(sidebars.length).toBeGreaterThan(0);
     });
 
-    it('renders header bar', () => {
+    it('renders title bar', () => {
       render(<MainLayout />);
-      expect(screen.getByTestId('header-bar')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar')).toBeInTheDocument();
+      expect(screen.queryByTestId('header-bar')).not.toBeInTheDocument();
     });
 
     it('renders status bar', () => {
@@ -298,7 +299,9 @@ describe('MainLayout', () => {
     it('renders custom header content', () => {
       render(<MainLayout headerContent={<div data-test-id="custom-header">Custom Header</div>} />);
 
-      expect(screen.getByTestId('custom-header')).toBeInTheDocument();
+      const titlebar = screen.getByTestId('titlebar');
+      expect(within(titlebar).getByTestId('custom-header')).toBeInTheDocument();
+      expect(screen.queryByTestId('header-bar')).not.toBeInTheDocument();
     });
 
     it('renders custom request content', () => {
