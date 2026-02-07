@@ -242,6 +242,7 @@ export const TitleBar = ({
   const isMac = isMacSync();
   const showSettingsButton = onSettingsClick !== undefined;
   const hasCustomContent = children !== undefined;
+  const showRightActions = showSettingsButton || !isMac;
 
   return (
     <div
@@ -270,26 +271,31 @@ export const TitleBar = ({
         )}
       </div>
 
-      <div className="h-full w-4 shrink-0" data-tauri-drag-region />
+      {hasCustomContent && <div className="h-full w-1 shrink-0" data-tauri-drag-region />}
 
-      {/* Right actions (all platforms) */}
-      <div className="ml-auto flex items-center h-full gap-1">
-        {showSettingsButton && (
-          <button
-            type="button"
-            onClick={onSettingsClick}
-            className={cn(
-              focusRingClasses,
-              'flex h-[34px] w-[34px] items-center justify-center hover:bg-bg-raised/50 transition-colors'
-            )}
-            aria-label="Open settings"
-            data-test-id="titlebar-settings"
-          >
-            <Settings size={16} className="text-text-muted" />
-          </button>
-        )}
-        {!isMac && <TitleBarControls isMac={false} />}
-      </div>
+      {/* Right utility rail */}
+      {showRightActions && (
+        <div
+          className="ml-auto flex h-full items-center gap-1 pl-1 pr-0.5"
+          data-test-id="titlebar-utilities"
+        >
+          {showSettingsButton && (
+            <button
+              type="button"
+              onClick={onSettingsClick}
+              className={cn(
+                focusRingClasses,
+                'flex h-[34px] w-[34px] items-center justify-center hover:bg-bg-raised/50 transition-colors'
+              )}
+              aria-label="Open settings"
+              data-test-id="titlebar-settings"
+            >
+              <Settings size={16} className="text-text-muted" />
+            </button>
+          )}
+          {!isMac && <TitleBarControls isMac={false} />}
+        </div>
+      )}
     </div>
   );
 };

@@ -134,6 +134,15 @@ describe('TitleBar', () => {
       expect(screen.getByTestId('titlebar-settings')).toBeInTheDocument();
     });
 
+    it('groups settings in a compact right utility rail', () => {
+      const onSettingsClick = vi.fn();
+      render(<TitleBar onSettingsClick={onSettingsClick} />);
+
+      const utilities = screen.getByTestId('titlebar-utilities');
+      expect(utilities).toHaveClass('pl-1');
+      expect(utilities).toHaveClass('pr-0.5');
+    });
+
     it('does not render settings button when onSettingsClick is missing', () => {
       render(<TitleBar />);
 
