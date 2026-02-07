@@ -63,10 +63,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
     const rect = rowRef.current.getBoundingClientRect();
     // Use Math.round to prevent sub-pixel gaps or "cutting" of the ring
-    // We add 1px to left to align exactly after the tree hierarchy line (border-l)
     return {
       top: Math.round(rect.top),
-      left: Math.round(rect.left) + 1,
+      left: Math.round(rect.left),
       width: Math.round(rect.width),
       height: Math.round(rect.height),
     };
@@ -273,18 +272,19 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       <AnimatePresence>
         {isExpanded && popoutPosition !== null && (
           <motion.div
-            initial={{ opacity: 0, scaleX: 0.95, originX: 0 }}
+            initial={{ opacity: 0, scaleX: 0.7, originX: 0 }}
             animate={{ opacity: 1, scaleX: 1, originX: 0 }}
-            exit={{ opacity: 0, scaleX: 0.95, originX: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 35, mass: 0.5 }}
+            exit={{ opacity: 0, scaleX: 0.7, originX: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
             role="tooltip"
             className="pointer-events-none overflow-visible"
             data-test-id="request-popout"
             style={{
               position: 'fixed',
               top: popoutPosition.top,
-              left: popoutPosition.left,
-              minWidth: popoutPosition.width,
+              // Move slightly left to visually connect with the hierarchy line
+              left: popoutPosition.left - 2,
+              minWidth: popoutPosition.width + 2,
               height: popoutPosition.height,
               maxWidth: 'min(600px, calc(100vw - 40px))',
               zIndex: 60,
