@@ -244,4 +244,16 @@ describe('ResponseViewer', () => {
     await user.keyboard('{ArrowRight}');
     expect(headersTab).toHaveFocus();
   });
+
+  it('tabs from the active tab directly to first interactive content control', async () => {
+    const user = userEvent.setup();
+    render(<ResponseViewer response={mockResponse} />);
+
+    const bodyTab = screen.getByRole('tab', { name: /body/i });
+    await user.click(bodyTab);
+    expect(bodyTab).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByLabelText('Copy json code')).toHaveFocus();
+  });
 });

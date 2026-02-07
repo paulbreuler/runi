@@ -164,7 +164,7 @@ export const RequestBuilder = (): React.JSX.Element => {
 
         {/* Tab content - overflow hidden to prevent scrollbar flash during transitions */}
         <div className="flex-1 min-h-0 overflow-hidden">
-          <Tabs.Panel value="headers" className="h-full min-h-0">
+          <Tabs.Panel value="headers" className="h-full min-h-0" tabIndex={-1}>
             <motion.div
               data-test-id="request-tab-panel-headers"
               initial={{ opacity: 0 }}
@@ -178,7 +178,7 @@ export const RequestBuilder = (): React.JSX.Element => {
             </motion.div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="body" className="h-full min-h-0">
+          <Tabs.Panel value="body" className="h-full min-h-0" tabIndex={-1}>
             <motion.div
               data-test-id="request-tab-panel-body"
               initial={{ opacity: 0 }}
@@ -201,7 +201,7 @@ export const RequestBuilder = (): React.JSX.Element => {
             </motion.div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="params" className="h-full min-h-0">
+          <Tabs.Panel value="params" className="h-full min-h-0" tabIndex={-1}>
             <motion.div
               data-test-id="request-tab-panel-params"
               initial={{ opacity: 0 }}
@@ -215,7 +215,7 @@ export const RequestBuilder = (): React.JSX.Element => {
             </motion.div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="auth" className="h-full min-h-0">
+          <Tabs.Panel value="auth" className="h-full min-h-0" tabIndex={-1}>
             <motion.div
               data-test-id="request-tab-panel-auth"
               initial={{ opacity: 0 }}

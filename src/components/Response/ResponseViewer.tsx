@@ -246,7 +246,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
 
         {/* Content - vertical scroll only, code blocks handle horizontal */}
         <div className="flex-1 min-h-0 overflow-hidden" style={{ scrollbarGutter: 'stable' }}>
-          <Tabs.Panel value="body" className="h-full min-h-0">
+          <Tabs.Panel value="body" className="h-full min-h-0" tabIndex={-1}>
             <div className="p-4 h-full min-h-0 flex flex-col" data-test-id="response-body">
               <span className="sr-only" data-test-id="response-body-raw">
                 {formattedBody}
@@ -263,7 +263,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             </div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="headers" className="h-full min-h-0">
+          <Tabs.Panel value="headers" className="h-full min-h-0" tabIndex={-1}>
             <div className="p-4 h-full min-h-0 overflow-auto">
               {/* Status line - httpie style */}
               <div className="mb-4 pb-4 border-b border-border-subtle">
@@ -287,7 +287,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             </div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="raw" className="h-full min-h-0">
+          <Tabs.Panel value="raw" className="h-full min-h-0" tabIndex={-1}>
             <div className="p-4 h-full min-h-0 flex flex-col" data-test-id="response-raw">
               <span className="sr-only" data-test-id="response-raw-text">
                 {formatRawHttp(response)}

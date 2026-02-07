@@ -76,6 +76,18 @@ describe('RequestBuilder', () => {
     expect(await screen.findByTestId('code-editor')).toBeInTheDocument();
   });
 
+  it('tabs from the active tab directly to first interactive content control', async () => {
+    const user = userEvent.setup();
+    render(<RequestBuilder />);
+
+    const headersTab = screen.getByRole('tab', { name: /headers/i });
+    await user.click(headersTab);
+    expect(headersTab).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByTestId('add-header-button')).toHaveFocus();
+  });
+
   it('switches to Params tab when clicked', async () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
