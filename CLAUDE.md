@@ -143,6 +143,8 @@ runi/
 
 ## Coding Standards
 
+> **Pre-implementation checklist:** Run `/impl-discipline` before every implementation task. It enforces TDD, component reuse, semantic tokens, accessibility, motion standards, and contravention fixes.
+
 ### Rust
 
 - All public items require doc comments
@@ -539,7 +541,7 @@ test(auth): add bearer token validation tests
 
 ### Creating Pull Requests
 
-Use `/pr` command to create pull requests with comprehensive descriptions. See `.claude/commands/pr.md` for full details including PR description template, title format, and agent detection.
+Use `/pr-create` command to create pull requests with comprehensive descriptions. See `.claude/commands/pr-create.md` for full details including PR description template, title format, and agent detection.
 
 ### Fixing PR Check Failures
 
@@ -550,7 +552,7 @@ Use `/pr-check-fixes` to systematically fix failing CI checks. See `.claude/comm
 1. **Identify PR and repo context:**
    - Get current branch name (`git branch --show-current`)
    - Resolve PR via `gh pr view --json number,title,state,headRefName,baseRefName,url`
-   - If no PR exists: inform user and suggest `/pr` first
+   - If no PR exists: inform user and suggest `/pr-create` first
 
 2. **Pull latest check state:**
    - Fetch PR checks via `gh pr view <PR> --json statusCheckRollup,mergeStateStatus,reviewDecision`

@@ -81,7 +81,7 @@ This command creates a pull request on GitHub with:
 
 ### In Cursor Chat
 
-Type `/pr` to generate PR from staged changes:
+Type `/pr-create` to generate PR from staged changes:
 
 ```text
 /pr
@@ -285,15 +285,15 @@ Agent detection examples:
 
 **Scenario:** Agent 0 has all features complete but hasn't been closed
 
-When `/pr` is run, it displays an informational message (see [Agent Status Validation Info](#agent-status-validation-info) in Error Handling section) and proceeds automatically with PR creation.
+When `/pr-create` is run, it displays an informational message (see [Agent Status Validation Info](#agent-status-validation-info) in Error Handling section) and proceeds automatically with PR creation.
 
 ## Integration with Code Review
 
-After code review, use `/pr` to create the PR:
+After code review, use `/pr-create` to create the PR:
 
 1. Run `/code-review` to review changes
 2. Fix any issues
-3. Run `/pr` to create PR on GitHub (description auto-generated)
+3. Run `/pr-create` to create PR on GitHub (description auto-generated)
 
 ## Error Handling
 
