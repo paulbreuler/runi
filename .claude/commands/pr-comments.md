@@ -6,20 +6,15 @@ Fetch, review, address, and resolve PR review comments.
 
 When this command is invoked:
 
-1. **Get current PR**:
-   - `gh pr view --json number,url,headRepositoryOwner,headRepositoryName`
-2. **List comments and threads**:
-   - Fetch all review comments and unresolved threads
-3. **Categorize**:
-   - Group by file path
-   - Identify deleted files and outdated comments
-4. **Address**:
-   - Reply with explanations or fixes
-   - For architecture/maintainability concerns, run `/code-review` before fixing
-5. **Commit fixes only if requested**:
-   - Use conventional commits and reference the concern
-6. **Resolve threads**:
-   - Mark as resolved only after replying (and after fixes land)
+1. **Get current PR**: Use `gh pr view --json number,url,headRepositoryOwner,headRepository` to get PR context
+2. **List comments**: Fetch all review comments and threads
+3. **Categorize**: Group by file path, identify deleted files, outdated comments
+4. **Address**: Reply to comments with explanations
+   - **Before fixing**: For architecture/maintainability concerns, run `/branch-code-review` to understand impact
+   - **Before fixing**: For security/MCP concerns, run `/mcp-code-review` to identify risks
+   - **After fixing**: If fixes were made, commit using conventional commits (use `/git-commit-best-practices`)
+   - **Commit message**: Reference the comment/concern: `fix(component): address review feedback on error handling`
+5. **Resolve**: Mark threads as resolved via GraphQL API (only after addressing and committing fixes)
 
 ## API Commands Reference
 
@@ -126,10 +121,10 @@ query {
 ### 1. Analyze Comments
 
 ```bash
-# Get PR context
+# Get PR number and repo info
 pr_number=$(gh pr view --json number --jq '.number')
 owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
-repo=$(gh pr view --json headRepositoryName --jq '.headRepositoryName')
+repo=$(gh pr view --json headRepository --jq '.headRepository.name')
 
 # List comments by file
 gh api repos/$owner/$repo/pulls/$pr_number/comments --paginate \
@@ -151,7 +146,7 @@ For deleted files:
 
 ```bash
 owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
-repo=$(gh pr view --json headRepositoryName --jq '.headRepositoryName')
+repo=$(gh pr view --json headRepository --jq '.headRepository.name')
 gh api repos/$owner/$repo/pulls/$pr_number/comments/{id}/replies \
   -X POST \
   -f body="This file has been removed in subsequent commits."
@@ -161,7 +156,7 @@ For addressed issues:
 
 ```bash
 owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
-repo=$(gh pr view --json headRepositoryName --jq '.headRepositoryName')
+repo=$(gh pr view --json headRepository --jq '.headRepository.name')
 gh api repos/$owner/$repo/pulls/$pr_number/comments/{id}/replies \
   -X POST \
   -f body="Fixed in commit abc123." # or explanation of why it's not an issue
@@ -170,6 +165,10 @@ gh api repos/$owner/$repo/pulls/$pr_number/comments/{id}/replies \
 ### 3. Resolve All Threads
 
 ```bash
+# Get PR repo info
+owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
+repo=$(gh pr view --json headRepository --jq '.headRepository.name')
+
 # Get all unresolved thread IDs
 thread_ids=$(gh api graphql -f query='
 query {
@@ -196,23 +195,6 @@ for thread_id in $thread_ids; do
   " --silent
   echo "Resolved: $thread_id"
 done
-```
-
-### Verify All Threads Resolved (GraphQL)
-
-```bash
-gh api graphql -f query='
-query {
-  repository(owner: "'$owner'", name: "'$repo'") {
-    pullRequest(number: '$pr_number') {
-      reviewThreads(first: 100) {
-        nodes {
-          isResolved
-        }
-      }
-    }
-  }
-}' --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | .isResolved] | {total: length, resolved: (map(select(. == true)) | length), unresolved: (map(select(. == false)) | length)}'
 ```
 
 ## Reply Templates
@@ -243,5 +225,5 @@ query {
 - Group similar comments and batch process them
 - Check if files still exist before addressing implementation concerns
 - Use `--silent` flag when batch processing to reduce noise
-- If fixes are required, use conventional commits (see `CLAUDE.md`)
-- Never include secrets, tokens, or credentials in replies
+- **Commit fixes**: When addressing comments with code changes, use conventional commits (see `/git-commit-best-practices`)
+- **Breaking changes**: If comment addresses breaking change concerns, ensure `BREAKING CHANGE:` footer is in commit message
