@@ -101,7 +101,7 @@ export const HeadersPanel = ({
           activateOnFocus={false}
         />
 
-        <Tabs.Panel value="response" className="flex-1 flex flex-col">
+        <Tabs.Panel value="response" className="flex-1 flex flex-col" tabIndex={-1}>
           {Object.keys(responseHeaders).length === 0 ? (
             <EmptyState
               variant="muted"
@@ -118,7 +118,7 @@ export const HeadersPanel = ({
             />
           )}
         </Tabs.Panel>
-        <Tabs.Panel value="request" className="flex-1 flex flex-col">
+        <Tabs.Panel value="request" className="flex-1 flex flex-col" tabIndex={-1}>
           {Object.keys(requestHeaders).length === 0 ? (
             <EmptyState
               variant="muted"

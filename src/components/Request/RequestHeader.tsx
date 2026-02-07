@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import React from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
@@ -35,25 +35,7 @@ export const RequestHeader = ({
   const methodColor = getMethodColor(method);
 
   // Respect prefers-reduced-motion
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent): void => {
-      setPrefersReducedMotion(e.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return (): void => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
+  const shouldReduceMotion = useReducedMotion();
 
   const handleMethodChange = (value: string | null): void => {
     if (value !== null && value.length > 0 && onMethodChange !== undefined) {
@@ -69,7 +51,7 @@ export const RequestHeader = ({
 
   // Helper function to render loading state
   const renderLoadingState = (): React.JSX.Element => {
-    if (prefersReducedMotion) {
+    if (shouldReduceMotion === true) {
       return <span className="text-accent-blue">Sending</span>;
     }
     return (

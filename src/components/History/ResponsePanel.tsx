@@ -127,7 +127,7 @@ export const ResponsePanel = ({
           activateOnFocus={false}
         />
 
-        <Tabs.Panel value="response" className="flex-1 flex flex-col">
+        <Tabs.Panel value="response" className="flex-1 flex flex-col" tabIndex={-1}>
           {responseBodyText === '' ? (
             <EmptyState
               variant="muted"
@@ -144,7 +144,7 @@ export const ResponsePanel = ({
             />
           )}
         </Tabs.Panel>
-        <Tabs.Panel value="request" className="flex-1 flex flex-col">
+        <Tabs.Panel value="request" className="flex-1 flex flex-col" tabIndex={-1}>
           {requestBodyText === '' ? (
             <EmptyState
               variant="muted"
