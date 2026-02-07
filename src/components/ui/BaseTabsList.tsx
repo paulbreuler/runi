@@ -142,7 +142,7 @@ export const BaseTabsList = <T extends string>({
                       <motion.div
                         layoutId={indicatorLayoutId}
                         className={cn(
-                          'absolute inset-0 pointer-events-none z-0',
+                          'absolute inset-y-0 left-[1px] right-[1px] pointer-events-none z-0',
                           indicatorClassName
                         )}
                         data-test-id={indicatorTestId}

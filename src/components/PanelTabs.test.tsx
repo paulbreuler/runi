@@ -269,6 +269,19 @@ describe('PanelTabs', () => {
       indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
       expect(indicator).toBeInTheDocument();
     });
+
+    it('active indicator uses inset bounds without persistent edge chrome', () => {
+      const { container } = render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+
+      const indicator = container.querySelector('[data-test-id="panel-tab-indicator"]');
+      expect(indicator).toBeInTheDocument();
+      expect(indicator?.className).toContain('left-[1px]');
+      expect(indicator?.className).toContain('right-[1px]');
+      expect(indicator?.className).not.toContain('border-x');
+      expect(indicator?.className).not.toContain(
+        'shadow-[inset_1px_0_0_var(--color-border-default),inset_-1px_0_0_var(--color-border-default)]'
+      );
+    });
   });
 
   describe('keyboard navigation', () => {

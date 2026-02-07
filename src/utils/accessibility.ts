@@ -63,14 +63,22 @@ export const focusRingClasses = [
  */
 export const containedFocusRingClasses = [
   'outline-none',
+  'focus-visible:outline-2',
+  'focus-visible:outline-[color:var(--color-ring)]',
+  'focus-visible:-outline-offset-2',
   'focus-visible:ring-2',
   'focus-visible:ring-[color:var(--color-ring)]',
   'focus-visible:!ring-offset-0',
   'focus-visible:ring-inset',
+  'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:outline-2',
+  '[&[data-focus-visible-added]:focus]:outline-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:-outline-offset-2',
   '[&[data-focus-visible-added]:focus]:ring-2',
   '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:!ring-offset-0',
   '[&[data-focus-visible-added]:focus]:ring-inset',
+  '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
 ].join(' ');
 
 /**
@@ -100,12 +108,14 @@ export const compositeFocusItemClasses = [
   'focus-visible:ring-[color:var(--color-ring)]',
   'focus-visible:!ring-offset-0',
   'focus-visible:ring-inset',
+  'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
   'focus-visible:z-10',
   'focus-visible:bg-bg-surface',
   '[&[data-focus-visible-added]:focus]:ring-2',
   '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:!ring-offset-0',
   '[&[data-focus-visible-added]:focus]:ring-inset',
+  '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:z-10',
   '[&[data-focus-visible-added]:focus]:bg-bg-surface',
 ].join(' ');
