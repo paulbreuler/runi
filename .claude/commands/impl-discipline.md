@@ -51,7 +51,7 @@ src/components/        — Feature components
 `BaseTabsList`, `NotificationTray`, `SegmentedControl`, `Toast`,
 `VirtualDataGrid`, `CodeEditor`
 
-**Reference**: `../runi-planning-docs/CLAUDE_CODE_COMPONENT_DISCIPLINE.md`
+**Reference**: `CLAUDE_CODE_COMPONENT_DISCIPLINE` (external planning doc; access via runi Planning MCP)
 
 ---
 
@@ -64,17 +64,18 @@ src/components/        — Feature components
 
 **Token categories:**
 
-| Category    | Prefix                        | Examples                                                                         |
-| ----------- | ----------------------------- | -------------------------------------------------------------------------------- |
-| Background  | `bg-`                         | `bg-app`, `bg-surface`, `bg-raised`, `bg-elevated`, `bg-overlay`                 |
-| Text        | `text-`                       | `text-primary`, `text-secondary`, `text-muted`, `text-contrast`                  |
-| Border      | `border-`                     | `border-subtle`, `border-default`, `border-emphasis`                             |
-| Signal      | `text-signal-` / `bg-signal-` | `text-signal-success`, `bg-signal-error`, `text-signal-ai`                       |
-| Method      | `text-method-` / `bg-method-` | `text-method-get`, `bg-method-post`                                              |
-| Accent      | `bg-accent-` / `text-accent-` | `bg-accent-blue`, `text-accent-purple`                                           |
-| Interactive | CSS vars                      | `var(--hover-bg)`, `var(--pressed-bg)`, `var(--selected-bg)`, `var(--active-bg)` |
+| Category    | Prefix                        | Examples                                                       |
+| ----------- | ----------------------------- | -------------------------------------------------------------- |
+| Background  | `bg-bg-`                      | `bg-bg-app`, `bg-bg-surface`, `bg-bg-raised`, `bg-bg-elevated` |
+| Text        | `text-text-`                  | `text-text-primary`, `text-text-secondary`, `text-text-muted`  |
+| Border      | `border-border-`              | `border-border-subtle`, `border-border-default`                |
+| Signal      | `text-signal-` / `bg-signal-` | `text-signal-success`, `bg-signal-error`, `text-signal-ai`     |
+| Method      | `text-method-` / `bg-method-` | `text-method-get`, `bg-method-post`                            |
+| Accent      | `bg-accent-` / `text-accent-` | `bg-accent-blue`, `text-accent-purple`                         |
+| Interactive | CSS vars                      | `var(--hover-bg)`, `var(--pressed-bg)`, `var(--selected-bg)`   |
 
-**Elevation layering** (bottom → top): `bg-app` → `bg-surface` → `bg-raised` → `bg-elevated` → `bg-overlay`
+**Elevation layering** (bottom → top):
+`bg-bg-app` → `bg-bg-surface` → `bg-bg-raised` → `bg-bg-elevated` → `bg-bg-overlay`
 
 **NEVER:**
 
@@ -181,7 +182,7 @@ just fmt          # Fix formatting
 ```tsx
 // 1. TDD: test written first with data-test-id
 // 2. Reuse: uses existing Button from ui/
-// 3. Tokens: bg-surface, text-primary, border-subtle
+// 3. Tokens: bg-bg-surface, text-text-primary, border-border-subtle
 // 4. A11y: focusRingClasses, aria-label, keyboard support
 // 5. Motion: motion/react, spring, respects reduced motion
 // 6. Contraventions: fixed nearby hardcoded color
@@ -201,7 +202,7 @@ export const ActionCard = ({ title, onAction }: ActionCardProps): JSX.Element =>
   return (
     <motion.div
       data-test-id="action-card"
-      className={`bg-surface border border-subtle rounded-lg p-4 ${focusRingClasses}`}
+      className={`bg-bg-surface border border-border-subtle rounded-lg p-4 ${focusRingClasses}`}
       whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
       whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -209,7 +210,7 @@ export const ActionCard = ({ title, onAction }: ActionCardProps): JSX.Element =>
       role="group"
       aria-label={title}
     >
-      <h3 className="text-primary text-sm font-medium">{title}</h3>
+      <h3 className="text-text-primary text-sm font-medium">{title}</h3>
       <Button data-test-id="action-card-button" onClick={onAction} aria-label={`Execute ${title}`}>
         Run
       </Button>
