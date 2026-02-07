@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useRequestStore } from '@/stores/useRequestStore';
 import type { CollectionRequest } from '@/types/collection';
@@ -47,6 +47,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const rowRef = useRef<HTMLButtonElement | null>(null);
   const textRef = useRef<HTMLSpanElement | null>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   const methodKey = request.method as HttpMethod;
   const methodClass =
@@ -68,7 +69,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     const observer = new IntersectionObserver(
       ([entry]): void => {
         // threshold: 0.95 means we consider it occluded if less than 95% is visible
-        // This prevents the popout from lingering when the item is mostly clipped
         setIsOccluded(entry !== undefined && entry.intersectionRatio < 0.95);
       },
       {
@@ -200,7 +200,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     return (): void => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [evaluateTruncation, isExpanded, updatePopoutPosition, request.name]);
+  }, [evaluateTruncation, isExpanded, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -242,7 +242,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/50',
           !actuallyVisible && containedFocusRingClasses,
-          // Suppress all focus ring/outline when expanded so it doesn't "cut" the popout
           actuallyVisible && 'outline-none ring-0 shadow-none',
           actuallyVisible && !isFocused && 'bg-bg-raised/30'
         )}
@@ -305,10 +304,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       <AnimatePresence>
         {actuallyVisible && popoutPosition !== null && (
           <motion.div
-            initial={{ opacity: 0, scaleX: 0.7, originX: 0 }}
-            animate={{ opacity: 1, scaleX: 1, originX: 0 }}
-            exit={{ opacity: 0, scaleX: 0.7, originX: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
+            initial="initial"
+            animate="animate"
+            exit="exit"
             role="tooltip"
             className="pointer-events-none overflow-visible"
             data-test-id="request-popout"
@@ -320,14 +318,36 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               height: popoutPosition.height,
               maxWidth: 'min(600px, calc(100vw - 40px))',
               zIndex: 60,
-              willChange: 'transform, opacity, top, left',
             }}
           >
-            <div
+            {/* Background shell that grows outward horizontally without squashing text */}
+            <motion.div
+              variants={{
+                initial: { opacity: 0, scaleX: 0.8 },
+                animate: { opacity: 1, scaleX: 1 },
+                exit: { opacity: 0, scaleX: 0.8 },
+              }}
+              transition={
+                shouldReduceMotion === true
+                  ? { duration: 0.1 }
+                  : { type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }
+              }
+              style={{ originX: 0 }}
               className={cn(
-                'flex items-center gap-2 px-3 h-full rounded-r-md rounded-l-none border border-border-subtle bg-bg-elevated shadow-2xl backdrop-blur-md min-w-0',
+                'absolute inset-0 rounded-r-md rounded-l-none border border-border-subtle bg-bg-elevated shadow-2xl backdrop-blur-md',
                 isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
               )}
+            />
+
+            {/* Stable content layer that only fades in to avoid jarring text "bounce" */}
+            <motion.div
+              variants={{
+                initial: { opacity: 0 },
+                animate: { opacity: 1 },
+                exit: { opacity: 0 },
+              }}
+              transition={{ duration: 0.2 }}
+              className="relative flex items-center gap-2 px-3 h-full min-w-0"
             >
               {isBound(request) && (
                 <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
@@ -355,7 +375,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                   AI
                 </span>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
