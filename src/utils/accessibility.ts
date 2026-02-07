@@ -110,14 +110,12 @@ export const compositeFocusItemClasses = [
   'focus-visible:ring-inset',
   'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
   'focus-visible:z-10',
-  'focus-visible:bg-bg-surface',
   '[&[data-focus-visible-added]:focus]:ring-2',
   '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:!ring-offset-0',
   '[&[data-focus-visible-added]:focus]:ring-inset',
   '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:z-10',
-  '[&[data-focus-visible-added]:focus]:bg-bg-surface',
 ].join(' ');
 
 /**

@@ -121,7 +121,6 @@ describe('accessibility utilities', () => {
         'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]'
       );
       expect(compositeFocusItemClasses).toContain('focus-visible:z-10');
-      expect(compositeFocusItemClasses).toContain('focus-visible:bg-bg-surface');
     });
 
     it('supports programmatic focus-visible state for composite children', () => {
@@ -137,9 +136,6 @@ describe('accessibility utilities', () => {
         '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]'
       );
       expect(compositeFocusItemClasses).toContain('[&[data-focus-visible-added]:focus]:z-10');
-      expect(compositeFocusItemClasses).toContain(
-        '[&[data-focus-visible-added]:focus]:bg-bg-surface'
-      );
     });
   });
 

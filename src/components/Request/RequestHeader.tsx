@@ -99,7 +99,6 @@ export const RequestHeader = ({
             className={cn(
               'relative min-w-28 w-auto h-9 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
               compositeFocusItemClasses,
-              'focus-visible:bg-bg-raised/50 [&[data-focus-visible-added]:focus]:bg-bg-raised/50',
               methodColor
             )}
             data-test-id="method-select"
@@ -154,7 +153,7 @@ export const RequestHeader = ({
             className={cn(
               'relative w-full h-9 justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
               compositeFocusItemClasses,
-              'focus-visible:bg-bg-raised/50 [&[data-focus-visible-added]:focus]:bg-bg-raised/50 focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
+              'focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
             )}
             style={{ minWidth: '72px' }}
           >

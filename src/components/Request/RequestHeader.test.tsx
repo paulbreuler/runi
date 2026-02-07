@@ -78,21 +78,18 @@ describe('RequestHeader', () => {
     expect(methodSelect.className).toContain('focus-visible:!ring-offset-0');
     expect(methodSelect.className).toContain('focus-visible:ring-inset');
     expect(methodSelect.className).toContain('focus-visible:z-10');
-    expect(methodSelect.className).toContain('focus-visible:bg-bg-raised/50');
 
     expect(urlInput.className).toContain('focus-visible:ring-2');
     expect(urlInput.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
     expect(urlInput.className).toContain('focus-visible:!ring-offset-0');
     expect(urlInput.className).toContain('focus-visible:ring-inset');
     expect(urlInput.className).toContain('focus-visible:z-10');
-    expect(urlInput.className).toContain('focus-visible:bg-bg-surface');
 
     expect(sendButton.className).toContain('focus-visible:ring-2');
     expect(sendButton.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
     expect(sendButton.className).toContain('focus-visible:!ring-offset-0');
     expect(sendButton.className).toContain('focus-visible:ring-inset');
     expect(sendButton.className).toContain('focus-visible:z-10');
-    expect(sendButton.className).toContain('focus-visible:bg-bg-raised/50');
     expect(sendButton.className).toContain('focus-visible:text-accent-blue');
   });
 
