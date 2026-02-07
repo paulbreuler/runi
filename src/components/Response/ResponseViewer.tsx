@@ -263,13 +263,23 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
             </div>
           </Tabs.Panel>
 
-          <Tabs.Panel value="headers" className="h-full min-h-0" tabIndex={-1}>
+          <Tabs.Panel
+            value="headers"
+            className="h-full min-h-0"
+            tabIndex={-1}
+            data-test-id="response-headers-panel"
+          >
             <div className="p-4 h-full min-h-0 overflow-auto">
               {/* Status line - httpie style */}
               <div className="mb-4 pb-4 border-b border-border-subtle">
                 <span className="font-mono text-sm">
                   <span className="text-text-muted">HTTP/1.1</span>{' '}
-                  <span className="text-signal-success font-semibold">{response.status}</span>{' '}
+                  <span
+                    className="text-signal-success font-semibold"
+                    data-test-id="response-status-code"
+                  >
+                    {response.status}
+                  </span>{' '}
                   <span className="text-text-secondary">{response.status_text}</span>
                 </span>
               </div>

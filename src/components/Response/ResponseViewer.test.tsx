@@ -105,8 +105,8 @@ describe('ResponseViewer', () => {
     const viewer = screen.getByTestId('response-viewer');
     expect(viewer).toBeInTheDocument();
     // Status code should be visible in the headers tab panel
-    const headersPanel = screen.getByRole('tabpanel');
-    expect(within(headersPanel).getByText('200')).toBeInTheDocument();
+    const headersPanel = screen.getByTestId('response-headers-panel');
+    expect(within(headersPanel).getByTestId('response-status-code')).toBeInTheDocument();
   });
 
   it('formats raw HTTP response', async () => {
