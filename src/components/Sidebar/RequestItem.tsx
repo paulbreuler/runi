@@ -240,10 +240,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         type="button"
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1 text-left transition-colors',
-          isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/50',
+          isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
           !actuallyVisible && containedFocusRingClasses,
           actuallyVisible && 'outline-none ring-0 shadow-none',
-          actuallyVisible && !isFocused && 'bg-bg-raised/30'
+          actuallyVisible && !isFocused && 'bg-transparent'
         )}
         data-test-id={`collection-request-${request.id}`}
         data-active={isSelected || undefined}
@@ -337,7 +337,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               }
               style={{ originX: 0 }}
               className={cn(
-                'absolute inset-0 rounded-r-md rounded-l-none border border-border-subtle bg-bg-elevated shadow-2xl backdrop-blur-md',
+                'absolute inset-0 rounded-r-md rounded-l-none border border-border-subtle shadow-2xl backdrop-blur-md',
+                isSelected ? 'bg-accent-blue/10' : 'bg-bg-raised/40',
                 isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
               )}
             />
