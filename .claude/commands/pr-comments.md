@@ -10,9 +10,9 @@ When this command is invoked:
 2. **List comments**: Fetch all review comments and threads
 3. **Categorize**: Group by file path, identify deleted files, outdated comments
 4. **Address**: Reply to comments with explanations
-   - **Before fixing**: For architecture/maintainability concerns, run `/branch-code-review` to understand impact
-   - **Before fixing**: For security/MCP concerns, run `/mcp-code-review` to identify risks
-   - **After fixing**: If fixes were made, commit using conventional commits (use `/git-commit-best-practices`)
+   - **Before fixing**: For architecture/maintainability concerns, run `/code-review` to understand impact
+   - **Before fixing**: For security/MCP concerns, run `/review-mcp` to identify risks
+   - **After fixing**: If fixes were made, commit using conventional commits (see CLAUDE.md commit conventions)
    - **Commit message**: Reference the comment/concern: `fix(component): address review feedback on error handling`
 5. **Resolve**: Mark threads as resolved via GraphQL API (only after addressing and committing fixes)
 
