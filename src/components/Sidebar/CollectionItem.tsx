@@ -13,7 +13,7 @@ import {
 } from '@/stores/useCollectionStore';
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
+import { containedFocusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface CollectionItemProps {
@@ -43,7 +43,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
       <button
         type="button"
         className={cn(
-          focusRingClasses,
+          containedFocusRingClasses,
           'w-full flex items-center justify-between gap-3 px-2 py-2 text-left hover:bg-bg-raised/40 transition-colors'
         )}
         data-test-id={`collection-item-${summary.id}`}

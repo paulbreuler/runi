@@ -316,6 +316,14 @@ describe('PanelTabs', () => {
       expect(values).toContain('network');
       expect(values).toContain('console');
     });
+
+    it('uses contained focus ring styles to avoid clipping in panel headers', () => {
+      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+
+      const networkTab = screen.getByTestId('panel-tab-network');
+      expect(networkTab.className).toContain('focus-visible:ring-inset');
+      expect(networkTab.className).toContain('focus-visible:!ring-offset-0');
+    });
   });
 
   describe('styling', () => {

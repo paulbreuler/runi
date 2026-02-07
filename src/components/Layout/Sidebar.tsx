@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
-import { focusRingClasses } from '@/utils/accessibility';
+import { containedFocusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 
 interface DrawerSectionProps {
@@ -36,7 +36,7 @@ const DrawerSection = ({
       <button
         type="button"
         className={cn(
-          focusRingClasses,
+          containedFocusRingClasses,
           'w-full flex items-center gap-2 px-4 py-3 hover:bg-bg-raised/30 transition-colors cursor-pointer group'
         )}
         onClick={() => {

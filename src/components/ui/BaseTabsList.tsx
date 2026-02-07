@@ -7,7 +7,7 @@ import React, { useCallback, useRef } from 'react';
 import { Tabs } from '@base-ui/react/tabs';
 import { motion, LayoutGroup, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
+import { containedFocusRingClasses } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
 
 export interface BaseTabItem<T extends string> {
@@ -131,7 +131,7 @@ export const BaseTabsList = <T extends string>({
                     onClick={handleClick}
                     className={cn(
                       tabClassName,
-                      focusRingClasses,
+                      containedFocusRingClasses,
                       activeTab === tab.value ? activeTabClassName : inactiveTabClassName
                     )}
                     whileHover={activeTab !== tab.value ? { scale: 1.02 } : undefined}

@@ -13,6 +13,7 @@ import { describe, it, expect, vi } from 'vitest';
 import * as React from 'react';
 import {
   focusRingClasses,
+  containedFocusRingClasses,
   compositeFocusContainerClasses,
   compositeFocusItemClasses,
   useFocusVisible,
@@ -60,6 +61,29 @@ describe('accessibility utilities', () => {
       );
       expect(hasFocusVisibleColor).toBe(true);
       expect(hasDataAttrColor).toBe(true);
+    });
+  });
+
+  describe('containedFocusRingClasses', () => {
+    it('uses ring styles suitable for clipped/overflow contexts', () => {
+      expect(containedFocusRingClasses).toContain('outline-none');
+      expect(containedFocusRingClasses).toContain('focus-visible:ring-2');
+      expect(containedFocusRingClasses).toContain('focus-visible:ring-[color:var(--color-ring)]');
+      expect(containedFocusRingClasses).toContain('focus-visible:!ring-offset-0');
+      expect(containedFocusRingClasses).toContain('focus-visible:ring-inset');
+      expect(containedFocusRingClasses).not.toContain('focus-visible:ring-offset-2');
+      expect(containedFocusRingClasses).not.toContain('focus-visible:ring-offset-bg-app');
+    });
+
+    it('supports programmatic focus-visible state in clipped contexts', () => {
+      expect(containedFocusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-2');
+      expect(containedFocusRingClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]'
+      );
+      expect(containedFocusRingClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:!ring-offset-0'
+      );
+      expect(containedFocusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-inset');
     });
   });
 

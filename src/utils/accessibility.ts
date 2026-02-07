@@ -56,6 +56,24 @@ export const focusRingClasses = [
 ].join(' ');
 
 /**
+ * Focus ring classes for controls rendered inside clipped/overflow containers.
+ *
+ * Uses inset ring and zero offset to avoid focus clipping when parent containers
+ * use overflow constraints (common in tab strips, list rows, and compact headers).
+ */
+export const containedFocusRingClasses = [
+  'outline-none',
+  'focus-visible:ring-2',
+  'focus-visible:ring-[color:var(--color-ring)]',
+  'focus-visible:!ring-offset-0',
+  'focus-visible:ring-inset',
+  '[&[data-focus-visible-added]:focus]:ring-2',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:!ring-offset-0',
+  '[&[data-focus-visible-added]:focus]:ring-inset',
+].join(' ');
+
+/**
  * Muted focus treatment for composite containers.
  *
  * Use on the parent wrapper of grouped interactive controls

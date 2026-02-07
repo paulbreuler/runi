@@ -63,6 +63,18 @@ describe('Sidebar', (): void => {
     expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();
   });
 
+  it('uses contained focus ring styles on drawer headers to avoid clipping', (): void => {
+    render(<Sidebar />);
+
+    const collectionsButton = screen.getByText('Collections').closest('button');
+    if (collectionsButton === null) {
+      throw new Error('Collections button not found');
+    }
+
+    expect(collectionsButton.className).toContain('focus-visible:ring-inset');
+    expect(collectionsButton.className).toContain('focus-visible:!ring-offset-0');
+  });
+
   it('renders the collections list content', (): void => {
     render(<Sidebar />);
     expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();

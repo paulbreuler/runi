@@ -11,7 +11,7 @@ import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
+import { containedFocusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface RequestItemProps {
@@ -142,7 +142,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         ref={rowRef}
         type="button"
         className={cn(
-          focusRingClasses,
+          containedFocusRingClasses,
           'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-bg-raised/50 transition-colors'
         )}
         data-test-id={`collection-request-${request.id}`}
