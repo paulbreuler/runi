@@ -167,6 +167,9 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
     response.headers['content-type'] ?? response.headers['Content-Type'] ?? undefined;
   const language = detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader });
   const formattedBody = language === 'json' ? formatJson(response.body) : response.body;
+  const overflowTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' as const };
 
   return (
     <div className="h-full flex flex-col" data-test-id="response-viewer">
@@ -219,7 +222,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                 data-test-id="response-tabs-overflow-left"
                 initial={false}
                 animate={getOverflowAnimation('left')}
-                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                transition={overflowTransition}
               />
             )}
             {showOverflowCue && canScrollRight && (
@@ -228,7 +231,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                 data-test-id="response-tabs-overflow-right"
                 initial={false}
                 animate={getOverflowAnimation('right')}
-                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                transition={overflowTransition}
               />
             )}
           </div>

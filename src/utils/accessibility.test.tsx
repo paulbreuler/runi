@@ -71,7 +71,7 @@ describe('accessibility utilities', () => {
       expect(containedFocusRingClasses).toContain(
         'focus-visible:outline-[color:var(--color-ring)]'
       );
-      expect(containedFocusRingClasses).toContain('focus-visible:-outline-offset-2');
+      expect(containedFocusRingClasses).toContain('focus-visible:outline-offset-[-2px]');
       expect(containedFocusRingClasses).toContain('focus-visible:ring-2');
       expect(containedFocusRingClasses).toContain('focus-visible:ring-[color:var(--color-ring)]');
       expect(containedFocusRingClasses).toContain('focus-visible:!ring-offset-0');
@@ -89,7 +89,7 @@ describe('accessibility utilities', () => {
         '[&[data-focus-visible-added]:focus]:outline-[color:var(--color-ring)]'
       );
       expect(containedFocusRingClasses).toContain(
-        '[&[data-focus-visible-added]:focus]:-outline-offset-2'
+        '[&[data-focus-visible-added]:focus]:outline-offset-[-2px]'
       );
       expect(containedFocusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-2');
       expect(containedFocusRingClasses).toContain(

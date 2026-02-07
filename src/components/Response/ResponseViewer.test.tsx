@@ -249,7 +249,7 @@ describe('ResponseViewer', () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
 
-    const bodyTab = screen.getByRole('tab', { name: /body/i });
+    const bodyTab = screen.getByTestId('response-tab-body');
     await user.click(bodyTab);
     expect(bodyTab).toHaveFocus();
 
