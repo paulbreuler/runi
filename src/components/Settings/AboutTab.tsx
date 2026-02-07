@@ -12,7 +12,7 @@ interface InfoItem {
   value: string;
 }
 
-const infoItems: InfoItem[] = [
+const INFO_ITEMS: InfoItem[] = [
   { id: 'telemetry', label: 'Telemetry', value: 'None' },
   { id: 'cloud-sync', label: 'Cloud Sync', value: 'Never' },
   { id: 'offline-mode', label: 'Offline Mode', value: 'Full' },
@@ -33,7 +33,7 @@ export function AboutTab(): ReactElement {
       </div>
 
       <div className="p-3 bg-bg-raised rounded-lg border border-border-subtle space-y-2">
-        {infoItems.map((item) => (
+        {INFO_ITEMS.map((item) => (
           <div
             key={item.id}
             className="flex items-center gap-2 text-xs text-fg-muted"

@@ -71,7 +71,23 @@ export function SettingsPanel({
     () => searchSettings(searchQuery, { caseSensitive }),
     [searchQuery, caseSensitive]
   );
-  const formResultCount = searchResults?.size ?? 0;
+
+  // Filter out MCP results in form mode (MCP tab was removed)
+  const filteredSearchResults = useMemo(() => {
+    if (searchResults === null || isJsonMode) {
+      return searchResults;
+    }
+    const filtered = new Set<string>();
+    for (const key of searchResults) {
+      // Exclude 'mcp' category and 'mcp.*' keys in form mode
+      if (!key.startsWith('mcp')) {
+        filtered.add(key);
+      }
+    }
+    return filtered;
+  }, [searchResults, isJsonMode]);
+
+  const formResultCount = filteredSearchResults?.size ?? 0;
   const resultCount = isJsonMode ? jsonMatchCount : formResultCount;
 
   // Reset to first match when search query changes in JSON mode
@@ -244,7 +260,7 @@ export function SettingsPanel({
               <GeneralTab
                 settings={settings}
                 onUpdate={updateSetting}
-                searchResults={searchResults}
+                searchResults={filteredSearchResults}
               />
             </div>
           )}
