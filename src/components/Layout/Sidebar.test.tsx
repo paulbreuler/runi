@@ -60,12 +60,12 @@ describe('Sidebar', (): void => {
       throw new Error('Collections button not found');
     }
     expect(collectionsButton).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByTestId('collection-list-disabled')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();
   });
 
   it('renders the collections list content', (): void => {
     render(<Sidebar />);
-    expect(screen.getByTestId('collection-list-disabled')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();
   });
 
   it('fills its container width', (): void => {
@@ -104,6 +104,8 @@ describe('CollectionList', (): void => {
   });
 
   it('shows disabled state when collections flag is off', (): void => {
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', false);
+
     render(<CollectionList />);
 
     expect(screen.getByTestId('collection-list-disabled')).toBeInTheDocument();

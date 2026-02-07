@@ -18,7 +18,7 @@ const DefaultExperimentalBadge = ({ state }: DefaultBadgeProps): React.JSX.Eleme
 
   return (
     <div
-      className="absolute -top-2 -right-2 rounded-full border border-signal-warning/30 bg-signal-warning/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-signal-warning"
+      className="absolute -top-2 -right-2 rounded-full border border-signal-warning/30 bg-signal-warning/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-signal-warning"
       data-test-id="feature-gate-badge"
     >
       Experimental

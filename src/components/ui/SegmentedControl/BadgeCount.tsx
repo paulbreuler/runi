@@ -149,7 +149,7 @@ export const BadgeCount = ({
 
   // Base badge classes - use tier color when available
   const badgeClasses = cn(
-    'shrink-0 px-1 py-0.5 rounded text-[10px] font-semibold min-w-[16px] text-center',
+    'shrink-0 px-1 py-0.5 rounded text-xs font-semibold min-w-[16px] text-center',
     getBadgeBackgroundClass()
   );
 

@@ -14,6 +14,7 @@ import {
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface CollectionItemProps {
   summary: CollectionSummary;
@@ -26,6 +27,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
   const selectCollection = useCollectionStore((state) => state.selectCollection);
   const collection = useCollection(summary.id);
   const sortedRequests = useSortedRequests(summary.id);
+  const displayName = truncateNavLabel(summary.name);
 
   const handleToggle = (): void => {
     const nextExpanded = !isExpanded;
@@ -53,7 +55,9 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
           <Folder size={14} className="text-text-muted" />
-          <span className="text-sm text-text-primary truncate">{summary.name}</span>
+          <span className="text-sm text-text-primary truncate" title={summary.name}>
+            {displayName}
+          </span>
         </div>
         <div className="flex items-center gap-2 text-xs text-text-muted shrink-0">
           <span>{summary.request_count}</span>

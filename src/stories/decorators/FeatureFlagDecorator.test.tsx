@@ -20,7 +20,11 @@ const renderDecorator = (args: Record<string, unknown>): void => {
       <div>
         <span data-test-id="canvas-enabled">{canvasEnabled ? 'on' : 'off'}</span>
         <span data-test-id="import-bruno">{importBruno ? 'on' : 'off'}</span>
-        <FeatureGate layer="canvas" flag="enabled" fallback={<div data-test-id="fallback" />}>
+        <FeatureGate
+          layer="http"
+          flag="collectionsEnabled"
+          fallback={<div data-test-id="fallback" />}
+        >
           <div data-test-id="gated-child" />
         </FeatureGate>
       </div>
@@ -54,7 +58,9 @@ describe('FeatureFlagDecorator', () => {
   });
 
   it('works with FeatureGate', async () => {
-    renderDecorator({ featureFlags: { canvas: { enabled: true } } });
+    // Use a stable flag (http.collectionsEnabled) so FeatureGate renders.
+    // Setting enabled=false means the gate shows the fallback.
+    renderDecorator({ featureFlags: { http: { collectionsEnabled: false } } });
     await waitFor(() => {
       expect(screen.getByTestId('fallback')).toBeInTheDocument();
     });

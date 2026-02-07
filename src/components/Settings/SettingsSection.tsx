@@ -95,14 +95,14 @@ export function SettingsSection({
         {meta.badge !== undefined && meta.badge !== null ? (
           <span
             className={cn(
-              'text-[9px] font-medium px-1.5 py-0.5 rounded-full',
+              'text-xs font-medium px-1.5 py-0.5 rounded-full',
               (meta.badge as { text: string; className: string }).className
             )}
           >
             {(meta.badge as { text: string; className: string }).text}
           </span>
         ) : null}
-        <span className="text-fg-muted/70 text-[10px] ml-auto">
+        <span className="text-fg-muted/70 text-xs ml-auto">
           {visibleFields.length} setting{visibleFields.length === 1 ? '' : 's'}
         </span>
       </button>

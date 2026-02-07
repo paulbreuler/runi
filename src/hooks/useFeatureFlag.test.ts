@@ -25,30 +25,30 @@ describe('useFeatureFlag', () => {
   test('returns state from metadata', () => {
     const { result } = renderHook(() => useFeatureFlag('http', 'importBruno'));
     expect(result.current.state).toBe(FLAG_METADATA.http.importBruno.state);
-    expect(result.current.state).toBe('teaser');
+    expect(result.current.state).toBe('hidden');
 
     const { result: result2 } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
-    expect(result2.current.state).toBe('teaser');
+    expect(result2.current.state).toBe('hidden');
   });
 
   test('returns isVisible correctly', () => {
-    // Teaser feature
-    const { result: teaser } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
-    expect(teaser.current.isVisible).toBe(true);
+    // Hidden feature - not visible
+    const { result: hidden } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
+    expect(hidden.current.isVisible).toBe(false);
 
-    // Stable feature
+    // Stable feature - visible
     const { result: stable } = renderHook(() => useFeatureFlag('http', 'collectionsEnabled'));
     expect(stable.current.isVisible).toBe(true);
   });
 
   test('returns isInteractive correctly', () => {
-    // Teaser feature - not interactive
-    const { result: teaser } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
-    expect(teaser.current.isInteractive).toBe(false);
+    // Hidden feature - not interactive
+    const { result: hidden } = renderHook(() => useFeatureFlag('canvas', 'connectionLines'));
+    expect(hidden.current.isInteractive).toBe(false);
 
-    // Teaser feature - not interactive
-    const { result: teaser2 } = renderHook(() => useFeatureFlag('canvas', 'enabled'));
-    expect(teaser2.current.isInteractive).toBe(false);
+    // Hidden feature - not interactive
+    const { result: hidden2 } = renderHook(() => useFeatureFlag('canvas', 'enabled'));
+    expect(hidden2.current.isInteractive).toBe(false);
 
     // Stable feature - interactive
     const { result: stable } = renderHook(() => useFeatureFlag('http', 'collectionsEnabled'));

@@ -25,20 +25,17 @@ vi.mock('@/hooks/useFeatureFlag', () => ({
 }));
 
 describe('FeaturesTab', () => {
-  it('renders visible feature flags and hides hidden ones', () => {
+  it('renders only stable/visible feature flags', () => {
     render(<FeaturesTab />);
 
-    expect(screen.getByTestId('feature-flag-http-importBruno')).toBeInTheDocument();
-    expect(screen.getByTestId('feature-flag-canvas-connectionLines')).toBeInTheDocument();
+    expect(screen.getByTestId('feature-flag-http-collectionsEnabled')).toBeInTheDocument();
   });
 
-  it('disables toggles for teaser flags', () => {
+  it('hides hidden feature flags', () => {
     render(<FeaturesTab />);
 
-    expect(screen.getByTestId('feature-toggle-http-importBruno')).toHaveAttribute(
-      'aria-disabled',
-      'true'
-    );
+    expect(screen.queryByTestId('feature-flag-http-importBruno')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('feature-flag-canvas-connectionLines')).not.toBeInTheDocument();
   });
 
   it('toggles interactive flags via setFlag', async () => {
@@ -46,6 +43,6 @@ describe('FeaturesTab', () => {
     render(<FeaturesTab />);
 
     await user.click(screen.getByTestId('feature-toggle-http-collectionsEnabled'));
-    expect(setFlagMock).toHaveBeenCalledWith('http', 'collectionsEnabled', true);
+    expect(setFlagMock).toHaveBeenCalledWith('http', 'collectionsEnabled', false);
   });
 });

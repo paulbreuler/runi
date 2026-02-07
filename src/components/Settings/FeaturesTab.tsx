@@ -57,7 +57,7 @@ export function FeaturesTab(): ReactElement {
               <span className="text-fg-muted text-xs font-semibold tracking-wide uppercase">
                 {LAYER_LABELS[layer]}
               </span>
-              <span className="text-[10px] text-fg-muted/70">
+              <span className="text-xs text-fg-muted/70">
                 {entries.length} flag{entries.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -81,7 +81,7 @@ export function FeaturesTab(): ReactElement {
                         {meta.state !== 'stable' && (
                           <span
                             className={cn(
-                              'text-[9px] font-medium px-1.5 py-0.5 rounded-full',
+                              'text-xs font-medium px-1.5 py-0.5 rounded-full',
                               stateBadgeClasses[meta.state]
                             )}
                           >

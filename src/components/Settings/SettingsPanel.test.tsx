@@ -40,7 +40,6 @@ describe('SettingsPanel', () => {
 
     expect(screen.getByTestId('settings-tab-general')).toBeInTheDocument();
     expect(screen.getByTestId('settings-tab-features')).toBeInTheDocument();
-    expect(screen.getByTestId('settings-tab-mcp')).toBeInTheDocument();
     expect(screen.getByTestId('settings-tab-about')).toBeInTheDocument();
   });
 
