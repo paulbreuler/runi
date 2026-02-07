@@ -68,7 +68,8 @@ This command can leverage specialized review skills:
 - ✅ Zustand for global state (not Redux, not Context for shared state)
 - ✅ Motion 12 for animations (import from `motion/react`)
 - ✅ **Design Principles**: Components follow DESIGN-PRINCIPLES.md criteria
-  (see runi Planning MCP `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md', code: 'doc.content' })`
+  (see runi Planning MCP
+  `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md', code: 'doc.content' })`
   for audit methodology)
 - ✅ **Design Principles (process_doc)**: For component-specific audit findings, use
   runi Planning MCP `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md',
@@ -436,7 +437,7 @@ process_doc({
 
 ## Related Commands
 
-- `/pr` - Create pull request after review passes
+- `/pr-create` - Create pull request after review passes
 - `/branch-code-review` - Architecture/maintainability review (skill, focused)
 - `/review-mcp` or `/mcp-code-review` - MCP/LLM security review (skill)
 - `/git-commit-best-practices` - Commit message guidance (skill)

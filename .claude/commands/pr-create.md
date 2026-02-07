@@ -81,22 +81,22 @@ This command creates a pull request on GitHub with:
 
 ### In Cursor Chat
 
-Type `/pr` to generate PR from staged changes:
+Type `/pr-create` to generate PR from staged changes:
 
 ```text
-/pr
+/pr-create
 ```
 
 Generate PR from recent commits:
 
 ```text
-/pr --commits HEAD~3..HEAD
+/pr-create --commits HEAD~3..HEAD
 ```
 
 Generate PR for specific branch:
 
 ```text
-/pr --base main
+/pr-create --base main
 ```
 
 **When invoked, this command will:**
@@ -247,7 +247,7 @@ The command analyzes:
 ### PR from Staged Changes (with Agent Detection)
 
 ```text
-/pr
+/pr-create
 ```
 
 Uses `npx limps next-task` to detect agent from git context (branch name, commit messages, modified files), then generates PR description with agent context.
@@ -260,7 +260,7 @@ Uses `npx limps next-task` to detect agent from git context (branch name, commit
 ### PR from Recent Commits
 
 ```text
-/pr --commits HEAD~3..HEAD
+/pr-create --commits HEAD~3..HEAD
 ```
 
 Same as above - uses `npx limps next-task` to detect agent from commit context.
@@ -268,7 +268,7 @@ Same as above - uses `npx limps next-task` to detect agent from commit context.
 ### PR Comparing Branches
 
 ```text
-/pr --base main
+/pr-create --base main
 ```
 
 Same as above - uses `npx limps next-task` to detect agent from branch context.
@@ -285,15 +285,15 @@ Agent detection examples:
 
 **Scenario:** Agent 0 has all features complete but hasn't been closed
 
-When `/pr` is run, it displays an informational message (see [Agent Status Validation Info](#agent-status-validation-info) in Error Handling section) and proceeds automatically with PR creation.
+When `/pr-create` is run, it displays an informational message (see [Agent Status Validation Info](#agent-status-validation-info) in Error Handling section) and proceeds automatically with PR creation.
 
 ## Integration with Code Review
 
-After code review, use `/pr` to create the PR:
+After code review, use `/pr-create` to create the PR:
 
 1. Run `/code-review` to review changes
 2. Fix any issues
-3. Run `/pr` to create PR on GitHub (description auto-generated)
+3. Run `/pr-create` to create PR on GitHub (description auto-generated)
 
 ## Error Handling
 

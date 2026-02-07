@@ -184,7 +184,7 @@ An agent file needs regeneration if:
 - Extract feature subissue numbers from existing file: `**GitHub Subissue**: #124` in each feature section (children)
 - Include in regenerated file metadata
 - **Do not create new issues** when regenerating (keep existing agent issue and feature subissues)
-- If no issues exist in old file, leave issue number fields empty (will be created by `/run-agent` or `/pr`)
+- If no issues exist in old file, leave issue number fields empty (will be created by `/run-agent` or `/pr-create`)
 
 
 ### 9. Verify Consistency

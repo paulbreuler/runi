@@ -185,7 +185,7 @@ compatibility, but new agents should use zero-padding.
   (main/master)
 - GitHub automatically closes feature subissues when PR with `Closes #124, #125, #126` merges to default branch
 - Agent issue (parent) is not closed by PR - only feature subissues are closed
-- If agent doesn't have issues when PR is created, issues are created retroactively by `/pr` command
+- If agent doesn't have issues when PR is created, issues are created retroactively by `/pr-create` command
 - See plan documentation for full workflow details
 
 **Extract only**:
