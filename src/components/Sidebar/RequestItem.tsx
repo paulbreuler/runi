@@ -36,6 +36,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const setBody = useRequestStore((state) => state.setBody);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isOccluded, setIsOccluded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const [popoutPosition, setPopoutPosition] = useState<{
     top: number;
@@ -51,6 +52,36 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
   const displayName = truncateNavLabel(request.name);
+
+  // Occlusion detection: hide popout if the item scrolls out of view
+  useEffect(() => {
+    const row = rowRef.current;
+    if (row === null) {
+      return undefined;
+    }
+
+    const scrollParent = row.closest('[data-scroll-container]');
+    if (scrollParent === null) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]): void => {
+        // threshold: 0.95 means we consider it occluded if less than 95% is visible
+        // This prevents the popout from lingering when the item is mostly clipped
+        setIsOccluded(entry !== undefined && entry.intersectionRatio < 0.95);
+      },
+      {
+        root: scrollParent,
+        threshold: [0, 0.95, 1.0],
+      }
+    );
+
+    observer.observe(row);
+    return (): void => {
+      observer.disconnect();
+    };
+  }, []);
 
   const calculatePosition = useCallback((): {
     top: number;
@@ -87,12 +118,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   }, [calculatePosition]);
 
   const showPopout = useCallback((): void => {
-    if (!isTruncated) {
+    if (!isTruncated || isOccluded) {
       return;
     }
     updatePopoutPosition();
     setIsExpanded(true);
-  }, [isTruncated, updatePopoutPosition]);
+  }, [isTruncated, isOccluded, updatePopoutPosition]);
 
   const hidePopout = useCallback((): void => {
     // Only hide if not focused
@@ -169,7 +200,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     return (): void => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [evaluateTruncation, isExpanded, updatePopoutPosition]);
+  }, [evaluateTruncation, isExpanded, updatePopoutPosition, request.name]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -200,6 +231,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     };
   }, [hidePopout, isExpanded, isFocused, updatePopoutPosition]);
 
+  const actuallyVisible = isExpanded && !isOccluded;
+
   return (
     <>
       <button
@@ -208,10 +241,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/50',
-          !isExpanded && containedFocusRingClasses,
+          !actuallyVisible && containedFocusRingClasses,
           // Suppress all focus ring/outline when expanded so it doesn't "cut" the popout
-          isExpanded && 'outline-none ring-0 shadow-none',
-          isExpanded && !isFocused && 'bg-bg-raised/30'
+          actuallyVisible && 'outline-none ring-0 shadow-none',
+          actuallyVisible && !isFocused && 'bg-bg-raised/30'
         )}
         data-test-id={`collection-request-${request.id}`}
         data-active={isSelected || undefined}
@@ -270,7 +303,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         </div>
       </button>
       <AnimatePresence>
-        {isExpanded && popoutPosition !== null && (
+        {actuallyVisible && popoutPosition !== null && (
           <motion.div
             initial={{ opacity: 0, scaleX: 0.7, originX: 0 }}
             animate={{ opacity: 1, scaleX: 1, originX: 0 }}
