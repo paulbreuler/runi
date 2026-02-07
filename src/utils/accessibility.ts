@@ -56,6 +56,43 @@ export const focusRingClasses = [
 ].join(' ');
 
 /**
+ * Muted focus treatment for composite containers.
+ *
+ * Use on the parent wrapper of grouped interactive controls
+ * (e.g. method select + URL input + send button) so users can
+ * see focus is within the composite without overpowering the
+ * active child control indicator.
+ */
+export const compositeFocusContainerClasses = [
+  'focus-within:border-border-default',
+  'focus-within:ring-1',
+  'focus-within:ring-[color:var(--color-border-default)]',
+].join(' ');
+
+/**
+ * Primary focus treatment for an active item inside a composite control.
+ *
+ * Keeps Base UI's focus semantics while tuning visuals for grouped controls:
+ * - ring offset is removed so focus stays within tight composite bounds
+ * - inset ring prevents clipping when parent uses overflow-hidden
+ * - z-index lifts focused item above separators/siblings
+ */
+export const compositeFocusItemClasses = [
+  'focus-visible:ring-2',
+  'focus-visible:ring-[color:var(--color-ring)]',
+  'focus-visible:!ring-offset-0',
+  'focus-visible:ring-inset',
+  'focus-visible:z-10',
+  'focus-visible:bg-bg-surface',
+  '[&[data-focus-visible-added]:focus]:ring-2',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:!ring-offset-0',
+  '[&[data-focus-visible-added]:focus]:ring-inset',
+  '[&[data-focus-visible-added]:focus]:z-10',
+  '[&[data-focus-visible-added]:focus]:bg-bg-surface',
+].join(' ');
+
+/**
  * Hook for hover-only elements that need to show on focus.
  *
  * Tracks focus within a container element and returns visibility state.

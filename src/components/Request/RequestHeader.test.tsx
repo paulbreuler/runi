@@ -58,11 +58,42 @@ describe('RequestHeader', () => {
     expect(urlInput).toHaveClass('bg-transparent');
   });
 
-  it('URL input has visible focus ring for keyboard navigation', () => {
+  it('applies muted composite focus state on request control', () => {
     render(<RequestHeader {...defaultProps} url="" />);
+    const control = screen.getByTestId('request-control');
+    expect(control.className).toContain('focus-within:ring-1');
+    expect(control.className).toContain('focus-within:ring-[color:var(--color-border-default)]');
+    expect(control.className).toContain('focus-within:border-border-default');
+  });
+
+  it('applies primary focus states to inner controls', () => {
+    render(<RequestHeader {...defaultProps} url="" />);
+
+    const methodSelect = screen.getByTestId('method-select');
     const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
+
+    expect(methodSelect.className).toContain('focus-visible:ring-2');
+    expect(methodSelect.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(methodSelect.className).toContain('focus-visible:!ring-offset-0');
+    expect(methodSelect.className).toContain('focus-visible:ring-inset');
+    expect(methodSelect.className).toContain('focus-visible:z-10');
+    expect(methodSelect.className).toContain('focus-visible:bg-bg-raised/50');
+
     expect(urlInput.className).toContain('focus-visible:ring-2');
-    expect(urlInput.className).toContain('ring-[color:var(--color-ring)]');
+    expect(urlInput.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(urlInput.className).toContain('focus-visible:!ring-offset-0');
+    expect(urlInput.className).toContain('focus-visible:ring-inset');
+    expect(urlInput.className).toContain('focus-visible:z-10');
+    expect(urlInput.className).toContain('focus-visible:bg-bg-surface');
+
+    expect(sendButton.className).toContain('focus-visible:ring-2');
+    expect(sendButton.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(sendButton.className).toContain('focus-visible:!ring-offset-0');
+    expect(sendButton.className).toContain('focus-visible:ring-inset');
+    expect(sendButton.className).toContain('focus-visible:z-10');
+    expect(sendButton.className).toContain('focus-visible:bg-bg-raised/50');
+    expect(sendButton.className).toContain('focus-visible:text-accent-blue');
   });
 
   it('renders send button with proper styling', () => {
@@ -71,6 +102,9 @@ describe('RequestHeader', () => {
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeInTheDocument();
     expect(sendButton).toHaveTextContent('Send');
+    // In composite: flat left edge, rounded right edge
+    expect(sendButton).toHaveClass('rounded-none');
+    expect(sendButton).toHaveClass('rounded-r-lg');
   });
 
   it('shows loading state on send button', () => {

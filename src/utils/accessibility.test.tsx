@@ -11,7 +11,12 @@
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import * as React from 'react';
-import { focusRingClasses, useFocusVisible } from './accessibility';
+import {
+  focusRingClasses,
+  compositeFocusContainerClasses,
+  compositeFocusItemClasses,
+  useFocusVisible,
+} from './accessibility';
 
 describe('accessibility utilities', () => {
   describe('focusRingClasses', () => {
@@ -55,6 +60,40 @@ describe('accessibility utilities', () => {
       );
       expect(hasFocusVisibleColor).toBe(true);
       expect(hasDataAttrColor).toBe(true);
+    });
+  });
+
+  describe('composite focus classes', () => {
+    it('contains muted focus-within styling for composite containers', () => {
+      expect(compositeFocusContainerClasses).toContain('focus-within:border-border-default');
+      expect(compositeFocusContainerClasses).toContain('focus-within:ring-1');
+      expect(compositeFocusContainerClasses).toContain(
+        'focus-within:ring-[color:var(--color-border-default)]'
+      );
+    });
+
+    it('contains strong item-level focus styling for active composite child', () => {
+      expect(compositeFocusItemClasses).toContain('focus-visible:ring-2');
+      expect(compositeFocusItemClasses).toContain('focus-visible:ring-[color:var(--color-ring)]');
+      expect(compositeFocusItemClasses).toContain('focus-visible:!ring-offset-0');
+      expect(compositeFocusItemClasses).toContain('focus-visible:ring-inset');
+      expect(compositeFocusItemClasses).toContain('focus-visible:z-10');
+      expect(compositeFocusItemClasses).toContain('focus-visible:bg-bg-surface');
+    });
+
+    it('supports programmatic focus-visible state for composite children', () => {
+      expect(compositeFocusItemClasses).toContain('[&[data-focus-visible-added]:focus]:ring-2');
+      expect(compositeFocusItemClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]'
+      );
+      expect(compositeFocusItemClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:!ring-offset-0'
+      );
+      expect(compositeFocusItemClasses).toContain('[&[data-focus-visible-added]:focus]:ring-inset');
+      expect(compositeFocusItemClasses).toContain('[&[data-focus-visible-added]:focus]:z-10');
+      expect(compositeFocusItemClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:bg-bg-surface'
+      );
     });
   });
 
