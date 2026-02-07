@@ -118,13 +118,13 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
 
   if (isMac) {
     return (
-      <div className={cn('flex items-center h-full gap-1', !isFocused && 'opacity-60')}>
+      <div className={cn('ml-2 flex items-center h-full gap-1', !isFocused && 'opacity-60')}>
         <button
           type="button"
           onClick={handleClose}
           className={cn(
             focusRingClasses,
-            'w-3 h-3 rounded-full border border-black/20 bg-[#ff5f57] hover:brightness-95 transition-[filter]'
+            'h-3.5 w-3.5 rounded-full border border-black/20 bg-[#ff5f57] hover:brightness-95 transition-[filter]'
           )}
           aria-label="Close window"
           data-test-id="titlebar-close"
@@ -134,7 +134,7 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           onClick={handleMinimize}
           className={cn(
             focusRingClasses,
-            'w-3 h-3 rounded-full border border-black/20 bg-[#febc2e] hover:brightness-95 transition-[filter]'
+            'h-3.5 w-3.5 rounded-full border border-black/20 bg-[#febc2e] hover:brightness-95 transition-[filter]'
           )}
           aria-label="Minimize window"
           data-test-id="titlebar-minimize"
@@ -144,7 +144,7 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           onClick={handleMaximize}
           className={cn(
             focusRingClasses,
-            'w-3 h-3 rounded-full border border-black/20 bg-[#28c840] hover:brightness-95 transition-[filter]'
+            'h-3.5 w-3.5 rounded-full border border-black/20 bg-[#28c840] hover:brightness-95 transition-[filter]'
           )}
           aria-label="Maximize window"
           data-test-id="titlebar-maximize"
@@ -249,12 +249,12 @@ export const TitleBar = ({
             onClick={onSettingsClick}
             className={cn(
               focusRingClasses,
-              'w-[30px] h-[30px] flex items-center justify-center hover:bg-bg-raised/50 transition-colors'
+              'flex h-[34px] w-[34px] items-center justify-center hover:bg-bg-raised/50 transition-colors'
             )}
             aria-label="Open settings"
             data-test-id="titlebar-settings"
           >
-            <Settings size={12} className="text-text-muted" />
+            <Settings size={16} className="text-text-muted" />
           </button>
         )}
         {!isMac && <TitleBarControls isMac={false} />}
