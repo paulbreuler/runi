@@ -31,6 +31,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const setHeaders = useRequestStore((state) => state.setHeaders);
   const setBody = useRequestStore((state) => state.setBody);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const [popoutPosition, setPopoutPosition] = useState<{
     top: number;
@@ -68,22 +69,28 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     setIsTruncated(scrollWidth > clientWidth);
   }, []);
 
+  const updatePopoutPosition = useCallback((): void => {
+    const position = calculatePosition();
+    if (position !== null) {
+      setPopoutPosition(position);
+    }
+  }, [calculatePosition]);
+
   const showPopout = useCallback((): void => {
     if (!isTruncated) {
       return;
     }
-    const position = calculatePosition();
-    if (position === null) {
-      return;
-    }
-    setPopoutPosition(position);
+    updatePopoutPosition();
     setIsExpanded(true);
-  }, [calculatePosition, isTruncated]);
+  }, [isTruncated, updatePopoutPosition]);
 
   const hidePopout = useCallback((): void => {
-    setIsExpanded(false);
-    setPopoutPosition(null);
-  }, []);
+    // Only hide if not focused
+    if (!isFocused) {
+      setIsExpanded(false);
+      setPopoutPosition(null);
+    }
+  }, [isFocused]);
 
   const handleMouseEnter = useCallback((): void => {
     if (hoverTimeoutRef.current !== null) {
@@ -100,16 +107,33 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     hidePopout();
   }, [hidePopout]);
 
+  const handleFocus = useCallback((): void => {
+    setIsFocused(true);
+    // Small delay to allow potential scroll-into-view to complete
+    requestAnimationFrame(() => {
+      showPopout();
+    });
+  }, [showPopout]);
+
+  const handleBlur = useCallback((): void => {
+    setIsFocused(false);
+    setIsExpanded(false);
+    setPopoutPosition(null);
+  }, []);
+
   useEffect((): (() => void) | undefined => {
     evaluateTruncation();
     const handleResize = (): void => {
       evaluateTruncation();
+      if (isExpanded) {
+        updatePopoutPosition();
+      }
     };
     window.addEventListener('resize', handleResize);
     return (): void => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [evaluateTruncation, request.name]);
+  }, [evaluateTruncation, isExpanded, updatePopoutPosition, request.name]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -128,13 +152,17 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return undefined;
     }
     const handleScroll = (): void => {
-      hidePopout();
+      if (isFocused) {
+        updatePopoutPosition();
+      } else {
+        hidePopout();
+      }
     };
     scrollParent.addEventListener('scroll', handleScroll, { passive: true });
     return (): void => {
       scrollParent.removeEventListener('scroll', handleScroll);
     };
-  }, [hidePopout, isExpanded]);
+  }, [hidePopout, isExpanded, isFocused, updatePopoutPosition]);
 
   return (
     <>
@@ -143,13 +171,14 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         type="button"
         className={cn(
           containedFocusRingClasses,
-          'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-bg-raised/50 transition-colors'
+          'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-bg-raised/50 transition-colors',
+          isExpanded && !isFocused && 'bg-bg-raised/30'
         )}
         data-test-id={`collection-request-${request.id}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onFocus={showPopout}
-        onBlur={hidePopout}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         onClick={() => {
           selectRequest(collectionId, request.id);
           setMethod(request.method);
@@ -213,7 +242,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             zIndex: 60,
           }}
         >
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-subtle bg-bg-elevated/95 shadow-lg backdrop-blur-sm">
+          <div
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md',
+              isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
+            )}
+          >
             {isBound(request) && (
               <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
             )}
