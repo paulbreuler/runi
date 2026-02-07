@@ -64,7 +64,7 @@ export const focusRingClasses = [
 export const containedFocusRingClasses = [
   'outline-none',
   'focus-visible:outline-2',
-  'focus-visible:outline-[color:var(--color-ring)]',
+  'focus-visible:outline-[var(--color-ring)]',
   'focus-visible:outline-offset-[-2px]',
   'focus-visible:ring-2',
   'focus-visible:ring-[color:var(--color-ring)]',
@@ -72,7 +72,7 @@ export const containedFocusRingClasses = [
   'focus-visible:ring-inset',
   'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:outline-2',
-  '[&[data-focus-visible-added]:focus]:outline-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:outline-[var(--color-ring)]',
   '[&[data-focus-visible-added]:focus]:outline-offset-[-2px]',
   '[&[data-focus-visible-added]:focus]:ring-2',
   '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',

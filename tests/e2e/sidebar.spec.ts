@@ -131,6 +131,7 @@ test.describe('Sidebar', () => {
 
     expect(parentHeight).toBeGreaterThan(0);
     expect(sidebarHeight).toBeGreaterThan(parentHeight - 4);
+    expect(sidebarHeight).toBeLessThanOrEqual(parentHeight + 4);
   });
 
   test('sidebar has smooth animation', async ({ page }) => {
