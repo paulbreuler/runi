@@ -142,7 +142,7 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full transition-colors',
+            'h-3.5 w-3.5 rounded-full border transition-colors',
             isFocused
               ? 'border-black/20 bg-[#ff5f57] hover:brightness-95'
               : 'cursor-default border-black/10 bg-[#8f8f8f]'
@@ -157,7 +157,7 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full transition-colors',
+            'h-3.5 w-3.5 rounded-full border transition-colors',
             isFocused
               ? 'border-black/20 bg-[#febc2e] hover:brightness-95'
               : 'cursor-default border-black/10 bg-[#8f8f8f]'
@@ -172,7 +172,7 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full transition-colors',
+            'h-3.5 w-3.5 rounded-full border transition-colors',
             isFocused
               ? 'border-black/20 bg-[#28c840] hover:brightness-95'
               : 'cursor-default border-black/10 bg-[#8f8f8f]'
