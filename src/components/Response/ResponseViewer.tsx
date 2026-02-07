@@ -10,6 +10,7 @@ import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLangua
 import { motion, useReducedMotion } from 'motion/react';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
+import { StatusBadge } from './StatusBadge';
 
 export interface ResponseViewerProps {
   response: HttpResponse;
@@ -175,62 +176,71 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
         className="flex-1 min-h-0 flex flex-col"
       >
         {/* Tab bar */}
-        <div className="relative flex items-center gap-2 px-6 py-2 border-b border-border-subtle bg-bg-surface">
-          <div
-            ref={tabScrollRef}
-            className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
-            aria-label="Response tabs"
-          >
-            <BaseTabsList
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              tabs={tabs.map((tab) => ({
-                value: tab.id,
-                testId: `response-tab-${tab.id}`,
-                label: (
-                  <span className="flex items-center gap-1.5">
-                    <span>{tab.label}</span>
-                    {tab.id === 'headers' && (
-                      <span className="text-xs text-text-muted">({headerCount})</span>
-                    )}
-                  </span>
-                ),
-              }))}
-              listClassName="flex items-center gap-1 pr-2 min-w-max"
-              tabClassName="px-3 h-7 text-sm rounded-lg transition-colors flex items-center gap-1.5 relative"
-              activeTabClassName="text-text-primary font-medium"
-              inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
-              indicatorLayoutId="response-viewer-tab-indicator"
-              indicatorClassName="bg-bg-raised rounded-lg"
-              indicatorTestId="response-viewer-tab-indicator"
-              listTestId="response-tabs-list"
-              activateOnFocus={false}
-            />
+        <div
+          className="relative flex items-center gap-3 pl-3 pr-2 py-2 border-b border-border-subtle bg-bg-surface"
+          data-test-id="response-header-bar"
+        >
+          <div className="relative flex-1 min-w-0">
+            <div
+              ref={tabScrollRef}
+              className="overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
+              aria-label="Response tabs"
+            >
+              <BaseTabsList
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                tabs={tabs.map((tab) => ({
+                  value: tab.id,
+                  testId: `response-tab-${tab.id}`,
+                  label: (
+                    <span className="flex items-center gap-1.5">
+                      <span>{tab.label}</span>
+                      {tab.id === 'headers' && (
+                        <span className="text-xs text-text-muted">({headerCount})</span>
+                      )}
+                    </span>
+                  ),
+                }))}
+                listClassName="flex items-center gap-1 pr-2 min-w-max"
+                tabClassName="px-3 h-7 text-sm rounded-lg transition-colors flex items-center gap-1.5 relative"
+                activeTabClassName="text-text-primary font-medium"
+                inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+                indicatorLayoutId="response-viewer-tab-indicator"
+                indicatorClassName="bg-bg-raised rounded-lg"
+                indicatorTestId="response-viewer-tab-indicator"
+                listTestId="response-tabs-list"
+                activateOnFocus={false}
+              />
+            </div>
+
+            {showOverflowCue && canScrollLeft && (
+              <motion.div
+                className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
+                data-test-id="response-tabs-overflow-left"
+                initial={false}
+                animate={getOverflowAnimation('left')}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
+            {showOverflowCue && canScrollRight && (
+              <motion.div
+                className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
+                data-test-id="response-tabs-overflow-right"
+                initial={false}
+                animate={getOverflowAnimation('right')}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
           </div>
 
-          {showOverflowCue && canScrollLeft && (
-            <motion.div
-              className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
-              data-test-id="response-tabs-overflow-left"
-              initial={false}
-              animate={getOverflowAnimation('left')}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
-          {showOverflowCue && canScrollRight && (
-            <motion.div
-              className="pointer-events-none absolute inset-y-0 right-20 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
-              data-test-id="response-tabs-overflow-right"
-              initial={false}
-              animate={getOverflowAnimation('right')}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
-
-          {/* Meta info */}
-          <div className="flex items-center gap-4 text-xs text-text-muted font-mono shrink-0">
+          {/* Meta info + status */}
+          <div
+            className="flex items-center gap-3 text-xs text-text-muted font-mono shrink-0"
+            data-test-id="response-header-meta"
+          >
             <span>{bodySize}</span>
             <span>{response.timing.total_ms}ms</span>
+            <StatusBadge status={response.status} statusText={response.status_text} />
           </div>
         </div>
 

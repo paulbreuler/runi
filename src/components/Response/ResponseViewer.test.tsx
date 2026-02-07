@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import { ResponseViewer } from './ResponseViewer';
@@ -62,6 +62,25 @@ describe('ResponseViewer', () => {
     // Body size should be calculated and displayed
   });
 
+  it('embeds response status badge in the header row as the rightmost element', () => {
+    render(<ResponseViewer response={mockResponse} />);
+
+    const headerRow = screen.getByTestId('response-header-bar');
+    const statusBadge = within(headerRow).getByTestId('status-badge');
+    expect(statusBadge).toBeInTheDocument();
+
+    const rightMeta = within(headerRow).getByTestId('response-header-meta');
+    expect(rightMeta.lastElementChild).toBe(statusBadge);
+  });
+
+  it('uses compact horizontal padding to maximize tab/header space', () => {
+    render(<ResponseViewer response={mockResponse} />);
+
+    const headerRow = screen.getByTestId('response-header-bar');
+    expect(headerRow).toHaveClass('pl-3');
+    expect(headerRow).toHaveClass('pr-2');
+  });
+
   it('switches between tabs', async () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);
@@ -85,8 +104,9 @@ describe('ResponseViewer', () => {
     // Should show HTTP status line (react-syntax-highlighter renders in code elements)
     const viewer = screen.getByTestId('response-viewer');
     expect(viewer).toBeInTheDocument();
-    // Status code should be visible
-    expect(screen.getByText('200')).toBeInTheDocument();
+    // Status code should be visible in the headers tab panel
+    const headersPanel = screen.getByRole('tabpanel');
+    expect(within(headersPanel).getByText('200')).toBeInTheDocument();
   });
 
   it('formats raw HTTP response', async () => {

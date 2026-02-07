@@ -196,6 +196,16 @@ describe('RequestBuilder', () => {
     expect(bodyTab).toHaveClass(/text-text-muted/);
   });
 
+  it('uses compact horizontal padding in the tabs header row', () => {
+    render(<RequestBuilder />);
+
+    const tabScroller = screen.getByTestId('request-tabs-scroll');
+    const headerRow = tabScroller.parentElement;
+    expect(headerRow).not.toBeNull();
+    expect(headerRow).toHaveClass('pl-3');
+    expect(headerRow).toHaveClass('pr-2');
+  });
+
   it('shows right overflow cue when tabs overflow', () => {
     render(<RequestBuilder />);
 
