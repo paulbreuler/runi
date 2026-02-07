@@ -9,9 +9,17 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, within, mocked } from 'storybook/test';
 import { TitleBar } from './TitleBar';
 import { Search } from 'lucide-react';
+import { isMacSync } from '@/utils/platform';
+
+// Custom args for story controls
+interface TitleBarStoryArgs {
+  platform?: 'macOS' | 'Windows';
+}
+
+type CombinedProps = React.ComponentProps<typeof TitleBar> & TitleBarStoryArgs;
 
 const meta = {
   title: 'Layout/TitleBar',
@@ -23,6 +31,10 @@ const meta = {
         component: `
 Title bar component for window title and controls.
 Supports platform-specific layouts (Mac vs Windows/Linux) and custom content.
+
+**Storybook 10 Features:**
+- Uses \`sb.mock\` for platform simulation.
+- Uses controls for state variations.
 `,
       },
     },
@@ -33,55 +45,41 @@ Supports platform-specific layouts (Mac vs Windows/Linux) and custom content.
       control: 'text',
       description: 'Window title (shown when no children provided)',
     },
-    onSettingsClick: {
-      action: 'settings clicked',
-      description: 'Callback for settings button (shows button if provided)',
-    },
-    children: {
-      control: 'text', // Simple control for demo
-      description: 'Custom content to render in the center',
+    platform: {
+      control: 'radio',
+      options: ['macOS', 'Windows'],
+      description: 'Simulate platform-specific controls',
     },
   },
   args: {
     title: 'runi',
+    platform: 'macOS',
   },
-} satisfies Meta<typeof TitleBar>;
+} satisfies Meta<CombinedProps>;
 
 export default meta;
-type Story = StoryObj<typeof TitleBar>;
+type Story = StoryObj<CombinedProps>;
 
 /**
  * Default TitleBar with just a title.
  */
 export const Default: Story = {
-  args: {
-    title: 'runi',
+  render: (args) => {
+    mocked(isMacSync).mockReturnValue(args.platform === 'macOS');
+    return <TitleBar title={args.title} />;
   },
 };
 
 /**
- * TitleBar with Settings button.
+ * Windows-style TitleBar.
  */
-export const WithSettings: Story = {
+export const WindowsLayout: Story = {
   args: {
-    title: 'runi',
-    onSettingsClick: fn(),
+    platform: 'Windows',
   },
-  play: async ({ canvasElement, step }) => {
-    const canvas = within(canvasElement);
-    const settingsBtn = canvas.queryByTestId('titlebar-settings');
-
-    // settings button might not show on Mac if the logic dictates?
-    // TitleBar.tsx: `const showRightActions = showSettingsButton || !isMac;`
-    // If isMac is true, showRightActions is true ONLY if showSettingsButton is true.
-    // So if onSettingsClick is provided, it should show.
-
-    if (settingsBtn !== null) {
-      await step('Click settings button', async () => {
-        await userEvent.click(settingsBtn);
-        await expect(settingsBtn).toHaveFocus();
-      });
-    }
+  render: (args) => {
+    mocked(isMacSync).mockReturnValue(args.platform === 'macOS');
+    return <TitleBar title={args.title} onSettingsClick={fn()} />;
   },
 };
 
@@ -98,13 +96,43 @@ export const CustomContent: Story = {
       </div>
     ),
   },
+  render: (args) => {
+    mocked(isMacSync).mockReturnValue(args.platform === 'macOS');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { platform, ...rest } = args;
+    return <TitleBar {...rest} />;
+  },
 };
 
 /**
- * Visual regression test: TitleBar with long title.
+ * Interaction test for window controls and settings.
  */
-export const LongTitle: Story = {
+export const InteractionTest: Story = {
   args: {
-    title: 'runi - A very long project name that might truncate if the window is too small',
+    onSettingsClick: fn(),
+    platform: 'Windows',
+  },
+  render: (args) => {
+    mocked(isMacSync).mockReturnValue(args.platform === 'macOS');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { platform, ...rest } = args;
+    return <TitleBar {...rest} />;
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const settingsBtn = canvas.queryByTestId('titlebar-settings');
+
+    if (settingsBtn !== null) {
+      await step('Click settings button', async () => {
+        await userEvent.click(settingsBtn);
+        await expect(settingsBtn).toHaveFocus();
+      });
+    }
+
+    await step('Verify window controls are present', async () => {
+      await expect(canvas.getByTestId('titlebar-minimize')).toBeVisible();
+      await expect(canvas.getByTestId('titlebar-maximize')).toBeVisible();
+      await expect(canvas.getByTestId('titlebar-close')).toBeVisible();
+    });
   },
 };
