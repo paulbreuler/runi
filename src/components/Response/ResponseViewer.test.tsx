@@ -108,6 +108,33 @@ describe('ResponseViewer', () => {
     expect(within(headersPanel).getByTestId('response-status-code')).toBeInTheDocument();
   });
 
+  it.each([
+    { status: 200, statusText: 'OK', expectedClass: 'text-signal-success' },
+    { status: 302, statusText: 'Found', expectedClass: 'text-accent-blue' },
+    { status: 404, statusText: 'Not Found', expectedClass: 'text-signal-warning' },
+    { status: 503, statusText: 'Service Unavailable', expectedClass: 'text-signal-error' },
+  ])(
+    'uses status-aware color for HTTP $status in headers panel',
+    async ({ status, statusText, expectedClass }) => {
+      const user = userEvent.setup();
+      render(
+        <ResponseViewer
+          response={{
+            ...mockResponse,
+            status,
+            status_text: statusText,
+          }}
+        />
+      );
+
+      await user.click(screen.getByTestId('response-tab-headers'));
+
+      const headersPanel = screen.getByTestId('response-headers-panel');
+      const statusCode = within(headersPanel).getByTestId('response-status-code');
+      expect(statusCode).toHaveClass(expectedClass);
+    }
+  );
+
   it('formats raw HTTP response', async () => {
     const user = userEvent.setup();
     render(<ResponseViewer response={mockResponse} />);

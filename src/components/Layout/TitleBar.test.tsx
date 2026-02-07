@@ -6,6 +6,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TitleBar } from './TitleBar';
+import { globalEventBus } from '@/events/bus';
 import * as platformUtils from '@/utils/platform';
 
 // Mock Tauri window API
@@ -15,6 +16,7 @@ const mockUnmaximize = vi.fn().mockResolvedValue(undefined);
 const mockClose = vi.fn().mockResolvedValue(undefined);
 const mockIsMaximized = vi.fn().mockResolvedValue(false);
 const mockListen = vi.fn().mockResolvedValue(() => {});
+const mockSetFocus = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: vi.fn(() => ({
@@ -22,6 +24,7 @@ vi.mock('@tauri-apps/api/window', () => ({
     maximize: mockMaximize,
     unmaximize: mockUnmaximize,
     close: mockClose,
+    setFocus: mockSetFocus,
     isMaximized: mockIsMaximized,
     listen: mockListen,
   })),
@@ -37,6 +40,7 @@ describe('TitleBar', () => {
     vi.clearAllMocks();
     // Default to macOS for most tests
     vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -55,6 +59,20 @@ describe('TitleBar', () => {
       expect(screen.getByTestId('titlebar-close')).toBeInTheDocument();
       expect(screen.getByTestId('titlebar-minimize')).toBeInTheDocument();
       expect(screen.getByTestId('titlebar-maximize')).toBeInTheDocument();
+    });
+
+    it('does not render macOS traffic-light controls when Tauri window is unavailable', async () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      vi.mocked(getCurrentWindow).mockImplementationOnce(() => {
+        throw new Error('Not in Tauri context');
+      });
+
+      render(<TitleBar />);
+
+      expect(screen.queryByTestId('titlebar-close')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('titlebar-minimize')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('titlebar-maximize')).not.toBeInTheDocument();
     });
 
     it('mutes macOS traffic light colors when window is unfocused', () => {
@@ -125,6 +143,18 @@ describe('TitleBar', () => {
 
       expect(screen.getByTestId('custom-content')).toBeInTheDocument();
       expect(screen.queryByTestId('titlebar-title')).not.toBeInTheDocument();
+    });
+
+    it('treats null and false children as no custom content', () => {
+      const { rerender } = render(<TitleBar>{null}</TitleBar>);
+
+      expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar')).toHaveClass('h-8');
+
+      rerender(<TitleBar>{false}</TitleBar>);
+
+      expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
+      expect(screen.getByTestId('titlebar')).toHaveClass('h-8');
     });
 
     it('renders settings button when onSettingsClick is provided', () => {
@@ -225,6 +255,20 @@ describe('TitleBar', () => {
       fireEvent.click(screen.getByTestId('titlebar-settings'));
       expect(onSettingsClick).toHaveBeenCalledTimes(1);
     });
+
+    it('uses first mac traffic-light click to focus an unfocused window', async () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+
+      render(<TitleBar />);
+
+      fireEvent.click(screen.getByTestId('titlebar-close'));
+
+      await waitFor(() => {
+        expect(mockSetFocus).toHaveBeenCalledTimes(1);
+      });
+      expect(mockClose).not.toHaveBeenCalled();
+    });
   });
 
   describe('accessibility', () => {
@@ -312,6 +356,27 @@ describe('TitleBar', () => {
       expect(() => {
         fireEvent.click(minimizeButton);
       }).not.toThrow();
+    });
+
+    it('emits toast errors when window commands fail', async () => {
+      vi.mocked(platformUtils.isMacSync).mockReturnValue(false);
+      mockMinimize.mockRejectedValueOnce(new Error('Window API error'));
+      const emitSpy = vi.spyOn(globalEventBus, 'emit');
+
+      render(<TitleBar />);
+
+      fireEvent.click(screen.getByTestId('titlebar-minimize'));
+
+      await waitFor(() => {
+        expect(emitSpy).toHaveBeenCalledWith(
+          'toast.show',
+          expect.objectContaining({
+            type: 'error',
+            message: 'Failed to minimize window',
+            details: 'Window API error',
+          })
+        );
+      });
     });
   });
 

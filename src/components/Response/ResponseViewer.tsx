@@ -86,6 +86,22 @@ function formatSize(body: string): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function getStatusTextClass(status: number): string {
+  if (status >= 200 && status < 300) {
+    return 'text-signal-success';
+  }
+  if (status >= 300 && status < 400) {
+    return 'text-accent-blue';
+  }
+  if (status >= 400 && status < 500) {
+    return 'text-signal-warning';
+  }
+  if (status >= 500) {
+    return 'text-signal-error';
+  }
+  return 'text-text-secondary';
+}
+
 export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Element => {
   const [activeTab, setActiveTab] = useState<TabId>('body');
   const prefersReducedMotion = useReducedMotion() === true;
@@ -284,7 +300,7 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
                 <span className="font-mono text-sm">
                   <span className="text-text-muted">HTTP/1.1</span>{' '}
                   <span
-                    className="text-signal-success font-semibold"
+                    className={`${getStatusTextClass(response.status)} font-semibold`}
                     data-test-id="response-status-code"
                   >
                     {response.status}

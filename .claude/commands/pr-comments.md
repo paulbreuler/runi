@@ -22,43 +22,77 @@ When this command is invoked:
 
 ```bash
 # Get unresolved threads with comment details (cursor-paginated)
-cursor=null
+cursor=""
 tmp_file=/tmp/pr-review-threads.jsonl
 : > "$tmp_file"
 
 while :; do
-  page=$(gh api graphql -f query='
-  query($owner: String!, $repo: String!, $pr_number: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $pr_number) {
-        reviewThreads(first: 100, after: $cursor) {
-          nodes {
-            id
-            path
-            isResolved
-            isOutdated
-            comments(first: 20) {
-              nodes {
-                databaseId
-                body
-                createdAt
-                url
-                author { login }
+  if [ -n "$cursor" ]; then
+    page=$(gh api graphql -f query='
+    query($owner: String!, $repo: String!, $pr_number: Int!, $cursor: String) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $pr_number) {
+          reviewThreads(first: 100, after: $cursor) {
+            nodes {
+              id
+              path
+              isResolved
+              isOutdated
+              comments(first: 20) {
+                nodes {
+                  databaseId
+                  body
+                  createdAt
+                  url
+                  author { login }
+                }
               }
             }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
           }
         }
       }
-    }
-  }' \
-    -F owner="{owner}" \
-    -F repo="{repo}" \
-    -F pr_number={pr_number} \
-    -F cursor="$cursor")
+    }' \
+      -F owner="{owner}" \
+      -F repo="{repo}" \
+      -F pr_number={pr_number} \
+      -F cursor="$cursor")
+  else
+    page=$(gh api graphql -f query='
+    query($owner: String!, $repo: String!, $pr_number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $pr_number) {
+          reviewThreads(first: 100) {
+            nodes {
+              id
+              path
+              isResolved
+              isOutdated
+              comments(first: 20) {
+                nodes {
+                  databaseId
+                  body
+                  createdAt
+                  url
+                  author { login }
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      }
+    }' \
+      -F owner="{owner}" \
+      -F repo="{repo}" \
+      -F pr_number={pr_number})
+  fi
 
   echo "$page" >> "$tmp_file"
 

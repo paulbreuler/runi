@@ -6,6 +6,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 import { Minimize2, Maximize2, Settings, X } from 'lucide-react';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
@@ -25,14 +26,22 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
     }
   }, []);
 
+  const emitWindowControlError = (message: string, error: unknown): void => {
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'error',
+      message,
+      details: error instanceof Error ? error.message : String(error),
+    });
+  };
+
   const handleMinimize = async (): Promise<void> => {
     if (appWindow === null) {
       return;
     }
     try {
       await appWindow.minimize();
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      emitWindowControlError('Failed to minimize window', error);
     }
   };
 
@@ -47,8 +56,8 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
       } else {
         await appWindow.maximize();
       }
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      emitWindowControlError('Failed to maximize window', error);
     }
   };
 
@@ -58,13 +67,17 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
     }
     try {
       await appWindow.close();
-    } catch {
-      // Ignore errors
+    } catch (error) {
+      emitWindowControlError('Failed to close window', error);
     }
   };
 
   // Track window focus state (must be before early return to follow Rules of Hooks)
-  const [isFocused, setIsFocused] = useState(true);
+  const [isFocused, setIsFocused] = useState(() =>
+    typeof document !== 'undefined' && typeof document.hasFocus === 'function'
+      ? document.hasFocus()
+      : true
+  );
 
   useEffect(() => {
     if (appWindow === null) {
@@ -117,16 +130,18 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
   }, [appWindow]);
 
   if (isMac) {
+    if (appWindow === null) {
+      return <div className="ml-2 h-full w-[58px]" data-tauri-drag-region />;
+    }
+
     const runMacControlAction = async (action: () => Promise<void>): Promise<void> => {
-      if (appWindow === null) {
-        return;
-      }
       // Match native macOS behavior: first click activates window, second click performs action.
       if (!isFocused) {
         try {
           await appWindow.setFocus();
-        } catch {
-          // Ignore focus errors
+          setIsFocused(true);
+        } catch (error) {
+          emitWindowControlError('Failed to focus window', error);
         }
         return;
       }
@@ -241,7 +256,7 @@ export const TitleBar = ({
 }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
   const showSettingsButton = onSettingsClick !== undefined;
-  const hasCustomContent = children !== undefined;
+  const hasCustomContent = React.Children.toArray(children).length > 0;
   const showRightActions = showSettingsButton || !isMac;
 
   return (
