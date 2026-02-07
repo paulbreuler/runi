@@ -44,7 +44,7 @@ describe('Input', () => {
   it('uses standard focus ring classes for keyboard focus visibility', () => {
     const { container } = render(<Input placeholder="Test" />);
     const input = container.querySelector('input');
-    expect(input?.className).toContain('focus-visible:ring-2');
-    expect(input?.className).toContain('ring-[color:var(--color-ring)]');
+    expect(input?.className).toContain('focus-visible:ring-[1.5px]');
+    expect(input?.className).toContain('ring-[color:var(--accent-a8)]');
   });
 });

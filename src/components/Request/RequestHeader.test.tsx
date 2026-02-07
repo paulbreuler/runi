@@ -73,20 +73,20 @@ describe('RequestHeader', () => {
     const urlInput = screen.getByTestId('url-input');
     const sendButton = screen.getByTestId('send-button');
 
-    expect(methodSelect.className).toContain('focus-visible:ring-2');
-    expect(methodSelect.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(methodSelect.className).toContain('focus-visible:ring-[1.5px]');
+    expect(methodSelect.className).toContain('focus-visible:ring-[color:var(--accent-a8)]');
     expect(methodSelect.className).toContain('focus-visible:!ring-offset-0');
     expect(methodSelect.className).toContain('focus-visible:ring-inset');
     expect(methodSelect.className).toContain('focus-visible:z-10');
 
-    expect(urlInput.className).toContain('focus-visible:ring-2');
-    expect(urlInput.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(urlInput.className).toContain('focus-visible:ring-[1.5px]');
+    expect(urlInput.className).toContain('focus-visible:ring-[color:var(--accent-a8)]');
     expect(urlInput.className).toContain('focus-visible:!ring-offset-0');
     expect(urlInput.className).toContain('focus-visible:ring-inset');
     expect(urlInput.className).toContain('focus-visible:z-10');
 
-    expect(sendButton.className).toContain('focus-visible:ring-2');
-    expect(sendButton.className).toContain('focus-visible:ring-[color:var(--color-ring)]');
+    expect(sendButton.className).toContain('focus-visible:ring-[1.5px]');
+    expect(sendButton.className).toContain('focus-visible:ring-[color:var(--accent-a8)]');
     expect(sendButton.className).toContain('focus-visible:!ring-offset-0');
     expect(sendButton.className).toContain('focus-visible:ring-inset');
     expect(sendButton.className).toContain('focus-visible:z-10');
