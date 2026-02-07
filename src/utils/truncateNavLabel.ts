@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-const maxNavLabelLength = 120;
+const MAX_NAV_LABEL_LENGTH = 120;
 
-/** Truncate a navigation label to a max length, appending ellipsis if needed. */
-export const truncateNavLabel = (label: string, maxLength = maxNavLabelLength): string => {
+/**
+ * Truncate a navigation label to a max length.
+ * Appends ellipsis when truncating and maxLength > 3.
+ */
+export const truncateNavLabel = (label: string, maxLength = MAX_NAV_LABEL_LENGTH): string => {
   if (maxLength <= 0) {
     return '';
   }
