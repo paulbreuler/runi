@@ -63,9 +63,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
     const rect = rowRef.current.getBoundingClientRect();
     // Use Math.round to prevent sub-pixel gaps or "cutting" of the ring
+    // We add 1px to left to align exactly after the tree hierarchy line (border-l)
     return {
       top: Math.round(rect.top),
-      left: Math.round(rect.left),
+      left: Math.round(rect.left) + 1,
       width: Math.round(rect.width),
       height: Math.round(rect.height),
     };
@@ -272,10 +273,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       <AnimatePresence>
         {isExpanded && popoutPosition !== null && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.99 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.99 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            initial={{ opacity: 0, scaleX: 0.95, originX: 0 }}
+            animate={{ opacity: 1, scaleX: 1, originX: 0 }}
+            exit={{ opacity: 0, scaleX: 0.95, originX: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 35, mass: 0.5 }}
             role="tooltip"
             className="pointer-events-none overflow-visible"
             data-test-id="request-popout"
@@ -292,7 +293,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           >
             <div
               className={cn(
-                'flex items-center gap-2 px-3 h-full rounded-md border border-border-subtle bg-bg-elevated shadow-xl backdrop-blur-md min-w-0',
+                'flex items-center gap-2 px-3 h-full rounded-md border border-border-subtle bg-bg-elevated shadow-2xl backdrop-blur-md min-w-0',
                 isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
               )}
             >
