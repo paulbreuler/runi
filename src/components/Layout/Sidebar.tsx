@@ -30,14 +30,17 @@ const DrawerSection = ({
 
   return (
     <div
-      className="border-b border-border-subtle last:border-b-0 flex flex-col min-h-0"
+      className={cn(
+        'border-b border-border-subtle last:border-b-0 flex flex-col min-h-0',
+        isOpen && 'flex-1'
+      )}
       data-test-id={testId}
     >
       <button
         type="button"
         className={cn(
           containedFocusRingClasses,
-          'w-full flex items-center gap-2 px-4 py-3 hover:bg-bg-raised/30 transition-colors cursor-pointer group'
+          'w-full flex items-center gap-2 px-4 py-3 hover:bg-bg-raised/30 transition-colors cursor-pointer group shrink-0'
         )}
         onClick={() => {
           setIsOpen(!isOpen);
@@ -62,9 +65,12 @@ const DrawerSection = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="flex-1 min-h-0"
+            className="flex-1 min-h-0 flex flex-col overflow-hidden"
           >
-            <div className="px-3 pb-3 flex-1 min-h-0 overflow-y-auto" data-scroll-container>
+            <div
+              className="px-3 pb-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+              data-scroll-container
+            >
               {children}
             </div>
           </motion.div>
@@ -76,17 +82,15 @@ const DrawerSection = ({
 
 export const Sidebar = (): React.JSX.Element => {
   return (
-    <aside className="w-full h-full bg-bg-surface flex flex-col" data-test-id="sidebar-content">
-      <div className="flex-1 min-h-0">
-        <DrawerSection
-          title="Collections"
-          icon={<Folder size={14} />}
-          defaultOpen
-          testId="collections-drawer"
-        >
-          <CollectionList />
-        </DrawerSection>
-      </div>
-    </aside>
+    <div className="flex-1 min-h-0 flex flex-col bg-bg-surface" data-test-id="sidebar-content">
+      <DrawerSection
+        title="Collections"
+        icon={<Folder size={14} />}
+        defaultOpen
+        testId="collections-drawer"
+      >
+        <CollectionList />
+      </DrawerSection>
+    </div>
   );
 };

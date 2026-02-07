@@ -570,7 +570,7 @@ export const MainLayout = ({
               >
                 {/* Sidebar content - fades out when collapsing */}
                 <motion.div
-                  className="flex-1 overflow-hidden"
+                  className="flex-1 flex flex-col overflow-hidden"
                   style={{ opacity: sidebarContentOpacity }}
                   data-test-id="sidebar-wrapper"
                   data-collapse-hint={isSidebarCollapseHint}
