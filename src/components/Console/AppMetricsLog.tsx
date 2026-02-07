@@ -83,7 +83,7 @@ export const AppMetricsLog: React.FC<AppMetricsLogProps> = ({
               </div>
             </>
           )}
-          <div className="text-text-muted text-[10px]">
+          <div className="text-text-muted text-xs">
             Threshold: {formatMemoryValue(metrics.memory.threshold)} (
             {(metrics.memory.thresholdPercent * 100).toFixed(0)}%)
           </div>

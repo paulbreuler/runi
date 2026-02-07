@@ -95,7 +95,7 @@ export const TimingWaterfall = ({
               title={`${key}: ${String(ms)}ms`}
             >
               {showLabel && (
-                <span className="text-[10px] font-mono font-medium text-white/90 whitespace-nowrap">
+                <span className="text-xs font-mono font-medium text-white/90 whitespace-nowrap">
                   {ms}ms
                 </span>
               )}

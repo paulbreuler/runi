@@ -10,7 +10,6 @@ import { Settings as SettingsIcon, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { GeneralTab } from './GeneralTab';
 import { FeaturesTab } from './FeaturesTab';
-import { McpTab } from './McpTab';
 import { AboutTab } from './AboutTab';
 import { SettingsSearchBar } from './SettingsSearchBar';
 import { searchSettings } from './settingsSearch';
@@ -21,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/Switch';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
-export type SettingsTabId = 'general' | 'features' | 'mcp' | 'about';
+export type SettingsTabId = 'general' | 'features' | 'about';
 
 export interface SettingsPanelProps {
   /** Whether the panel is visible */
@@ -41,13 +40,12 @@ export interface SettingsPanelProps {
 const TABS: Array<{ id: SettingsTabId; label: string }> = [
   { id: 'general', label: 'General' },
   { id: 'features', label: 'Features' },
-  { id: 'mcp', label: 'MCP' },
   { id: 'about', label: 'About' },
 ];
 
 /**
- * Settings panel: header, search, tabs (General | Features | MCP | About),
- * scrollable content, footer. Phase 1: General tab with http, storage, ui.
+ * Settings panel: header, search, tabs (General | Features | About),
+ * scrollable content, footer.
  */
 export function SettingsPanel({
   isOpen = true,
@@ -261,17 +259,6 @@ export function SettingsPanel({
               <FeaturesTab />
             </div>
           )}
-          {!isJsonMode && activeTab === 'mcp' && (
-            <div
-              id="settings-tabpanel-mcp"
-              role="tabpanel"
-              aria-labelledby="settings-tab-mcp"
-              className="p-0"
-              data-test-id="settings-tabpanel-mcp"
-            >
-              <McpTab settings={settings} onUpdate={updateSetting} />
-            </div>
-          )}
           {!isJsonMode && activeTab === 'about' && (
             <div
               id="settings-tabpanel-about"
@@ -297,7 +284,7 @@ export function SettingsPanel({
           >
             Reset to defaults
           </Button>
-          <span className="text-[10px] text-fg-muted">
+          <span className="text-xs text-fg-muted">
             {jsonError !== null && jsonError !== '' ? 'Invalid JSON' : 'Local preferences'}
           </span>
         </div>

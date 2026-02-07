@@ -125,7 +125,7 @@ export function SettingsSearchBar({
           <>
             {jsonMode ? (
               <>
-                <span className="text-[10px] text-fg-muted tabular-nums" aria-live="polite">
+                <span className="text-xs text-fg-muted tabular-nums" aria-live="polite">
                   {jsonMatchLabel}
                 </span>
                 {hasResults && (
@@ -156,7 +156,7 @@ export function SettingsSearchBar({
                 )}
               </>
             ) : (
-              <span className="text-[10px] text-fg-muted" aria-live="polite">
+              <span className="text-xs text-fg-muted" aria-live="polite">
                 {settingsMatchLabel}
               </span>
             )}

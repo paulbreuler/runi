@@ -23,6 +23,15 @@ interface CollectionItemRequestListProps {
   collectionId: string;
 }
 
+const MAX_NAV_LABEL_LENGTH = 120;
+
+const truncateNavLabel = (label: string, maxLength = MAX_NAV_LABEL_LENGTH): string => {
+  if (label.length <= maxLength) {
+    return label;
+  }
+  return `${label.slice(0, maxLength - 3)}...`;
+};
+
 export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
   const selectRequest = useCollectionStore((state) => state.selectRequest);
   const setMethod = useRequestStore((state) => state.setMethod);
@@ -44,6 +53,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const methodKey = request.method as HttpMethod;
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
+  const displayName = truncateNavLabel(request.name);
 
   const calculatePosition = useCallback((): {
     top: number;
@@ -164,21 +174,22 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               data-test-id="request-bound-indicator"
             />
           )}
-          <span className={cn('text-[11px] font-semibold uppercase tracking-wider', methodClass)}>
+          <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
             {request.method}
           </span>
           <span
             ref={textRef}
             className="text-sm text-text-primary truncate"
             data-test-id="request-name"
+            title={request.name}
           >
-            {request.name}
+            {displayName}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {request.is_streaming && (
             <span
-              className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-[11px] text-purple-500"
+              className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500"
               data-test-id="request-streaming-badge"
             >
               <Radio size={12} />
@@ -187,7 +198,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           )}
           {isAiGenerated(request) && (
             <span
-              className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-[11px] text-[#6EB1D1]"
+              className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]"
               data-test-id="request-ai-badge"
             >
               <Sparkles size={12} />
@@ -214,18 +225,20 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             {isBound(request) && (
               <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
             )}
-            <span className={cn('text-[11px] font-semibold uppercase tracking-wider', methodClass)}>
+            <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
               {request.method}
             </span>
-            <span className="text-sm text-text-primary whitespace-nowrap">{request.name}</span>
+            <span className="text-sm text-text-primary whitespace-nowrap" title={request.name}>
+              {displayName}
+            </span>
             {request.is_streaming && (
-              <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-[11px] text-purple-500">
+              <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500">
                 <Radio size={12} />
                 Streaming
               </span>
             )}
             {isAiGenerated(request) && (
-              <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-[11px] text-[#6EB1D1]">
+              <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]">
                 <Sparkles size={12} />
                 AI
               </span>

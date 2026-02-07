@@ -95,7 +95,7 @@ export function SettingRow<C extends SettingsCategory>({
           {availability !== 'supported' && (
             <span
               className={cn(
-                'text-[9px] font-medium px-1.5 py-0.5 rounded-full uppercase tracking-[0.08em]',
+                'text-xs font-medium px-1.5 py-0.5 rounded-full uppercase tracking-[0.08em]',
                 availability === 'teaser'
                   ? 'bg-amber-3 text-amber-11'
                   : 'bg-bg-elevated text-fg-muted'
@@ -108,7 +108,7 @@ export function SettingRow<C extends SettingsCategory>({
         </div>
         <p className="text-xs text-fg-muted mt-0.5">{schema.description}</p>
         {showWarning && (
-          <p className="text-[11px] text-amber-11 mt-1 flex items-center gap-1">
+          <p className="text-xs text-amber-11 mt-1 flex items-center gap-1">
             <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden />
             {schema.warning}
           </p>
@@ -150,7 +150,7 @@ export function SettingRow<C extends SettingsCategory>({
               })()}
             </div>
             {numberError !== null && numberError !== '' ? (
-              <span className="text-[10px] text-red-11">{numberError}</span>
+              <span className="text-xs text-red-11">{numberError}</span>
             ) : null}
           </>
         )}

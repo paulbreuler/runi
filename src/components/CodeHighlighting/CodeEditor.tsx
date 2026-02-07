@@ -505,7 +505,7 @@ export const CodeEditor = ({
             />
             {searchTerm.trim().length > 0 && (
               <span
-                className="text-[10px] text-fg-muted tabular-nums whitespace-nowrap"
+                className="text-xs text-fg-muted tabular-nums whitespace-nowrap"
                 aria-live="polite"
               >
                 {searchMatches.length > 0

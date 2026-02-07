@@ -569,7 +569,7 @@ export const DockablePanel = ({
               style={isDragging ? { opacity: contentOpacity } : undefined}
             >
               <GripHorizontal size={14} />
-              <span className="text-[11px] font-medium tracking-wide uppercase">Tray</span>
+              <span className="text-xs font-medium tracking-wide uppercase">Tray</span>
             </motion.div>
           </motion.div>
         )}
@@ -614,7 +614,7 @@ export const DockablePanel = ({
             >
               <GripVertical size={14} />
               <span
-                className="text-[11px] font-medium tracking-wide uppercase"
+                className="text-xs font-medium tracking-wide uppercase"
                 style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
                 Tray
@@ -663,7 +663,7 @@ export const DockablePanel = ({
             >
               <GripVertical size={14} />
               <span
-                className="text-[11px] font-medium tracking-wide uppercase"
+                className="text-xs font-medium tracking-wide uppercase"
                 style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
                 Tray
