@@ -4,9 +4,11 @@
  * Usage:
  *   npx tsx scripts/helpers/pr-comments.ts list [pr_number]
  *   npx tsx scripts/helpers/pr-comments.ts analyze [pr_number]
+ *   npx tsx scripts/helpers/pr-comments.ts reply [pr_number] <comment_id> <message>
+ *   npx tsx scripts/helpers/pr-comments.ts resolve <thread_id>
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 
 interface GHComment {
@@ -33,11 +35,15 @@ interface GHPRView {
   headRepository: { name: string };
 }
 
+const runGh = (args: string[]): string => {
+  return execFileSync('gh', args, { encoding: 'utf-8' });
+};
+
 const getPRInfo = (prNumber?: string): GHPRView => {
-  const cmd = prNumber
-    ? `gh pr view ${prNumber} --json number,headRepositoryOwner,headRepository`
-    : `gh pr view --json number,headRepositoryOwner,headRepository`;
-  return JSON.parse(execSync(cmd, { encoding: 'utf-8' }));
+  const args = ['pr', 'view'];
+  if (prNumber) args.push(prNumber);
+  args.push('--json', 'number,headRepositoryOwner,headRepository');
+  return JSON.parse(runGh(args));
 };
 
 const fetchThreads = (owner: string, repo: string, prNumber: number): GHThread[] => {
@@ -71,20 +77,24 @@ const fetchThreads = (owner: string, repo: string, prNumber: number): GHThread[]
     }
   `;
 
-  // Simple pagination wrapper for gh api graphql
-  const result = execSync(
-    `gh api graphql --paginate -f query='${query}' -F owner="${owner}" -F repo="${repo}" -F pr_number=${prNumber}`,
-    { encoding: 'utf-8' }
-  );
+  const result = runGh([
+    'api',
+    'graphql',
+    '--paginate',
+    '-f',
+    `query=${query}`,
+    '-F',
+    `owner=${owner}`,
+    '-F',
+    `repo=${repo}`,
+    '-F',
+    `pr_number=${prNumber}`,
+  ]);
 
-  // gh --paginate returns multiple JSON objects concatenated or a single one depending on version
-  // We'll try to parse it as a single object if possible, or split if needed
   try {
     const parsed = JSON.parse(result);
     return parsed.data.repository.pullRequest.reviewThreads.nodes;
   } catch (e) {
-    // If multiple pages, gh returns them line-by-line or concatenated
-    // Standard approach: parse each line as a JSON object if it starts with {
     return result
       .split('\n')
       .filter((line) => line.trim().startsWith('{'))
@@ -92,7 +102,7 @@ const fetchThreads = (owner: string, repo: string, prNumber: number): GHThread[]
   }
 };
 
-const listCommand = (threads: GHThread[]) => {
+const listCommand = (threads: GHThread[]): void => {
   const unresolved = threads.filter((t) => !t.isResolved);
   if (unresolved.length === 0) {
     console.log('✅ No unresolved review threads found.');
@@ -109,7 +119,7 @@ const listCommand = (threads: GHThread[]) => {
   });
 };
 
-const analyzeCommand = (threads: GHThread[]) => {
+const analyzeCommand = (threads: GHThread[]): void => {
   const unresolved = threads.filter((t) => !t.isResolved);
   if (unresolved.length === 0) {
     console.log('✅ No unresolved review threads found.');
@@ -136,19 +146,26 @@ const replyCommand = (
   prNumber: number,
   commentId: string,
   body: string
-) => {
-  const cmd = `gh api repos/${owner}/${repo}/pulls/${prNumber}/comments/${commentId}/replies -X POST -f body="${body}" --silent`;
-  execSync(cmd);
+): void => {
+  runGh([
+    'api',
+    `repos/${owner}/${repo}/pulls/${prNumber}/comments/${commentId}/replies`,
+    '-X',
+    'POST',
+    '-f',
+    `body=${body}`,
+    '--silent',
+  ]);
   console.log(`✅ Replied to comment ${commentId}`);
 };
 
-const resolveCommand = (threadId: string) => {
-  const query = `mutation { resolveReviewThread(input: {threadId: \"${threadId}\"}) { thread { isResolved } } }`;
-  execSync(`gh api graphql -f query='${query}' --silent`);
+const resolveCommand = (threadId: string): void => {
+  const query = `mutation { resolveReviewThread(input: {threadId: "${threadId}"}) { thread { isResolved } } }`;
+  runGh(['api', 'graphql', '-f', `query=${query}`, '--silent']);
   console.log(`✅ Resolved thread ${threadId}`);
 };
 
-const main = () => {
+const main = (): void => {
   const [command, prArg, extra1, ...extraRest] = process.argv.slice(2);
 
   if (!command || !['list', 'analyze', 'reply', 'resolve'].includes(command)) {
@@ -163,7 +180,6 @@ const main = () => {
   }
 
   try {
-    // Resolve is special, it only needs thread ID
     if (command === 'resolve') {
       if (!prArg) throw new Error('Thread ID required for resolve command');
       resolveCommand(prArg);
