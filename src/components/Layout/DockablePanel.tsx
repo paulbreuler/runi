@@ -684,7 +684,7 @@ export const DockablePanel = ({
               className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative"
             >
               {/* Scrollable header content */}
-              <ScrollArea.Root className="flex-1 min-w-0">
+              <ScrollArea.Root className="flex-1 min-w-0 h-full relative">
                 <ScrollArea.Viewport
                   ref={headerScrollRef}
                   className="scroll-area-viewport flex items-center gap-2 min-w-max h-full touch-pan-x overflow-x-auto overflow-y-hidden"
@@ -698,6 +698,27 @@ export const DockablePanel = ({
                     )}
                   </ScrollArea.Content>
                 </ScrollArea.Viewport>
+
+                {/* Overflow gradient cues - positioned inside ScrollArea.Root */}
+                {showOverflowCue && canScrollLeft && (
+                  <motion.div
+                    className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent z-20"
+                    data-test-id="panel-header-overflow-left"
+                    initial={false}
+                    animate={getOverflowAnimation('left')}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                )}
+                {showOverflowCue && canScrollRight && (
+                  <motion.div
+                    className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-bg-surface/90 to-transparent z-20"
+                    data-test-id="panel-header-overflow-right"
+                    initial={false}
+                    animate={getOverflowAnimation('right')}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                )}
+
                 <ScrollArea.Scrollbar
                   orientation="horizontal"
                   className="scroll-area-scrollbar flex touch-none select-none transition-colors h-1"
@@ -706,30 +727,10 @@ export const DockablePanel = ({
                 </ScrollArea.Scrollbar>
               </ScrollArea.Root>
 
-              {/* Overflow gradient cues */}
-              {showOverflowCue && canScrollLeft && (
-                <motion.div
-                  className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-gradient-to-r from-bg-surface/90 to-transparent"
-                  data-test-id="panel-header-overflow-left"
-                  initial={false}
-                  animate={getOverflowAnimation('left')}
-                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                />
-              )}
-              {showOverflowCue && canScrollRight && (
-                <motion.div
-                  className="pointer-events-none absolute inset-y-0 right-[84px] w-6 bg-gradient-to-l from-bg-surface/90 to-transparent"
-                  data-test-id="panel-header-overflow-right"
-                  initial={false}
-                  animate={getOverflowAnimation('right')}
-                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                />
-              )}
-
               {/* Control buttons - fixed on right */}
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 shrink-0 ml-2">
                 {/* Dock controls */}
-                <DockControls className="mr-2" />
+                <DockControls />
 
                 {/* Collapse/Minimize button */}
                 <button

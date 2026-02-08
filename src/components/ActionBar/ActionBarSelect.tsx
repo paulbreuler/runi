@@ -76,10 +76,11 @@ export const ActionBarSelect = <T extends BaseSelectOption>({
   const isIconMode = variant === 'icon';
 
   // Trigger classes for icon mode
-  const iconTriggerClasses = 'size-7 p-0 min-w-0 justify-center [&>svg:last-child]:hidden';
+  const iconTriggerClasses =
+    'size-7 p-0 min-w-0 justify-center [&>span:last-child]:hidden shrink-0';
 
   // Trigger classes for full/compact mode
-  const normalTriggerClasses = 'h-7 px-2 py-1 text-xs';
+  const normalTriggerClasses = 'h-7 px-2 py-1 text-xs shrink-0';
 
   return (
     <Select.Select value={value} onValueChange={onValueChange}>
