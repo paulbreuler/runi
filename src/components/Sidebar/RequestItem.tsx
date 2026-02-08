@@ -301,7 +301,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           <motion.div
             initial={{ width: popoutPosition.width }}
             animate={{ width: 'auto' }}
-            exit={{ width: popoutPosition.width }}
+            exit={{ width: popoutPosition.width, transition: { duration: 0 } }}
             transition={
               shouldReduceMotion === true
                 ? { duration: 0 }
