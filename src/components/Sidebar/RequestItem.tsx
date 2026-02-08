@@ -149,7 +149,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       }
       hoverTimeoutRef.current = window.setTimeout(() => {
         showPopout();
-      }, 150);
+      }, 250);
     } else {
       if (hoverTimeoutRef.current !== null) {
         window.clearTimeout(hoverTimeoutRef.current);
@@ -352,7 +352,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             transition={
               shouldReduceMotion === true
                 ? { duration: 0 }
-                : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5 }
+                : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5, delay: 0.1 }
             }
             role="tooltip"
             className="pointer-events-none overflow-hidden"
