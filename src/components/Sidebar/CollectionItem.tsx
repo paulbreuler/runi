@@ -14,7 +14,6 @@ import {
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
 import { containedFocusRingClasses } from '@/utils/accessibility';
-import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface CollectionItemProps {
@@ -34,7 +33,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
 
   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>): void => {
     // Ensure mouse click sets focus so subsequent keyboard nav works
-    focusWithVisibility(e.currentTarget);
+    e.currentTarget.focus({ preventScroll: true });
     const nextExpanded = !isExpanded;
     toggleExpanded(summary.id);
     selectCollection(summary.id);

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import type { CollectionRequest } from '@/types/collection';
 import { RequestItem } from './RequestItem';
 import { TooltipProvider } from '@/components/ui/Tooltip';
@@ -40,12 +40,15 @@ const baseRequest: CollectionRequest = {
 };
 
 describe('RequestItem', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('shows a popout after hover delay when truncated', async () => {
-    vi.useRealTimers();
+  it('shows a popout after hover delay when truncated', () => {
     render(
       <TooltipProvider>
         <RequestItem request={baseRequest} collectionId="col_1" />
@@ -64,23 +67,25 @@ describe('RequestItem', () => {
     });
 
     const wrapper = row.parentElement!;
-    fireEvent.mouseEnter(wrapper);
+    act(() => {
+      fireEvent.mouseEnter(wrapper);
+    });
 
-    const popout = await screen.findByTestId('request-popout', {}, { timeout: 1000 });
-    expect(popout).toBeInTheDocument();
+    // Advance past the 250ms hover delay
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
 
-    fireEvent.mouseLeave(wrapper);
+    expect(screen.getByTestId('request-popout')).toBeInTheDocument();
 
-    await waitFor(
-      () => {
-        expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
-      },
-      { timeout: 1000 }
-    );
+    act(() => {
+      fireEvent.mouseLeave(wrapper);
+    });
+
+    expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
   });
 
-  it('does not show a popout when text is not truncated', async () => {
-    vi.useRealTimers();
+  it('does not show a popout when text is not truncated', () => {
     const shortRequest = { ...baseRequest, name: 'Short Name' };
     render(
       <TooltipProvider>
@@ -100,10 +105,15 @@ describe('RequestItem', () => {
     });
 
     const wrapper = row.parentElement!;
-    fireEvent.mouseEnter(wrapper);
+    act(() => {
+      fireEvent.mouseEnter(wrapper);
+    });
 
-    // Should not find it even after a delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Advance past the hover delay
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
     expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
   });
 });

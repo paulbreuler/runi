@@ -36,6 +36,7 @@ vi.mock('@/stores/useCollectionStore', () => ({
 describe('Sidebar', (): void => {
   beforeEach((): void => {
     useFeatureFlagStore.getState().resetToDefaults();
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
     mockCollectionState = createCollectionState();
   });
   it('renders sidebar with proper structure', (): void => {

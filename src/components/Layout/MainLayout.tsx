@@ -23,6 +23,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { isMacSync, getModifierKeyName } from '@/utils/platform';
 import type { ModifierKey } from '@/utils/keyboard';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useWindowFocus } from '@/hooks/useWindowFocus';
 import { cn } from '@/utils/cn';
 import { NetworkHistoryPanel } from '../History/NetworkHistoryPanel';
 import { ConsolePanel } from '../Console/ConsolePanel';
@@ -517,11 +518,15 @@ export const MainLayout = ({
   );
 
   const isSidebarOverlay = sidebarVisible && isCompact;
+  const isFocused = useWindowFocus();
 
   return (
     <div
       ref={layoutRef}
-      className="relative z-0 flex h-screen flex-col bg-bg-app"
+      className={cn(
+        'relative z-0 flex h-screen flex-col bg-bg-app transition-colors duration-300',
+        !isFocused && 'window-blur'
+      )}
       data-test-id="main-layout"
     >
       <div className="shrink-0">

@@ -28,7 +28,7 @@ hydrated from YAML config files in `~/.runi`.
 | Flag                      | Default | State          | Description                                     |
 | ------------------------- | ------- | -------------- | ----------------------------------------------- |
 | `http.collectionsEnabled` | `false` | `experimental` | Enable collections navigation in the sidebar.   |
-| `http.collectionsSaving`  | `false` | `experimental` | Allow saving and persisting collection changes. |
+| `http.collectionsSaving`  | `false` | `hidden`       | Allow saving and persisting collection changes. |
 | `http.importBruno`        | `true`  | `stable`       | Import Bruno collections into runi.             |
 | `http.importPostman`      | `true`  | `stable`       | Import Postman collections and environments.    |
 | `http.importOpenAPI`      | `true`  | `stable`       | Import OpenAPI specs into the HTTP client.      |

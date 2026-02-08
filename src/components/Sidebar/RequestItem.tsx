@@ -13,7 +13,6 @@ import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { containedFocusRingClasses } from '@/utils/accessibility';
-import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface RequestItemProps {
@@ -123,10 +122,20 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   }, [calculatePosition]);
 
   const showPopout = useCallback((): void => {
+    // Bail early if selected (popout won't render) or text isn't truncated
+    if (isSelected) {
+      return;
+    }
     evaluateTruncation();
+    if (textRef.current !== null) {
+      const { scrollWidth, clientWidth } = textRef.current;
+      if (scrollWidth <= clientWidth + 1) {
+        return;
+      }
+    }
     updatePopoutPosition();
     setIsExpanded(true);
-  }, [evaluateTruncation, updatePopoutPosition]);
+  }, [evaluateTruncation, updatePopoutPosition, isSelected]);
 
   const hidePopout = useCallback((): void => {
     if (!isFocused) {
@@ -135,7 +144,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
   }, [isFocused]);
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     if (isHovered || isFocused) {
       if (hoverTimeoutRef.current !== null) {
         window.clearTimeout(hoverTimeoutRef.current);
@@ -175,17 +184,17 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     setPopoutPosition(null);
   }, []);
 
-  useLayoutEffect(() => {
+  useLayoutEffect((): void => {
     evaluateTruncation();
   }, [evaluateTruncation, request.name]);
 
   // Use ResizeObserver to reliably track truncation as sidebar resizes
-  useLayoutEffect(() => {
+  useLayoutEffect((): (() => void) | undefined => {
     const el = textRef.current;
-    if (el === null) {
+    if (el === null || typeof ResizeObserver === 'undefined') {
       return undefined;
     }
-    const observer = new ResizeObserver(() => {
+    const observer = new ResizeObserver((): void => {
       evaluateTruncation();
     });
     observer.observe(el);
@@ -199,7 +208,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     [isExpanded, isOccluded, isTruncated, isSelected]
   );
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!isActuallyVisible()) {
       return undefined;
     }
@@ -291,7 +300,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e) => {
-          focusWithVisibility(e.currentTarget);
+          e.currentTarget.focus({ preventScroll: true });
           handleAction();
         }}
       >
@@ -303,7 +312,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               aria-label="Bound to spec"
               title="Bound to spec"
             >
-              <span className="h-2 w-2 rounded-full bg-green-500" />
+              <span className="h-2 w-2 rounded-full bg-signal-success" />
             </div>
           )}
           <span
@@ -325,7 +334,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         <div className="flex items-center gap-2 shrink-0">
           {request.is_streaming && (
             <span
-              className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0"
+              className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs text-accent-purple shrink-0"
               data-test-id="request-streaming-badge"
             >
               <Radio size={12} />
@@ -334,7 +343,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           )}
           {isAiGenerated(request) && (
             <span
-              className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1] shrink-0"
+              className="flex items-center gap-1 rounded-full bg-signal-ai/10 px-2 py-0.5 text-xs text-signal-ai shrink-0"
               data-test-id="request-ai-badge"
             >
               <Sparkles size={12} />
@@ -356,7 +365,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5, delay: 0.1 }
             }
             role="tooltip"
-            className="pointer-events-none overflow-hidden"
+            className="pointer-events-none overflow-hidden bg-bg-elevated"
             data-test-id="request-popout"
             style={{
               position: 'fixed',
@@ -365,7 +374,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               height: popoutPosition.height,
               zIndex: 60,
               maxWidth: 'min(600px, calc(100vw - 40px))',
-              backgroundColor: isSelected ? '#1C2C3E' : '#1E1E1E',
             }}
           >
             <div className="flex items-center gap-2 px-3 h-full whitespace-nowrap min-w-0">
@@ -376,7 +384,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                   aria-label="Bound to spec"
                   title="Bound to spec"
                 >
-                  <span className="h-2 w-2 rounded-full bg-green-500" />
+                  <span className="h-2 w-2 rounded-full bg-signal-success" />
                 </div>
               )}
               <span
@@ -391,13 +399,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 <span className="text-sm text-text-primary truncate block">{request.name}</span>
               </div>
               {request.is_streaming && (
-                <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0">
+                <span className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs text-accent-purple shrink-0">
                   <Radio size={12} />
                   Streaming
                 </span>
               )}
               {isAiGenerated(request) && (
-                <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1] shrink-0">
+                <span className="flex items-center gap-1 rounded-full bg-signal-ai/10 px-2 py-0.5 text-xs text-signal-ai shrink-0">
                   <Sparkles size={12} />
                   AI
                 </span>

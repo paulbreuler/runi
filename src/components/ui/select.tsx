@@ -39,7 +39,7 @@ const SelectTrigger = React.forwardRef<
     {...(dataTestId !== undefined && { 'data-test-id': dataTestId })}
     className={cn(
       focusRingClasses,
-      'border border-border-subtle data-[placeholder]:text-text-muted flex h-9 w-fit items-center justify-between gap-2 rounded-lg bg-bg-surface px-3 py-2 text-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-bg-raised hover:border-border-default [&>span]:line-clamp-1',
+      'border border-border-subtle data-[placeholder]:text-text-muted flex h-9 w-fit items-center justify-between gap-2 rounded-lg bg-bg-surface px-3 py-2 text-sm text-text-primary transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-bg-raised hover:border-border-default [&>span]:line-clamp-1',
       className
     )}
     {...props}

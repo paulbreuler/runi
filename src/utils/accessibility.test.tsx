@@ -68,7 +68,7 @@ describe('accessibility utilities', () => {
     it('uses ring styles suitable for clipped/overflow contexts', () => {
       expect(containedFocusRingClasses).toContain('outline-none');
       expect(containedFocusRingClasses).toContain('focus-visible:outline-1');
-      expect(containedFocusRingClasses).toContain('focus-visible:outline-[var(--accent-a8)]');
+      expect(containedFocusRingClasses).toContain('focus-visible:outline-[color:var(--accent-a8)]');
       expect(containedFocusRingClasses).toContain('focus-visible:outline-offset-[-1px]');
       expect(containedFocusRingClasses).toContain('focus-visible:ring-1');
       expect(containedFocusRingClasses).toContain('focus-visible:ring-[color:var(--accent-a8)]');
@@ -84,7 +84,7 @@ describe('accessibility utilities', () => {
     it('supports programmatic focus-visible state in clipped contexts', () => {
       expect(containedFocusRingClasses).toContain('[&[data-focus-visible-added]:focus]:outline-1');
       expect(containedFocusRingClasses).toContain(
-        '[&[data-focus-visible-added]:focus]:outline-[var(--accent-a8)]'
+        '[&[data-focus-visible-added]:focus]:outline-[color:var(--accent-a8)]'
       );
       expect(containedFocusRingClasses).toContain(
         '[&[data-focus-visible-added]:focus]:outline-offset-[-1px]'
