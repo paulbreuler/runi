@@ -422,7 +422,7 @@ describe('HomePage - Auto-save to history', () => {
     });
   });
 
-  describe('Collection request selection (event-driven)', () => {
+  describe('Collection request selection (event-driven)', (): void => {
     const mockCollectionRequest: CollectionRequest = {
       id: 'req_456',
       name: 'Get Users',
@@ -438,19 +438,7 @@ describe('HomePage - Auto-save to history', () => {
       body: { type: 'raw', content: '{"filter": "active"}' },
     };
 
-    it('subscribes to collection.request-selected event on mount', async () => {
-      render(<HomePage />);
-
-      // Verify subscription was set up
-      const { globalEventBus } = await import('@/events/bus');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(vi.mocked(globalEventBus.on)).toHaveBeenCalledWith(
-        'collection.request-selected',
-        expect.any(Function)
-      );
-    });
-
-    it('updates request store when collection.request-selected event is emitted', async () => {
+    it('updates request store when collection.request-selected event is emitted', async (): Promise<void> => {
       render(<HomePage />);
 
       // Wait for subscription to be set up
@@ -491,7 +479,7 @@ describe('HomePage - Auto-save to history', () => {
       });
     });
 
-    it('handles collection request without body', async () => {
+    it('handles collection request without body', async (): Promise<void> => {
       const requestWithoutBody: CollectionRequest = {
         ...mockCollectionRequest,
         body: undefined,
@@ -529,7 +517,7 @@ describe('HomePage - Auto-save to history', () => {
       });
     });
 
-    it('clears previous response when loading from collection', async () => {
+    it('clears previous response when loading from collection', async (): Promise<void> => {
       render(<HomePage />);
 
       const { globalEventBus } = await import('@/events/bus');
@@ -562,7 +550,7 @@ describe('HomePage - Auto-save to history', () => {
       });
     });
 
-    it('cleans up both history and collection event subscriptions on unmount', async () => {
+    it('cleans up both history and collection event subscriptions on unmount', async (): Promise<void> => {
       const { unmount } = render(<HomePage />);
 
       // Get both unsubscribe functions

@@ -124,8 +124,8 @@ describe('RequestItem', () => {
     expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
   });
 
-  describe('Event-driven request selection', () => {
-    it('emits collection.request-selected event when clicked', () => {
+  describe('Event-driven request selection', (): void => {
+    it('emits collection.request-selected event when clicked', (): void => {
       const emitSpy = vi.spyOn(globalEventBus, 'emit');
 
       render(
@@ -148,7 +148,7 @@ describe('RequestItem', () => {
       emitSpy.mockRestore();
     });
 
-    it('emits event with correct payload for different requests', () => {
+    it('emits event with correct payload for different requests', (): void => {
       const emitSpy = vi.spyOn(globalEventBus, 'emit');
       const postRequest: CollectionRequest = {
         ...baseRequest,
