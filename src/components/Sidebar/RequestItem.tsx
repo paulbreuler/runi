@@ -6,8 +6,8 @@
 import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { globalEventBus } from '@/events/bus';
 import { useCollectionStore } from '@/stores/useCollectionStore';
-import { useRequestStore } from '@/stores/useRequestStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
@@ -29,10 +29,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
   const isSelected = selectedRequestId === request.id;
   const selectRequest = useCollectionStore((state) => state.selectRequest);
-  const setMethod = useRequestStore((state) => state.setMethod);
-  const setUrl = useRequestStore((state) => state.setUrl);
-  const setHeaders = useRequestStore((state) => state.setHeaders);
-  const setBody = useRequestStore((state) => state.setBody);
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -272,10 +268,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     setPopoutPosition(null);
 
     selectRequest(collectionId, request.id);
-    setMethod(request.method);
-    setUrl(request.url);
-    setHeaders(request.headers);
-    setBody(request.body?.content ?? '');
+
+    // Propagate event for other components (like RequestPanel) to react
+    globalEventBus.emit('collection.request-selected', {
+      collectionId,
+      request,
+    });
   };
 
   return (

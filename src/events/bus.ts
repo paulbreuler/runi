@@ -16,6 +16,8 @@
  * - Testability (easy to mock event bus)
  */
 
+import type { CollectionRequest } from '@/types/collection';
+
 /**
  * Event type identifiers.
  *
@@ -29,6 +31,7 @@ export type EventType =
   | 'response.error'
   | 'sidebar.toggled'
   | 'sidebar.visible-changed'
+  | 'collection.request-selected'
   | 'history.entry-selected'
   | 'ai.suggestion-requested'
   | 'ai.suggestion-available'
@@ -40,6 +43,14 @@ export type EventType =
   | 'console.error-emitted'
   | 'panel.console-requested'
   | 'toast.show';
+
+/**
+ * Payload for collection.request-selected event.
+ */
+export interface CollectionRequestSelectedPayload {
+  collectionId: string;
+  request: CollectionRequest;
+}
 
 /**
  * Toast notification type.
