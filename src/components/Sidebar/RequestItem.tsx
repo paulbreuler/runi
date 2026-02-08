@@ -134,7 +134,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     if (hoverTimeoutRef.current !== null) {
       window.clearTimeout(hoverTimeoutRef.current);
     }
-    hoverTimeoutRef.current = window.setTimeout(showPopout, 250);
+    hoverTimeoutRef.current = window.setTimeout(showPopout, 150);
   }, [showPopout]);
 
   const handleMouseLeave = useCallback((): void => {
@@ -305,7 +305,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             transition={
               shouldReduceMotion === true
                 ? { duration: 0 }
-                : { type: 'spring', stiffness: 500, damping: 35, mass: 0.5 }
+                : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5 }
             }
             role="tooltip"
             className="pointer-events-none overflow-hidden"
