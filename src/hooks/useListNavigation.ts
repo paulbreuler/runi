@@ -55,7 +55,7 @@ export function useListNavigation(options: ListNavigationOptions): {
         const isAbove = itemRect.top < containerRect.top + padding;
         const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;
 
-        const scrollBehavior = prefersReducedMotion ? 'instant' : 'smooth';
+        const scrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
 
         if (isAbove) {
           const delta = itemRect.top - (containerRect.top + padding);
@@ -106,31 +106,29 @@ export function useListNavigation(options: ListNavigationOptions): {
           // Intercept Tab to follow our natural scrolling driver
           if (e.shiftKey) {
             // Previous
-            if (currentIndex <= 0) {
-              if (loop) {
-                e.preventDefault();
-                targetIndex = items.length - 1;
-              }
-              // If not looping, let default Tab behavior handle focus exit
-            } else {
+            if (currentIndex > 0) {
               e.preventDefault();
               targetIndex = currentIndex - 1;
+            } else if (loop && currentIndex === 0) {
+              // Only loop if explicitly enabled AND we are at the very start
+              e.preventDefault();
+              targetIndex = items.length - 1;
             }
+            // Otherwise allow default behavior to exit the list
           } else {
             // Next
             if (currentIndex === -1) {
               e.preventDefault();
               targetIndex = 0;
-            } else if (currentIndex === items.length - 1) {
-              if (loop) {
-                e.preventDefault();
-                targetIndex = 0;
-              }
-              // If not looping, let default Tab behavior handle focus exit
-            } else {
+            } else if (currentIndex < items.length - 1) {
               e.preventDefault();
               targetIndex = currentIndex + 1;
+            } else if (loop && currentIndex === items.length - 1) {
+              // Only loop if explicitly enabled AND we are at the very end
+              e.preventDefault();
+              targetIndex = 0;
             }
+            // Otherwise allow default behavior to exit the list
           }
           break;
         case 'ArrowDown':

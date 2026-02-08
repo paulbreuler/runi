@@ -23,8 +23,9 @@ export const CollectionList = (): React.JSX.Element => {
   // Roving tabindex/Arrow key navigation for the whole sidebar tree
   const { handleKeyDown } = useListNavigation({
     // Selector covers both collection headers and individual request items
-    itemSelector: '[data-test-id^="collection-item-"], [data-test-id^="collection-request-"]',
+    itemSelector: '[data-nav-item="true"]',
     activeItemSelector: '[data-active="true"]',
+    loop: false,
   });
 
   useEffect(() => {

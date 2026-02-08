@@ -54,6 +54,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
         )}
         data-test-id={`collection-item-${summary.id}`}
         data-active={isSelected || undefined}
+        data-nav-item="true"
         onClick={handleToggle}
         aria-expanded={isExpanded}
       >

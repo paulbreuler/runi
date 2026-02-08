@@ -15,7 +15,6 @@ import { cn } from '@/utils/cn';
 import { containedFocusRingClasses } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
-import { Tooltip } from '@/components/ui/Tooltip';
 
 interface RequestItemProps {
   request: CollectionRequest;
@@ -26,8 +25,6 @@ interface CollectionItemRequestListProps {
   requests: CollectionRequest[];
   collectionId: string;
 }
-
-const MAX_EXPANDED_CHARS = 80;
 
 export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
@@ -61,14 +58,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
   const displayName = truncateNavLabel(request.name);
 
-  // Expansion triggers if name.length > 100
-  const isTooLong = request.name.length > MAX_EXPANDED_CHARS;
-  const expandedDisplayName = truncateNavLabel(request.name, MAX_EXPANDED_CHARS);
-
   // Occlusion detection: hide popout if the item scrolls out of view
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     const row = rowRef.current;
-    if (row === null) {
+    if (row === null || typeof IntersectionObserver === 'undefined') {
       return undefined;
     }
 
@@ -292,6 +285,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         )}
         data-test-id={`collection-request-${request.id}`}
         data-active={isSelected || undefined}
+        data-nav-item="true"
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e) => {
@@ -301,7 +295,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       >
         <div className="flex items-center gap-2 min-w-0">
           {isBound(request) && (
-            <div className="flex items-center justify-center shrink-0 w-3" aria-hidden="true">
+            <div
+              className="flex items-center justify-center shrink-0 w-3"
+              role="img"
+              aria-label="Bound to spec"
+              title="Bound to spec"
+            >
               <span className="h-2 w-2 rounded-full bg-green-500" />
             </div>
           )}
@@ -366,15 +365,15 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               maxWidth: 'min(600px, calc(100vw - 40px))',
               backgroundColor: isSelected ? '#1C2C3E' : '#1E1E1E',
             }}
-            onClick={(e) => {
-              e.stopPropagation();
-              rowRef.current?.focus();
-              handleAction();
-            }}
           >
             <div className="flex items-center gap-2 px-3 h-full whitespace-nowrap min-w-0">
               {isBound(request) && (
-                <div className="flex items-center justify-center shrink-0 w-3" aria-hidden="true">
+                <div
+                  className="flex items-center justify-center shrink-0 w-3"
+                  role="img"
+                  aria-label="Bound to spec"
+                  title="Bound to spec"
+                >
                   <span className="h-2 w-2 rounded-full bg-green-500" />
                 </div>
               )}
@@ -387,15 +386,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 {request.method}
               </span>
               <div className="flex-1 min-w-0">
-                {isTooLong ? (
-                  <Tooltip content={request.name} delayDuration={250}>
-                    <span className="text-sm text-text-primary truncate block">
-                      {expandedDisplayName}
-                    </span>
-                  </Tooltip>
-                ) : (
-                  <span className="text-sm text-text-primary truncate block">{request.name}</span>
-                )}
+                <span className="text-sm text-text-primary truncate block">{request.name}</span>
               </div>
               {request.is_streaming && (
                 <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0">
