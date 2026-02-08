@@ -89,3 +89,4 @@ prompts/
 
 # Audit scripts (moved to external glimps extension)
 scripts/audit/
+.limps/

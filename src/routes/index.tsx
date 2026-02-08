@@ -17,7 +17,11 @@ import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
-import { globalEventBus, type ToastEventPayload } from '@/events/bus';
+import {
+  globalEventBus,
+  type ToastEventPayload,
+  type CollectionRequestSelectedPayload,
+} from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 
 export const HomePage = (): React.JSX.Element => {
@@ -61,21 +65,44 @@ export const HomePage = (): React.JSX.Element => {
 
   // Subscribe to history entry selection events
   useEffect(() => {
-    const unsubscribe = globalEventBus.on<HistoryEntry>('history.entry-selected', (event) => {
-      const entry = event.payload;
-      // Update request store with history entry data
-      setMethod(entry.request.method);
-      setUrl(entry.request.url);
-      setHeaders(entry.request.headers);
-      setBody(entry.request.body ?? '');
-      // Update local state to match
-      setLocalUrl(entry.request.url);
-      setLocalMethod(entry.request.method as HttpMethod);
-      // Clear previous response when loading from history
-      setResponse(null);
-    });
+    const unsubscribeHistory = globalEventBus.on<HistoryEntry>(
+      'history.entry-selected',
+      (event) => {
+        const entry = event.payload;
+        // Update request store with history entry data
+        setMethod(entry.request.method);
+        setUrl(entry.request.url);
+        setHeaders(entry.request.headers);
+        setBody(entry.request.body ?? '');
+        // Update local state to match
+        setLocalUrl(entry.request.url);
+        setLocalMethod(entry.request.method as HttpMethod);
+        // Clear previous response when loading from history
+        setResponse(null);
+      }
+    );
 
-    return unsubscribe;
+    const unsubscribeCollection = globalEventBus.on<CollectionRequestSelectedPayload>(
+      'collection.request-selected',
+      (event) => {
+        const { request } = event.payload;
+        // Update request store with collection request data
+        setMethod(request.method);
+        setUrl(request.url);
+        setHeaders(request.headers);
+        setBody(request.body?.content ?? '');
+        // Update local state to match
+        setLocalUrl(request.url);
+        setLocalMethod(request.method as HttpMethod);
+        // Clear previous response when loading from collection
+        setResponse(null);
+      }
+    );
+
+    return (): void => {
+      unsubscribeHistory();
+      unsubscribeCollection();
+    };
     // Zustand store setters are stable and don't need to be in deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

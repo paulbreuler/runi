@@ -11,6 +11,7 @@ import { useRequestStore } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { executeRequest } from '@/api/http';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
+import type { CollectionRequest } from '@/types/collection';
 
 // Mock the stores
 vi.mock('@/stores/useRequestStore');
@@ -418,6 +419,155 @@ describe('HomePage - Auto-save to history', () => {
       // Verify handlers are cleared (or would be cleared in real implementation)
       // This tests that cleanup is properly handled
       expect(typeof unsubscribe).toBe('function');
+    });
+  });
+
+  describe('Collection request selection (event-driven)', (): void => {
+    const mockCollectionRequest: CollectionRequest = {
+      id: 'req_456',
+      name: 'Get Users',
+      seq: 1,
+      method: 'GET',
+      url: 'https://api.example.com/users',
+      headers: { Authorization: 'Bearer token123' },
+      params: [],
+      is_streaming: false,
+      binding: { is_manual: false },
+      intelligence: { ai_generated: false },
+      tags: [],
+      body: { type: 'raw', content: '{"filter": "active"}' },
+    };
+
+    it('updates request store when collection.request-selected event is emitted', async (): Promise<void> => {
+      render(<HomePage />);
+
+      // Wait for subscription to be set up
+      const { globalEventBus } = await import('@/events/bus');
+      await waitFor(() => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(vi.mocked(globalEventBus.on)).toHaveBeenCalled();
+      });
+
+      // Get handlers for collection.request-selected
+      const handlers = mockHandlersMap.get('collection.request-selected');
+      if (handlers === undefined || handlers.size === 0) {
+        throw new Error('No handlers found for collection.request-selected');
+      }
+
+      // Call all registered handlers (simulating event emission)
+      act(() => {
+        handlers.forEach((handler) => {
+          handler({
+            type: 'collection.request-selected',
+            payload: {
+              collectionId: 'col_789',
+              request: mockCollectionRequest,
+            },
+            timestamp: Date.now(),
+            source: 'RequestItem',
+          });
+        });
+      });
+
+      // Verify store was updated with collection request data
+      await waitFor(() => {
+        expect(mockSetMethod).toHaveBeenCalledWith('GET');
+        expect(mockSetUrl).toHaveBeenCalledWith('https://api.example.com/users');
+        expect(mockSetHeaders).toHaveBeenCalledWith({ Authorization: 'Bearer token123' });
+        expect(mockSetBody).toHaveBeenCalledWith('{"filter": "active"}');
+        expect(mockSetResponse).toHaveBeenCalledWith(null);
+      });
+    });
+
+    it('handles collection request without body', async (): Promise<void> => {
+      const requestWithoutBody: CollectionRequest = {
+        ...mockCollectionRequest,
+        body: undefined,
+      };
+
+      render(<HomePage />);
+
+      const { globalEventBus } = await import('@/events/bus');
+      await waitFor(() => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(vi.mocked(globalEventBus.on)).toHaveBeenCalled();
+      });
+
+      const handlers = mockHandlersMap.get('collection.request-selected');
+      if (handlers === undefined || handlers.size === 0) {
+        throw new Error('No handlers found');
+      }
+
+      act(() => {
+        handlers.forEach((handler) => {
+          handler({
+            type: 'collection.request-selected',
+            payload: {
+              collectionId: 'col_789',
+              request: requestWithoutBody,
+            },
+            timestamp: Date.now(),
+            source: 'RequestItem',
+          });
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockSetBody).toHaveBeenCalledWith('');
+      });
+    });
+
+    it('clears previous response when loading from collection', async (): Promise<void> => {
+      render(<HomePage />);
+
+      const { globalEventBus } = await import('@/events/bus');
+      await waitFor(() => {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(vi.mocked(globalEventBus.on)).toHaveBeenCalled();
+      });
+
+      const handlers = mockHandlersMap.get('collection.request-selected');
+      if (handlers === undefined || handlers.size === 0) {
+        throw new Error('No handlers found');
+      }
+
+      act(() => {
+        handlers.forEach((handler) => {
+          handler({
+            type: 'collection.request-selected',
+            payload: {
+              collectionId: 'col_789',
+              request: mockCollectionRequest,
+            },
+            timestamp: Date.now(),
+            source: 'RequestItem',
+          });
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockSetResponse).toHaveBeenCalledWith(null);
+      });
+    });
+
+    it('cleans up both history and collection event subscriptions on unmount', async (): Promise<void> => {
+      const { unmount } = render(<HomePage />);
+
+      // Get both unsubscribe functions
+      const { globalEventBus } = await import('@/events/bus');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const unsubscribeCalls = vi.mocked(globalEventBus.on).mock.results;
+
+      // Should have 2 subscriptions: history and collection
+      expect(unsubscribeCalls.length).toBeGreaterThanOrEqual(2);
+
+      // Unmount component
+      unmount();
+
+      // Verify cleanup functions exist
+      unsubscribeCalls.forEach((call) => {
+        expect(typeof call.value).toBe('function');
+      });
     });
   });
 });

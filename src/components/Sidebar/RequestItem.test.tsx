@@ -8,6 +8,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import type { CollectionRequest } from '@/types/collection';
 import { RequestItem } from './RequestItem';
 import { TooltipProvider } from '@/components/ui/Tooltip';
+import { globalEventBus } from '@/events/bus';
 
 // Mock motion components to avoid animation delays in tests
 vi.mock('motion/react', () => ({
@@ -121,5 +122,61 @@ describe('RequestItem', () => {
     });
 
     expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
+  });
+
+  describe('Event-driven request selection', (): void => {
+    it('emits collection.request-selected event when clicked', (): void => {
+      const emitSpy = vi.spyOn(globalEventBus, 'emit');
+
+      render(
+        <TooltipProvider>
+          <RequestItem request={baseRequest} collectionId="col_1" />
+        </TooltipProvider>
+      );
+
+      const row = screen.getByTestId('collection-request-req_1');
+
+      act(() => {
+        fireEvent.click(row);
+      });
+
+      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
+        collectionId: 'col_1',
+        request: baseRequest,
+      });
+
+      emitSpy.mockRestore();
+    });
+
+    it('emits event with correct payload for different requests', (): void => {
+      const emitSpy = vi.spyOn(globalEventBus, 'emit');
+      const postRequest: CollectionRequest = {
+        ...baseRequest,
+        id: 'req_2',
+        name: 'Create User',
+        method: 'POST',
+        url: 'https://api.example.com/users',
+        body: { type: 'raw', content: '{"name": "Test"}' },
+      };
+
+      render(
+        <TooltipProvider>
+          <RequestItem request={postRequest} collectionId="col_2" />
+        </TooltipProvider>
+      );
+
+      const row = screen.getByTestId('collection-request-req_2');
+
+      act(() => {
+        fireEvent.click(row);
+      });
+
+      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
+        collectionId: 'col_2',
+        request: postRequest,
+      });
+
+      emitSpy.mockRestore();
+    });
   });
 });
