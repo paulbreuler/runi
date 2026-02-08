@@ -6,9 +6,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
-import { RequestHeader } from './RequestHeader';
+import { UrlBar } from './UrlBar';
 
-describe('RequestHeader', () => {
+describe('UrlBar', () => {
   const defaultProps = {
     method: 'GET' as const,
     url: 'https://api.example.com',
@@ -19,7 +19,7 @@ describe('RequestHeader', () => {
   };
 
   it('renders inline titlebar layout without outer panel chrome', () => {
-    const { container } = render(<RequestHeader {...defaultProps} />);
+    const { container } = render(<UrlBar {...defaultProps} />);
 
     // Should not introduce its own panel framing when rendered in titlebar
     const wrapper = container.firstChild as HTMLElement;
@@ -29,7 +29,7 @@ describe('RequestHeader', () => {
   });
 
   it('renders method select with colored text only', () => {
-    render(<RequestHeader {...defaultProps} />);
+    render(<UrlBar {...defaultProps} />);
 
     const methodSelect = screen.getByTestId('method-select');
     expect(methodSelect).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('RequestHeader', () => {
   });
 
   it('renders URL input with proper placeholder', () => {
-    render(<RequestHeader {...defaultProps} url="" />);
+    render(<UrlBar {...defaultProps} url="" />);
 
     const urlInput = screen.getByTestId('url-input');
     expect(urlInput).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe('RequestHeader', () => {
   });
 
   it('renders URL input with proper styling', () => {
-    render(<RequestHeader {...defaultProps} url="" />);
+    render(<UrlBar {...defaultProps} url="" />);
 
     const urlInput = screen.getByTestId('url-input');
     // URL input remains borderless; the full control row carries the border
@@ -58,16 +58,16 @@ describe('RequestHeader', () => {
     expect(urlInput).toHaveClass('bg-transparent');
   });
 
-  it('applies muted composite focus state on request control', () => {
-    render(<RequestHeader {...defaultProps} url="" />);
-    const control = screen.getByTestId('request-control');
+  it('applies muted composite focus state on command bar', () => {
+    render(<UrlBar {...defaultProps} url="" />);
+    const control = screen.getByTestId('url-bar');
     expect(control.className).toContain('focus-within:ring-1');
     expect(control.className).toContain('focus-within:ring-[color:var(--color-border-default)]');
     expect(control.className).toContain('focus-within:border-border-default');
   });
 
   it('applies primary focus states to inner controls', () => {
-    render(<RequestHeader {...defaultProps} url="" />);
+    render(<UrlBar {...defaultProps} url="" />);
 
     const methodSelect = screen.getByTestId('method-select');
     const urlInput = screen.getByTestId('url-input');
@@ -94,7 +94,7 @@ describe('RequestHeader', () => {
   });
 
   it('renders send button with proper styling', () => {
-    render(<RequestHeader {...defaultProps} />);
+    render(<UrlBar {...defaultProps} />);
 
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('RequestHeader', () => {
   });
 
   it('shows loading state on send button', () => {
-    render(<RequestHeader {...defaultProps} loading={true} />);
+    render(<UrlBar {...defaultProps} loading={true} />);
 
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toHaveTextContent('Sending');
@@ -113,14 +113,14 @@ describe('RequestHeader', () => {
   });
 
   it('disables send button when URL is empty', () => {
-    render(<RequestHeader {...defaultProps} url="" />);
+    render(<UrlBar {...defaultProps} url="" />);
 
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeDisabled();
   });
 
   it('enables send button when URL is valid', () => {
-    render(<RequestHeader {...defaultProps} url="https://api.example.com" />);
+    render(<UrlBar {...defaultProps} url="https://api.example.com" />);
 
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).not.toBeDisabled();
@@ -128,7 +128,7 @@ describe('RequestHeader', () => {
 
   it('calls onSend when send button is clicked', async () => {
     const onSend = vi.fn();
-    render(<RequestHeader {...defaultProps} onSend={onSend} />);
+    render(<UrlBar {...defaultProps} onSend={onSend} />);
 
     await userEvent.click(screen.getByTestId('send-button'));
     expect(onSend).toHaveBeenCalledTimes(1);
@@ -136,7 +136,7 @@ describe('RequestHeader', () => {
 
   it('calls onSend when Enter is pressed in URL input', async () => {
     const onSend = vi.fn();
-    render(<RequestHeader {...defaultProps} onSend={onSend} />);
+    render(<UrlBar {...defaultProps} onSend={onSend} />);
 
     const urlInput = screen.getByTestId('url-input');
     await userEvent.type(urlInput, '{Enter}');
@@ -145,7 +145,7 @@ describe('RequestHeader', () => {
 
   it('does not call onSend on Enter when URL is empty', async () => {
     const onSend = vi.fn();
-    render(<RequestHeader {...defaultProps} url="" onSend={onSend} />);
+    render(<UrlBar {...defaultProps} url="" onSend={onSend} />);
 
     const urlInput = screen.getByTestId('url-input');
     await userEvent.type(urlInput, '{Enter}');
@@ -154,7 +154,7 @@ describe('RequestHeader', () => {
 
   it('calls onUrlChange when typing in URL input', async () => {
     const onUrlChange = vi.fn();
-    render(<RequestHeader {...defaultProps} url="" onUrlChange={onUrlChange} />);
+    render(<UrlBar {...defaultProps} url="" onUrlChange={onUrlChange} />);
 
     const urlInput = screen.getByTestId('url-input');
     await userEvent.type(urlInput, 'test');
@@ -162,10 +162,10 @@ describe('RequestHeader', () => {
   });
 
   it('renders inline command row without extra framed container', () => {
-    render(<RequestHeader {...defaultProps} />);
+    render(<UrlBar {...defaultProps} />);
 
     // One subtle border around the whole control, not around URL only
-    const control = screen.getByTestId('request-control');
+    const control = screen.getByTestId('url-bar');
     expect(control).toBeInTheDocument();
     expect(control).toHaveClass('border');
     expect(control).toHaveClass('border-border-subtle');

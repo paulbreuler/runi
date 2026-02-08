@@ -12,7 +12,7 @@ import { cn } from '@/utils/cn';
 import { compositeFocusContainerClasses, compositeFocusItemClasses } from '@/utils/accessibility';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
 
-interface RequestHeaderProps {
+interface UrlBarProps {
   method: HttpMethod;
   url?: string;
   loading?: boolean;
@@ -21,14 +21,19 @@ interface RequestHeaderProps {
   onSend?: () => void;
 }
 
-export const RequestHeader = ({
+/**
+ * UrlBar - The main interaction bar for the application.
+ * Currently handles Method selection, URL input, and Send action.
+ * Future evolution will include intent detection and natural language commands.
+ */
+export const UrlBar = ({
   method,
   url = '',
   loading = false,
   onMethodChange,
   onUrlChange,
   onSend,
-}: RequestHeaderProps): React.JSX.Element => {
+}: UrlBarProps): React.JSX.Element => {
   const httpMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
   const isValidUrl = url.length > 0;
@@ -89,7 +94,7 @@ export const RequestHeader = ({
           'flex flex-1 min-w-0 items-center gap-0 rounded-lg border border-border-subtle bg-bg-raised overflow-hidden transition-colors duration-200 hover:border-border-default',
           compositeFocusContainerClasses
         )}
-        data-test-id="request-control"
+        data-test-id="url-bar"
       >
         {/* Method selector - appears as prefix */}
         <Select.Select value={method} onValueChange={handleMethodChange}>
@@ -97,7 +102,7 @@ export const RequestHeader = ({
             role="button"
             aria-haspopup="listbox"
             className={cn(
-              'relative min-w-28 w-auto h-9 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
+              'relative min-w-28 w-auto h-8 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
               compositeFocusItemClasses,
               methodColor
             )}
@@ -135,7 +140,7 @@ export const RequestHeader = ({
           aria-label="Request URL"
           noScale
           className={cn(
-            'relative h-9 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted py-0',
+            'relative h-8 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted py-0',
             compositeFocusItemClasses
           )}
         />
@@ -151,7 +156,7 @@ export const RequestHeader = ({
             data-test-id="send-button"
             aria-label="Send Request"
             className={cn(
-              'relative w-full h-9 justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
+              'relative w-full h-8 justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
               compositeFocusItemClasses,
               'focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
             )}
