@@ -121,7 +121,9 @@ describe('ConsolePanel (Migrated to VirtualDataGrid)', () => {
     // Click to select
     if (rowCheckbox) {
       fireEvent.click(rowCheckbox);
-      expect(rowCheckbox).toBeChecked();
+      await waitFor(() => {
+        expect(rowCheckbox).toHaveAttribute('aria-checked', 'true');
+      }, WAIT_TIMEOUT);
     }
   });
 
