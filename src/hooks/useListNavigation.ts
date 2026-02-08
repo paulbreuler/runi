@@ -4,6 +4,7 @@
  */
 
 import { useCallback } from 'react';
+import { useReducedMotion } from 'motion/react';
 import { focusWithVisibility } from '@/utils/focusVisibility';
 
 interface ListNavigationOptions {
@@ -22,48 +23,54 @@ export function useListNavigation(options: ListNavigationOptions): {
   handleKeyDown: (e: React.KeyboardEvent) => void;
 } {
   const { itemSelector, activeItemSelector, loop = true } = options;
+  const prefersReducedMotion = useReducedMotion() === true;
 
   /**
    * Helper to focus an item and scroll it naturally into view.
    */
-  const navigateToIndex = useCallback((items: HTMLElement[], index: number) => {
-    const targetItem = items[index];
-    if (targetItem === undefined) {
-      return;
-    }
-
-    // Use preventScroll to stop the browser from jarringly jumping to the element
-    focusWithVisibility(targetItem, { preventScroll: true });
-
-    // Find the scroll container (closest element with data-scroll-container or overflow)
-    const scrollContainer = targetItem.closest<HTMLElement>(
-      '[data-scroll-container], [style*="overflow: auto"], [style*="overflow: scroll"]'
-    );
-
-    if (scrollContainer !== null) {
-      const itemRect = targetItem.getBoundingClientRect();
-      const containerRect = scrollContainer.getBoundingClientRect();
-
-      // Padding to ensure item isn't flush with edges
-      const padding = 12;
-      // Preview height to show part of the next item
-      const preview = 24;
-
-      const isAbove = itemRect.top < containerRect.top + padding;
-      const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;
-
-      if (isAbove) {
-        const delta = itemRect.top - (containerRect.top + padding);
-        scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
-      } else if (isBelow) {
-        const delta = itemRect.bottom - (containerRect.bottom - padding - preview);
-        scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
+  const navigateToIndex = useCallback(
+    (items: HTMLElement[], index: number) => {
+      const targetItem = items[index];
+      if (targetItem === undefined) {
+        return;
       }
-    }
-  }, []);
+
+      // Use preventScroll to stop the browser from jarringly jumping to the element
+      focusWithVisibility(targetItem, { preventScroll: true });
+
+      // Find the scroll container (closest element with data-scroll-container or overflow)
+      const scrollContainer = targetItem.closest<HTMLElement>(
+        '[data-scroll-container], [style*="overflow: auto"], [style*="overflow: scroll"]'
+      );
+
+      if (scrollContainer !== null) {
+        const itemRect = targetItem.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+
+        // Padding to ensure item isn't flush with edges
+        const padding = 12;
+        // Preview height to show part of the next item
+        const preview = 24;
+
+        const isAbove = itemRect.top < containerRect.top + padding;
+        const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;
+
+        const scrollBehavior = prefersReducedMotion ? 'instant' : 'smooth';
+
+        if (isAbove) {
+          const delta = itemRect.top - (containerRect.top + padding);
+          scrollContainer.scrollBy({ top: delta, behavior: scrollBehavior });
+        } else if (isBelow) {
+          const delta = itemRect.bottom - (containerRect.bottom - padding - preview);
+          scrollContainer.scrollBy({ top: delta, behavior: scrollBehavior });
+        }
+      }
+    },
+    [prefersReducedMotion]
+  );
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: React.KeyboardEvent): void => {
       const container = e.currentTarget as HTMLElement;
       const items = Array.from(container.querySelectorAll<HTMLElement>(itemSelector)).filter(
         (item) => {
@@ -97,21 +104,31 @@ export function useListNavigation(options: ListNavigationOptions): {
       switch (e.key) {
         case 'Tab':
           // Intercept Tab to follow our natural scrolling driver
-          e.preventDefault();
           if (e.shiftKey) {
             // Previous
             if (currentIndex <= 0) {
-              targetIndex = loop ? items.length - 1 : 0;
+              if (loop) {
+                e.preventDefault();
+                targetIndex = items.length - 1;
+              }
+              // If not looping, let default Tab behavior handle focus exit
             } else {
+              e.preventDefault();
               targetIndex = currentIndex - 1;
             }
           } else {
             // Next
             if (currentIndex === -1) {
+              e.preventDefault();
               targetIndex = 0;
             } else if (currentIndex === items.length - 1) {
-              targetIndex = loop ? 0 : items.length - 1;
+              if (loop) {
+                e.preventDefault();
+                targetIndex = 0;
+              }
+              // If not looping, let default Tab behavior handle focus exit
             } else {
+              e.preventDefault();
               targetIndex = currentIndex + 1;
             }
           }
