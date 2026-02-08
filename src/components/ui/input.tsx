@@ -12,7 +12,7 @@ export interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd'
 > {
-  /** Disable scale animations on hover/focus (useful for compact UI) */
+  /** Disable scale animations on hover (useful for compact UI) */
   noScale?: boolean;
 }
 

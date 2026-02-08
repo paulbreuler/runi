@@ -82,7 +82,7 @@ const DrawerSection = ({
 
 export const Sidebar = (): React.JSX.Element => {
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-bg-surface" data-test-id="sidebar-content">
+    <aside className="flex-1 min-h-0 flex flex-col bg-bg-surface" data-test-id="sidebar-content">
       <DrawerSection
         title="Collections"
         icon={<Folder size={14} />}
@@ -91,6 +91,6 @@ export const Sidebar = (): React.JSX.Element => {
       >
         <CollectionList />
       </DrawerSection>
-    </div>
+    </aside>
   );
 };

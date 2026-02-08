@@ -40,18 +40,28 @@ export const useWindowFocus = (): boolean => {
     // Listen to Tauri window focus/blur events if available
     let cleanupFocus: (() => void) | undefined;
     let cleanupBlur: (() => void) | undefined;
+    let isMounted = true;
 
     if (appWindow !== null) {
       void appWindow.listen('tauri://focus', handleFocus).then((unsubscribe: () => void) => {
-        cleanupFocus = unsubscribe;
+        if (isMounted) {
+          cleanupFocus = unsubscribe;
+        } else {
+          unsubscribe();
+        }
       });
 
       void appWindow.listen('tauri://blur', handleBlur).then((unsubscribe: () => void) => {
-        cleanupBlur = unsubscribe;
+        if (isMounted) {
+          cleanupBlur = unsubscribe;
+        } else {
+          unsubscribe();
+        }
       });
     }
 
     return (): void => {
+      isMounted = false;
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('blur', handleBlur);
       cleanupFocus?.();

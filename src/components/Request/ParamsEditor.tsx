@@ -25,7 +25,7 @@ export const ParamsEditor = (): React.JSX.Element => {
   const shouldReduceMotion = useReducedMotion();
 
   const springTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
-  const transition = shouldReduceMotion === true ? { duration: 0.1 } : springTransition;
+  const transition = shouldReduceMotion === true ? { duration: 0 } : springTransition;
 
   // Parse URL to extract query parameters
   useEffect(() => {

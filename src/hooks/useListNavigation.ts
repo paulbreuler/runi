@@ -17,7 +17,7 @@ interface ListNavigationOptions {
 }
 
 /**
- * Hook for list-based keyboard navigation (ArrowUp/Down, Home/End, Tab).
+ * Hook for list-based keyboard navigation (ArrowUp/Down, Home/End).
  */
 export function useListNavigation(options: ListNavigationOptions): {
   handleKeyDown: (e: React.KeyboardEvent) => void;
@@ -29,7 +29,7 @@ export function useListNavigation(options: ListNavigationOptions): {
    * Helper to focus an item and scroll it naturally into view.
    */
   const navigateToIndex = useCallback(
-    (items: HTMLElement[], index: number) => {
+    (items: HTMLElement[], index: number): void => {
       const targetItem = items[index];
       if (targetItem === undefined) {
         return;

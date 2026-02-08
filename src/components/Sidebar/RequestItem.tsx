@@ -12,7 +12,7 @@ import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
-import { containedFocusRingClasses } from '@/utils/accessibility';
+import { focusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface RequestItemProps {
@@ -291,7 +291,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
-          isActuallyVisible() ? 'outline-none ring-0 shadow-none' : containedFocusRingClasses,
+          isActuallyVisible() ? 'outline-none ring-0 shadow-none' : focusRingClasses,
           isActuallyVisible() && !isFocused && 'bg-transparent'
         )}
         data-test-id={`collection-request-${request.id}`}

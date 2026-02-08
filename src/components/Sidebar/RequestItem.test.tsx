@@ -12,14 +12,20 @@ import { TooltipProvider } from '@/components/ui/Tooltip';
 // Mock motion components to avoid animation delays in tests
 vi.mock('motion/react', () => ({
   motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<any>): React.JSX.Element => (
+    div: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<React.ComponentPropsWithoutRef<'div'>>): React.JSX.Element => (
       <div {...props}>{children}</div>
     ),
-    span: ({ children, ...props }: React.PropsWithChildren<any>): React.JSX.Element => (
+    span: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<React.ComponentPropsWithoutRef<'span'>>): React.JSX.Element => (
       <span {...props}>{children}</span>
     ),
   },
-  AnimatePresence: ({ children }: React.PropsWithChildren<any>): React.JSX.Element => (
+  AnimatePresence: ({ children }: React.PropsWithChildren<object>): React.JSX.Element => (
     <>{children}</>
   ),
   useReducedMotion: (): boolean => true,
@@ -40,7 +46,7 @@ const baseRequest: CollectionRequest = {
 };
 
 describe('RequestItem', () => {
-  beforeEach(() => {
+  beforeEach((): void => {
     vi.useFakeTimers();
   });
 
