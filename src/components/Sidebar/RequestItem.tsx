@@ -260,7 +260,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           setBody(request.body?.content ?? '');
         }}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className={cn('flex items-center gap-2 min-w-0', actuallyVisible && 'invisible')}>
           {isBound(request) && (
             <div className="flex items-center justify-center shrink-0 w-3" aria-hidden="true">
               <span className="h-2 w-2 rounded-full bg-green-500" />
@@ -283,7 +283,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             {displayName}
           </span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className={cn('flex items-center gap-2 shrink-0', actuallyVisible && 'invisible')}>
           {request.is_streaming && (
             <span
               className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0"
