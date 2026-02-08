@@ -38,13 +38,12 @@ hydrated from YAML config files in `~/.runi`.
 
 ### Layer 1: Spatial Canvas
 
-| Flag                     | Default | State    | Description                                   |
-| ------------------------ | ------- | -------- | --------------------------------------------- |
-| `canvas.enabled`         | `false` | `hidden` | Enable the blueprint canvas view.             |
-| `canvas.minimap`         | `false` | `hidden` | Show a minimap in the blueprint canvas.       |
-| `canvas.connectionLines` | `false` | `hidden` | Render connection lines between nodes.        |
-| `canvas.snapToGrid`      | `false` | `hidden` | Snap canvas nodes to the grid.                |
-| `canvas.commandBar`      | `false` | `hidden` | Enable command bar actions inside the canvas. |
+| Flag                     | Default | State    | Description                             |
+| ------------------------ | ------- | -------- | --------------------------------------- |
+| `canvas.enabled`         | `false` | `hidden` | Enable the blueprint canvas view.       |
+| `canvas.minimap`         | `false` | `hidden` | Show a minimap in the blueprint canvas. |
+| `canvas.connectionLines` | `false` | `hidden` | Render connection lines between nodes.  |
+| `canvas.snapToGrid`      | `false` | `hidden` | Snap canvas nodes to the grid.          |
 
 ### Layer 2: Comprehension
 

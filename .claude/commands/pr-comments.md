@@ -38,12 +38,12 @@ to ensure consistency.
 
 ### Usage Reference
 
-| Task             | Command                                                        |
-| :--------------- | :------------------------------------------------------------- |
-| List Unresolved  | `npx tsx scripts/helpers/pr-comments.ts list`                  |
-| Analyze Files    | `npx tsx scripts/helpers/pr-comments.ts analyze`               |
-| Reply to Comment | `npx tsx scripts/helpers/pr-comments.ts reply <pr> <id> <msg>` |
-| Resolve Thread   | `npx tsx scripts/helpers/pr-comments.ts resolve <id>`          |
+| Task             | Command                                                               |
+| :--------------- | :-------------------------------------------------------------------- |
+| List Unresolved  | `npx tsx scripts/helpers/pr-comments.ts list [pr_number]`             |
+| Analyze Files    | `npx tsx scripts/helpers/pr-comments.ts analyze [pr_number]`          |
+| Reply to Comment | `npx tsx scripts/helpers/pr-comments.ts reply [pr_number] <id> <msg>` |
+| Resolve Thread   | `npx tsx scripts/helpers/pr-comments.ts resolve <id>`                 |
 
 ## Workflow
 
