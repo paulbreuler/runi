@@ -257,7 +257,7 @@ export const EmptyState = ({
             </p>
           )}
         </motion.div>
-        {children !== undefined && (
+        {children !== null && children !== undefined && (
           <motion.div variants={itemVariants} data-test-id="empty-state-children">
             {children}
           </motion.div>
@@ -321,7 +321,7 @@ export const EmptyState = ({
       )}
 
       {/* Custom children content */}
-      {children !== undefined && (
+      {children !== null && children !== undefined && (
         <motion.div variants={itemVariants} data-test-id="empty-state-children">
           {children}
         </motion.div>

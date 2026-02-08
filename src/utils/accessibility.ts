@@ -63,22 +63,22 @@ export const focusRingClasses = [
  */
 export const containedFocusRingClasses = [
   'outline-none',
-  'focus-visible:outline-1',
+  'focus-visible:outline-[1.5px]',
   'focus-visible:outline-[color:var(--accent-a8)]',
-  'focus-visible:outline-offset-[-1px]',
-  'focus-visible:ring-1',
+  'focus-visible:outline-offset-[-1.5px]',
+  'focus-visible:ring-[1.5px]',
   'focus-visible:ring-[color:var(--accent-a8)]',
   'focus-visible:!ring-offset-0',
   'focus-visible:ring-inset',
-  'focus-visible:shadow-[inset_1px_0_0_var(--accent-a8),inset_-1px_0_0_var(--accent-a8)]',
-  '[&[data-focus-visible-added]:focus]:outline-1',
+  'focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
+  '[&[data-focus-visible-added]:focus]:outline-[1.5px]',
   '[&[data-focus-visible-added]:focus]:outline-[color:var(--accent-a8)]',
-  '[&[data-focus-visible-added]:focus]:outline-offset-[-1px]',
-  '[&[data-focus-visible-added]:focus]:ring-1',
+  '[&[data-focus-visible-added]:focus]:outline-offset-[-1.5px]',
+  '[&[data-focus-visible-added]:focus]:ring-[1.5px]',
   '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
   '[&[data-focus-visible-added]:focus]:!ring-offset-0',
   '[&[data-focus-visible-added]:focus]:ring-inset',
-  '[&[data-focus-visible-added]:focus]:shadow-[inset_1px_0_0_var(--accent-a8),inset_-1px_0_0_var(--accent-a8)]',
+  '[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
 ].join(' ');
 
 /**

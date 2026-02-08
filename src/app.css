@@ -202,7 +202,7 @@ body {
     --color-border-subtle: var(--gray-3);
     --color-border-default: var(--gray-4);
 
-    /* Dim root background/surface tokens (propogates to bg-bg-app, bg-bg-surface, etc.) */
+    /* Dim root background/surface tokens (propagates to bg-bg-app, bg-bg-surface, etc.) */
     --color-background: var(--gray-1);
     --color-surface: var(--gray-1);
     --color-panel-solid: var(--gray-2);
