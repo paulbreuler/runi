@@ -40,6 +40,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [isOccluded, setIsOccluded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
 
@@ -58,8 +59,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const methodKey = request.method as HttpMethod;
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
+  const displayName = truncateNavLabel(request.name);
 
-  // Expansion triggers if DOM-truncated, but tooltip only if over MAX_EXPANDED_CHARS
+  // Expansion triggers if name.length > 100
   const isTooLong = request.name.length > MAX_EXPANDED_CHARS;
   const expandedDisplayName = truncateNavLabel(request.name, MAX_EXPANDED_CHARS);
 
@@ -114,7 +116,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = textRef.current;
-    // Use 1px buffer to be sensitive to any truncation
+    // Use 1px buffer for robustness against subpixel rounding
     setIsTruncated(scrollWidth > clientWidth + 1);
   }, []);
 
@@ -126,14 +128,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   }, [calculatePosition]);
 
   const showPopout = useCallback((): void => {
-    // Evaluate immediately so state is ready for rendering
     evaluateTruncation();
     updatePopoutPosition();
-
-    // Use rAF to ensure browser has settled layout before final visibility check
-    requestAnimationFrame(() => {
-      setIsExpanded(true);
-    });
+    setIsExpanded(true);
   }, [evaluateTruncation, updatePopoutPosition]);
 
   const hidePopout = useCallback((): void => {
@@ -143,27 +140,39 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
   }, [isFocused]);
 
-  const handleMouseEnter = useCallback((): void => {
-    if (hoverTimeoutRef.current !== null) {
-      window.clearTimeout(hoverTimeoutRef.current);
+  useEffect(() => {
+    if (isHovered || isFocused) {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+      }
+      hoverTimeoutRef.current = window.setTimeout(() => {
+        showPopout();
+      }, 150);
+    } else {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      hidePopout();
     }
-    hoverTimeoutRef.current = window.setTimeout(() => {
-      showPopout();
-    }, 150);
-  }, [showPopout]);
+    return (): void => {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, [isHovered, isFocused, showPopout, hidePopout]);
+
+  const handleMouseEnter = useCallback((): void => {
+    setIsHovered(true);
+  }, []);
 
   const handleMouseLeave = useCallback((): void => {
-    if (hoverTimeoutRef.current !== null) {
-      window.clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = null;
-    hidePopout();
-  }, [hidePopout]);
+    setIsHovered(false);
+  }, []);
 
   const handleFocus = useCallback((): void => {
     setIsFocused(true);
-    showPopout();
-  }, [showPopout]);
+  }, []);
 
   const handleBlur = useCallback((): void => {
     setIsFocused(false);
@@ -174,6 +183,21 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   useLayoutEffect(() => {
     evaluateTruncation();
   }, [evaluateTruncation, request.name]);
+
+  // Use ResizeObserver to reliably track truncation as sidebar resizes
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (el === null) {
+      return undefined;
+    }
+    const observer = new ResizeObserver(() => {
+      evaluateTruncation();
+    });
+    observer.observe(el);
+    return (): void => {
+      observer.disconnect();
+    };
+  }, [evaluateTruncation]);
 
   useLayoutEffect(() => {
     if (isExpanded) {
@@ -287,26 +311,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           >
             {request.method}
           </span>
-          {/* Tooltip in rest state ONLY if very long, otherwise let expansion handle it */}
-          {isTooLong && !actuallyVisible ? (
-            <Tooltip content={request.name} delayDuration={250}>
-              <span
-                ref={textRef}
-                className="text-sm text-text-primary truncate"
-                data-test-id="request-name"
-              >
-                {request.name}
-              </span>
-            </Tooltip>
-          ) : (
-            <span
-              ref={textRef}
-              className="text-sm text-text-primary truncate"
-              data-test-id="request-name"
-            >
-              {request.name}
-            </span>
-          )}
+          <span
+            ref={textRef}
+            className="text-sm text-text-primary truncate"
+            data-test-id="request-name"
+          >
+            {displayName}
+          </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {request.is_streaming && (
@@ -374,10 +385,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 {request.method}
               </span>
               <div className="flex-1 min-w-0">
-                {/* 
-                  Expansion shows up to 100 characters.
-                  Only show Tooltip if it's STILL truncated (longer than 100 chars).
-                */}
                 {isTooLong ? (
                   <Tooltip content={request.name} delayDuration={250}>
                     <span className="text-sm text-text-primary truncate block">
@@ -402,7 +409,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               )}
             </div>
 
-            {/* Focus ring overlay for the expanded state */}
             {isFocused && (
               <div className="absolute inset-0 pointer-events-none ring-[1.5px] ring-[color:var(--accent-a8)] ring-inset" />
             )}
