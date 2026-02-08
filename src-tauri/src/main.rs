@@ -20,6 +20,10 @@ use infrastructure::commands::{
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
+use infrastructure::mcp::commands::{
+    create_mcp_service, mcp_call_tool, mcp_list_servers, mcp_list_tools, mcp_load_config,
+    mcp_server_status, mcp_start_server, mcp_stop_server,
+};
 use infrastructure::memory_monitor::{
     collect_ram_sample, get_ram_stats, set_memory_monitoring_enabled, start_memory_monitor,
 };
@@ -72,6 +76,7 @@ pub fn run() {
             Ok(())
         })
         .manage(create_proxy_service())
+        .manage(create_mcp_service())
         .invoke_handler(tauri::generate_handler![
             hello_world,
             execute_request,
@@ -98,7 +103,14 @@ pub fn run() {
             cmd_log_frontend_error,
             cmd_write_frontend_error_report,
             set_log_level,
-            write_startup_timing
+            write_startup_timing,
+            mcp_load_config,
+            mcp_start_server,
+            mcp_stop_server,
+            mcp_list_servers,
+            mcp_server_status,
+            mcp_list_tools,
+            mcp_call_tool
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

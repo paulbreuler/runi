@@ -34,6 +34,8 @@ sysinfo = "0.31"
 sha2 = "0.10"
 hex = "0.4"
 openapiv3 = "2.2.0"
+# MCP client (Model Context Protocol)
+rmcp = { version = "0.14", features = ["client", "transport-child-process", "transport-io"] }
 # Encryption (Phase 10)
 aes-gcm = "0.10.3"
 base64 = "0.22.1"
