@@ -22,7 +22,7 @@ describe('Card', () => {
     const card = container.firstChild as HTMLElement;
     expect(card.className).toContain('rounded-xl');
     expect(card.className).toContain('border-border-subtle');
-    expect(card.className).toContain('bg-bg-surface');
+    expect(card.className).toContain('bg-bg-raised');
   });
 
   it('disables hover effect when hover prop is false', () => {

@@ -257,7 +257,11 @@ export const EmptyState = ({
             </p>
           )}
         </motion.div>
-        {children}
+        {children !== undefined && (
+          <motion.div variants={itemVariants} data-test-id="empty-state-children">
+            {children}
+          </motion.div>
+        )}
         {action !== undefined && (
           <motion.div variants={itemVariants} data-test-id="empty-state-action">
             {action}

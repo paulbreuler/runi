@@ -20,7 +20,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       ...props,
       ref,
       className: cn(
-        'rounded-xl border border-border-subtle bg-bg-surface',
+        'rounded-xl border border-border-subtle bg-bg-raised',
         'text-text-primary flex flex-col gap-6',
         className
       ),
