@@ -27,7 +27,7 @@ interface CollectionItemRequestListProps {
   collectionId: string;
 }
 
-const MAX_EXPANDED_CHARS = 100;
+const MAX_EXPANDED_CHARS = 80;
 
 export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
