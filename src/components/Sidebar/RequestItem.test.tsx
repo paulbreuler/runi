@@ -27,9 +27,7 @@ vi.mock('motion/react', () => ({
 
 const baseRequest: CollectionRequest = {
   id: 'req_1',
-  name: 'A very long request name that should truncate in the UI because it is definitely longer than one hundred characters to trigger the logic'.repeat(
-    1
-  ),
+  name: 'A very long request name that should truncate in the UI because it is definitely longer than one hundred characters to trigger the logic',
   seq: 1,
   method: 'GET',
   url: 'https://httpbin.org/get',
@@ -57,6 +55,7 @@ describe('RequestItem', () => {
     const row = screen.getByTestId('collection-request-req_1');
     const name = screen.getByTestId('request-name');
 
+    // Mock truncation conditions
     Object.defineProperty(name, 'scrollWidth', { value: 200, configurable: true });
     Object.defineProperty(name, 'clientWidth', { value: 100, configurable: true });
 
@@ -70,7 +69,7 @@ describe('RequestItem', () => {
     const popout = await screen.findByTestId('request-popout', {}, { timeout: 1000 });
     expect(popout).toBeInTheDocument();
 
-    fireEvent.mouseLeave(row);
+    fireEvent.mouseLeave(wrapper);
 
     await waitFor(
       () => {
@@ -90,6 +89,16 @@ describe('RequestItem', () => {
     );
 
     const row = screen.getByTestId('collection-request-req_1');
+    const name = screen.getByTestId('request-name');
+
+    // Mock non-truncation conditions
+    Object.defineProperty(name, 'scrollWidth', { value: 100, configurable: true });
+    Object.defineProperty(name, 'clientWidth', { value: 100, configurable: true });
+
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+
     const wrapper = row.parentElement!;
     fireEvent.mouseEnter(wrapper);
 

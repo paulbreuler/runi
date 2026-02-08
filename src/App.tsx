@@ -22,7 +22,7 @@ export const App = (): React.JSX.Element => {
     <ThemeProvider appearance="dark" accentColor="blue" grayColor="gray">
       <FeatureFlagProvider>
         <ToastProvider>
-          <TooltipProvider delayDuration={400}>
+          <TooltipProvider delayDuration={250}>
             <MemoryWarningListener />
             <BrowserRouter>
               <Suspense
