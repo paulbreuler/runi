@@ -112,8 +112,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = textRef.current;
-    // Use 2px buffer for robustness against subpixel rounding
-    setIsTruncated(scrollWidth > clientWidth + 2);
+    // Use 4px buffer for robustness against subpixel rounding and font metrics
+    setIsTruncated(scrollWidth > clientWidth + 4);
   }, []);
 
   const evaluateExpandedTruncation = useCallback((): void => {
@@ -121,8 +121,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = expandedTextRef.current;
-    // Use 2px buffer for robustness against subpixel rounding
-    setIsExpandedTruncated(scrollWidth > clientWidth + 2);
+    // Use 4px buffer for robustness against subpixel rounding and font metrics
+    setIsExpandedTruncated(scrollWidth > clientWidth + 4);
   }, []);
 
   const updatePopoutPosition = useCallback((): void => {
@@ -322,7 +322,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             to prevent double-tooltips or "hover-through" artifacts.
           */}
           {isTruncated && !actuallyVisible ? (
-            <Tooltip content={request.name} delayDuration={500}>
+            <Tooltip content={request.name} delayDuration={1000}>
               <span
                 ref={textRef}
                 className="text-sm text-text-primary truncate"
@@ -409,7 +409,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               </span>
               <div className="flex-1 min-w-0">
                 {isExpandedTruncated ? (
-                  <Tooltip content={request.name} delayDuration={500}>
+                  <Tooltip content={request.name} delayDuration={1000}>
                     <span
                       ref={expandedTextRef}
                       className="text-sm text-text-primary truncate block"
