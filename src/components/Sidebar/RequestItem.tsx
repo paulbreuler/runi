@@ -93,7 +93,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return null;
     }
     const rect = rowRef.current.getBoundingClientRect();
-    // Use Math.round to prevent sub-pixel gaps or "cutting" of the ring
+    // Use Math.round to prevent sub-pixel gaps
     return {
       top: Math.round(rect.top),
       left: Math.round(rect.left),
@@ -324,6 +324,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             }}
           >
             {/* Background shell that grows outward horizontally without squashing text */}
+            {/* Matches the underlying item's styling perfectly (no shadow, no blur) */}
             <motion.div
               variants={{
                 initial: { opacity: 0, scaleX: 0.8 },
@@ -337,9 +338,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               }
               style={{ originX: 0 }}
               className={cn(
-                'absolute inset-0 rounded-r-md rounded-l-none border border-border-subtle shadow-2xl backdrop-blur-md',
+                'absolute inset-0',
                 isSelected ? 'bg-accent-blue/10' : 'bg-bg-raised/40',
-                isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] border-transparent'
+                isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] ring-inset'
               )}
             />
 
