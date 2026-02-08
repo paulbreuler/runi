@@ -67,29 +67,33 @@ describe('accessibility utilities', () => {
   describe('containedFocusRingClasses', () => {
     it('uses ring styles suitable for clipped/overflow contexts', () => {
       expect(containedFocusRingClasses).toContain('outline-none');
-      expect(containedFocusRingClasses).toContain('focus-visible:outline-1');
+      expect(containedFocusRingClasses).toContain('focus-visible:outline-[1.5px]');
       expect(containedFocusRingClasses).toContain('focus-visible:outline-[color:var(--accent-a8)]');
-      expect(containedFocusRingClasses).toContain('focus-visible:outline-offset-[-1px]');
-      expect(containedFocusRingClasses).toContain('focus-visible:ring-1');
+      expect(containedFocusRingClasses).toContain('focus-visible:outline-offset-[-1.5px]');
+      expect(containedFocusRingClasses).toContain('focus-visible:ring-[1.5px]');
       expect(containedFocusRingClasses).toContain('focus-visible:ring-[color:var(--accent-a8)]');
       expect(containedFocusRingClasses).toContain('focus-visible:!ring-offset-0');
       expect(containedFocusRingClasses).toContain('focus-visible:ring-inset');
       expect(containedFocusRingClasses).toContain(
-        'focus-visible:shadow-[inset_1px_0_0_var(--accent-a8),inset_-1px_0_0_var(--accent-a8)]'
+        'focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]'
       );
       expect(containedFocusRingClasses).not.toContain('focus-visible:ring-offset-2');
       expect(containedFocusRingClasses).not.toContain('focus-visible:ring-offset-bg-app');
     });
 
     it('supports programmatic focus-visible state in clipped contexts', () => {
-      expect(containedFocusRingClasses).toContain('[&[data-focus-visible-added]:focus]:outline-1');
+      expect(containedFocusRingClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:outline-[1.5px]'
+      );
       expect(containedFocusRingClasses).toContain(
         '[&[data-focus-visible-added]:focus]:outline-[color:var(--accent-a8)]'
       );
       expect(containedFocusRingClasses).toContain(
-        '[&[data-focus-visible-added]:focus]:outline-offset-[-1px]'
+        '[&[data-focus-visible-added]:focus]:outline-offset-[-1.5px]'
       );
-      expect(containedFocusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-1');
+      expect(containedFocusRingClasses).toContain(
+        '[&[data-focus-visible-added]:focus]:ring-[1.5px]'
+      );
       expect(containedFocusRingClasses).toContain(
         '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]'
       );
@@ -98,7 +102,7 @@ describe('accessibility utilities', () => {
       );
       expect(containedFocusRingClasses).toContain('[&[data-focus-visible-added]:focus]:ring-inset');
       expect(containedFocusRingClasses).toContain(
-        '[&[data-focus-visible-added]:focus]:shadow-[inset_1px_0_0_var(--accent-a8),inset_-1px_0_0_var(--accent-a8)]'
+        '[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]'
       );
     });
   });
