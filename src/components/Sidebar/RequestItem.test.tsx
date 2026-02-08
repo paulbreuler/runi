@@ -62,7 +62,8 @@ describe('RequestItem', () => {
       window.dispatchEvent(new Event('resize'));
     });
 
-    fireEvent.mouseEnter(row);
+    const wrapper = row.parentElement!;
+    fireEvent.mouseEnter(wrapper);
 
     const popout = await screen.findByTestId('request-popout', {}, { timeout: 1000 });
     expect(popout).toBeInTheDocument();

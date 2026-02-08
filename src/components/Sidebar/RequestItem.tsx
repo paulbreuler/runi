@@ -35,17 +35,21 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const setUrl = useRequestStore((state) => state.setUrl);
   const setHeaders = useRequestStore((state) => state.setHeaders);
   const setBody = useRequestStore((state) => state.setBody);
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [isOccluded, setIsOccluded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const [isExpandedTruncated, setIsExpandedTruncated] = useState(false);
+
   const [popoutPosition, setPopoutPosition] = useState<{
     top: number;
     left: number;
     width: number;
     height: number;
   } | null>(null);
+
   const rowRef = useRef<HTMLButtonElement | null>(null);
   const textRef = useRef<HTMLSpanElement | null>(null);
   const expandedTextRef = useRef<HTMLSpanElement | null>(null);
@@ -108,8 +112,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = textRef.current;
-    // Use 1px buffer to handle subpixel rendering artifacts
-    setIsTruncated(scrollWidth > clientWidth + 1);
+    // Use 2px buffer for robustness against subpixel rounding
+    setIsTruncated(scrollWidth > clientWidth + 2);
   }, []);
 
   const evaluateExpandedTruncation = useCallback((): void => {
@@ -117,8 +121,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = expandedTextRef.current;
-    // Use 1px buffer to handle subpixel rendering artifacts
-    setIsExpandedTruncated(scrollWidth > clientWidth + 1);
+    // Use 2px buffer for robustness against subpixel rounding
+    setIsExpandedTruncated(scrollWidth > clientWidth + 2);
   }, []);
 
   const updatePopoutPosition = useCallback((): void => {
@@ -129,10 +133,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   }, [calculatePosition]);
 
   const showPopout = useCallback((): void => {
-    evaluateTruncation();
-    updatePopoutPosition();
-    setIsExpanded(true);
-  }, [evaluateTruncation, updatePopoutPosition]);
+    if (isHovered || isFocused) {
+      evaluateTruncation();
+      updatePopoutPosition();
+      setIsExpanded(true);
+    }
+  }, [evaluateTruncation, updatePopoutPosition, isHovered, isFocused]);
 
   const hidePopout = useCallback((): void => {
     if (!isFocused) {
@@ -141,22 +147,35 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
   }, [isFocused]);
 
-  const handleMouseEnter = useCallback((): void => {
-    if (hoverTimeoutRef.current !== null) {
-      window.clearTimeout(hoverTimeoutRef.current);
+  useEffect(() => {
+    if (isHovered || isFocused) {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+      }
+      hoverTimeoutRef.current = window.setTimeout(() => {
+        showPopout();
+      }, 150);
+    } else {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      hidePopout();
     }
-    hoverTimeoutRef.current = window.setTimeout(() => {
-      showPopout();
-    }, 150);
-  }, [showPopout]);
+    return (): void => {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, [isHovered, isFocused, showPopout, hidePopout]);
+
+  const handleMouseEnter = useCallback((): void => {
+    setIsHovered(true);
+  }, []);
 
   const handleMouseLeave = useCallback((): void => {
-    if (hoverTimeoutRef.current !== null) {
-      window.clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = null;
-    hidePopout();
-  }, [hidePopout]);
+    setIsHovered(false);
+  }, []);
 
   const handleFocus = useCallback((): void => {
     setIsFocused(true);
@@ -173,10 +192,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     evaluateTruncation();
   }, [evaluateTruncation, request.name]);
 
-  // Check truncation of the expanded state whenever visibility or content changes
+  // Constantly check truncation of the expanded state during visibility
   useLayoutEffect(() => {
     if (isExpanded) {
-      // Small delay ensures we check AFTER the browser has established new layout
       const id = requestAnimationFrame(evaluateExpandedTruncation);
       return (): void => {
         cancelAnimationFrame(id);
@@ -252,8 +270,20 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
 
   const actuallyVisible = isExpanded && !isOccluded && isTruncated;
 
+  const handleAction = (): void => {
+    selectRequest(collectionId, request.id);
+    setMethod(request.method);
+    setUrl(request.url);
+    setHeaders(request.headers);
+    setBody(request.body?.content ?? '');
+  };
+
   return (
-    <>
+    <div
+      className="relative w-full"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
         ref={rowRef}
         type="button"
@@ -266,17 +296,11 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         )}
         data-test-id={`collection-request-${request.id}`}
         data-active={isSelected || undefined}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e) => {
           focusWithVisibility(e.currentTarget);
-          selectRequest(collectionId, request.id);
-          setMethod(request.method);
-          setUrl(request.url);
-          setHeaders(request.headers);
-          setBody(request.body?.content ?? '');
+          handleAction();
         }}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -293,8 +317,11 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           >
             {request.method}
           </span>
-          {/* Tooltip only shown if truncated at rest */}
-          {isTruncated ? (
+          {/* 
+            Disable button's internal tooltip if the expansion is active 
+            to prevent double-tooltips or "hover-through" artifacts.
+          */}
+          {isTruncated && !actuallyVisible ? (
             <Tooltip content={request.name} delayDuration={500}>
               <span
                 ref={textRef}
@@ -342,14 +369,14 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             initial={{ width: popoutPosition.width }}
             animate={{ width: 'auto' }}
             exit={{ width: popoutPosition.width, transition: { duration: 0 } }}
-            onUpdate={evaluateExpandedTruncation} // Constant check during width animation
+            onUpdate={evaluateExpandedTruncation}
             transition={
               shouldReduceMotion === true
                 ? { duration: 0 }
                 : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5 }
             }
             role="tooltip"
-            className="pointer-events-none overflow-hidden"
+            className="pointer-events-auto overflow-hidden cursor-pointer"
             data-test-id="request-popout"
             style={{
               position: 'fixed',
@@ -358,8 +385,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               height: popoutPosition.height,
               zIndex: 60,
               maxWidth: 'min(600px, calc(100vw - 40px))',
-              // Use a solid color that matches exactly the hover state
               backgroundColor: isSelected ? '#1C2C3E' : '#1E1E1E',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              rowRef.current?.focus();
+              handleAction();
             }}
           >
             <div className="flex items-center gap-2 px-3 h-full whitespace-nowrap min-w-0">
@@ -377,10 +408,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 {request.method}
               </span>
               <div className="flex-1 min-w-0">
-                {/* 
-                  Only show Tooltip in expanded state if it's STILL truncated 
-                  (i.e. name is longer than 600px or the window width)
-                */}
                 {isExpandedTruncated ? (
                   <Tooltip content={request.name} delayDuration={500}>
                     <span
@@ -410,14 +437,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               )}
             </div>
 
-            {/* Focus ring overlay for the expanded state */}
             {isFocused && (
               <div className="absolute inset-0 pointer-events-none ring-[1.5px] ring-[color:var(--accent-a8)] ring-inset" />
             )}
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 };
 
