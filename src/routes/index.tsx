@@ -11,7 +11,7 @@ import { getConsoleService } from '@/services/console-service';
 import { getCorrelationId } from '@/utils/correlation-id';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
-import { CommandBar } from '@/components/CommandBar/CommandBar';
+import { UrlBar } from '@/components/UrlBar/UrlBar';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -218,7 +218,7 @@ export const HomePage = (): React.JSX.Element => {
     <MainLayout
       initialSidebarVisible={initialSidebarVisible}
       headerContent={
-        <CommandBar
+        <UrlBar
           method={localMethod}
           url={localUrl}
           loading={isLoading}

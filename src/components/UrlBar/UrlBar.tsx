@@ -12,7 +12,7 @@ import { cn } from '@/utils/cn';
 import { compositeFocusContainerClasses, compositeFocusItemClasses } from '@/utils/accessibility';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
 
-interface CommandBarProps {
+interface UrlBarProps {
   method: HttpMethod;
   url?: string;
   loading?: boolean;
@@ -22,18 +22,18 @@ interface CommandBarProps {
 }
 
 /**
- * CommandBar - The main interaction bar for the application.
+ * UrlBar - The main interaction bar for the application.
  * Currently handles Method selection, URL input, and Send action.
  * Future evolution will include intent detection and natural language commands.
  */
-export const CommandBar = ({
+export const UrlBar = ({
   method,
   url = '',
   loading = false,
   onMethodChange,
   onUrlChange,
   onSend,
-}: CommandBarProps): React.JSX.Element => {
+}: UrlBarProps): React.JSX.Element => {
   const httpMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
   const isValidUrl = url.length > 0;
@@ -94,7 +94,7 @@ export const CommandBar = ({
           'flex flex-1 min-w-0 items-center gap-0 rounded-lg border border-border-subtle bg-bg-raised overflow-hidden transition-colors duration-200 hover:border-border-default',
           compositeFocusContainerClasses
         )}
-        data-test-id="command-bar"
+        data-test-id="url-bar"
       >
         {/* Method selector - appears as prefix */}
         <Select.Select value={method} onValueChange={handleMethodChange}>

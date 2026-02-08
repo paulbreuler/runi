@@ -116,12 +116,6 @@ export const FLAG_METADATA: FlagMetadataRegistry = {
       description: 'Snap canvas nodes to the grid.',
       state: 'hidden',
     },
-    commandBar: {
-      addedVersion: '0.5.0',
-      expectedGraduation: '0.7.0',
-      description: 'Enable command bar actions inside the canvas.',
-      state: 'hidden',
-    },
   },
   comprehension: {
     driftDetection: {

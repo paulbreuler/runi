@@ -32,7 +32,6 @@ describe('feature flag types', () => {
   it('has the expected canvas flags', () => {
     const flags: FeatureFlags = DEFAULT_FLAGS;
     expect(Object.keys(flags.canvas).sort()).toEqual([
-      'commandBar',
       'connectionLines',
       'enabled',
       'minimap',
