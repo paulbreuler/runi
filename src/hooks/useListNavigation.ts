@@ -92,6 +92,31 @@ export function useListNavigation(options: ListNavigationOptions): {
         const targetItem = items[targetIndex];
         if (targetItem !== undefined) {
           focusWithVisibility(targetItem);
+
+          // Find the scroll container (closest element with data-scroll-container or overflow)
+          const scrollContainer = targetItem.closest<HTMLElement>(
+            '[data-scroll-container], [style*="overflow: auto"], [style*="overflow: scroll"]'
+          );
+
+          if (scrollContainer !== null) {
+            const itemRect = targetItem.getBoundingClientRect();
+            const containerRect = scrollContainer.getBoundingClientRect();
+
+            // Padding to ensure item isn't flush with edges
+            const padding = 8;
+            // Preview height to show part of the next item
+            const preview = 12;
+
+            const isAbove = itemRect.top < containerRect.top + padding;
+            const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;
+
+            if (isAbove) {
+              scrollContainer.scrollTop -= containerRect.top + padding - itemRect.top;
+            } else if (isBelow) {
+              scrollContainer.scrollTop +=
+                itemRect.bottom - (containerRect.bottom - padding - preview);
+            }
+          }
         }
       }
     },
