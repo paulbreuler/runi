@@ -16,12 +16,51 @@ interface ListNavigationOptions {
 }
 
 /**
- * Hook for list-based keyboard navigation (ArrowUp/Down, Home/End).
+ * Hook for list-based keyboard navigation (ArrowUp/Down, Home/End, Tab).
  */
 export function useListNavigation(options: ListNavigationOptions): {
   handleKeyDown: (e: React.KeyboardEvent) => void;
 } {
   const { itemSelector, activeItemSelector, loop = true } = options;
+
+  /**
+   * Helper to focus an item and scroll it naturally into view.
+   */
+  const navigateToIndex = useCallback((items: HTMLElement[], index: number) => {
+    const targetItem = items[index];
+    if (targetItem === undefined) {
+      return;
+    }
+
+    // Use preventScroll to stop the browser from jarringly jumping to the element
+    focusWithVisibility(targetItem, { preventScroll: true });
+
+    // Find the scroll container (closest element with data-scroll-container or overflow)
+    const scrollContainer = targetItem.closest<HTMLElement>(
+      '[data-scroll-container], [style*="overflow: auto"], [style*="overflow: scroll"]'
+    );
+
+    if (scrollContainer !== null) {
+      const itemRect = targetItem.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+
+      // Padding to ensure item isn't flush with edges
+      const padding = 12;
+      // Preview height to show part of the next item
+      const preview = 24;
+
+      const isAbove = itemRect.top < containerRect.top + padding;
+      const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;
+
+      if (isAbove) {
+        const delta = itemRect.top - (containerRect.top + padding);
+        scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
+      } else if (isBelow) {
+        const delta = itemRect.bottom - (containerRect.bottom - padding - preview);
+        scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
+      }
+    }
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -56,6 +95,27 @@ export function useListNavigation(options: ListNavigationOptions): {
       let targetIndex = -1;
 
       switch (e.key) {
+        case 'Tab':
+          // Intercept Tab to follow our natural scrolling driver
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Previous
+            if (currentIndex <= 0) {
+              targetIndex = loop ? items.length - 1 : 0;
+            } else {
+              targetIndex = currentIndex - 1;
+            }
+          } else {
+            // Next
+            if (currentIndex === -1) {
+              targetIndex = 0;
+            } else if (currentIndex === items.length - 1) {
+              targetIndex = loop ? 0 : items.length - 1;
+            } else {
+              targetIndex = currentIndex + 1;
+            }
+          }
+          break;
         case 'ArrowDown':
           e.preventDefault();
           if (currentIndex === -1) {
@@ -89,50 +149,10 @@ export function useListNavigation(options: ListNavigationOptions): {
       }
 
       if (targetIndex !== -1) {
-        const targetItem = items[targetIndex];
-
-        if (targetItem !== undefined) {
-          // Use preventScroll to stop the browser from jarringly jumping to the element
-
-          focusWithVisibility(targetItem, { preventScroll: true });
-
-          // Find the scroll container (closest element with data-scroll-container or overflow)
-
-          const scrollContainer = targetItem.closest<HTMLElement>(
-            '[data-scroll-container], [style*="overflow: auto"], [style*="overflow: scroll"]'
-          );
-
-          if (scrollContainer !== null) {
-            const itemRect = targetItem.getBoundingClientRect();
-
-            const containerRect = scrollContainer.getBoundingClientRect();
-
-            // Padding to ensure item isn't flush with edges
-
-            const padding = 12;
-
-            // Preview height to show part of the next item
-
-            const preview = 24;
-
-            const isAbove = itemRect.top < containerRect.top + padding;
-
-            const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;
-
-            if (isAbove) {
-              const delta = itemRect.top - (containerRect.top + padding);
-
-              scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
-            } else if (isBelow) {
-              const delta = itemRect.bottom - (containerRect.bottom - padding - preview);
-
-              scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
-            }
-          }
-        }
+        navigateToIndex(items, targetIndex);
       }
     },
-    [itemSelector, activeItemSelector, loop]
+    [itemSelector, activeItemSelector, loop, navigateToIndex]
   );
 
   return { handleKeyDown };
