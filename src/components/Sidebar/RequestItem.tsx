@@ -353,7 +353,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5 }
             }
             role="tooltip"
-            className="pointer-events-auto overflow-hidden cursor-pointer"
+            className="pointer-events-none overflow-hidden"
             data-test-id="request-popout"
             style={{
               position: 'fixed',
