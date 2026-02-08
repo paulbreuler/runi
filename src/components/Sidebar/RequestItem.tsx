@@ -260,7 +260,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           setBody(request.body?.content ?? '');
         }}
       >
-        <div className={cn('flex items-center gap-2 min-w-0', actuallyVisible && 'invisible')}>
+        <div className="flex items-center gap-2 min-w-0">
           {isBound(request) && (
             <div className="flex items-center justify-center shrink-0 w-3" aria-hidden="true">
               <span className="h-2 w-2 rounded-full bg-green-500" />
@@ -283,7 +283,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             {displayName}
           </span>
         </div>
-        <div className={cn('flex items-center gap-2 shrink-0', actuallyVisible && 'invisible')}>
+        <div className="flex items-center gap-2 shrink-0">
           {request.is_streaming && (
             <span
               className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0"
@@ -323,7 +323,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               zIndex: 60,
             }}
           >
-            {/* Background shell that grows outward horizontally without squashing text */}
+            {/* Solid background shell that grows outward horizontally */}
             {/* Matches the underlying item's styling perfectly (no shadow, no blur) */}
             <motion.div
               variants={{
@@ -339,12 +339,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               style={{ originX: 0 }}
               className={cn(
                 'absolute inset-0',
-                isSelected ? 'bg-accent-blue/10' : 'bg-bg-raised/40',
+                isSelected ? 'bg-[#1C2C3E]' : 'bg-[#1E1E1E]',
                 isFocused && 'ring-[1.5px] ring-[color:var(--accent-a8)] ring-inset'
               )}
             />
 
-            {/* Stable content layer that only fades in to avoid jarring text "bounce" */}
+            {/* Stable content layer that only fades in */}
             <motion.div
               variants={{
                 initial: { opacity: 0 },
@@ -354,7 +354,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
               style={{ scaleX: 1 }} // Explicitly lock scale to prevent squishing from parent context
               className="relative flex items-center gap-2 px-3 h-full min-w-0"
             >
