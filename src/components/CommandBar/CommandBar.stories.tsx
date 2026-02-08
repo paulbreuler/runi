@@ -7,22 +7,22 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
-import { RequestHeader } from './RequestHeader';
+import { CommandBar } from './CommandBar';
 import type { HttpMethod } from '@/utils/http-colors';
 
 const meta = {
-  title: 'Request/RequestHeader',
-  component: RequestHeader,
+  title: 'CommandBar/CommandBar',
+  component: CommandBar,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
-} satisfies Meta<typeof RequestHeader>;
+} satisfies Meta<typeof CommandBar>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const RequestHeaderWithState = ({
+const CommandBarWithState = ({
   initialMethod = 'GET',
   initialUrl = 'https://api.example.com/users',
   loading = false,
@@ -36,7 +36,7 @@ const RequestHeaderWithState = ({
 
   return (
     <div className="w-full border border-border-default bg-bg-app">
-      <RequestHeader
+      <CommandBar
         method={method}
         url={url}
         onMethodChange={setMethod}
@@ -54,28 +54,28 @@ export const Default: Story = {
   args: {
     method: 'GET',
   },
-  render: () => <RequestHeaderWithState />,
+  render: () => <CommandBarWithState />,
 };
 
 export const Loading: Story = {
   args: {
     method: 'POST',
   },
-  render: () => <RequestHeaderWithState initialMethod="POST" loading={true} />,
+  render: () => <CommandBarWithState initialMethod="POST" loading={true} />,
 };
 
 export const EmptyUrl: Story = {
   args: {
     method: 'GET',
   },
-  render: () => <RequestHeaderWithState initialUrl="" />,
+  render: () => <CommandBarWithState initialUrl="" />,
 };
 
 export const AllMethods: Story = {
   args: {
     method: 'GET',
   },
-  render: () => <RequestHeaderWithState initialUrl="https://api.example.com/resource" />,
+  render: () => <CommandBarWithState initialUrl="https://api.example.com/resource" />,
 };
 
 /**
@@ -86,7 +86,7 @@ export const FormInteractionsTest: Story = {
     method: 'GET',
     url: 'https://api.example.com/users',
   },
-  render: () => <RequestHeaderWithState />,
+  render: () => <CommandBarWithState />,
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
@@ -131,7 +131,7 @@ export const KeyboardNavigationTest: Story = {
     method: 'GET',
     url: 'https://api.example.com/users',
   },
-  render: () => <RequestHeaderWithState />,
+  render: () => <CommandBarWithState />,
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
