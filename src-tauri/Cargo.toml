@@ -1,6 +1,6 @@
 [package]
 name = "runi"
-version = "0.6.0"
+version = "0.7.0"
 description = "Runi - An open-source Tauri desktop application"
 authors = ["Paul Breuler"]
 license = "MIT"

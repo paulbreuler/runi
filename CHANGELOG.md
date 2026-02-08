@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.7.0](https://github.com/paulbreuler/runi/compare/runi-v0.6.0...runi-v0.7.0) (2026-02-08)
+
+
+### Features
+
+* **commands:** add /impl-discipline skill and fix stale /pr references ([#107](https://github.com/paulbreuler/runi/issues/107)) ([e300677](https://github.com/paulbreuler/runi/commit/e300677a8b4f0e5725863f3798c9d76466628e83))
+
+
+### Bug Fixes
+
+* **ui:** perfect sidebar expansion, tooltips, and layout stability ([#108](https://github.com/paulbreuler/runi/issues/108)) ([13c2c4b](https://github.com/paulbreuler/runi/commit/13c2c4b50b68f181f7f090090795dd486930ff22))
+
+
+### Refactoring
+
+* **events:** use event bus for collection request selection ([#110](https://github.com/paulbreuler/runi/issues/110)) ([3ae1cb2](https://github.com/paulbreuler/runi/commit/3ae1cb23340b777468a3fa24ee546068b783fe1e))
+
 ## [0.6.0](https://github.com/paulbreuler/runi/compare/runi-v0.5.0...runi-v0.6.0) (2026-02-07)
 
 
