@@ -90,31 +90,43 @@ export function useListNavigation(options: ListNavigationOptions): {
 
       if (targetIndex !== -1) {
         const targetItem = items[targetIndex];
+
         if (targetItem !== undefined) {
-          focusWithVisibility(targetItem);
+          // Use preventScroll to stop the browser from jarringly jumping to the element
+
+          focusWithVisibility(targetItem, { preventScroll: true });
 
           // Find the scroll container (closest element with data-scroll-container or overflow)
+
           const scrollContainer = targetItem.closest<HTMLElement>(
             '[data-scroll-container], [style*="overflow: auto"], [style*="overflow: scroll"]'
           );
 
           if (scrollContainer !== null) {
             const itemRect = targetItem.getBoundingClientRect();
+
             const containerRect = scrollContainer.getBoundingClientRect();
 
             // Padding to ensure item isn't flush with edges
+
             const padding = 12;
+
             // Preview height to show part of the next item
+
             const preview = 24;
 
             const isAbove = itemRect.top < containerRect.top + padding;
+
             const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;
 
             if (isAbove) {
-              scrollContainer.scrollTop -= containerRect.top + padding - itemRect.top;
+              const delta = itemRect.top - (containerRect.top + padding);
+
+              scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
             } else if (isBelow) {
-              scrollContainer.scrollTop +=
-                itemRect.bottom - (containerRect.bottom - padding - preview);
+              const delta = itemRect.bottom - (containerRect.bottom - padding - preview);
+
+              scrollContainer.scrollBy({ top: delta, behavior: 'smooth' });
             }
           }
         }
