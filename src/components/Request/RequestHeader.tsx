@@ -97,7 +97,7 @@ export const RequestHeader = ({
             role="button"
             aria-haspopup="listbox"
             className={cn(
-              'relative min-w-28 w-auto h-9 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
+              'relative min-w-28 w-auto h-8 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
               compositeFocusItemClasses,
               methodColor
             )}
@@ -135,7 +135,7 @@ export const RequestHeader = ({
           aria-label="Request URL"
           noScale
           className={cn(
-            'relative h-9 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted py-0',
+            'relative h-8 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted py-0',
             compositeFocusItemClasses
           )}
         />
@@ -151,7 +151,7 @@ export const RequestHeader = ({
             data-test-id="send-button"
             aria-label="Send Request"
             className={cn(
-              'relative w-full h-9 justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
+              'relative w-full h-8 justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
               compositeFocusItemClasses,
               'focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
             )}
