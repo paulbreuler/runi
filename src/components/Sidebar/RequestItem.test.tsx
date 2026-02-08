@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import type { CollectionRequest } from '@/types/collection';
 import { RequestItem } from './RequestItem';
+import { TooltipProvider } from '@/components/ui/Tooltip';
 
 // Mock motion components to avoid animation delays in tests
 vi.mock('motion/react', () => ({
@@ -44,8 +45,12 @@ describe('RequestItem', () => {
   });
 
   it('shows a popout after hover delay when truncated', async () => {
-    vi.useFakeTimers();
-    render(<RequestItem request={baseRequest} collectionId="col_1" />);
+    vi.useRealTimers();
+    render(
+      <TooltipProvider>
+        <RequestItem request={baseRequest} collectionId="col_1" />
+      </TooltipProvider>
+    );
 
     const row = screen.getByTestId('collection-request-req_1');
     const name = screen.getByTestId('request-name');
@@ -57,24 +62,28 @@ describe('RequestItem', () => {
       window.dispatchEvent(new Event('resize'));
     });
 
-    act(() => {
-      fireEvent.mouseEnter(row);
-      vi.advanceTimersByTime(260);
-    });
+    fireEvent.mouseEnter(row);
 
-    const popout = screen.getByTestId('request-popout');
+    const popout = await screen.findByTestId('request-popout', {}, { timeout: 1000 });
     expect(popout).toBeInTheDocument();
 
-    act(() => {
-      fireEvent.mouseLeave(row);
-    });
+    fireEvent.mouseLeave(row);
 
-    expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
+      },
+      { timeout: 1000 }
+    );
   });
 
-  it('does not show a popout when text is not truncated', () => {
-    vi.useFakeTimers();
-    render(<RequestItem request={baseRequest} collectionId="col_1" />);
+  it('does not show a popout when text is not truncated', async () => {
+    vi.useRealTimers();
+    render(
+      <TooltipProvider>
+        <RequestItem request={baseRequest} collectionId="col_1" />
+      </TooltipProvider>
+    );
 
     const row = screen.getByTestId('collection-request-req_1');
     const name = screen.getByTestId('request-name');
@@ -86,11 +95,10 @@ describe('RequestItem', () => {
       window.dispatchEvent(new Event('resize'));
     });
 
-    act(() => {
-      fireEvent.mouseEnter(row);
-      vi.advanceTimersByTime(260);
-    });
+    fireEvent.mouseEnter(row);
 
+    // Should not find it even after a delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
     expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
   });
 });
