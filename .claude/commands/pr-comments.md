@@ -1,353 +1,84 @@
 # PR Comments
 
-Fetch, review, address, and resolve PR review comments.
+Fetch, review, address, and resolve PR review comments using the automated helper script.
 
 ## Instructions for Claude
 
 When this command is invoked:
 
-1. **Get current PR**: Use `gh pr view --json number,url,headRepositoryOwner,headRepository` to get PR context
-2. **List comments**: Fetch unresolved review threads only (and the comments inside those threads)
-3. **Categorize**: Group unresolved threads by file path, identify deleted files, and check outdated state
-4. **Address**: Reply to comments with explanations
-   - **Before fixing**: For architecture/maintainability concerns, run `/code-review` to understand impact
-   - **Before fixing**: For security/MCP concerns, run `/review-mcp` to identify risks
-   - **After fixing**: If fixes were made, commit using conventional commits (see CLAUDE.md commit conventions)
-   - **Commit message**: Reference the comment/concern: `fix(component): address review feedback on error handling`
-5. **Resolve**: Mark threads as resolved via GraphQL API (only after addressing and committing fixes)
+1. **Get current PR and List comments**: Use the helper script to list unresolved threads.
 
-## API Commands Reference
+   ```bash
+   npx tsx scripts/helpers/pr-comments.ts list [pr_number]
+   ```
 
-### List Unresolved Review Threads (GraphQL)
+2. **Analyze**: Categorize unresolved threads by file path and check for deleted files.
 
-```bash
-# Get unresolved threads with comment details (cursor-paginated)
-cursor=""
-tmp_file=/tmp/pr-review-threads.jsonl
-: > "$tmp_file"
+   ```bash
+   npx tsx scripts/helpers/pr-comments.ts analyze [pr_number]
+   ```
 
-while :; do
-  if [ -n "$cursor" ]; then
-    page=$(gh api graphql -f query='
-    query($owner: String!, $repo: String!, $pr_number: Int!, $cursor: String) {
-      repository(owner: $owner, name: $repo) {
-        pullRequest(number: $pr_number) {
-          reviewThreads(first: 100, after: $cursor) {
-            nodes {
-              id
-              path
-              isResolved
-              isOutdated
-              comments(first: 20) {
-                nodes {
-                  databaseId
-                  body
-                  createdAt
-                  url
-                  author { login }
-                }
-              }
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-          }
-        }
-      }
-    }' \
-      -F owner="{owner}" \
-      -F repo="{repo}" \
-      -F pr_number={pr_number} \
-      -F cursor="$cursor")
-  else
-    page=$(gh api graphql -f query='
-    query($owner: String!, $repo: String!, $pr_number: Int!) {
-      repository(owner: $owner, name: $repo) {
-        pullRequest(number: $pr_number) {
-          reviewThreads(first: 100) {
-            nodes {
-              id
-              path
-              isResolved
-              isOutdated
-              comments(first: 20) {
-                nodes {
-                  databaseId
-                  body
-                  createdAt
-                  url
-                  author { login }
-                }
-              }
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-          }
-        }
-      }
-    }' \
-      -F owner="{owner}" \
-      -F repo="{repo}" \
-      -F pr_number={pr_number})
-  fi
+3. **Address**: Reply to comments using the script.
 
-  echo "$page" >> "$tmp_file"
+   ```bash
+   npx tsx scripts/helpers/pr-comments.ts reply [pr_number] <comment_id> "Your reply message"
+   ```
 
-  has_next=$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage' <<<"$page")
-  if [ "$has_next" != "true" ]; then
-    break
-  fi
+4. **Resolve**: Mark threads as resolved via the script (only after addressing and committing fixes).
 
-  cursor=$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor' <<<"$page")
-done
+   ```bash
+   npx tsx scripts/helpers/pr-comments.ts resolve <thread_id>
+   ```
 
-# Filter unresolved from all pages (not just first 100)
-jq -s '[.[].data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)]' "$tmp_file"
-```
+## Standardized Helper Script
 
-### Reply to a Comment (REST)
+The repository includes a TypeScript helper at `scripts/helpers/pr-comments.ts` that encapsulates
+GraphQL queries and state analysis. Always prefer this script over raw `gh` CLI commands
+to ensure consistency.
 
-```bash
-# Reply to a specific comment
-gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies \
-  -X POST \
-  -f body="Your reply message here"
+### Usage Reference
 
-# Batch reply to multiple comments
-comment_ids=(123 456 789)
-for id in "${comment_ids[@]}"; do
-  gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/$id/replies \
-    -X POST \
-    -f body="Reply message" \
-    --silent
-done
-```
-
-### Get Unresolved Review Threads (GraphQL)
-
-```bash
-# List all unresolved threads with their IDs and file paths
-gh api graphql --paginate -f query='
-query($owner: String!, $repo: String!, $pr_number: Int!, $endCursor: String) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $pr_number) {
-      reviewThreads(first: 100, after: $endCursor) {
-        nodes {
-          id
-          isResolved
-          path
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-    }
-  }
-}' -F owner="{owner}" -F repo="{repo}" -F pr_number={pr_number} \
-  --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | "\(.id)|\(.path)"'
-```
-
-### Resolve a Review Thread (GraphQL)
-
-```bash
-# Resolve a single thread
-gh api graphql -f query='
-mutation {
-  resolveReviewThread(input: {threadId: "PRRT_xxx"}) {
-    thread {
-      isResolved
-    }
-  }
-}'
-
-# Batch resolve multiple threads
-thread_ids=("PRRT_xxx" "PRRT_yyy" "PRRT_zzz")
-for thread_id in "${thread_ids[@]}"; do
-  gh api graphql -f query="
-    mutation {
-      resolveReviewThread(input: {threadId: \"$thread_id\"}) {
-        thread {
-          isResolved
-        }
-      }
-    }
-  " --silent
-done
-```
-
-### Verify All Threads Resolved (GraphQL)
-
-```bash
-gh api graphql --paginate -f query='
-query($owner: String!, $repo: String!, $pr_number: Int!, $endCursor: String) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $pr_number) {
-      reviewThreads(first: 100, after: $endCursor) {
-        nodes {
-          isResolved
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-    }
-  }
-}' -F owner="{owner}" -F repo="{repo}" -F pr_number={pr_number} \
-  --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | .isResolved] | {total: length, resolved: (map(select(. == true)) | length), unresolved: (map(select(. == false)) | length)}'
-```
+| Task             | Command                                                        |
+| :--------------- | :------------------------------------------------------------- |
+| List Unresolved  | `npx tsx scripts/helpers/pr-comments.ts list`                  |
+| Analyze Files    | `npx tsx scripts/helpers/pr-comments.ts analyze`               |
+| Reply to Comment | `npx tsx scripts/helpers/pr-comments.ts reply <pr> <id> <msg>` |
+| Resolve Thread   | `npx tsx scripts/helpers/pr-comments.ts resolve <id>`          |
 
 ## Workflow
 
-### 1. Analyze Comments
+### 1. Review & Analyze
 
-```bash
-# Get PR number and repo info
-pr_number=$(gh pr view --json number --jq '.number')
-owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
-repo=$(gh pr view --json headRepository --jq '.headRepository.name')
+Always start by listing and analyzing. This identifies which files need attention and which
+comments might be outdated (e.g., file deleted).
 
-# Fetch unresolved review threads only
-gh api graphql --paginate -f query='
-query($owner: String!, $repo: String!, $pr_number: Int!, $endCursor: String) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $pr_number) {
-      reviewThreads(first: 100, after: $endCursor) {
-        nodes {
-          id
-          path
-          isResolved
-          isOutdated
-          comments(first: 20) {
-            nodes {
-              databaseId
-              body
-              author { login }
-              createdAt
-              url
-            }
-          }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-    }
-  }
-}' -F owner="$owner" -F repo="$repo" -F pr_number="$pr_number" > /tmp/pr-unresolved-threads.json
+### 2. Address Implementation
 
-# List unresolved thread counts by file
-jq -r '.data.repository.pullRequest.reviewThreads.nodes[]
-  | select(.isResolved == false)
-  | .path' /tmp/pr-unresolved-threads.json | sort | uniq -c | sort -rn
+- **Before fixing**: For architecture/maintainability concerns, run `/code-review`.
+- **Before fixing**: For security/MCP concerns, run `/review-mcp`.
+- **After fixing**: Commit using conventional commits (e.g., `fix(ui): address feedback on UrlBar height`).
 
-# Check which unresolved thread files still exist
-for file in $(jq -r '.data.repository.pullRequest.reviewThreads.nodes[]
-  | select(.isResolved == false)
-  | .path' /tmp/pr-unresolved-threads.json | sort -u); do
-  if [ -f "$file" ]; then
-    echo "EXISTS: $file"
-  else
-    echo "DELETED: $file"
-  fi
-done
-```
+### 3. Communicate & Resolve
 
-### 2. Reply to Comments
-
-For deleted files:
-
-```bash
-owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
-repo=$(gh pr view --json headRepository --jq '.headRepository.name')
-gh api repos/$owner/$repo/pulls/$pr_number/comments/{id}/replies \
-  -X POST \
-  -f body="This file has been removed in subsequent commits."
-```
-
-For addressed issues:
-
-```bash
-owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
-repo=$(gh pr view --json headRepository --jq '.headRepository.name')
-gh api repos/$owner/$repo/pulls/$pr_number/comments/{id}/replies \
-  -X POST \
-  -f body="Fixed in commit abc123." # or explanation of why it's not an issue
-```
-
-### 3. Resolve All Threads
-
-```bash
-# Get PR repo info
-owner=$(gh pr view --json headRepositoryOwner --jq '.headRepositoryOwner.login')
-repo=$(gh pr view --json headRepository --jq '.headRepository.name')
-
-# Get all unresolved thread IDs
-thread_ids=$(gh api graphql --paginate -f query='
-query($owner: String!, $repo: String!, $pr_number: Int!, $endCursor: String) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $pr_number) {
-      reviewThreads(first: 100, after: $endCursor) {
-        nodes {
-          id
-          isResolved
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-    }
-  }
-}' -F owner="$owner" -F repo="$repo" -F pr_number="$pr_number" \
-  --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false) | .id')
-
-# Resolve each thread
-for thread_id in $thread_ids; do
-  gh api graphql -f query="
-    mutation {
-      resolveReviewThread(input: {threadId: \"$thread_id\"}) {
-        thread { isResolved }
-      }
-    }
-  " --silent
-  echo "Resolved: $thread_id"
-done
-```
+- Reply to each addressed comment with the fix description.
+- Resolve the thread immediately after replying.
 
 ## Reply Templates
 
 **Deleted file:**
 
-> This file has been removed. [Brief explanation of why/what replaced it.]
+> This file has been removed.
+> [Brief explanation of why/what replaced it.]
 
 **Addressed in code:**
 
-> Fixed in [commit/change description].
+> Fixed in [commit hash or description].
 
 **Won't fix (with explanation):**
 
 > This is intentional because [reason]. [Additional context if needed.]
 
-**Test/infrastructure code:**
-
-> This is test infrastructure. Tests are passing - if issues arise, we can enhance then.
-
 **Outdated comment:**
 
-> This has been addressed in subsequent commits. [Brief explanation of current state.]
-
-## Notes
-
-- Always reply before resolving so reviewers understand why
-- Group similar comments and batch process them
-- Default to unresolved threads only; do not bulk-fetch all PR comments unless needed as fallback
-- Check if files still exist before addressing implementation concerns
-- Use `--silent` flag when batch processing to reduce noise
-- **Commit fixes**: When addressing comments with code changes, use conventional commits (see `/git-commit-best-practices`)
-- **Breaking changes**: If comment addresses breaking change concerns, ensure `BREAKING CHANGE:` footer is in commit message
+> This has been addressed in subsequent commits.
+> [Brief explanation of current state.]
