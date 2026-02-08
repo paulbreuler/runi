@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { Zap } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 import { OVER_9000_THRESHOLD } from './config';
 import { usePowerLevelContext } from './usePowerLevel';
@@ -48,6 +48,7 @@ export const BadgeCount = ({
   animate,
   isSelected,
 }: BadgeCountProps): React.JSX.Element => {
+  const prefersReducedMotion = useReducedMotion() === true;
   // Access tier state from context
   const powerLevel = usePowerLevelContext();
 
@@ -74,7 +75,7 @@ export const BadgeCount = ({
 
   // Show lightning bolt only during active animation (when tier colors are shown)
   // Fades out when animation completes (idle/settling states)
-  const showLightningBolt = isOver9000 && shouldUseTierColor;
+  const showLightningBolt = isOver9000 && shouldUseTierColor && !prefersReducedMotion;
 
   // Determine badge color based on tier and animation state
   const getBadgeColor = (): string => {
@@ -103,7 +104,7 @@ export const BadgeCount = ({
     const wasUnder = prevCountRef.current < OVER_9000_THRESHOLD;
     const isNowOver = count >= OVER_9000_THRESHOLD;
 
-    if (wasUnder && isNowOver) {
+    if (wasUnder && isNowOver && !prefersReducedMotion) {
       // Just crossed the threshold - trigger animation!
       animationKey.current += 1;
       setJustCrossed(true);
@@ -118,10 +119,10 @@ export const BadgeCount = ({
 
     prevCountRef.current = count;
     return undefined;
-  }, [count]);
+  }, [count, prefersReducedMotion]);
 
   React.useEffect(() => {
-    if (animate && AnimateNumber === null) {
+    if (animate && AnimateNumber === null && !prefersReducedMotion) {
       import('motion-plus/react')
         .then((mod) => {
           setAnimateNumber(() => mod.AnimateNumber);
@@ -130,7 +131,7 @@ export const BadgeCount = ({
           // Fallback to static display if import fails
         });
     }
-  }, [animate, AnimateNumber]);
+  }, [animate, AnimateNumber, prefersReducedMotion]);
 
   const displayCount = Math.min(count, maxCount);
   const showPlus = count > maxCount;
@@ -138,7 +139,7 @@ export const BadgeCount = ({
   // Determine badge background class based on state
   const getBadgeBackgroundClass = (): string => {
     // Only show special 9K+ gradient during animation
-    if (isOver9000 && shouldUseTierColor) {
+    if (isOver9000 && shouldUseTierColor && !prefersReducedMotion) {
       return 'bg-gradient-to-r from-amber-500/20 to-orange-500/20';
     }
     if (isSelected) {
@@ -163,7 +164,8 @@ export const BadgeCount = ({
 
     // Determine boxShadow: show glow during justCrossed burst, otherwise no shadow
     // Using consistent NO_SHADOW format ensures Motion can interpolate properly
-    const boxShadowValue = justCrossed ? createGlowShadow(glowColor) : NO_SHADOW;
+    const boxShadowValue =
+      justCrossed && !prefersReducedMotion ? createGlowShadow(glowColor) : NO_SHADOW;
 
     return (
       <AnimatePresence mode="wait">
@@ -175,12 +177,16 @@ export const BadgeCount = ({
           animate={{
             color: animatedColor,
             boxShadow: boxShadowValue,
-            ...(justCrossed ? shakeAnimation : {}),
+            ...(justCrossed && !prefersReducedMotion ? shakeAnimation : {}),
           }}
-          transition={{
-            duration: 0.3,
-            ...(justCrossed ? shakeTransition : {}),
-          }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : {
+                  duration: 0.3,
+                  ...(justCrossed ? shakeTransition : {}),
+                }
+          }
         >
           <span className="flex items-center gap-0.5">
             <span>9K+</span>
@@ -212,7 +218,7 @@ export const BadgeCount = ({
   // Use 'inherit' as default to pick up class-based coloring
   const animatedBadgeColor = badgeColor !== '' ? badgeColor : 'inherit';
 
-  if (animate && AnimateNumber !== null) {
+  if (animate && AnimateNumber !== null && !prefersReducedMotion) {
     return (
       <motion.span
         className={badgeClasses}
@@ -237,7 +243,7 @@ export const BadgeCount = ({
     <motion.span
       className={badgeClasses}
       animate={{ color: animatedBadgeColor }}
-      transition={{ duration: 0.3 }}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3 }}
     >
       {showPlus ? `${String(maxCount)}+` : count}
     </motion.span>

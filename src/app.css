@@ -144,7 +144,7 @@ html {
 body {
   font-family: var(--font-sans);
   background-color: transparent;
-  color: var(--gray-12);
+  color: var(--color-text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -173,6 +173,56 @@ body {
   *::before,
   *::after {
     overscroll-behavior: none;
+  }
+
+  /* Global Reduced Motion Reset */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-delay: -1ms !important;
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      background-attachment: initial !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+    }
+  }
+}
+
+@layer utilities {
+  .window-blur {
+    /* Dim root text tokens */
+    --color-text-primary: var(--gray-10);
+    --color-text-secondary: var(--gray-9);
+    --color-text-muted: var(--gray-8);
+
+    /* Dim root border tokens */
+    --color-border-subtle: var(--gray-3);
+    --color-border-default: var(--gray-4);
+
+    /* Dim root background/surface tokens (propagates to bg-bg-app, bg-bg-surface, etc.) */
+    --color-background: var(--gray-1);
+    --color-surface: var(--gray-1);
+    --color-panel-solid: var(--gray-2);
+    --color-bg-elevated: var(--gray-3);
+
+    /* Dim semantic/signal colors when blurred */
+    --color-accent-blue: var(--gray-9);
+    --color-accent-blue-hover: var(--gray-10);
+    --color-accent-purple: var(--gray-9);
+    --color-signal-success: var(--gray-9);
+    --color-signal-warning: var(--gray-9);
+    --color-signal-error: var(--gray-9);
+    --color-signal-ai: var(--gray-9);
+
+    /* Dim method colors specifically */
+    --color-method-get: var(--gray-9);
+    --color-method-post: var(--gray-9);
+    --color-method-put: var(--gray-9);
+    --color-method-patch: var(--gray-9);
+    --color-method-delete: var(--gray-9);
   }
 }
 

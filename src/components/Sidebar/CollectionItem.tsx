@@ -13,7 +13,7 @@ import {
 } from '@/stores/useCollectionStore';
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
-import { containedFocusRingClasses } from '@/utils/accessibility';
+import { focusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface CollectionItemProps {
@@ -22,6 +22,8 @@ interface CollectionItemProps {
 
 export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Element => {
   const isExpanded = useIsExpanded(summary.id);
+  const selectedCollectionId = useCollectionStore((state) => state.selectedCollectionId);
+  const isSelected = selectedCollectionId === summary.id;
   const toggleExpanded = useCollectionStore((state) => state.toggleExpanded);
   const loadCollection = useCollectionStore((state) => state.loadCollection);
   const selectCollection = useCollectionStore((state) => state.selectCollection);
@@ -29,7 +31,9 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
   const sortedRequests = useSortedRequests(summary.id);
   const displayName = truncateNavLabel(summary.name);
 
-  const handleToggle = (): void => {
+  const handleToggle = (e: React.MouseEvent<HTMLButtonElement>): void => {
+    // Ensure mouse click sets focus so subsequent keyboard nav works
+    e.currentTarget.focus({ preventScroll: true });
     const nextExpanded = !isExpanded;
     toggleExpanded(summary.id);
     selectCollection(summary.id);
@@ -43,10 +47,13 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
       <button
         type="button"
         className={cn(
-          containedFocusRingClasses,
-          'w-full flex items-center justify-between gap-3 px-2 py-2 text-left hover:bg-bg-raised/40 transition-colors'
+          focusRingClasses,
+          'w-full flex items-center justify-between gap-3 px-3 py-1 text-left transition-colors',
+          isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40'
         )}
         data-test-id={`collection-item-${summary.id}`}
+        data-active={isSelected || undefined}
+        data-nav-item="true"
         onClick={handleToggle}
         aria-expanded={isExpanded}
       >

@@ -9,6 +9,7 @@ import { MemoryWarningListener } from './components/Memory/MemoryWarningListener
 import { FeatureFlagProvider } from './providers/FeatureFlagProvider';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastProvider } from './components/ui/Toast';
+import { TooltipProvider } from './components/ui/Tooltip';
 
 // Lazy load routes for code splitting
 const HomePage = lazy(() => import('./routes/index').then((m) => ({ default: m.HomePage })));
@@ -21,21 +22,23 @@ export const App = (): React.JSX.Element => {
     <ThemeProvider appearance="dark" accentColor="blue" grayColor="gray">
       <FeatureFlagProvider>
         <ToastProvider>
-          <MemoryWarningListener />
-          <BrowserRouter>
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
-                  Loading...
-                </div>
-              }
-            >
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/devtools-popout" element={<DevToolsPopout />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
+          <TooltipProvider delayDuration={250}>
+            <MemoryWarningListener />
+            <BrowserRouter>
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
+                    Loading...
+                  </div>
+                }
+              >
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/devtools-popout" element={<DevToolsPopout />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
         </ToastProvider>
       </FeatureFlagProvider>
     </ThemeProvider>

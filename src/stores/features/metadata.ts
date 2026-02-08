@@ -46,7 +46,7 @@ export const FLAG_METADATA: FlagMetadataRegistry = {
       addedVersion: '0.5.0',
       expectedGraduation: '0.7.0',
       description: 'Enable collections navigation in the sidebar.',
-      state: 'stable',
+      state: 'experimental',
     },
     collectionsSaving: {
       addedVersion: '0.5.0',

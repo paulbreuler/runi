@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import React from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
@@ -35,25 +35,7 @@ export const RequestHeader = ({
   const methodColor = getMethodColor(method);
 
   // Respect prefers-reduced-motion
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent): void => {
-      setPrefersReducedMotion(e.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return (): void => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
+  const shouldReduceMotion = useReducedMotion();
 
   const handleMethodChange = (value: string | null): void => {
     if (value !== null && value.length > 0 && onMethodChange !== undefined) {
@@ -69,7 +51,7 @@ export const RequestHeader = ({
 
   // Helper function to render loading state
   const renderLoadingState = (): React.JSX.Element => {
-    if (prefersReducedMotion) {
+    if (shouldReduceMotion === true) {
       return <span className="text-accent-blue">Sending</span>;
     }
     return (
@@ -115,9 +97,8 @@ export const RequestHeader = ({
             role="button"
             aria-haspopup="listbox"
             className={cn(
-              'relative min-w-28 w-auto h-8 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
+              'relative min-w-28 w-auto h-9 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
               compositeFocusItemClasses,
-              'focus-visible:bg-bg-raised/50 [&[data-focus-visible-added]:focus]:bg-bg-raised/50',
               methodColor
             )}
             data-test-id="method-select"
@@ -152,8 +133,9 @@ export const RequestHeader = ({
           data-test-id="url-input"
           disabled={loading}
           aria-label="Request URL"
+          noScale
           className={cn(
-            'relative h-8 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted',
+            'relative h-9 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted py-0',
             compositeFocusItemClasses
           )}
         />
@@ -169,9 +151,9 @@ export const RequestHeader = ({
             data-test-id="send-button"
             aria-label="Send Request"
             className={cn(
-              'relative w-full justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
+              'relative w-full h-9 justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
               compositeFocusItemClasses,
-              'focus-visible:bg-bg-raised/50 [&[data-focus-visible-added]:focus]:bg-bg-raised/50 focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
+              'focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
             )}
             style={{ minWidth: '72px' }}
           >

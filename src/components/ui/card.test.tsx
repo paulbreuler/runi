@@ -22,14 +22,7 @@ describe('Card', () => {
     const card = container.firstChild as HTMLElement;
     expect(card.className).toContain('rounded-xl');
     expect(card.className).toContain('border-border-subtle');
-    expect(card.className).toContain('bg-bg-surface');
-  });
-
-  it('applies glass styling when glass prop is true', () => {
-    const { container } = render(<Card glass>Content</Card>);
-    const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain('glass');
-    expect(card.className).not.toContain('bg-bg-surface');
+    expect(card.className).toContain('bg-bg-raised');
   });
 
   it('disables hover effect when hover prop is false', () => {

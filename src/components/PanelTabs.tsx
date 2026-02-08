@@ -104,7 +104,7 @@ export const PanelTabs = ({
             ),
           },
         ]}
-        listClassName="flex items-center gap-1 border-r border-border-default pr-2 mr-2"
+        listClassName="flex items-center gap-1 border-r border-border-default pr-2 mr-2 shrink-0"
         tabClassName="shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1.5 relative"
         activeTabClassName="text-text-primary"
         inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"

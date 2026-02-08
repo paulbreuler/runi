@@ -3,19 +3,21 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 import { Minimize2, Maximize2, Settings, X } from 'lucide-react';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { focusRingClasses } from '@/utils/accessibility';
+import { useWindowFocus } from '@/hooks/useWindowFocus';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
 interface TitleBarControlsProps {
   isMac: boolean;
+  isFocused: boolean;
 }
 
-const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element => {
+const TitleBarControls = ({ isMac, isFocused }: TitleBarControlsProps): React.JSX.Element => {
   // Cache window instance to avoid repeated getCurrentWindow() calls
   const appWindow = useMemo<Window | null>(() => {
     try {
@@ -72,84 +74,26 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
     }
   };
 
-  // Track window focus state (must be before early return to follow Rules of Hooks)
-  const [isFocused, setIsFocused] = useState(() =>
-    typeof document !== 'undefined' && typeof document.hasFocus === 'function'
-      ? document.hasFocus()
-      : true
-  );
-
-  useEffect(() => {
-    if (appWindow === null) {
-      return;
-    }
-
-    const handleFocus = (): void => {
-      setIsFocused(true);
-    };
-
-    const handleBlur = (): void => {
-      setIsFocused(false);
-    };
-
-    // Listen to window focus/blur events using Tauri v2 event system
-    let cleanupFocus: (() => void) | undefined;
-    let cleanupBlur: (() => void) | undefined;
-
-    void appWindow
-      .listen('tauri://focus', handleFocus)
-      .then((unsubscribe: () => void) => {
-        cleanupFocus = unsubscribe;
-      })
-      .catch(() => {
-        // Fallback to window focus event if Tauri event unavailable
-        window.addEventListener('focus', handleFocus);
-        cleanupFocus = (): void => {
-          window.removeEventListener('focus', handleFocus);
-        };
-      });
-
-    void appWindow
-      .listen('tauri://blur', handleBlur)
-      .then((unsubscribe: () => void) => {
-        cleanupBlur = unsubscribe;
-      })
-      .catch(() => {
-        // Fallback to window blur event if Tauri event unavailable
-        window.addEventListener('blur', handleBlur);
-        cleanupBlur = (): void => {
-          window.removeEventListener('blur', handleBlur);
-        };
-      });
-
-    return (): void => {
-      // Cleanup listeners
-      cleanupFocus?.();
-      cleanupBlur?.();
-    };
-  }, [appWindow]);
-
   if (isMac) {
     if (appWindow === null) {
       return <div className="ml-2 h-full w-[58px]" data-tauri-drag-region />;
     }
 
     const runMacControlAction = async (action: () => Promise<void>): Promise<void> => {
-      // Match native macOS behavior: first click activates window, second click performs action.
+      // Standard window controls are always available, even when the window isn't active.
+      // We perform the action immediately and ensure the window is focused.
       if (!isFocused) {
         try {
           await appWindow.setFocus();
-          setIsFocused(true);
-        } catch (error) {
-          emitWindowControlError('Failed to focus window', error);
+        } catch (_error) {
+          // Ignore focus errors during action execution
         }
-        return;
       }
       await action();
     };
 
     return (
-      <div className="ml-2 flex h-full items-center gap-2">
+      <div className="group ml-2 flex h-full items-center gap-2">
         <button
           type="button"
           onClick={() => {
@@ -157,14 +101,37 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full border transition-colors',
+            'flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors',
             isFocused
-              ? 'border-black/20 bg-[#ff5f57] hover:brightness-95'
-              : 'cursor-default border-black/10 bg-[#8f8f8f]'
+              ? 'border-black/10 bg-[#FF5F56] hover:brightness-90'
+              : 'border-black/5 bg-[#4D4D4D]/20 group-hover:border-black/10 group-hover:bg-[#FF5F56] group-hover:hover:brightness-90'
           )}
           aria-label="Close window"
           data-test-id="titlebar-close"
-        />
+        >
+          <svg
+            width="6"
+            height="6"
+            viewBox="0 0 6 6"
+            fill="none"
+            className="opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            <path
+              d="M1.17188 1.17188L4.82812 4.82812"
+              stroke="black"
+              strokeOpacity="0.8"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+            <path
+              d="M4.82812 1.17188L1.17188 4.82812"
+              stroke="black"
+              strokeOpacity="0.8"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
         <button
           type="button"
           onClick={() => {
@@ -172,14 +139,30 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full border transition-colors',
+            'flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors',
             isFocused
-              ? 'border-black/20 bg-[#febc2e] hover:brightness-95'
-              : 'cursor-default border-black/10 bg-[#8f8f8f]'
+              ? 'border-black/10 bg-[#FFBD2E] hover:brightness-90'
+              : 'border-black/5 bg-[#4D4D4D]/20 group-hover:border-black/10 group-hover:bg-[#FFBD2E] group-hover:hover:brightness-90'
           )}
           aria-label="Minimize window"
           data-test-id="titlebar-minimize"
-        />
+        >
+          <svg
+            width="6"
+            height="1"
+            viewBox="0 0 6 1"
+            fill="none"
+            className="opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            <path
+              d="M0 0.5H6"
+              stroke="black"
+              strokeOpacity="0.8"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
         <button
           type="button"
           onClick={() => {
@@ -187,14 +170,39 @@ const TitleBarControls = ({ isMac }: TitleBarControlsProps): React.JSX.Element =
           }}
           className={cn(
             focusRingClasses,
-            'h-3.5 w-3.5 rounded-full border transition-colors',
+            'flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors',
             isFocused
-              ? 'border-black/20 bg-[#28c840] hover:brightness-95'
-              : 'cursor-default border-black/10 bg-[#8f8f8f]'
+              ? 'border-black/10 bg-[#27C93F] hover:brightness-90'
+              : 'border-black/5 bg-[#4D4D4D]/20 group-hover:border-black/10 group-hover:bg-[#27C93F] group-hover:hover:brightness-90'
           )}
           aria-label="Maximize window"
           data-test-id="titlebar-maximize"
-        />
+        >
+          <svg
+            width="6"
+            height="6"
+            viewBox="0 0 6 6"
+            fill="none"
+            className="opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            <path
+              d="M3.5 1H5V2.5"
+              stroke="black"
+              strokeOpacity="0.8"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M2.5 5H1V3.5"
+              stroke="black"
+              strokeOpacity="0.8"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
     );
   }
@@ -255,6 +263,7 @@ export const TitleBar = ({
   onSettingsClick,
 }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
+  const isFocused = useWindowFocus();
   const showSettingsButton = onSettingsClick !== undefined;
   const hasCustomContent = React.Children.toArray(children).length > 0;
   const showRightActions = showSettingsButton || !isMac;
@@ -263,13 +272,13 @@ export const TitleBar = ({
     <div
       className={cn(
         'border-b border-border-subtle bg-bg-surface flex items-center gap-2',
-        'text-xs text-text-secondary select-none px-2',
+        'text-xs text-text-secondary select-none px-2 transition-colors duration-200',
         hasCustomContent ? 'h-12' : 'h-8'
       )}
       data-test-id="titlebar"
       data-tauri-drag-region
     >
-      {isMac && <TitleBarControls isMac />}
+      {isMac && <TitleBarControls isMac isFocused={isFocused} />}
 
       {/* Keep explicit drag handle visible even with custom header content */}
       <div className="h-full w-4 shrink-0" data-tauri-drag-region />
@@ -308,7 +317,7 @@ export const TitleBar = ({
               <Settings size={16} className="text-text-muted" />
             </button>
           )}
-          {!isMac && <TitleBarControls isMac={false} />}
+          {!isMac && <TitleBarControls isMac={false} isFocused={isFocused} />}
         </div>
       )}
     </div>

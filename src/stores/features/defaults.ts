@@ -7,7 +7,7 @@ import type { FeatureFlags } from './types';
 
 export const DEFAULT_FLAGS: FeatureFlags = {
   http: {
-    collectionsEnabled: true,
+    collectionsEnabled: false,
     collectionsSaving: false,
     importBruno: false,
     importPostman: false,

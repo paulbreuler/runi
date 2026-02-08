@@ -8,7 +8,7 @@
  * @description Reusable utilities for consistent accessibility patterns across custom components
  *
  * Provides:
- * - Standard focus ring classes (blue, 2px, with offset)
+ * - Standard focus ring classes (blue, 1.5px, with offset)
  * - Focus visibility hook for hover-only elements
  * - Focus management helpers
  */
@@ -19,8 +19,8 @@ import * as React from 'react';
  * Standard focus ring classes for interactive elements.
  *
  * Follows WCAG 2.1 AA requirements:
- * - 2px ring width for visibility
- * - Theme ring color token (--color-ring) for consistency
+ * - 1.5px ring width for visibility (Zen aesthetic)
+ * - Theme accent color token (--accent-a8) for consistency
  * - 2px offset for better visibility on dark backgrounds
  * - Uses :focus-visible (only shows on keyboard focus, not mouse clicks)
  *
@@ -43,14 +43,14 @@ import * as React from 'react';
 export const focusRingClasses = [
   'outline-none',
   // Native :focus-visible (Tab key, some browsers handle programmatic focus)
-  'focus-visible:ring-2',
-  'focus-visible:ring-[color:var(--color-ring)]',
+  'focus-visible:ring-[1.5px]',
+  'focus-visible:ring-[color:var(--accent-a8)]',
   'focus-visible:ring-offset-2',
   'focus-visible:ring-offset-bg-app',
   // Programmatic focus visibility (arrow key navigation)
   // Uses attribute selector with :focus to ensure element is actually focused
-  '[&[data-focus-visible-added]:focus]:ring-2',
-  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:ring-[1.5px]',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
   '[&[data-focus-visible-added]:focus]:ring-offset-2',
   '[&[data-focus-visible-added]:focus]:ring-offset-bg-app',
 ].join(' ');
@@ -63,22 +63,22 @@ export const focusRingClasses = [
  */
 export const containedFocusRingClasses = [
   'outline-none',
-  'focus-visible:outline-2',
-  'focus-visible:outline-[var(--color-ring)]',
-  'focus-visible:outline-offset-[-2px]',
-  'focus-visible:ring-2',
-  'focus-visible:ring-[color:var(--color-ring)]',
+  'focus-visible:outline-[1.5px]',
+  'focus-visible:outline-[color:var(--accent-a8)]',
+  'focus-visible:outline-offset-[-1.5px]',
+  'focus-visible:ring-[1.5px]',
+  'focus-visible:ring-[color:var(--accent-a8)]',
   'focus-visible:!ring-offset-0',
   'focus-visible:ring-inset',
-  'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
-  '[&[data-focus-visible-added]:focus]:outline-2',
-  '[&[data-focus-visible-added]:focus]:outline-[var(--color-ring)]',
-  '[&[data-focus-visible-added]:focus]:outline-offset-[-2px]',
-  '[&[data-focus-visible-added]:focus]:ring-2',
-  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
+  'focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
+  '[&[data-focus-visible-added]:focus]:outline-[1.5px]',
+  '[&[data-focus-visible-added]:focus]:outline-[color:var(--accent-a8)]',
+  '[&[data-focus-visible-added]:focus]:outline-offset-[-1.5px]',
+  '[&[data-focus-visible-added]:focus]:ring-[1.5px]',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
   '[&[data-focus-visible-added]:focus]:!ring-offset-0',
   '[&[data-focus-visible-added]:focus]:ring-inset',
-  '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
 ].join(' ');
 
 /**
@@ -104,20 +104,18 @@ export const compositeFocusContainerClasses = [
  * - z-index lifts focused item above separators/siblings
  */
 export const compositeFocusItemClasses = [
-  'focus-visible:ring-2',
-  'focus-visible:ring-[color:var(--color-ring)]',
+  'focus-visible:ring-[1.5px]',
+  'focus-visible:ring-[color:var(--accent-a8)]',
   'focus-visible:!ring-offset-0',
   'focus-visible:ring-inset',
-  'focus-visible:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+  'focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
   'focus-visible:z-10',
-  'focus-visible:bg-bg-surface',
-  '[&[data-focus-visible-added]:focus]:ring-2',
-  '[&[data-focus-visible-added]:focus]:ring-[color:var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:ring-[1.5px]',
+  '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
   '[&[data-focus-visible-added]:focus]:!ring-offset-0',
   '[&[data-focus-visible-added]:focus]:ring-inset',
-  '[&[data-focus-visible-added]:focus]:shadow-[inset_2px_0_0_var(--color-ring),inset_-2px_0_0_var(--color-ring)]',
+  '[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
   '[&[data-focus-visible-added]:focus]:z-10',
-  '[&[data-focus-visible-added]:focus]:bg-bg-surface',
 ].join(' ');
 
 /**

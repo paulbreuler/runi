@@ -12,17 +12,15 @@ interface CardProps extends Omit<
   'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd'
 > {
   hover?: boolean;
-  glass?: boolean;
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, hover = true, glass = false, ...props }, ref) => {
+  ({ className, hover = true, ...props }, ref) => {
     const motionProps = {
       ...props,
       ref,
       className: cn(
-        'rounded-xl border border-border-subtle',
-        glass ? 'glass' : 'bg-bg-surface',
+        'rounded-xl border border-border-subtle bg-bg-raised',
         'text-text-primary flex flex-col gap-6',
         className
       ),

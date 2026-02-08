@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TitleBar } from './TitleBar';
 import { globalEventBus } from '@/events/bus';
@@ -35,11 +35,18 @@ vi.mock('@/utils/platform', () => ({
   isMacSync: vi.fn(),
 }));
 
+// Mock useWindowFocus hook
+const mockUseWindowFocus = vi.fn().mockReturnValue(true);
+vi.mock('@/hooks/useWindowFocus', () => ({
+  useWindowFocus: (): boolean => mockUseWindowFocus(),
+}));
+
 describe('TitleBar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default to macOS for most tests
     vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+    mockUseWindowFocus.mockReturnValue(true);
     vi.spyOn(document, 'hasFocus').mockReturnValue(true);
   });
 
@@ -76,26 +83,13 @@ describe('TitleBar', () => {
     });
 
     it('mutes macOS traffic light colors when window is unfocused', () => {
-      const listeners = new Map<string, () => void>();
-      mockListen.mockImplementation((event, handler) => {
-        listeners.set(event as string, handler as () => void);
-        return Promise.resolve(() => {});
-      });
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
+      mockUseWindowFocus.mockReturnValue(false);
 
       render(<TitleBar />);
 
       const closeButton = screen.getByTestId('titlebar-close');
-      expect(closeButton).toHaveClass('bg-[#ff5f57]');
-
-      const blurHandler = listeners.get('tauri://blur');
-      expect(blurHandler).toBeDefined();
-
-      act(() => {
-        blurHandler?.();
-      });
-
-      expect(closeButton).toHaveClass('bg-[#8f8f8f]');
+      expect(closeButton).toHaveClass('bg-[#4D4D4D]/20');
     });
 
     it('renders Windows/Linux-style window controls on non-macOS', () => {
@@ -256,9 +250,9 @@ describe('TitleBar', () => {
       expect(onSettingsClick).toHaveBeenCalledTimes(1);
     });
 
-    it('uses first mac traffic-light click to focus an unfocused window', async () => {
+    it('performs action and focuses on traffic-light click when window is unfocused', async () => {
       vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
-      vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+      mockUseWindowFocus.mockReturnValue(false);
 
       render(<TitleBar />);
 
@@ -266,8 +260,8 @@ describe('TitleBar', () => {
 
       await waitFor(() => {
         expect(mockSetFocus).toHaveBeenCalledTimes(1);
+        expect(mockClose).toHaveBeenCalledTimes(1);
       });
-      expect(mockClose).not.toHaveBeenCalled();
     });
   });
 

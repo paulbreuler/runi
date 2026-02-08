@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { motion, type Variant } from 'motion/react';
+import { motion, type Variant, useReducedMotion } from 'motion/react';
 import {
   Button as BaseButton,
   type ButtonProps as BaseButtonProps,
@@ -57,34 +57,40 @@ const buttonVariants = cva(
 
 // Motion animation variants - following Motion best practices
 // Using variants makes animations reusable and easier to maintain
-const buttonMotionVariants: Record<string, Variant> = {
+const createButtonMotionVariants = (reducedMotion: boolean): Record<string, Variant> => ({
   // Zen aesthetic: subtle, calm interactions
   rest: {
     scale: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 400,
-      damping: 25,
-      mass: 0.5,
-    },
+    transition: reducedMotion
+      ? { duration: 0 }
+      : {
+          type: 'spring',
+          stiffness: 400,
+          damping: 25,
+          mass: 0.5,
+        },
   },
   hover: {
-    scale: 1.02,
-    transition: {
-      type: 'spring',
-      stiffness: 400,
-      damping: 25,
-    },
+    scale: reducedMotion ? 1 : 1.02,
+    transition: reducedMotion
+      ? { duration: 0 }
+      : {
+          type: 'spring',
+          stiffness: 400,
+          damping: 25,
+        },
   },
   tap: {
-    scale: 0.98,
-    transition: {
-      type: 'spring',
-      stiffness: 600,
-      damping: 30,
-    },
+    scale: reducedMotion ? 1 : 0.98,
+    transition: reducedMotion
+      ? { duration: 0 }
+      : {
+          type: 'spring',
+          stiffness: 600,
+          damping: 30,
+        },
   },
-};
+});
 
 export interface ButtonProps
   extends
@@ -122,6 +128,7 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
     },
     ref
   ) => {
+    const prefersReducedMotion = useReducedMotion() === true;
     const useMotion = process.env.NODE_ENV !== 'test';
     const MotionButton = useMotion ? motion.button : 'button';
     const baseClasses = buttonVariants({ variant, size });
@@ -135,6 +142,11 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
         ? (children as React.ReactElement)
         : undefined;
     const resolvedRender = renderElement ?? render;
+
+    const motionVariants = React.useMemo(
+      () => createButtonMotionVariants(prefersReducedMotion),
+      [prefersReducedMotion]
+    );
 
     return (
       <BaseButton
@@ -162,10 +174,10 @@ const Button = React.forwardRef<HTMLElement, ButtonProps>(
             // noScale disables hover/tap animations for compact UI contexts
             const motionProps = useMotion
               ? {
-                  variants: noScale ? undefined : buttonMotionVariants,
+                  variants: noScale ? undefined : motionVariants,
                   initial: noScale ? undefined : 'rest',
-                  whileHover: disabled || noScale ? undefined : 'hover',
-                  whileTap: disabled || noScale ? undefined : 'tap',
+                  whileHover: disabled || noScale || prefersReducedMotion ? undefined : 'hover',
+                  whileTap: disabled || noScale || prefersReducedMotion ? undefined : 'tap',
                 }
               : {};
 

@@ -51,8 +51,8 @@ describe('ActionBarSearch', () => {
   it('uses standard focus ring classes for keyboard focus visibility', () => {
     render(<ActionBarSearch value="" onChange={() => {}} aria-label="Search" />);
     const input = screen.getByRole('textbox');
-    expect(input.className).toContain('focus-visible:ring-2');
-    expect(input.className).toContain('ring-[color:var(--color-ring)]');
+    expect(input.className).toContain('focus-visible:ring-[1.5px]');
+    expect(input.className).toContain('focus-visible:ring-[color:var(--accent-a8)]');
   });
 
   it('applies custom className', () => {

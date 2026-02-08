@@ -3,15 +3,16 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useRequestStore } from '@/stores/useRequestStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
-import { containedFocusRingClasses } from '@/utils/accessibility';
+import { focusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface RequestItemProps {
@@ -25,27 +26,66 @@ interface CollectionItemRequestListProps {
 }
 
 export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
+  const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
+  const isSelected = selectedRequestId === request.id;
   const selectRequest = useCollectionStore((state) => state.selectRequest);
   const setMethod = useRequestStore((state) => state.setMethod);
   const setUrl = useRequestStore((state) => state.setUrl);
   const setHeaders = useRequestStore((state) => state.setHeaders);
   const setBody = useRequestStore((state) => state.setBody);
+
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isOccluded, setIsOccluded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
+
   const [popoutPosition, setPopoutPosition] = useState<{
     top: number;
     left: number;
     width: number;
     height: number;
   } | null>(null);
+
   const rowRef = useRef<HTMLButtonElement | null>(null);
   const textRef = useRef<HTMLSpanElement | null>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   const methodKey = request.method as HttpMethod;
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
   const displayName = truncateNavLabel(request.name);
+
+  // Occlusion detection: hide popout if the item scrolls out of view
+  useEffect((): (() => void) | undefined => {
+    const row = rowRef.current;
+    if (row === null || typeof IntersectionObserver === 'undefined') {
+      return undefined;
+    }
+
+    const scrollParent = row.closest('[data-scroll-container]');
+    if (scrollParent === null) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]): void => {
+        // Only occlude if mostly hidden (less than 10% visible)
+        // This prevents items at the very bottom of the scroll container from being blocked
+        setIsOccluded(entry !== undefined && entry.intersectionRatio < 0.1);
+      },
+      {
+        root: scrollParent,
+        threshold: [0, 0.1, 1.0],
+      }
+    );
+
+    observer.observe(row);
+    return (): void => {
+      observer.disconnect();
+    };
+  }, []);
 
   const calculatePosition = useCallback((): {
     top: number;
@@ -57,7 +97,12 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return null;
     }
     const rect = rowRef.current.getBoundingClientRect();
-    return { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+    return {
+      top: Math.round(rect.top),
+      left: Math.round(rect.left),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    };
   }, []);
 
   const evaluateTruncation = useCallback((): void => {
@@ -65,51 +110,134 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = textRef.current;
-    setIsTruncated(scrollWidth > clientWidth);
+    // Use 1px buffer for robustness against subpixel rounding
+    setIsTruncated(scrollWidth > clientWidth + 1);
   }, []);
 
-  const showPopout = useCallback((): void => {
-    if (!isTruncated) {
-      return;
-    }
+  const updatePopoutPosition = useCallback((): void => {
     const position = calculatePosition();
-    if (position === null) {
+    if (position !== null) {
+      setPopoutPosition(position);
+    }
+  }, [calculatePosition]);
+
+  const showPopout = useCallback((): void => {
+    // Bail early if selected (popout won't render) or text isn't truncated
+    if (isSelected) {
       return;
     }
-    setPopoutPosition(position);
+    evaluateTruncation();
+    if (textRef.current !== null) {
+      const { scrollWidth, clientWidth } = textRef.current;
+      if (scrollWidth <= clientWidth + 1) {
+        return;
+      }
+    }
+    updatePopoutPosition();
     setIsExpanded(true);
-  }, [calculatePosition, isTruncated]);
+  }, [evaluateTruncation, updatePopoutPosition, isSelected]);
 
   const hidePopout = useCallback((): void => {
+    if (!isFocused) {
+      setIsExpanded(false);
+      setPopoutPosition(null);
+    }
+  }, [isFocused]);
+
+  useEffect((): (() => void) => {
+    if (isHovered || isFocused) {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+      }
+      hoverTimeoutRef.current = window.setTimeout(() => {
+        showPopout();
+      }, 250);
+    } else {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      hidePopout();
+    }
+    return (): void => {
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, [isHovered, isFocused, showPopout, hidePopout]);
+
+  const handleMouseEnter = useCallback((): void => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback((): void => {
+    setIsHovered(false);
+  }, []);
+
+  const handleFocus = useCallback((): void => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback((): void => {
+    setIsFocused(false);
     setIsExpanded(false);
     setPopoutPosition(null);
   }, []);
 
-  const handleMouseEnter = useCallback((): void => {
-    if (hoverTimeoutRef.current !== null) {
-      window.clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = window.setTimeout(showPopout, 250);
-  }, [showPopout]);
+  useLayoutEffect((): void => {
+    evaluateTruncation();
+  }, [evaluateTruncation, request.name]);
 
-  const handleMouseLeave = useCallback((): void => {
-    if (hoverTimeoutRef.current !== null) {
-      window.clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
+  // Use ResizeObserver to reliably track truncation as sidebar resizes
+  useLayoutEffect((): (() => void) | undefined => {
+    const el = textRef.current;
+    if (el === null || typeof ResizeObserver === 'undefined') {
+      return undefined;
     }
-    hidePopout();
-  }, [hidePopout]);
+    const observer = new ResizeObserver((): void => {
+      evaluateTruncation();
+    });
+    observer.observe(el);
+    return (): void => {
+      observer.disconnect();
+    };
+  }, [evaluateTruncation]);
+
+  const isActuallyVisible = useCallback(
+    (): boolean => isExpanded && !isOccluded && isTruncated && !isSelected,
+    [isExpanded, isOccluded, isTruncated, isSelected]
+  );
 
   useEffect((): (() => void) | undefined => {
-    evaluateTruncation();
-    const handleResize = (): void => {
-      evaluateTruncation();
+    if (!isActuallyVisible()) {
+      return undefined;
+    }
+
+    let frameId: number | undefined;
+
+    const handleUpdate = (): void => {
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId);
+      }
+      frameId = requestAnimationFrame(() => {
+        updatePopoutPosition();
+        frameId = undefined;
+      });
     };
-    window.addEventListener('resize', handleResize);
+
+    // Update on scroll or resize
+    window.addEventListener('resize', handleUpdate);
+    // Use capture for scroll to catch events from any container
+    window.addEventListener('scroll', handleUpdate, true);
+
     return (): void => {
-      window.removeEventListener('resize', handleResize);
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener('resize', handleUpdate);
+      window.removeEventListener('scroll', handleUpdate, true);
     };
-  }, [evaluateTruncation, request.name]);
+  }, [isActuallyVisible, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -128,60 +256,85 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return undefined;
     }
     const handleScroll = (): void => {
-      hidePopout();
+      if (!isFocused) {
+        hidePopout();
+      }
     };
     scrollParent.addEventListener('scroll', handleScroll, { passive: true });
     return (): void => {
       scrollParent.removeEventListener('scroll', handleScroll);
     };
-  }, [hidePopout, isExpanded]);
+  }, [hidePopout, isExpanded, isFocused]);
+
+  const handleAction = (): void => {
+    // Close popout immediately on selection so it doesn't obstruct the main UI
+    setIsExpanded(false);
+    setPopoutPosition(null);
+
+    selectRequest(collectionId, request.id);
+    setMethod(request.method);
+    setUrl(request.url);
+    setHeaders(request.headers);
+    setBody(request.body?.content ?? '');
+  };
 
   return (
-    <>
+    <div
+      className="relative w-full"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
         ref={rowRef}
         type="button"
+        aria-label={`${request.method} ${request.name}`}
         className={cn(
-          containedFocusRingClasses,
-          'w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-bg-raised/50 transition-colors'
+          'w-full flex items-center justify-between gap-2 px-3 py-1 text-left transition-colors',
+          isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
+          isActuallyVisible() ? 'outline-none ring-0 shadow-none' : focusRingClasses,
+          isActuallyVisible() && !isFocused && 'bg-transparent'
         )}
         data-test-id={`collection-request-${request.id}`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onFocus={showPopout}
-        onBlur={hidePopout}
-        onClick={() => {
-          selectRequest(collectionId, request.id);
-          setMethod(request.method);
-          setUrl(request.url);
-          setHeaders(request.headers);
-          setBody(request.body?.content ?? '');
+        data-active={isSelected || undefined}
+        data-nav-item="true"
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onClick={(e) => {
+          e.currentTarget.focus({ preventScroll: true });
+          handleAction();
         }}
       >
         <div className="flex items-center gap-2 min-w-0">
           {isBound(request) && (
-            <span
-              className="h-2 w-2 rounded-full bg-green-500"
+            <div
+              className="flex items-center justify-center shrink-0 w-3"
+              role="img"
               aria-label="Bound to spec"
-              data-test-id="request-bound-indicator"
-            />
+              title="Bound to spec"
+            >
+              <span className="h-2 w-2 rounded-full bg-signal-success" />
+            </div>
           )}
-          <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
+          <span
+            className={cn(
+              'text-xs font-semibold uppercase tracking-wider shrink-0 min-w-[28px]',
+              methodClass
+            )}
+          >
             {request.method}
           </span>
           <span
             ref={textRef}
             className="text-sm text-text-primary truncate"
             data-test-id="request-name"
-            title={request.name}
           >
             {displayName}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {request.is_streaming && (
             <span
-              className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500"
+              className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs text-accent-purple shrink-0"
               data-test-id="request-streaming-badge"
             >
               <Radio size={12} />
@@ -190,7 +343,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           )}
           {isAiGenerated(request) && (
             <span
-              className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]"
+              className="flex items-center gap-1 rounded-full bg-signal-ai/10 px-2 py-0.5 text-xs text-signal-ai shrink-0"
               data-test-id="request-ai-badge"
             >
               <Sparkles size={12} />
@@ -199,44 +352,73 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           )}
         </div>
       </button>
-      {isExpanded && popoutPosition !== null && (
-        <div
-          role="tooltip"
-          className="pointer-events-none"
-          data-test-id="request-popout"
-          style={{
-            position: 'fixed',
-            top: popoutPosition.top,
-            left: popoutPosition.left,
-            minWidth: popoutPosition.width,
-            maxWidth: 'min(600px, calc(100vw - 40px))',
-            zIndex: 60,
-          }}
-        >
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-subtle bg-bg-elevated/95 shadow-lg backdrop-blur-sm">
-            {isBound(request) && (
-              <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
-            )}
-            <span className={cn('text-xs font-semibold uppercase tracking-wider', methodClass)}>
-              {request.method}
-            </span>
-            <span className="text-sm text-text-primary whitespace-nowrap">{request.name}</span>
-            {request.is_streaming && (
-              <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500">
-                <Radio size={12} />
-                Streaming
+
+      <AnimatePresence>
+        {isActuallyVisible() && popoutPosition !== null && (
+          <motion.div
+            initial={{ width: popoutPosition.width }}
+            animate={{ width: 'auto' }}
+            exit={{ width: popoutPosition.width, transition: { duration: 0 } }}
+            transition={
+              shouldReduceMotion === true
+                ? { duration: 0 }
+                : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5, delay: 0.1 }
+            }
+            role="tooltip"
+            className="pointer-events-none overflow-hidden bg-bg-elevated"
+            data-test-id="request-popout"
+            style={{
+              position: 'fixed',
+              top: popoutPosition.top,
+              left: popoutPosition.left,
+              height: popoutPosition.height,
+              zIndex: 60,
+              maxWidth: 'min(600px, calc(100vw - 40px))',
+            }}
+          >
+            <div className="flex items-center gap-2 px-3 h-full whitespace-nowrap min-w-0">
+              {isBound(request) && (
+                <div
+                  className="flex items-center justify-center shrink-0 w-3"
+                  role="img"
+                  aria-label="Bound to spec"
+                  title="Bound to spec"
+                >
+                  <span className="h-2 w-2 rounded-full bg-signal-success" />
+                </div>
+              )}
+              <span
+                className={cn(
+                  'text-xs font-semibold uppercase tracking-wider shrink-0 min-w-[28px]',
+                  methodClass
+                )}
+              >
+                {request.method}
               </span>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm text-text-primary truncate block">{request.name}</span>
+              </div>
+              {request.is_streaming && (
+                <span className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs text-accent-purple shrink-0">
+                  <Radio size={12} />
+                  Streaming
+                </span>
+              )}
+              {isAiGenerated(request) && (
+                <span className="flex items-center gap-1 rounded-full bg-signal-ai/10 px-2 py-0.5 text-xs text-signal-ai shrink-0">
+                  <Sparkles size={12} />
+                  AI
+                </span>
+              )}
+            </div>
+
+            {isFocused && (
+              <div className="absolute inset-0 pointer-events-none ring-[1.5px] ring-[color:var(--accent-a8)] ring-inset" />
             )}
-            {isAiGenerated(request) && (
-              <span className="flex items-center gap-1 rounded-full bg-[#6EB1D1]/10 px-2 py-0.5 text-xs text-[#6EB1D1]">
-                <Sparkles size={12} />
-                AI
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-    </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

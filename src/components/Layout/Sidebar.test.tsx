@@ -36,6 +36,7 @@ vi.mock('@/stores/useCollectionStore', () => ({
 describe('Sidebar', (): void => {
   beforeEach((): void => {
     useFeatureFlagStore.getState().resetToDefaults();
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
     mockCollectionState = createCollectionState();
   });
   it('renders sidebar with proper structure', (): void => {
@@ -78,7 +79,7 @@ describe('Sidebar', (): void => {
     render(<Sidebar />);
 
     const sidebar = screen.getByTestId('sidebar-content');
-    expect(sidebar).toHaveClass('w-full');
+    expect(sidebar).toHaveClass('flex-1');
   });
 
   it('has proper background styling', (): void => {

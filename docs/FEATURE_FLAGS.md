@@ -28,33 +28,33 @@ hydrated from YAML config files in `~/.runi`.
 | Flag                      | Default | State          | Description                                     |
 | ------------------------- | ------- | -------------- | ----------------------------------------------- |
 | `http.collectionsEnabled` | `false` | `experimental` | Enable collections navigation in the sidebar.   |
-| `http.collectionsSaving`  | `false` | `experimental` | Allow saving and persisting collection changes. |
-| `http.importBruno`        | `true`  | `stable`       | Import Bruno collections into runi.             |
-| `http.importPostman`      | `true`  | `stable`       | Import Postman collections and environments.    |
-| `http.importOpenAPI`      | `true`  | `stable`       | Import OpenAPI specs into the HTTP client.      |
-| `http.exportCurl`         | `true`  | `stable`       | Export requests as curl commands.               |
-| `http.exportPython`       | `false` | `experimental` | Export requests as Python code snippets.        |
-| `http.exportJavaScript`   | `false` | `experimental` | Export requests as JavaScript code snippets.    |
+| `http.collectionsSaving`  | `false` | `hidden`       | Allow saving and persisting collection changes. |
+| `http.importBruno`        | `false` | `hidden`       | Import Bruno collections into runi.             |
+| `http.importPostman`      | `false` | `hidden`       | Import Postman collections and environments.    |
+| `http.importOpenAPI`      | `false` | `hidden`       | Import OpenAPI specs into the HTTP client.      |
+| `http.exportCurl`         | `false` | `hidden`       | Export requests as curl commands.               |
+| `http.exportPython`       | `false` | `hidden`       | Export requests as Python code snippets.        |
+| `http.exportJavaScript`   | `false` | `hidden`       | Export requests as JavaScript code snippets.    |
 
 ### Layer 1: Spatial Canvas
 
-| Flag                     | Default | State          | Description                                   |
-| ------------------------ | ------- | -------------- | --------------------------------------------- |
-| `canvas.enabled`         | `false` | `experimental` | Enable the blueprint canvas view.             |
-| `canvas.minimap`         | `false` | `experimental` | Show a minimap in the blueprint canvas.       |
-| `canvas.connectionLines` | `false` | `hidden`       | Render connection lines between nodes.        |
-| `canvas.snapToGrid`      | `false` | `hidden`       | Snap canvas nodes to the grid.                |
-| `canvas.commandBar`      | `false` | `hidden`       | Enable command bar actions inside the canvas. |
+| Flag                     | Default | State    | Description                                   |
+| ------------------------ | ------- | -------- | --------------------------------------------- |
+| `canvas.enabled`         | `false` | `hidden` | Enable the blueprint canvas view.             |
+| `canvas.minimap`         | `false` | `hidden` | Show a minimap in the blueprint canvas.       |
+| `canvas.connectionLines` | `false` | `hidden` | Render connection lines between nodes.        |
+| `canvas.snapToGrid`      | `false` | `hidden` | Snap canvas nodes to the grid.                |
+| `canvas.commandBar`      | `false` | `hidden` | Enable command bar actions inside the canvas. |
 
 ### Layer 2: Comprehension
 
-| Flag                              | Default | State          | Description                                 |
-| --------------------------------- | ------- | -------------- | ------------------------------------------- |
-| `comprehension.driftDetection`    | `false` | `experimental` | Detect drift between requests and specs.    |
-| `comprehension.aiVerification`    | `false` | `hidden`       | Verify AI-generated requests against specs. |
-| `comprehension.semanticLinks`     | `false` | `hidden`       | Suggest semantic links across specs.        |
-| `comprehension.temporalAwareness` | `false` | `hidden`       | Track API changes over time.                |
-| `comprehension.specBinding`       | `false` | `experimental` | Bind requests to OpenAPI specs.             |
+| Flag                              | Default | State    | Description                                 |
+| --------------------------------- | ------- | -------- | ------------------------------------------- |
+| `comprehension.driftDetection`    | `false` | `hidden` | Detect drift between requests and specs.    |
+| `comprehension.aiVerification`    | `false` | `hidden` | Verify AI-generated requests against specs. |
+| `comprehension.semanticLinks`     | `false` | `hidden` | Suggest semantic links across specs.        |
+| `comprehension.temporalAwareness` | `false` | `hidden` | Track API changes over time.                |
+| `comprehension.specBinding`       | `false` | `hidden` | Bind requests to OpenAPI specs.             |
 
 ### Layer 3: AI-Native
 
@@ -68,12 +68,12 @@ hydrated from YAML config files in `~/.runi`.
 
 ### Debug
 
-| Flag                         | Default | State          | Description                                 |
-| ---------------------------- | ------- | -------------- | ------------------------------------------- |
-| `debug.verboseLogging`       | `false` | `experimental` | Enable verbose logging for troubleshooting. |
-| `debug.performanceOverlay`   | `false` | `experimental` | Show performance overlay metrics.           |
-| `debug.mockResponses`        | `false` | `experimental` | Return mock responses for debugging.        |
-| `debug.forceAllExperimental` | `false` | `experimental` | Force-enable all experimental features.     |
+| Flag                         | Default | State    | Description                                 |
+| ---------------------------- | ------- | -------- | ------------------------------------------- |
+| `debug.verboseLogging`       | `false` | `hidden` | Enable verbose logging for troubleshooting. |
+| `debug.performanceOverlay`   | `false` | `hidden` | Show performance overlay metrics.           |
+| `debug.mockResponses`        | `false` | `hidden` | Return mock responses for debugging.        |
+| `debug.forceAllExperimental` | `false` | `hidden` | Force-enable all experimental features.     |
 
 ## Usage
 

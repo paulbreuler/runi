@@ -134,9 +134,15 @@ export const BaseTabsList = <T extends string>({
                       containedFocusRingClasses,
                       activeTab === tab.value ? activeTabClassName : inactiveTabClassName
                     )}
-                    whileHover={activeTab !== tab.value ? { scale: 1.02 } : undefined}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ duration: 0.15 }}
+                    whileHover={
+                      prefersReducedMotion || activeTab === tab.value ? undefined : { scale: 1.02 }
+                    }
+                    whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : { type: 'spring', stiffness: 400, damping: 25 }
+                    }
                   >
                     {activeTab === tab.value && (
                       <motion.div
