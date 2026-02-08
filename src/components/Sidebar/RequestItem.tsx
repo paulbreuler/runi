@@ -321,7 +321,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               backgroundColor: isSelected ? '#1C2C3E' : '#1E1E1E',
             }}
           >
-            <div className="flex items-center gap-2 px-3 h-full whitespace-nowrap">
+            <div className="flex items-center gap-2 px-3 h-full whitespace-nowrap min-w-0">
               {isBound(request) && (
                 <div className="flex items-center justify-center shrink-0 w-3" aria-hidden="true">
                   <span className="h-2 w-2 rounded-full bg-green-500" />
@@ -335,7 +335,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               >
                 {request.method}
               </span>
-              <span className="text-sm text-text-primary shrink-0">{request.name}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm text-text-primary truncate block">{request.name}</span>
+              </div>
               {request.is_streaming && (
                 <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0">
                   <Radio size={12} />
