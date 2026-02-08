@@ -103,9 +103,9 @@ export function useListNavigation(options: ListNavigationOptions): {
             const containerRect = scrollContainer.getBoundingClientRect();
 
             // Padding to ensure item isn't flush with edges
-            const padding = 8;
+            const padding = 12;
             // Preview height to show part of the next item
-            const preview = 12;
+            const preview = 24;
 
             const isAbove = itemRect.top < containerRect.top + padding;
             const isBelow = itemRect.bottom > containerRect.bottom - padding - preview;

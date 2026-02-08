@@ -79,14 +79,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
 
     const observer = new IntersectionObserver(
       ([entry]): void => {
-        // Only occlude if significantly cut off (less than 50% visible)
-        setIsOccluded(entry !== undefined && entry.intersectionRatio < 0.5);
+        // Only occlude if mostly hidden (less than 10% visible)
+        // This prevents items at the very bottom of the scroll container from being blocked
+        setIsOccluded(entry !== undefined && entry.intersectionRatio < 0.1);
       },
       {
         root: scrollParent,
-        threshold: [0, 0.5, 1.0],
-        // Allow it to expand slightly into the bottom area before occluding
-        rootMargin: '0px 0px -4px 0px',
+        threshold: [0, 0.1, 1.0],
       }
     );
 
