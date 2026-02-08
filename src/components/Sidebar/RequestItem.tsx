@@ -108,7 +108,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = textRef.current;
-    setIsTruncated(scrollWidth > clientWidth);
+    // Use 1px buffer to handle subpixel rendering artifacts
+    setIsTruncated(scrollWidth > clientWidth + 1);
   }, []);
 
   const evaluateExpandedTruncation = useCallback((): void => {
@@ -116,7 +117,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = expandedTextRef.current;
-    setIsExpandedTruncated(scrollWidth > clientWidth);
+    // Use 1px buffer to handle subpixel rendering artifacts
+    setIsExpandedTruncated(scrollWidth > clientWidth + 1);
   }, []);
 
   const updatePopoutPosition = useCallback((): void => {
@@ -174,8 +176,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   // Check truncation of the expanded state whenever visibility or content changes
   useLayoutEffect(() => {
     if (isExpanded) {
-      evaluateExpandedTruncation();
+      // Small delay ensures we check AFTER the browser has established new layout
+      const id = requestAnimationFrame(evaluateExpandedTruncation);
+      return (): void => {
+        cancelAnimationFrame(id);
+      };
     }
+    return undefined;
   }, [isExpanded, evaluateExpandedTruncation, request.name]);
 
   useLayoutEffect(() => {
@@ -335,6 +342,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             initial={{ width: popoutPosition.width }}
             animate={{ width: 'auto' }}
             exit={{ width: popoutPosition.width, transition: { duration: 0 } }}
+            onUpdate={evaluateExpandedTruncation} // Constant check during width animation
             transition={
               shouldReduceMotion === true
                 ? { duration: 0 }
