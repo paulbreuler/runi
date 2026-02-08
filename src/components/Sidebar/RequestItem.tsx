@@ -194,16 +194,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     };
   }, [evaluateTruncation]);
 
-  useLayoutEffect(() => {
-    if (isExpanded) {
-      updatePopoutPosition();
-    }
-  }, [isExpanded, updatePopoutPosition]);
-
-  const actuallyVisible = isExpanded && !isOccluded && isTruncated;
+  const isActuallyVisible = useCallback(
+    (): boolean => isExpanded && !isOccluded && isTruncated && !isSelected,
+    [isExpanded, isOccluded, isTruncated, isSelected]
+  );
 
   useEffect(() => {
-    if (!actuallyVisible) {
+    if (!isActuallyVisible()) {
       return undefined;
     }
 
@@ -231,7 +228,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       window.removeEventListener('resize', handleUpdate);
       window.removeEventListener('scroll', handleUpdate, true);
     };
-  }, [actuallyVisible, updatePopoutPosition]);
+  }, [isActuallyVisible, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -261,6 +258,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   }, [hidePopout, isExpanded, isFocused]);
 
   const handleAction = (): void => {
+    // Close popout immediately on selection so it doesn't obstruct the main UI
+    setIsExpanded(false);
+    setPopoutPosition(null);
+
     selectRequest(collectionId, request.id);
     setMethod(request.method);
     setUrl(request.url);
@@ -281,9 +282,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
-          !actuallyVisible && containedFocusRingClasses,
-          actuallyVisible && 'outline-none ring-0 shadow-none',
-          actuallyVisible && !isFocused && 'bg-transparent'
+          isActuallyVisible() ? 'outline-none ring-0 shadow-none' : containedFocusRingClasses,
+          isActuallyVisible() && !isFocused && 'bg-transparent'
         )}
         data-test-id={`collection-request-${request.id}`}
         data-active={isSelected || undefined}
@@ -345,7 +345,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       </button>
 
       <AnimatePresence>
-        {actuallyVisible && popoutPosition !== null && (
+        {isActuallyVisible() && popoutPosition !== null && (
           <motion.div
             initial={{ width: popoutPosition.width }}
             animate={{ width: 'auto' }}
