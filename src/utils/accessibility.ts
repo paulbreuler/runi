@@ -8,7 +8,7 @@
  * @description Reusable utilities for consistent accessibility patterns across custom components
  *
  * Provides:
- * - Standard focus ring classes (blue, 2px, with offset)
+ * - Standard focus ring classes (blue, 1.5px, with offset)
  * - Focus visibility hook for hover-only elements
  * - Focus management helpers
  */
@@ -19,8 +19,8 @@ import * as React from 'react';
  * Standard focus ring classes for interactive elements.
  *
  * Follows WCAG 2.1 AA requirements:
- * - 2px ring width for visibility
- * - Theme ring color token (--color-ring) for consistency
+ * - 1.5px ring width for visibility (Zen aesthetic)
+ * - Theme accent color token (--accent-a8) for consistency
  * - 2px offset for better visibility on dark backgrounds
  * - Uses :focus-visible (only shows on keyboard focus, not mouse clicks)
  *

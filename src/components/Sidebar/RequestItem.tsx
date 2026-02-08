@@ -200,35 +200,38 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
   }, [isExpanded, updatePopoutPosition]);
 
+  const actuallyVisible = isExpanded && !isOccluded && isTruncated;
+
   useEffect(() => {
-    if (!isFocused || !isExpanded) {
+    if (!actuallyVisible) {
       return undefined;
     }
 
-    let frameId: number;
-    const update = (): void => {
-      updatePopoutPosition();
-      frameId = requestAnimationFrame(update);
-    };
-    frameId = requestAnimationFrame(update);
+    let frameId: number | undefined;
 
-    return (): void => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [isFocused, isExpanded, updatePopoutPosition]);
-
-  useEffect((): (() => void) | undefined => {
-    const handleResize = (): void => {
-      evaluateTruncation();
-      if (isExpanded) {
-        updatePopoutPosition();
+    const handleUpdate = (): void => {
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId);
       }
+      frameId = requestAnimationFrame(() => {
+        updatePopoutPosition();
+        frameId = undefined;
+      });
     };
-    window.addEventListener('resize', handleResize);
+
+    // Update on scroll or resize
+    window.addEventListener('resize', handleUpdate);
+    // Use capture for scroll to catch events from any container
+    window.addEventListener('scroll', handleUpdate, true);
+
     return (): void => {
-      window.removeEventListener('resize', handleResize);
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener('resize', handleUpdate);
+      window.removeEventListener('scroll', handleUpdate, true);
     };
-  }, [evaluateTruncation, isExpanded, updatePopoutPosition]);
+  }, [actuallyVisible, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -256,8 +259,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       scrollParent.removeEventListener('scroll', handleScroll);
     };
   }, [hidePopout, isExpanded, isFocused]);
-
-  const actuallyVisible = isExpanded && !isOccluded && isTruncated;
 
   const handleAction = (): void => {
     selectRequest(collectionId, request.id);
