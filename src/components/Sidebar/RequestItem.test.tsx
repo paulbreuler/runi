@@ -27,7 +27,9 @@ vi.mock('motion/react', () => ({
 
 const baseRequest: CollectionRequest = {
   id: 'req_1',
-  name: 'A very long request name that should truncate in the UI',
+  name: 'A very long request name that should truncate in the UI because it is definitely longer than one hundred characters to trigger the logic'.repeat(
+    1
+  ),
   seq: 1,
   method: 'GET',
   url: 'https://httpbin.org/get',
@@ -80,23 +82,16 @@ describe('RequestItem', () => {
 
   it('does not show a popout when text is not truncated', async () => {
     vi.useRealTimers();
+    const shortRequest = { ...baseRequest, name: 'Short Name' };
     render(
       <TooltipProvider>
-        <RequestItem request={baseRequest} collectionId="col_1" />
+        <RequestItem request={shortRequest} collectionId="col_1" />
       </TooltipProvider>
     );
 
     const row = screen.getByTestId('collection-request-req_1');
-    const name = screen.getByTestId('request-name');
-
-    Object.defineProperty(name, 'scrollWidth', { value: 100, configurable: true });
-    Object.defineProperty(name, 'clientWidth', { value: 100, configurable: true });
-
-    act(() => {
-      window.dispatchEvent(new Event('resize'));
-    });
-
-    fireEvent.mouseEnter(row);
+    const wrapper = row.parentElement!;
+    fireEvent.mouseEnter(wrapper);
 
     // Should not find it even after a delay
     await new Promise((resolve) => setTimeout(resolve, 300));

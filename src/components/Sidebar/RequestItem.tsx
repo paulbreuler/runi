@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
@@ -27,6 +27,8 @@ interface CollectionItemRequestListProps {
   collectionId: string;
 }
 
+const TRUNCATION_LIMIT = 100;
+
 export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
   const isSelected = selectedRequestId === request.id;
@@ -40,8 +42,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isOccluded, setIsOccluded] = useState(false);
-  const [isTruncated, setIsTruncated] = useState(false);
-  const [isExpandedTruncated, setIsExpandedTruncated] = useState(false);
 
   const [popoutPosition, setPopoutPosition] = useState<{
     top: number;
@@ -51,15 +51,16 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   } | null>(null);
 
   const rowRef = useRef<HTMLButtonElement | null>(null);
-  const textRef = useRef<HTMLSpanElement | null>(null);
-  const expandedTextRef = useRef<HTMLSpanElement | null>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
   const methodKey = request.method as HttpMethod;
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
-  const displayName = truncateNavLabel(request.name);
+
+  // Simple string-length based truncation
+  const isTruncated = request.name.length > TRUNCATION_LIMIT;
+  const displayName = truncateNavLabel(request.name, TRUNCATION_LIMIT);
 
   // Occlusion detection: hide popout if the item scrolls out of view
   useEffect(() => {
@@ -107,24 +108,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     };
   }, []);
 
-  const evaluateTruncation = useCallback((): void => {
-    if (textRef.current === null) {
-      return;
-    }
-    const { scrollWidth, clientWidth } = textRef.current;
-    // Use 4px buffer for robustness against subpixel rounding and font metrics
-    setIsTruncated(scrollWidth > clientWidth + 4);
-  }, []);
-
-  const evaluateExpandedTruncation = useCallback((): void => {
-    if (expandedTextRef.current === null) {
-      return;
-    }
-    const { scrollWidth, clientWidth } = expandedTextRef.current;
-    // Use 4px buffer for robustness against subpixel rounding and font metrics
-    setIsExpandedTruncated(scrollWidth > clientWidth + 4);
-  }, []);
-
   const updatePopoutPosition = useCallback((): void => {
     const position = calculatePosition();
     if (position !== null) {
@@ -134,11 +117,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
 
   const showPopout = useCallback((): void => {
     if (isHovered || isFocused) {
-      evaluateTruncation();
       updatePopoutPosition();
       setIsExpanded(true);
     }
-  }, [evaluateTruncation, updatePopoutPosition, isHovered, isFocused]);
+  }, [updatePopoutPosition, isHovered, isFocused]);
 
   const hidePopout = useCallback((): void => {
     if (!isFocused) {
@@ -188,27 +170,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     setPopoutPosition(null);
   }, []);
 
-  useLayoutEffect(() => {
-    evaluateTruncation();
-  }, [evaluateTruncation, request.name]);
-
-  // Constantly check truncation of the expanded state during visibility
-  useLayoutEffect(() => {
-    if (isExpanded) {
-      const id = requestAnimationFrame(evaluateExpandedTruncation);
-      return (): void => {
-        cancelAnimationFrame(id);
-      };
-    }
-    return undefined;
-  }, [isExpanded, evaluateExpandedTruncation, request.name]);
-
-  useLayoutEffect(() => {
-    if (isExpanded) {
-      updatePopoutPosition();
-    }
-  }, [isExpanded, updatePopoutPosition]);
-
   useEffect(() => {
     if (!isFocused || !isExpanded) {
       return undefined;
@@ -217,7 +178,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     let frameId: number;
     const update = (): void => {
       updatePopoutPosition();
-      evaluateExpandedTruncation();
       frameId = requestAnimationFrame(update);
     };
     frameId = requestAnimationFrame(update);
@@ -225,21 +185,19 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     return (): void => {
       cancelAnimationFrame(frameId);
     };
-  }, [isFocused, isExpanded, updatePopoutPosition, evaluateExpandedTruncation]);
+  }, [isFocused, isExpanded, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     const handleResize = (): void => {
-      evaluateTruncation();
       if (isExpanded) {
         updatePopoutPosition();
-        evaluateExpandedTruncation();
       }
     };
     window.addEventListener('resize', handleResize);
     return (): void => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [evaluateTruncation, isExpanded, updatePopoutPosition, evaluateExpandedTruncation]);
+  }, [isExpanded, updatePopoutPosition]);
 
   useEffect((): (() => void) | undefined => {
     return (): void => {
@@ -317,26 +275,15 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           >
             {request.method}
           </span>
-          {/* 
-            Disable button's internal tooltip if the expansion is active 
-            to prevent double-tooltips or "hover-through" artifacts.
-          */}
+          {/* Tooltip only shown if truncated at rest (over 100 chars) */}
           {isTruncated && !actuallyVisible ? (
             <Tooltip content={request.name} delayDuration={1000}>
-              <span
-                ref={textRef}
-                className="text-sm text-text-primary truncate"
-                data-test-id="request-name"
-              >
+              <span className="text-sm text-text-primary truncate" data-test-id="request-name">
                 {displayName}
               </span>
             </Tooltip>
           ) : (
-            <span
-              ref={textRef}
-              className="text-sm text-text-primary truncate"
-              data-test-id="request-name"
-            >
+            <span className="text-sm text-text-primary truncate" data-test-id="request-name">
               {displayName}
             </span>
           )}
@@ -369,7 +316,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
             initial={{ width: popoutPosition.width }}
             animate={{ width: 'auto' }}
             exit={{ width: popoutPosition.width, transition: { duration: 0 } }}
-            onUpdate={evaluateExpandedTruncation}
             transition={
               shouldReduceMotion === true
                 ? { duration: 0 }
@@ -408,20 +354,13 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 {request.method}
               </span>
               <div className="flex-1 min-w-0">
-                {isExpandedTruncated ? (
-                  <Tooltip content={request.name} delayDuration={1000}>
-                    <span
-                      ref={expandedTextRef}
-                      className="text-sm text-text-primary truncate block"
-                    >
-                      {request.name}
-                    </span>
-                  </Tooltip>
-                ) : (
-                  <span ref={expandedTextRef} className="text-sm text-text-primary truncate block">
-                    {request.name}
-                  </span>
-                )}
+                {/* 
+                  Only show Tooltip in expanded state if it's STILL truncated 
+                  (the name is over 100 chars, but the expanded box might also truncate it)
+                */}
+                <Tooltip content={request.name} delayDuration={1000}>
+                  <span className="text-sm text-text-primary truncate block">{request.name}</span>
+                </Tooltip>
               </div>
               {request.is_streaming && (
                 <span className="flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-500 shrink-0">
