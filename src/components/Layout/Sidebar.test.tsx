@@ -78,7 +78,7 @@ describe('Sidebar', (): void => {
     render(<Sidebar />);
 
     const sidebar = screen.getByTestId('sidebar-content');
-    expect(sidebar).toHaveClass('w-full');
+    expect(sidebar).toHaveClass('flex-1');
   });
 
   it('has proper background styling', (): void => {
