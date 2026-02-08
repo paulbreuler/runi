@@ -276,6 +276,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       <button
         ref={rowRef}
         type="button"
+        aria-label={`${request.method} ${request.name}`}
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
