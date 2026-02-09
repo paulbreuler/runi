@@ -133,13 +133,13 @@ test.describe('Layout Resizing', () => {
       // Verify width is clamped to minimum (256px) or greater
       const newBox = await sidebar.boundingBox();
       expect(newBox).not.toBeNull();
-      // Width should be clamped to minimum (256px) or greater, not collapsed
-      expect(newBox!.width).toBeGreaterThanOrEqual(240); // Allow some tolerance
+      // Width should be clamped to minimum (260px) or greater, not collapsed
+      expect(newBox!.width).toBeGreaterThanOrEqual(255); // Allow small tolerance
       // Should not have collapsed (width should be >= minimum, not 8px)
       expect(newBox!.width).toBeGreaterThan(50); // Definitely not collapsed
     });
 
-    test('sidebar respects maximum width (500px)', async ({ page }) => {
+    test('sidebar respects maximum width (600px)', async ({ page }) => {
       const sidebar = page.getByTestId('sidebar');
       const resizer = page.getByTestId('sidebar-resizer');
 
@@ -156,16 +156,16 @@ test.describe('Layout Resizing', () => {
         resizerBox!.y + resizerBox!.height / 2
       );
       await page.mouse.down();
-      // Drag far to the right
-      await page.mouse.move(resizerBox!.x + 500, resizerBox!.y + resizerBox!.height / 2);
+      // Drag far to the right (more than max width)
+      await page.mouse.move(resizerBox!.x + 800, resizerBox!.y + resizerBox!.height / 2);
       await page.mouse.up();
 
       await page.waitForTimeout(300);
 
-      // Verify width is at most 500px
+      // Verify width is clamped to MAX_SIDEBAR_WIDTH (600px)
       const newBox = await sidebar.boundingBox();
       expect(newBox).not.toBeNull();
-      expect(newBox!.width).toBeLessThanOrEqual(520); // Allow some tolerance
+      expect(newBox!.width).toBeLessThanOrEqual(610); // Allow small tolerance
     });
 
     test('sidebar resizer shows handle on hover', async ({ page }) => {
