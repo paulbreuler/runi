@@ -51,20 +51,20 @@ const COLLAPSED_PANEL_WIDTH = 0;
 const trayVariantsBottom = {
   rest: {
     y: 0,
-    backgroundColor: 'var(--color-bg-surface)',
+    backgroundColor: 'var(--color-bg-raised)',
     boxShadow: '0 0 0 0 rgba(0,0,0,0)',
-    opacity: 0.6,
+    opacity: 0.8,
   },
   hover: {
     y: -1,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '0 -2px 8px -2px rgba(0,0,0,0.2)',
+    boxShadow: '0 -2px 8px -2px rgba(0,0,0,0.3)',
     opacity: 1,
   },
   dragging: {
     y: 0,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '0 -2px 8px -2px rgba(0,0,0,0.3)',
+    boxShadow: '0 -2px 8px -2px rgba(0,0,0,0.4)',
     opacity: 1,
   },
 };
@@ -73,20 +73,20 @@ const trayVariantsBottom = {
 const trayVariantsLeft = {
   rest: {
     x: 0,
-    backgroundColor: 'var(--color-bg-surface)',
+    backgroundColor: 'var(--color-bg-raised)',
     boxShadow: '0 0 0 0 rgba(0,0,0,0)',
-    opacity: 0.6,
+    opacity: 0.8,
   },
   hover: {
     x: 1,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.2)',
+    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3)',
     opacity: 1,
   },
   dragging: {
     x: 0,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3)',
+    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.4)',
     opacity: 1,
   },
 };
@@ -95,28 +95,28 @@ const trayVariantsLeft = {
 const trayVariantsRight = {
   rest: {
     x: 0,
-    backgroundColor: 'var(--color-bg-surface)',
+    backgroundColor: 'var(--color-bg-raised)',
     boxShadow: '0 0 0 0 rgba(0,0,0,0)',
-    opacity: 0.6,
+    opacity: 0.8,
   },
   hover: {
     x: -1,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '-2px 0 8px -2px rgba(0,0,0,0.2)',
+    boxShadow: '-2px 0 8px -2px rgba(0,0,0,0.3)',
     opacity: 1,
   },
   dragging: {
     x: 0,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '-2px 0 8px -2px rgba(0,0,0,0.3)',
+    boxShadow: '-2px 0 8px -2px rgba(0,0,0,0.4)',
     opacity: 1,
   },
 };
 
 // Content variants - inherits state from parent via variant prop
 const trayContentVariants = {
-  rest: { opacity: 0.5 },
-  hover: { opacity: 0.9 },
+  rest: { opacity: 0.6 },
+  hover: { opacity: 1 },
   dragging: { opacity: 1 },
 };
 
@@ -546,8 +546,8 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute left-1/2 -translate-x-1/2 bottom-0 h-2.5 w-12',
-              'border border-border-default rounded-t-lg border-b-0',
+              'absolute left-1/2 -translate-x-1/2 bottom-0 h-3 w-16',
+              'border border-border-default rounded-t-md border-b-0',
               'flex items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-row-resize' : 'cursor-pointer'
             )}
@@ -579,7 +579,7 @@ export const DockablePanel = ({
               transition={trayTransition}
               style={isDragging ? { opacity: contentOpacity } : undefined}
             >
-              <GripHorizontal size={10} />
+              <GripHorizontal size={12} />
             </motion.div>
           </motion.div>
         )}
@@ -589,8 +589,8 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute top-1/2 -translate-y-1/2 right-0 w-2.5 h-12',
-              'border border-border-default rounded-r-lg border-l-0',
+              'absolute top-1/2 -translate-y-1/2 right-0 w-3 h-16',
+              'border border-border-default rounded-r-md border-l-0',
               'flex flex-col items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-col-resize' : 'cursor-pointer'
             )}
@@ -622,7 +622,7 @@ export const DockablePanel = ({
               transition={trayTransition}
               style={isDragging ? { opacity: contentOpacity } : undefined}
             >
-              <GripVertical size={10} />
+              <GripVertical size={12} />
             </motion.div>
           </motion.div>
         )}
@@ -632,8 +632,8 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute top-1/2 -translate-y-1/2 left-0 w-2.5 h-12',
-              'border border-border-default rounded-l-lg border-r-0',
+              'absolute top-1/2 -translate-y-1/2 left-0 w-3 h-16',
+              'border border-border-default rounded-l-md border-r-0',
               'flex flex-col items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-col-resize' : 'cursor-pointer'
             )}
@@ -665,7 +665,7 @@ export const DockablePanel = ({
               transition={trayTransition}
               style={isDragging ? { opacity: contentOpacity } : undefined}
             >
-              <GripVertical size={10} />
+              <GripVertical size={12} />
             </motion.div>
           </motion.div>
         )}
