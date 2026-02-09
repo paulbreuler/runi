@@ -28,35 +28,7 @@ test.describe('MainLayout', () => {
     // Verify main layout is present
     await expect(page.getByTestId('main-layout')).toBeVisible();
 
-    // Sidebar is collapsed by default, so open it first
-    const isMac = await page.evaluate(() => {
-      return (
-        navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
-        (navigator.userAgentData as { platform?: string } | undefined)?.platform === 'macOS'
-      );
-    });
-    await page.focus('body');
-    await page.waitForTimeout(100);
-    await page.evaluate(
-      ({ meta, ctrl }) => {
-        const event = new KeyboardEvent('keydown', {
-          key: 'b',
-          code: 'KeyB',
-          keyCode: 66,
-          which: 66,
-          metaKey: meta,
-          ctrlKey: ctrl,
-          shiftKey: false,
-          altKey: false,
-          bubbles: true,
-          cancelable: true,
-        });
-        window.dispatchEvent(event);
-      },
-      { meta: isMac, ctrl: !isMac }
-    );
-
-    // Verify sidebar is now visible
+    // Sidebar is visible by default
     await expect(page.getByTestId('sidebar')).toBeVisible();
 
     // Verify request and response panes are visible
@@ -85,24 +57,24 @@ test.describe('MainLayout', () => {
     // Wait for main layout to be ready
     await expect(page.getByTestId('main-layout')).toBeVisible();
 
-    // Verify sidebar is collapsed by default
-    await expect(page.getByTestId('sidebar')).not.toBeVisible();
+    // Verify sidebar is visible by default
+    await expect(page.getByTestId('sidebar')).toBeVisible();
 
     // Focus the page to ensure keyboard events are received
     await page.focus('body');
     await page.waitForTimeout(100);
 
-    // Press ⌘B (Meta+B on Mac) to open sidebar
+    // Press ⌘B (Meta+B on Mac) to close sidebar
     await page.keyboard.press('Meta+b');
 
-    // Sidebar should now be visible
-    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 2000 });
-
-    // Press ⌘B again to close
-    await page.keyboard.press('Meta+b');
-
-    // Sidebar should be hidden again
+    // Sidebar should now be hidden
     await expect(page.getByTestId('sidebar')).not.toBeVisible({ timeout: 2000 });
+
+    // Press ⌘B again to open
+    await page.keyboard.press('Meta+b');
+
+    // Sidebar should be visible again
+    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 2000 });
   });
 
   test('keyboard shortcut toggles sidebar (Windows/Linux)', async ({ page }) => {
@@ -123,24 +95,24 @@ test.describe('MainLayout', () => {
     // Wait for main layout to be ready
     await expect(page.getByTestId('main-layout')).toBeVisible();
 
-    // Verify sidebar is collapsed by default
-    await expect(page.getByTestId('sidebar')).not.toBeVisible();
+    // Verify sidebar is visible by default
+    await expect(page.getByTestId('sidebar')).toBeVisible();
 
     // Focus the page to ensure keyboard events are received
     await page.focus('body');
     await page.waitForTimeout(100);
 
-    // Press Ctrl+B on Windows/Linux to open sidebar
+    // Press Ctrl+B on Windows/Linux to close sidebar
     await page.keyboard.press('Control+b');
 
-    // Sidebar should now be visible
-    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 2000 });
-
-    // Press Ctrl+B again to close
-    await page.keyboard.press('Control+b');
-
-    // Sidebar should be hidden again
+    // Sidebar should now be hidden
     await expect(page.getByTestId('sidebar')).not.toBeVisible({ timeout: 2000 });
+
+    // Press Ctrl+B again to open
+    await page.keyboard.press('Control+b');
+
+    // Sidebar should be visible again
+    await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 2000 });
   });
 
   test('pane resizer is visible and interactive', async ({ page }) => {

@@ -104,7 +104,7 @@ export const MainLayout = ({
   headerContent,
   requestContent,
   responseContent,
-  initialSidebarVisible = false, // Default collapsed since collections aren't supported yet
+  initialSidebarVisible = true, // Default to visible now that collections are supported
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, sidebarEdge, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const {

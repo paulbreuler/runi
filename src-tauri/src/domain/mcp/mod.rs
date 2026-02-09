@@ -5,6 +5,8 @@
 
 /// MCP server configuration loading and validation.
 pub mod config;
+/// Event emitter trait for decoupled Tauri event emission.
+pub mod events;
 /// JSON-RPC 2.0 request/response/error types.
 pub mod jsonrpc;
 /// MCP protocol types (initialize, tools/list, tools/call).

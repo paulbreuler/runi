@@ -158,8 +158,8 @@ export function SettingsPanel({
     >
       <div className="w-[480px] bg-bg-surface border-r border-border-subtle flex flex-col shrink-0">
         {/* Header */}
-        <div className="p-4 border-b border-border-subtle">
-          <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="px-4 pt-3 pb-4 border-b border-border-subtle">
+          <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
               <SettingsIcon className="h-4 w-4 text-fg-muted" aria-hidden />
               <h1 className="text-fg-default font-medium" id="settings-title">

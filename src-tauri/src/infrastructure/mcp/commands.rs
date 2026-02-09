@@ -6,6 +6,8 @@
 //! These commands are exposed to the frontend via `tauri::generate_handler!`.
 
 use crate::application::mcp_server_service::McpServerService;
+use crate::domain::mcp::events::EventEmitter;
+use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::mcp::server::http_sse::{self, McpServerState};
 use crate::infrastructure::mcp::server::session::SessionManager;
 use serde::{Deserialize, Serialize};
@@ -49,14 +51,26 @@ pub const DEFAULT_MCP_PORT: u16 = 3001;
 /// Start the MCP server on the given port, storing the handle in the provided state.
 ///
 /// This is the core implementation used by both the Tauri command and auto-start.
+/// When an `AppHandle` is provided, MCP events (collection/request changes)
+/// are broadcast to the React UI via Tauri events.
 ///
 /// # Errors
 ///
 /// Returns an error if the server is already running, the collections directory
 /// cannot be determined, or the port is unavailable.
-pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<(), String> {
+pub async fn start_server(
+    port: u16,
+    state: &McpServerServiceState,
+    app_handle: Option<tauri::AppHandle>,
+) -> Result<(), String> {
     // Prepare everything outside the lock — no I/O while holding the lock.
-    let service = McpServerService::with_default_dir()?;
+    let service = if let Some(handle) = app_handle {
+        let emitter: Arc<dyn EventEmitter> = Arc::new(TauriEventEmitter::new(handle));
+        let dir = crate::infrastructure::storage::collection_store::get_collections_dir()?;
+        McpServerService::with_emitter(dir, emitter)
+    } else {
+        McpServerService::with_default_dir()?
+    };
     let sessions = Arc::new(SessionManager::new());
 
     let mcp_state = McpServerState {
@@ -110,9 +124,10 @@ pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<()
 #[tauri::command]
 pub async fn mcp_server_start(
     port: u16,
+    app_handle: tauri::AppHandle,
     server_state: tauri::State<'_, McpServerServiceState>,
 ) -> Result<(), String> {
-    start_server(port, &server_state).await
+    start_server(port, &server_state, Some(app_handle)).await
 }
 
 /// Stop the MCP HTTP/SSE server.

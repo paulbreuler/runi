@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://runi.dev/schema/collection/v1.json
+$schema: https://runi.dev/schema/collection/v1.json
+version: 1
+id: col_event_test_collection_9bf4a8
+metadata:
+  name: Event Test Collection
+  created_at: '2026-02-09T03:49:35Z'
+  modified_at: '2026-02-09T03:49:35Z'
+source:
+  source_type: manual
+  fetched_at: '2026-02-09T03:49:35Z'
+requests: []

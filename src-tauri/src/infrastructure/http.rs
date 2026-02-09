@@ -434,17 +434,15 @@ fn duration_to_ms(d: Duration) -> u64 {
 
 /// Execute an HTTP request with the given parameters.
 ///
-/// Uses the curl library to capture detailed timing breakdown including
-/// DNS resolution, TCP connect, TLS handshake, and time to first byte.
+/// Standalone async function that can be called from both Tauri commands
+/// and the MCP server dispatcher. Uses curl on a blocking thread for
+/// detailed timing breakdown (DNS, TCP, TLS, TTFB).
 ///
 /// # Errors
 ///
-/// Returns an error string (JSON-serialized `AppError`) if the request fails.
-/// Tauri v2 requires `Result<T, String>` for commands - `AppError` is serialized
-/// to JSON string to preserve correlation IDs and error details.
-#[tauri::command]
+/// Returns an error string if the request fails.
 #[instrument(skip(params), fields(correlation_id = %correlation_id.as_deref().unwrap_or("unknown"), url = %params.url, method = %params.method))]
-pub async fn execute_request(
+pub async fn execute_http_request(
     params: RequestParams,
     correlation_id: Option<String>,
 ) -> Result<HttpResponse, String> {
@@ -463,7 +461,6 @@ pub async fn execute_request(
     let result = tokio::task::spawn_blocking(move || execute_request_sync(&params, correlation_id))
         .await
         .map_err(|e| {
-            // Convert spawn_blocking error to AppError, then serialize to String
             let app_error = AppError::new(
                 corr_id.clone(),
                 "TASK_EXECUTION_ERROR",
@@ -493,8 +490,6 @@ pub async fn execute_request(
                 error_message = %e.message,
                 "HTTP request failed"
             );
-            // Convert AppError to JSON string for Tauri v2 compatibility
-            // Frontend will deserialize this back to AppError
             let error_json = serde_json::to_string(&e).unwrap_or_else(|_| {
                 format!(
                     "{{\"correlation_id\":\"{corr_id}\",\"code\":\"SERIALIZATION_ERROR\",\"message\":\"Failed to serialize error\"}}"
@@ -503,6 +498,21 @@ pub async fn execute_request(
             Err(error_json)
         }
     }
+}
+
+/// Execute an HTTP request — Tauri command wrapper.
+///
+/// Thin wrapper around [`execute_http_request`] for Tauri v2 command compatibility.
+///
+/// # Errors
+///
+/// Returns a JSON-serialized `AppError` string on failure.
+#[tauri::command]
+pub async fn execute_request(
+    params: RequestParams,
+    correlation_id: Option<String>,
+) -> Result<HttpResponse, String> {
+    execute_http_request(params, correlation_id).await
 }
 
 #[cfg(test)]

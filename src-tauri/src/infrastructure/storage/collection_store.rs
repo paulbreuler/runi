@@ -1,5 +1,4 @@
 use crate::domain::collection::{Collection, CollectionMetadata};
-use crate::infrastructure::storage::get_data_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
@@ -13,13 +12,41 @@ const SCHEMA_COMMENT: &str =
 
 /// Get the collections storage directory.
 ///
-/// Uses platform-appropriate data directory:
-/// - macOS: ~/Library/Application Support/runi/collections/
-/// - Linux: ~/.local/share/runi/collections/
-/// - Windows: C:\Users\<user>\AppData\Roaming\runi\collections\
+/// ## Resolution Order
+/// 1. Environment variable `RUNI_COLLECTIONS_DIR` (if set)
+/// 2. Project root + `/collections/` (default, git-friendly)
+///
+/// ## Project Root Detection
+/// - In dev mode: Uses `CARGO_MANIFEST_DIR/../collections/` (repo root, avoids Tauri rebuild triggers)
+/// - In production: Uses current working directory + `/collections/`
+///
+/// ## Examples
+/// - Default (dev): `/path/to/runi/collections/` (repo root)
+/// - Default (prod): `./collections/` (user's project directory)
+/// - Override: `RUNI_COLLECTIONS_DIR=/path/to/collections runi`
 pub fn get_collections_dir() -> Result<PathBuf, String> {
-    let base_dir = get_data_dir()?;
-    let dir = collections_dir_from(&base_dir);
+    // Check environment variable override first
+    if let Ok(env_dir) = std::env::var("RUNI_COLLECTIONS_DIR") {
+        let dir = PathBuf::from(env_dir);
+        ensure_dir(&dir)?;
+        return Ok(dir);
+    }
+
+    // In dev mode (CARGO_MANIFEST_DIR is set), use project root to avoid Tauri rebuild triggers
+    // In production, use current working directory (user's project)
+    let base_dir = if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        // Dev mode: go up one level from src-tauri/ to repo root
+        PathBuf::from(manifest_dir)
+            .parent()
+            .ok_or_else(|| "Failed to get parent directory of CARGO_MANIFEST_DIR".to_string())?
+            .to_path_buf()
+    } else {
+        // Production: use current working directory
+        std::env::current_dir()
+            .map_err(|e| format!("Failed to get current working directory: {e}"))?
+    };
+
+    let dir = base_dir.join(COLLECTIONS_DIR_NAME);
     ensure_dir(&dir)?;
     Ok(dir)
 }
@@ -187,8 +214,8 @@ fn temp_path_for(dir: &Path, collection_id: &str) -> PathBuf {
     dir.join(format!(".{collection_id}.tmp"))
 }
 
+#[cfg(test)]
 fn collections_dir_from(base: &Path) -> PathBuf {
-    #[cfg(test)]
     if let Some(override_dir) = collections_dir_override() {
         return override_dir;
     }
