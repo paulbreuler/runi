@@ -70,6 +70,12 @@ pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<()
         .await
         .map_err(|e| format!("Failed to bind to port {port}: {e}"))?;
 
+    // Store the actual bound port (handles port 0 → ephemeral port assignment).
+    let actual_port = listener
+        .local_addr()
+        .map_err(|e| format!("Failed to get local address: {e}"))?
+        .port();
+
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
 
     // Atomic check-and-set: single write lock to avoid TOCTOU race.
@@ -79,22 +85,24 @@ pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<()
     }
 
     tokio::spawn(async move {
-        axum::serve(listener, app)
+        if let Err(e) = axum::serve(listener, app)
             .with_graceful_shutdown(async {
                 let _ = shutdown_rx.await;
             })
             .await
-            .ok();
+        {
+            tracing::error!("MCP server exited with error: {e}");
+        }
     });
 
     *guard = Some(McpServerHandle {
-        port,
+        port: actual_port,
         shutdown_tx,
         sessions,
     });
     drop(guard);
 
-    tracing::info!("MCP server started on port {port}");
+    tracing::info!("MCP server started on port {actual_port}");
     Ok(())
 }
 

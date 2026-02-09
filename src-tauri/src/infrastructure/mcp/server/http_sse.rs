@@ -10,7 +10,7 @@ use std::convert::Infallible;
 use std::sync::Arc;
 
 use axum::Router;
-use axum::extract::State;
+use axum::extract::{DefaultBodyLimit, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::response::sse::{Event, Sse};
@@ -31,12 +31,16 @@ pub struct McpServerState {
     pub sessions: Arc<SessionManager>,
 }
 
+/// Maximum request body size (1 MiB). Prevents memory exhaustion from oversized payloads.
+const MAX_BODY_SIZE: usize = 1024 * 1024;
+
 /// Build the Axum router for the MCP server.
 pub fn router(state: McpServerState) -> Router {
     Router::new()
         .route("/mcp", post(handle_post))
         .route("/mcp", delete(handle_delete))
         .route("/mcp/sse", get(handle_sse))
+        .layer(DefaultBodyLimit::max(MAX_BODY_SIZE))
         .with_state(state)
 }
 
@@ -97,20 +101,16 @@ async fn handle_sse(
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(32);
 
     // Send initial endpoint event, then hold the sender open so the SSE stream
-    // stays alive. The sender will be dropped when the client disconnects
-    // (the spawned task detects the closed channel via send failure).
+    // stays alive. When the client disconnects, `rx` is dropped — `tx.closed()`
+    // resolves, and this task exits cleanly (no leak).
     tokio::spawn(async move {
         let _ = tx
             .send(Ok(Event::default().event("endpoint").data("/mcp")))
             .await;
 
-        // Keep the SSE stream alive by holding `tx`.
-        // Future: use this to push server notifications (collection changes, etc).
-        // The pending future never resolves; when the client disconnects,
-        // the rx side drops and subsequent sends would fail.
-        std::future::pending::<()>().await;
-        // Unreachable, but ensures `tx` is not dropped.
-        drop(tx);
+        // Wait until the receiver is dropped (client disconnects).
+        // Future: use this task to push server notifications before the close.
+        tx.closed().await;
     });
 
     Ok(Sse::new(ReceiverStream::new(rx)))

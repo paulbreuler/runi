@@ -39,7 +39,9 @@ pub async fn dispatch(raw: &str, service: &Arc<RwLock<McpServerService>>) -> Opt
         return None;
     }
 
-    let id = request.id.clone();
+    // Flatten Option<Option<JsonRpcId>> → Option<JsonRpcId> for the response.
+    // `Some(Some(id))` → `Some(id)`, `Some(None)` (id: null) → `None`, `None` (absent) → `None`
+    let id = request.id.clone().flatten();
     let response = match request.method.as_str() {
         "initialize" => handle_initialize(id),
         "tools/list" => handle_tools_list(id, service).await,

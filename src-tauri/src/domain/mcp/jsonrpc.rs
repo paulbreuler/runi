@@ -35,13 +35,29 @@ pub enum JsonRpcId {
 }
 
 /// JSON-RPC 2.0 request object.
+///
+/// Per the JSON-RPC 2.0 spec:
+/// - A notification has **no `id` field at all** (the key is absent).
+/// - A request with `"id": null` is NOT a notification — the server must respond.
+///
+/// We use `#[serde(default, deserialize_with = ...)]` to distinguish
+/// "field absent" (`None`) from "field present as null" (`Some(None)`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JsonRpcRequest {
     /// Protocol version, always "2.0".
     pub jsonrpc: String,
-    /// Request identifier. `None` for notifications.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<JsonRpcId>,
+    /// Request identifier.
+    ///
+    /// - `None` → field absent → notification (no response expected).
+    /// - `Some(None)` → `"id": null` → server must respond with `id: null`.
+    /// - `Some(Some(id))` → `"id": 1` or `"id": "abc"` → normal request.
+    #[allow(clippy::option_option)] // Intentional: distinguishes absent vs null per JSON-RPC 2.0 spec
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_optional_id"
+    )]
+    pub id: Option<Option<JsonRpcId>>,
     /// Method name to invoke.
     pub method: String,
     /// Method parameters.
@@ -49,8 +65,25 @@ pub struct JsonRpcRequest {
     pub params: Option<serde_json::Value>,
 }
 
+/// Custom deserializer that distinguishes absent `id` from `"id": null`.
+///
+/// - absent → `None`
+/// - `null` → `Some(None)`
+/// - value → `Some(Some(id))`
+#[allow(clippy::option_option)] // Intentional: distinguishes absent vs null per JSON-RPC 2.0 spec
+fn deserialize_optional_id<'de, D>(deserializer: D) -> Result<Option<Option<JsonRpcId>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    // If this function is called, the field is present in the JSON.
+    let value: Option<JsonRpcId> = Option::deserialize(deserializer)?;
+    Ok(Some(value))
+}
+
 impl JsonRpcRequest {
-    /// Whether this request is a notification (no id, no response expected).
+    /// Whether this request is a notification (no `id` field at all).
+    ///
+    /// Per JSON-RPC 2.0: a request with `"id": null` is NOT a notification.
     #[must_use]
     pub const fn is_notification(&self) -> bool {
         self.id.is_none()
@@ -63,6 +96,7 @@ pub struct JsonRpcResponse {
     /// Protocol version, always "2.0".
     pub jsonrpc: String,
     /// Request identifier this response corresponds to.
+    /// Serializes as `null` when `None`, always present in response.
     pub id: Option<JsonRpcId>,
     /// Success result (mutually exclusive with `error`).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -74,6 +108,8 @@ pub struct JsonRpcResponse {
 
 impl JsonRpcResponse {
     /// Build a success response.
+    ///
+    /// `id` is the flattened request ID: `Some(id)` or `None` (for null).
     #[must_use]
     pub fn success(id: Option<JsonRpcId>, result: serde_json::Value) -> Self {
         Self {
@@ -171,14 +207,14 @@ mod tests {
     fn test_request_serialization_roundtrip_with_integer_id() {
         let req = JsonRpcRequest {
             jsonrpc: JSONRPC_VERSION.to_string(),
-            id: Some(JsonRpcId::Number(42)),
+            id: Some(Some(JsonRpcId::Number(42))),
             method: "initialize".to_string(),
             params: Some(json!({"key": "value"})),
         };
         let json_str = serde_json::to_string(&req).unwrap();
         let deserialized: JsonRpcRequest = serde_json::from_str(&json_str).unwrap();
         assert_eq!(deserialized.jsonrpc, "2.0");
-        assert_eq!(deserialized.id, Some(JsonRpcId::Number(42)));
+        assert_eq!(deserialized.id, Some(Some(JsonRpcId::Number(42))));
         assert_eq!(deserialized.method, "initialize");
     }
 
@@ -186,7 +222,7 @@ mod tests {
     fn test_request_serialization_roundtrip_with_string_id() {
         let req = JsonRpcRequest {
             jsonrpc: JSONRPC_VERSION.to_string(),
-            id: Some(JsonRpcId::String("abc-123".to_string())),
+            id: Some(Some(JsonRpcId::String("abc-123".to_string()))),
             method: "tools/list".to_string(),
             params: None,
         };
@@ -194,7 +230,7 @@ mod tests {
         let deserialized: JsonRpcRequest = serde_json::from_str(&json_str).unwrap();
         assert_eq!(
             deserialized.id,
-            Some(JsonRpcId::String("abc-123".to_string()))
+            Some(Some(JsonRpcId::String("abc-123".to_string())))
         );
         assert!(deserialized.params.is_none());
     }
@@ -210,6 +246,27 @@ mod tests {
         assert!(req.is_notification());
         let json_str = serde_json::to_string(&req).unwrap();
         assert!(!json_str.contains("\"id\""));
+    }
+
+    #[test]
+    fn test_null_id_is_not_notification() {
+        // Per JSON-RPC 2.0: "id": null is NOT a notification, server must respond.
+        let json_str = r#"{"jsonrpc":"2.0","id":null,"method":"ping"}"#;
+        let req: JsonRpcRequest = serde_json::from_str(json_str).unwrap();
+        assert!(
+            !req.is_notification(),
+            "id:null should NOT be a notification"
+        );
+        assert_eq!(req.id, Some(None));
+    }
+
+    #[test]
+    fn test_absent_id_is_notification() {
+        // No "id" field at all → notification
+        let json_str = r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#;
+        let req: JsonRpcRequest = serde_json::from_str(json_str).unwrap();
+        assert!(req.is_notification(), "absent id should be a notification");
+        assert_eq!(req.id, None);
     }
 
     #[test]
@@ -287,7 +344,7 @@ mod tests {
     fn test_request_non_notification() {
         let req = JsonRpcRequest {
             jsonrpc: JSONRPC_VERSION.to_string(),
-            id: Some(JsonRpcId::Number(1)),
+            id: Some(Some(JsonRpcId::Number(1))),
             method: "test".to_string(),
             params: None,
         };

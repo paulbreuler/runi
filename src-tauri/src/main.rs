@@ -20,9 +20,10 @@ use infrastructure::commands::{
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
+#[cfg(debug_assertions)]
+use infrastructure::mcp::commands::{DEFAULT_MCP_PORT, start_server};
 use infrastructure::mcp::commands::{
-    DEFAULT_MCP_PORT, create_mcp_server_state, mcp_server_start, mcp_server_status,
-    mcp_server_stop, start_server,
+    create_mcp_server_state, mcp_server_start, mcp_server_status, mcp_server_stop,
 };
 use infrastructure::memory_monitor::{
     collect_ram_sample, get_ram_stats, set_memory_monitoring_enabled, start_memory_monitor,
@@ -48,6 +49,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .manage(create_mcp_server_state())
         .setup(move |app| {
             #[cfg(debug_assertions)]
             {
@@ -73,19 +75,23 @@ pub fn run() {
             let app_handle = app.handle();
             start_memory_monitor(app_handle, total_ram_gb);
 
-            // Auto-start MCP server so Claude Code can connect immediately
-            let mcp_state = app.state::<infrastructure::mcp::commands::McpServerServiceState>();
-            let mcp_state_clone = mcp_state.inner().clone();
-            tauri::async_runtime::spawn(async move {
-                if let Err(e) = start_server(DEFAULT_MCP_PORT, &mcp_state_clone).await {
-                    tracing::warn!("Failed to auto-start MCP server: {e}");
-                }
-            });
+            // In debug builds, auto-start MCP server so Claude Code can connect immediately.
+            // In release builds, the server must be started explicitly via Tauri commands
+            // to avoid opening a listening port by default.
+            #[cfg(debug_assertions)]
+            {
+                let mcp_state = app.state::<infrastructure::mcp::commands::McpServerServiceState>();
+                let mcp_state_clone = mcp_state.inner().clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = start_server(DEFAULT_MCP_PORT, &mcp_state_clone).await {
+                        tracing::warn!("Failed to auto-start MCP server: {e}");
+                    }
+                });
+            }
 
             Ok(())
         })
         .manage(create_proxy_service())
-        .manage(create_mcp_server_state())
         .invoke_handler(tauri::generate_handler![
             hello_world,
             execute_request,

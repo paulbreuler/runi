@@ -161,15 +161,18 @@ impl McpServerService {
 
     /// Validate a collection ID to prevent path traversal attacks.
     ///
-    /// Collection IDs must only contain alphanumeric characters, underscores,
-    /// and hyphens. Rejects any ID containing path separators or `..`.
+    /// Collection IDs must only contain ASCII alphanumeric characters, underscores,
+    /// and hyphens. Rejects any ID with other characters (spaces, dots, slashes, etc).
     fn validate_collection_id(id: &str) -> Result<(), String> {
         if id.is_empty() {
             return Err("Collection ID cannot be empty".to_string());
         }
-        if id.contains('.') || id.contains('/') || id.contains('\\') {
+        if !id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        {
             return Err(format!(
-                "Invalid collection ID: '{id}' — must not contain '.', '/', or '\\'"
+                "Invalid collection ID: '{id}' — must contain only letters, digits, '_', or '-'"
             ));
         }
         Ok(())
