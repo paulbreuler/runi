@@ -8,8 +8,9 @@
 
 #![allow(dead_code)]
 
-use async_trait::async_trait;
 use std::sync::Arc;
+
+use async_trait::async_trait;
 use tokio::sync::{Mutex, mpsc};
 
 use crate::domain::mcp::transport::Transport;

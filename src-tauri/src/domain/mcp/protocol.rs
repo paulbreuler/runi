@@ -3,13 +3,13 @@
 
 //! MCP protocol types for the server implementation.
 //!
-//! These types model the MCP 2024-11-05 specification's initialize,
+//! These types model the MCP 2025-11-25 specification's initialize,
 //! tools/list, and tools/call methods.
 
 use serde::{Deserialize, Serialize};
 
 /// MCP protocol version supported by this server.
-pub const PROTOCOL_VERSION: &str = "2024-11-05";
+pub const PROTOCOL_VERSION: &str = "2025-11-25";
 
 /// Server name reported in initialize response.
 pub const SERVER_NAME: &str = "runi";

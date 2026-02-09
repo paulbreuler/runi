@@ -6,14 +6,16 @@
 //! Manages the set of tools exposed by runi's MCP server and dispatches
 //! tool calls to the appropriate handlers backed by the collection store.
 
+use std::path::{Path, PathBuf};
+
+use serde_json::json;
+
 use crate::domain::collection::{Collection, CollectionRequest};
 use crate::domain::mcp::protocol::{McpToolDefinition, ToolCallResult, ToolResponseContent};
 use crate::infrastructure::storage::collection_store::{
     delete_collection_in_dir, list_collections_in_dir, load_collection_in_dir,
     save_collection_in_dir,
 };
-use serde_json::json;
-use std::path::{Path, PathBuf};
 
 /// A registered tool with its definition and handler.
 struct RegisteredTool {
@@ -157,6 +159,22 @@ impl McpServerService {
         &self.collections_dir
     }
 
+    /// Validate a collection ID to prevent path traversal attacks.
+    ///
+    /// Collection IDs must only contain alphanumeric characters, underscores,
+    /// and hyphens. Rejects any ID containing path separators or `..`.
+    fn validate_collection_id(id: &str) -> Result<(), String> {
+        if id.is_empty() {
+            return Err("Collection ID cannot be empty".to_string());
+        }
+        if id.contains('.') || id.contains('/') || id.contains('\\') {
+            return Err(format!(
+                "Invalid collection ID: '{id}' — must not contain '.', '/', or '\\'"
+            ));
+        }
+        Ok(())
+    }
+
     fn handle_create_collection(
         &self,
         args: &serde_json::Map<String, serde_json::Value>,
@@ -224,6 +242,7 @@ impl McpServerService {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: url".to_string())?;
 
+        Self::validate_collection_id(collection_id)?;
         let mut collection = load_collection_in_dir(collection_id, self.dir())?;
         let seq = collection.next_seq();
         let request = CollectionRequest {
@@ -264,6 +283,7 @@ impl McpServerService {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: request_id".to_string())?;
 
+        Self::validate_collection_id(collection_id)?;
         let mut collection = load_collection_in_dir(collection_id, self.dir())?;
         let request = collection
             .requests
@@ -304,6 +324,7 @@ impl McpServerService {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
 
+        Self::validate_collection_id(collection_id)?;
         delete_collection_in_dir(collection_id, self.dir())?;
 
         Ok(ToolCallResult {
@@ -594,6 +615,55 @@ mod tests {
         );
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_path_traversal_rejected_dotdot() {
+        let (service, _dir) = make_service();
+        let result = service.call_tool(
+            "delete_collection",
+            Some(args(&[("collection_id", "../etc/passwd")])),
+        );
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid collection ID"));
+    }
+
+    #[test]
+    fn test_path_traversal_rejected_slash() {
+        let (service, _dir) = make_service();
+        let result = service.call_tool(
+            "add_request",
+            Some(args(&[
+                ("collection_id", "foo/bar"),
+                ("name", "Test"),
+                ("method", "GET"),
+                ("url", "http://x.com"),
+            ])),
+        );
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid collection ID"));
+    }
+
+    #[test]
+    fn test_path_traversal_rejected_backslash() {
+        let (service, _dir) = make_service();
+        let result = service.call_tool(
+            "update_request",
+            Some(args(&[
+                ("collection_id", "foo\\bar"),
+                ("request_id", "req_1"),
+            ])),
+        );
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid collection ID"));
+    }
+
+    #[test]
+    fn test_path_traversal_rejected_empty() {
+        let (service, _dir) = make_service();
+        let result = service.call_tool("delete_collection", Some(args(&[("collection_id", "")])));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("empty"));
     }
 
     #[test]

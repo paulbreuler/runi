@@ -55,14 +55,7 @@ pub const DEFAULT_MCP_PORT: u16 = 3001;
 /// Returns an error if the server is already running, the collections directory
 /// cannot be determined, or the port is unavailable.
 pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<(), String> {
-    {
-        let guard = state.read().await;
-        if guard.is_some() {
-            return Err("MCP server is already running".to_string());
-        }
-        drop(guard);
-    }
-
+    // Prepare everything outside the lock — no I/O while holding the lock.
     let service = McpServerService::with_default_dir()?;
     let sessions = Arc::new(SessionManager::new());
 
@@ -79,6 +72,12 @@ pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<()
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
 
+    // Atomic check-and-set: single write lock to avoid TOCTOU race.
+    let mut guard = state.write().await;
+    if guard.is_some() {
+        return Err("MCP server is already running".to_string());
+    }
+
     tokio::spawn(async move {
         axum::serve(listener, app)
             .with_graceful_shutdown(async {
@@ -88,7 +87,6 @@ pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<()
             .ok();
     });
 
-    let mut guard = state.write().await;
     *guard = Some(McpServerHandle {
         port,
         shutdown_tx,

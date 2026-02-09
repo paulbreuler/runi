@@ -5,14 +5,16 @@
 //!
 //! Routes incoming JSON-RPC requests to the appropriate handler based on method name.
 
+use std::sync::Arc;
+
+use serde_json::json;
+use tokio::sync::RwLock;
+
 use crate::application::mcp_server_service::McpServerService;
 use crate::domain::mcp::jsonrpc::{JsonRpcError, JsonRpcId, JsonRpcRequest, JsonRpcResponse};
 use crate::domain::mcp::protocol::{
     InitializeResult, ToolCallParams, ToolCallResult, ToolResponseContent, ToolsListResult,
 };
-use serde_json::json;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 /// Dispatch a JSON-RPC request string to the appropriate handler.
 ///
@@ -154,7 +156,7 @@ mod tests {
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
-        assert_eq!(result["protocolVersion"], "2024-11-05");
+        assert_eq!(result["protocolVersion"], "2025-11-25");
         assert_eq!(result["serverInfo"]["name"], "runi");
     }
 

@@ -6,19 +6,21 @@
 //! Exposes JSON-RPC 2.0 over HTTP POST with SSE for server notifications.
 //! Implements the MCP Streamable HTTP transport spec.
 
-use crate::application::mcp_server_service::McpServerService;
-use crate::infrastructure::mcp::server::dispatcher;
-use crate::infrastructure::mcp::server::session::SessionManager;
+use std::convert::Infallible;
+use std::sync::Arc;
+
 use axum::Router;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::response::sse::{Event, Sse};
 use axum::routing::{delete, get, post};
-use std::convert::Infallible;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio_stream::wrappers::ReceiverStream;
+
+use crate::application::mcp_server_service::McpServerService;
+use crate::infrastructure::mcp::server::dispatcher;
+use crate::infrastructure::mcp::server::session::SessionManager;
 
 /// Shared state for the Axum MCP server.
 #[derive(Clone)]
@@ -94,10 +96,22 @@ async fn handle_sse(
 
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(32);
 
-    // Send initial connected event
-    let _ = tx
-        .send(Ok(Event::default().event("endpoint").data("/mcp")))
-        .await;
+    // Send initial endpoint event, then hold the sender open so the SSE stream
+    // stays alive. The sender will be dropped when the client disconnects
+    // (the spawned task detects the closed channel via send failure).
+    tokio::spawn(async move {
+        let _ = tx
+            .send(Ok(Event::default().event("endpoint").data("/mcp")))
+            .await;
+
+        // Keep the SSE stream alive by holding `tx`.
+        // Future: use this to push server notifications (collection changes, etc).
+        // The pending future never resolves; when the client disconnects,
+        // the rx side drops and subsequent sends would fail.
+        std::future::pending::<()>().await;
+        // Unreachable, but ensures `tx` is not dropped.
+        drop(tx);
+    });
 
     Ok(Sse::new(ReceiverStream::new(rx)))
 }
