@@ -92,7 +92,7 @@ pub fn run() {
             Ok(())
         })
         .manage(create_proxy_service())
-        .manage(create_mcp_service())
+        .manage(create_mcp_server_state())
         .invoke_handler(tauri::generate_handler![
             hello_world,
             execute_request,
