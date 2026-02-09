@@ -65,24 +65,13 @@ test.describe('Sidebar', () => {
 
     await expect(sidebar).toBeVisible();
 
-    // Wait for sidebar to reach its full width (animation completes)
-    // Sidebar should be approximately 256px when fully expanded
-    await expect(async () => {
-      const boundingBox = await sidebar.boundingBox();
-      expect(boundingBox).not.toBeNull();
-      if (boundingBox) {
-        // Allow small tolerance for browser rendering
-        expect(boundingBox.width).toBeGreaterThan(250);
-        expect(boundingBox.width).toBeLessThan(270);
-      }
-    }).toPass({ timeout: 5000 });
-
-    // Verify final width
+    // Sidebar should be DEFAULT_SIDEBAR_WIDTH (300px) when fully expanded
     const boundingBox = await sidebar.boundingBox();
     expect(boundingBox).not.toBeNull();
     if (boundingBox) {
-      expect(boundingBox.width).toBeGreaterThan(250);
-      expect(boundingBox.width).toBeLessThan(270);
+      // Allow small tolerance for browser rendering
+      expect(boundingBox.width).toBeGreaterThan(295);
+      expect(boundingBox.width).toBeLessThan(305);
     }
   });
 
