@@ -162,7 +162,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   const onRequestExecutedRef = useRef(onRequestExecuted);
 
   // Update refs when callbacks change
-  useEffect(() => {
+  useEffect((): void => {
     onCollectionCreatedRef.current = onCollectionCreated;
     onCollectionDeletedRef.current = onCollectionDeleted;
     onCollectionSavedRef.current = onCollectionSaved;
@@ -236,7 +236,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   // Uses a cancelled flag to handle the race where the component unmounts
   // before async listen() calls resolve — any late-resolving listeners
   // are immediately cleaned up.
-  useEffect(() => {
+  useEffect((): (() => void) => {
     let cancelled = false;
     const unlistenFns: UnlistenFn[] = [];
 
@@ -244,7 +244,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
       eventName: string,
       handler: (envelope: EventEnvelope<T>) => void
     ): Promise<void> => {
-      const unlisten = await listen<EventEnvelope<T>>(eventName, (event) => {
+      const unlisten = await listen<EventEnvelope<T>>(eventName, (event): void => {
         handler(event.payload);
       });
       if (cancelled) {

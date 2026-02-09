@@ -28,6 +28,12 @@ pub fn get_collections_dir() -> Result<PathBuf, String> {
     // Check environment variable override first
     if let Ok(env_dir) = std::env::var("RUNI_COLLECTIONS_DIR") {
         let dir = PathBuf::from(env_dir);
+        if dir.exists() && !dir.is_dir() {
+            return Err(format!(
+                "RUNI_COLLECTIONS_DIR is not a directory: {}",
+                dir.display()
+            ));
+        }
         ensure_dir(&dir)?;
         return Ok(dir);
     }
