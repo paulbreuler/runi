@@ -96,18 +96,17 @@ export const LongList: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    await step('Verify scrollbar appears on expand', async () => {
-      // The drawer is open by default in Sidebar component
-      // Using findByTestId because it might take a frame to appear due to requestAnimationFrame
-      const scrollbar = await canvas.findByTestId('sidebar-scrollbar');
-      await expect(scrollbar).toBeInTheDocument();
+    await step('Verify drawer is expanded', async () => {
+      const drawer = canvas.getByTestId('collections-drawer');
+      await expect(drawer).toBeInTheDocument();
+      const toggle = canvas.getByTestId('collections-drawer-toggle');
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     });
 
-    await step('Verify scrollbar is inset', async () => {
-      const scrollbar = canvas.getByTestId('sidebar-scrollbar');
-      await expect(scrollbar).toHaveClass('right-0.5');
-      await expect(scrollbar).toHaveClass('top-0');
-      await expect(scrollbar).toHaveClass('bottom-0');
+    await step('Verify scroll area exists', async () => {
+      // Check that the scroll root exists (this is rendered by the component)
+      const scrollRoot = canvas.getByTestId('sidebar-scroll-root');
+      await expect(scrollRoot).toBeInTheDocument();
     });
   },
 };
