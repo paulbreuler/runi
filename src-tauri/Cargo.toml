@@ -20,29 +20,33 @@ serde_json = "1.0"
 serde_yml = "0.0.12"
 tokio = { version = "1.49.0", features = ["rt-multi-thread", "macros", "time", "fs"] }
 curl = "0.4"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 anyhow = "1.0.39"
-dirs = "5.0"
+dirs = "6.0"
 uuid = { version = "1.0", features = ["v7", "serde", "std"] }
 chrono = { version = "0.4", features = ["serde"] }
-rand = "0.8"
+rand = "0.10"
 async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "ansi"] }
-rusqlite = { version = "0.33", features = ["bundled"] }
-sysinfo = "0.31"
+rusqlite = { version = "0.38", features = ["bundled"] }
+sysinfo = "0.38"
 sha2 = "0.10"
 hex = "0.4"
 openapiv3 = "2.2.0"
+# MCP server (HTTP/SSE transport)
+axum = { version = "0.8", features = ["json"] }
+tokio-stream = "0.1"
 # Encryption (Phase 10)
 aes-gcm = "0.10.3"
 base64 = "0.22.1"
 keyring = "3.6"
 
 [dev-dependencies]
-ts-rs = "10"
+ts-rs = "12"
 serial_test = "3"
 tempfile = "3"
+tower = { version = "0.5", features = ["util"] }
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
