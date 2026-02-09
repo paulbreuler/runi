@@ -63,11 +63,6 @@ interface DisplayLogEntry extends ConsoleLog {
   _originalLog?: DisplayLog;
 }
 
-interface FormattedLogArgs {
-  code: string;
-  language: string;
-}
-
 /**
  * Try to parse a string as JSON and return pretty-printed form.
  * Returns the original string if not valid JSON (or not object/array).
@@ -316,7 +311,7 @@ export const ConsolePanel = ({
     const grouped = new Map<string, ConsoleLog[]>();
     for (const log of filtered) {
       const correlationId = log.correlationId ?? '';
-      const argsKey = log.args.length > 0 ? 'has_args' : 'no_args';
+      const argsKey = log.args.length > 0 ? JSON.stringify(log.args).substring(0, 200) : '';
       const groupKey = `${log.level}|${log.message}|${correlationId}|${argsKey}`;
       if (!grouped.has(groupKey)) {
         grouped.set(groupKey, []);

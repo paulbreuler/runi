@@ -38,8 +38,8 @@ export const CollectionEventProvider = ({
     },
     onCollectionDeleted: (envelope): void => {
       void loadCollections();
-      // If deleted collection was selected, the store will handle clearing selection
-      // when it reloads and the collection is no longer present
+      // If the deleted collection was selected, clear selection immediately
+      // so the UI doesn't reference a stale collection while loadCollections() refreshes
       if (useCollectionStore.getState().selectedCollectionId === envelope.payload.id) {
         useCollectionStore.getState().selectCollection(null);
       }
