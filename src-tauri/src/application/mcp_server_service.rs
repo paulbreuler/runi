@@ -11,9 +11,9 @@ use std::sync::Arc;
 
 use serde_json::json;
 
-use crate::domain::collection::{Collection, CollectionRequest};
+use crate::domain::collection::{Collection, CollectionRequest, IntelligenceMetadata, SourceType};
 use crate::domain::http::RequestParams;
-use crate::domain::mcp::events::EventEmitter;
+use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::mcp::protocol::{McpToolDefinition, ToolCallResult, ToolResponseContent};
 use crate::infrastructure::storage::collection_store::{
     delete_collection_in_dir, list_collections_in_dir, load_collection_in_dir,
@@ -40,32 +40,50 @@ fn tool_def(name: &str, description: &str, input_schema: serde_json::Value) -> R
 ///
 /// Tools operate on collections stored in a configurable directory,
 /// defaulting to the system collections directory.
+///
+/// Every operation carries an [`Actor`] for provenance tracking.
+/// MCP-created collections use `SourceType::Mcp` and requests get
+/// `ai_generated: true` attribution.
 pub struct McpServerService {
     tools: Vec<RegisteredTool>,
     collections_dir: PathBuf,
     event_emitter: Option<Arc<dyn EventEmitter>>,
+    /// The actor for all operations — set at construction from MCP session info.
+    actor: Actor,
 }
 
 impl McpServerService {
     /// Create a new server service with the given collections directory.
+    ///
+    /// Defaults to `Actor::Ai` since MCP server operations are AI-initiated.
     #[must_use]
     pub fn new(collections_dir: PathBuf) -> Self {
         let mut service = Self {
             tools: Vec::new(),
             collections_dir,
             event_emitter: None,
+            actor: Actor::Ai {
+                model: None,
+                session_id: None,
+            },
         };
         service.register_tools();
         service
     }
 
     /// Create a new server service with an event emitter for UI notifications.
+    ///
+    /// Defaults to `Actor::Ai` since MCP server operations are AI-initiated.
     #[must_use]
     pub fn with_emitter(collections_dir: PathBuf, emitter: Arc<dyn EventEmitter>) -> Self {
         let mut service = Self {
             tools: Vec::new(),
             collections_dir,
             event_emitter: Some(emitter),
+            actor: Actor::Ai {
+                model: None,
+                session_id: None,
+            },
         };
         service.register_tools();
         service
@@ -84,11 +102,11 @@ impl McpServerService {
     /// Emit an event if an emitter is configured. No-ops otherwise.
     fn emit(&self, event_name: &str, payload: serde_json::Value) {
         if let Some(emitter) = &self.event_emitter {
-            emitter.emit_event(event_name, payload);
+            emitter.emit_event(event_name, &self.actor, payload);
         }
     }
 
-    /// Emit a `mcp:request-executed` event after HTTP execution completes.
+    /// Emit a `request:executed` event after HTTP execution completes.
     ///
     /// Called by the dispatcher after async HTTP execution (outside the lock).
     pub fn emit_execute_event(
@@ -98,7 +116,7 @@ impl McpServerService {
         response: &crate::domain::http::HttpResponse,
     ) {
         self.emit(
-            "mcp:request-executed",
+            "request:executed",
             json!({
                 "collection_id": collection_id,
                 "request_id": request_id,
@@ -284,11 +302,12 @@ impl McpServerService {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: name".to_string())?;
 
-        let collection = Collection::new(name);
+        let mut collection = Collection::new(name);
+        collection.source.source_type = SourceType::Mcp;
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
-            "mcp:collection-created",
+            "collection:created",
             json!({"id": &collection.id, "name": name}),
         );
 
@@ -356,6 +375,7 @@ impl McpServerService {
             seq,
             method: method.to_uppercase(),
             url: url.to_string(),
+            intelligence: IntelligenceMetadata::ai_generated("mcp"),
             ..Default::default()
         };
         let request_id = request.id.clone();
@@ -363,7 +383,7 @@ impl McpServerService {
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
-            "mcp:request-added",
+            "request:added",
             json!({"collection_id": collection_id, "request_id": &request_id, "name": name}),
         );
 
@@ -414,7 +434,7 @@ impl McpServerService {
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
-            "mcp:request-updated",
+            "request:updated",
             json!({"collection_id": collection_id, "request_id": request_id}),
         );
 
@@ -442,7 +462,7 @@ impl McpServerService {
         Self::validate_collection_id(collection_id)?;
         delete_collection_in_dir(collection_id, self.dir())?;
 
-        self.emit("mcp:collection-deleted", json!({"id": collection_id}));
+        self.emit("collection:deleted", json!({"id": collection_id}));
 
         Ok(ToolCallResult {
             content: vec![ToolResponseContent::Text {
@@ -820,10 +840,74 @@ mod tests {
 
         let captured = events.lock().expect("lock events");
         assert_eq!(captured.len(), 1);
-        assert_eq!(captured[0].0, "mcp:collection-created");
-        assert_eq!(captured[0].1["name"], "Test API");
-        assert!(captured[0].1["id"].as_str().is_some());
+        assert_eq!(captured[0].0, "collection:created");
+        assert!(matches!(
+            captured[0].1,
+            crate::domain::mcp::events::Actor::Ai { .. }
+        ));
+        assert_eq!(captured[0].2["name"], "Test API");
+        assert!(captured[0].2["id"].as_str().is_some());
         drop(captured);
+    }
+
+    #[test]
+    fn test_create_collection_has_mcp_source_type() {
+        let (service, _dir) = make_service();
+
+        let result = service
+            .call_tool("create_collection", Some(args(&[("name", "MCP Test")])))
+            .unwrap();
+        let text = match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        let created: serde_json::Value = serde_json::from_str(text).unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
+        assert_eq!(collection.source.source_type, SourceType::Mcp);
+    }
+
+    #[test]
+    fn test_add_request_has_ai_attribution() {
+        let (service, _dir) = make_service();
+
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Test")])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        let add_result = service
+            .call_tool(
+                "add_request",
+                Some(args(&[
+                    ("collection_id", collection_id),
+                    ("name", "AI Request"),
+                    ("method", "GET"),
+                    ("url", "https://api.example.com/ai"),
+                ])),
+            )
+            .unwrap();
+        let added: serde_json::Value = serde_json::from_str(match &add_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let request_id = added["request_id"].as_str().unwrap();
+
+        let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
+        let request = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .unwrap();
+        assert!(request.intelligence.ai_generated);
+        assert_eq!(
+            request.intelligence.generator_model,
+            Some("mcp".to_string())
+        );
     }
 
     #[test]
@@ -858,8 +942,12 @@ mod tests {
 
         let captured = events.lock().expect("lock events");
         assert_eq!(captured.len(), 2); // create + add
-        assert_eq!(captured[1].0, "mcp:request-added");
-        assert_eq!(captured[1].1["name"], "Get Users");
+        assert_eq!(captured[1].0, "request:added");
+        assert!(matches!(
+            captured[1].1,
+            crate::domain::mcp::events::Actor::Ai { .. }
+        ));
+        assert_eq!(captured[1].2["name"], "Get Users");
         drop(captured);
     }
 
@@ -888,8 +976,12 @@ mod tests {
 
         let captured = events.lock().expect("lock events");
         assert_eq!(captured.len(), 2); // create + delete
-        assert_eq!(captured[1].0, "mcp:collection-deleted");
-        assert_eq!(captured[1].1["id"].as_str().unwrap(), collection_id);
+        assert_eq!(captured[1].0, "collection:deleted");
+        assert!(matches!(
+            captured[1].1,
+            crate::domain::mcp::events::Actor::Ai { .. }
+        ));
+        assert_eq!(captured[1].2["id"].as_str().unwrap(), collection_id);
         drop(captured);
     }
 

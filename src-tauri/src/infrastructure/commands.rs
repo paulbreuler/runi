@@ -7,6 +7,7 @@ use crate::application::proxy_service::ProxyService;
 use crate::domain::collection::Collection;
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
+use crate::domain::mcp::events::{Actor, EventEnvelope};
 use crate::domain::models::HelloWorldResponse;
 use crate::infrastructure::spec::converter::convert_to_collection;
 use crate::infrastructure::spec::fetcher::fetch_openapi_spec;
@@ -17,6 +18,7 @@ use crate::infrastructure::storage::collection_store::{
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
+use serde_json::json;
 use std::sync::{Arc, LazyLock};
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
@@ -33,6 +35,24 @@ static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
     LazyLock::new(|| Arc::new(MemoryHistoryStorage::new()));
 
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
+
+/// Emit a collection event wrapped in an [`EventEnvelope`].
+fn emit_collection_event(
+    app: &tauri::AppHandle,
+    event_name: &str,
+    actor: &Actor,
+    payload: serde_json::Value,
+) {
+    let envelope = EventEnvelope {
+        actor: actor.clone(),
+        timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        correlation_id: None,
+        payload,
+    };
+    if let Err(e) = app.emit(event_name, &envelope) {
+        tracing::warn!("Failed to emit event '{event_name}': {e}");
+    }
+}
 
 /// Initialize the proxy service
 pub fn create_proxy_service() -> Arc<Mutex<ProxyService>> {
@@ -159,10 +179,10 @@ pub fn get_system_specs() -> Result<SystemSpecs, String> {
     let cpu_cores = system.cpus().len();
 
     // Get total memory in GB (sysinfo returns memory in KiB)
-    let total_memory_kib = system.total_memory();
+    let total_memory_bytes = system.total_memory();
     // Precision loss is acceptable for memory measurements in GB
     #[allow(clippy::cast_precision_loss)]
-    let total_memory_gb = total_memory_kib as f64 / (1024.0 * 1024.0);
+    let total_memory_gb = total_memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
 
     // Get platform
     let platform = if cfg!(target_os = "macos") {
@@ -226,9 +246,20 @@ pub fn get_config_dir() -> Result<String, String> {
 }
 
 /// Save a collection to disk.
+///
+/// Emits `collection:saved` with `Actor::User` for real-time UI updates.
 #[tauri::command]
-pub async fn cmd_save_collection(collection: Collection) -> Result<String, String> {
+pub async fn cmd_save_collection(
+    app: tauri::AppHandle,
+    collection: Collection,
+) -> Result<String, String> {
     let path = save_collection(&collection)?;
+    emit_collection_event(
+        &app,
+        "collection:saved",
+        &Actor::User,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
     Ok(path.to_string_lossy().to_string())
 }
 
@@ -245,9 +276,33 @@ pub async fn cmd_list_collections() -> Result<Vec<CollectionSummary>, String> {
 }
 
 /// Delete a collection by ID.
+///
+/// Emits `collection:deleted` with `Actor::User` for real-time UI updates.
 #[tauri::command]
-pub async fn cmd_delete_collection(collection_id: String) -> Result<(), String> {
-    delete_collection(&collection_id)
+pub async fn cmd_delete_collection(
+    app: tauri::AppHandle,
+    collection_id: String,
+) -> Result<(), String> {
+    delete_collection(&collection_id)?;
+    emit_collection_event(
+        &app,
+        "collection:deleted",
+        &Actor::User,
+        json!({"id": &collection_id}),
+    );
+    Ok(())
+}
+
+/// Fetch, parse, and save the httpbin.org collection.
+///
+/// Core logic extracted from the Tauri command for testability (no `AppHandle` needed).
+async fn add_httpbin_collection_inner() -> Result<Collection, String> {
+    let fetch_result = fetch_openapi_spec(HTTPBIN_SPEC_URL).await?;
+    let parsed = parse_openapi_spec(&fetch_result.content)?;
+    let collection =
+        convert_to_collection(&parsed, &fetch_result.content, &fetch_result.source_url);
+    save_collection(&collection)?;
+    Ok(collection)
 }
 
 /// Convenience command: Add httpbin.org collection.
@@ -257,14 +312,17 @@ pub async fn cmd_delete_collection(collection_id: String) -> Result<(), String> 
 /// 2. Parse spec into internal types
 /// 3. Convert to Collection format
 /// 4. Save to disk
-/// 5. Return the new collection
+/// 5. Emit `collection:created` with `Actor::System`
+/// 6. Return the new collection
 #[tauri::command]
-pub async fn cmd_add_httpbin_collection() -> Result<Collection, String> {
-    let fetch_result = fetch_openapi_spec(HTTPBIN_SPEC_URL).await?;
-    let parsed = parse_openapi_spec(&fetch_result.content)?;
-    let collection =
-        convert_to_collection(&parsed, &fetch_result.content, &fetch_result.source_url);
-    save_collection(&collection)?;
+pub async fn cmd_add_httpbin_collection(app: tauri::AppHandle) -> Result<Collection, String> {
+    let collection = add_httpbin_collection_inner().await?;
+    emit_collection_event(
+        &app,
+        "collection:created",
+        &Actor::System,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
     Ok(collection)
 }
 
@@ -1222,7 +1280,7 @@ mod tests {
     async fn test_cmd_add_httpbin_collection_returns_collection() {
         let temp_dir = TempDir::new().unwrap();
         let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
-            cmd_add_httpbin_collection().await
+            add_httpbin_collection_inner().await
         })
         .await;
         let collection = result.unwrap();

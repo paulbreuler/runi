@@ -102,6 +102,14 @@ describe('Sidebar', (): void => {
     const scrollContainer = container.querySelector('[data-scroll-container]');
     expect(scrollContainer).toBeInTheDocument();
   });
+
+  it('has a scroll container with 250ms fade-out delay', (): void => {
+    const { container } = render(<Sidebar />);
+    // The ScrollArea.Root mock overwrites className with the one passed in prop
+    const scrollRoot = container.querySelector('.group\\/scroll');
+    expect(scrollRoot).toBeInTheDocument();
+    expect(scrollRoot).toHaveAttribute('delay', '250');
+  });
 });
 
 describe('CollectionList', (): void => {

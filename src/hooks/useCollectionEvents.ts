@@ -7,16 +7,43 @@
  * @file useCollectionEvents hook
  * @description Hook for real-time collection event streaming from Tauri backend
  *
- * Subscribes to Tauri events for live collection updates from MCP server:
- * - mcp:collection-created - New collection added
- * - mcp:collection-deleted - Collection removed
- * - mcp:request-added - Request added to collection
- * - mcp:request-updated - Request modified
- * - mcp:request-executed - Request executed with results
+ * Every event is wrapped in an EventEnvelope with actor attribution,
+ * so the UI knows WHO initiated each action (user, AI, or system).
+ *
+ * Unified event names (no mcp: prefix — the actor field tells you the origin):
+ * - collection:created - New collection added
+ * - collection:deleted - Collection removed
+ * - collection:saved - Collection saved to disk
+ * - request:added - Request added to collection
+ * - request:updated - Request modified
+ * - request:executed - Request executed with results
  */
 
 import { useEffect, useCallback, useRef } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+
+/**
+ * Who initiated this action.
+ *
+ * Maps to runi's signal system:
+ * - user → no special signal
+ * - ai → purple signal (#a855f7, suspect until verified)
+ * - system → neutral/gray
+ */
+export type Actor =
+  | { type: 'user' }
+  | { type: 'ai'; model: string | null; session_id: string | null }
+  | { type: 'system' };
+
+/**
+ * Wraps every event with provenance metadata.
+ */
+export interface EventEnvelope<T> {
+  actor: Actor;
+  timestamp: string;
+  correlation_id: string | null;
+  payload: T;
+}
 
 /**
  * Collection created event payload
@@ -31,6 +58,14 @@ export interface CollectionCreatedEvent {
  */
 export interface CollectionDeletedEvent {
   id: string;
+}
+
+/**
+ * Collection saved event payload
+ */
+export interface CollectionSavedEvent {
+  id: string;
+  name: string;
 }
 
 /**
@@ -57,7 +92,7 @@ export interface RequestExecutedEvent {
   collection_id: string;
   request_id: string;
   status: number;
-  success: boolean;
+  total_ms: number;
 }
 
 /**
@@ -65,37 +100,45 @@ export interface RequestExecutedEvent {
  */
 export interface UseCollectionEventsOptions {
   /** Callback when a collection is created */
-  onCollectionCreated?: (event: CollectionCreatedEvent) => void;
+  onCollectionCreated?: (envelope: EventEnvelope<CollectionCreatedEvent>) => void;
 
   /** Callback when a collection is deleted */
-  onCollectionDeleted?: (event: CollectionDeletedEvent) => void;
+  onCollectionDeleted?: (envelope: EventEnvelope<CollectionDeletedEvent>) => void;
+
+  /** Callback when a collection is saved */
+  onCollectionSaved?: (envelope: EventEnvelope<CollectionSavedEvent>) => void;
 
   /** Callback when a request is added */
-  onRequestAdded?: (event: RequestAddedEvent) => void;
+  onRequestAdded?: (envelope: EventEnvelope<RequestAddedEvent>) => void;
 
   /** Callback when a request is updated */
-  onRequestUpdated?: (event: RequestUpdatedEvent) => void;
+  onRequestUpdated?: (envelope: EventEnvelope<RequestUpdatedEvent>) => void;
 
   /** Callback when a request is executed */
-  onRequestExecuted?: (event: RequestExecutedEvent) => void;
+  onRequestExecuted?: (envelope: EventEnvelope<RequestExecutedEvent>) => void;
 }
 
 /**
- * Hook for subscribing to real-time collection events from MCP server.
+ * Hook for subscribing to real-time collection events from Tauri backend.
  *
  * **CRITICAL:** This hook makes the UI completely event-driven. Collections
- * and requests are NEVER polled - they update ONLY via Tauri events.
+ * and requests update via Tauri events regardless of whether the action
+ * came from the user, AI (MCP), or system.
+ *
+ * Every callback receives the full `EventEnvelope` with actor attribution,
+ * enabling the UI to show WHO did what (e.g., purple signal for AI actions).
  *
  * @example
  * ```tsx
  * useCollectionEvents({
- *   onCollectionCreated: (event) => {
- *     // Reload collection list
+ *   onCollectionCreated: (envelope) => {
+ *     if (envelope.actor.type === 'ai') {
+ *       // Show purple signal dot
+ *     }
  *     loadCollections();
  *   },
- *   onRequestAdded: (event) => {
- *     // Reload specific collection
- *     loadCollection(event.collection_id);
+ *   onRequestAdded: (envelope) => {
+ *     loadCollection(envelope.payload.collection_id);
  *   },
  * });
  * ```
@@ -104,6 +147,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   const {
     onCollectionCreated,
     onCollectionDeleted,
+    onCollectionSaved,
     onRequestAdded,
     onRequestUpdated,
     onRequestExecuted,
@@ -112,6 +156,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   // Store callbacks in refs to avoid re-subscribing on callback changes
   const onCollectionCreatedRef = useRef(onCollectionCreated);
   const onCollectionDeletedRef = useRef(onCollectionDeleted);
+  const onCollectionSavedRef = useRef(onCollectionSaved);
   const onRequestAddedRef = useRef(onRequestAdded);
   const onRequestUpdatedRef = useRef(onRequestUpdated);
   const onRequestExecutedRef = useRef(onRequestExecuted);
@@ -120,51 +165,72 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   useEffect(() => {
     onCollectionCreatedRef.current = onCollectionCreated;
     onCollectionDeletedRef.current = onCollectionDeleted;
+    onCollectionSavedRef.current = onCollectionSaved;
     onRequestAddedRef.current = onRequestAdded;
     onRequestUpdatedRef.current = onRequestUpdated;
     onRequestExecutedRef.current = onRequestExecuted;
   }, [
     onCollectionCreated,
     onCollectionDeleted,
+    onCollectionSaved,
     onRequestAdded,
     onRequestUpdated,
     onRequestExecuted,
   ]);
 
   // Handle collection created event
-  const handleCollectionCreated = useCallback((event: CollectionCreatedEvent): void => {
-    if (onCollectionCreatedRef.current !== undefined) {
-      onCollectionCreatedRef.current(event);
-    }
-  }, []);
+  const handleCollectionCreated = useCallback(
+    (envelope: EventEnvelope<CollectionCreatedEvent>): void => {
+      if (onCollectionCreatedRef.current !== undefined) {
+        onCollectionCreatedRef.current(envelope);
+      }
+    },
+    []
+  );
 
   // Handle collection deleted event
-  const handleCollectionDeleted = useCallback((event: CollectionDeletedEvent): void => {
-    if (onCollectionDeletedRef.current !== undefined) {
-      onCollectionDeletedRef.current(event);
-    }
-  }, []);
+  const handleCollectionDeleted = useCallback(
+    (envelope: EventEnvelope<CollectionDeletedEvent>): void => {
+      if (onCollectionDeletedRef.current !== undefined) {
+        onCollectionDeletedRef.current(envelope);
+      }
+    },
+    []
+  );
+
+  // Handle collection saved event
+  const handleCollectionSaved = useCallback(
+    (envelope: EventEnvelope<CollectionSavedEvent>): void => {
+      if (onCollectionSavedRef.current !== undefined) {
+        onCollectionSavedRef.current(envelope);
+      }
+    },
+    []
+  );
 
   // Handle request added event
-  const handleRequestAdded = useCallback((event: RequestAddedEvent): void => {
+  const handleRequestAdded = useCallback((envelope: EventEnvelope<RequestAddedEvent>): void => {
     if (onRequestAddedRef.current !== undefined) {
-      onRequestAddedRef.current(event);
+      onRequestAddedRef.current(envelope);
     }
   }, []);
 
   // Handle request updated event
-  const handleRequestUpdated = useCallback((event: RequestUpdatedEvent): void => {
+  const handleRequestUpdated = useCallback((envelope: EventEnvelope<RequestUpdatedEvent>): void => {
     if (onRequestUpdatedRef.current !== undefined) {
-      onRequestUpdatedRef.current(event);
+      onRequestUpdatedRef.current(envelope);
     }
   }, []);
 
   // Handle request executed event
-  const handleRequestExecuted = useCallback((event: RequestExecutedEvent): void => {
-    if (onRequestExecutedRef.current !== undefined) {
-      onRequestExecutedRef.current(event);
-    }
-  }, []);
+  const handleRequestExecuted = useCallback(
+    (envelope: EventEnvelope<RequestExecutedEvent>): void => {
+      if (onRequestExecutedRef.current !== undefined) {
+        onRequestExecutedRef.current(envelope);
+      }
+    },
+    []
+  );
 
   // Subscribe to Tauri events
   useEffect(() => {
@@ -172,45 +238,48 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
 
     const setupListeners = async (): Promise<void> => {
       try {
-        // Listen for collection created
-        const unlistenCollectionCreated = await listen<CollectionCreatedEvent>(
-          'mcp:collection-created',
+        const unlistenCollectionCreated = await listen<EventEnvelope<CollectionCreatedEvent>>(
+          'collection:created',
           (event) => {
             handleCollectionCreated(event.payload);
           }
         );
         unlistenFns.push(unlistenCollectionCreated);
 
-        // Listen for collection deleted
-        const unlistenCollectionDeleted = await listen<CollectionDeletedEvent>(
-          'mcp:collection-deleted',
+        const unlistenCollectionDeleted = await listen<EventEnvelope<CollectionDeletedEvent>>(
+          'collection:deleted',
           (event) => {
             handleCollectionDeleted(event.payload);
           }
         );
         unlistenFns.push(unlistenCollectionDeleted);
 
-        // Listen for request added
-        const unlistenRequestAdded = await listen<RequestAddedEvent>(
-          'mcp:request-added',
+        const unlistenCollectionSaved = await listen<EventEnvelope<CollectionSavedEvent>>(
+          'collection:saved',
+          (event) => {
+            handleCollectionSaved(event.payload);
+          }
+        );
+        unlistenFns.push(unlistenCollectionSaved);
+
+        const unlistenRequestAdded = await listen<EventEnvelope<RequestAddedEvent>>(
+          'request:added',
           (event) => {
             handleRequestAdded(event.payload);
           }
         );
         unlistenFns.push(unlistenRequestAdded);
 
-        // Listen for request updated
-        const unlistenRequestUpdated = await listen<RequestUpdatedEvent>(
-          'mcp:request-updated',
+        const unlistenRequestUpdated = await listen<EventEnvelope<RequestUpdatedEvent>>(
+          'request:updated',
           (event) => {
             handleRequestUpdated(event.payload);
           }
         );
         unlistenFns.push(unlistenRequestUpdated);
 
-        // Listen for request executed
-        const unlistenRequestExecuted = await listen<RequestExecutedEvent>(
-          'mcp:request-executed',
+        const unlistenRequestExecuted = await listen<EventEnvelope<RequestExecutedEvent>>(
+          'request:executed',
           (event) => {
             handleRequestExecuted(event.payload);
           }
@@ -232,6 +301,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   }, [
     handleCollectionCreated,
     handleCollectionDeleted,
+    handleCollectionSaved,
     handleRequestAdded,
     handleRequestUpdated,
     handleRequestExecuted,

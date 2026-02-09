@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ScrollArea } from '@base-ui/react/scroll-area';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
 import { containedFocusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
@@ -67,12 +68,20 @@ const DrawerSection = ({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="flex-1 min-h-0 flex flex-col overflow-hidden"
           >
-            <div
-              className="px-3 pb-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
-              data-scroll-container
-            >
-              {children}
-            </div>
+            <ScrollArea.Root className="flex-1 min-h-0 relative group/scroll">
+              <ScrollArea.Viewport
+                className="scroll-area-viewport w-full h-full"
+                data-scroll-container
+              >
+                <div className="px-3 pb-3">{children}</div>
+              </ScrollArea.Viewport>
+              <ScrollArea.Scrollbar
+                orientation="vertical"
+                className="scroll-area-scrollbar absolute right-0.5 top-0 bottom-0 z-20 flex touch-none select-none transition-opacity duration-200"
+              >
+                <ScrollArea.Thumb className="scroll-area-thumb flex-1 rounded-full" />
+              </ScrollArea.Scrollbar>
+            </ScrollArea.Root>
           </motion.div>
         )}
       </AnimatePresence>
