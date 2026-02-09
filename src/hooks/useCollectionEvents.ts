@@ -116,6 +116,9 @@ export interface UseCollectionEventsOptions {
 
   /** Callback when a request is executed */
   onRequestExecuted?: (envelope: EventEnvelope<RequestExecutedEvent>) => void;
+
+  /** Callback when listener setup fails */
+  onError?: (error: unknown) => void;
 }
 
 /**
@@ -151,6 +154,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onRequestAdded,
     onRequestUpdated,
     onRequestExecuted,
+    onError,
   } = options;
 
   // Store callbacks in refs to avoid re-subscribing on callback changes
@@ -160,6 +164,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   const onRequestAddedRef = useRef(onRequestAdded);
   const onRequestUpdatedRef = useRef(onRequestUpdated);
   const onRequestExecutedRef = useRef(onRequestExecuted);
+  const onErrorRef = useRef(onError);
 
   // Update refs when callbacks change
   useEffect((): void => {
@@ -169,6 +174,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onRequestAddedRef.current = onRequestAdded;
     onRequestUpdatedRef.current = onRequestUpdated;
     onRequestExecutedRef.current = onRequestExecuted;
+    onErrorRef.current = onError;
   }, [
     onCollectionCreated,
     onCollectionDeleted,
@@ -176,6 +182,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onRequestAdded,
     onRequestUpdated,
     onRequestExecuted,
+    onError,
   ]);
 
   // Handle collection created event
@@ -265,7 +272,11 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
           addListener('request:executed', handleRequestExecuted),
         ]);
       } catch (error) {
-        console.error('Failed to subscribe to collection events:', error);
+        if (onErrorRef.current !== undefined) {
+          onErrorRef.current(error);
+        } else {
+          console.error('Failed to subscribe to collection events:', error);
+        }
       }
     };
 

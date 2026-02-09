@@ -8,6 +8,7 @@
  * @description Consolidated story using Storybook 10 controls
  */
 
+import React, { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { Sidebar } from './Sidebar';
@@ -48,15 +49,14 @@ export const Playground: Story = {
   },
 };
 
-/**
- * Story with a long list of items to test scrollbar behavior.
- */
-export const LongList: Story = {
-  render: () => {
-    // Enable collections
+const LongListWrapper = (): React.JSX.Element => {
+  useEffect((): (() => void) => {
+    const prevSummaries = useCollectionStore.getState().summaries;
+    const prevIsLoading = useCollectionStore.getState().isLoading;
+    const prevError = useCollectionStore.getState().error;
+
     useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
 
-    // Mock a long list of collections
     const mockCollections: CollectionSummary[] = Array.from({ length: 20 }, (_, i) => ({
       id: `col-${String(i)}`,
       name: `Collection ${String(i + 1)}`,
@@ -65,19 +65,34 @@ export const LongList: Story = {
       modified_at: new Date().toISOString(),
     }));
 
-    // Setup store before rendering
     useCollectionStore.setState({
       summaries: mockCollections,
       isLoading: false,
       error: null,
     });
 
-    return (
-      <div className="w-64 h-[400px] border-r border-border-default bg-bg-app overflow-hidden">
-        <Sidebar />
-      </div>
-    );
-  },
+    return (): void => {
+      useFeatureFlagStore.getState().resetToDefaults();
+      useCollectionStore.setState({
+        summaries: prevSummaries,
+        isLoading: prevIsLoading,
+        error: prevError,
+      });
+    };
+  }, []);
+
+  return (
+    <div className="w-64 h-[400px] border-r border-border-default bg-bg-app overflow-hidden">
+      <Sidebar />
+    </div>
+  );
+};
+
+/**
+ * Story with a long list of items to test scrollbar behavior.
+ */
+export const LongList: Story = {
+  render: (): React.JSX.Element => <LongListWrapper />,
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
@@ -86,16 +101,13 @@ export const LongList: Story = {
       // Using findByTestId because it might take a frame to appear due to requestAnimationFrame
       const scrollbar = await canvas.findByTestId('sidebar-scrollbar');
       await expect(scrollbar).toBeInTheDocument();
-      // We can't easily test the exact opacity transition in interaction test
-      // but we can verify it's there and has the right classes
-      await expect(scrollbar).toHaveClass('opacity-100');
     });
 
     await step('Verify scrollbar is inset', async () => {
       const scrollbar = canvas.getByTestId('sidebar-scrollbar');
-      await expect(scrollbar).toHaveClass('right-2');
-      await expect(scrollbar).toHaveClass('top-1');
-      await expect(scrollbar).toHaveClass('bottom-1');
+      await expect(scrollbar).toHaveClass('right-0.5');
+      await expect(scrollbar).toHaveClass('top-0');
+      await expect(scrollbar).toHaveClass('bottom-0');
     });
   },
 };

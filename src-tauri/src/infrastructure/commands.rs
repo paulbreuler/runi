@@ -7,8 +7,9 @@ use crate::application::proxy_service::ProxyService;
 use crate::domain::collection::Collection;
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
-use crate::domain::mcp::events::{Actor, EventEnvelope};
+use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::models::HelloWorldResponse;
+use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::spec::converter::convert_to_collection;
 use crate::infrastructure::spec::fetcher::fetch_openapi_spec;
 use crate::infrastructure::spec::parser::parse_openapi_spec;
@@ -43,15 +44,8 @@ fn emit_collection_event(
     actor: &Actor,
     payload: serde_json::Value,
 ) {
-    let envelope = EventEnvelope {
-        actor: actor.clone(),
-        timestamp: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
-        correlation_id: None,
-        payload,
-    };
-    if let Err(e) = app.emit(event_name, &envelope) {
-        tracing::warn!("Failed to emit event '{event_name}': {e}");
-    }
+    let emitter = TauriEventEmitter::new(app.clone());
+    emitter.emit_event(event_name, actor, payload);
 }
 
 /// Initialize the proxy service
