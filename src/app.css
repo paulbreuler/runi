@@ -342,12 +342,13 @@ body {
   background: var(--gray-8);
   border-radius: 4px;
   position: relative;
-  opacity: 0;
+  opacity: 0.6;
   transition: opacity 0.2s;
 }
 
-.scroll-area-scrollbar[data-state='visible'] .scroll-area-thumb {
-  opacity: 0.6;
+/* data-state is provided by Radix/Base UI ScrollArea */
+.scroll-area-scrollbar[data-state='hidden'] {
+  opacity: 0;
 }
 
 .scroll-area-thumb:hover {

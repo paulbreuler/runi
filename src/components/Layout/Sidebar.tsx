@@ -70,7 +70,8 @@ const DrawerSection = ({
           >
             <ScrollArea.Root
               className="flex-1 min-h-0 relative group/scroll"
-              {...({ type: 'scroll', delay: 250 } as Record<string, unknown>)}
+              type="auto"
+              hideDelay={250}
             >
               <ScrollArea.Viewport
                 className="scroll-area-viewport w-full h-full"

@@ -108,8 +108,8 @@ describe('Sidebar', (): void => {
     // The ScrollArea.Root mock overwrites className with the one passed in prop
     const scrollRoot = container.querySelector('.group\\/scroll');
     expect(scrollRoot).toBeInTheDocument();
-    expect(scrollRoot).toHaveAttribute('delay', '250');
-    expect(scrollRoot).toHaveAttribute('type', 'scroll');
+    expect(scrollRoot).toHaveAttribute('hidedelay', '250');
+    expect(scrollRoot).toHaveAttribute('type', 'auto');
   });
 
   it('renders a vertical scrollbar in the drawer body', (): void => {
