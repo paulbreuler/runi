@@ -42,6 +42,7 @@ export type EventType =
   | 'console.warn-emitted'
   | 'console.error-emitted'
   | 'panel.console-requested'
+  | 'request.accept-ai'
   | 'toast.show';
 
 /**

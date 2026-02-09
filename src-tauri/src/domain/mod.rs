@@ -10,3 +10,5 @@ pub mod http;
 /// MCP domain models and protocol types.
 pub mod mcp;
 pub mod models;
+/// Participant identity and Lamport timestamps for multiplayer-like provenance.
+pub mod participant;

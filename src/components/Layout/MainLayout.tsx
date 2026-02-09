@@ -34,6 +34,8 @@ import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
+import { ActivityFeed } from '@/components/ActivityFeed';
+import { useActivityStore } from '@/stores/useActivityStore';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -125,6 +127,7 @@ export const MainLayout = ({
   // Panel tab state
   const [activeTab, setActiveTab] = useState<PanelTabType>('network');
   const { entries } = useHistoryStore();
+  const activityEntries = useActivityStore((s) => s.entries);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Sidebar state
@@ -662,6 +665,7 @@ export const MainLayout = ({
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     networkCount={entries.length}
+                    activityCount={activityEntries.length}
                   />
                 }
               >
@@ -676,6 +680,7 @@ export const MainLayout = ({
                       }}
                     />
                   }
+                  activityContent={<ActivityFeed className="h-full" />}
                 />
               </DockablePanel>
             )}
@@ -762,6 +767,7 @@ export const MainLayout = ({
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     networkCount={entries.length}
+                    activityCount={activityEntries.length}
                   />
                 }
               >
@@ -776,6 +782,7 @@ export const MainLayout = ({
                       }}
                     />
                   }
+                  activityContent={<ActivityFeed className="h-full" />}
                 />
               </DockablePanel>
             )}
@@ -792,6 +799,7 @@ export const MainLayout = ({
               activeTab={activeTab}
               onTabChange={setActiveTab}
               networkCount={entries.length}
+              activityCount={activityEntries.length}
             />
           }
         >
@@ -806,6 +814,7 @@ export const MainLayout = ({
                 }}
               />
             }
+            activityContent={<ActivityFeed className="h-full" />}
           />
         </DockablePanel>
       )}

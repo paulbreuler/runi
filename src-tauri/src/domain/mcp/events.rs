@@ -12,6 +12,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::domain::participant::{LamportTimestamp, ParticipantId};
+
 /// Who initiated this action.
 ///
 /// Every state mutation carries an actor so the UI can distinguish
@@ -37,10 +39,29 @@ pub enum Actor {
     System,
 }
 
+impl Actor {
+    /// Convert this actor to a [`ParticipantId`] for the participant system.
+    #[must_use]
+    pub fn to_participant_id(&self) -> ParticipantId {
+        match self {
+            Self::User => ParticipantId::User,
+            Self::Ai { model, session_id } => ParticipantId::Ai {
+                session_id: session_id.clone(),
+                model: model.clone(),
+            },
+            Self::System => ParticipantId::System,
+        }
+    }
+}
+
 /// Wraps every event with provenance metadata.
 ///
 /// The frontend receives this envelope for every Tauri event,
 /// enabling actor attribution in the UI.
+///
+/// The optional `lamport` field carries a Lamport timestamp for causal
+/// ordering of events across participants. When present, the UI can
+/// display sequence numbers and detect concurrent edits.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EventEnvelope {
     /// Who initiated this action.
@@ -50,6 +71,9 @@ pub struct EventEnvelope {
     /// Groups related events (e.g., "create collection + add 5 requests").
     #[serde(skip_serializing_if = "Option::is_none")]
     pub correlation_id: Option<String>,
+    /// Lamport timestamp for causal ordering.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lamport: Option<LamportTimestamp>,
     /// The domain-specific event data.
     pub payload: serde_json::Value,
 }
@@ -61,6 +85,23 @@ pub struct EventEnvelope {
 pub trait EventEmitter: Send + Sync {
     /// Emit a named event with actor attribution and a JSON payload.
     fn emit_event(&self, event_name: &str, actor: &Actor, payload: serde_json::Value);
+
+    /// Emit a named event with actor attribution, Lamport timestamp, and JSON payload.
+    ///
+    /// Default implementation delegates to `emit_event`, ignoring the timestamp.
+    /// Override this to include Lamport timestamps in emitted events.
+    fn emit_event_with_seq(
+        &self,
+        event_name: &str,
+        actor: &Actor,
+        lamport: LamportTimestamp,
+        payload: serde_json::Value,
+    ) {
+        // Default: drop lamport, delegate to legacy method.
+        // Overridden by TauriEventEmitter to include it.
+        let _ = lamport;
+        self.emit_event(event_name, actor, payload);
+    }
 }
 
 /// Test event emitter that captures emitted events for assertions.
@@ -170,6 +211,7 @@ mod tests {
             },
             timestamp: "2026-02-08T12:00:00Z".to_string(),
             correlation_id: Some("corr_123".to_string()),
+            lamport: None,
             payload: json!({"id": "col_1", "name": "Test"}),
         };
         let json = serde_json::to_value(&envelope).unwrap();
@@ -185,6 +227,7 @@ mod tests {
             actor: Actor::User,
             timestamp: "2026-02-08T12:00:00Z".to_string(),
             correlation_id: None,
+            lamport: None,
             payload: json!({"id": "col_1"}),
         };
         let json = serde_json::to_value(&envelope).unwrap();
@@ -197,11 +240,68 @@ mod tests {
             actor: Actor::System,
             timestamp: "2026-02-08T12:00:00Z".to_string(),
             correlation_id: None,
+            lamport: None,
             payload: json!({"key": "value"}),
         };
         let json = serde_json::to_string(&envelope).unwrap();
         let deserialized: EventEnvelope = serde_json::from_str(&json).unwrap();
         assert_eq!(envelope, deserialized);
+    }
+
+    #[test]
+    fn test_event_envelope_with_lamport() {
+        use crate::domain::participant::{LamportTimestamp, ParticipantId};
+        let envelope = EventEnvelope {
+            actor: Actor::Ai {
+                model: None,
+                session_id: Some("s1".to_string()),
+            },
+            timestamp: "2026-02-09T10:00:00Z".to_string(),
+            correlation_id: None,
+            lamport: Some(LamportTimestamp {
+                participant: ParticipantId::Ai {
+                    session_id: Some("s1".to_string()),
+                    model: None,
+                },
+                seq: 42,
+            }),
+            payload: json!({"id": "col_1"}),
+        };
+        let json = serde_json::to_value(&envelope).unwrap();
+        assert_eq!(json["lamport"]["seq"], 42);
+        assert_eq!(json["lamport"]["participant"]["type"], "ai");
+    }
+
+    #[test]
+    fn test_event_envelope_without_lamport_omits_field() {
+        let envelope = EventEnvelope {
+            actor: Actor::User,
+            timestamp: "2026-02-09T10:00:00Z".to_string(),
+            correlation_id: None,
+            lamport: None,
+            payload: json!({"id": "col_1"}),
+        };
+        let json = serde_json::to_value(&envelope).unwrap();
+        assert!(json.get("lamport").is_none());
+    }
+
+    #[test]
+    fn test_actor_to_participant_id() {
+        use crate::domain::participant::ParticipantId;
+
+        assert_eq!(Actor::User.to_participant_id(), ParticipantId::User);
+        assert_eq!(Actor::System.to_participant_id(), ParticipantId::System);
+        assert_eq!(
+            Actor::Ai {
+                model: Some("claude".to_string()),
+                session_id: Some("s1".to_string()),
+            }
+            .to_participant_id(),
+            ParticipantId::Ai {
+                session_id: Some("s1".to_string()),
+                model: Some("claude".to_string()),
+            }
+        );
     }
 
     #[test]

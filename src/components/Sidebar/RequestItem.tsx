@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { Radio, Sparkles } from 'lucide-react';
+import { Check, Radio, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { globalEventBus } from '@/events/bus';
 import { useCollectionStore } from '@/stores/useCollectionStore';
@@ -52,6 +52,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
   const displayName = truncateNavLabel(request.name);
+  const isGhostNode = isAiGenerated(request) && request.intelligence.verified !== true;
 
   // Occlusion detection: hide popout if the item scrolls out of view
   useEffect((): (() => void) | undefined => {
@@ -290,7 +291,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
           isActuallyVisible() ? 'outline-none ring-0 shadow-none' : focusRingClasses,
-          isActuallyVisible() && !isFocused && 'bg-transparent'
+          isActuallyVisible() && !isFocused && 'bg-transparent',
+          isGhostNode && 'border border-signal-ai/25 bg-signal-ai/[0.03] rounded-md mx-1 my-0.5'
         )}
         data-test-id={`collection-request-${request.id}`}
         data-active={isSelected || undefined}
@@ -347,6 +349,25 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               <Sparkles size={12} />
               AI
             </span>
+          )}
+          {isGhostNode && (
+            <button
+              type="button"
+              className="flex items-center gap-1 rounded-full bg-signal-success/10 px-2 py-0.5 text-xs text-signal-success shrink-0 hover:bg-signal-success/20 transition-colors"
+              data-test-id={`request-accept-${request.id}`}
+              aria-label={`Accept AI-generated request "${request.name}"`}
+              onClick={(e): void => {
+                e.stopPropagation();
+                globalEventBus.emit('request.accept-ai', {
+                  collectionId,
+                  requestId: request.id,
+                });
+              }}
+              title="Accept — mark as verified"
+            >
+              <Check size={12} />
+              Accept
+            </button>
           )}
         </div>
       </button>
