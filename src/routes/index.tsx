@@ -15,6 +15,7 @@ import { UrlBar } from '@/components/UrlBar/UrlBar';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
@@ -232,6 +233,7 @@ export const HomePage = (): React.JSX.Element => {
       }
       requestContent={
         <div className="h-full flex flex-col bg-bg-app">
+          <VigilanceMonitor active={isLoading} label="Executing Request..." />
           <div className="flex-1 overflow-hidden">
             <RequestBuilder />
           </div>

@@ -51,9 +51,9 @@ export const MAX_PANEL_PERCENTAGES: PanelSizes = {
 };
 
 /**
- * Collapsed panel height (thin bar) - 28px for "book page edge" feel.
+ * Collapsed panel height (thin bar) - 10px for "book page edge" feel.
  */
-export const COLLAPSED_PANEL_HEIGHT = 28;
+export const COLLAPSED_PANEL_HEIGHT = 10;
 
 interface PanelState {
   /** Current dock position */

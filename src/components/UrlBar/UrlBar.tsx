@@ -91,7 +91,7 @@ export const UrlBar = ({
       {/* Inline titlebar command row (no extra panel shell) */}
       <div
         className={cn(
-          'flex flex-1 min-w-0 items-center gap-0 rounded-lg border border-border-subtle bg-bg-raised overflow-hidden transition-colors duration-200 hover:border-border-default',
+          'flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300',
           compositeFocusContainerClasses
         )}
         data-test-id="url-bar"
@@ -102,9 +102,10 @@ export const UrlBar = ({
             role="button"
             aria-haspopup="listbox"
             className={cn(
-              'relative min-w-28 w-auto h-8 font-semibold bg-transparent border-0 border-r border-border-subtle rounded-none rounded-l-lg hover:bg-bg-raised/50 transition-colors duration-200 whitespace-nowrap text-text-secondary',
+              'relative min-w-24 w-auto h-7 font-mono text-xs font-semibold bg-transparent border-0 transition-all duration-300 whitespace-nowrap',
               compositeFocusItemClasses,
-              methodColor
+              methodColor,
+              'hover:brightness-125 focus:brightness-125'
             )}
             data-test-id="method-select"
             disabled={loading}
@@ -112,14 +113,14 @@ export const UrlBar = ({
           >
             <Select.SelectValue>{method}</Select.SelectValue>
           </Select.SelectTrigger>
-          <Select.SelectContent>
+          <Select.SelectContent className="glass">
             {httpMethods.map((httpMethod) => {
               const color = getMethodColor(httpMethod);
               return (
                 <Select.SelectItem
                   key={httpMethod}
                   value={httpMethod}
-                  className={`${color} data-highlighted:bg-bg-raised/50`}
+                  className={cn('text-xs font-mono', color, 'data-highlighted:bg-bg-raised/50')}
                 >
                   {httpMethod}
                 </Select.SelectItem>
@@ -140,27 +141,25 @@ export const UrlBar = ({
           aria-label="Request URL"
           noScale
           className={cn(
-            'relative h-8 flex-1 border-0 rounded-none bg-transparent text-text-secondary placeholder:text-text-muted py-0',
+            'relative h-7 flex-1 border-0 rounded-none bg-transparent text-text-primary font-mono text-sm placeholder:text-text-muted/40 py-0',
             compositeFocusItemClasses
           )}
         />
 
-        {/* Send button - appears as suffix with fixed width to prevent layout shift */}
-        <div className="flex-shrink-0 w-[72px] border-l border-border-subtle">
+        {/* Send button - minimal suffix */}
+        <div className="flex-shrink-0">
           <Button
             variant="ghost"
-            size="sm"
+            size="xs"
             noScale
             onClick={onSend}
             disabled={!isValidUrl || loading}
             data-test-id="send-button"
             aria-label="Send Request"
             className={cn(
-              'relative w-full h-8 justify-center whitespace-nowrap hover:text-accent-blue !px-2 rounded-none rounded-r-lg',
-              compositeFocusItemClasses,
-              'focus-visible:text-accent-blue [&[data-focus-visible-added]:focus]:text-accent-blue'
+              'relative h-7 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue transition-colors',
+              compositeFocusItemClasses
             )}
-            style={{ minWidth: '72px' }}
           >
             {loading ? renderLoadingState() : 'Send'}
           </Button>

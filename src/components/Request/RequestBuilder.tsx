@@ -115,7 +115,7 @@ export const RequestBuilder = (): React.JSX.Element => {
         onValueChange={setActiveTab as (value: string) => void}
         className="flex-1 min-h-0 flex flex-col"
       >
-        <div className="relative flex items-center pl-3 pr-2 py-2 border-b border-border-subtle bg-bg-surface">
+        <div className="relative flex items-center pl-3 pr-2 py-1.5 border-b border-border-subtle/30">
           <div
             ref={tabScrollRef}
             className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
@@ -131,11 +131,11 @@ export const RequestBuilder = (): React.JSX.Element => {
                 testId: `request-tab-${tab.id}`,
               }))}
               listClassName="flex items-center gap-1 pr-2 min-w-max"
-              tabClassName="px-3 h-7 text-sm rounded-lg transition-colors duration-200 font-medium relative"
-              activeTabClassName="bg-bg-raised text-text-primary"
-              inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+              tabClassName="px-2.5 h-6 text-[11px] uppercase tracking-wider rounded-md transition-all duration-200 font-semibold relative"
+              activeTabClassName="text-text-primary"
+              inactiveTabClassName="text-text-muted/60 hover:text-text-secondary"
               indicatorLayoutId="request-tab-indicator"
-              indicatorClassName="bg-bg-raised rounded-lg"
+              indicatorClassName="bg-bg-raised/50 rounded-md"
               indicatorTestId="request-tab-indicator"
               listTestId="request-tabs-list"
               listAriaLabel="Request tabs"

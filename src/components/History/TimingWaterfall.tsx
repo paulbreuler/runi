@@ -25,11 +25,11 @@ interface TimingWaterfallProps {
 }
 
 const segmentConfig = [
-  { key: 'dns', label: 'DNS', color: 'bg-accent-purple' },
-  { key: 'connect', label: 'Connect', color: 'bg-signal-warning' },
-  { key: 'tls', label: 'TLS', color: 'bg-signal-ai' },
-  { key: 'wait', label: 'Wait', color: 'bg-signal-success' },
-  { key: 'download', label: 'Download', color: 'bg-accent-blue' },
+  { key: 'dns', label: 'DNS', colorClass: 'bg-signal-ai' },
+  { key: 'connect', label: 'Connect', colorClass: 'bg-signal-warning' },
+  { key: 'tls', label: 'TLS', colorClass: 'bg-accent-blue' },
+  { key: 'wait', label: 'Wait', colorClass: 'bg-signal-success' },
+  { key: 'download', label: 'Download', colorClass: 'bg-gray-11' },
 ] as const;
 
 /**
@@ -52,7 +52,7 @@ export const TimingWaterfall = ({
     return (
       <div
         data-test-id="timing-waterfall-empty"
-        className={cn('w-full bg-bg-raised rounded-full', height)}
+        className={cn('w-full bg-bg-raised/50 rounded-full', height)}
       />
     );
   }
@@ -70,9 +70,9 @@ export const TimingWaterfall = ({
       {/* Waterfall bar */}
       <div
         data-test-id="timing-waterfall"
-        className={cn('w-full flex rounded-full overflow-hidden bg-bg-raised', height)}
+        className={cn('w-full flex rounded-full overflow-hidden bg-bg-raised/30', height)}
       >
-        {segmentConfig.map(({ key, color }, index) => {
+        {segmentConfig.map(({ key, colorClass }, index) => {
           const ms = segments[key as keyof TimingWaterfallSegments];
           const widthPercent = getWidth(ms);
           const showLabel = showInlineLabels && widthPercent >= inlineLabelMinWidth;
@@ -80,7 +80,10 @@ export const TimingWaterfall = ({
             <motion.div
               key={key}
               data-test-id={`timing-${key}`}
-              className={cn(color, showLabel && 'flex justify-center items-center overflow-hidden')}
+              className={cn(
+                colorClass as string,
+                showLabel && 'flex justify-center items-center overflow-hidden'
+              )}
               initial={
                 shouldReduceMotion === true
                   ? { width: `${String(widthPercent)}%` }
@@ -95,7 +98,7 @@ export const TimingWaterfall = ({
               title={`${key}: ${String(ms)}ms`}
             >
               {showLabel && (
-                <span className="text-xs font-mono font-medium text-white/90 whitespace-nowrap">
+                <span className="text-[10px] font-mono font-bold text-bg-app whitespace-nowrap px-1">
                   {ms}ms
                 </span>
               )}
@@ -105,21 +108,28 @@ export const TimingWaterfall = ({
       </div>
 
       {/* Compact total display */}
-      {compact && <span className="text-xs font-mono text-text-muted text-right">{totalMs}ms</span>}
+      {compact && (
+        <span className="text-xs font-mono text-text-secondary text-right">{totalMs}ms</span>
+      )}
 
       {/* Full legend */}
       {showLegend && (
-        <div className="flex flex-wrap gap-3 text-xs">
-          {segmentConfig.map(({ key, label, color }) => {
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] mt-1">
+          {segmentConfig.map(({ key, label, colorClass }) => {
             const ms = segments[key as keyof TimingWaterfallSegments];
             if (ms <= 0) {
               return null;
             }
             return (
               <div key={key} className="flex items-center gap-1.5">
-                <span className={cn('w-2 h-2 rounded-full', color)} />
-                <span className="text-text-secondary">{label}</span>
-                <span className="font-mono text-text-muted">{ms}ms</span>
+                <span
+                  className={cn(
+                    'w-1.5 h-1.5 rounded-full ring-1 ring-white/10',
+                    colorClass as string
+                  )}
+                />
+                <span className="text-text-muted">{label}</span>
+                <span className="font-mono text-text-secondary">{ms}ms</span>
               </div>
             );
           })}

@@ -181,10 +181,10 @@ export const TimingTab = ({
               <span
                 className={cn(
                   'inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm',
-                  'bg-signal-warning/10 border border-signal-warning/30 text-signal-warning'
+                  'bg-signal-warning/10 border border-signal-warning/20 text-signal-warning'
                 )}
               >
-                ! {intelligence.drift.message}
+                <span className="font-semibold">Drift:</span> {intelligence.drift.message}
               </span>
             )}
             {intelligence.aiGenerated && (

@@ -24,13 +24,13 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 
  * Background shading appears on hover like a list item.
  */
 export const methodTextColors: Record<HttpMethod, string> = {
-  GET: 'text-accent-blue', // Blue - read operation, safe
-  POST: 'text-signal-success', // Green - create, positive
-  PUT: 'text-signal-warning', // Orange - update, caution
-  PATCH: 'text-signal-warning', // Orange - same as PUT
-  DELETE: 'text-signal-error', // Red - destructive
-  HEAD: 'text-text-muted', // Gray - meta operation
-  OPTIONS: 'text-text-muted', // Gray - meta operation
+  GET: 'text-method-get',
+  POST: 'text-method-post',
+  PUT: 'text-method-put',
+  PATCH: 'text-method-patch',
+  DELETE: 'text-method-delete',
+  HEAD: 'text-method-head',
+  OPTIONS: 'text-method-options',
 };
 
 /**
