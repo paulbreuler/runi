@@ -63,6 +63,11 @@ interface DisplayLogEntry extends ConsoleLog {
   _originalLog?: DisplayLog;
 }
 
+interface FormattedLogArgs {
+  code: string;
+  language: string;
+}
+
 /**
  * Serialize args deterministically for grouping.
  * Sorts object keys to ensure consistent serialization regardless of key order.
@@ -86,14 +91,6 @@ function serializeArgs(args: unknown[]): string {
 }
 
 /**
- * Formatted log arguments with code and detected language
- */
-interface FormattedLogArgs {
-  code: string;
-  language: string;
-}
-
-/**
  * Try to parse a string as JSON and return pretty-printed form.
  * Returns the original string if not valid JSON (or not object/array).
  */
@@ -112,6 +109,14 @@ function tryFormatJsonString(input: string): { formatted: string; isJson: boolea
   } catch {
     return { formatted: input, isJson: false };
   }
+}
+
+/**
+ * Formatted log arguments with code and detected language
+ */
+interface FormattedLogArgs {
+  code: string;
+  language: string;
 }
 
 /**
@@ -333,7 +338,7 @@ export const ConsolePanel = ({
     const grouped = new Map<string, ConsoleLog[]>();
     for (const log of filtered) {
       const correlationId = log.correlationId ?? '';
-      const argsKey = log.args.length > 0 ? serializeArgs(log.args) : '';
+      const argsKey = serializeArgs(log.args);
       const groupKey = `${log.level}|${log.message}|${correlationId}|${argsKey}`;
       if (!grouped.has(groupKey)) {
         grouped.set(groupKey, []);
