@@ -112,8 +112,9 @@ export const MainLayout = ({
   const {
     position: panelPosition,
     isVisible: panelVisible,
-    toggleVisibility: togglePanel,
+    isCollapsed: panelCollapsed,
     setVisible,
+    setCollapsed,
   } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
@@ -169,14 +170,28 @@ export const MainLayout = ({
     [toggleSidebar]
   );
 
+  const handlePanelShortcut = useCallback(() => {
+    if (!panelVisible) {
+      // If hidden, show it and ensure it's expanded
+      setVisible(true);
+      setCollapsed(false);
+    } else if (panelCollapsed) {
+      // If visible but minimized, expand it
+      setCollapsed(false);
+    } else {
+      // If visible and expanded, hide it
+      setVisible(false);
+    }
+  }, [panelVisible, panelCollapsed, setCollapsed, setVisible]);
+
   const panelShortcut = useMemo(
     () => ({
       key: 'i',
       modifier: (isMacSync() ? ['meta', 'shift'] : ['ctrl', 'shift']) as ModifierKey[],
-      handler: togglePanel,
+      handler: handlePanelShortcut,
       description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
     }),
-    [togglePanel]
+    [handlePanelShortcut]
   );
 
   useKeyboardShortcuts(sidebarShortcutMeta);
