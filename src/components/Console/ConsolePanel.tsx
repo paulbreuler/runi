@@ -70,7 +70,6 @@ interface DisplayLogEntry extends ConsoleLog {
 function serializeArgs(args: unknown[]): string {
   try {
     return JSON.stringify(args, (_key: string, value: unknown): unknown => {
-      // Sort object keys for deterministic serialization
       if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
         const obj = value as Record<string, unknown>;
         const sorted: Record<string, unknown> = {};
@@ -82,7 +81,6 @@ function serializeArgs(args: unknown[]): string {
       return value;
     });
   } catch {
-    // Fallback if serialization fails
     return String(args);
   }
 }
@@ -335,7 +333,7 @@ export const ConsolePanel = ({
     const grouped = new Map<string, ConsoleLog[]>();
     for (const log of filtered) {
       const correlationId = log.correlationId ?? '';
-      const argsKey = serializeArgs(log.args);
+      const argsKey = log.args.length > 0 ? serializeArgs(log.args) : '';
       const groupKey = `${log.level}|${log.message}|${correlationId}|${argsKey}`;
       if (!grouped.has(groupKey)) {
         grouped.set(groupKey, []);

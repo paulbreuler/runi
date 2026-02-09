@@ -46,9 +46,9 @@ const MIN_PANE_SIZE = 20;
 const MAX_PANE_SIZE = 80;
 const DEFAULT_SPLIT = 50;
 
-const MIN_SIDEBAR_WIDTH = 256;
-const MAX_SIDEBAR_WIDTH = 500;
-const DEFAULT_SIDEBAR_WIDTH = 256;
+const MIN_SIDEBAR_WIDTH = 260;
+const MAX_SIDEBAR_WIDTH = 600;
+const DEFAULT_SIDEBAR_WIDTH = 300;
 const COLLAPSED_SIDEBAR_WIDTH = 8; // Slim page edge when collapsed
 const SIDEBAR_COLLAPSE_BUFFER = 24; // Pixels below min before collapsing
 

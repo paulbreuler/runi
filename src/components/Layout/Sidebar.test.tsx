@@ -109,6 +109,14 @@ describe('Sidebar', (): void => {
     const scrollRoot = container.querySelector('.group\\/scroll');
     expect(scrollRoot).toBeInTheDocument();
     expect(scrollRoot).toHaveAttribute('delay', '250');
+    expect(scrollRoot).toHaveAttribute('type', 'scroll');
+  });
+
+  it('renders a vertical scrollbar in the drawer body', (): void => {
+    const { container } = render(<Sidebar />);
+    const scrollbar = container.querySelector('.scroll-area-scrollbar');
+    expect(scrollbar).toBeInTheDocument();
+    expect(scrollbar).toHaveAttribute('orientation', 'vertical');
   });
 });
 

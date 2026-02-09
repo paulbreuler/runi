@@ -232,10 +232,10 @@ describe('MainLayout', () => {
       expect(resizer).toHaveAttribute('role', 'separator');
       expect(resizer).toHaveAttribute('aria-label', 'Resize sidebar (double-click to collapse)');
       expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
-      expect(resizer).toHaveAttribute('aria-valuenow', '256');
+      expect(resizer).toHaveAttribute('aria-valuenow', '300');
       // aria-valuemin is COLLAPSED_SIDEBAR_WIDTH (8) since sidebar can collapse
       expect(resizer).toHaveAttribute('aria-valuemin', '8');
-      expect(resizer).toHaveAttribute('aria-valuemax', '500');
+      expect(resizer).toHaveAttribute('aria-valuemax', '600');
     });
 
     it('sidebar is present when visible', () => {

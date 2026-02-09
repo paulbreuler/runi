@@ -68,12 +68,15 @@ const DrawerSection = ({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="flex-1 min-h-0 flex flex-col overflow-hidden"
           >
-            <ScrollArea.Root className="flex-1 min-h-0 relative group/scroll">
+            <ScrollArea.Root
+              className="flex-1 min-h-0 relative group/scroll"
+              {...({ type: 'scroll', delay: 250 } as Record<string, unknown>)}
+            >
               <ScrollArea.Viewport
                 className="scroll-area-viewport w-full h-full"
                 data-scroll-container
               >
-                <div className="px-3 pb-3">{children}</div>
+                <div className="px-2 pb-3">{children}</div>
               </ScrollArea.Viewport>
               <ScrollArea.Scrollbar
                 orientation="vertical"
