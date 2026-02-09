@@ -62,6 +62,21 @@ if (typeof window !== 'undefined' && window.__runiTestIdMirror !== true) {
 import { sb } from 'storybook/test';
 sb.mock(import('../src/utils/platform.ts'), { spy: true });
 
+// Mock Tauri invoke globally
+if (typeof window !== 'undefined') {
+  (window as any).__TAURI_INTERNALS__ = {
+    invoke: async (cmd: string, args?: any) => {
+      console.log(`[Storybook Mock] invoke: ${cmd}`, args);
+      if (cmd === 'cmd_list_collections') {
+        // Return whatever is in the store at the time of calling
+        const { useCollectionStore } = await import('../src/stores/useCollectionStore');
+        return useCollectionStore.getState().summaries;
+      }
+      return [];
+    },
+  };
+}
+
 const preview: Preview = {
   parameters: {
     controls: {

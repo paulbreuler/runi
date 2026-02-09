@@ -287,7 +287,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         type="button"
         aria-label={`${request.method} ${request.name}`}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 py-1 text-left transition-colors',
+          'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
           isActuallyVisible() ? 'outline-none ring-0 shadow-none' : focusRingClasses,
           isActuallyVisible() && !isFocused && 'bg-transparent'
@@ -302,7 +302,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           handleAction();
         }}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {isBound(request) && (
             <div
               className="flex items-center justify-center shrink-0 w-3"
@@ -374,7 +374,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               maxWidth: 'min(600px, calc(100vw - 40px))',
             }}
           >
-            <div className="flex items-center gap-2 px-3 h-full whitespace-nowrap min-w-0">
+            <div className="flex items-center gap-2 px-2 h-full whitespace-nowrap min-w-0">
               {isBound(request) && (
                 <div
                   className="flex items-center justify-center shrink-0 w-3"

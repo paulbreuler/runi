@@ -45,7 +45,7 @@ export interface CollectionSource {
   source_commit?: string;
 }
 
-export type SourceType = 'openapi' | 'postman' | 'bruno' | 'insomnia' | 'curl' | 'manual';
+export type SourceType = 'openapi' | 'postman' | 'bruno' | 'insomnia' | 'curl' | 'manual' | 'mcp';
 
 export interface CollectionRequest extends ExtensionFields {
   id: string;
@@ -160,6 +160,8 @@ export function getSourceIcon(sourceType: SourceType): string {
       return 'source-curl';
     case 'manual':
       return 'source-manual';
+    case 'mcp':
+      return 'source-mcp';
     default:
       return 'source-collection';
   }

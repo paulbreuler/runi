@@ -90,3 +90,7 @@ prompts/
 # Audit scripts (moved to external glimps extension)
 scripts/audit/
 .limps/
+
+# Collections created by tests (httpbin, etc.)
+collections/
+src-tauri/collections/

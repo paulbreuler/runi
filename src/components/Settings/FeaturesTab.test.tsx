@@ -43,6 +43,6 @@ describe('FeaturesTab', () => {
     render(<FeaturesTab />);
 
     await user.click(screen.getByTestId('feature-toggle-http-collectionsEnabled'));
-    expect(setFlagMock).toHaveBeenCalledWith('http', 'collectionsEnabled', true);
+    expect(setFlagMock).toHaveBeenCalledWith('http', 'collectionsEnabled', false);
   });
 });

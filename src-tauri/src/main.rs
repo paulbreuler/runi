@@ -82,8 +82,11 @@ pub fn run() {
             {
                 let mcp_state = app.state::<infrastructure::mcp::commands::McpServerServiceState>();
                 let mcp_state_clone = mcp_state.inner().clone();
+                let mcp_app_handle = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
-                    if let Err(e) = start_server(DEFAULT_MCP_PORT, &mcp_state_clone).await {
+                    if let Err(e) =
+                        start_server(DEFAULT_MCP_PORT, &mcp_state_clone, Some(mcp_app_handle)).await
+                    {
                         tracing::warn!("Failed to auto-start MCP server: {e}");
                     }
                 });

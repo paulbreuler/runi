@@ -46,9 +46,9 @@ const MIN_PANE_SIZE = 20;
 const MAX_PANE_SIZE = 80;
 const DEFAULT_SPLIT = 50;
 
-const MIN_SIDEBAR_WIDTH = 256;
-const MAX_SIDEBAR_WIDTH = 500;
-const DEFAULT_SIDEBAR_WIDTH = 256;
+const MIN_SIDEBAR_WIDTH = 260;
+const MAX_SIDEBAR_WIDTH = 600;
+const DEFAULT_SIDEBAR_WIDTH = 300;
 const COLLAPSED_SIDEBAR_WIDTH = 8; // Slim page edge when collapsed
 const SIDEBAR_COLLAPSE_BUFFER = 24; // Pixels below min before collapsing
 
@@ -92,11 +92,11 @@ const immediateTransition = {
  */
 const getSashClasses = (position: 'left' | 'right', isDragging: boolean): string =>
   cn(
-    'absolute top-0 bottom-0 z-10 touch-none',
+    'absolute top-0 bottom-0 z-30 touch-none transition-colors',
     'cursor-col-resize select-none',
-    position === 'right' ? 'right-0' : '',
-    'w-[3px] bg-transparent',
-    'hover:bg-border-default/50',
+    position === 'right' ? 'right-0' : 'left-0',
+    'w-[2px] bg-transparent',
+    'hover:bg-border-subtle/50',
     isDragging && 'bg-border-default'
   );
 
@@ -104,7 +104,7 @@ export const MainLayout = ({
   headerContent,
   requestContent,
   responseContent,
-  initialSidebarVisible = false, // Default collapsed since collections aren't supported yet
+  initialSidebarVisible = true, // Default to visible now that collections are supported
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, sidebarEdge, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const {

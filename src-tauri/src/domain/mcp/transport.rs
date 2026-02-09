@@ -52,6 +52,6 @@ mod tests {
             assert_send_sync::<T>();
         }
         // This test passes at compile time — no runtime assertion needed.
-        let _ = check::<crate::infrastructure::mcp::fake_transport::FakeTransport>;
+        check::<crate::infrastructure::mcp::fake_transport::FakeTransport>();
     }
 }

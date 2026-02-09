@@ -5,6 +5,8 @@
 
 /// Tauri command handlers for MCP server lifecycle.
 pub mod commands;
+/// Tauri event emitter implementation for MCP server.
+pub mod events;
 /// In-memory transport for testing without HTTP.
 pub mod fake_transport;
 /// HTTP/SSE server, dispatcher, and session management.

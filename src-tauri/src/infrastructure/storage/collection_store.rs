@@ -1,5 +1,4 @@
 use crate::domain::collection::{Collection, CollectionMetadata};
-use crate::infrastructure::storage::get_data_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
@@ -13,13 +12,50 @@ const SCHEMA_COMMENT: &str =
 
 /// Get the collections storage directory.
 ///
-/// Uses platform-appropriate data directory:
-/// - macOS: ~/Library/Application Support/runi/collections/
-/// - Linux: ~/.local/share/runi/collections/
-/// - Windows: C:\Users\<user>\AppData\Roaming\runi\collections\
+/// ## Resolution Order
+/// 1. Environment variable `RUNI_COLLECTIONS_DIR` (if set)
+/// 2. Project root + `/collections/` (default, git-friendly)
+///
+/// ## Project Root Detection
+/// - In dev mode: Uses `CARGO_MANIFEST_DIR/../collections/` (repo root, avoids Tauri rebuild triggers)
+/// - In production: Uses current working directory + `/collections/`
+///
+/// ## Examples
+/// - Default (dev): `/path/to/runi/collections/` (repo root)
+/// - Default (prod): `./collections/` (user's project directory)
+/// - Override: `RUNI_COLLECTIONS_DIR=/path/to/collections runi`
 pub fn get_collections_dir() -> Result<PathBuf, String> {
-    let base_dir = get_data_dir()?;
-    let dir = collections_dir_from(&base_dir);
+    // Check environment variable override first
+    if let Ok(env_dir) = std::env::var("RUNI_COLLECTIONS_DIR") {
+        let dir = PathBuf::from(env_dir);
+        if dir.exists() && !dir.is_dir() {
+            return Err(format!(
+                "RUNI_COLLECTIONS_DIR is not a directory: {}",
+                dir.display()
+            ));
+        }
+        ensure_dir(&dir)?;
+        return Ok(dir);
+    }
+
+    // In dev mode, use project root to avoid Tauri rebuild triggers.
+    // CARGO_MANIFEST_DIR is set as a runtime env var by both `cargo test` and
+    // `cargo run` (and by Tauri's dev harness), so this branch reliably fires
+    // during development. In production builds it's absent, falling through
+    // to current_dir() which resolves to the user's project directory.
+    let base_dir = if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        // Dev mode: go up one level from src-tauri/ to repo root
+        PathBuf::from(manifest_dir)
+            .parent()
+            .ok_or_else(|| "Failed to get parent directory of CARGO_MANIFEST_DIR".to_string())?
+            .to_path_buf()
+    } else {
+        // Production: use current working directory
+        std::env::current_dir()
+            .map_err(|e| format!("Failed to get current working directory: {e}"))?
+    };
+
+    let dir = base_dir.join(COLLECTIONS_DIR_NAME);
     ensure_dir(&dir)?;
     Ok(dir)
 }
@@ -41,6 +77,7 @@ pub fn save_collection(collection: &Collection) -> Result<PathBuf, String> {
     save_collection_in_dir(collection, &dir)
 }
 
+/// Save a collection to the specified directory with deterministic serialization.
 pub fn save_collection_in_dir(collection: &Collection, dir: &Path) -> Result<PathBuf, String> {
     ensure_dir(dir)?;
     let filename = format!("{}.yaml", collection.id);
@@ -70,6 +107,7 @@ pub fn load_collection(collection_id: &str) -> Result<Collection, String> {
     load_collection_in_dir(collection_id, &dir)
 }
 
+/// Load a collection from the specified directory.
 pub fn load_collection_in_dir(collection_id: &str, dir: &Path) -> Result<Collection, String> {
     let path = dir.join(format!("{collection_id}.yaml"));
 
@@ -90,6 +128,7 @@ pub fn list_collections() -> Result<Vec<CollectionSummary>, String> {
     list_collections_in_dir(&dir)
 }
 
+/// List all saved collections in the specified directory.
 pub fn list_collections_in_dir(dir: &Path) -> Result<Vec<CollectionSummary>, String> {
     ensure_dir(dir)?;
 
@@ -120,6 +159,7 @@ pub fn delete_collection(collection_id: &str) -> Result<(), String> {
     delete_collection_in_dir(collection_id, &dir)
 }
 
+/// Delete a collection file from the specified directory.
 pub fn delete_collection_in_dir(collection_id: &str, dir: &Path) -> Result<(), String> {
     let path = dir.join(format!("{collection_id}.yaml"));
 
@@ -187,8 +227,8 @@ fn temp_path_for(dir: &Path, collection_id: &str) -> PathBuf {
     dir.join(format!(".{collection_id}.tmp"))
 }
 
+#[cfg(test)]
 fn collections_dir_from(base: &Path) -> PathBuf {
-    #[cfg(test)]
     if let Some(override_dir) = collections_dir_override() {
         return override_dir;
     }

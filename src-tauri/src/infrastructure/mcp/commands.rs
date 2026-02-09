@@ -5,12 +5,16 @@
 //!
 //! These commands are exposed to the frontend via `tauri::generate_handler!`.
 
+use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
+
 use crate::application::mcp_server_service::McpServerService;
+use crate::domain::mcp::events::EventEmitter;
+use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::mcp::server::http_sse::{self, McpServerState};
 use crate::infrastructure::mcp::server::session::SessionManager;
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 /// Managed state type for the MCP server.
 pub type McpServerServiceState = Arc<RwLock<Option<McpServerHandle>>>;
@@ -49,14 +53,26 @@ pub const DEFAULT_MCP_PORT: u16 = 3001;
 /// Start the MCP server on the given port, storing the handle in the provided state.
 ///
 /// This is the core implementation used by both the Tauri command and auto-start.
+/// When an `AppHandle` is provided, MCP events (collection/request changes)
+/// are broadcast to the React UI via Tauri events.
 ///
 /// # Errors
 ///
 /// Returns an error if the server is already running, the collections directory
 /// cannot be determined, or the port is unavailable.
-pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<(), String> {
+pub async fn start_server(
+    port: u16,
+    state: &McpServerServiceState,
+    app_handle: Option<tauri::AppHandle>,
+) -> Result<(), String> {
     // Prepare everything outside the lock — no I/O while holding the lock.
-    let service = McpServerService::with_default_dir()?;
+    let service = if let Some(handle) = app_handle {
+        let emitter: Arc<dyn EventEmitter> = Arc::new(TauriEventEmitter::new(handle));
+        let dir = crate::infrastructure::storage::collection_store::get_collections_dir()?;
+        McpServerService::with_emitter(dir, emitter)
+    } else {
+        McpServerService::with_default_dir()?
+    };
     let sessions = Arc::new(SessionManager::new());
 
     let mcp_state = McpServerState {
@@ -110,9 +126,10 @@ pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<()
 #[tauri::command]
 pub async fn mcp_server_start(
     port: u16,
+    app_handle: tauri::AppHandle,
     server_state: tauri::State<'_, McpServerServiceState>,
 ) -> Result<(), String> {
-    start_server(port, &server_state).await
+    start_server(port, &server_state, Some(app_handle)).await
 }
 
 /// Stop the MCP HTTP/SSE server.
@@ -137,18 +154,27 @@ pub async fn mcp_server_stop(
 pub async fn mcp_server_status(
     server_state: tauri::State<'_, McpServerServiceState>,
 ) -> Result<McpServerStatusInfo, String> {
-    let guard = server_state.read().await;
-    match guard.as_ref() {
-        Some(handle) => Ok(McpServerStatusInfo {
+    // Copy needed fields under the read lock, then drop before awaiting
+    // session_count() to avoid holding the lock across an .await point.
+    let (port, sessions) = {
+        let guard = server_state.read().await;
+        guard.as_ref().map_or((None, None), |handle| {
+            (Some(handle.port), Some(Arc::clone(&handle.sessions)))
+        })
+    };
+
+    if let Some(sessions) = sessions {
+        Ok(McpServerStatusInfo {
             running: true,
-            port: Some(handle.port),
-            session_count: handle.sessions.session_count().await,
-        }),
-        None => Ok(McpServerStatusInfo {
+            port,
+            session_count: sessions.session_count().await,
+        })
+    } else {
+        Ok(McpServerStatusInfo {
             running: false,
             port: None,
             session_count: 0,
-        }),
+        })
     }
 }
 

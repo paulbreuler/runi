@@ -31,11 +31,14 @@ const getInitialSidebarVisible = (): boolean => {
     return false;
   }
   const config = (window as { __RUNI_E2E__?: RuniE2EConfig }).__RUNI_E2E__;
-  return config?.sidebarVisible === true;
+  if (config?.sidebarVisible !== undefined) {
+    return config.sidebarVisible;
+  }
+  return true; // Default to open
 };
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-  sidebarVisible: getInitialSidebarVisible(), // Default collapsed unless E2E overrides
+  sidebarVisible: getInitialSidebarVisible(), // Default visible now that collections are supported
   sidebarEdge: 'left',
   logLevel: 'info',
   metricsVisible: false, // Default hidden to save space

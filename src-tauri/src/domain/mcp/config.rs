@@ -7,9 +7,10 @@
 
 #![allow(dead_code)]
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
 
 const MCP_SERVERS_FILE_NAME: &str = "mcp-servers.yaml";
 

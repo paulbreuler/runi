@@ -325,8 +325,16 @@ body {
 
 /* Scrollbar track */
 .scroll-area-scrollbar {
-  background: var(--color-surface);
+  background: transparent;
   border-radius: 4px;
+}
+
+.scroll-area-scrollbar[data-orientation='vertical'] {
+  width: 6px;
+}
+
+.scroll-area-scrollbar[data-orientation='horizontal'] {
+  height: 6px;
 }
 
 /* Scrollbar thumb */
@@ -334,6 +342,7 @@ body {
   background: var(--gray-8);
   border-radius: 4px;
   position: relative;
+  transition: background 0.2s;
 }
 
 .scroll-area-thumb:hover {

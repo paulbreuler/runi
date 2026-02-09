@@ -7,5 +7,6 @@ pub mod collection;
 pub mod errors;
 pub mod features;
 pub mod http;
+/// MCP domain models and protocol types.
 pub mod mcp;
 pub mod models;

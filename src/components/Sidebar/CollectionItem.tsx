@@ -48,7 +48,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
         type="button"
         className={cn(
           focusRingClasses,
-          'w-full flex items-center justify-between gap-3 px-3 py-1 text-left transition-colors',
+          'w-full flex items-center justify-between gap-3 px-2 py-1 text-left transition-colors',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40'
         )}
         data-test-id={`collection-item-${summary.id}`}
@@ -73,7 +73,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
         </div>
       </button>
       {isExpanded && (
-        <div className="ml-4 border-l border-border-subtle pb-2" data-test-id="collection-requests">
+        <div className="ml-3 border-l border-border-subtle pb-2" data-test-id="collection-requests">
           <CollectionItemRequestList collectionId={summary.id} requests={sortedRequests} />
         </div>
       )}

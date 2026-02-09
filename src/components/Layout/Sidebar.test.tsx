@@ -31,6 +31,9 @@ const createCollectionState = (): MockCollectionStoreState => ({
 vi.mock('@/stores/useCollectionStore', () => ({
   useCollectionStore: (selector: (state: MockCollectionStoreState) => unknown): unknown =>
     selector(mockCollectionState),
+  useIsExpanded: vi.fn(() => true),
+  useCollection: vi.fn(() => undefined),
+  useSortedRequests: vi.fn(() => []),
 }));
 
 describe('Sidebar', (): void => {
@@ -38,6 +41,15 @@ describe('Sidebar', (): void => {
     useFeatureFlagStore.getState().resetToDefaults();
     useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
     mockCollectionState = createCollectionState();
+
+    // Mock scrollable content
+    mockCollectionState.summaries = Array.from({ length: 20 }, (_, i) => ({
+      id: `col-${String(i)}`,
+      name: `Collection ${String(i + 1)}`,
+      request_count: 5,
+      source_type: 'manual',
+      modified_at: new Date().toISOString(),
+    }));
   });
   it('renders sidebar with proper structure', (): void => {
     render(<Sidebar />);
@@ -58,7 +70,7 @@ describe('Sidebar', (): void => {
 
     const collectionsButton = screen.getByTestId('collections-drawer-toggle');
     expect(collectionsButton).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-list')).toBeInTheDocument();
   });
 
   it('uses contained focus ring styles on drawer headers to avoid clipping', (): void => {
@@ -72,7 +84,7 @@ describe('Sidebar', (): void => {
 
   it('renders the collections list content', (): void => {
     render(<Sidebar />);
-    expect(screen.getByTestId('collection-list-empty')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-list')).toBeInTheDocument();
   });
 
   it('fills its container width', (): void => {
@@ -101,6 +113,36 @@ describe('Sidebar', (): void => {
     const { container } = render(<Sidebar />);
     const scrollContainer = container.querySelector('[data-scroll-container]');
     expect(scrollContainer).toBeInTheDocument();
+  });
+
+  it('has a scroll container with fade-out delay classes', async (): Promise<void> => {
+    render(<Sidebar />);
+    const scrollRoot = screen.getByTestId('sidebar-scroll-root');
+    expect(scrollRoot).toBeInTheDocument();
+
+    // Verify scrollbar has the manual opacity classes including hover on the bar area
+    const scrollbar = screen.getByTestId('sidebar-scrollbar');
+    // Note: It might start with opacity-100 because of showBriefly() on mount when isOpen=true
+    // but in JSDOM scrollHeight might be 0, causing it to be opacity-0.
+    // We just verify it has the correct classes for manual control.
+    expect(scrollbar).toHaveClass('transition-opacity');
+    expect(scrollbar).toHaveClass('duration-300');
+    expect(scrollbar).toHaveClass('hover:opacity-100');
+    expect(scrollbar).not.toHaveClass('group-hover/scroll:opacity-100');
+
+    // Verify inset classes
+    expect(scrollbar).toHaveClass('absolute');
+    expect(scrollbar).toHaveClass('right-0.5');
+    expect(scrollbar).toHaveClass('top-0');
+    expect(scrollbar).toHaveClass('bottom-0');
+    expect(scrollbar).toHaveClass('z-20');
+  });
+
+  it('renders a vertical scrollbar in the drawer body', (): void => {
+    render(<Sidebar />);
+    const scrollbar = screen.getByTestId('sidebar-scrollbar');
+    expect(scrollbar).toBeInTheDocument();
+    expect(scrollbar).toHaveAttribute('orientation', 'vertical');
   });
 });
 

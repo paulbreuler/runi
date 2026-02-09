@@ -17,6 +17,7 @@ import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import {
   globalEventBus,
   type ToastEventPayload,
@@ -41,12 +42,14 @@ export const HomePage = (): React.JSX.Element => {
   } = useRequestStore();
 
   const { addEntry, loadHistory } = useHistoryStore();
+  const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
 
   const initialSidebarVisible =
-    typeof window !== 'undefined' &&
-    (window.location.search.includes('e2eSidebar=1') ||
-      (window as { __RUNI_E2E__?: { sidebarVisible?: boolean } }).__RUNI_E2E__?.sidebarVisible ===
-        true);
+    (typeof window !== 'undefined' &&
+      (window.location.search.includes('e2eSidebar=1') ||
+        (window as { __RUNI_E2E__?: { sidebarVisible?: boolean } }).__RUNI_E2E__?.sidebarVisible ===
+          true)) ||
+    collectionsEnabled;
 
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);

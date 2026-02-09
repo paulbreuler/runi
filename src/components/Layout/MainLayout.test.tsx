@@ -232,10 +232,10 @@ describe('MainLayout', () => {
       expect(resizer).toHaveAttribute('role', 'separator');
       expect(resizer).toHaveAttribute('aria-label', 'Resize sidebar (double-click to collapse)');
       expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
-      expect(resizer).toHaveAttribute('aria-valuenow', '256');
+      expect(resizer).toHaveAttribute('aria-valuenow', '300');
       // aria-valuemin is COLLAPSED_SIDEBAR_WIDTH (8) since sidebar can collapse
       expect(resizer).toHaveAttribute('aria-valuemin', '8');
-      expect(resizer).toHaveAttribute('aria-valuemax', '500');
+      expect(resizer).toHaveAttribute('aria-valuemax', '600');
     });
 
     it('sidebar is present when visible', () => {
@@ -499,7 +499,16 @@ describe('MainLayout', () => {
       const resizer = screen.getByTestId('pane-resizer');
 
       // Should have hover class for background hint
-      expect(resizer).toHaveClass('hover:bg-border-default/50');
+      expect(resizer).toHaveClass('hover:bg-border-subtle/50');
+    });
+
+    it('sidebar resizer has hover styles', () => {
+      render(<MainLayout />);
+
+      const resizer = screen.getByTestId('sidebar-resizer');
+
+      // Should have hover class for background hint
+      expect(resizer).toHaveClass('hover:bg-border-subtle/50');
     });
 
     it('resizer has minimal styling (transparent at rest)', () => {
@@ -544,6 +553,8 @@ describe('MainLayout', () => {
       // Sidebar resizer should be absolutely positioned
       expect(sidebarResizer).toHaveClass('absolute');
       expect(sidebarResizer).toHaveClass('right-0');
+      expect(sidebarResizer).toHaveClass('z-30');
+      expect(sidebarResizer).toHaveClass('w-[2px]');
     });
 
     it('panes are siblings without resizer in flex flow', () => {
