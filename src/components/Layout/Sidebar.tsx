@@ -30,26 +30,49 @@ const DrawerSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [showScrollbar, setShowScrollbar] = useState(false);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const showBriefly = useCallback(() => {
-    setShowScrollbar(true);
-    if (scrollTimeout.current !== null) {
-      clearTimeout(scrollTimeout.current);
-    }
-    scrollTimeout.current = setTimeout(() => {
-      setShowScrollbar(false);
-    }, 400);
+  const showBriefly = useCallback((duration = 400) => {
+    // Ensure we have the latest layout before checking scrollability
+    requestAnimationFrame(() => {
+      if (viewportRef.current === null) {
+        return;
+      }
+
+      const { scrollHeight, clientHeight } = viewportRef.current;
+      const isScrollable = scrollHeight > clientHeight + 1; // +1 for subpixel rounding
+
+      // If not scrollable, immediately hide and don't proceed
+      if (!isScrollable) {
+        setShowScrollbar(false);
+        if (scrollTimeout.current !== null) {
+          clearTimeout(scrollTimeout.current);
+          scrollTimeout.current = null;
+        }
+        return;
+      }
+
+      // Only show if it's actually scrollable
+      setShowScrollbar(true);
+      if (scrollTimeout.current !== null) {
+        clearTimeout(scrollTimeout.current);
+      }
+      scrollTimeout.current = setTimeout(() => {
+        setShowScrollbar(false);
+        scrollTimeout.current = null;
+      }, duration);
+    });
   }, []);
 
   const handleScroll = useCallback(() => {
     showBriefly();
   }, [showBriefly]);
 
-  // Show scrollbar when section opens
+  // Show scrollbar when section opens - longer duration to clear the entry animation
   useEffect(() => {
     if (isOpen) {
-      showBriefly();
+      showBriefly(800);
     }
   }, [isOpen, showBriefly]);
 
@@ -60,6 +83,7 @@ const DrawerSection = ({
     }
 
     const observer = new ResizeObserver(() => {
+      // Content size changed, might have become scrollable
       showBriefly();
     });
 
@@ -67,7 +91,7 @@ const DrawerSection = ({
     return (): void => {
       observer.disconnect();
     };
-  }, [isOpen, showBriefly]);
+  }, [isOpen, showBriefly, viewportRef]);
 
   useEffect(() => {
     return (): void => {
@@ -121,6 +145,7 @@ const DrawerSection = ({
               data-test-id="sidebar-scroll-root"
             >
               <ScrollArea.Viewport
+                ref={viewportRef}
                 className="scroll-area-viewport w-full h-full"
                 data-scroll-container
                 onScroll={handleScroll}
@@ -133,7 +158,7 @@ const DrawerSection = ({
                 orientation="vertical"
                 data-test-id="sidebar-scrollbar"
                 className={cn(
-                  'scroll-area-scrollbar absolute right-2 top-1 bottom-1 z-20 flex touch-none select-none transition-opacity duration-300',
+                  'scroll-area-scrollbar absolute right-0.5 top-0 bottom-0 z-20 flex touch-none select-none transition-opacity duration-300',
                   showScrollbar ? 'opacity-100' : 'opacity-0 hover:opacity-100'
                 )}
               >

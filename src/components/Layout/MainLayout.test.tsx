@@ -499,7 +499,16 @@ describe('MainLayout', () => {
       const resizer = screen.getByTestId('pane-resizer');
 
       // Should have hover class for background hint
-      expect(resizer).toHaveClass('hover:bg-border-default/50');
+      expect(resizer).toHaveClass('hover:bg-border-subtle/50');
+    });
+
+    it('sidebar resizer has hover styles', () => {
+      render(<MainLayout />);
+
+      const resizer = screen.getByTestId('sidebar-resizer');
+
+      // Should have hover class for background hint
+      expect(resizer).toHaveClass('hover:bg-border-subtle/50');
     });
 
     it('resizer has minimal styling (transparent at rest)', () => {
@@ -544,6 +553,8 @@ describe('MainLayout', () => {
       // Sidebar resizer should be absolutely positioned
       expect(sidebarResizer).toHaveClass('absolute');
       expect(sidebarResizer).toHaveClass('right-0');
+      expect(sidebarResizer).toHaveClass('z-30');
+      expect(sidebarResizer).toHaveClass('w-[2px]');
     });
 
     it('panes are siblings without resizer in flex flow', () => {

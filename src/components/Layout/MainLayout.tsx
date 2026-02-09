@@ -92,11 +92,11 @@ const immediateTransition = {
  */
 const getSashClasses = (position: 'left' | 'right', isDragging: boolean): string =>
   cn(
-    'absolute top-0 bottom-0 z-10 touch-none',
+    'absolute top-0 bottom-0 z-30 touch-none transition-colors',
     'cursor-col-resize select-none',
-    position === 'right' ? 'right-0' : '',
-    'w-[3px] bg-transparent',
-    'hover:bg-border-default/50',
+    position === 'right' ? 'right-0' : 'left-0',
+    'w-[2px] bg-transparent',
+    'hover:bg-border-subtle/50',
     isDragging && 'bg-border-default'
   );
 
