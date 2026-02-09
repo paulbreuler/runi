@@ -152,18 +152,27 @@ pub async fn mcp_server_stop(
 pub async fn mcp_server_status(
     server_state: tauri::State<'_, McpServerServiceState>,
 ) -> Result<McpServerStatusInfo, String> {
-    let guard = server_state.read().await;
-    match guard.as_ref() {
-        Some(handle) => Ok(McpServerStatusInfo {
+    // Copy needed fields under the read lock, then drop before awaiting
+    // session_count() to avoid holding the lock across an .await point.
+    let (port, sessions) = {
+        let guard = server_state.read().await;
+        guard.as_ref().map_or((None, None), |handle| {
+            (Some(handle.port), Some(Arc::clone(&handle.sessions)))
+        })
+    };
+
+    if let Some(sessions) = sessions {
+        Ok(McpServerStatusInfo {
             running: true,
-            port: Some(handle.port),
-            session_count: handle.sessions.session_count().await,
-        }),
-        None => Ok(McpServerStatusInfo {
+            port,
+            session_count: sessions.session_count().await,
+        })
+    } else {
+        Ok(McpServerStatusInfo {
             running: false,
             port: None,
             session_count: 0,
-        }),
+        })
     }
 }
 

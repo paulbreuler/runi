@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScrollArea } from '@base-ui/react/scroll-area';
@@ -28,6 +28,26 @@ const DrawerSection = ({
 }: DrawerSectionProps): React.JSX.Element => {
   // icon parameter is kept for API consistency but not currently used in the UI
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [showScrollbar, setShowScrollbar] = useState(false);
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleScroll = useCallback(() => {
+    setShowScrollbar(true);
+    if (scrollTimeout.current !== null) {
+      clearTimeout(scrollTimeout.current);
+    }
+    scrollTimeout.current = setTimeout(() => {
+      setShowScrollbar(false);
+    }, 400);
+  }, []);
+
+  useEffect(() => {
+    return (): void => {
+      if (scrollTimeout.current !== null) {
+        clearTimeout(scrollTimeout.current);
+      }
+    };
+  }, []);
 
   return (
     <div
@@ -68,20 +88,20 @@ const DrawerSection = ({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="flex-1 min-h-0 flex flex-col overflow-hidden"
           >
-            <ScrollArea.Root
-              className="flex-1 min-h-0 relative group/scroll"
-              type="auto"
-              hideDelay={250}
-            >
+            <ScrollArea.Root className="flex-1 min-h-0 relative group/scroll">
               <ScrollArea.Viewport
                 className="scroll-area-viewport w-full h-full"
                 data-scroll-container
+                onScroll={handleScroll}
               >
                 <div className="px-2 pb-3">{children}</div>
               </ScrollArea.Viewport>
               <ScrollArea.Scrollbar
                 orientation="vertical"
-                className="scroll-area-scrollbar absolute right-0.5 top-0 bottom-0 z-20 flex touch-none select-none transition-opacity duration-200"
+                className={cn(
+                  'scroll-area-scrollbar absolute right-3 top-0 bottom-0 z-20 flex touch-none select-none transition-opacity duration-300',
+                  showScrollbar ? 'opacity-100' : 'opacity-0 hover:opacity-100'
+                )}
               >
                 <ScrollArea.Thumb className="scroll-area-thumb flex-1 rounded-full" />
               </ScrollArea.Scrollbar>

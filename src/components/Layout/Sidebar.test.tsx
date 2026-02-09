@@ -103,13 +103,17 @@ describe('Sidebar', (): void => {
     expect(scrollContainer).toBeInTheDocument();
   });
 
-  it('has a scroll container with 250ms fade-out delay', (): void => {
+  it('has a scroll container with fade-out delay classes', (): void => {
     const { container } = render(<Sidebar />);
     // The ScrollArea.Root mock overwrites className with the one passed in prop
     const scrollRoot = container.querySelector('.group\\/scroll');
     expect(scrollRoot).toBeInTheDocument();
-    expect(scrollRoot).toHaveAttribute('hidedelay', '250');
-    expect(scrollRoot).toHaveAttribute('type', 'auto');
+
+    // Verify scrollbar has the manual opacity classes including hover on the bar area
+    const scrollbar = container.querySelector('.scroll-area-scrollbar');
+    expect(scrollbar).toHaveClass('opacity-0');
+    expect(scrollbar).toHaveClass('hover:opacity-100');
+    expect(scrollbar).not.toHaveClass('group-hover/scroll:opacity-100');
   });
 
   it('renders a vertical scrollbar in the drawer body', (): void => {

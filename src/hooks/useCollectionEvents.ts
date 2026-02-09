@@ -32,7 +32,7 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event';
  */
 export type Actor =
   | { type: 'user' }
-  | { type: 'ai'; model: string | null; session_id: string | null }
+  | { type: 'ai'; model?: string; session_id?: string }
   | { type: 'system' };
 
 /**
@@ -41,7 +41,7 @@ export type Actor =
 export interface EventEnvelope<T> {
   actor: Actor;
   timestamp: string;
-  correlation_id: string | null;
+  correlation_id?: string;
   payload: T;
 }
 
@@ -232,59 +232,38 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     []
   );
 
-  // Subscribe to Tauri events
+  // Subscribe to Tauri events.
+  // Uses a cancelled flag to handle the race where the component unmounts
+  // before async listen() calls resolve — any late-resolving listeners
+  // are immediately cleaned up.
   useEffect(() => {
+    let cancelled = false;
     const unlistenFns: UnlistenFn[] = [];
+
+    const addListener = async <T>(
+      eventName: string,
+      handler: (envelope: EventEnvelope<T>) => void
+    ): Promise<void> => {
+      const unlisten = await listen<EventEnvelope<T>>(eventName, (event) => {
+        handler(event.payload);
+      });
+      if (cancelled) {
+        unlisten();
+      } else {
+        unlistenFns.push(unlisten);
+      }
+    };
 
     const setupListeners = async (): Promise<void> => {
       try {
-        const unlistenCollectionCreated = await listen<EventEnvelope<CollectionCreatedEvent>>(
-          'collection:created',
-          (event) => {
-            handleCollectionCreated(event.payload);
-          }
-        );
-        unlistenFns.push(unlistenCollectionCreated);
-
-        const unlistenCollectionDeleted = await listen<EventEnvelope<CollectionDeletedEvent>>(
-          'collection:deleted',
-          (event) => {
-            handleCollectionDeleted(event.payload);
-          }
-        );
-        unlistenFns.push(unlistenCollectionDeleted);
-
-        const unlistenCollectionSaved = await listen<EventEnvelope<CollectionSavedEvent>>(
-          'collection:saved',
-          (event) => {
-            handleCollectionSaved(event.payload);
-          }
-        );
-        unlistenFns.push(unlistenCollectionSaved);
-
-        const unlistenRequestAdded = await listen<EventEnvelope<RequestAddedEvent>>(
-          'request:added',
-          (event) => {
-            handleRequestAdded(event.payload);
-          }
-        );
-        unlistenFns.push(unlistenRequestAdded);
-
-        const unlistenRequestUpdated = await listen<EventEnvelope<RequestUpdatedEvent>>(
-          'request:updated',
-          (event) => {
-            handleRequestUpdated(event.payload);
-          }
-        );
-        unlistenFns.push(unlistenRequestUpdated);
-
-        const unlistenRequestExecuted = await listen<EventEnvelope<RequestExecutedEvent>>(
-          'request:executed',
-          (event) => {
-            handleRequestExecuted(event.payload);
-          }
-        );
-        unlistenFns.push(unlistenRequestExecuted);
+        await Promise.all([
+          addListener('collection:created', handleCollectionCreated),
+          addListener('collection:deleted', handleCollectionDeleted),
+          addListener('collection:saved', handleCollectionSaved),
+          addListener('request:added', handleRequestAdded),
+          addListener('request:updated', handleRequestUpdated),
+          addListener('request:executed', handleRequestExecuted),
+        ]);
       } catch (error) {
         console.error('Failed to subscribe to collection events:', error);
       }
@@ -292,8 +271,8 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
 
     void setupListeners();
 
-    // Cleanup on unmount
     return (): void => {
+      cancelled = true;
       for (const unlisten of unlistenFns) {
         unlisten();
       }

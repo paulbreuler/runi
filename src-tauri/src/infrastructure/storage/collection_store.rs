@@ -32,8 +32,11 @@ pub fn get_collections_dir() -> Result<PathBuf, String> {
         return Ok(dir);
     }
 
-    // In dev mode (CARGO_MANIFEST_DIR is set), use project root to avoid Tauri rebuild triggers
-    // In production, use current working directory (user's project)
+    // In dev mode, use project root to avoid Tauri rebuild triggers.
+    // CARGO_MANIFEST_DIR is set as a runtime env var by both `cargo test` and
+    // `cargo run` (and by Tauri's dev harness), so this branch reliably fires
+    // during development. In production builds it's absent, falling through
+    // to current_dir() which resolves to the user's project directory.
     let base_dir = if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
         // Dev mode: go up one level from src-tauri/ to repo root
         PathBuf::from(manifest_dir)
