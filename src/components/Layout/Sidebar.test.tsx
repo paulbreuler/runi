@@ -46,8 +46,9 @@ describe('Sidebar', (): void => {
     mockCollectionState.summaries = Array.from({ length: 20 }, (_, i) => ({
       id: `col-${String(i)}`,
       name: `Collection ${String(i + 1)}`,
-      requestCount: 5,
-      folderCount: 2,
+      request_count: 5,
+      source_type: 'manual',
+      modified_at: new Date().toISOString(),
     }));
   });
   it('renders sidebar with proper structure', (): void => {
