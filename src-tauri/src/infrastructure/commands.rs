@@ -178,7 +178,7 @@ pub fn get_system_specs() -> Result<SystemSpecs, String> {
     };
     let cpu_cores = system.cpus().len();
 
-    // Get total memory in GB (sysinfo returns memory in KiB)
+    // Get total memory in GB (sysinfo returns memory in bytes)
     let total_memory_bytes = system.total_memory();
     // Precision loss is acceptable for memory measurements in GB
     #[allow(clippy::cast_precision_loss)]

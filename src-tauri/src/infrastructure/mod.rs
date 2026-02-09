@@ -6,6 +6,7 @@
 pub mod commands;
 pub mod http;
 pub mod logging;
+/// MCP infrastructure adapters and transports.
 pub mod mcp;
 pub mod memory_monitor;
 pub mod spec;

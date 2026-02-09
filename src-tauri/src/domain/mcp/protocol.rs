@@ -94,7 +94,7 @@ pub struct ToolCallParams {
     /// Tool name to invoke.
     pub name: String,
     /// Arguments as a JSON object.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arguments: Option<serde_json::Map<String, serde_json::Value>>,
 }
 

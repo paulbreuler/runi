@@ -71,6 +71,7 @@ pub fn save_collection(collection: &Collection) -> Result<PathBuf, String> {
     save_collection_in_dir(collection, &dir)
 }
 
+/// Save a collection to the specified directory with deterministic serialization.
 pub fn save_collection_in_dir(collection: &Collection, dir: &Path) -> Result<PathBuf, String> {
     ensure_dir(dir)?;
     let filename = format!("{}.yaml", collection.id);
@@ -100,6 +101,7 @@ pub fn load_collection(collection_id: &str) -> Result<Collection, String> {
     load_collection_in_dir(collection_id, &dir)
 }
 
+/// Load a collection from the specified directory.
 pub fn load_collection_in_dir(collection_id: &str, dir: &Path) -> Result<Collection, String> {
     let path = dir.join(format!("{collection_id}.yaml"));
 
@@ -120,6 +122,7 @@ pub fn list_collections() -> Result<Vec<CollectionSummary>, String> {
     list_collections_in_dir(&dir)
 }
 
+/// List all saved collections in the specified directory.
 pub fn list_collections_in_dir(dir: &Path) -> Result<Vec<CollectionSummary>, String> {
     ensure_dir(dir)?;
 
@@ -150,6 +153,7 @@ pub fn delete_collection(collection_id: &str) -> Result<(), String> {
     delete_collection_in_dir(collection_id, &dir)
 }
 
+/// Delete a collection file from the specified directory.
 pub fn delete_collection_in_dir(collection_id: &str, dir: &Path) -> Result<(), String> {
     let path = dir.join(format!("{collection_id}.yaml"));
 

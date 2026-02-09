@@ -32,8 +32,6 @@ export const CollectionEventProvider = ({
 }): React.JSX.Element => {
   const loadCollections = useCollectionStore((s) => s.loadCollections);
   const loadCollection = useCollectionStore((s) => s.loadCollection);
-  const selectedCollectionId = useCollectionStore((s) => s.selectedCollectionId);
-
   useCollectionEvents({
     onCollectionCreated: (): void => {
       void loadCollections();
@@ -42,7 +40,7 @@ export const CollectionEventProvider = ({
       void loadCollections();
       // If deleted collection was selected, the store will handle clearing selection
       // when it reloads and the collection is no longer present
-      if (selectedCollectionId === envelope.payload.id) {
+      if (useCollectionStore.getState().selectedCollectionId === envelope.payload.id) {
         useCollectionStore.getState().selectCollection(null);
       }
     },

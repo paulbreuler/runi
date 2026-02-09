@@ -5,14 +5,16 @@
 //!
 //! These commands are exposed to the frontend via `tauri::generate_handler!`.
 
+use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
+
 use crate::application::mcp_server_service::McpServerService;
 use crate::domain::mcp::events::EventEmitter;
 use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::mcp::server::http_sse::{self, McpServerState};
 use crate::infrastructure::mcp::server::session::SessionManager;
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 /// Managed state type for the MCP server.
 pub type McpServerServiceState = Arc<RwLock<Option<McpServerHandle>>>;
