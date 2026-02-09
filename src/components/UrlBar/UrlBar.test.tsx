@@ -35,8 +35,8 @@ describe('UrlBar', () => {
     expect(methodSelect).toBeInTheDocument();
     expect(methodSelect).toHaveClass('font-semibold');
     // Text color based on method, transparent background, list-like hover
-    // GET is blue per industry standard (read, safe, neutral)
-    expect(methodSelect).toHaveClass('text-accent-blue');
+    // GET uses method-specific color token
+    expect(methodSelect).toHaveClass('text-method-get');
     expect(methodSelect).toHaveClass('bg-transparent');
     expect(methodSelect).toHaveClass('border-0');
   });
@@ -90,7 +90,7 @@ describe('UrlBar', () => {
     expect(sendButton.className).toContain('focus-visible:!ring-offset-0');
     expect(sendButton.className).toContain('focus-visible:ring-inset');
     expect(sendButton.className).toContain('focus-visible:z-10');
-    expect(sendButton.className).toContain('focus-visible:text-accent-blue');
+    // Send button uses composite focus item classes (no text-accent-blue on focus)
   });
 
   it('renders send button with proper styling', () => {
@@ -99,9 +99,8 @@ describe('UrlBar', () => {
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeInTheDocument();
     expect(sendButton).toHaveTextContent('Send');
-    // In composite: flat left edge, rounded right edge
-    expect(sendButton).toHaveClass('rounded-none');
-    expect(sendButton).toHaveClass('rounded-r-lg');
+    // Send button is a ghost button within the composite bar
+    expect(sendButton).toHaveClass('text-text-muted');
   });
 
   it('shows loading state on send button', () => {
@@ -164,11 +163,10 @@ describe('UrlBar', () => {
   it('renders inline command row without extra framed container', () => {
     render(<UrlBar {...defaultProps} />);
 
-    // One subtle border around the whole control, not around URL only
+    // Composite control with focus-within border treatment
     const control = screen.getByTestId('url-bar');
     expect(control).toBeInTheDocument();
-    expect(control).toHaveClass('border');
-    expect(control).toHaveClass('border-border-subtle');
-    expect(control).toHaveClass('bg-bg-raised');
+    expect(control.className).toContain('focus-within:border-border-default');
+    expect(control.className).toContain('focus-within:ring-1');
   });
 });

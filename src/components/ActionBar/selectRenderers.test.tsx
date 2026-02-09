@@ -24,37 +24,37 @@ describe('selectRenderers', () => {
       expect(screen.getByText('All Methods')).toHaveClass('text-text-secondary');
     });
 
-    it('renders GET with blue color', () => {
+    it('renders GET with method-specific color', () => {
       const option: MethodSelectOption = { value: 'GET', label: 'GET' };
       render(<>{renderMethodOption(option)}</>);
 
       const badge = screen.getByText('GET');
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass('text-accent-blue');
+      expect(badge).toHaveClass('text-method-get');
     });
 
-    it('renders POST with green color', () => {
+    it('renders POST with method-specific color', () => {
       const option: MethodSelectOption = { value: 'POST', label: 'POST' };
       render(<>{renderMethodOption(option)}</>);
 
       const badge = screen.getByText('POST');
-      expect(badge).toHaveClass('text-signal-success');
+      expect(badge).toHaveClass('text-method-post');
     });
 
-    it('renders PUT with warning color', () => {
+    it('renders PUT with method-specific color', () => {
       const option: MethodSelectOption = { value: 'PUT', label: 'PUT' };
       render(<>{renderMethodOption(option)}</>);
 
       const badge = screen.getByText('PUT');
-      expect(badge).toHaveClass('text-signal-warning');
+      expect(badge).toHaveClass('text-method-put');
     });
 
-    it('renders DELETE with error color', () => {
+    it('renders DELETE with method-specific color', () => {
       const option: MethodSelectOption = { value: 'DELETE', label: 'DELETE' };
       render(<>{renderMethodOption(option)}</>);
 
       const badge = screen.getByText('DELETE');
-      expect(badge).toHaveClass('text-signal-error');
+      expect(badge).toHaveClass('text-method-delete');
     });
 
     it('applies background color to method badges', () => {

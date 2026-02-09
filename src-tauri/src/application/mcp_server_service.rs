@@ -524,7 +524,7 @@ mod tests {
 
     #[test]
     fn test_registers_six_tools() {
-        let (mut service, _dir) = make_service();
+        let (service, _dir) = make_service();
         let tools = service.list_tools();
         assert_eq!(tools.len(), 6);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
@@ -538,7 +538,7 @@ mod tests {
 
     #[test]
     fn test_tool_definitions_have_schemas() {
-        let (mut service, _dir) = make_service();
+        let (service, _dir) = make_service();
         for tool in service.list_tools() {
             assert_eq!(
                 tool.input_schema.get("type").and_then(|v| v.as_str()),
@@ -1104,7 +1104,7 @@ mod tests {
 
     #[test]
     fn test_prepare_execute_request_nonexistent_collection() {
-        let (mut service, _dir) = make_service();
+        let (service, _dir) = make_service();
         let mut exec_args = serde_json::Map::new();
         exec_args.insert("collection_id".to_string(), json!("nonexistent"));
         exec_args.insert("request_id".to_string(), json!("req_1"));

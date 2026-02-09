@@ -38,8 +38,8 @@ const trayTransition = {
   damping: 30,
 };
 
-// Collapsed size for horizontal docks (left/right) - 10px for "book page edge" feel
-const COLLAPSED_PANEL_WIDTH = 10;
+// Collapsed size for horizontal docks (left/right) - 0px to occupy no layout space
+const COLLAPSED_PANEL_WIDTH = 0;
 
 // ============================================================================
 // Tray Variants - Unified Material Feel
@@ -499,8 +499,7 @@ export const DockablePanel = ({
         data-test-id="dockable-panel"
         className={cn(
           getPanelClasses(),
-          isCollapsed && 'overflow-visible',
-          isCollapsed && isHorizontal && 'cursor-pointer',
+          isCollapsed && 'overflow-visible pointer-events-none',
           className
         )}
         style={{ ...getPanelStyle(), zIndex: DOCKABLE_PANEL_Z_INDEX }}
@@ -513,7 +512,7 @@ export const DockablePanel = ({
         {/* Resize handle */}
         <div
           data-test-id="panel-resizer"
-          className={getResizerClasses()}
+          className={cn(getResizerClasses(), isCollapsed && 'pointer-events-none')}
           role="separator"
           aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
           aria-label="Resize panel (double-click to collapse)"
@@ -547,9 +546,9 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute left-1/2 -translate-x-1/2 top-0 h-full w-12',
+              'absolute left-1/2 -translate-x-1/2 bottom-0 h-2.5 w-12',
               'border border-border-default rounded-t-lg border-b-0',
-              'flex items-center justify-center',
+              'flex items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-row-resize' : 'cursor-pointer'
             )}
             variants={trayVariantsBottom}
@@ -590,9 +589,9 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute top-1/2 -translate-y-1/2 left-0 w-full h-12',
+              'absolute top-1/2 -translate-y-1/2 right-0 w-2.5 h-12',
               'border border-border-default rounded-r-lg border-l-0',
-              'flex flex-col items-center justify-center',
+              'flex flex-col items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-col-resize' : 'cursor-pointer'
             )}
             variants={trayVariantsLeft}
@@ -633,9 +632,9 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute top-1/2 -translate-y-1/2 right-0 w-full h-12',
+              'absolute top-1/2 -translate-y-1/2 left-0 w-2.5 h-12',
               'border border-border-default rounded-l-lg border-r-0',
-              'flex flex-col items-center justify-center',
+              'flex flex-col items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-col-resize' : 'cursor-pointer'
             )}
             variants={trayVariantsRight}

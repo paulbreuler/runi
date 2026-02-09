@@ -36,10 +36,11 @@ describe('useActivityStore', () => {
 
     const { entries } = useActivityStore.getState();
     expect(entries).toHaveLength(1);
-    expect(entries[0].id).toBe('activity-1');
-    expect(entries[0].actor).toEqual(AI_ACTOR);
-    expect(entries[0].action).toBe('created_collection');
-    expect(entries[0].target).toBe('Test Collection');
+    const entry = entries[0]!;
+    expect(entry.id).toBe('activity-1');
+    expect(entry.actor).toEqual(AI_ACTOR);
+    expect(entry.action).toBe('created_collection');
+    expect(entry.target).toBe('Test Collection');
   });
 
   it('prepends new entries (newest first)', () => {
@@ -48,8 +49,8 @@ describe('useActivityStore', () => {
 
     const { entries } = useActivityStore.getState();
     expect(entries).toHaveLength(2);
-    expect(entries[0].target).toBe('Second');
-    expect(entries[1].target).toBe('First');
+    expect(entries[0]!.target).toBe('Second');
+    expect(entries[1]!.target).toBe('First');
   });
 
   it('caps entries at 100', () => {
@@ -64,14 +65,14 @@ describe('useActivityStore', () => {
     useActivityStore.getState().addEntry(makeEntry({ seq: 42 }));
 
     const { entries } = useActivityStore.getState();
-    expect(entries[0].seq).toBe(42);
+    expect(entries[0]!.seq).toBe(42);
   });
 
   it('preserves targetId field when provided', () => {
     useActivityStore.getState().addEntry(makeEntry({ targetId: 'col_123' }));
 
     const { entries } = useActivityStore.getState();
-    expect(entries[0].targetId).toBe('col_123');
+    expect(entries[0]!.targetId).toBe('col_123');
   });
 
   it('clear removes all entries', () => {
@@ -95,7 +96,7 @@ describe('useActivityStore', () => {
 
     const { entries } = useActivityStore.getState();
     expect(entries).toHaveLength(1);
-    expect(entries[0].target).toBe('Recent');
+    expect(entries[0]!.target).toBe('Recent');
   });
 
   it('auto-prunes old entries on addEntry', () => {
@@ -119,7 +120,7 @@ describe('useActivityStore', () => {
 
     const { entries } = useActivityStore.getState();
     expect(entries).toHaveLength(1);
-    expect(entries[0].target).toBe('New');
+    expect(entries[0]!.target).toBe('New');
   });
 
   it('supports all activity action types', () => {
@@ -146,9 +147,9 @@ describe('useActivityStore', () => {
 
     const { entries } = useActivityStore.getState();
     expect(entries).toHaveLength(3);
-    expect(entries[0].actor.type).toBe('system');
-    expect(entries[1].actor.type).toBe('user');
-    expect(entries[2].actor.type).toBe('ai');
+    expect(entries[0]!.actor.type).toBe('system');
+    expect(entries[1]!.actor.type).toBe('user');
+    expect(entries[2]!.actor.type).toBe('ai');
   });
 
   it('generates unique sequential ids', () => {

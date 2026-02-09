@@ -193,7 +193,7 @@ describe('DockablePanel', () => {
       expect(screen.queryByTestId('panel-content')).not.toBeInTheDocument();
     });
 
-    it('shows Tray label with grip icon when collapsed', () => {
+    it('shows grip icon when collapsed', () => {
       usePanelStore.setState({ isCollapsed: true });
 
       render(
@@ -204,9 +204,12 @@ describe('DockablePanel', () => {
 
       // Header should NOT be visible when collapsed (minimal design)
       expect(screen.queryByTestId('panel-header')).not.toBeInTheDocument();
-      // Collapsed edge should be visible with "Tray" label
+      // Collapsed edge should be visible with grip icon (no text label)
       expect(screen.getByTestId('panel-collapsed-edge')).toBeInTheDocument();
-      expect(screen.getByText('Tray')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-collapsed-edge')).toHaveAttribute(
+        'aria-label',
+        'Expand Tray (click or drag)'
+      );
     });
 
     it('expands when clicking collapsed edge', () => {
