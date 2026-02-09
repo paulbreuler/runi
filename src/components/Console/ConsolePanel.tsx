@@ -69,28 +69,6 @@ interface FormattedLogArgs {
 }
 
 /**
- * Serialize args deterministically for grouping.
- * Sorts object keys to ensure consistent serialization regardless of key order.
- */
-function serializeArgs(args: unknown[]): string {
-  try {
-    return JSON.stringify(args, (_key: string, value: unknown): unknown => {
-      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        const obj = value as Record<string, unknown>;
-        const sorted: Record<string, unknown> = {};
-        for (const k of Object.keys(obj).sort()) {
-          sorted[k] = obj[k];
-        }
-        return sorted;
-      }
-      return value;
-    });
-  } catch {
-    return String(args);
-  }
-}
-
-/**
  * Try to parse a string as JSON and return pretty-printed form.
  * Returns the original string if not valid JSON (or not object/array).
  */
@@ -338,7 +316,7 @@ export const ConsolePanel = ({
     const grouped = new Map<string, ConsoleLog[]>();
     for (const log of filtered) {
       const correlationId = log.correlationId ?? '';
-      const argsKey = serializeArgs(log.args);
+      const argsKey = log.args.length > 0 ? 'has_args' : 'no_args';
       const groupKey = `${log.level}|${log.message}|${correlationId}|${argsKey}`;
       if (!grouped.has(groupKey)) {
         grouped.set(groupKey, []);

@@ -601,13 +601,13 @@ describe('ConsolePanel', () => {
     expect(countBadge).toBeInTheDocument();
   });
 
-  it('does NOT group logs with same message but different args', async () => {
+  it('groups logs with same message but different args (args not compared)', async () => {
     const service = getConsoleService();
     service.clear(); // Ensure clean state
     render(<ConsolePanel />);
     const correlationId = 'test-correlation-123';
 
-    // Add logs with same message but different args
+    // Add logs with same message but different args — grouping ignores arg content
     await act(async () => {
       service.addLog({
         level: 'error',
@@ -625,20 +625,16 @@ describe('ConsolePanel', () => {
       });
     });
 
-    // Wait for logs to appear
+    // Should appear as a single grouped entry (grouping uses has_args/no_args, not arg content)
     await waitFor(() => {
       const logEntries = screen.getAllByText(/failed to open devtools popout window/i);
-      expect(logEntries.length).toBeGreaterThanOrEqual(2);
+      expect(logEntries.length).toBe(1);
     }, WAIT_TIMEOUT);
 
-    // Should show 2 separate log entries (not grouped)
-    const logEntries = screen.getAllByText(/failed to open devtools popout window/i);
-    expect(logEntries.length).toBe(2);
-
-    // Should NOT show count badge (not grouped) - wait a bit to ensure grouping logic has run
+    // Should show count badge with "×2"
     await waitFor(() => {
-      const countBadge = screen.queryByTitle(/2 occurrences/i);
-      expect(countBadge).not.toBeInTheDocument();
+      const countBadge = screen.getByText('×2');
+      expect(countBadge).toBeInTheDocument();
     }, WAIT_TIMEOUT);
   });
 
