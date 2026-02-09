@@ -1,133 +1,185 @@
 // Copyright (c) 2026 BaseState LLC
 // SPDX-License-Identifier: MIT
 
-//! Tauri command handlers for MCP operations.
+//! Tauri command handlers for the MCP server.
 //!
 //! These commands are exposed to the frontend via `tauri::generate_handler!`.
 
-use crate::application::mcp_service::McpService;
-use crate::domain::features::config as feature_config;
-use crate::domain::mcp::types::{ServerInfo, ToolCallResult, ToolInfo};
+use crate::application::mcp_server_service::McpServerService;
+use crate::infrastructure::mcp::server::http_sse::{self, McpServerState};
+use crate::infrastructure::mcp::server::session::SessionManager;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-/// Managed state type for the MCP service.
-pub type McpServiceState = Arc<RwLock<McpService>>;
+/// Managed state type for the MCP server.
+pub type McpServerServiceState = Arc<RwLock<Option<McpServerHandle>>>;
 
-/// Create the initial MCP service state for Tauri managed state.
+/// Handle to a running MCP server (Axum + session manager).
+pub struct McpServerHandle {
+    /// Port the server is listening on.
+    pub port: u16,
+    /// Shutdown signal sender.
+    shutdown_tx: tokio::sync::oneshot::Sender<()>,
+    /// Session manager reference.
+    pub sessions: Arc<SessionManager>,
+}
+
+/// Create the initial MCP server state for Tauri managed state.
 #[must_use]
-pub fn create_mcp_service() -> McpServiceState {
-    Arc::new(RwLock::new(McpService::new()))
+pub fn create_mcp_server_state() -> McpServerServiceState {
+    Arc::new(RwLock::new(None))
 }
 
-/// Load MCP server configuration from `~/.runi/mcp-servers.yaml`.
-#[tauri::command]
-pub async fn mcp_load_config(state: tauri::State<'_, McpServiceState>) -> Result<(), String> {
-    let config_dir = feature_config::get_config_dir()?;
-    let mut service = state.write().await;
-    service.load_config(&config_dir).await
+/// Status info returned by `mcp_server_status`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct McpServerStatusInfo {
+    /// Whether the server is running.
+    pub running: bool,
+    /// Port the server is listening on (if running).
+    pub port: Option<u16>,
+    /// Number of active sessions.
+    pub session_count: usize,
 }
 
-/// Start an MCP server by name.
+/// Default port for the MCP server.
+pub const DEFAULT_MCP_PORT: u16 = 3001;
+
+/// Start the MCP server on the given port, storing the handle in the provided state.
+///
+/// This is the core implementation used by both the Tauri command and auto-start.
+///
+/// # Errors
+///
+/// Returns an error if the server is already running, the collections directory
+/// cannot be determined, or the port is unavailable.
+pub async fn start_server(port: u16, state: &McpServerServiceState) -> Result<(), String> {
+    {
+        let guard = state.read().await;
+        if guard.is_some() {
+            return Err("MCP server is already running".to_string());
+        }
+        drop(guard);
+    }
+
+    let service = McpServerService::with_default_dir()?;
+    let sessions = Arc::new(SessionManager::new());
+
+    let mcp_state = McpServerState {
+        service: Arc::new(RwLock::new(service)),
+        sessions: Arc::clone(&sessions),
+    };
+
+    let app = http_sse::router(mcp_state);
+
+    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{port}"))
+        .await
+        .map_err(|e| format!("Failed to bind to port {port}: {e}"))?;
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+
+    tokio::spawn(async move {
+        axum::serve(listener, app)
+            .with_graceful_shutdown(async {
+                let _ = shutdown_rx.await;
+            })
+            .await
+            .ok();
+    });
+
+    let mut guard = state.write().await;
+    *guard = Some(McpServerHandle {
+        port,
+        shutdown_tx,
+        sessions,
+    });
+    drop(guard);
+
+    tracing::info!("MCP server started on port {port}");
+    Ok(())
+}
+
+/// Start the MCP HTTP/SSE server on the given port.
 #[tauri::command]
-pub async fn mcp_start_server(
-    name: String,
-    state: tauri::State<'_, McpServiceState>,
+pub async fn mcp_server_start(
+    port: u16,
+    server_state: tauri::State<'_, McpServerServiceState>,
 ) -> Result<(), String> {
-    let mut service = state.write().await;
-    service.start_server(&name).await
+    start_server(port, &server_state).await
 }
 
-/// Stop an MCP server by name.
+/// Stop the MCP HTTP/SSE server.
 #[tauri::command]
-pub async fn mcp_stop_server(
-    name: String,
-    state: tauri::State<'_, McpServiceState>,
+pub async fn mcp_server_stop(
+    server_state: tauri::State<'_, McpServerServiceState>,
 ) -> Result<(), String> {
-    let mut service = state.write().await;
-    service.stop_server(&name).await
+    let handle = {
+        let mut guard = server_state.write().await;
+        guard
+            .take()
+            .ok_or_else(|| "MCP server is not running".to_string())?
+    };
+
+    let _ = handle.shutdown_tx.send(());
+    tracing::info!("MCP server stopped");
+    Ok(())
 }
 
-/// List all registered MCP servers with their status and tools.
-#[tauri::command]
-pub async fn mcp_list_servers(
-    state: tauri::State<'_, McpServiceState>,
-) -> Result<Vec<ServerInfo>, String> {
-    let service = state.read().await;
-    Ok(service.list_servers())
-}
-
-/// Get info for a single MCP server by name.
+/// Get the status of the MCP server.
 #[tauri::command]
 pub async fn mcp_server_status(
-    name: String,
-    state: tauri::State<'_, McpServiceState>,
-) -> Result<ServerInfo, String> {
-    let service = state.read().await;
-    service.get_server_info(&name)
-}
-
-/// List tools available on a running MCP server.
-#[tauri::command]
-pub async fn mcp_list_tools(
-    server_name: String,
-    state: tauri::State<'_, McpServiceState>,
-) -> Result<Vec<ToolInfo>, String> {
-    let service = state.read().await;
-    service.get_server_tools(&server_name)
-}
-
-/// Call a tool on a running MCP server.
-#[tauri::command]
-pub async fn mcp_call_tool(
-    server_name: String,
-    tool_name: String,
-    arguments: serde_json::Value,
-    state: tauri::State<'_, McpServiceState>,
-) -> Result<ToolCallResult, String> {
-    let service = state.read().await;
-    service.call_tool(&server_name, &tool_name, arguments).await
+    server_state: tauri::State<'_, McpServerServiceState>,
+) -> Result<McpServerStatusInfo, String> {
+    let guard = server_state.read().await;
+    match guard.as_ref() {
+        Some(handle) => Ok(McpServerStatusInfo {
+            running: true,
+            port: Some(handle.port),
+            session_count: handle.sessions.session_count().await,
+        }),
+        None => Ok(McpServerStatusInfo {
+            running: false,
+            port: None,
+            session_count: 0,
+        }),
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::mcp::types::{ServerStatus, ToolContent};
-
-    #[test]
-    fn test_server_info_json_roundtrip() {
-        let info = ServerInfo {
-            name: "test".to_string(),
-            status: ServerStatus::Running,
-            tools: vec![ToolInfo {
-                name: "echo".to_string(),
-                description: Some("Echo tool".to_string()),
-                input_schema: serde_json::json!({"type": "object"}),
-            }],
-        };
-        let json = serde_json::to_string(&info).unwrap();
-        let parsed: ServerInfo = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed.name, "test");
-        assert_eq!(parsed.tools.len(), 1);
-    }
-
-    #[test]
-    fn test_tool_call_result_json_roundtrip() {
-        let result = ToolCallResult {
-            content: vec![ToolContent::Text("hello".to_string())],
-            is_error: false,
-        };
-        let json = serde_json::to_string(&result).unwrap();
-        let parsed: ToolCallResult = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed.content.len(), 1);
-        assert!(!parsed.is_error);
-    }
 
     #[tokio::test]
-    async fn test_create_mcp_service_returns_valid_state() {
-        let state = create_mcp_service();
-        let service = state.read().await;
-        assert!(service.list_servers().is_empty());
-        drop(service);
+    async fn test_create_mcp_server_state_is_none() {
+        let state = create_mcp_server_state();
+        let guard = state.read().await;
+        assert!(guard.is_none());
+        drop(guard);
+    }
+
+    #[test]
+    fn test_server_status_info_serialization() {
+        let status = McpServerStatusInfo {
+            running: true,
+            port: Some(3001),
+            session_count: 2,
+        };
+        let json = serde_json::to_string(&status).unwrap();
+        assert!(json.contains("\"running\":true"));
+        assert!(json.contains("\"port\":3001"));
+        assert!(json.contains("\"sessionCount\":2"));
+    }
+
+    #[test]
+    fn test_server_status_info_not_running() {
+        let status = McpServerStatusInfo {
+            running: false,
+            port: None,
+            session_count: 0,
+        };
+        let json = serde_json::to_string(&status).unwrap();
+        assert!(json.contains("\"running\":false"));
+        assert!(json.contains("\"port\":null"));
     }
 }

@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 //! MCP domain types for server status, tool info, and tool call results.
+//!
+//! Currently unused — preserved for future MCP client service.
+
+#![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
 

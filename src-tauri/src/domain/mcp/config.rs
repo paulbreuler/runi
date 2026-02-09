@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 //! MCP server configuration loading and validation.
+//!
+//! Currently unused — preserved for future MCP client configuration support.
+
+#![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

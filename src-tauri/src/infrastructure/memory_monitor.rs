@@ -114,7 +114,7 @@ impl MemoryMonitorState {
 fn get_current_memory_usage(total_ram_gb: f64) -> (f64, f64) {
     let mut system = System::new();
     // Only refresh processes, not all system info (more efficient)
-    system.refresh_processes(sysinfo::ProcessesToUpdate::All);
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
     let pid = Pid::from(std::process::id() as usize);
 
     system.process(pid).map_or((0.0, 0.0), |process| {

@@ -3,5 +3,5 @@
 
 // Application layer - Use cases and services
 
-pub mod mcp_service;
+pub mod mcp_server_service;
 pub mod proxy_service;

@@ -41,7 +41,7 @@ pub fn save_collection(collection: &Collection) -> Result<PathBuf, String> {
     save_collection_in_dir(collection, &dir)
 }
 
-fn save_collection_in_dir(collection: &Collection, dir: &Path) -> Result<PathBuf, String> {
+pub fn save_collection_in_dir(collection: &Collection, dir: &Path) -> Result<PathBuf, String> {
     ensure_dir(dir)?;
     let filename = format!("{}.yaml", collection.id);
     let path = dir.join(&filename);
@@ -70,7 +70,7 @@ pub fn load_collection(collection_id: &str) -> Result<Collection, String> {
     load_collection_in_dir(collection_id, &dir)
 }
 
-fn load_collection_in_dir(collection_id: &str, dir: &Path) -> Result<Collection, String> {
+pub fn load_collection_in_dir(collection_id: &str, dir: &Path) -> Result<Collection, String> {
     let path = dir.join(format!("{collection_id}.yaml"));
 
     if !path.exists() {
@@ -90,7 +90,7 @@ pub fn list_collections() -> Result<Vec<CollectionSummary>, String> {
     list_collections_in_dir(&dir)
 }
 
-fn list_collections_in_dir(dir: &Path) -> Result<Vec<CollectionSummary>, String> {
+pub fn list_collections_in_dir(dir: &Path) -> Result<Vec<CollectionSummary>, String> {
     ensure_dir(dir)?;
 
     let mut summaries = Vec::new();
@@ -120,7 +120,7 @@ pub fn delete_collection(collection_id: &str) -> Result<(), String> {
     delete_collection_in_dir(collection_id, &dir)
 }
 
-fn delete_collection_in_dir(collection_id: &str, dir: &Path) -> Result<(), String> {
+pub fn delete_collection_in_dir(collection_id: &str, dir: &Path) -> Result<(), String> {
     let path = dir.join(format!("{collection_id}.yaml"));
 
     if !path.exists() {

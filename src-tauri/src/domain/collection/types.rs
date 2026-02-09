@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use serde_yml::Value;
 use std::collections::BTreeMap;
@@ -306,10 +306,10 @@ pub enum AuthType {
 }
 
 fn random_hex_suffix() -> String {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut random = String::with_capacity(6);
     for _ in 0..6 {
-        let nibble: u8 = rng.gen_range(0..16);
+        let nibble: u8 = rng.random_range(0..16);
         random.push(std::char::from_digit(u32::from(nibble), 16).unwrap_or('0'));
     }
     random

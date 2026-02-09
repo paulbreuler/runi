@@ -21,8 +21,8 @@ use infrastructure::commands::{
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
 use infrastructure::mcp::commands::{
-    create_mcp_service, mcp_call_tool, mcp_list_servers, mcp_list_tools, mcp_load_config,
-    mcp_server_status, mcp_start_server, mcp_stop_server,
+    DEFAULT_MCP_PORT, create_mcp_server_state, mcp_server_start, mcp_server_status,
+    mcp_server_stop, start_server,
 };
 use infrastructure::memory_monitor::{
     collect_ram_sample, get_ram_stats, set_memory_monitoring_enabled, start_memory_monitor,
@@ -73,10 +73,19 @@ pub fn run() {
             let app_handle = app.handle();
             start_memory_monitor(app_handle, total_ram_gb);
 
+            // Auto-start MCP server so Claude Code can connect immediately
+            let mcp_state = app.state::<infrastructure::mcp::commands::McpServerServiceState>();
+            let mcp_state_clone = mcp_state.inner().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = start_server(DEFAULT_MCP_PORT, &mcp_state_clone).await {
+                    tracing::warn!("Failed to auto-start MCP server: {e}");
+                }
+            });
+
             Ok(())
         })
         .manage(create_proxy_service())
-        .manage(create_mcp_service())
+        .manage(create_mcp_server_state())
         .invoke_handler(tauri::generate_handler![
             hello_world,
             execute_request,
@@ -104,13 +113,9 @@ pub fn run() {
             cmd_write_frontend_error_report,
             set_log_level,
             write_startup_timing,
-            mcp_load_config,
-            mcp_start_server,
-            mcp_stop_server,
-            mcp_list_servers,
-            mcp_server_status,
-            mcp_list_tools,
-            mcp_call_tool
+            mcp_server_start,
+            mcp_server_stop,
+            mcp_server_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
