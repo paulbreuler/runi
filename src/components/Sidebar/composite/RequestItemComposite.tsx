@@ -117,24 +117,6 @@ export const RequestItemComposite = ({
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
-        <AnimatePresence mode="popLayout">
-          {isAiDraft && isPopout && (
-            <motion.button
-              key="accept-button-popout"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              type="button"
-              className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
-              onClick={handleAcceptAi}
-              title="Accept AI changes"
-            >
-              <Check size={10} />
-              Accept
-            </motion.button>
-          )}
-        </AnimatePresence>
-
         {(isAiDraft || isAiVerified) && (
           <div
             className={cn(
@@ -194,7 +176,7 @@ export const RequestItemComposite = ({
         <div className="relative flex items-center justify-between gap-2 w-full z-10 pointer-events-none h-[28px]">
           {renderContent()}
 
-          {/* Action Area - Sibling to content but visually on right */}
+          {/* Action Area - Only in base layer to avoid double buttons, visually on right */}
           <div className="flex items-center gap-1.5 shrink-0 mr-2">
             <AnimatePresence mode="popLayout">
               {isAiDraft && (
@@ -217,17 +199,36 @@ export const RequestItemComposite = ({
         </div>
 
         <PopoverContent
-          side="bottom"
+          side="top"
           align="start"
           sideOffset={-28}
           className={cn(
-            'pointer-events-auto overflow-hidden bg-bg-elevated shadow-2xl min-w-full w-auto p-0 h-[28px] flex items-center z-100 cursor-pointer',
+            'pointer-events-auto overflow-hidden shadow-2xl min-w-full w-auto p-0 h-[28px] flex items-center z-100 cursor-pointer',
             isSelected ? 'bg-accent-blue/20' : 'bg-bg-raised',
-            isAiDraft ? 'border border-signal-ai/40 rounded-md' : 'border-none rounded-none'
+            isAiDraft
+              ? 'border border-signal-ai/40 rounded-md bg-signal-ai/[0.05]'
+              : 'border-none rounded-none'
           )}
           onClick={handleSelect}
         >
           {renderContent(true)}
+
+          {/* Mirrored Action Area in Popout */}
+          <div className="flex items-center gap-1.5 shrink-0 mr-2 pointer-events-none">
+            <AnimatePresence mode="popLayout">
+              {isAiDraft && (
+                <motion.button
+                  key="accept-button-pop"
+                  type="button"
+                  className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
+                  onClick={handleAcceptAi}
+                >
+                  <Check size={10} />
+                  Accept
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
