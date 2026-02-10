@@ -174,13 +174,6 @@ export const Playground: Story = {
       await expect(scrollArea.scrollLeft).toBeGreaterThan(0);
     });
 
-    await step('Verify StatusBadge is present', async () => {
-      const badge = canvas.getByTestId('status-badge');
-      await expect(badge).toBeVisible();
-      await expect(badge).toHaveTextContent('200');
-      await expect(badge).toHaveTextContent('OK');
-    });
-
     await step('Verify tab panel content is accessible', async () => {
       // Switch back to Body tab
       const bodyTab = canvas.getByTestId('response-tab-body');

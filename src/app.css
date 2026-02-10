@@ -31,102 +31,76 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* ============================================
-     Semantic Color Tokens
-     Uses --color-* prefix so Tailwind utilities work:
-     - bg-bg-app, bg-bg-surface use --color-bg-*
-     - text-text-primary, text-text-muted use --color-text-*
-     - border-border-subtle use --color-border-*
+     Zen "Ink" Surface Palette
      ============================================ */
 
-  /* Background tokens (used as bg-bg-app, bg-bg-surface, etc.) */
-  --color-bg-app: var(--color-background);
-  --color-bg-surface: var(--color-surface);
-  --color-bg-raised: var(--color-panel-solid);
-  --color-bg-elevated: var(--gray-4);
-  --color-bg-overlay: var(--color-overlay);
+  /* Background tokens */
+  --color-bg-app: #080809;
+  --color-bg-surface: #111113;
+  --color-bg-raised: #1a1a1d;
+  --color-bg-elevated: #242427;
+  --color-bg-overlay: oklch(0.1 0.01 240 / 80%);
 
-  /* Text tokens (used as text-text-primary, text-text-muted, etc.) */
-  --color-text-primary: var(--gray-12);
-  --color-text-secondary: var(--gray-11);
-  --color-text-muted: var(--gray-9);
-  --color-text-contrast: var(--gray-1);
+  /* Text tokens */
+  --color-text-primary: oklch(0.98 0.01 240);
+  --color-text-secondary: oklch(0.85 0.01 240);
+  --color-text-muted: oklch(0.65 0.01 240);
+  --color-text-contrast: oklch(0.05 0.01 240);
 
-  /* Border tokens (used as border-border-subtle, border-border-default, etc.) */
-  --color-border-subtle: var(--gray-5);
-  --color-border-default: var(--gray-6);
-  --color-border-emphasis: var(--gray-7);
+  /* Border tokens */
+  --color-border-subtle: oklch(0.2 0.01 240 / 40%);
+  --color-border-default: oklch(0.25 0.01 240 / 50%);
+  --color-border-emphasis: oklch(0.35 0.01 240 / 60%);
 
-  /* Signal Colors (runi-specific, until full Radix scales added) */
-  --color-signal-success: oklch(0.723 0.191 142.5);
-  --color-signal-warning: oklch(0.769 0.188 70.08);
-  --color-signal-error: oklch(0.637 0.237 25.33);
-  --color-signal-ai: oklch(0.627 0.265 303.9);
+  /* Signal Colors - Zen low-chroma OKLCH functional signals */
+  --color-signal-success: oklch(0.75 0.1 150);
+  --color-signal-success-rgba-08: oklch(0.75 0.1 150 / 8%);
+  --color-signal-warning: oklch(0.8 0.1 75);
+  --color-signal-warning-rgba-08: oklch(0.8 0.1 75 / 8%);
+  --color-signal-error: oklch(0.65 0.12 25);
+  --color-signal-ai: oklch(0.65 0.1 300);
+  --color-signal-ai-rgba-25: oklch(0.65 0.1 300 / 25%);
+  --color-accent-blue: oklch(0.7 0.1 230);
+  --color-accent-blue-hover: oklch(0.7 0.1 230 / 90%);
+  --color-accent-contrast: var(--color-text-primary);
+  --color-accent-purple: var(--color-signal-ai);
 
-  /* HTTP Method Colors */
-  --color-method-get: var(--accent-9);
+  /* HTTP Method Colors - Zen Signal mapping */
+  --color-method-get: oklch(0.7 0.1 230);
   --color-method-post: var(--color-signal-success);
   --color-method-put: var(--color-signal-warning);
   --color-method-patch: var(--color-signal-warning);
   --color-method-delete: var(--color-signal-error);
-  --color-method-head: var(--gray-9);
-  --color-method-options: var(--gray-9);
+  --color-method-head: var(--color-text-muted);
+  --color-method-options: var(--color-text-muted);
 
-  /* Accent Colors (for Tailwind utility compatibility) */
-  --color-accent-blue: var(--accent-9);
-  --color-accent-blue-hover: var(--accent-10);
-  --color-accent-contrast: var(--accent-contrast);
-  --color-accent-purple: oklch(0.627 0.265 303.9);
-  --color-accent-green: oklch(0.723 0.191 142.5);
-  --color-accent-amber: oklch(0.769 0.188 70.08);
-  --color-accent-red: oklch(0.637 0.237 25.33);
+  /* Interactive State Tokens - Zen (No shadows, color shifts) */
+  --color-pressed: var(--color-bg-raised);
+  --color-pressed-subtle: oklch(0.2 0.01 240 / 20%);
+  --color-pressed-border: var(--color-border-emphasis);
+  --color-pressed-text: var(--color-text-primary);
 
-  /* ============================================
-     Interactive State Tokens
-     Usage: bg-pressed, border-pressed, text-pressed, etc.
-     These tokens switch automatically based on .light class
-     ============================================ */
+  /* Selected State */
+  --color-selected: oklch(0.7 0.1 230 / 15%);
+  --color-selected-solid: var(--color-accent-blue);
+  --color-selected-border: oklch(0.7 0.1 230 / 40%);
+  --color-selected-text: var(--color-text-primary);
 
-  /* Pressed State (toggles, buttons when activated) */
-  --color-pressed: var(--pressed-bg);
-  --color-pressed-subtle: var(--pressed-bg-subtle);
-  --color-pressed-border: var(--pressed-border);
-  --color-pressed-text: var(--pressed-text);
-
-  /* Selected State (multi-select, active tabs) */
-  --color-selected: var(--selected-bg);
-  --color-selected-solid: var(--selected-bg-solid);
-  --color-selected-border: var(--selected-border);
-  --color-selected-text: var(--selected-text);
-
-  /* Active State (navigation, current item) */
-  --color-active: var(--active-bg);
-  --color-active-border: var(--active-border);
-  --color-active-text: var(--active-text);
-  --color-active-indicator: var(--active-indicator);
+  /* Active State */
+  --color-active: oklch(0.7 0.1 230 / 10%);
+  --color-active-border: oklch(0.7 0.1 230 / 30%);
+  --color-active-text: var(--color-text-primary);
+  --color-active-indicator: var(--color-accent-blue);
 
   /* Hover State */
-  --color-hover: var(--hover-bg);
-  --color-hover-accent: var(--hover-bg-accent);
-  --color-hover-border: var(--hover-border);
+  --color-hover: var(--color-bg-raised);
+  --color-hover-accent: oklch(0.7 0.1 230 / 10%);
+  --color-hover-border: var(--color-border-emphasis);
 
-  /* shadcn/ui compatibility layer */
-  --color-foreground: var(--gray-12);
-  --color-card: var(--color-surface);
-  --color-card-foreground: var(--gray-12);
-  --color-popover: var(--color-surface);
-  --color-popover-foreground: var(--gray-12);
-  --color-primary: var(--accent-9);
-  --color-primary-foreground: var(--accent-contrast);
-  --color-secondary: var(--color-panel-solid);
-  --color-secondary-foreground: var(--gray-12);
-  --color-muted: var(--color-panel-solid);
-  --color-muted-foreground: var(--gray-11);
-  --color-accent: var(--color-panel-solid);
-  --color-accent-foreground: var(--gray-12);
-  --color-destructive: var(--color-signal-error);
-  --color-border: var(--gray-6);
-  --color-input: var(--color-panel-solid);
-  --color-ring: var(--color-primary);
+  /* Transition Durations - Zen (0.2s - 0.4s) */
+  --duration-zen-fast: 0.2s;
+  --duration-zen-base: 0.3s;
+  --duration-zen-slow: 0.4s;
 }
 
 /* ============================================
@@ -165,7 +139,7 @@ body {
 @layer base {
   * {
     /* Focus indicator: use focusRingClasses on interactive elements; no global outline to avoid double indicators */
-    @apply border-[color:var(--gray-6)];
+    @apply border-border-subtle;
   }
 
   /* Disable elastic overscroll bounce on all scrollable elements */
@@ -192,42 +166,97 @@ body {
 }
 
 @layer utilities {
+  /* Glass Utility */
+  .glass {
+    @apply bg-bg-surface/70 backdrop-blur-md border border-border-subtle/50;
+  }
+
+  /* Grain Utility */
+  .grain {
+    position: relative;
+  }
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 10;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Drift Highlight Utility - For CodeMirror/Editor migration */
+  .drift-highlight {
+    background-color: var(--color-signal-warning-rgba-08);
+    box-shadow: inset 2px 0 0 0 var(--color-signal-warning);
+    position: relative;
+  }
+
+  /* Vigilance Monitor Progress Animation */
+  .vigilance-progress {
+    height: 2px;
+    background: linear-gradient(
+      to right,
+      var(--color-signal-ai) 0%,
+      var(--color-accent-blue) 50%,
+      var(--color-signal-success) 100%
+    );
+    background-size: 200% 100%;
+    animation: vigilance-flow 2s linear infinite;
+  }
+
+  /* Vigilance Monitor Idle State - Static line, same height as active to prevent layout shift */
+  .vigilance-progress-idle {
+    height: 2px;
+    background: var(--color-border-subtle);
+  }
+
+  @keyframes vigilance-flow {
+    0% {
+      background-position: 100% 0%;
+    }
+    100% {
+      background-position: -100% 0%;
+    }
+  }
+
   .window-blur {
-    /* Dim root text tokens */
-    --color-text-primary: var(--gray-10);
-    --color-text-secondary: var(--gray-9);
-    --color-text-muted: var(--gray-8);
+    /* Dim root text tokens - Zen Inactive */
+    --color-text-primary: oklch(0.5 0.01 240);
+    --color-text-secondary: oklch(0.4 0.01 240);
+    --color-text-muted: oklch(0.3 0.01 240);
 
-    /* Dim root border tokens */
-    --color-border-subtle: var(--gray-3);
-    --color-border-default: var(--gray-4);
+    /* Dim root border tokens - Zen Inactive */
+    --color-border-subtle: oklch(0.15 0.01 240 / 10%);
+    --color-border-default: oklch(0.18 0.01 240 / 15%);
+    --color-border-emphasis: oklch(0.22 0.01 240 / 20%);
 
-    /* Dim root background/surface tokens (propagates to bg-bg-app, bg-bg-surface, etc.) */
-    --color-background: var(--gray-1);
-    --color-surface: var(--gray-1);
-    --color-panel-solid: var(--gray-2);
-    --color-bg-elevated: var(--gray-3);
+    /* Dim root background/surface tokens */
+    --color-background: #060607;
+    --color-surface: #0a0a0c;
+    --color-panel-solid: #0e0e10;
+    --color-bg-elevated: #141416;
 
     /* Dim semantic/signal colors when blurred */
-    --color-accent-blue: var(--gray-9);
-    --color-accent-blue-hover: var(--gray-10);
-    --color-accent-purple: var(--gray-9);
-    --color-signal-success: var(--gray-9);
-    --color-signal-warning: var(--gray-9);
-    --color-signal-error: var(--gray-9);
-    --color-signal-ai: var(--gray-9);
+    --color-signal-success: oklch(0.4 0.02 150);
+    --color-signal-warning: oklch(0.4 0.02 75);
+    --color-signal-error: oklch(0.4 0.02 25);
+    --color-signal-ai: oklch(0.4 0.02 300);
+    --color-accent-blue: oklch(0.4 0.02 230);
 
     /* Dim method colors specifically */
-    --color-method-get: var(--gray-9);
-    --color-method-post: var(--gray-9);
-    --color-method-put: var(--gray-9);
-    --color-method-patch: var(--gray-9);
-    --color-method-delete: var(--gray-9);
+    --color-method-get: oklch(0.4 0.02 230);
+    --color-method-post: oklch(0.4 0.02 150);
+    --color-method-put: oklch(0.4 0.02 75);
+    --color-method-patch: oklch(0.4 0.02 75);
+    --color-method-delete: oklch(0.4 0.02 25);
   }
 }
 
 /* ============================================
-   Animations
+   Animations - Deliberate and Calm
    ============================================ */
 
 @keyframes pulse-glow {
@@ -237,15 +266,15 @@ body {
     transform: scale(1);
   }
   50% {
-    opacity: 0.7;
-    transform: scale(1.02);
+    opacity: 0.8;
+    transform: scale(1.01);
   }
 }
 
 @keyframes slide-in {
   from {
     opacity: 0;
-    transform: translateX(-10px);
+    transform: translateX(-4px);
   }
   to {
     opacity: 1;
@@ -256,7 +285,7 @@ body {
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -265,15 +294,15 @@ body {
 }
 
 .animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+  animation: pulse-glow 3s linear infinite;
 }
 
 .animate-slide-in {
-  animation: slide-in 0.3s ease-out forwards;
+  animation: slide-in var(--duration-zen-base) linear forwards;
 }
 
 .animate-fade-up {
-  animation: fade-up 0.6s ease-out forwards;
+  animation: fade-up var(--duration-zen-slow) linear forwards;
 }
 
 /* ============================================
@@ -286,16 +315,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-surface);
+  background: var(--color-bg-app);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--gray-8);
+  background: var(--gray-7);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-9);
+  background: var(--gray-8);
 }
 
 /* Hide scrollbars while preserving scroll behavior */
@@ -339,14 +368,14 @@ body {
 
 /* Scrollbar thumb */
 .scroll-area-thumb {
-  background: var(--gray-8);
+  background: var(--gray-7);
   border-radius: 4px;
   position: relative;
   transition: background 0.2s;
 }
 
 .scroll-area-thumb:hover {
-  background: var(--gray-9);
+  background: var(--gray-8);
 }
 
 /* Ensure minimum touch target size (44x44px) */
@@ -420,8 +449,8 @@ aside[data-test-id='sidebar'] {
    ============================================ */
 
 ::selection {
-  background: var(--accent-a5);
-  color: var(--gray-12);
+  background: var(--color-signal-ai-rgba-25);
+  color: var(--color-text-primary);
 }
 
 /* ============================================

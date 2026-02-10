@@ -10,6 +10,17 @@ import userEvent from '@testing-library/user-event';
 import { fireEvent } from '@testing-library/react';
 import { PanelTabs } from './PanelTabs';
 
+// Mock useSettingsStore for Follow AI toggle
+vi.mock('@/stores/useSettingsStore', () => ({
+  useSettingsStore: Object.assign(
+    (selector: (state: { followAiMode: boolean; toggleFollowAiMode: () => void }) => unknown) =>
+      selector({ followAiMode: false, toggleFollowAiMode: vi.fn() }),
+    {
+      getState: () => ({ followAiMode: false }),
+    }
+  ),
+}));
+
 // Mock motion/react to avoid animation-related issues in tests
 vi.mock('motion/react', () => ({
   motion: {
@@ -141,7 +152,7 @@ describe('PanelTabs', () => {
       const list = container.querySelector('[data-test-id="tabs-list"]');
       expect(list).toBeInTheDocument();
       const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"][role="tab"]');
-      expect(triggers).toHaveLength(2);
+      expect(triggers).toHaveLength(3);
     });
 
     it('renders Network tab with icon', () => {
@@ -177,6 +188,32 @@ describe('PanelTabs', () => {
 
       expect(screen.queryByTestId('panel-tab-network-count')).not.toBeInTheDocument();
       expect(screen.queryByTestId('panel-tab-console-count')).not.toBeInTheDocument();
+    });
+
+    it('renders Activity tab', () => {
+      render(<PanelTabs activeTab="activity" onTabChange={mockOnTabChange} />);
+
+      expect(screen.getByTestId('panel-tab-activity')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-activity')).toHaveTextContent('Activity');
+    });
+
+    it('displays activity count badge when provided', () => {
+      render(<PanelTabs activeTab="activity" onTabChange={mockOnTabChange} activityCount={7} />);
+
+      expect(screen.getByTestId('panel-tab-activity-count')).toHaveTextContent('7');
+    });
+
+    it('shows Follow AI toggle when activity tab is active', () => {
+      render(<PanelTabs activeTab="activity" onTabChange={mockOnTabChange} />);
+
+      expect(screen.getByTestId('follow-ai-toggle')).toBeInTheDocument();
+      expect(screen.getByTestId('follow-ai-toggle')).toHaveTextContent('Follow AI');
+    });
+
+    it('hides Follow AI toggle when activity tab is not active', () => {
+      render(<PanelTabs activeTab="network" onTabChange={mockOnTabChange} />);
+
+      expect(screen.queryByTestId('follow-ai-toggle')).not.toBeInTheDocument();
     });
   });
 
@@ -327,6 +364,7 @@ describe('PanelTabs', () => {
       const values = Array.from(triggers).map((t) => t.getAttribute('data-value'));
       expect(values).toContain('network');
       expect(values).toContain('console');
+      expect(values).toContain('activity');
     });
 
     it('uses contained focus ring styles to avoid clipping in panel headers', () => {

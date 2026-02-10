@@ -14,12 +14,16 @@ interface SettingsState {
   sidebarEdge: SidebarEdge;
   logLevel: LogLevel;
   metricsVisible: boolean;
+  /** When true, auto-focus AI-created/modified items in the UI. */
+  followAiMode: boolean;
   toggleSidebar: () => void;
   setSidebarVisible: (visible: boolean) => void;
   setSidebarEdge: (edge: SidebarEdge) => void;
   setLogLevel: (level: LogLevel) => Promise<void>;
   toggleMetrics: () => void;
   setMetricsVisible: (visible: boolean) => void;
+  toggleFollowAiMode: () => void;
+  setFollowAiMode: (enabled: boolean) => void;
 }
 
 interface RuniE2EConfig {
@@ -42,6 +46,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   sidebarEdge: 'left',
   logLevel: 'info',
   metricsVisible: false, // Default hidden to save space
+  followAiMode: false, // Default off — user opts in
   toggleSidebar: (): void => {
     set((state) => ({ sidebarVisible: !state.sidebarVisible }));
   },
@@ -65,5 +70,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   },
   setMetricsVisible: (visible: boolean): void => {
     set({ metricsVisible: visible });
+  },
+  toggleFollowAiMode: (): void => {
+    set((state) => ({ followAiMode: !state.followAiMode }));
+  },
+  setFollowAiMode: (enabled: boolean): void => {
+    set({ followAiMode: enabled });
   },
 }));

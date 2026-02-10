@@ -30,7 +30,7 @@ export const NetworkStatusBar = ({
   }
 
   return (
-    <div className="h-8 flex items-center gap-4 px-3 border-t border-border-subtle text-xs">
+    <div className="h-7 flex items-center gap-4 px-3 border-t border-border-subtle text-xs">
       {driftCount > 0 && <span className="text-signal-warning">{driftCount} with drift</span>}
 
       {aiCount > 0 && <span className="text-signal-ai">{aiCount} AI-generated</span>}

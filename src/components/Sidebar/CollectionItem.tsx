@@ -4,7 +4,7 @@
  */
 
 import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
-import { CollectionItemRequestList } from '@/components/Sidebar/RequestItem';
+import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
   useCollectionStore,
@@ -61,7 +61,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
           <span className="text-text-muted">
             {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
-          <Folder size={14} className="text-text-muted" />
+          <Folder size={14} className="shrink-0 text-text-muted" />
           <span className="text-sm text-text-primary truncate" title={summary.name}>
             {displayName}
           </span>
@@ -74,7 +74,7 @@ export const CollectionItem = ({ summary }: CollectionItemProps): React.JSX.Elem
       </button>
       {isExpanded && (
         <div className="ml-3 border-l border-border-subtle pb-2" data-test-id="collection-requests">
-          <CollectionItemRequestList collectionId={summary.id} requests={sortedRequests} />
+          <RequestListComposite collectionId={summary.id} requests={sortedRequests} />
         </div>
       )}
     </div>

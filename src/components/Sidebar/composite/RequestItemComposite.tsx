@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { globalEventBus } from '@/events/bus';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
@@ -14,18 +13,24 @@ import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
+import { globalEventBus } from '@/events/bus';
 
-interface RequestItemProps {
+export interface RequestItemCompositeProps {
   request: CollectionRequest;
   collectionId: string;
+  className?: string;
 }
 
-interface CollectionItemRequestListProps {
-  requests: CollectionRequest[];
-  collectionId: string;
-}
-
-export const RequestItem = ({ request, collectionId }: RequestItemProps): React.JSX.Element => {
+/**
+ * A composite sidebar item for API requests.
+ * Uses a fixed-position overlay pattern (matching production RequestItem)
+ * to expand truncated names on hover without ghosting artifacts.
+ */
+export const RequestItemComposite = ({
+  request,
+  collectionId,
+  className,
+}: RequestItemCompositeProps): React.JSX.Element => {
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
   const isSelected = selectedRequestId === request.id;
   const selectRequest = useCollectionStore((state) => state.selectRequest);
@@ -52,7 +57,9 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
   const displayName = truncateNavLabel(request.name);
-  const isGhostNode = isAiGenerated(request) && request.intelligence.verified !== true;
+
+  const isAiDraft = isAiGenerated(request) && request.intelligence.verified !== true;
+  const isAiVerified = isAiGenerated(request) && request.intelligence.verified === true;
 
   // Occlusion detection: hide popout if the item scrolls out of view
   useEffect((): (() => void) | undefined => {
@@ -68,8 +75,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
 
     const observer = new IntersectionObserver(
       ([entry]): void => {
-        // Only occlude if mostly hidden (less than 10% visible)
-        // This prevents items at the very bottom of the scroll container from being blocked
         setIsOccluded(entry !== undefined && entry.intersectionRatio < 0.1);
       },
       {
@@ -107,7 +112,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       return;
     }
     const { scrollWidth, clientWidth } = textRef.current;
-    // Use 1px buffer for robustness against subpixel rounding
     setIsTruncated(scrollWidth > clientWidth + 1);
   }, []);
 
@@ -119,7 +123,6 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
   }, [calculatePosition]);
 
   const showPopout = useCallback((): void => {
-    // Bail early if selected (popout won't render) or text isn't truncated
     if (isSelected) {
       return;
     }
@@ -141,6 +144,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     }
   }, [isFocused]);
 
+  // 250ms hover delay
   useEffect((): (() => void) => {
     if (isHovered || isFocused) {
       if (hoverTimeoutRef.current !== null) {
@@ -163,29 +167,11 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     };
   }, [isHovered, isFocused, showPopout, hidePopout]);
 
-  const handleMouseEnter = useCallback((): void => {
-    setIsHovered(true);
-  }, []);
-
-  const handleMouseLeave = useCallback((): void => {
-    setIsHovered(false);
-  }, []);
-
-  const handleFocus = useCallback((): void => {
-    setIsFocused(true);
-  }, []);
-
-  const handleBlur = useCallback((): void => {
-    setIsFocused(false);
-    setIsExpanded(false);
-    setPopoutPosition(null);
-  }, []);
-
   useLayoutEffect((): void => {
     evaluateTruncation();
   }, [evaluateTruncation, request.name]);
 
-  // Use ResizeObserver to reliably track truncation as sidebar resizes
+  // ResizeObserver for truncation tracking
   useLayoutEffect((): (() => void) | undefined => {
     const el = textRef.current;
     if (el === null || typeof ResizeObserver === 'undefined') {
@@ -205,6 +191,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     [isExpanded, isOccluded, isTruncated, isSelected]
   );
 
+  // Scroll/resize position tracking
   useEffect((): (() => void) | undefined => {
     if (!isActuallyVisible()) {
       return undefined;
@@ -222,9 +209,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       });
     };
 
-    // Update on scroll or resize
     window.addEventListener('resize', handleUpdate);
-    // Use capture for scroll to catch events from any container
     window.addEventListener('scroll', handleUpdate, true);
 
     return (): void => {
@@ -236,6 +221,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     };
   }, [isActuallyVisible, updatePopoutPosition]);
 
+  // Cleanup timeout on unmount
   useEffect((): (() => void) | undefined => {
     return (): void => {
       if (hoverTimeoutRef.current !== null) {
@@ -244,6 +230,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     };
   }, []);
 
+  // Scroll-dismiss
   useEffect((): (() => void) | undefined => {
     if (!isExpanded) {
       return undefined;
@@ -263,107 +250,115 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     };
   }, [hidePopout, isExpanded, isFocused]);
 
-  const handleAction = (): void => {
-    // Close popout immediately on selection so it doesn't obstruct the main UI
+  const handleSelect = useCallback((): void => {
     setIsExpanded(false);
     setPopoutPosition(null);
-
     selectRequest(collectionId, request.id);
+    globalEventBus.emit('collection.request-selected', { collectionId, request });
+  }, [collectionId, request, selectRequest]);
 
-    // Propagate event for other components (like RequestPanel) to react
-    globalEventBus.emit('collection.request-selected', {
-      collectionId,
-      request,
-    });
-  };
+  const handleFocus = useCallback((): void => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback((): void => {
+    setIsFocused(false);
+    setIsExpanded(false);
+    setPopoutPosition(null);
+  }, []);
+
+  const renderContent = (isPopout = false): React.JSX.Element => (
+    <div
+      className={cn('flex items-center gap-2 w-full h-full px-2', isPopout && 'whitespace-nowrap')}
+    >
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        {isBound(request) && (
+          <div className="shrink-0 w-3 flex items-center justify-center">
+            <span className="h-1.5 w-1.5 rounded-full bg-signal-success shadow-[0_0_4px_rgba(34,197,94,0.4)]" />
+          </div>
+        )}
+
+        <span
+          className={cn(
+            'text-[10px] font-bold uppercase tracking-widest shrink-0 min-w-[28px]',
+            methodClass
+          )}
+        >
+          {request.method}
+        </span>
+
+        <span
+          ref={isPopout ? null : textRef}
+          className={cn('text-sm text-text-primary', !isPopout && 'truncate block')}
+        >
+          {isPopout ? request.name : displayName}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1.5 shrink-0">
+        {(isAiDraft || isAiVerified) && (
+          <Sparkles size={10} className={isAiDraft ? 'text-signal-ai' : 'text-text-muted'} />
+        )}
+
+        {request.is_streaming && (
+          <div className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-1.5 py-0.5 text-[10px] text-accent-purple shrink-0 font-semibold">
+            <Radio size={10} />
+            Stream
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const actuallyVisible = isActuallyVisible();
 
   return (
     <div
-      className="relative w-full"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      className={cn('relative w-full', className)}
+      onMouseEnter={(): void => {
+        setIsHovered(true);
+      }}
+      onMouseLeave={(): void => {
+        setIsHovered(false);
+      }}
     >
-      {/* div[role=button] avoids invalid nested <button> when Accept button is rendered inside */}
+      {/* div[role=button] avoids invalid nested <button> when action slot contains a <button> */}
       <div
         ref={rowRef}
         role="button"
         tabIndex={0}
-        aria-label={`${request.method} ${request.name}`}
+        aria-label={`Select request ${request.method} ${request.name}`}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors cursor-pointer',
+          'w-full flex items-center justify-between gap-2 py-1 text-left transition-colors min-h-[28px] cursor-pointer',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
-          isActuallyVisible() ? 'outline-none ring-0 shadow-none' : focusRingClasses,
-          isActuallyVisible() && !isFocused && 'bg-transparent',
-          isGhostNode && 'border border-signal-ai/25 rounded-md mx-1 my-0.5',
-          isGhostNode && !isSelected && 'bg-signal-ai/[0.03]'
+          // Suppress focus ring when popout is visible — the popout visually replaces the row,
+          // so a double ring would be confusing.
+          actuallyVisible ? 'outline-none ring-0 shadow-none' : focusRingClasses,
+          actuallyVisible && !isFocused && 'bg-transparent',
+          isAiDraft && 'border border-signal-ai/25 bg-signal-ai/[0.03] rounded-md mx-1 my-0.5'
         )}
-        data-test-id={`collection-request-${request.id}`}
+        data-test-id={`request-select-${request.id}`}
         data-active={isSelected || undefined}
-        data-nav-item="true"
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e): void => {
           (e.currentTarget as HTMLElement).focus({ preventScroll: true });
-          handleAction();
+          handleSelect();
         }}
-        onKeyDown={(e): void => {
+        onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            handleAction();
+            handleSelect();
           }
         }}
       >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {isBound(request) && (
-            <div
-              className="flex items-center justify-center shrink-0 w-3"
-              role="img"
-              aria-label="Bound to spec"
-              title="Bound to spec"
-            >
-              <span className="h-2 w-2 rounded-full bg-signal-success" />
-            </div>
-          )}
-          <span
-            className={cn(
-              'text-xs font-semibold uppercase tracking-wider shrink-0 min-w-[28px]',
-              methodClass
-            )}
-          >
-            {request.method}
-          </span>
-          <span
-            ref={textRef}
-            className="text-sm text-text-primary truncate"
-            data-test-id="request-name"
-          >
-            {displayName}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {request.is_streaming && (
-            <span
-              className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs text-accent-purple shrink-0"
-              data-test-id="request-streaming-badge"
-            >
-              <Radio size={12} />
-              Streaming
-            </span>
-          )}
-          {isAiGenerated(request) && (
-            <span
-              className="flex items-center gap-1 rounded-full bg-signal-ai/10 px-2 py-0.5 text-xs text-signal-ai shrink-0"
-              data-test-id="request-ai-badge"
-            >
-              <Sparkles size={12} />
-              AI
-            </span>
-          )}
+        <div className={cn('flex items-center w-full', actuallyVisible && 'invisible')}>
+          {renderContent()}
         </div>
       </div>
 
       <AnimatePresence>
-        {isActuallyVisible() && popoutPosition !== null && (
+        {actuallyVisible && popoutPosition !== null && (
           <motion.div
             initial={{ width: popoutPosition.width }}
             animate={{ width: 'auto' }}
@@ -374,7 +369,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
                 : { type: 'spring', stiffness: 1000, damping: 50, mass: 0.5, delay: 0.1 }
             }
             role="tooltip"
-            className="pointer-events-none overflow-hidden bg-bg-elevated"
+            className={cn(
+              'pointer-events-none overflow-hidden bg-bg-elevated',
+              isAiDraft && 'border border-signal-ai/40 rounded-md'
+            )}
             data-test-id="request-popout"
             style={{
               position: 'fixed',
@@ -385,69 +383,10 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               maxWidth: 'min(600px, calc(100vw - 40px))',
             }}
           >
-            <div className="flex items-center gap-2 px-2 h-full whitespace-nowrap min-w-0">
-              {isBound(request) && (
-                <div
-                  className="flex items-center justify-center shrink-0 w-3"
-                  role="img"
-                  aria-label="Bound to spec"
-                  title="Bound to spec"
-                >
-                  <span className="h-2 w-2 rounded-full bg-signal-success" />
-                </div>
-              )}
-              <span
-                className={cn(
-                  'text-xs font-semibold uppercase tracking-wider shrink-0 min-w-[28px]',
-                  methodClass
-                )}
-              >
-                {request.method}
-              </span>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm text-text-primary truncate block">{request.name}</span>
-              </div>
-              {request.is_streaming && (
-                <span className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs text-accent-purple shrink-0">
-                  <Radio size={12} />
-                  Streaming
-                </span>
-              )}
-              {isAiGenerated(request) && (
-                <span className="flex items-center gap-1 rounded-full bg-signal-ai/10 px-2 py-0.5 text-xs text-signal-ai shrink-0">
-                  <Sparkles size={12} />
-                  AI
-                </span>
-              )}
-            </div>
-
-            {isFocused && (
-              <div className="absolute inset-0 pointer-events-none ring-[1.5px] ring-[color:var(--accent-a8)] ring-inset" />
-            )}
+            <div className="flex items-center h-full">{renderContent(true)}</div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-};
-
-export const CollectionItemRequestList = ({
-  requests,
-  collectionId,
-}: CollectionItemRequestListProps): React.JSX.Element => {
-  if (requests.length === 0) {
-    return (
-      <div className="px-3 py-2 text-xs text-text-muted" data-test-id="collection-empty-requests">
-        No requests yet
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col">
-      {requests.map((request) => (
-        <RequestItem key={request.id} request={request} collectionId={collectionId} />
-      ))}
     </div>
   );
 };

@@ -114,7 +114,7 @@ async fn handle_tools_call(
         return handle_execute_request(id, params.arguments, service).await;
     }
 
-    let svc = service.read().await;
+    let mut svc = service.write().await;
     match svc.call_tool(&params.name, params.arguments) {
         Ok(result) => JsonRpcResponse::success(
             id,
@@ -169,7 +169,7 @@ async fn handle_execute_request(
         Ok(response) => {
             // Emit event for UI update
             {
-                let svc = service.read().await;
+                let mut svc = service.write().await;
                 svc.emit_execute_event(&collection_id, &request_id, &response);
             }
 

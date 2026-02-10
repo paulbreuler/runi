@@ -11,10 +11,11 @@ use std::sync::Arc;
 
 use serde_json::json;
 
-use crate::domain::collection::{Collection, CollectionRequest, IntelligenceMetadata, SourceType};
+use crate::domain::collection::{Collection, CollectionRequest, IntelligenceMetadata};
 use crate::domain::http::RequestParams;
 use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::mcp::protocol::{McpToolDefinition, ToolCallResult, ToolResponseContent};
+use crate::domain::participant::{LamportTimestamp, SeqCounter};
 use crate::infrastructure::storage::collection_store::{
     delete_collection_in_dir, list_collections_in_dir, load_collection_in_dir,
     save_collection_in_dir,
@@ -42,14 +43,18 @@ fn tool_def(name: &str, description: &str, input_schema: serde_json::Value) -> R
 /// defaulting to the system collections directory.
 ///
 /// Every operation carries an [`Actor`] for provenance tracking.
-/// MCP-created collections use `SourceType::Mcp` and requests get
-/// `ai_generated: true` attribution.
+/// MCP-created collections default to `SourceType::Manual` (MCP is a creation
+/// channel, not a collection type). Requests get `ai_generated: true` attribution.
+///
+/// Maintains a [`SeqCounter`] for Lamport timestamps on emitted events.
 pub struct McpServerService {
     tools: Vec<RegisteredTool>,
     collections_dir: PathBuf,
     event_emitter: Option<Arc<dyn EventEmitter>>,
     /// The actor for all operations — set at construction from MCP session info.
     actor: Actor,
+    /// Lamport sequence counter for this service instance.
+    seq_counter: SeqCounter,
 }
 
 impl McpServerService {
@@ -66,6 +71,7 @@ impl McpServerService {
                 model: None,
                 session_id: None,
             },
+            seq_counter: SeqCounter::new(),
         };
         service.register_tools();
         service
@@ -84,6 +90,7 @@ impl McpServerService {
                 model: None,
                 session_id: None,
             },
+            seq_counter: SeqCounter::new(),
         };
         service.register_tools();
         service
@@ -99,10 +106,14 @@ impl McpServerService {
         Ok(Self::new(dir))
     }
 
-    /// Emit an event if an emitter is configured. No-ops otherwise.
-    fn emit(&self, event_name: &str, payload: serde_json::Value) {
+    /// Emit an event with a Lamport timestamp if an emitter is configured. No-ops otherwise.
+    fn emit(&mut self, event_name: &str, payload: serde_json::Value) {
         if let Some(emitter) = &self.event_emitter {
-            emitter.emit_event(event_name, &self.actor, payload);
+            let lamport = LamportTimestamp {
+                participant: self.actor.to_participant_id(),
+                seq: self.seq_counter.next(),
+            };
+            emitter.emit_event_with_seq(event_name, &self.actor, lamport, payload);
         }
     }
 
@@ -110,7 +121,7 @@ impl McpServerService {
     ///
     /// Called by the dispatcher after async HTTP execution (outside the lock).
     pub fn emit_execute_event(
-        &self,
+        &mut self,
         collection_id: &str,
         request_id: &str,
         response: &crate::domain::http::HttpResponse,
@@ -178,7 +189,7 @@ impl McpServerService {
     ///
     /// Returns an error if the tool is not found or the call fails.
     pub fn call_tool(
-        &self,
+        &mut self,
         name: &str,
         arguments: Option<serde_json::Map<String, serde_json::Value>>,
     ) -> Result<ToolCallResult, String> {
@@ -294,7 +305,7 @@ impl McpServerService {
     }
 
     fn handle_create_collection(
-        &self,
+        &mut self,
         args: &serde_json::Map<String, serde_json::Value>,
     ) -> Result<ToolCallResult, String> {
         let name = args
@@ -302,8 +313,7 @@ impl McpServerService {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: name".to_string())?;
 
-        let mut collection = Collection::new(name);
-        collection.source.source_type = SourceType::Mcp;
+        let collection = Collection::new(name);
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
@@ -346,7 +356,7 @@ impl McpServerService {
     }
 
     fn handle_add_request(
-        &self,
+        &mut self,
         args: &serde_json::Map<String, serde_json::Value>,
     ) -> Result<ToolCallResult, String> {
         let collection_id = args
@@ -401,7 +411,7 @@ impl McpServerService {
     }
 
     fn handle_update_request(
-        &self,
+        &mut self,
         args: &serde_json::Map<String, serde_json::Value>,
     ) -> Result<ToolCallResult, String> {
         let collection_id = args
@@ -451,7 +461,7 @@ impl McpServerService {
     }
 
     fn handle_delete_collection(
-        &self,
+        &mut self,
         args: &serde_json::Map<String, serde_json::Value>,
     ) -> Result<ToolCallResult, String> {
         let collection_id = args
@@ -460,15 +470,23 @@ impl McpServerService {
             .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
 
         Self::validate_collection_id(collection_id)?;
+
+        // Load the friendly name before deleting
+        let friendly_name = load_collection_in_dir(collection_id, self.dir())
+            .ok()
+            .map_or_else(|| collection_id.to_string(), |c| c.metadata.name);
         delete_collection_in_dir(collection_id, self.dir())?;
 
-        self.emit("collection:deleted", json!({"id": collection_id}));
+        self.emit(
+            "collection:deleted",
+            json!({"id": collection_id, "name": friendly_name}),
+        );
 
         Ok(ToolCallResult {
             content: vec![ToolResponseContent::Text {
                 text: json!({
                     "collection_id": collection_id,
-                    "message": format!("Collection '{collection_id}' deleted")
+                    "message": format!("Collection '{friendly_name}' deleted")
                 })
                 .to_string(),
             }],
@@ -495,6 +513,7 @@ fn collection_request_to_params(req: &CollectionRequest, timeout_ms: u64) -> Req
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::collection::SourceType;
     use tempfile::TempDir;
 
     fn make_service() -> (McpServerService, TempDir) {
@@ -540,7 +559,7 @@ mod tests {
 
     #[test]
     fn test_create_collection_success() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service
             .call_tool("create_collection", Some(args(&[("name", "GitHub API")])))
             .unwrap();
@@ -555,7 +574,7 @@ mod tests {
 
     #[test]
     fn test_create_collection_missing_name() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool("create_collection", Some(serde_json::Map::new()));
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("name"));
@@ -563,7 +582,7 @@ mod tests {
 
     #[test]
     fn test_list_collections_empty() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool("list_collections", None).unwrap();
         assert!(!result.is_error);
         let text = match &result.content[0] {
@@ -574,7 +593,7 @@ mod tests {
 
     #[test]
     fn test_list_collections_after_create() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         service
             .call_tool("create_collection", Some(args(&[("name", "API One")])))
             .unwrap();
@@ -592,7 +611,7 @@ mod tests {
 
     #[test]
     fn test_add_request_success() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         // Create collection first
         let create_result = service
@@ -626,7 +645,7 @@ mod tests {
 
     #[test]
     fn test_add_request_missing_params() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool("add_request", Some(args(&[("collection_id", "foo")])));
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("name"));
@@ -634,7 +653,7 @@ mod tests {
 
     #[test]
     fn test_add_request_collection_not_found() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool(
             "add_request",
             Some(args(&[
@@ -650,7 +669,7 @@ mod tests {
 
     #[test]
     fn test_update_request_success() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         // Create collection + request
         let create_result = service
@@ -706,7 +725,7 @@ mod tests {
 
     #[test]
     fn test_update_request_not_found() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         // Create collection
         let create_result = service
@@ -731,7 +750,7 @@ mod tests {
 
     #[test]
     fn test_delete_collection_success() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         // Create then delete
         let create_result = service
@@ -761,7 +780,7 @@ mod tests {
 
     #[test]
     fn test_delete_collection_not_found() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool(
             "delete_collection",
             Some(args(&[("collection_id", "nonexistent")])),
@@ -772,7 +791,7 @@ mod tests {
 
     #[test]
     fn test_path_traversal_rejected_dotdot() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool(
             "delete_collection",
             Some(args(&[("collection_id", "../etc/passwd")])),
@@ -783,7 +802,7 @@ mod tests {
 
     #[test]
     fn test_path_traversal_rejected_slash() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool(
             "add_request",
             Some(args(&[
@@ -799,7 +818,7 @@ mod tests {
 
     #[test]
     fn test_path_traversal_rejected_backslash() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool(
             "update_request",
             Some(args(&[
@@ -813,7 +832,7 @@ mod tests {
 
     #[test]
     fn test_path_traversal_rejected_empty() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool("delete_collection", Some(args(&[("collection_id", "")])));
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("empty"));
@@ -821,7 +840,7 @@ mod tests {
 
     #[test]
     fn test_unknown_tool() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
         let result = service.call_tool("nonexistent_tool", None);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Unknown tool"));
@@ -832,7 +851,8 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let emitter = crate::domain::mcp::events::TestEventEmitter::new();
         let events = emitter.events_handle();
-        let service = McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+        let mut service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
 
         service
             .call_tool("create_collection", Some(args(&[("name", "Test API")])))
@@ -851,8 +871,20 @@ mod tests {
     }
 
     #[test]
-    fn test_create_collection_has_mcp_source_type() {
-        let (service, _dir) = make_service();
+    fn test_create_collection_duplicate_name_rejected() {
+        let (mut service, _dir) = make_service();
+        service
+            .call_tool("create_collection", Some(args(&[("name", "Stripe API")])))
+            .unwrap();
+
+        let result = service.call_tool("create_collection", Some(args(&[("name", "Stripe API")])));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("already exists"));
+    }
+
+    #[test]
+    fn test_create_collection_has_manual_source_type() {
+        let (mut service, _dir) = make_service();
 
         let result = service
             .call_tool("create_collection", Some(args(&[("name", "MCP Test")])))
@@ -863,13 +895,15 @@ mod tests {
         let created: serde_json::Value = serde_json::from_str(text).unwrap();
         let collection_id = created["id"].as_str().unwrap();
 
+        // MCP is a creation channel, not a collection type.
+        // AI provenance is tracked via intelligence.ai_generated on each request.
         let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
-        assert_eq!(collection.source.source_type, SourceType::Mcp);
+        assert_eq!(collection.source.source_type, SourceType::Manual);
     }
 
     #[test]
     fn test_add_request_has_ai_attribution() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         let create_result = service
             .call_tool("create_collection", Some(args(&[("name", "Test")])))
@@ -915,7 +949,8 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let emitter = crate::domain::mcp::events::TestEventEmitter::new();
         let events = emitter.events_handle();
-        let service = McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+        let mut service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
 
         // Create collection
         let result = service
@@ -956,7 +991,8 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let emitter = crate::domain::mcp::events::TestEventEmitter::new();
         let events = emitter.events_handle();
-        let service = McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+        let mut service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
 
         let result = service
             .call_tool("create_collection", Some(args(&[("name", "To Delete")])))
@@ -982,12 +1018,13 @@ mod tests {
             crate::domain::mcp::events::Actor::Ai { .. }
         ));
         assert_eq!(captured[1].2["id"].as_str().unwrap(), collection_id);
+        assert_eq!(captured[1].2["name"].as_str().unwrap(), "To Delete");
         drop(captured);
     }
 
     #[test]
     fn test_no_emitter_does_not_panic() {
-        let (service, _dir) = make_service(); // No emitter
+        let (mut service, _dir) = make_service(); // No emitter
         let result = service
             .call_tool("create_collection", Some(args(&[("name", "Test")])))
             .unwrap();
@@ -1047,7 +1084,7 @@ mod tests {
 
     #[test]
     fn test_prepare_execute_request_success() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         // Create collection + request
         let create_result = service
@@ -1102,7 +1139,7 @@ mod tests {
 
     #[test]
     fn test_prepare_execute_request_nonexistent_request() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         let create_result = service
             .call_tool("create_collection", Some(args(&[("name", "Test")])))
@@ -1124,7 +1161,7 @@ mod tests {
 
     #[test]
     fn test_prepare_execute_request_custom_timeout() {
-        let (service, _dir) = make_service();
+        let (mut service, _dir) = make_service();
 
         let create_result = service
             .call_tool("create_collection", Some(args(&[("name", "Test")])))

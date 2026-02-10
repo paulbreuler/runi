@@ -48,11 +48,11 @@ describe('TimingWaterfall', () => {
 
   it('applies correct color classes to segments', () => {
     render(<TimingWaterfall segments={defaultSegments} totalMs={150} />);
-    expect(screen.getByTestId('timing-dns')).toHaveClass('bg-accent-purple');
+    expect(screen.getByTestId('timing-dns')).toHaveClass('bg-signal-ai');
     expect(screen.getByTestId('timing-connect')).toHaveClass('bg-signal-warning');
-    expect(screen.getByTestId('timing-tls')).toHaveClass('bg-signal-ai');
+    expect(screen.getByTestId('timing-tls')).toHaveClass('bg-accent-blue');
     expect(screen.getByTestId('timing-wait')).toHaveClass('bg-signal-success');
-    expect(screen.getByTestId('timing-download')).toHaveClass('bg-accent-blue');
+    expect(screen.getByTestId('timing-download')).toHaveClass('bg-bg-raised');
   });
 
   it('shows legend with ms values', () => {

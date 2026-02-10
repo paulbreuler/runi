@@ -34,6 +34,8 @@ import { generateCurlCommand } from '@/utils/curl';
 import type { NetworkHistoryEntry } from '@/types/history';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
+import { ActivityFeed } from '@/components/ActivityFeed';
+import { useActivityStore } from '@/stores/useActivityStore';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -110,8 +112,9 @@ export const MainLayout = ({
   const {
     position: panelPosition,
     isVisible: panelVisible,
-    toggleVisibility: togglePanel,
+    isCollapsed: panelCollapsed,
     setVisible,
+    setCollapsed,
   } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
@@ -125,6 +128,7 @@ export const MainLayout = ({
   // Panel tab state
   const [activeTab, setActiveTab] = useState<PanelTabType>('network');
   const { entries } = useHistoryStore();
+  const activityEntries = useActivityStore((s) => s.entries);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Sidebar state
@@ -166,14 +170,28 @@ export const MainLayout = ({
     [toggleSidebar]
   );
 
+  const handlePanelShortcut = useCallback(() => {
+    if (!panelVisible) {
+      // If hidden, show it and ensure it's expanded
+      setVisible(true);
+      setCollapsed(false);
+    } else if (panelCollapsed) {
+      // If visible but minimized, expand it
+      setCollapsed(false);
+    } else {
+      // If visible and expanded, hide it
+      setVisible(false);
+    }
+  }, [panelVisible, panelCollapsed, setCollapsed, setVisible]);
+
   const panelShortcut = useMemo(
     () => ({
       key: 'i',
       modifier: (isMacSync() ? ['meta', 'shift'] : ['ctrl', 'shift']) as ModifierKey[],
-      handler: togglePanel,
+      handler: handlePanelShortcut,
       description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
     }),
-    [togglePanel]
+    [handlePanelShortcut]
   );
 
   useKeyboardShortcuts(sidebarShortcutMeta);
@@ -662,6 +680,7 @@ export const MainLayout = ({
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     networkCount={entries.length}
+                    activityCount={activityEntries.length}
                   />
                 }
               >
@@ -676,6 +695,7 @@ export const MainLayout = ({
                       }}
                     />
                   }
+                  activityContent={<ActivityFeed className="h-full" />}
                 />
               </DockablePanel>
             )}
@@ -762,6 +782,7 @@ export const MainLayout = ({
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     networkCount={entries.length}
+                    activityCount={activityEntries.length}
                   />
                 }
               >
@@ -776,6 +797,7 @@ export const MainLayout = ({
                       }}
                     />
                   }
+                  activityContent={<ActivityFeed className="h-full" />}
                 />
               </DockablePanel>
             )}
@@ -792,6 +814,7 @@ export const MainLayout = ({
               activeTab={activeTab}
               onTabChange={setActiveTab}
               networkCount={entries.length}
+              activityCount={activityEntries.length}
             />
           }
         >
@@ -806,6 +829,7 @@ export const MainLayout = ({
                 }}
               />
             }
+            activityContent={<ActivityFeed className="h-full" />}
           />
         </DockablePanel>
       )}

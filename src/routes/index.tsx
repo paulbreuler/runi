@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { executeRequest } from '@/api/http';
 import { isAppError, type AppError } from '@/types/errors';
 import { getConsoleService } from '@/services/console-service';
@@ -14,7 +13,7 @@ import { createRequestParams, type HttpMethod } from '@/types/http';
 import { UrlBar } from '@/components/UrlBar/UrlBar';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
@@ -24,6 +23,22 @@ import {
   type CollectionRequestSelectedPayload,
 } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
+
+const getStatusColorClass = (status: number): string => {
+  if (status >= 200 && status < 300) {
+    return 'text-signal-success';
+  }
+  if (status >= 300 && status < 400) {
+    return 'text-accent-blue';
+  }
+  if (status >= 400 && status < 500) {
+    return 'text-signal-warning';
+  }
+  if (status >= 500) {
+    return 'text-signal-error';
+  }
+  return 'text-text-secondary';
+};
 
 export const HomePage = (): React.JSX.Element => {
   const {
@@ -217,6 +232,32 @@ export const HomePage = (): React.JSX.Element => {
     void handleSend();
   };
 
+  const getVigilanceLabel = (): React.ReactNode => {
+    if (isLoading) {
+      return 'Executing request...';
+    }
+    if (response !== null) {
+      const bytes = new Blob([response.body]).size;
+      let size = `${String(bytes)} B`;
+      if (bytes >= 1024 * 1024) {
+        size = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      } else if (bytes >= 1024) {
+        size = `${(bytes / 1024).toFixed(1)} KB`;
+      }
+      const statusColor = getStatusColorClass(response.status);
+      return (
+        <>
+          <span className={statusColor}>
+            {response.status} {response.status_text}
+          </span>
+          {' · '}
+          {response.timing.total_ms}ms · {size}
+        </>
+      );
+    }
+    return 'Ready';
+  };
+
   return (
     <MainLayout
       initialSidebarVisible={initialSidebarVisible}
@@ -239,35 +280,14 @@ export const HomePage = (): React.JSX.Element => {
       }
       responseContent={
         <div className="h-full flex flex-col bg-bg-app">
-          <AnimatePresence mode="wait">
-            {response !== null ? (
-              <motion.div
-                key="response"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="flex-1 flex flex-col overflow-hidden"
-              >
-                {/* Response viewer with integrated header (tabs + status + metrics) */}
-                <ResponseViewer response={response} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 h-full"
-              >
-                <EmptyState
-                  title="Response will appear here"
-                  description="Send a request to see the response, headers, and timing information displayed in a clear, readable format."
-                  variant="muted"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <ResponseViewer
+              response={response}
+              vigilanceSlot={
+                <VigilanceMonitor visible active={isLoading} label={getVigilanceLabel()} />
+              }
+            />
+          </div>
         </div>
       }
     />

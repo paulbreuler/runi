@@ -143,12 +143,12 @@ describe('TitleBar', () => {
       const { rerender } = render(<TitleBar>{null}</TitleBar>);
 
       expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
-      expect(screen.getByTestId('titlebar')).toHaveClass('h-8');
+      expect(screen.getByTestId('titlebar')).toHaveClass('h-7');
 
       rerender(<TitleBar>{false}</TitleBar>);
 
       expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
-      expect(screen.getByTestId('titlebar')).toHaveClass('h-8');
+      expect(screen.getByTestId('titlebar')).toHaveClass('h-7');
     });
 
     it('renders settings button when onSettingsClick is provided', () => {

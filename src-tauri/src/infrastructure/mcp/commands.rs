@@ -13,7 +13,7 @@ use tokio::sync::RwLock;
 use crate::application::mcp_server_service::McpServerService;
 use crate::domain::mcp::events::EventEmitter;
 use crate::infrastructure::mcp::events::TauriEventEmitter;
-use crate::infrastructure::mcp::server::http_sse::{self, McpServerState};
+use crate::infrastructure::mcp::server::http_sse::{self, EventBroadcaster, McpServerState};
 use crate::infrastructure::mcp::server::session::SessionManager;
 
 /// Managed state type for the MCP server.
@@ -48,7 +48,8 @@ pub struct McpServerStatusInfo {
 }
 
 /// Default port for the MCP server.
-pub const DEFAULT_MCP_PORT: u16 = 3001;
+/// Uses 3002 to avoid conflict with runi-planning-docs MCP (limps) on 3001.
+pub const DEFAULT_MCP_PORT: u16 = 3002;
 
 /// Start the MCP server on the given port, storing the handle in the provided state.
 ///
@@ -66,8 +67,10 @@ pub async fn start_server(
     app_handle: Option<tauri::AppHandle>,
 ) -> Result<(), String> {
     // Prepare everything outside the lock — no I/O while holding the lock.
+    let broadcaster = Arc::new(EventBroadcaster::new());
     let service = if let Some(handle) = app_handle {
-        let emitter: Arc<dyn EventEmitter> = Arc::new(TauriEventEmitter::new(handle));
+        let emitter: Arc<dyn EventEmitter> =
+            Arc::new(TauriEventEmitter::new(handle).with_broadcaster(Arc::clone(&broadcaster)));
         let dir = crate::infrastructure::storage::collection_store::get_collections_dir()?;
         McpServerService::with_emitter(dir, emitter)
     } else {
@@ -78,6 +81,7 @@ pub async fn start_server(
     let mcp_state = McpServerState {
         service: Arc::new(RwLock::new(service)),
         sessions: Arc::clone(&sessions),
+        broadcaster,
     };
 
     let app = http_sse::router(mcp_state);

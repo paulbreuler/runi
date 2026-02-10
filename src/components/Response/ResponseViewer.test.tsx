@@ -55,24 +55,6 @@ describe('ResponseViewer', () => {
     expect(screen.getByTestId('response-headers-count')).toHaveTextContent('(2)');
   });
 
-  it('displays body size and timing', () => {
-    render(<ResponseViewer response={mockResponse} />);
-
-    expect(screen.getByTestId('response-total-time')).toHaveTextContent('150ms');
-    // Body size should be calculated and displayed
-  });
-
-  it('embeds response status badge in the header row as the rightmost element', () => {
-    render(<ResponseViewer response={mockResponse} />);
-
-    const headerRow = screen.getByTestId('response-header-bar');
-    const statusBadge = within(headerRow).getByTestId('status-badge');
-    expect(statusBadge).toBeInTheDocument();
-
-    const rightMeta = within(headerRow).getByTestId('response-header-meta');
-    expect(rightMeta.lastElementChild).toBe(statusBadge);
-  });
-
   it('uses compact horizontal padding to maximize tab/header space', () => {
     render(<ResponseViewer response={mockResponse} />);
 

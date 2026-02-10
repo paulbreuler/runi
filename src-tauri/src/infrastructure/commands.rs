@@ -277,12 +277,17 @@ pub async fn cmd_delete_collection(
     app: tauri::AppHandle,
     collection_id: String,
 ) -> Result<(), String> {
+    // Load the friendly name before deleting
+    let friendly_name = load_collection(&collection_id)
+        .ok()
+        .map_or_else(|| collection_id.clone(), |c| c.metadata.name);
+
     delete_collection(&collection_id)?;
     emit_collection_event(
         &app,
         "collection:deleted",
         &Actor::User,
-        json!({"id": &collection_id}),
+        json!({"id": &collection_id, "name": &friendly_name}),
     );
     Ok(())
 }

@@ -8,75 +8,73 @@
  */
 
 /* ============================================
-   Accent Color Mapping (Blue default at :root)
+   Accent Color Mapping (Zen - Grayscale default)
    ============================================ */
 :root {
-  --accent-1: var(--blue-1);
-  --accent-2: var(--blue-2);
-  --accent-3: var(--blue-3);
-  --accent-4: var(--blue-4);
-  --accent-5: var(--blue-5);
-  --accent-6: var(--blue-6);
-  --accent-7: var(--blue-7);
-  --accent-8: var(--blue-8);
-  --accent-9: var(--blue-9);
-  --accent-10: var(--blue-10);
-  --accent-11: var(--blue-11);
-  --accent-12: var(--blue-12);
-  --accent-a1: var(--blue-a1);
-  --accent-a2: var(--blue-a2);
-  --accent-a3: var(--blue-a3);
-  --accent-a4: var(--blue-a4);
-  --accent-a5: var(--blue-a5);
-  --accent-a6: var(--blue-a6);
-  --accent-a7: var(--blue-a7);
-  --accent-a8: var(--blue-a8);
-  --accent-a9: var(--blue-a9);
-  --accent-a10: var(--blue-a10);
-  --accent-a11: var(--blue-a11);
-  --accent-a12: var(--blue-a12);
-  --accent-contrast: var(--blue-contrast);
-  --accent-surface: var(--blue-surface);
-  --accent-indicator: var(--blue-indicator);
-  --accent-track: var(--blue-track);
+  --accent-1: var(--gray-1);
+  --accent-2: var(--gray-2);
+  --accent-3: var(--gray-3);
+  --accent-4: var(--gray-4);
+  --accent-5: var(--gray-5);
+  --accent-6: var(--gray-6);
+  --accent-7: var(--gray-7);
+  --accent-8: var(--gray-8);
+  --accent-9: var(--gray-9);
+  --accent-10: var(--gray-10);
+  --accent-11: var(--gray-11);
+  --accent-12: var(--gray-12);
+  --accent-a1: var(--gray-a1);
+  --accent-a2: var(--gray-a2);
+  --accent-a3: var(--gray-a3);
+  --accent-a4: var(--gray-a4);
+  --accent-a5: var(--gray-a5);
+  --accent-a6: var(--gray-a6);
+  --accent-a7: var(--gray-a7);
+  --accent-a8: var(--gray-a8);
+  --accent-a9: var(--gray-a9);
+  --accent-a10: var(--gray-a10);
+  --accent-a11: var(--gray-a11);
+  --accent-a12: var(--gray-a12);
+  --accent-contrast: var(--gray-contrast);
+  --accent-surface: var(--gray-surface);
+  --accent-indicator: var(--gray-indicator);
+  --accent-track: var(--gray-track);
 
-  /* Focus tokens (derived from accent) */
-  --focus-8: var(--accent-8);
+  /* Focus tokens (Zen - subtle gray focus) */
+  --focus-8: var(--gray-7);
 
   /* ============================================
-     Interactive State Tokens - Dark Theme
-     Uses "emphasis direction" thinking:
-     - In dark mode, pressed = accent tint (lighter/colored)
-     - Provides clear visual distinction without going darker
+     Interactive State Tokens - Dark Theme (Zen)
+     Uses grayscale hierarchy for minimal distraction
      ============================================ */
 
   /* Pressed State (toggles, buttons when activated) */
-  --pressed-bg: var(--accent-a4);
-  --pressed-bg-subtle: var(--accent-a3);
-  --pressed-border: var(--accent-7);
+  --pressed-bg: var(--gray-a4);
+  --pressed-bg-subtle: var(--gray-a3);
+  --pressed-border: var(--gray-7);
   --pressed-text: var(--gray-12);
 
   /* Selected State (multi-select, active tabs, current nav) */
-  --selected-bg: var(--accent-a3);
-  --selected-bg-solid: var(--accent-4);
-  --selected-border: var(--accent-6);
-  --selected-text: var(--accent-11);
+  --selected-bg: var(--gray-a3);
+  --selected-bg-solid: var(--gray-4);
+  --selected-border: var(--gray-6);
+  --selected-text: var(--gray-12);
 
   /* Active State (navigation current item, active filters) */
-  --active-bg: var(--accent-a2);
-  --active-border: var(--accent-5);
-  --active-text: var(--accent-11);
-  --active-indicator: var(--accent-9);
+  --active-bg: var(--gray-a2);
+  --active-border: var(--gray-5);
+  --active-text: var(--gray-12);
+  --active-indicator: var(--gray-9);
 
-  /* Hover State (for consistency, though often inline) */
+  /* Hover State */
   --hover-bg: var(--gray-a3);
-  --hover-bg-accent: var(--accent-a3);
+  --hover-bg-accent: var(--gray-a4);
   --hover-border: var(--gray-7);
 
-  /* Semantic Background Tokens - Dark Theme (default) */
-  --color-background: var(--gray-1);
-  --color-surface: var(--gray-2);
-  --color-panel-solid: var(--gray-3);
+  /* Semantic Background Tokens - Dark Theme (Zen Ink) */
+  --color-background: var(--ink-app);
+  --color-surface: var(--ink-surface);
+  --color-panel-solid: var(--ink-raised);
   --color-panel-translucent: var(--gray-a3);
   --color-overlay: var(--gray-a8);
 }
@@ -95,30 +93,29 @@
   --color-overlay: var(--gray-a8);
 
   /* ============================================
-     Interactive State Tokens - Light Theme
-     In light mode, pressed = darker/more saturated accent
+     Interactive State Tokens - Light Theme (Zen)
      ============================================ */
 
   /* Pressed State */
-  --pressed-bg: var(--accent-4);
-  --pressed-bg-subtle: var(--accent-3);
-  --pressed-border: var(--accent-7);
+  --pressed-bg: var(--gray-4);
+  --pressed-bg-subtle: var(--gray-3);
+  --pressed-border: var(--gray-7);
   --pressed-text: var(--gray-12);
 
   /* Selected State */
-  --selected-bg: var(--accent-3);
-  --selected-bg-solid: var(--accent-4);
-  --selected-border: var(--accent-6);
-  --selected-text: var(--accent-11);
+  --selected-bg: var(--gray-3);
+  --selected-bg-solid: var(--gray-4);
+  --selected-border: var(--gray-6);
+  --selected-text: var(--gray-12);
 
   /* Active State */
-  --active-bg: var(--accent-2);
-  --active-border: var(--accent-5);
-  --active-text: var(--accent-11);
-  --active-indicator: var(--accent-9);
+  --active-bg: var(--gray-2);
+  --active-border: var(--gray-5);
+  --active-text: var(--gray-12);
+  --active-indicator: var(--gray-9);
 
   /* Hover State */
-  --hover-bg: var(--gray-a3);
-  --hover-bg-accent: var(--accent-a3);
-  --hover-border: var(--gray-7);
+  --hover-bg: var(--gray-a2);
+  --hover-bg-accent: var(--gray-a3);
+  --hover-border: var(--gray-6);
 }

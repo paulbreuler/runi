@@ -25,6 +25,13 @@ const SCHEMA_COMMENT: &str =
 /// - Default (prod): `./collections/` (user's project directory)
 /// - Override: `RUNI_COLLECTIONS_DIR=/path/to/collections runi`
 pub fn get_collections_dir() -> Result<PathBuf, String> {
+    // Check test override first (cfg(test) only)
+    #[cfg(test)]
+    if let Some(override_dir) = collections_dir_override() {
+        ensure_dir(&override_dir)?;
+        return Ok(override_dir);
+    }
+
     // Check environment variable override first
     if let Ok(env_dir) = std::env::var("RUNI_COLLECTIONS_DIR") {
         let dir = PathBuf::from(env_dir);
@@ -78,8 +85,11 @@ pub fn save_collection(collection: &Collection) -> Result<PathBuf, String> {
 }
 
 /// Save a collection to the specified directory with deterministic serialization.
+///
+/// Returns an error if another collection (different ID) already has the same name.
 pub fn save_collection_in_dir(collection: &Collection, dir: &Path) -> Result<PathBuf, String> {
     ensure_dir(dir)?;
+    check_name_unique(collection, dir)?;
     let filename = format!("{}.yaml", collection.id);
     let path = dir.join(&filename);
 
@@ -235,6 +245,30 @@ fn collections_dir_from(base: &Path) -> PathBuf {
     base.join(COLLECTIONS_DIR_NAME)
 }
 
+/// Reject if another collection (different ID) already uses this name.
+fn check_name_unique(collection: &Collection, dir: &Path) -> Result<(), String> {
+    if !dir.exists() {
+        return Ok(());
+    }
+    let entries = fs::read_dir(dir).map_err(|e| format!("Failed to read collections dir: {e}"))?;
+    for entry in entries {
+        let Ok(entry) = entry else { continue };
+        let path = entry.path();
+        if !is_yaml_file(&path) || is_temp_file(&path) {
+            continue;
+        }
+        if let Ok(summary) = load_collection_summary(&path) {
+            if summary.name == collection.metadata.name && summary.id != collection.id {
+                return Err(format!(
+                    "A collection named '{}' already exists ({})",
+                    summary.name, summary.id
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 fn ensure_dir(dir: &Path) -> Result<(), String> {
     if !dir.exists() {
         fs::create_dir_all(dir)
@@ -364,5 +398,30 @@ mod tests {
         delete_collection_in_dir(&collection.id, &collections_dir).unwrap();
         let result = load_collection_in_dir(&collection.id, &collections_dir);
         assert!(result.is_err());
+    }
+
+    #[test]
+    #[serial]
+    fn test_duplicate_name_rejected() {
+        let temp_dir = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(temp_dir.path());
+        save_collection_in_dir(&Collection::new("Stripe API"), &collections_dir).unwrap();
+
+        let duplicate = Collection::new("Stripe API");
+        let result = save_collection_in_dir(&duplicate, &collections_dir);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("already exists"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_self_update_allowed() {
+        let temp_dir = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(temp_dir.path());
+        let collection = Collection::new("Stripe API");
+        save_collection_in_dir(&collection, &collections_dir).unwrap();
+
+        // Re-saving the same collection (same ID) must succeed
+        save_collection_in_dir(&collection, &collections_dir).unwrap();
     }
 }

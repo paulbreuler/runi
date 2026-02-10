@@ -196,7 +196,7 @@ export const StatusBar = (): React.JSX.Element => {
 
   return (
     <div
-      className="relative h-8 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-2 text-xs"
+      className="relative h-7 border-t border-border-subtle bg-bg-surface/80 flex items-center justify-between px-2 text-xs"
       style={{ zIndex: STATUS_BAR_Z_INDEX }}
       data-test-id="status-bar"
     >

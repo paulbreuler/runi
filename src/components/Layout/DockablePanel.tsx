@@ -38,8 +38,8 @@ const trayTransition = {
   damping: 30,
 };
 
-// Collapsed size for horizontal docks (left/right) - 28px for "book page edge" feel
-const COLLAPSED_PANEL_WIDTH = 28;
+// Collapsed size for horizontal docks (left/right) - 0px to occupy no layout space
+const COLLAPSED_PANEL_WIDTH = 0;
 
 // ============================================================================
 // Tray Variants - Unified Material Feel
@@ -51,64 +51,73 @@ const COLLAPSED_PANEL_WIDTH = 28;
 const trayVariantsBottom = {
   rest: {
     y: 0,
-    backgroundColor: 'var(--color-bg-surface)',
+    backgroundColor: 'var(--color-bg-raised)',
     boxShadow: '0 0 0 0 rgba(0,0,0,0)',
+    opacity: 0.8,
   },
   hover: {
-    y: -2, // Slight lift suggests "pulling toward content"
+    y: -1,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '0 -4px 12px -4px rgba(0,0,0,0.15)',
+    boxShadow: '0 -2px 8px -2px rgba(0,0,0,0.3)',
+    opacity: 1,
   },
   dragging: {
     y: 0,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '0 -4px 12px -4px rgba(0,0,0,0.2)',
+    boxShadow: '0 -2px 8px -2px rgba(0,0,0,0.4)',
+    opacity: 1,
   },
 };
 
-// Left tray container variants - nudges right toward content
+// Left tray container variants - centered tab
 const trayVariantsLeft = {
   rest: {
     x: 0,
-    backgroundColor: 'var(--color-bg-surface)',
+    backgroundColor: 'var(--color-bg-raised)',
     boxShadow: '0 0 0 0 rgba(0,0,0,0)',
+    opacity: 0.8,
   },
   hover: {
-    x: 2, // Nudge toward content (right)
+    x: 1,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '4px 0 12px -4px rgba(0,0,0,0.15)',
+    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3)',
+    opacity: 1,
   },
   dragging: {
     x: 0,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '4px 0 12px -4px rgba(0,0,0,0.2)',
+    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.4)',
+    opacity: 1,
   },
 };
 
-// Right tray container variants - nudges left toward content
+// Right tray container variants - centered tab
 const trayVariantsRight = {
   rest: {
     x: 0,
-    backgroundColor: 'var(--color-bg-surface)',
+    backgroundColor: 'var(--color-bg-raised)',
     boxShadow: '0 0 0 0 rgba(0,0,0,0)',
+    opacity: 0.8,
   },
   hover: {
-    x: -2, // Nudge toward content (left)
+    x: -1,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '-4px 0 12px -4px rgba(0,0,0,0.15)',
+    boxShadow: '-2px 0 8px -2px rgba(0,0,0,0.3)',
+    opacity: 1,
   },
   dragging: {
     x: 0,
     backgroundColor: 'var(--color-bg-elevated)',
-    boxShadow: '-4px 0 12px -4px rgba(0,0,0,0.2)',
+    boxShadow: '-2px 0 8px -2px rgba(0,0,0,0.4)',
+    opacity: 1,
   },
 };
 
 // Content variants - inherits state from parent via variant prop
 const trayContentVariants = {
-  rest: { opacity: 0.4 },
-  hover: { opacity: 0.7 },
-  dragging: { opacity: 0.7 }, // Will be overridden by useTransform during drag
+  rest: { opacity: 0.6 },
+  hover: { opacity: 1 },
+  dragging: { opacity: 1 },
 };
 
 /**
@@ -208,10 +217,10 @@ export const DockablePanel = ({
   const sizeSpring = useSpring(targetSize, prefersReducedMotion ? { duration: 0 } : panelSpring);
 
   // Content opacity based on size - fades out as panel expands during drag
-  // When collapsed (28px bottom, 28px sides), content is visible
+  // When collapsed, content is visible
   // As user drags to expand, content fades out smoothly
   const collapsedSize = isHorizontal ? COLLAPSED_PANEL_WIDTH : COLLAPSED_PANEL_HEIGHT;
-  const contentOpacity = useTransform(sizeSpring, [collapsedSize, collapsedSize + 20], [0.4, 0]);
+  const contentOpacity = useTransform(sizeSpring, [collapsedSize, collapsedSize + 10], [1, 0]);
 
   // Update spring target when size changes
   useEffect(() => {
@@ -457,16 +466,19 @@ export const DockablePanel = ({
 
   // Get panel container classes
   const getPanelClasses = (): string => {
-    const base = 'flex bg-bg-surface border-border-default shrink-0 relative';
+    const base = cn(
+      'flex shrink-0 relative',
+      !isCollapsed && 'bg-bg-surface border-border-default'
+    );
 
     if (position === 'bottom') {
-      return cn(base, 'flex-col border-t');
+      return cn(base, 'flex-col', !isCollapsed && 'border-t');
     }
     if (position === 'left') {
-      return cn(base, 'flex-col border-r');
+      return cn(base, 'flex-col', !isCollapsed && 'border-r');
     }
     if (position === 'right') {
-      return cn(base, 'flex-col border-l');
+      return cn(base, 'flex-col', !isCollapsed && 'border-l');
     }
     return cn(base, 'flex-col');
   };
@@ -487,8 +499,7 @@ export const DockablePanel = ({
         data-test-id="dockable-panel"
         className={cn(
           getPanelClasses(),
-          isCollapsed && 'overflow-visible',
-          isCollapsed && isHorizontal && 'cursor-pointer',
+          isCollapsed && 'overflow-visible pointer-events-none',
           className
         )}
         style={{ ...getPanelStyle(), zIndex: DOCKABLE_PANEL_Z_INDEX }}
@@ -501,7 +512,7 @@ export const DockablePanel = ({
         {/* Resize handle */}
         <div
           data-test-id="panel-resizer"
-          className={getResizerClasses()}
+          className={cn(getResizerClasses(), isCollapsed && 'pointer-events-none')}
           role="separator"
           aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
           aria-label="Resize panel (double-click to collapse)"
@@ -535,9 +546,9 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute inset-x-0 top-0 h-full',
-              'border-t border-border-default',
-              'flex items-center justify-center',
+              'absolute left-1/2 -translate-x-1/2 bottom-0 h-3 w-16',
+              'border border-border-default rounded-t-md border-b-0',
+              'flex items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-row-resize' : 'cursor-pointer'
             )}
             variants={trayVariantsBottom}
@@ -562,14 +573,13 @@ export const DockablePanel = ({
           >
             {/* Content - inherits variant from parent, fades during drag */}
             <motion.div
-              className="flex items-center gap-1.5 select-none text-text-muted"
+              className="flex items-center select-none text-text-muted"
               variants={trayContentVariants}
               animate={getTrayVariant()}
               transition={trayTransition}
               style={isDragging ? { opacity: contentOpacity } : undefined}
             >
-              <GripHorizontal size={14} />
-              <span className="text-xs font-medium tracking-wide uppercase">Tray</span>
+              <GripHorizontal size={12} />
             </motion.div>
           </motion.div>
         )}
@@ -579,9 +589,9 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute inset-y-0 left-0 w-full',
-              'border-r border-border-default',
-              'flex flex-col items-center justify-center',
+              'absolute top-1/2 -translate-y-1/2 right-0 w-3 h-16',
+              'border border-border-default rounded-r-md border-l-0',
+              'flex flex-col items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-col-resize' : 'cursor-pointer'
             )}
             variants={trayVariantsLeft}
@@ -606,19 +616,13 @@ export const DockablePanel = ({
           >
             {/* Content - inherits variant from parent, fades during drag */}
             <motion.div
-              className="flex flex-col items-center gap-1.5 select-none text-text-muted"
+              className="flex flex-col items-center select-none text-text-muted"
               variants={trayContentVariants}
               animate={getTrayVariant()}
               transition={trayTransition}
               style={isDragging ? { opacity: contentOpacity } : undefined}
             >
-              <GripVertical size={14} />
-              <span
-                className="text-xs font-medium tracking-wide uppercase"
-                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-              >
-                Tray
-              </span>
+              <GripVertical size={12} />
             </motion.div>
           </motion.div>
         )}
@@ -628,9 +632,9 @@ export const DockablePanel = ({
           <motion.div
             data-test-id="panel-collapsed-edge"
             className={cn(
-              'absolute inset-y-0 right-0 w-full',
-              'border-l border-border-default',
-              'flex flex-col items-center justify-center',
+              'absolute top-1/2 -translate-y-1/2 left-0 w-3 h-16',
+              'border border-border-default rounded-l-md border-r-0',
+              'flex flex-col items-center justify-center pointer-events-auto',
               isDragging ? 'cursor-col-resize' : 'cursor-pointer'
             )}
             variants={trayVariantsRight}
@@ -655,19 +659,13 @@ export const DockablePanel = ({
           >
             {/* Content - inherits variant from parent, fades during drag */}
             <motion.div
-              className="flex flex-col items-center gap-1.5 select-none text-text-muted"
+              className="flex flex-col items-center select-none text-text-muted"
               variants={trayContentVariants}
               animate={getTrayVariant()}
               transition={trayTransition}
               style={isDragging ? { opacity: contentOpacity } : undefined}
             >
-              <GripVertical size={14} />
-              <span
-                className="text-xs font-medium tracking-wide uppercase"
-                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-              >
-                Tray
-              </span>
+              <GripVertical size={12} />
             </motion.div>
           </motion.div>
         )}
@@ -681,7 +679,7 @@ export const DockablePanel = ({
             {/* Panel header */}
             <div
               data-test-id="panel-header"
-              className="flex items-center h-8 px-3 border-b border-border-default shrink-0 relative"
+              className="flex items-center h-7 px-3 border-b border-border-default shrink-0 relative"
             >
               {/* Scrollable header content */}
               <ScrollArea.Root className="flex-1 min-w-0 h-full relative">

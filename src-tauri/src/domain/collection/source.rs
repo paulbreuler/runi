@@ -74,8 +74,6 @@ pub enum SourceType {
     /// Created manually by the user.
     #[default]
     Manual,
-    /// Created via MCP (Model Context Protocol) by an AI agent.
-    Mcp,
 }
 
 #[cfg(test)]
@@ -107,7 +105,6 @@ mod tests {
             SourceType::Insomnia,
             SourceType::Curl,
             SourceType::Manual,
-            SourceType::Mcp,
         ];
         for v in variants {
             let yaml = serde_yml::to_string(&v).unwrap();
@@ -120,19 +117,6 @@ mod tests {
     fn test_source_type_serializes_snake_case() {
         let yaml = serde_yml::to_string(&SourceType::Openapi).unwrap();
         assert!(yaml.contains("openapi"));
-    }
-
-    #[test]
-    fn test_source_type_mcp_serializes() {
-        let yaml = serde_yml::to_string(&SourceType::Mcp).unwrap();
-        assert!(yaml.contains("mcp"));
-    }
-
-    #[test]
-    fn test_source_type_mcp_roundtrips() {
-        let json = serde_json::to_string(&SourceType::Mcp).unwrap();
-        let deserialized: SourceType = serde_json::from_str(&json).unwrap();
-        assert_eq!(deserialized, SourceType::Mcp);
     }
 
     #[test]

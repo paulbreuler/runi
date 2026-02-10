@@ -115,51 +115,57 @@ export const RequestBuilder = (): React.JSX.Element => {
         onValueChange={setActiveTab as (value: string) => void}
         className="flex-1 min-h-0 flex flex-col"
       >
-        <div className="relative flex items-center pl-3 pr-2 py-2 border-b border-border-subtle bg-bg-surface">
-          <div
-            ref={tabScrollRef}
-            className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
-            aria-label="Request tabs"
-            data-test-id="request-tabs-scroll"
-          >
-            <BaseTabsList
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              tabs={tabs.map((tab) => ({
-                value: tab.id,
-                label: tab.label,
-                testId: `request-tab-${tab.id}`,
-              }))}
-              listClassName="flex items-center gap-1 pr-2 min-w-max"
-              tabClassName="px-3 h-7 text-sm rounded-lg transition-colors duration-200 font-medium relative"
-              activeTabClassName="bg-bg-raised text-text-primary"
-              inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
-              indicatorLayoutId="request-tab-indicator"
-              indicatorClassName="bg-bg-raised rounded-lg"
-              indicatorTestId="request-tab-indicator"
-              listTestId="request-tabs-list"
-              listAriaLabel="Request tabs"
-              activateOnFocus={false}
-            />
+        <div
+          className="relative flex items-center gap-3 pl-3 pr-2 py-2 border-b border-border-subtle bg-bg-surface"
+          data-test-id="request-header-bar"
+        >
+          <div className="relative flex-1 min-w-0">
+            <div
+              ref={tabScrollRef}
+              className="overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x"
+              aria-label="Request tabs"
+              data-test-id="request-tabs-scroll"
+            >
+              <BaseTabsList
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                tabs={tabs.map((tab) => ({
+                  value: tab.id,
+                  label: tab.label,
+                  testId: `request-tab-${tab.id}`,
+                }))}
+                listClassName="flex items-center gap-1 pr-2 min-w-max"
+                tabClassName="px-3 h-7 text-sm rounded-lg transition-colors flex items-center gap-1.5 relative"
+                activeTabClassName="text-text-primary font-medium"
+                inactiveTabClassName="text-text-muted hover:text-text-primary hover:bg-bg-raised/50"
+                indicatorLayoutId="request-tab-indicator"
+                indicatorClassName="bg-bg-raised rounded-lg"
+                indicatorTestId="request-tab-indicator"
+                listTestId="request-tabs-list"
+                listAriaLabel="Request tabs"
+                activateOnFocus={false}
+              />
+            </div>
+
+            {showOverflowCue && canScrollLeft && (
+              <motion.div
+                className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
+                data-test-id="request-tabs-overflow-left"
+                initial={false}
+                animate={getOverflowAnimation('left')}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
+            {showOverflowCue && canScrollRight && (
+              <motion.div
+                className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
+                data-test-id="request-tabs-overflow-right"
+                initial={false}
+                animate={getOverflowAnimation('right')}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
           </div>
-          {showOverflowCue && canScrollLeft && (
-            <motion.div
-              className="pointer-events-none absolute inset-y-0 left-2 w-6 bg-linear-to-r from-bg-surface/90 to-transparent"
-              data-test-id="request-tabs-overflow-left"
-              initial={false}
-              animate={getOverflowAnimation('left')}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
-          {showOverflowCue && canScrollRight && (
-            <motion.div
-              className="pointer-events-none absolute inset-y-0 right-2 w-6 bg-linear-to-l from-bg-surface/90 to-transparent"
-              data-test-id="request-tabs-overflow-right"
-              initial={false}
-              animate={getOverflowAnimation('right')}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
         </div>
 
         {/* Tab content - overflow hidden to prevent scrollbar flash during transitions */}

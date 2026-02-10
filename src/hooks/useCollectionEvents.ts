@@ -42,6 +42,7 @@ export interface EventEnvelope<T> {
   actor: Actor;
   timestamp: string;
   correlation_id?: string;
+  lamport?: { participant: Actor; seq: number };
   payload: T;
 }
 
@@ -58,6 +59,7 @@ export interface CollectionCreatedEvent {
  */
 export interface CollectionDeletedEvent {
   id: string;
+  name?: string;
 }
 
 /**

@@ -54,6 +54,19 @@
   --gray-10: #797b84;
   --gray-11: #b2b3bb;
   --gray-12: #eeeef0;
+
+  /* Zen "Ink" Palette */
+  --ink-app: #080809;
+  --ink-surface: #111113;
+  --ink-raised: #1a1a1d;
+
+  /* Zen Signals (OKLCH) */
+  --zen-success: oklch(0.75 0.1 150);
+  --zen-warning: oklch(0.8 0.1 75);
+  --zen-ai: oklch(0.65 0.1 300);
+  --zen-error: oklch(0.65 0.12 25);
+  --zen-accent: oklch(0.7 0.1 230);
+  --zen-border: oklch(0.2 0.01 240 / 0.4);
   --gray-a1: #8b008d02;
   --gray-a2: #f8d6fa0e;
   --gray-a3: #e3dbf91a;

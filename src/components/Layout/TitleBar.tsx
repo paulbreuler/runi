@@ -273,7 +273,7 @@ export const TitleBar = ({
       className={cn(
         'border-b border-border-subtle bg-bg-surface flex items-center gap-2',
         'text-xs text-text-secondary select-none px-2 transition-colors duration-200',
-        hasCustomContent ? 'h-12' : 'h-8'
+        hasCustomContent ? 'h-12' : 'h-7'
       )}
       data-test-id="titlebar"
       data-tauri-drag-region
