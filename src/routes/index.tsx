@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { executeRequest } from '@/api/http';
 import { isAppError, type AppError } from '@/types/errors';
 import { getConsoleService } from '@/services/console-service';
@@ -13,7 +13,6 @@ import { createRequestParams, type HttpMethod } from '@/types/http';
 import { UrlBar } from '@/components/UrlBar/UrlBar';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
@@ -66,8 +65,6 @@ export const HomePage = (): React.JSX.Element => {
         (window as { __RUNI_E2E__?: { sidebarVisible?: boolean } }).__RUNI_E2E__?.sidebarVisible ===
           true)) ||
     collectionsEnabled;
-
-  const hasExecutedRef = useRef(false);
 
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
@@ -134,7 +131,6 @@ export const HomePage = (): React.JSX.Element => {
       return;
     }
 
-    hasExecutedRef.current = true;
     setLoading(true);
     setResponse(null);
     setUrl(localUrl);
@@ -284,24 +280,14 @@ export const HomePage = (): React.JSX.Element => {
       }
       responseContent={
         <div className="h-full flex flex-col bg-bg-app">
-          {hasExecutedRef.current ? (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <ResponseViewer
-                response={response}
-                vigilanceSlot={
-                  <VigilanceMonitor visible active={isLoading} label={getVigilanceLabel()} />
-                }
-              />
-            </div>
-          ) : (
-            <div className="flex-1 h-full">
-              <EmptyState
-                title="Response will appear here"
-                description="Send a request to see the response, headers, and timing information displayed in a clear, readable format."
-                variant="muted"
-              />
-            </div>
-          )}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <ResponseViewer
+              response={response}
+              vigilanceSlot={
+                <VigilanceMonitor visible active={isLoading} label={getVigilanceLabel()} />
+              }
+            />
+          </div>
         </div>
       }
     />
