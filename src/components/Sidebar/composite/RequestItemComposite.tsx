@@ -6,7 +6,7 @@
 import React, { useCallback, useRef, useState, useLayoutEffect } from 'react';
 import { Check, Radio, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Popover } from '@base-ui/react/popover';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
@@ -133,19 +133,20 @@ export const RequestItemComposite = ({
           </span>
 
           <Popover open={isHovered && isTruncated}>
-            <Popover.Trigger
+            <PopoverTrigger
               ref={textRef}
               className="text-sm text-text-primary truncate block pointer-events-none"
             >
               {displayName}
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Positioner side="right" sideOffset={8} align="center">
-                <Popover.Content className="glass px-2 py-1 text-sm text-text-primary z-100 max-w-md break-all">
-                  {request.name}
-                </Popover.Content>
-              </Popover.Positioner>
-            </Popover.Portal>
+            </PopoverTrigger>
+            <PopoverContent
+              side="right"
+              sideOffset={8}
+              align="center"
+              className="glass px-2 py-1 text-sm text-text-primary z-100 max-w-md break-all w-auto p-0"
+            >
+              {request.name}
+            </PopoverContent>
           </Popover>
         </div>
 
