@@ -203,31 +203,36 @@ export const RequestItemComposite = ({
           align="start"
           sideOffset={-28}
           className={cn(
-            'pointer-events-auto overflow-hidden shadow-2xl min-w-full w-auto p-0 h-[28px] flex items-center z-100 cursor-pointer',
-            isSelected ? 'bg-accent-blue/20' : 'bg-bg-raised',
-            isAiDraft
-              ? 'border border-signal-ai/40 rounded-md bg-signal-ai/[0.05]'
-              : 'border-none rounded-none'
+            'pointer-events-auto overflow-hidden shadow-2xl min-w-full w-auto !p-0 h-[28px] flex items-center z-100 cursor-pointer !border-none !ring-0',
+            isSelected ? 'bg-accent-blue/20' : 'bg-[#111113]', // Solid Ink Surface to mask underlying text
+            isAiDraft && 'bg-signal-ai/[0.08]'
           )}
           onClick={handleSelect}
         >
-          {renderContent(true)}
+          <div
+            className={cn(
+              'w-full h-full flex items-center',
+              isAiDraft && 'border border-signal-ai/40 rounded-md'
+            )}
+          >
+            {renderContent(true)}
 
-          {/* Mirrored Action Area in Popout */}
-          <div className="flex items-center gap-1.5 shrink-0 mr-2 pointer-events-none">
-            <AnimatePresence mode="popLayout">
-              {isAiDraft && (
-                <motion.button
-                  key="accept-button-pop"
-                  type="button"
-                  className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
-                  onClick={handleAcceptAi}
-                >
-                  <Check size={10} />
-                  Accept
-                </motion.button>
-              )}
-            </AnimatePresence>
+            {/* Mirrored Action Area in Popout */}
+            <div className="flex items-center gap-1.5 shrink-0 mr-2 pointer-events-none">
+              <AnimatePresence mode="popLayout">
+                {isAiDraft && (
+                  <motion.button
+                    key="accept-button-pop"
+                    type="button"
+                    className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
+                    onClick={handleAcceptAi}
+                  >
+                    <Check size={10} />
+                    Accept
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </PopoverContent>
       </Popover>
