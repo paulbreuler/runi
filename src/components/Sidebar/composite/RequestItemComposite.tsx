@@ -85,6 +85,60 @@ export const RequestItemComposite = ({
     [collectionId, request.id]
   );
 
+  const renderContent = (isPopout = false): React.JSX.Element => (
+    <div
+      className={cn(
+        'flex items-center gap-2 w-full min-w-0 h-full',
+        isPopout ? 'px-2 whitespace-nowrap' : ''
+      )}
+    >
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        {isBound(request) && (
+          <div className="shrink-0 w-3 flex items-center justify-center">
+            <span className="h-1.5 w-1.5 rounded-full bg-signal-success shadow-[0_0_4px_rgba(34,197,94,0.4)]" />
+          </div>
+        )}
+
+        <span
+          className={cn(
+            'text-[10px] font-bold uppercase tracking-widest shrink-0 min-w-[28px]',
+            methodClass
+          )}
+        >
+          {request.method}
+        </span>
+
+        <span
+          ref={isPopout ? null : textRef}
+          className={cn('text-sm text-text-primary', !isPopout && 'truncate block')}
+        >
+          {isPopout ? request.name : displayName}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1.5 shrink-0">
+        {(isAiDraft || isAiVerified) && (
+          <div
+            className={cn(
+              'flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0',
+              isAiDraft ? 'bg-signal-ai/10 text-signal-ai' : 'text-text-muted'
+            )}
+          >
+            <Sparkles size={10} />
+            {isAiDraft && 'AI'}
+          </div>
+        )}
+
+        {request.is_streaming && (
+          <div className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-1.5 py-0.5 text-[10px] text-accent-purple shrink-0 font-semibold">
+            <Radio size={10} />
+            Stream
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div
       className={cn(
@@ -101,96 +155,60 @@ export const RequestItemComposite = ({
       }}
       role="none"
     >
-      {/* Primary Hit Area - Background Button */}
-      <button
-        type="button"
-        className={cn(
-          'absolute inset-0 w-full h-full text-left cursor-pointer z-0',
-          focusRingClasses,
-          isAiDraft && 'rounded-md'
-        )}
-        onClick={handleSelect}
-        aria-label={`Select request ${request.method} ${request.name}`}
-        data-test-id={`request-select-${request.id}`}
-      />
-
-      {/* Content Layer - Pointer Events None except for buttons */}
-      <div className="relative flex items-center justify-between gap-2 w-full z-10 pointer-events-none">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {isBound(request) && (
-            <div className="shrink-0 w-3 flex items-center justify-center">
-              <span className="h-1.5 w-1.5 rounded-full bg-signal-success shadow-[0_0_4px_rgba(34,197,94,0.4)]" />
-            </div>
-          )}
-
-          <span
+      <Popover open={isHovered && isTruncated && !isSelected}>
+        <PopoverTrigger asChild>
+          {/* Primary Hit Area - Background Button */}
+          <button
+            type="button"
             className={cn(
-              'text-[10px] font-bold uppercase tracking-widest shrink-0 min-w-[28px]',
-              methodClass
+              'absolute inset-0 w-full h-full text-left cursor-pointer z-0',
+              focusRingClasses,
+              isAiDraft && 'rounded-md'
             )}
-          >
-            {request.method}
-          </span>
+            onClick={handleSelect}
+            aria-label={`Select request ${request.method} ${request.name}`}
+            data-test-id={`request-select-${request.id}`}
+          />
+        </PopoverTrigger>
 
-          <Popover open={isHovered && isTruncated}>
-            <PopoverTrigger
-              ref={textRef}
-              className="text-sm text-text-primary truncate block pointer-events-none"
-            >
-              {displayName}
-            </PopoverTrigger>
-            <PopoverContent
-              side="right"
-              sideOffset={8}
-              align="center"
-              className="glass px-2 py-1 text-sm text-text-primary z-100 max-w-md break-all w-auto p-0"
-            >
-              {request.name}
-            </PopoverContent>
-          </Popover>
+        {/* Base Content Layer */}
+        <div className="relative flex items-center justify-between gap-2 w-full z-10 pointer-events-none">
+          {renderContent()}
+
+          {/* Action Area - Sibling to content but visually on right */}
+          <div className="flex items-center gap-1.5 shrink-0 ml-1">
+            <AnimatePresence mode="popLayout">
+              {isAiDraft && (
+                <motion.button
+                  key="accept-button"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  type="button"
+                  className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
+                  onClick={handleAcceptAi}
+                  title="Accept AI changes"
+                >
+                  <Check size={10} />
+                  Accept
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        {/* Secondary Actions Area */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <AnimatePresence mode="popLayout">
-            {isAiDraft && (
-              <motion.button
-                key="accept-button"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                type="button"
-                className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
-                onClick={handleAcceptAi}
-                title="Accept AI changes"
-              >
-                <Check size={10} />
-                Accept
-              </motion.button>
-            )}
-
-            {(isAiDraft || isAiVerified) && (
-              <motion.div
-                key="ai-indicator"
-                className={cn(
-                  'flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0',
-                  isAiDraft ? 'bg-signal-ai/10 text-signal-ai' : 'text-text-muted'
-                )}
-              >
-                <Sparkles size={10} />
-                {isAiDraft && 'AI'}
-              </motion.div>
-            )}
-
-            {request.is_streaming && (
-              <div className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-1.5 py-0.5 text-[10px] text-accent-purple shrink-0 font-semibold">
-                <Radio size={10} />
-                Stream
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+        <PopoverContent
+          side="left"
+          align="start"
+          sideOffset={0}
+          className={cn(
+            'pointer-events-none overflow-hidden bg-bg-elevated border-none shadow-xl min-w-full w-auto p-0 h-[28px] flex items-center',
+            isSelected && 'bg-accent-blue/20'
+          )}
+        >
+          {renderContent(true)}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

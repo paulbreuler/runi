@@ -48,7 +48,8 @@ pub struct McpServerStatusInfo {
 }
 
 /// Default port for the MCP server.
-pub const DEFAULT_MCP_PORT: u16 = 3001;
+/// Uses 3002 to avoid conflict with runi-planning-docs MCP (limps) on 3001.
+pub const DEFAULT_MCP_PORT: u16 = 3002;
 
 /// Start the MCP server on the given port, storing the handle in the provided state.
 ///
