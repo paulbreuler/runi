@@ -29,10 +29,18 @@ type Story = StoryObj<typeof RequestItemComposite>;
 const baseRequest: CollectionRequest = {
   id: 'req_1',
   name: 'Get User Profile',
+  seq: 1,
   method: 'GET',
   url: 'https://api.example.com/user/1',
-  headers: [],
+  headers: {},
+  params: [],
+  is_streaming: false,
+  tags: [],
+  binding: {
+    is_manual: true,
+  },
   intelligence: {
+    ai_generated: false,
     verified: true,
   },
 };
@@ -52,8 +60,9 @@ export const AiDraft: Story = {
       name: 'List Recent Transactions (AI Suggestion)',
       method: 'POST',
       intelligence: {
+        ai_generated: true,
         verified: false,
-        actor: { type: 'ai', id: 'claude-3-5-sonnet' },
+        generator_model: 'claude-3-5-sonnet',
       },
     },
     collectionId: 'col_1',
@@ -68,8 +77,9 @@ export const AiVerified: Story = {
       name: 'Update Preferences',
       method: 'PATCH',
       intelligence: {
+        ai_generated: true,
         verified: true,
-        actor: { type: 'ai', id: 'claude-3-5-sonnet' },
+        generator_model: 'claude-3-5-sonnet',
       },
     },
     collectionId: 'col_1',
@@ -83,9 +93,14 @@ export const BoundToSpec: Story = {
       id: 'req_bound',
       name: 'Authenticated Endpoint',
       method: 'GET',
+      binding: {
+        operation_id: 'getUser',
+        path: '/user',
+        is_manual: false,
+      },
       intelligence: {
+        ai_generated: false,
         verified: true,
-        actor: { type: 'system', id: 'spec-sync' },
       },
     },
     collectionId: 'col_1',
