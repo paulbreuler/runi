@@ -265,6 +265,7 @@ export default tseslint.config(
       'storybook-static/',
       'coverage/',
       'html/', // Vitest HTML test reports
+      'src-tauri/html/', // Vitest HTML test reports (Tauri context)
       'playwright-report/', // Playwright test reports
       'test-results/', // Playwright test results
       'src/types/generated/',

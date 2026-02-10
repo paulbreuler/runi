@@ -137,7 +137,6 @@ export const HomePage = (): React.JSX.Element => {
 
     hasExecutedRef.current = true;
     setLoading(true);
-    setResponse(null);
     setUrl(localUrl);
     setMethod(localMethod);
 
