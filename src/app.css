@@ -61,6 +61,9 @@
   --color-signal-ai: oklch(0.65 0.1 300);
   --color-signal-ai-rgba-25: oklch(0.65 0.1 300 / 25%);
   --color-accent-blue: oklch(0.7 0.1 230);
+  --color-accent-blue-hover: oklch(0.7 0.1 230 / 90%);
+  --color-accent-contrast: var(--color-text-primary);
+  --color-accent-purple: var(--color-signal-ai);
 
   /* HTTP Method Colors - Zen Signal mapping */
   --color-method-get: oklch(0.7 0.1 230);
