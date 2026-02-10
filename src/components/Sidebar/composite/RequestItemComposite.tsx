@@ -139,6 +139,8 @@ export const RequestItemComposite = ({
     </div>
   );
 
+  const isExpanded = isHovered && isTruncated && !isSelected;
+
   return (
     <div
       className={cn(
@@ -156,7 +158,7 @@ export const RequestItemComposite = ({
       }}
       role="none"
     >
-      <Popover open={isHovered && isTruncated && !isSelected}>
+      <Popover open={isExpanded}>
         <PopoverTrigger asChild>
           {/* Primary Hit Area - Background Button */}
           <button
@@ -172,11 +174,16 @@ export const RequestItemComposite = ({
           />
         </PopoverTrigger>
 
-        {/* Base Content Layer */}
-        <div className="relative flex items-center justify-between gap-2 w-full z-10 pointer-events-none h-[28px]">
+        {/* Base Content Layer - Hidden when expansion is open to prevent ghosting */}
+        <div
+          className={cn(
+            'relative flex items-center justify-between gap-2 w-full z-10 pointer-events-none h-[28px]',
+            isExpanded && 'invisible'
+          )}
+        >
           {renderContent()}
 
-          {/* Action Area - Only in base layer to avoid double buttons, visually on right */}
+          {/* Action Area - Base Layer */}
           <div className="flex items-center gap-1.5 shrink-0 mr-2">
             <AnimatePresence mode="popLayout">
               {isAiDraft && (
@@ -198,27 +205,28 @@ export const RequestItemComposite = ({
           </div>
         </div>
 
+        {/* Expanded Overlay - Clean Masking */}
         <PopoverContent
           side="top"
           align="start"
           sideOffset={-28}
           className={cn(
             'pointer-events-auto overflow-hidden shadow-2xl min-w-full w-auto !p-0 h-[28px] flex items-center z-100 cursor-pointer !border-none !ring-0',
-            isSelected ? 'bg-accent-blue/20' : 'bg-[#111113]', // Solid Ink Surface to mask underlying text
-            isAiDraft && 'bg-signal-ai/[0.08]'
+            isSelected ? 'bg-accent-blue/20' : 'bg-[#111113]', // Solid opaque background
+            isAiDraft && 'bg-[#1a141d]' // Solid AI tint
           )}
           onClick={handleSelect}
         >
           <div
             className={cn(
-              'w-full h-full flex items-center',
+              'w-full h-full flex items-center pr-2',
               isAiDraft && 'border border-signal-ai/40 rounded-md'
             )}
           >
             {renderContent(true)}
 
-            {/* Mirrored Action Area in Popout */}
-            <div className="flex items-center gap-1.5 shrink-0 mr-2 pointer-events-none">
+            {/* Expansion Layer Action Area */}
+            <div className="flex items-center gap-1.5 shrink-0 ml-1">
               <AnimatePresence mode="popLayout">
                 {isAiDraft && (
                   <motion.button
