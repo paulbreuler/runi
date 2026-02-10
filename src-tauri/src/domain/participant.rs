@@ -3,7 +3,7 @@
 
 //! Participant identity and Lamport timestamps for multiplayer-like provenance.
 //!
-//! Inspired by Zed's `ReplicaId`/`ParticipantId` pattern. Every state mutation
+//! Uses a ReplicaId/ParticipantId pattern for multiplayer-like provenance. Every state mutation
 //! carries a participant identity and a logical sequence number so the UI can
 //! attribute changes to the correct actor and order them causally.
 //!
@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 
 /// Identifies WHO made a change — the multiplayer "cursor".
 ///
-/// Maps to Zed's `ParticipantId` / `ReplicaId`:
+/// `ParticipantId` variants:
 /// - `User` (replica 0) — the human at the keyboard
 /// - `System` (replica 1) — automated runi actions
 /// - `Ai` (replica 2) — AI agents via MCP
@@ -42,7 +42,7 @@ pub enum ParticipantId {
 }
 
 impl ParticipantId {
-    /// The Zed-style replica ID for this participant.
+    /// The replica ID for this participant.
     ///
     /// Used for deterministic ordering: User=0, System=1, AI=2.
     /// Reserved for version vector ordering in future multiplayer features.

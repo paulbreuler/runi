@@ -8,7 +8,7 @@
 //!
 //! Every event carries an [`Actor`] indicating WHO initiated the action,
 //! and is wrapped in an [`EventEnvelope`] with provenance metadata.
-//! Inspired by Zed's `ReplicaId` pattern for distinguishing human vs AI edits.
+//! Uses a ReplicaId pattern for distinguishing human vs AI edits.
 
 use serde::{Deserialize, Serialize};
 

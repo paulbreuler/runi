@@ -4,7 +4,7 @@
  */
 
 /**
- * @file Participant color system (Zed-inspired).
+ * @file Participant color system for multiplayer-like attribution.
  *
  * Maps ParticipantId → color palette for multiplayer-like attribution.
  * AI gets reserved purple (#a855f7), matching runi's signal system.
@@ -12,7 +12,7 @@
 
 import type { Actor } from '@/hooks/useCollectionEvents';
 
-/** Zed-style player color with cursor, background, and selection variants. */
+/** Player color with cursor, background, and selection variants. */
 export interface ParticipantColor {
   /** Primary color for cursor/dot indicators. */
   cursor: string;

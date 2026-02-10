@@ -7,13 +7,13 @@
  * @file Participant identity and Lamport timestamps for multiplayer-like provenance.
  *
  * Mirrors Rust types from `domain/participant.rs`.
- * Inspired by Zed's ReplicaId/ParticipantId pattern.
+ * Uses a ReplicaId/ParticipantId pattern for multiplayer-like provenance.
  */
 
 /**
  * Identifies WHO made a change — the multiplayer "cursor".
  *
- * Maps to Zed's ParticipantId:
+ * ParticipantId variants:
  * - User (replica 0) — the human at the keyboard
  * - System (replica 1) — automated runi actions
  * - Ai (replica 2) — AI agents via MCP
