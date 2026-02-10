@@ -95,7 +95,7 @@ export function isEditableElement(element: Element | null): boolean {
   }
 
   const tagName = element.tagName.toUpperCase();
-  if (tagName === 'INPUT' || tagName === 'TEXTAREA') {
+  if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
     return true;
   }
 

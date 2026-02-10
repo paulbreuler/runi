@@ -36,7 +36,6 @@ export type EventType =
   | 'ai.suggestion-requested'
   | 'ai.suggestion-available'
   | 'ai.error-analysis'
-  | 'command.executed'
   | 'console.debug-emitted'
   | 'console.info-emitted'
   | 'console.warn-emitted'
