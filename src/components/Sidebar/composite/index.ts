@@ -4,3 +4,4 @@
  */
 
 export * from './RequestItemComposite';
+export * from './RequestListComposite';

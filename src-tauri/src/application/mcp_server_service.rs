@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use serde_json::json;
 
-use crate::domain::collection::{Collection, CollectionRequest, IntelligenceMetadata, SourceType};
+use crate::domain::collection::{Collection, CollectionRequest, IntelligenceMetadata};
 use crate::domain::http::RequestParams;
 use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::mcp::protocol::{McpToolDefinition, ToolCallResult, ToolResponseContent};
@@ -43,8 +43,8 @@ fn tool_def(name: &str, description: &str, input_schema: serde_json::Value) -> R
 /// defaulting to the system collections directory.
 ///
 /// Every operation carries an [`Actor`] for provenance tracking.
-/// MCP-created collections use `SourceType::Mcp` and requests get
-/// `ai_generated: true` attribution.
+/// MCP-created collections default to `SourceType::Manual` (MCP is a creation
+/// channel, not a collection type). Requests get `ai_generated: true` attribution.
 ///
 /// Maintains a [`SeqCounter`] for Lamport timestamps on emitted events.
 pub struct McpServerService {
@@ -313,8 +313,7 @@ impl McpServerService {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: name".to_string())?;
 
-        let mut collection = Collection::new(name);
-        collection.source.source_type = SourceType::Mcp;
+        let collection = Collection::new(name);
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
@@ -514,6 +513,7 @@ fn collection_request_to_params(req: &CollectionRequest, timeout_ms: u64) -> Req
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::collection::SourceType;
     use tempfile::TempDir;
 
     fn make_service() -> (McpServerService, TempDir) {
@@ -883,7 +883,7 @@ mod tests {
     }
 
     #[test]
-    fn test_create_collection_has_mcp_source_type() {
+    fn test_create_collection_has_manual_source_type() {
         let (mut service, _dir) = make_service();
 
         let result = service
@@ -895,8 +895,10 @@ mod tests {
         let created: serde_json::Value = serde_json::from_str(text).unwrap();
         let collection_id = created["id"].as_str().unwrap();
 
+        // MCP is a creation channel, not a collection type.
+        // AI provenance is tracked via intelligence.ai_generated on each request.
         let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
-        assert_eq!(collection.source.source_type, SourceType::Mcp);
+        assert_eq!(collection.source.source_type, SourceType::Manual);
     }
 
     #[test]
