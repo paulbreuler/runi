@@ -269,9 +269,14 @@ export const RequestItemComposite = ({
 
   const renderContent = (isPopout = false): React.JSX.Element => (
     <div
-      className={cn('flex items-center gap-2 w-full h-full px-2', isPopout && 'whitespace-nowrap')}
+      data-test-id="request-item-content"
+      className={cn(
+        'flex items-center gap-2 h-full px-2',
+        !isPopout && 'w-full',
+        isPopout && 'whitespace-nowrap'
+      )}
     >
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className={cn('flex items-center gap-2', !isPopout && 'min-w-0 flex-1')}>
         {isBound(request) && (
           <div className="shrink-0 w-3 flex items-center justify-center">
             <span className="h-1.5 w-1.5 rounded-full bg-signal-success shadow-[0_0_4px_rgba(34,197,94,0.4)]" />
@@ -289,6 +294,7 @@ export const RequestItemComposite = ({
 
         <span
           ref={isPopout ? null : textRef}
+          data-test-id={isPopout ? undefined : 'request-name'}
           className={cn('text-sm text-text-primary', !isPopout && 'truncate block')}
         >
           {isPopout ? request.name : displayName}

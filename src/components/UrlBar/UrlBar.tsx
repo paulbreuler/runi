@@ -87,84 +87,81 @@ export const UrlBar = ({
   };
 
   return (
-    <div className="flex flex-1 min-w-0 items-center gap-0">
-      {/* Inline titlebar command row (no extra panel shell) */}
-      <div
-        className={cn(
-          'flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300',
-          compositeFocusContainerClasses
-        )}
-        data-test-id="url-bar"
-      >
-        {/* Method selector - appears as prefix */}
-        <Select.Select value={method} onValueChange={handleMethodChange}>
-          <Select.SelectTrigger
-            role="button"
-            aria-haspopup="listbox"
-            className={cn(
-              'relative min-w-24 w-auto h-7 font-mono text-xs font-semibold bg-transparent border-0 transition-all duration-300 whitespace-nowrap',
-              compositeFocusItemClasses,
-              methodColor,
-              'hover:brightness-125 focus:brightness-125'
-            )}
-            data-test-id="method-select"
-            disabled={loading}
-            aria-label="HTTP Method"
-          >
-            <Select.SelectValue>{method}</Select.SelectValue>
-          </Select.SelectTrigger>
-          <Select.SelectContent className="glass">
-            {httpMethods.map((httpMethod) => {
-              const color = getMethodColor(httpMethod);
-              return (
-                <Select.SelectItem
-                  key={httpMethod}
-                  value={httpMethod}
-                  className={cn('text-xs font-mono', color, 'data-highlighted:bg-bg-raised/50')}
-                  data-test-id={`method-option-${httpMethod}`}
-                >
-                  {httpMethod}
-                </Select.SelectItem>
-              );
-            })}
-          </Select.SelectContent>
-        </Select.Select>
-
-        {/* URL input - seamless flow */}
-        <Input
-          type="text"
-          value={url}
-          onChange={(e) => onUrlChange?.(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Enter request URL..."
-          data-test-id="url-input"
-          disabled={loading}
-          aria-label="Request URL"
-          noScale
+    <div
+      className={cn(
+        'flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300',
+        compositeFocusContainerClasses
+      )}
+      data-test-id="url-bar"
+    >
+      {/* Method selector - appears as prefix */}
+      <Select.Select value={method} onValueChange={handleMethodChange}>
+        <Select.SelectTrigger
+          role="button"
+          aria-haspopup="listbox"
           className={cn(
-            'relative h-7 flex-1 border-0 rounded-none bg-transparent text-text-primary font-mono text-sm placeholder:text-text-muted/40 py-0',
+            'relative min-w-24 w-auto h-7 font-mono text-xs font-semibold bg-transparent border-0 transition-all duration-300 whitespace-nowrap',
+            compositeFocusItemClasses,
+            methodColor,
+            'hover:brightness-125 focus:brightness-125'
+          )}
+          data-test-id="method-select"
+          disabled={loading}
+          aria-label="HTTP Method"
+        >
+          <Select.SelectValue>{method}</Select.SelectValue>
+        </Select.SelectTrigger>
+        <Select.SelectContent className="glass">
+          {httpMethods.map((httpMethod) => {
+            const color = getMethodColor(httpMethod);
+            return (
+              <Select.SelectItem
+                key={httpMethod}
+                value={httpMethod}
+                className={cn('text-xs font-mono', color, 'data-highlighted:bg-bg-raised/50')}
+                data-test-id={`method-option-${httpMethod}`}
+              >
+                {httpMethod}
+              </Select.SelectItem>
+            );
+          })}
+        </Select.SelectContent>
+      </Select.Select>
+
+      {/* URL input - seamless flow */}
+      <Input
+        type="text"
+        value={url}
+        onChange={(e) => onUrlChange?.(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Enter request URL..."
+        data-test-id="url-input"
+        disabled={loading}
+        aria-label="Request URL"
+        noScale
+        className={cn(
+          'relative h-7 flex-1 border-0 rounded-none bg-transparent text-text-primary font-mono text-sm placeholder:text-text-muted/40 py-0',
+          compositeFocusItemClasses
+        )}
+      />
+
+      {/* Send button - minimal suffix */}
+      <div className="flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="xs"
+          noScale
+          onClick={onSend}
+          disabled={!isValidUrl || loading}
+          data-test-id="send-button"
+          aria-label="Send Request"
+          className={cn(
+            'relative h-7 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue transition-colors',
             compositeFocusItemClasses
           )}
-        />
-
-        {/* Send button - minimal suffix */}
-        <div className="flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="xs"
-            noScale
-            onClick={onSend}
-            disabled={!isValidUrl || loading}
-            data-test-id="send-button"
-            aria-label="Send Request"
-            className={cn(
-              'relative h-7 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue transition-colors',
-              compositeFocusItemClasses
-            )}
-          >
-            {loading ? renderLoadingState() : 'Send'}
-          </Button>
-        </div>
+        >
+          {loading ? renderLoadingState() : 'Send'}
+        </Button>
       </div>
     </div>
   );

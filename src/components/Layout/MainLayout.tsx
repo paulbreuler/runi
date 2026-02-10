@@ -20,6 +20,7 @@ import { TitleBar } from './TitleBar';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useTabStore } from '@/stores/useTabStore';
 import { isMacSync, getModifierKeyName } from '@/utils/platform';
 import type { ModifierKey } from '@/utils/keyboard';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -197,6 +198,109 @@ export const MainLayout = ({
   useKeyboardShortcuts(sidebarShortcutMeta);
   useKeyboardShortcuts(sidebarShortcutCtrl);
   useKeyboardShortcuts(panelShortcut);
+
+  // Tab keyboard shortcuts
+  const openTab = useTabStore((s) => s.openTab);
+  const closeTab = useTabStore((s) => s.closeTab);
+
+  const handleNewTab = useCallback(() => {
+    openTab();
+  }, [openTab]);
+
+  const handleCloseTab = useCallback(() => {
+    const activeId = useTabStore.getState().activeTabId;
+    if (activeId !== null) {
+      closeTab(activeId);
+    }
+  }, [closeTab]);
+
+  const handleNextTab = useCallback(() => {
+    const { tabOrder, activeTabId } = useTabStore.getState();
+    if (tabOrder.length <= 1 || activeTabId === null) {
+      return;
+    }
+    const idx = tabOrder.indexOf(activeTabId);
+    const nextIdx = (idx + 1) % tabOrder.length;
+    const nextTabId = tabOrder[nextIdx];
+    if (nextTabId !== undefined) {
+      useTabStore.getState().setActiveTab(nextTabId);
+    }
+  }, []);
+
+  const handlePrevTab = useCallback(() => {
+    const { tabOrder, activeTabId } = useTabStore.getState();
+    if (tabOrder.length <= 1 || activeTabId === null) {
+      return;
+    }
+    const idx = tabOrder.indexOf(activeTabId);
+    const prevIdx = (idx - 1 + tabOrder.length) % tabOrder.length;
+    const prevTabId = tabOrder[prevIdx];
+    if (prevTabId !== undefined) {
+      useTabStore.getState().setActiveTab(prevTabId);
+    }
+  }, []);
+
+  const newTabMeta = useMemo(
+    () => ({
+      key: 't',
+      modifier: 'meta' as const,
+      handler: handleNewTab,
+      description: '⌘T - New tab',
+    }),
+    [handleNewTab]
+  );
+  const newTabCtrl = useMemo(
+    () => ({
+      key: 't',
+      modifier: 'ctrl' as const,
+      handler: handleNewTab,
+      description: 'Ctrl+T - New tab',
+    }),
+    [handleNewTab]
+  );
+  const closeTabMeta = useMemo(
+    () => ({
+      key: 'w',
+      modifier: 'meta' as const,
+      handler: handleCloseTab,
+      description: '⌘W - Close tab',
+    }),
+    [handleCloseTab]
+  );
+  const closeTabCtrl = useMemo(
+    () => ({
+      key: 'w',
+      modifier: 'ctrl' as const,
+      handler: handleCloseTab,
+      description: 'Ctrl+W - Close tab',
+    }),
+    [handleCloseTab]
+  );
+  const nextTabShortcut = useMemo(
+    () => ({
+      key: 'Tab',
+      modifier: 'ctrl' as const,
+      handler: handleNextTab,
+      description: 'Ctrl+Tab - Next tab',
+    }),
+    [handleNextTab]
+  );
+  const prevTabShortcut = useMemo(
+    () => ({
+      key: 'Tab',
+      modifier: ['ctrl', 'shift'] as ModifierKey[],
+      handler: handlePrevTab,
+      description: 'Ctrl+Shift+Tab - Previous tab',
+    }),
+    [handlePrevTab]
+  );
+
+  useKeyboardShortcuts(newTabMeta);
+  useKeyboardShortcuts(newTabCtrl);
+  useKeyboardShortcuts(closeTabMeta);
+  useKeyboardShortcuts(closeTabCtrl);
+  useKeyboardShortcuts(nextTabShortcut);
+  useKeyboardShortcuts(prevTabShortcut);
 
   // Track target correlation ID for console panel jump
   const [targetCorrelationId, setTargetCorrelationId] = useState<string | undefined>(undefined);
@@ -770,7 +874,7 @@ export const MainLayout = ({
                   aria-valuemin={MIN_PANE_SIZE}
                   aria-valuemax={MAX_PANE_SIZE}
                 />
-              </motion.div>
+              </motion.div>{' '}
             </LayoutGroup>
 
             {/* Right dock panel */}

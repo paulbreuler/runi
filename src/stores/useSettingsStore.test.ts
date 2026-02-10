@@ -108,6 +108,37 @@ describe('useSettingsStore', () => {
     });
   });
 
+  describe('openItemsRatio', () => {
+    it('initializes with default ratio of 0.35', () => {
+      const { result } = renderHook(() => useSettingsStore());
+      expect(result.current.openItemsRatio).toBe(0.35);
+    });
+
+    it('sets ratio via setOpenItemsRatio', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setOpenItemsRatio(0.5);
+      });
+
+      expect(result.current.openItemsRatio).toBe(0.5);
+    });
+
+    it('clamps ratio to [0.1, 0.9] range', () => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setOpenItemsRatio(0);
+      });
+      expect(result.current.openItemsRatio).toBe(0.1);
+
+      act(() => {
+        result.current.setOpenItemsRatio(1);
+      });
+      expect(result.current.openItemsRatio).toBe(0.9);
+    });
+  });
+
   describe('edge cases', () => {
     it('handles rapid sidebar toggles', () => {
       const { result } = renderHook(() => useSettingsStore());

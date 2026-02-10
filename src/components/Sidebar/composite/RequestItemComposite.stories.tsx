@@ -145,12 +145,70 @@ export const Truncated: Story = {
       });
     });
 
-    await step('Verify popout appears', async () => {
+    await step('Verify popout appears and expands beyond sidebar width', async () => {
       const popout = document.querySelector('[data-test-id="request-popout"]');
       await expect(popout).not.toBeNull();
+      if (popout === null) {
+        return;
+      }
+
+      // Popout content should not have w-full (constrains expansion)
+      const content = popout.querySelector('[data-test-id="request-item-content"]');
+      await expect(content).not.toBeNull();
+      if (content !== null) {
+        await expect(content.className).not.toContain('w-full');
+      }
+
+      // Popout should be wider than the sidebar container (w-80 = 320px)
+      const popoutRect = popout.getBoundingClientRect();
+      if (popoutRect.width > 0) {
+        await expect(popoutRect.width).toBeGreaterThan(320);
+      }
     });
 
     await step('Unhover to dismiss popout', async () => {
+      await userEvent.unhover(button);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    });
+  },
+};
+
+export const TruncatedWithStreamBadge: Story = {
+  args: {
+    request: {
+      ...baseRequest,
+      id: 'req_long_stream',
+      name: 'This is a very long streaming request name that should expand and push the badge rightward',
+      is_streaming: true,
+    },
+    collectionId: 'col_1',
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByTestId('request-select-req_long_stream');
+
+    await step('Hover to trigger popout', async () => {
+      await userEvent.hover(button);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 400);
+      });
+    });
+
+    await step('Verify popout shows full name with badge after text', async () => {
+      const popout = document.querySelector('[data-test-id="request-popout"]');
+      await expect(popout).not.toBeNull();
+      if (popout === null) {
+        return;
+      }
+      // Full name should be visible (not truncated)
+      await expect(popout.textContent).toContain('push the badge rightward');
+      // Stream badge should also be present
+      await expect(popout.textContent).toContain('Stream');
+    });
+
+    await step('Unhover to dismiss', async () => {
       await userEvent.unhover(button);
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
