@@ -12,7 +12,6 @@ import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
-import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { globalEventBus } from '@/events/bus';
 
@@ -342,8 +341,8 @@ export const RequestItemComposite = ({
         data-active={isSelected || undefined}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        onClick={(e) => {
-          focusWithVisibility(e.currentTarget as HTMLElement, { preventScroll: true });
+        onClick={(e): void => {
+          (e.currentTarget as HTMLElement).focus({ preventScroll: true });
           handleSelect();
         }}
         onKeyDown={(e) => {

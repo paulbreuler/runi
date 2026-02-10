@@ -15,20 +15,20 @@ const SYSTEM_ACTOR: Actor = { type: 'system' };
 describe('getParticipantColor', () => {
   it('returns purple for AI actors', () => {
     const color = getParticipantColor(AI_ACTOR);
-    expect(color.cursor).toBe('#a855f7');
+    expect(color.cursor).toBe('var(--color-signal-ai)');
     expect(color.textClass).toBe('text-signal-ai');
     expect(color.dotClass).toBe('bg-signal-ai');
   });
 
   it('returns blue for user actors', () => {
     const color = getParticipantColor(USER_ACTOR);
-    expect(color.cursor).toBe('#3b82f6');
+    expect(color.cursor).toBe('var(--color-accent-blue)');
     expect(color.textClass).toBe('text-accent-blue');
   });
 
   it('returns gray for system actors', () => {
     const color = getParticipantColor(SYSTEM_ACTOR);
-    expect(color.cursor).toBe('#6b7280');
+    expect(color.cursor).toBe('var(--color-text-muted)');
     expect(color.textClass).toBe('text-text-muted');
   });
 

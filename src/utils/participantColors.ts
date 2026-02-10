@@ -26,29 +26,29 @@ export interface ParticipantColor {
   dotClass: string;
 }
 
-/** AI participant color — purple signal. */
+/** AI participant color — purple signal. Uses CSS vars for theme/blur consistency. */
 const AI_COLOR: ParticipantColor = {
-  cursor: '#a855f7',
-  background: 'rgba(168, 85, 247, 0.06)',
-  selection: 'rgba(168, 85, 247, 0.19)',
+  cursor: 'var(--color-signal-ai)',
+  background: 'oklch(0.65 0.1 300 / 6%)',
+  selection: 'oklch(0.65 0.1 300 / 19%)',
   textClass: 'text-signal-ai',
   dotClass: 'bg-signal-ai',
 };
 
 /** User participant color — blue (default runi accent). */
 const USER_COLOR: ParticipantColor = {
-  cursor: '#3b82f6',
-  background: 'rgba(59, 130, 246, 0.06)',
-  selection: 'rgba(59, 130, 246, 0.19)',
+  cursor: 'var(--color-accent-blue)',
+  background: 'oklch(0.7 0.1 230 / 6%)',
+  selection: 'oklch(0.7 0.1 230 / 19%)',
   textClass: 'text-accent-blue',
   dotClass: 'bg-accent-blue',
 };
 
 /** System participant color — gray/neutral. */
 const SYSTEM_COLOR: ParticipantColor = {
-  cursor: '#6b7280',
-  background: 'rgba(107, 114, 128, 0.06)',
-  selection: 'rgba(107, 114, 128, 0.19)',
+  cursor: 'var(--color-text-muted)',
+  background: 'oklch(0.65 0.01 240 / 6%)',
+  selection: 'oklch(0.65 0.01 240 / 19%)',
   textClass: 'text-text-muted',
   dotClass: 'bg-text-muted',
 };

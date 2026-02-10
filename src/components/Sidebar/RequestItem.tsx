@@ -13,7 +13,6 @@ import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
-import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface RequestItemProps {
@@ -304,7 +303,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e): void => {
-          focusWithVisibility(e.currentTarget as HTMLElement, { preventScroll: true });
+          (e.currentTarget as HTMLElement).focus({ preventScroll: true });
           handleAction();
         }}
         onKeyDown={(e): void => {
