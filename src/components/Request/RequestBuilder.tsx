@@ -115,7 +115,10 @@ export const RequestBuilder = (): React.JSX.Element => {
         onValueChange={setActiveTab as (value: string) => void}
         className="flex-1 min-h-0 flex flex-col"
       >
-        <div className="relative flex items-center gap-3 pl-3 pr-2 py-2 border-b border-border-subtle bg-bg-surface">
+        <div
+          className="relative flex items-center gap-3 pl-3 pr-2 py-2 border-b border-border-subtle bg-bg-surface"
+          data-test-id="request-header-bar"
+        >
           <div className="relative flex-1 min-w-0">
             <div
               ref={tabScrollRef}

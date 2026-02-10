@@ -52,7 +52,7 @@ describe('TimingWaterfall', () => {
     expect(screen.getByTestId('timing-connect')).toHaveClass('bg-signal-warning');
     expect(screen.getByTestId('timing-tls')).toHaveClass('bg-accent-blue');
     expect(screen.getByTestId('timing-wait')).toHaveClass('bg-signal-success');
-    expect(screen.getByTestId('timing-download')).toHaveClass('bg-gray-11');
+    expect(screen.getByTestId('timing-download')).toHaveClass('bg-bg-raised');
   });
 
   it('shows legend with ms values', () => {

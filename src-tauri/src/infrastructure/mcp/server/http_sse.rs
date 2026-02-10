@@ -161,23 +161,30 @@ async fn handle_sse(
         }
 
         // Relay broadcast events until client disconnects or channel closes.
+        // Uses select! to detect client disconnect even when no broadcasts arrive.
         loop {
-            match broadcast_rx.recv().await {
-                Ok(envelope) => {
-                    let Ok(data) = serde_json::to_string(&envelope) else {
-                        continue; // Skip malformed envelopes.
-                    };
-                    let sse_event = Event::default().event("mcp-event").data(data);
-                    if tx.send(Ok(sse_event)).await.is_err() {
-                        break; // Client disconnected.
+            tokio::select! {
+                result = broadcast_rx.recv() => {
+                    match result {
+                        Ok(envelope) => {
+                            let Ok(data) = serde_json::to_string(&envelope) else {
+                                continue; // Skip malformed envelopes.
+                            };
+                            let sse_event = Event::default().event("mcp-event").data(data);
+                            if tx.send(Ok(sse_event)).await.is_err() {
+                                break; // Client disconnected.
+                            }
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
+                            tracing::warn!("SSE client lagged, skipped {n} events");
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                            break; // Broadcaster shut down.
+                        }
                     }
                 }
-                Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
-                    // Client fell behind — log and continue with latest.
-                    tracing::warn!("SSE client lagged, skipped {n} events");
-                }
-                Err(tokio::sync::broadcast::error::RecvError::Closed) => {
-                    break; // Broadcaster shut down.
+                () = tx.closed() => {
+                    break; // Client disconnected.
                 }
             }
         }

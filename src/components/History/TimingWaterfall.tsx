@@ -29,7 +29,7 @@ const segmentConfig = [
   { key: 'connect', label: 'Connect', colorClass: 'bg-signal-warning' },
   { key: 'tls', label: 'TLS', colorClass: 'bg-accent-blue' },
   { key: 'wait', label: 'Wait', colorClass: 'bg-signal-success' },
-  { key: 'download', label: 'Download', colorClass: 'bg-gray-11' },
+  { key: 'download', label: 'Download', colorClass: 'bg-bg-raised' },
 ] as const;
 
 /**

@@ -205,9 +205,7 @@ describe('RequestBuilder', () => {
   it('uses compact horizontal padding in the tabs header row', () => {
     render(<RequestBuilder />);
 
-    const tabScroller = screen.getByTestId('request-tabs-scroll');
-    const headerRow = tabScroller.parentElement?.parentElement;
-    expect(headerRow).not.toBeNull();
+    const headerRow = screen.getByTestId('request-header-bar');
     expect(headerRow).toHaveClass('pl-3');
     expect(headerRow).toHaveClass('pr-2');
   });

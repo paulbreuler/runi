@@ -295,18 +295,19 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
           isActuallyVisible() ? 'outline-none ring-0 shadow-none' : focusRingClasses,
           isActuallyVisible() && !isFocused && 'bg-transparent',
-          isGhostNode && 'border border-signal-ai/25 bg-signal-ai/[0.03] rounded-md mx-1 my-0.5'
+          isGhostNode && 'border border-signal-ai/25 rounded-md mx-1 my-0.5',
+          isGhostNode && !isSelected && 'bg-signal-ai/[0.03]'
         )}
         data-test-id={`collection-request-${request.id}`}
         data-active={isSelected || undefined}
         data-nav-item="true"
         onFocus={handleFocus}
         onBlur={handleBlur}
-        onClick={(e) => {
+        onClick={(e): void => {
           focusWithVisibility(e.currentTarget as HTMLElement, { preventScroll: true });
           handleAction();
         }}
-        onKeyDown={(e) => {
+        onKeyDown={(e): void => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             handleAction();
