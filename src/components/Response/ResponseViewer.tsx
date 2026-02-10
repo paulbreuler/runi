@@ -10,10 +10,11 @@ import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLangua
 import { motion, useReducedMotion } from 'motion/react';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
-import { StatusBadge } from './StatusBadge';
 
 export interface ResponseViewerProps {
   response: HttpResponse;
+  /** Slot rendered below the tab bar (e.g. VigilanceMonitor) */
+  vigilanceSlot?: React.ReactNode;
 }
 
 type TabId = 'body' | 'headers' | 'raw';
@@ -72,20 +73,6 @@ function formatRawHttp(response: HttpResponse): string {
   return lines.join('\n');
 }
 
-/**
- * Calculate approximate body size
- */
-function formatSize(body: string): string {
-  const bytes = new Blob([body]).size;
-  if (bytes < 1024) {
-    return `${String(bytes)} B`;
-  }
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function getStatusTextClass(status: number): string {
   if (status >= 200 && status < 300) {
     return 'text-signal-success';
@@ -102,7 +89,10 @@ function getStatusTextClass(status: number): string {
   return 'text-text-secondary';
 }
 
-export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Element => {
+export const ResponseViewer = ({
+  response,
+  vigilanceSlot,
+}: ResponseViewerProps): React.JSX.Element => {
   const [activeTab, setActiveTab] = useState<TabId>('body');
   const prefersReducedMotion = useReducedMotion() === true;
   const tabScrollRef = useRef<HTMLDivElement>(null);
@@ -178,7 +168,6 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
   };
 
   const headerCount = Object.keys(response.headers).length;
-  const bodySize = formatSize(response.body);
   const contentTypeHeader =
     response.headers['content-type'] ?? response.headers['Content-Type'] ?? undefined;
   const language = detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader });
@@ -257,17 +246,9 @@ export const ResponseViewer = ({ response }: ResponseViewerProps): React.JSX.Ele
               />
             )}
           </div>
-
-          {/* Meta info + status */}
-          <div
-            className="flex items-center gap-3 text-xs text-text-muted font-mono shrink-0"
-            data-test-id="response-header-meta"
-          >
-            <span data-test-id="response-body-size">{bodySize}</span>
-            <span data-test-id="response-total-time">{response.timing.total_ms}ms</span>
-            <StatusBadge status={response.status} statusText={response.status_text} />
-          </div>
         </div>
+
+        {vigilanceSlot}
 
         {/* Content - vertical scroll only, code blocks handle horizontal */}
         <div className="flex-1 min-h-0 overflow-hidden" style={{ scrollbarGutter: 'stable' }}>

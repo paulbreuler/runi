@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { executeRequest } from '@/api/http';
 import { isAppError, type AppError } from '@/types/errors';
@@ -25,6 +25,22 @@ import {
   type CollectionRequestSelectedPayload,
 } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
+
+const getStatusColorClass = (status: number): string => {
+  if (status >= 200 && status < 300) {
+    return 'text-signal-success';
+  }
+  if (status >= 300 && status < 400) {
+    return 'text-accent-blue';
+  }
+  if (status >= 400 && status < 500) {
+    return 'text-signal-warning';
+  }
+  if (status >= 500) {
+    return 'text-signal-error';
+  }
+  return 'text-text-secondary';
+};
 
 export const HomePage = (): React.JSX.Element => {
   const {
@@ -51,6 +67,8 @@ export const HomePage = (): React.JSX.Element => {
         (window as { __RUNI_E2E__?: { sidebarVisible?: boolean } }).__RUNI_E2E__?.sidebarVisible ===
           true)) ||
     collectionsEnabled;
+
+  const hasExecutedRef = useRef(false);
 
   const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
   const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
@@ -117,6 +135,7 @@ export const HomePage = (): React.JSX.Element => {
       return;
     }
 
+    hasExecutedRef.current = true;
     setLoading(true);
     setResponse(null);
     setUrl(localUrl);
@@ -218,6 +237,32 @@ export const HomePage = (): React.JSX.Element => {
     void handleSend();
   };
 
+  const getVigilanceLabel = (): React.ReactNode => {
+    if (isLoading) {
+      return 'Executing request...';
+    }
+    if (response !== null) {
+      const bytes = new Blob([response.body]).size;
+      let size = `${String(bytes)} B`;
+      if (bytes >= 1024 * 1024) {
+        size = `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      } else if (bytes >= 1024) {
+        size = `${(bytes / 1024).toFixed(1)} KB`;
+      }
+      const statusColor = getStatusColorClass(response.status);
+      return (
+        <>
+          <span className={statusColor}>
+            {response.status} {response.status_text}
+          </span>
+          {' · '}
+          {response.timing.total_ms}ms · {size}
+        </>
+      );
+    }
+    return 'Ready';
+  };
+
   return (
     <MainLayout
       initialSidebarVisible={initialSidebarVisible}
@@ -233,7 +278,6 @@ export const HomePage = (): React.JSX.Element => {
       }
       requestContent={
         <div className="h-full flex flex-col bg-bg-app">
-          <VigilanceMonitor active={isLoading} label="Executing Request..." />
           <div className="flex-1 overflow-hidden">
             <RequestBuilder />
           </div>
@@ -251,8 +295,16 @@ export const HomePage = (): React.JSX.Element => {
                 transition={{ duration: 0.2 }}
                 className="flex-1 flex flex-col overflow-hidden"
               >
-                {/* Response viewer with integrated header (tabs + status + metrics) */}
-                <ResponseViewer response={response} />
+                <ResponseViewer
+                  response={response}
+                  vigilanceSlot={
+                    <VigilanceMonitor
+                      visible={hasExecutedRef.current || isLoading}
+                      active={isLoading}
+                      label={getVigilanceLabel()}
+                    />
+                  }
+                />
               </motion.div>
             ) : (
               <motion.div

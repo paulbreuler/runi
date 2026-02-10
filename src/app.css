@@ -204,6 +204,12 @@ body {
     animation: vigilance-flow 2s linear infinite;
   }
 
+  /* Vigilance Monitor Idle State - Static thin line */
+  .vigilance-progress-idle {
+    height: 1px;
+    background: var(--color-border-subtle);
+  }
+
   @keyframes vigilance-flow {
     0% {
       background-position: 100% 0%;

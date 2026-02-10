@@ -206,7 +206,7 @@ describe('RequestBuilder', () => {
     render(<RequestBuilder />);
 
     const tabScroller = screen.getByTestId('request-tabs-scroll');
-    const headerRow = tabScroller.parentElement;
+    const headerRow = tabScroller.parentElement?.parentElement;
     expect(headerRow).not.toBeNull();
     expect(headerRow).toHaveClass('pl-3');
     expect(headerRow).toHaveClass('pr-2');

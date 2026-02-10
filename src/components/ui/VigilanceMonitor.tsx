@@ -8,10 +8,12 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 
 interface VigilanceMonitorProps {
-  /** Whether the monitor is active */
+  /** Whether the monitor strip is visible (controls mount/unmount with animated enter/exit) */
+  visible: boolean;
+  /** Whether the progress bar animates (executing/verifying) */
   active: boolean;
-  /** Label describing the current check (e.g., "Verifying request against user.yaml...") */
-  label?: string;
+  /** Label describing the current status (supports ReactNode for colored segments) */
+  label?: React.ReactNode;
   /** Additional CSS classes */
   className?: string;
 }
@@ -19,9 +21,11 @@ interface VigilanceMonitorProps {
 /**
  * VigilanceMonitor - State transparency component for background checks.
  * Shows a progress bar with a semantic label to keep users informed.
+ * Persists after first use as a static idle strip (progressive disclosure).
  * Follows Zen design principles: minimal, informative, and deliberate.
  */
 export const VigilanceMonitor = ({
+  visible,
   active,
   label,
   className,
@@ -30,7 +34,7 @@ export const VigilanceMonitor = ({
 
   return (
     <AnimatePresence>
-      {active && (
+      {visible && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
@@ -40,20 +44,28 @@ export const VigilanceMonitor = ({
           data-test-id="vigilance-monitor"
         >
           <div className="flex flex-col relative">
-            <div className="vigilance-progress w-full relative z-10" />
             <div
-              className="absolute inset-0 bg-repeat-x opacity-10 pointer-events-none z-20"
-              style={{
-                backgroundImage: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5) 50%)',
-                backgroundSize: '100% 2px',
-              }}
+              className={cn(
+                'w-full relative z-10',
+                active ? 'vigilance-progress' : 'vigilance-progress-idle'
+              )}
             />
-            {label !== undefined && label !== '' && (
+            {active && (
+              <div
+                className="absolute inset-0 bg-repeat-x opacity-10 pointer-events-none z-20"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5) 50%)',
+                  backgroundSize: '100% 2px',
+                }}
+              />
+            )}
+            {label !== null && label !== undefined && label !== '' && (
               <div className="px-3 py-0.5 bg-bg-surface/50 border-b border-border-subtle/30">
                 <span
                   className={cn(
                     'text-[9px] font-mono uppercase tracking-widest text-text-muted',
-                    prefersReducedMotion !== true && 'animate-pulse'
+                    active && prefersReducedMotion !== true && 'animate-pulse'
                   )}
                 >
                   {label}
