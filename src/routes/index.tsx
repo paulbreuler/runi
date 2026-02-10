@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { executeRequest } from '@/api/http';
 import { isAppError, type AppError } from '@/types/errors';
 import { getConsoleService } from '@/services/console-service';
@@ -137,6 +136,7 @@ export const HomePage = (): React.JSX.Element => {
 
     hasExecutedRef.current = true;
     setLoading(true);
+    setResponse(null);
     setUrl(localUrl);
     setMethod(localMethod);
 
@@ -284,43 +284,24 @@ export const HomePage = (): React.JSX.Element => {
       }
       responseContent={
         <div className="h-full flex flex-col bg-bg-app">
-          <AnimatePresence mode="wait">
-            {response !== null ? (
-              <motion.div
-                key="response"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="flex-1 flex flex-col overflow-hidden"
-              >
-                <ResponseViewer
-                  response={response}
-                  vigilanceSlot={
-                    <VigilanceMonitor
-                      visible={hasExecutedRef.current || isLoading}
-                      active={isLoading}
-                      label={getVigilanceLabel()}
-                    />
-                  }
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 h-full"
-              >
-                <EmptyState
-                  title="Response will appear here"
-                  description="Send a request to see the response, headers, and timing information displayed in a clear, readable format."
-                  variant="muted"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {hasExecutedRef.current ? (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <ResponseViewer
+                response={response}
+                vigilanceSlot={
+                  <VigilanceMonitor visible active={isLoading} label={getVigilanceLabel()} />
+                }
+              />
+            </div>
+          ) : (
+            <div className="flex-1 h-full">
+              <EmptyState
+                title="Response will appear here"
+                description="Send a request to see the response, headers, and timing information displayed in a clear, readable format."
+                variant="muted"
+              />
+            </div>
+          )}
         </div>
       }
     />

@@ -12,7 +12,8 @@ import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
 
 export interface ResponseViewerProps {
-  response: HttpResponse;
+  /** Current response, or null while loading */
+  response: HttpResponse | null;
   /** Slot rendered below the tab bar (e.g. VigilanceMonitor) */
   vigilanceSlot?: React.ReactNode;
 }
@@ -167,11 +168,19 @@ export const ResponseViewer = ({
     return { opacity: 0.25, x: 0 };
   };
 
-  const headerCount = Object.keys(response.headers).length;
+  const headerCount = response !== null ? Object.keys(response.headers).length : 0;
   const contentTypeHeader =
-    response.headers['content-type'] ?? response.headers['Content-Type'] ?? undefined;
-  const language = detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader });
-  const formattedBody = language === 'json' ? formatJson(response.body) : response.body;
+    response !== null
+      ? (response.headers['content-type'] ?? response.headers['Content-Type'] ?? undefined)
+      : undefined;
+  const language =
+    response !== null
+      ? detectSyntaxLanguage({ body: response.body, contentType: contentTypeHeader })
+      : 'text';
+  let formattedBody = '';
+  if (response !== null) {
+    formattedBody = language === 'json' ? formatJson(response.body) : response.body;
+  }
   const overflowTransition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' as const };
@@ -275,48 +284,54 @@ export const ResponseViewer = ({
             tabIndex={-1}
             data-test-id="response-headers-panel"
           >
-            <div className="p-4 h-full min-h-0 overflow-auto">
-              {/* Status line - httpie style */}
-              <div className="mb-4 pb-4 border-b border-border-subtle">
-                <span className="font-mono text-sm">
-                  <span className="text-text-muted">HTTP/1.1</span>{' '}
-                  <span
-                    className={`${getStatusTextClass(response.status)} font-semibold`}
-                    data-test-id="response-status-code"
-                  >
-                    {response.status}
-                  </span>{' '}
-                  <span className="text-text-secondary">{response.status_text}</span>
-                </span>
-              </div>
+            {response !== null && (
+              <div className="p-4 h-full min-h-0 overflow-auto">
+                {/* Status line - httpie style */}
+                <div className="mb-4 pb-4 border-b border-border-subtle">
+                  <span className="font-mono text-sm">
+                    <span className="text-text-muted">HTTP/1.1</span>{' '}
+                    <span
+                      className={`${getStatusTextClass(response.status)} font-semibold`}
+                      data-test-id="response-status-code"
+                    >
+                      {response.status}
+                    </span>{' '}
+                    <span className="text-text-secondary">{response.status_text}</span>
+                  </span>
+                </div>
 
-              {/* Headers */}
-              <div className="space-y-1">
-                {Object.entries(response.headers).map(([key, value]) => (
-                  <div key={key} className="font-mono text-sm flex">
-                    <span className="text-accent-blue">{key}</span>
-                    <span className="text-text-muted mx-1">:</span>
-                    <span className="text-text-secondary break-all">{value}</span>
-                  </div>
-                ))}
+                {/* Headers */}
+                <div className="space-y-1">
+                  {Object.entries(response.headers).map(([key, value]) => (
+                    <div key={key} className="font-mono text-sm flex">
+                      <span className="text-accent-blue">{key}</span>
+                      <span className="text-text-muted mx-1">:</span>
+                      <span className="text-text-secondary break-all">{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </Tabs.Panel>
 
           <Tabs.Panel value="raw" className="h-full min-h-0" tabIndex={-1}>
             <div className="p-4 h-full min-h-0 flex flex-col" data-test-id="response-raw">
-              <span className="sr-only" data-test-id="response-raw-text">
-                {formatRawHttp(response)}
-              </span>
-              <div className="flex-1 min-h-0">
-                <CodeEditor
-                  mode="display"
-                  code={formatRawHttp(response)}
-                  language="http"
-                  variant="borderless"
-                  className="h-full"
-                />
-              </div>
+              {response !== null && (
+                <>
+                  <span className="sr-only" data-test-id="response-raw-text">
+                    {formatRawHttp(response)}
+                  </span>
+                  <div className="flex-1 min-h-0">
+                    <CodeEditor
+                      mode="display"
+                      code={formatRawHttp(response)}
+                      language="http"
+                      variant="borderless"
+                      className="h-full"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </Tabs.Panel>
         </div>
