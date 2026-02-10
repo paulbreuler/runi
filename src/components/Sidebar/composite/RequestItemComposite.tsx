@@ -88,8 +88,8 @@ export const RequestItemComposite = ({
   const renderContent = (isPopout = false): React.JSX.Element => (
     <div
       className={cn(
-        'flex items-center gap-2 w-full min-w-0 h-full',
-        isPopout ? 'px-2 whitespace-nowrap' : ''
+        'flex items-center gap-2 w-full min-w-0 h-full px-2',
+        isPopout && 'whitespace-nowrap'
       )}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -117,6 +117,24 @@ export const RequestItemComposite = ({
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
+        <AnimatePresence mode="popLayout">
+          {isAiDraft && isPopout && (
+            <motion.button
+              key="accept-button-popout"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              type="button"
+              className="pointer-events-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
+              onClick={handleAcceptAi}
+              title="Accept AI changes"
+            >
+              <Check size={10} />
+              Accept
+            </motion.button>
+          )}
+        </AnimatePresence>
+
         {(isAiDraft || isAiVerified) && (
           <div
             className={cn(
@@ -142,9 +160,10 @@ export const RequestItemComposite = ({
   return (
     <div
       className={cn(
-        'group relative flex items-center min-h-[28px] px-2 py-0.5 transition-all duration-200',
+        'group relative flex items-center min-h-[28px] transition-all duration-200',
         isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
         isAiDraft && 'border border-signal-ai/25 bg-signal-ai/[0.03] rounded-md mx-1 my-0.5',
+        !isAiDraft && 'px-0', // Padding handled by renderContent
         className
       )}
       onMouseEnter={(): void => {
@@ -172,11 +191,11 @@ export const RequestItemComposite = ({
         </PopoverTrigger>
 
         {/* Base Content Layer */}
-        <div className="relative flex items-center justify-between gap-2 w-full z-10 pointer-events-none">
+        <div className="relative flex items-center justify-between gap-2 w-full z-10 pointer-events-none h-[28px]">
           {renderContent()}
 
           {/* Action Area - Sibling to content but visually on right */}
-          <div className="flex items-center gap-1.5 shrink-0 ml-1">
+          <div className="flex items-center gap-1.5 shrink-0 mr-2">
             <AnimatePresence mode="popLayout">
               {isAiDraft && (
                 <motion.button
@@ -198,12 +217,13 @@ export const RequestItemComposite = ({
         </div>
 
         <PopoverContent
-          side="left"
+          side="bottom"
           align="start"
-          sideOffset={0}
+          sideOffset={-28}
           className={cn(
-            'pointer-events-none overflow-hidden bg-bg-elevated border-none shadow-xl min-w-full w-auto p-0 h-[28px] flex items-center',
-            isSelected && 'bg-accent-blue/20'
+            'pointer-events-auto overflow-hidden bg-bg-elevated shadow-2xl min-w-full w-auto p-0 h-[28px] flex items-center z-100',
+            isSelected ? 'bg-accent-blue/20' : 'bg-bg-raised',
+            isAiDraft ? 'border border-signal-ai/40 rounded-md' : 'border-none rounded-none'
           )}
         >
           {renderContent(true)}
