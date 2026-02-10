@@ -89,7 +89,7 @@ export const RequestItemComposite = ({
     <div
       className={cn(
         'flex items-center gap-2 w-full min-w-0 h-full px-2',
-        isPopout && 'whitespace-nowrap'
+        isPopout && 'whitespace-nowrap pointer-events-none'
       )}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -163,7 +163,7 @@ export const RequestItemComposite = ({
         'group relative flex items-center min-h-[28px] transition-all duration-200',
         isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
         isAiDraft && 'border border-signal-ai/25 bg-signal-ai/[0.03] rounded-md mx-1 my-0.5',
-        !isAiDraft && 'px-0', // Padding handled by renderContent
+        !isAiDraft && 'px-0',
         className
       )}
       onMouseEnter={(): void => {
@@ -221,10 +221,11 @@ export const RequestItemComposite = ({
           align="start"
           sideOffset={-28}
           className={cn(
-            'pointer-events-auto overflow-hidden bg-bg-elevated shadow-2xl min-w-full w-auto p-0 h-[28px] flex items-center z-100',
+            'pointer-events-auto overflow-hidden bg-bg-elevated shadow-2xl min-w-full w-auto p-0 h-[28px] flex items-center z-100 cursor-pointer',
             isSelected ? 'bg-accent-blue/20' : 'bg-bg-raised',
             isAiDraft ? 'border border-signal-ai/40 rounded-md' : 'border-none rounded-none'
           )}
+          onClick={handleSelect}
         >
           {renderContent(true)}
         </PopoverContent>
