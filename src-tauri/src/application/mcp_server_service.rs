@@ -469,12 +469,12 @@ impl McpServerService {
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
 
+        Self::validate_collection_id(collection_id)?;
+
         // Load the friendly name before deleting
         let friendly_name = load_collection_in_dir(collection_id, self.dir())
             .ok()
             .map_or_else(|| collection_id.to_string(), |c| c.metadata.name);
-
-        Self::validate_collection_id(collection_id)?;
         delete_collection_in_dir(collection_id, self.dir())?;
 
         self.emit(

@@ -121,6 +121,7 @@ export const UrlBar = ({
                   key={httpMethod}
                   value={httpMethod}
                   className={cn('text-xs font-mono', color, 'data-highlighted:bg-bg-raised/50')}
+                  data-test-id={`method-option-${httpMethod}`}
                 >
                   {httpMethod}
                 </Select.SelectItem>

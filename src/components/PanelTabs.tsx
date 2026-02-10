@@ -9,6 +9,7 @@ import { Tabs } from '@base-ui/react/tabs';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 export type PanelTabType = 'network' | 'console' | 'activity';
 
@@ -146,6 +147,7 @@ export const PanelTabs = ({
           type="button"
           className={cn(
             'shrink-0 flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors',
+            focusRingClasses,
             followAiMode
               ? 'bg-signal-ai/15 text-signal-ai'
               : 'text-text-muted hover:text-text-primary hover:bg-bg-raised/50'

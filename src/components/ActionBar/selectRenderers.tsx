@@ -46,7 +46,11 @@ export interface IntelligenceSelectOption {
  */
 export const renderMethodOption = (option: MethodSelectOption): React.ReactNode => {
   if (option.value === 'ALL') {
-    return <span className="text-text-secondary">{option.label}</span>;
+    return (
+      <span className="text-text-secondary" data-test-id="method-option-all">
+        {option.label}
+      </span>
+    );
   }
 
   const method = option.value;
@@ -57,6 +61,7 @@ export const renderMethodOption = (option: MethodSelectOption): React.ReactNode 
         methodTextColors[method],
         methodBgColors[method]
       )}
+      data-test-id={`method-option-${method}`}
     >
       {option.value}
     </span>
@@ -69,12 +74,16 @@ export const renderMethodOption = (option: MethodSelectOption): React.ReactNode 
  */
 export const renderStatusOption = (option: StatusSelectOption): React.ReactNode => {
   if (option.range === undefined) {
-    return <span className="text-text-secondary">{option.label}</span>;
+    return (
+      <span className="text-text-secondary" data-test-id="status-option-all">
+        {option.label}
+      </span>
+    );
   }
 
   const colors = statusRangeColors[option.range];
   return (
-    <span className="flex items-center gap-2">
+    <span className="flex items-center gap-2" data-test-id={`status-option-${option.range}`}>
       <span className={cn('w-2 h-2 rounded-full shrink-0', colors.dot)} />
       <span className={colors.text}>{option.label}</span>
     </span>
@@ -87,12 +96,16 @@ export const renderStatusOption = (option: StatusSelectOption): React.ReactNode 
  */
 export const renderIntelligenceOption = (option: IntelligenceSelectOption): React.ReactNode => {
   if (option.signal === undefined) {
-    return <span className="text-text-secondary">{option.label}</span>;
+    return (
+      <span className="text-text-secondary" data-test-id="intelligence-option-all">
+        {option.label}
+      </span>
+    );
   }
 
   const colors = intelligenceColors[option.signal];
   return (
-    <span className="flex items-center gap-2">
+    <span className="flex items-center gap-2" data-test-id={`intelligence-option-${option.signal}`}>
       <span className={cn('w-2 h-2 rounded-full shrink-0', colors.dot)} />
       <span className={colors.text}>{option.label}</span>
     </span>

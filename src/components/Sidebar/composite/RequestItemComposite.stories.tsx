@@ -3,10 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { Check } from 'lucide-react';
 import { RequestItemComposite } from './RequestItemComposite';
 import type { CollectionRequest } from '@/types/collection';
 
@@ -58,20 +56,6 @@ export const Default: Story = {
   },
 };
 
-const AcceptButton = (): React.JSX.Element => (
-  <button
-    type="button"
-    className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-signal-success/10 text-signal-success border border-signal-success/20 hover:bg-signal-success/20 transition-colors text-[10px] font-semibold"
-    onClick={(e): void => {
-      e.stopPropagation();
-    }}
-    title="Accept AI changes"
-  >
-    <Check size={10} />
-    Accept
-  </button>
-);
-
 export const AiDraft: Story = {
   args: {
     request: {
@@ -86,7 +70,6 @@ export const AiDraft: Story = {
       },
     },
     collectionId: 'col_1',
-    action: <AcceptButton />,
   },
 };
 

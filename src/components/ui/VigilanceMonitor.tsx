@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 
 interface VigilanceMonitorProps {
@@ -26,6 +26,8 @@ export const VigilanceMonitor = ({
   label,
   className,
 }: VigilanceMonitorProps): React.JSX.Element => {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <AnimatePresence>
       {active && (
@@ -48,7 +50,12 @@ export const VigilanceMonitor = ({
             />
             {label !== undefined && label !== '' && (
               <div className="px-3 py-0.5 bg-bg-surface/50 border-b border-border-subtle/30">
-                <span className="text-[9px] font-mono uppercase tracking-widest text-text-muted animate-pulse">
+                <span
+                  className={cn(
+                    'text-[9px] font-mono uppercase tracking-widest text-text-muted',
+                    prefersReducedMotion !== true && 'animate-pulse'
+                  )}
+                >
                   {label}
                 </span>
               </div>

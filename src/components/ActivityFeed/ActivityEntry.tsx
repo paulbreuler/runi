@@ -14,6 +14,7 @@ import { Bot, Cog, User } from 'lucide-react';
 import type { ActivityEntry as ActivityEntryType } from '@/stores/useActivityStore';
 import { getParticipantColor, getActorLabel } from '@/utils/participantColors';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 interface ActivityEntryProps {
   entry: ActivityEntryType;
@@ -63,17 +64,21 @@ export const ActivityEntry = ({ entry, onClick }: ActivityEntryProps): React.JSX
   const actionLabel = ACTION_LABELS[entry.action] ?? entry.action;
   const isAi = entry.actor.type === 'ai';
 
+  const isClickable = onClick !== undefined;
+  const Tag = isClickable ? 'button' : 'div';
+
   return (
-    <button
-      type="button"
+    <Tag
+      {...(isClickable ? { type: 'button' as const } : {})}
       className={cn(
         'w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors',
-        'hover:bg-bg-raised/40',
+        isClickable && 'hover:bg-bg-raised/40 cursor-pointer',
+        isClickable && focusRingClasses,
         isAi && 'border-l-2 border-signal-ai/30'
       )}
       data-test-id={`activity-entry-${entry.id}`}
       onClick={
-        onClick !== undefined
+        isClickable
           ? (): void => {
               onClick(entry);
             }
@@ -95,6 +100,6 @@ export const ActivityEntry = ({ entry, onClick }: ActivityEntryProps): React.JSX
       <span className="text-text-muted/50 shrink-0 ml-auto">
         {formatRelativeTime(entry.timestamp)}
       </span>
-    </button>
+    </Tag>
   );
 };

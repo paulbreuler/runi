@@ -12,6 +12,7 @@ import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { globalEventBus } from '@/events/bus';
 
@@ -19,8 +20,6 @@ export interface RequestItemCompositeProps {
   request: CollectionRequest;
   collectionId: string;
   className?: string;
-  /** Slot for a signal-driven action (e.g. Accept, Review, Resolve). Rendered at the trailing edge. */
-  action?: React.ReactNode;
 }
 
 /**
@@ -32,7 +31,6 @@ export const RequestItemComposite = ({
   request,
   collectionId,
   className,
-  action,
 }: RequestItemCompositeProps): React.JSX.Element => {
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
   const isSelected = selectedRequestId === request.id;
@@ -51,7 +49,7 @@ export const RequestItemComposite = ({
     height: number;
   } | null>(null);
 
-  const rowRef = useRef<HTMLButtonElement | null>(null);
+  const rowRef = useRef<HTMLDivElement | null>(null);
   const textRef = useRef<HTMLSpanElement | null>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
   const shouldReduceMotion = useReducedMotion();
@@ -309,8 +307,6 @@ export const RequestItemComposite = ({
             Stream
           </div>
         )}
-
-        {action !== undefined && <div className="pointer-events-auto">{action}</div>}
       </div>
     </div>
   );
@@ -327,13 +323,17 @@ export const RequestItemComposite = ({
         setIsHovered(false);
       }}
     >
-      <button
+      {/* div[role=button] avoids invalid nested <button> when action slot contains a <button> */}
+      <div
         ref={rowRef}
-        type="button"
+        role="button"
+        tabIndex={0}
         aria-label={`Select request ${request.method} ${request.name}`}
         className={cn(
-          'w-full flex items-center justify-between gap-2 py-1 text-left transition-colors min-h-[28px]',
+          'w-full flex items-center justify-between gap-2 py-1 text-left transition-colors min-h-[28px] cursor-pointer',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
+          // Suppress focus ring when popout is visible — the popout visually replaces the row,
+          // so a double ring would be confusing.
           actuallyVisible ? 'outline-none ring-0 shadow-none' : focusRingClasses,
           actuallyVisible && !isFocused && 'bg-transparent',
           isAiDraft && 'border border-signal-ai/25 bg-signal-ai/[0.03] rounded-md mx-1 my-0.5'
@@ -343,14 +343,20 @@ export const RequestItemComposite = ({
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e) => {
-          e.currentTarget.focus({ preventScroll: true });
+          focusWithVisibility(e.currentTarget as HTMLElement, { preventScroll: true });
           handleSelect();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleSelect();
+          }
         }}
       >
         <div className={cn('flex items-center w-full', actuallyVisible && 'invisible')}>
           {renderContent()}
         </div>
-      </button>
+      </div>
 
       <AnimatePresence>
         {actuallyVisible && popoutPosition !== null && (

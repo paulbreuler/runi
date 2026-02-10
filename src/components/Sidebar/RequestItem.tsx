@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { Check, Radio, Sparkles } from 'lucide-react';
+import { Radio, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { globalEventBus } from '@/events/bus';
 import { useCollectionStore } from '@/stores/useCollectionStore';
@@ -13,6 +13,7 @@ import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 
 interface RequestItemProps {
@@ -43,7 +44,7 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     height: number;
   } | null>(null);
 
-  const rowRef = useRef<HTMLButtonElement | null>(null);
+  const rowRef = useRef<HTMLDivElement | null>(null);
   const textRef = useRef<HTMLSpanElement | null>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
   const shouldReduceMotion = useReducedMotion();
@@ -283,12 +284,14 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <button
+      {/* div[role=button] avoids invalid nested <button> when Accept button is rendered inside */}
+      <div
         ref={rowRef}
-        type="button"
+        role="button"
+        tabIndex={0}
         aria-label={`${request.method} ${request.name}`}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors',
+          'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors cursor-pointer',
           isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
           isActuallyVisible() ? 'outline-none ring-0 shadow-none' : focusRingClasses,
           isActuallyVisible() && !isFocused && 'bg-transparent',
@@ -300,8 +303,14 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e) => {
-          e.currentTarget.focus({ preventScroll: true });
+          focusWithVisibility(e.currentTarget as HTMLElement, { preventScroll: true });
           handleAction();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleAction();
+          }
         }}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -350,27 +359,8 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
               AI
             </span>
           )}
-          {isGhostNode && (
-            <button
-              type="button"
-              className="flex items-center gap-1 rounded-full bg-signal-success/10 px-2 py-0.5 text-xs text-signal-success shrink-0 hover:bg-signal-success/20 transition-colors"
-              data-test-id={`request-accept-${request.id}`}
-              aria-label={`Accept AI-generated request "${request.name}"`}
-              onClick={(e): void => {
-                e.stopPropagation();
-                globalEventBus.emit('request.accept-ai', {
-                  collectionId,
-                  requestId: request.id,
-                });
-              }}
-              title="Accept — mark as verified"
-            >
-              <Check size={12} />
-              Accept
-            </button>
-          )}
         </div>
-      </button>
+      </div>
 
       <AnimatePresence>
         {isActuallyVisible() && popoutPosition !== null && (

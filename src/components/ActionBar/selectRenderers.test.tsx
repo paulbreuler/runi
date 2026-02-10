@@ -20,15 +20,16 @@ describe('selectRenderers', () => {
       const option: MethodSelectOption = { value: 'ALL', label: 'All Methods' };
       render(<>{renderMethodOption(option)}</>);
 
-      expect(screen.getByText('All Methods')).toBeInTheDocument();
-      expect(screen.getByText('All Methods')).toHaveClass('text-text-secondary');
+      const el = screen.getByTestId('method-option-all');
+      expect(el).toBeInTheDocument();
+      expect(el).toHaveClass('text-text-secondary');
     });
 
     it('renders GET with method-specific color', () => {
       const option: MethodSelectOption = { value: 'GET', label: 'GET' };
       render(<>{renderMethodOption(option)}</>);
 
-      const badge = screen.getByText('GET');
+      const badge = screen.getByTestId('method-option-GET');
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveClass('text-method-get');
     });
@@ -37,7 +38,7 @@ describe('selectRenderers', () => {
       const option: MethodSelectOption = { value: 'POST', label: 'POST' };
       render(<>{renderMethodOption(option)}</>);
 
-      const badge = screen.getByText('POST');
+      const badge = screen.getByTestId('method-option-POST');
       expect(badge).toHaveClass('text-method-post');
     });
 
@@ -45,7 +46,7 @@ describe('selectRenderers', () => {
       const option: MethodSelectOption = { value: 'PUT', label: 'PUT' };
       render(<>{renderMethodOption(option)}</>);
 
-      const badge = screen.getByText('PUT');
+      const badge = screen.getByTestId('method-option-PUT');
       expect(badge).toHaveClass('text-method-put');
     });
 
@@ -53,7 +54,7 @@ describe('selectRenderers', () => {
       const option: MethodSelectOption = { value: 'DELETE', label: 'DELETE' };
       render(<>{renderMethodOption(option)}</>);
 
-      const badge = screen.getByText('DELETE');
+      const badge = screen.getByTestId('method-option-DELETE');
       expect(badge).toHaveClass('text-method-delete');
     });
 
@@ -61,7 +62,7 @@ describe('selectRenderers', () => {
       const option: MethodSelectOption = { value: 'GET', label: 'GET' };
       render(<>{renderMethodOption(option)}</>);
 
-      const badge = screen.getByText('GET');
+      const badge = screen.getByTestId('method-option-GET');
       expect(badge).toHaveClass('bg-accent-blue/10');
     });
   });
@@ -71,43 +72,46 @@ describe('selectRenderers', () => {
       const option: StatusSelectOption = { value: 'All', label: 'All Status' };
       render(<>{renderStatusOption(option)}</>);
 
-      expect(screen.getByText('All Status')).toBeInTheDocument();
+      expect(screen.getByTestId('status-option-all')).toBeInTheDocument();
     });
 
     it('renders 2xx with success color and dot', () => {
       const option: StatusSelectOption = { value: '2xx', label: '2xx Success', range: '2xx' };
       render(<>{renderStatusOption(option)}</>);
 
-      expect(screen.getByText('2xx Success')).toBeInTheDocument();
-      expect(screen.getByText('2xx Success')).toHaveClass('text-signal-success');
+      const container = screen.getByTestId('status-option-2xx');
+      expect(container.querySelector('.text-signal-success')).toBeInTheDocument();
     });
 
     it('renders 3xx with blue color and dot', () => {
       const option: StatusSelectOption = { value: '3xx', label: '3xx Redirect', range: '3xx' };
       render(<>{renderStatusOption(option)}</>);
 
-      expect(screen.getByText('3xx Redirect')).toHaveClass('text-accent-blue');
+      const container = screen.getByTestId('status-option-3xx');
+      expect(container.querySelector('.text-accent-blue')).toBeInTheDocument();
     });
 
     it('renders 4xx with warning color and dot', () => {
       const option: StatusSelectOption = { value: '4xx', label: '4xx Client Error', range: '4xx' };
       render(<>{renderStatusOption(option)}</>);
 
-      expect(screen.getByText('4xx Client Error')).toHaveClass('text-signal-warning');
+      const container = screen.getByTestId('status-option-4xx');
+      expect(container.querySelector('.text-signal-warning')).toBeInTheDocument();
     });
 
     it('renders 5xx with error color and dot', () => {
       const option: StatusSelectOption = { value: '5xx', label: '5xx Server Error', range: '5xx' };
       render(<>{renderStatusOption(option)}</>);
 
-      expect(screen.getByText('5xx Server Error')).toHaveClass('text-signal-error');
+      const container = screen.getByTestId('status-option-5xx');
+      expect(container.querySelector('.text-signal-error')).toBeInTheDocument();
     });
 
     it('renders colored dot indicator', () => {
       const option: StatusSelectOption = { value: '2xx', label: '2xx Success', range: '2xx' };
-      const { container } = render(<>{renderStatusOption(option)}</>);
+      render(<>{renderStatusOption(option)}</>);
 
-      // Find the dot element
+      const container = screen.getByTestId('status-option-2xx');
       const dot = container.querySelector('.rounded-full');
       expect(dot).toBeInTheDocument();
       expect(dot).toHaveClass('bg-signal-success');
@@ -119,7 +123,7 @@ describe('selectRenderers', () => {
       const option: IntelligenceSelectOption = { value: 'All', label: 'All' };
       render(<>{renderIntelligenceOption(option)}</>);
 
-      expect(screen.getByText('All')).toBeInTheDocument();
+      expect(screen.getByTestId('intelligence-option-all')).toBeInTheDocument();
     });
 
     it('renders verified with success color and dot', () => {
@@ -130,7 +134,8 @@ describe('selectRenderers', () => {
       };
       render(<>{renderIntelligenceOption(option)}</>);
 
-      expect(screen.getByText('Verified')).toHaveClass('text-signal-success');
+      const container = screen.getByTestId('intelligence-option-verified');
+      expect(container.querySelector('.text-signal-success')).toBeInTheDocument();
     });
 
     it('renders drift with warning color and dot', () => {
@@ -141,14 +146,16 @@ describe('selectRenderers', () => {
       };
       render(<>{renderIntelligenceOption(option)}</>);
 
-      expect(screen.getByText('Has Drift')).toHaveClass('text-signal-warning');
+      const container = screen.getByTestId('intelligence-option-drift');
+      expect(container.querySelector('.text-signal-warning')).toBeInTheDocument();
     });
 
     it('renders ai with AI signal color and dot', () => {
       const option: IntelligenceSelectOption = { value: 'ai', label: 'AI Generated', signal: 'ai' };
       render(<>{renderIntelligenceOption(option)}</>);
 
-      expect(screen.getByText('AI Generated')).toHaveClass('text-signal-ai');
+      const container = screen.getByTestId('intelligence-option-ai');
+      expect(container.querySelector('.text-signal-ai')).toBeInTheDocument();
     });
 
     it('renders bound with blue color and dot', () => {
@@ -159,7 +166,8 @@ describe('selectRenderers', () => {
       };
       render(<>{renderIntelligenceOption(option)}</>);
 
-      expect(screen.getByText('Bound to Spec')).toHaveClass('text-accent-blue');
+      const container = screen.getByTestId('intelligence-option-bound');
+      expect(container.querySelector('.text-accent-blue')).toBeInTheDocument();
     });
 
     it('renders colored dot indicator', () => {
@@ -168,8 +176,9 @@ describe('selectRenderers', () => {
         label: 'Has Drift',
         signal: 'drift',
       };
-      const { container } = render(<>{renderIntelligenceOption(option)}</>);
+      render(<>{renderIntelligenceOption(option)}</>);
 
+      const container = screen.getByTestId('intelligence-option-drift');
       const dot = container.querySelector('.rounded-full');
       expect(dot).toBeInTheDocument();
       expect(dot).toHaveClass('bg-signal-warning');

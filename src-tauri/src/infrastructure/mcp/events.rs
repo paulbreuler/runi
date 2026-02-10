@@ -11,10 +11,11 @@
 
 use std::sync::Arc;
 
+use tauri::{AppHandle, Emitter};
+
 use crate::domain::mcp::events::{Actor, EventEmitter, EventEnvelope};
 use crate::domain::participant::LamportTimestamp;
 use crate::infrastructure::mcp::server::http_sse::EventBroadcaster;
-use tauri::{AppHandle, Emitter};
 
 /// Event emitter backed by a Tauri `AppHandle`.
 ///

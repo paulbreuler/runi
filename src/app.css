@@ -310,12 +310,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-gray-7);
+  background: var(--gray-7);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-8);
+  background: var(--gray-8);
 }
 
 /* Hide scrollbars while preserving scroll behavior */
@@ -359,14 +359,14 @@ body {
 
 /* Scrollbar thumb */
 .scroll-area-thumb {
-  background: var(--color-gray-7);
+  background: var(--gray-7);
   border-radius: 4px;
   position: relative;
   transition: background 0.2s;
 }
 
 .scroll-area-thumb:hover {
-  background: var(--color-gray-8);
+  background: var(--gray-8);
 }
 
 /* Ensure minimum touch target size (44x44px) */
