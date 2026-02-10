@@ -59,6 +59,7 @@ export interface CollectionCreatedEvent {
  */
 export interface CollectionDeletedEvent {
   id: string;
+  name?: string;
 }
 
 /**

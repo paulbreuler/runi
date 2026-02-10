@@ -110,7 +110,7 @@ export const CollectionEventProvider = ({
       recordActivity(
         envelope.actor,
         'deleted_collection',
-        envelope.payload.id,
+        envelope.payload.name ?? envelope.payload.id,
         envelope.payload.id,
         envelope.timestamp,
         extractSeq(envelope)
@@ -128,6 +128,7 @@ export const CollectionEventProvider = ({
       );
     },
     onRequestAdded: (envelope): void => {
+      void loadCollections();
       void loadCollection(envelope.payload.collection_id);
       recordActivity(
         envelope.actor,
