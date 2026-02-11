@@ -4,7 +4,7 @@ Pre-flight checklist for every implementation task. Invoke before writing code.
 
 ## Instructions for Claude
 
-**When this command is invoked, acknowledge all 6 disciplines below and follow them
+**When this command is invoked, acknowledge all 7 disciplines below and follow them
 throughout the implementation. Reference this checklist before each file change.**
 
 ---
@@ -166,6 +166,27 @@ import { motion, useReducedMotion } from 'motion/react'; // ✅ CORRECT
 
 ---
 
+### 7. MCP Accessibility (MANDATORY for UI Features)
+
+Every UI action must be MCP-accessible. AI is a native co-driver.
+
+**Checklist:**
+
+- [ ] Event defined in `src/events/bus.ts` for the action
+- [ ] UI emits event via EventBus (not direct state mutation)
+- [ ] MCP tool exists in `src-tauri/src/application/mcp_server_service.rs` that emits same event with `Actor::Ai`
+- [ ] UI subscribes to event and responds identically regardless of actor
+- [ ] Tests cover both UI and MCP paths
+
+**Decision tree:**
+
+1. Does the feature have a UI action (button, toggle, navigation)? → **Yes**: needs event + MCP tool
+2. Is it read-only or a system event? → **Skip** MCP tool
+
+**Reference**: See `.claude/skills/runi-architecture/SKILL.md` → "MCP-First Implementation" for the full pattern.
+
+---
+
 ## Quick Reference
 
 **Commands:**
@@ -177,7 +198,7 @@ just ci           # Full CI pipeline (before pushing)
 just fmt          # Fix formatting
 ```
 
-**Correct implementation example (all 6 disciplines):**
+**Correct implementation example (all 7 disciplines):**
 
 ```tsx
 // 1. TDD: test written first with data-test-id
@@ -186,6 +207,7 @@ just fmt          # Fix formatting
 // 4. A11y: focusRingClasses, aria-label, keyboard support
 // 5. Motion: motion/react, spring, respects reduced motion
 // 6. Contraventions: fixed nearby hardcoded color
+// 7. MCP: action emits event, MCP tool emits same event with Actor::Ai
 
 import { motion, useReducedMotion } from 'motion/react';
 import { Button } from '@/components/ui/button';
@@ -199,6 +221,12 @@ interface ActionCardProps {
 export const ActionCard = ({ title, onAction }: ActionCardProps): JSX.Element => {
   const shouldReduceMotion = useReducedMotion();
 
+  const handleAction = (): void => {
+    // 7. MCP: emit event instead of direct state mutation
+    eventBus.emit('action.executed', { title, actor: 'human' });
+    onAction();
+  };
+
   return (
     <motion.div
       data-test-id="action-card"
@@ -211,7 +239,11 @@ export const ActionCard = ({ title, onAction }: ActionCardProps): JSX.Element =>
       aria-label={title}
     >
       <h3 className="text-text-primary text-sm font-medium">{title}</h3>
-      <Button data-test-id="action-card-button" onClick={onAction} aria-label={`Execute ${title}`}>
+      <Button
+        data-test-id="action-card-button"
+        onClick={handleAction}
+        aria-label={`Execute ${title}`}
+      >
         Run
       </Button>
     </motion.div>
