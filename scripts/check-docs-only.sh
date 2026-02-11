@@ -50,10 +50,14 @@ while IFS= read -r file; do
     README*|readme*|CHANGELOG*|changelog*|LICENSE*|license*|CONTRIBUTING*|contributing*)
       IS_DOC=true
       ;;
-    docs/*|.claude/*|.cursor/*)
+    docs/*|.claude/*|.cursor/*|.gemini/*)
       IS_DOC=true
       ;;
     .github/*.md|.github/*.yml|.github/*.yaml)
+      IS_DOC=true
+      ;;
+    .cursorrules|CLAUDE.md|AGENTS.md|GEMINI.md)
+      # AI coding instruction files
       IS_DOC=true
       ;;
     *)
@@ -61,6 +65,7 @@ while IFS= read -r file; do
       if [[ "$file" == docs/* ]] || \
          [[ "$file" == .claude/* ]] || \
          [[ "$file" == .cursor/* ]] || \
+         [[ "$file" == .gemini/* ]] || \
          [[ "$file" == .github/*.md ]] || \
          [[ "$file" == .github/*.yml ]] || \
          [[ "$file" == .github/*.yaml ]]; then
