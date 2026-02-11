@@ -37,6 +37,7 @@ import { useHistoryStore } from '@/stores/useHistoryStore';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { useActivityStore } from '@/stores/useActivityStore';
+import { useTabStore } from '@/stores/useTabStore';
 import { CommandBar } from '@/components/CommandBar';
 
 export interface MainLayoutProps {
@@ -180,14 +181,45 @@ export const MainLayout = ({
     return unsubscribe;
   }, [setVisible, setActiveTab]);
 
-  // Listen for command bar toggle events
+  // Listen for global UI events
   useEffect(() => {
-    const unsubscribe = globalEventBus.on('commandbar.toggle', () => {
+    const unsubCommandBar = globalEventBus.on('commandbar.toggle', () => {
       setIsCommandBarOpen((prev) => !prev);
     });
 
-    return unsubscribe;
-  }, []);
+    const unsubSettings = globalEventBus.on('settings.toggle', () => {
+      setIsSettingsOpen((prev) => !prev);
+    });
+
+    const unsubSidebar = globalEventBus.on('sidebar.toggle', () => {
+      toggleSidebar();
+    });
+
+    const unsubPanel = globalEventBus.on('panel.toggle', () => {
+      // Re-use logic from useLayoutCommands for consistency
+      const { isVisible, isCollapsed, setVisible, setCollapsed } = usePanelStore.getState();
+      if (!isVisible) {
+        setVisible(true);
+        setCollapsed(false);
+      } else if (isCollapsed) {
+        setCollapsed(false);
+      } else {
+        setVisible(false);
+      }
+    });
+
+    const unsubNewRequest = globalEventBus.on('request.new', () => {
+      useTabStore.getState().openTab();
+    });
+
+    return (): void => {
+      unsubCommandBar();
+      unsubSettings();
+      unsubSidebar();
+      unsubPanel();
+      unsubNewRequest();
+    };
+  }, [toggleSidebar]);
 
   // Auto-collapse sidebar when left dock is active
   // Store the previous state to restore when switching away from left dock

@@ -12,8 +12,6 @@
 
 import { useEffect } from 'react';
 import { globalCommandRegistry } from '@/commands/registry';
-import { usePanelStore } from '@/stores/usePanelStore';
-import { useSettingsStore } from '@/stores/useSettingsStore';
 import { globalEventBus } from '@/events/bus';
 
 /**
@@ -27,7 +25,7 @@ export function useLayoutCommands(): void {
       title: 'Toggle Sidebar',
       category: 'view',
       handler: (): void => {
-        useSettingsStore.getState().toggleSidebar();
+        globalEventBus.emit('sidebar.toggle', {});
       },
     });
 
@@ -36,19 +34,7 @@ export function useLayoutCommands(): void {
       title: 'Toggle DevTools',
       category: 'view',
       handler: (): void => {
-        const { isVisible, isCollapsed, setVisible, setCollapsed } = usePanelStore.getState();
-
-        if (!isVisible) {
-          // Hidden → show and expand
-          setVisible(true);
-          setCollapsed(false);
-        } else if (isCollapsed) {
-          // Visible but collapsed → expand
-          setCollapsed(false);
-        } else {
-          // Visible and expanded → hide
-          setVisible(false);
-        }
+        globalEventBus.emit('panel.toggle', {});
       },
     });
 
@@ -62,10 +48,20 @@ export function useLayoutCommands(): void {
       },
     });
 
+    globalCommandRegistry.register({
+      id: 'settings.toggle',
+      title: 'Toggle Settings',
+      category: 'view',
+      handler: (): void => {
+        globalEventBus.emit('settings.toggle', {});
+      },
+    });
+
     return (): void => {
       globalCommandRegistry.unregister('sidebar.toggle');
       globalCommandRegistry.unregister('panel.toggle');
       globalCommandRegistry.unregister('commandbar.toggle');
+      globalCommandRegistry.unregister('settings.toggle');
     };
   }, []);
 }

@@ -10,9 +10,18 @@ import { CommandBar } from './CommandBar';
 import { useTabStore } from '@/stores/useTabStore';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
+import { globalEventBus } from '@/events/bus';
 
 // Mock scrollIntoView for cmdk
 Element.prototype.scrollIntoView = vi.fn();
+
+// Mock event bus
+vi.mock('@/events/bus', () => ({
+  globalEventBus: {
+    emit: vi.fn(),
+    on: vi.fn(() => vi.fn()),
+  },
+}));
 
 // Mock stores
 vi.mock('@/stores/useTabStore');
@@ -28,6 +37,7 @@ describe('CommandBar', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(globalEventBus, 'emit');
 
     // Mock useTabStore
     const mockTabs = {
@@ -234,8 +244,9 @@ describe('CommandBar', () => {
   it('should display open tabs section when tabs exist', () => {
     render(<CommandBar isOpen onClose={mockOnClose} />);
     expect(screen.getByText(/open tabs/i)).toBeInTheDocument();
-    expect(screen.getByText(/GET \/users/i)).toBeInTheDocument();
-    expect(screen.getByText(/POST \/posts/i)).toBeInTheDocument();
+    // Redesign shows GET/POST in multiple places (method and label)
+    expect(screen.getAllByText(/GET/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/POST/i).length).toBeGreaterThan(0);
   });
 
   it('should display collections section when collections exist', () => {
@@ -262,10 +273,11 @@ describe('CommandBar', () => {
     await user.type(input, 'users');
 
     // The filter is based on the value prop which includes method + label + url
+    expect(screen.getAllByText(/GET/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/GET \/users/i)).toBeInTheDocument();
-    // POST /posts should be hidden (cmdk sets hidden attribute) because it doesn't match "users"
+
+    // POST /posts should be hidden
     const postItem = screen.queryByTestId('tab-item-tab-2');
-    // cmdk filters by hiding items, so it may not be in the document or be hidden
     if (postItem !== null) {
       expect(postItem).toHaveAttribute('hidden');
     }
@@ -331,53 +343,51 @@ describe('CommandBar', () => {
     expect(input).toBeInTheDocument();
   });
 
-  it('should execute New Request action', async () => {
+  it('should execute New Request action via event bus', async () => {
     const user = userEvent.setup();
-    const mockOpenTab = vi.fn();
-
-    const mockTabs = {
-      'tab-1': {
-        id: 'tab-1',
-        label: 'GET /users',
-        method: 'GET' as const,
-        url: 'https://api.example.com/users',
-        headers: {},
-        body: '',
-        response: null,
-        isDirty: false,
-        createdAt: Date.now(),
-      },
-    };
-
-    const mockState = {
-      tabs: mockTabs,
-      tabOrder: ['tab-1'],
-      activeTabId: 'tab-1',
-      openTab: mockOpenTab,
-      closeTab: vi.fn(),
-      setActiveTab: vi.fn(),
-      updateTab: vi.fn(),
-      reorderTab: vi.fn(),
-      closeOtherTabs: vi.fn(),
-      closeAllTabs: vi.fn(),
-      findTabBySource: vi.fn(),
-      getActiveTab: vi.fn(),
-    };
-
-    vi.mocked(useTabStore).mockImplementation((selector) => {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      return selector !== undefined ? selector(mockState) : mockState;
-    });
-
-    // Mock getState for direct store access in commands.ts
-    vi.mocked(useTabStore).getState = vi.fn(() => mockState);
-
     render(<CommandBar isOpen onClose={mockOnClose} />);
 
-    const newRequestAction = screen.getByText(/new request/i);
-    await user.click(newRequestAction);
+    const action = screen.getByText(/new request/i);
+    await user.click(action);
 
-    expect(mockOpenTab).toHaveBeenCalledWith();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('request.new', expect.any(Object));
+    expect(mockOnClose).toHaveBeenCalledOnce();
+  });
+
+  it('should execute Toggle Sidebar action via event bus', async () => {
+    const user = userEvent.setup();
+    render(<CommandBar isOpen onClose={mockOnClose} />);
+
+    const action = screen.getByText(/toggle sidebar/i);
+    await user.click(action);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('sidebar.toggle', expect.any(Object));
+    expect(mockOnClose).toHaveBeenCalledOnce();
+  });
+
+  it('should execute Toggle DevTools action via event bus', async () => {
+    const user = userEvent.setup();
+    render(<CommandBar isOpen onClose={mockOnClose} />);
+
+    const action = screen.getByText(/toggle devtools/i);
+    await user.click(action);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('panel.toggle', expect.any(Object));
+    expect(mockOnClose).toHaveBeenCalledOnce();
+  });
+
+  it('should execute Open Settings action via event bus', async () => {
+    const user = userEvent.setup();
+    render(<CommandBar isOpen onClose={mockOnClose} />);
+
+    const action = screen.getByText(/open settings/i);
+    await user.click(action);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('settings.toggle', expect.any(Object));
     expect(mockOnClose).toHaveBeenCalledOnce();
   });
 

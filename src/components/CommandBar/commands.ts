@@ -3,9 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { useTabStore } from '@/stores/useTabStore';
-import { useSettingsStore } from '@/stores/useSettingsStore';
-import { usePanelStore } from '@/stores/usePanelStore';
+import { globalEventBus } from '@/events/bus';
 
 /**
  * Available command actions in the command bar.
@@ -34,30 +32,28 @@ export const COMMAND_ACTIONS: CommandAction[] = [
     id: 'new-request',
     label: 'New Request',
     handler: (): void => {
-      useTabStore.getState().openTab();
+      globalEventBus.emit('request.new', {});
     },
   },
   {
     id: 'toggle-sidebar',
     label: 'Toggle Sidebar',
     handler: (): void => {
-      useSettingsStore.getState().toggleSidebar();
+      globalEventBus.emit('sidebar.toggle', {});
     },
   },
   {
     id: 'toggle-devtools',
     label: 'Toggle DevTools',
     handler: (): void => {
-      usePanelStore.getState().toggleVisibility();
+      globalEventBus.emit('panel.toggle', {});
     },
   },
   {
     id: 'open-settings',
     label: 'Open Settings',
     handler: (): void => {
-      // TODO: Implement settings panel opening
-      // eslint-disable-next-line no-console
-      console.log('Open settings');
+      globalEventBus.emit('settings.toggle', {});
     },
   },
 ];

@@ -24,11 +24,13 @@ import type { CollectionRequest } from '@/types/collection';
  * Use dot notation for namespacing (e.g., 'request.send', 'response.received').
  */
 export type EventType =
+  | 'request.new'
   | 'request.send'
   | 'request.method-changed'
   | 'request.url-changed'
   | 'response.received'
   | 'response.error'
+  | 'sidebar.toggle'
   | 'sidebar.toggled'
   | 'sidebar.visible-changed'
   | 'collection.request-selected'
@@ -40,9 +42,11 @@ export type EventType =
   | 'console.info-emitted'
   | 'console.warn-emitted'
   | 'console.error-emitted'
+  | 'panel.toggle'
   | 'panel.console-requested'
   | 'request.accept-ai'
   | 'toast.show'
+  | 'settings.toggle'
   | 'commandbar.toggle';
 
 /**

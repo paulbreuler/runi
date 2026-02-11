@@ -31,6 +31,7 @@ export type CommandId =
   | 'tab.previous'
   | 'sidebar.toggle'
   | 'panel.toggle'
+  | 'settings.toggle'
   | 'commandbar.toggle';
 
 /**

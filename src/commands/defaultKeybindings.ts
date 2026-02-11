@@ -42,6 +42,8 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   // --- Command ---
   { commandId: 'commandbar.toggle', key: 'k', modifier: 'meta', platform: 'mac' },
   { commandId: 'commandbar.toggle', key: 'k', modifier: 'ctrl', platform: 'other' },
+  { commandId: 'settings.toggle', key: ',', modifier: 'meta', platform: 'mac' },
+  { commandId: 'settings.toggle', key: ',', modifier: 'ctrl', platform: 'other' },
 ];
 
 /**
@@ -55,5 +57,6 @@ export const COMMAND_METADATA: CommandMeta[] = [
   { id: 'tab.previous', title: 'Previous Tab', category: 'tabs' },
   { id: 'sidebar.toggle', title: 'Toggle Sidebar', category: 'view' },
   { id: 'panel.toggle', title: 'Toggle DevTools', category: 'view' },
+  { id: 'settings.toggle', title: 'Toggle Settings', category: 'view' },
   { id: 'commandbar.toggle', title: 'Toggle Command Bar', category: 'command' },
 ];
