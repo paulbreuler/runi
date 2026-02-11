@@ -329,6 +329,40 @@ describe('CommandBar', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
+  it('should execute Collection Request selection via event bus', async () => {
+    const user = userEvent.setup();
+    render(<CommandBar isOpen onClose={mockOnClose} />);
+
+    const item = screen.getByText(/Get Users/i);
+    await user.click(item);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith(
+      'collection.request-selected',
+      expect.objectContaining({
+        collectionId: 'coll-1',
+        request: expect.objectContaining({ id: 'req-1', name: 'Get Users' }),
+      })
+    );
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  it('should execute History Entry selection via event bus', async () => {
+    const user = userEvent.setup();
+    render(<CommandBar isOpen onClose={mockOnClose} />);
+
+    // Use test ID to avoid ambiguity with tabs that might have same URL
+    const item = screen.getByTestId('history-item-hist-1');
+    await user.click(item);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith(
+      'history.entry-selected',
+      expect.objectContaining({ id: 'hist-1' })
+    );
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
   it('should handle keyboard navigation with arrow keys', async () => {
     const user = userEvent.setup();
     render(<CommandBar isOpen onClose={mockOnClose} />);

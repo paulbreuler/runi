@@ -33,8 +33,6 @@ export const IntentProvider = ({ children }: { children: React.ReactNode }): Rea
           'End',
           'PageUp',
           'PageDown',
-          'Enter',
-          ' ',
         ].includes(e.key)
       ) {
         root.setAttribute('data-intent', 'keyboard');

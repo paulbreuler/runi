@@ -15,20 +15,6 @@
 
 import * as React from 'react';
 
-// Inject global styles to suppress focus rings for mouse users.
-// This handles third-party components or cases where :focus-visible might still trigger.
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.id = 'suppress-mouse-focus';
-  style.innerHTML = `
-    html[data-intent="mouse"] *:focus {
-      outline: none !important;
-      box-shadow: none !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
 /**
  * Standard focus ring classes for interactive elements.
  *
