@@ -6,57 +6,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { globalCommandRegistry } from '@/commands/registry';
+import { globalEventBus } from '@/events/bus';
 import { useLayoutCommands } from './useLayoutCommands';
 
-// Mock settings store
-const mockToggleSidebar = vi.fn();
-
-vi.mock('@/stores/useSettingsStore', () => ({
-  useSettingsStore: Object.assign(
-    (selector: (state: Record<string, unknown>) => unknown): unknown =>
-      selector({ toggleSidebar: mockToggleSidebar }),
-    {
-      getState: () => ({ toggleSidebar: mockToggleSidebar }),
-      setState: vi.fn(),
-      subscribe: vi.fn(),
-      destroy: vi.fn(),
-    }
-  ),
-}));
-
-// Mock panel store
-const mockSetVisible = vi.fn();
-const mockSetCollapsed = vi.fn();
-
-let mockPanelState = { isVisible: false, isCollapsed: false };
-
-vi.mock('@/stores/usePanelStore', () => ({
-  usePanelStore: Object.assign(
-    (selector: (state: Record<string, unknown>) => unknown): unknown =>
-      selector({
-        isVisible: mockPanelState.isVisible,
-        isCollapsed: mockPanelState.isCollapsed,
-        setVisible: mockSetVisible,
-        setCollapsed: mockSetCollapsed,
-      }),
-    {
-      getState: () => ({
-        isVisible: mockPanelState.isVisible,
-        isCollapsed: mockPanelState.isCollapsed,
-        setVisible: mockSetVisible,
-        setCollapsed: mockSetCollapsed,
-      }),
-      setState: vi.fn(),
-      subscribe: vi.fn(),
-      destroy: vi.fn(),
-    }
-  ),
+// Mock event bus
+vi.mock('@/events/bus', () => ({
+  globalEventBus: {
+    emit: vi.fn(),
+  },
 }));
 
 describe('useLayoutCommands', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPanelState = { isVisible: false, isCollapsed: false };
+    vi.spyOn(globalEventBus, 'emit');
+
     for (const cmd of globalCommandRegistry.getAll()) {
       globalCommandRegistry.unregister(cmd.id);
     }
@@ -75,6 +39,8 @@ describe('useLayoutCommands', () => {
 
     expect(globalCommandRegistry.has('sidebar.toggle')).toBe(true);
     expect(globalCommandRegistry.has('panel.toggle')).toBe(true);
+    expect(globalCommandRegistry.has('settings.toggle')).toBe(true);
+    expect(globalCommandRegistry.has('commandbar.toggle')).toBe(true);
   });
 
   it('unregisters layout commands on unmount', () => {
@@ -85,41 +51,43 @@ describe('useLayoutCommands', () => {
 
     expect(globalCommandRegistry.has('sidebar.toggle')).toBe(false);
     expect(globalCommandRegistry.has('panel.toggle')).toBe(false);
+    expect(globalCommandRegistry.has('settings.toggle')).toBe(false);
+    expect(globalCommandRegistry.has('commandbar.toggle')).toBe(false);
   });
 
-  it('sidebar.toggle handler calls toggleSidebar', async () => {
+  it('sidebar.toggle handler emits sidebar.toggle event', async () => {
     renderHook(() => {
       useLayoutCommands();
     });
     await globalCommandRegistry.execute('sidebar.toggle');
-    expect(mockToggleSidebar).toHaveBeenCalledTimes(1);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('sidebar.toggle', {});
   });
 
-  it('panel.toggle shows hidden panel', async () => {
-    mockPanelState = { isVisible: false, isCollapsed: false };
+  it('panel.toggle handler emits panel.toggle event', async () => {
     renderHook(() => {
       useLayoutCommands();
     });
     await globalCommandRegistry.execute('panel.toggle');
-    expect(mockSetVisible).toHaveBeenCalledWith(true);
-    expect(mockSetCollapsed).toHaveBeenCalledWith(false);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('panel.toggle', {});
   });
 
-  it('panel.toggle expands collapsed panel', async () => {
-    mockPanelState = { isVisible: true, isCollapsed: true };
+  it('settings.toggle handler emits settings.toggle event', async () => {
     renderHook(() => {
       useLayoutCommands();
     });
-    await globalCommandRegistry.execute('panel.toggle');
-    expect(mockSetCollapsed).toHaveBeenCalledWith(false);
+    await globalCommandRegistry.execute('settings.toggle');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('settings.toggle', {});
   });
 
-  it('panel.toggle hides visible expanded panel', async () => {
-    mockPanelState = { isVisible: true, isCollapsed: false };
+  it('commandbar.toggle handler emits commandbar.toggle event', async () => {
     renderHook(() => {
       useLayoutCommands();
     });
-    await globalCommandRegistry.execute('panel.toggle');
-    expect(mockSetVisible).toHaveBeenCalledWith(false);
+    await globalCommandRegistry.execute('commandbar.toggle');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(globalEventBus.emit).toHaveBeenCalledWith('commandbar.toggle', {});
   });
 });
