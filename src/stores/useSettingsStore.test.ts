@@ -16,7 +16,7 @@ describe('useSettingsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset store to initial state (sidebar visible by default)
-    useSettingsStore.setState({ sidebarVisible: true, logLevel: 'info' });
+    useSettingsStore.setState({ sidebarVisible: true, logLevel: 'info', openItemsRatio: 0.35 });
   });
 
   it('initializes with sidebar visible', () => {
@@ -105,6 +105,37 @@ describe('useSettingsStore', () => {
 
         expect(result.current.logLevel).toBe(level);
       }
+    });
+  });
+
+  describe('openItemsRatio', (): void => {
+    it('initializes with default ratio of 0.35', (): void => {
+      const { result } = renderHook(() => useSettingsStore());
+      expect(result.current.openItemsRatio).toBe(0.35);
+    });
+
+    it('sets ratio via setOpenItemsRatio', (): void => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setOpenItemsRatio(0.5);
+      });
+
+      expect(result.current.openItemsRatio).toBe(0.5);
+    });
+
+    it('clamps ratio to [0.1, 0.9] range', (): void => {
+      const { result } = renderHook(() => useSettingsStore());
+
+      act(() => {
+        result.current.setOpenItemsRatio(0);
+      });
+      expect(result.current.openItemsRatio).toBe(0.1);
+
+      act(() => {
+        result.current.setOpenItemsRatio(1);
+      });
+      expect(result.current.openItemsRatio).toBe(0.9);
     });
   });
 

@@ -4,6 +4,10 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { KeybindingService } from '@/services/keybindingService';
+import { useTabCommands } from '@/hooks/useTabCommands';
+import { useLayoutCommands } from '@/hooks/useLayoutCommands';
+
 import {
   motion,
   AnimatePresence,
@@ -19,9 +23,6 @@ import { DockablePanel } from './DockablePanel';
 import { TitleBar } from './TitleBar';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { usePanelStore } from '@/stores/usePanelStore';
-import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { isMacSync, getModifierKeyName } from '@/utils/platform';
-import type { ModifierKey } from '@/utils/keyboard';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useWindowFocus } from '@/hooks/useWindowFocus';
 import { cn } from '@/utils/cn';
@@ -109,13 +110,7 @@ export const MainLayout = ({
   initialSidebarVisible = true, // Default to visible now that collections are supported
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, sidebarEdge, toggleSidebar, setSidebarVisible } = useSettingsStore();
-  const {
-    position: panelPosition,
-    isVisible: panelVisible,
-    isCollapsed: panelCollapsed,
-    setVisible,
-    setCollapsed,
-  } = usePanelStore();
+  const { position: panelPosition, isVisible: panelVisible, setVisible } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
 
@@ -148,55 +143,17 @@ export const MainLayout = ({
     }
   }, [initialSidebarVisible, setSidebarVisible]);
 
-  // Memoize keyboard shortcuts to prevent unnecessary re-registrations
-  // Register both meta and ctrl for sidebar toggle to work in all environments (including E2E tests)
-  const sidebarShortcutMeta = useMemo(
-    () => ({
-      key: 'b',
-      modifier: 'meta' as const,
-      handler: toggleSidebar,
-      description: '⌘B - Toggle sidebar',
-    }),
-    [toggleSidebar]
-  );
+  // Centralized keybinding system: register domain commands and start service
+  useTabCommands();
+  useLayoutCommands();
 
-  const sidebarShortcutCtrl = useMemo(
-    () => ({
-      key: 'b',
-      modifier: 'ctrl' as const,
-      handler: toggleSidebar,
-      description: 'Ctrl+B - Toggle sidebar',
-    }),
-    [toggleSidebar]
-  );
-
-  const handlePanelShortcut = useCallback(() => {
-    if (!panelVisible) {
-      // If hidden, show it and ensure it's expanded
-      setVisible(true);
-      setCollapsed(false);
-    } else if (panelCollapsed) {
-      // If visible but minimized, expand it
-      setCollapsed(false);
-    } else {
-      // If visible and expanded, hide it
-      setVisible(false);
-    }
-  }, [panelVisible, panelCollapsed, setCollapsed, setVisible]);
-
-  const panelShortcut = useMemo(
-    () => ({
-      key: 'i',
-      modifier: (isMacSync() ? ['meta', 'shift'] : ['ctrl', 'shift']) as ModifierKey[],
-      handler: handlePanelShortcut,
-      description: `${getModifierKeyName()}+Shift+I - Toggle DevTools panel`,
-    }),
-    [handlePanelShortcut]
-  );
-
-  useKeyboardShortcuts(sidebarShortcutMeta);
-  useKeyboardShortcuts(sidebarShortcutCtrl);
-  useKeyboardShortcuts(panelShortcut);
+  useEffect(() => {
+    const service = new KeybindingService();
+    service.start();
+    return (): void => {
+      service.stop();
+    };
+  }, []);
 
   // Track target correlation ID for console panel jump
   const [targetCorrelationId, setTargetCorrelationId] = useState<string | undefined>(undefined);

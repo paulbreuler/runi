@@ -34,34 +34,34 @@
      Zen "Ink" Surface Palette
      ============================================ */
 
-  /* Background tokens */
-  --color-bg-app: #080809;
-  --color-bg-surface: #111113;
-  --color-bg-raised: #1a1a1d;
-  --color-bg-elevated: #242427;
-  --color-bg-overlay: oklch(0.1 0.01 240 / 80%);
+  /* Background tokens - Lifted further for better visibility in bright environments */
+  --color-bg-app: #141517;
+  --color-bg-surface: #1c1d21;
+  --color-bg-raised: #26272b;
+  --color-bg-elevated: #2f3035;
+  --color-bg-overlay: oklch(0.18 0.01 240 / 85%);
 
-  /* Text tokens */
-  --color-text-primary: oklch(0.98 0.01 240);
-  --color-text-secondary: oklch(0.85 0.01 240);
-  --color-text-muted: oklch(0.65 0.01 240);
+  /* Text tokens - Maximized contrast */
+  --color-text-primary: oklch(1 0 240);
+  --color-text-secondary: oklch(0.95 0.005 240);
+  --color-text-muted: oklch(0.85 0.01 240);
   --color-text-contrast: oklch(0.05 0.01 240);
 
-  /* Border tokens */
-  --color-border-subtle: oklch(0.2 0.01 240 / 40%);
-  --color-border-default: oklch(0.25 0.01 240 / 50%);
-  --color-border-emphasis: oklch(0.35 0.01 240 / 60%);
+  /* Border tokens - High visibility for bright environments */
+  --color-border-subtle: oklch(0.5 0.01 240 / 55%);
+  --color-border-default: oklch(0.6 0.01 240 / 65%);
+  --color-border-emphasis: oklch(0.75 0.01 240 / 75%);
 
-  /* Signal Colors - Zen low-chroma OKLCH functional signals */
-  --color-signal-success: oklch(0.75 0.1 150);
-  --color-signal-success-rgba-08: oklch(0.75 0.1 150 / 8%);
-  --color-signal-warning: oklch(0.8 0.1 75);
-  --color-signal-warning-rgba-08: oklch(0.8 0.1 75 / 8%);
-  --color-signal-error: oklch(0.65 0.12 25);
-  --color-signal-ai: oklch(0.65 0.1 300);
-  --color-signal-ai-rgba-25: oklch(0.65 0.1 300 / 25%);
-  --color-accent-blue: oklch(0.7 0.1 230);
-  --color-accent-blue-hover: oklch(0.7 0.1 230 / 90%);
+  /* Signal Colors - High chroma and lightness to cut through glare */
+  --color-signal-success: oklch(0.85 0.15 150);
+  --color-signal-success-rgba-15: oklch(0.85 0.15 150 / 15%);
+  --color-signal-warning: oklch(0.88 0.15 75);
+  --color-signal-warning-rgba-15: oklch(0.88 0.15 75 / 15%);
+  --color-signal-error: oklch(0.78 0.18 25);
+  --color-signal-ai: oklch(0.8 0.15 300);
+  --color-signal-ai-rgba-35: oklch(0.8 0.15 300 / 35%);
+  --color-accent-blue: oklch(0.82 0.15 230);
+  --color-accent-blue-hover: oklch(0.85 0.18 230);
   --color-accent-contrast: var(--color-text-primary);
   --color-accent-purple: var(--color-signal-ai);
 
@@ -189,7 +189,7 @@ body {
 
   /* Drift Highlight Utility - For CodeMirror/Editor migration */
   .drift-highlight {
-    background-color: var(--color-signal-warning-rgba-08);
+    background-color: var(--color-signal-warning-rgba-15);
     box-shadow: inset 2px 0 0 0 var(--color-signal-warning);
     position: relative;
   }
@@ -223,28 +223,28 @@ body {
   }
 
   .window-blur {
-    /* Dim root text tokens - Zen Inactive */
-    --color-text-primary: oklch(0.5 0.01 240);
-    --color-text-secondary: oklch(0.4 0.01 240);
-    --color-text-muted: oklch(0.3 0.01 240);
+    /* Dim root text tokens - Zen Inactive (Lifted for readability in glare) */
+    --color-text-primary: oklch(0.75 0.01 240);
+    --color-text-secondary: oklch(0.65 0.01 240);
+    --color-text-muted: oklch(0.55 0.01 240);
 
-    /* Dim root border tokens - Zen Inactive */
-    --color-border-subtle: oklch(0.15 0.01 240 / 10%);
-    --color-border-default: oklch(0.18 0.01 240 / 15%);
-    --color-border-emphasis: oklch(0.22 0.01 240 / 20%);
+    /* Dim root border tokens - Zen Inactive (High visibility maintained) */
+    --color-border-subtle: oklch(0.35 0.01 240 / 30%);
+    --color-border-default: oklch(0.4 0.01 240 / 35%);
+    --color-border-emphasis: oklch(0.45 0.01 240 / 40%);
 
     /* Dim root background/surface tokens */
-    --color-background: #060607;
-    --color-surface: #0a0a0c;
-    --color-panel-solid: #0e0e10;
-    --color-bg-elevated: #141416;
+    --color-background: #0f1012;
+    --color-surface: #141517;
+    --color-panel-solid: #1a1b1e;
+    --color-bg-elevated: #212225;
 
-    /* Dim semantic/signal colors when blurred */
-    --color-signal-success: oklch(0.4 0.02 150);
-    --color-signal-warning: oklch(0.4 0.02 75);
-    --color-signal-error: oklch(0.4 0.02 25);
-    --color-signal-ai: oklch(0.4 0.02 300);
-    --color-accent-blue: oklch(0.4 0.02 230);
+    /* Dim semantic/signal colors when blurred (Lifted chroma) */
+    --color-signal-success: oklch(0.55 0.04 150);
+    --color-signal-warning: oklch(0.55 0.04 75);
+    --color-signal-error: oklch(0.55 0.04 25);
+    --color-signal-ai: oklch(0.55 0.04 300);
+    --color-accent-blue: oklch(0.55 0.04 230);
 
     /* Dim method colors specifically */
     --color-method-get: oklch(0.4 0.02 230);
@@ -449,7 +449,7 @@ aside[data-test-id='sidebar'] {
    ============================================ */
 
 ::selection {
-  background: var(--color-signal-ai-rgba-25);
+  background: var(--color-signal-ai-rgba-35);
   color: var(--color-text-primary);
 }
 

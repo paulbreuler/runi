@@ -80,11 +80,11 @@ is the only light.
 
 2. **Drift Sniffer (The Room):**
    - When a request drifts from the spec, highlight the specific line in the JSON body with a subtle
-     **amber glow** (`--color-signal-warning-rgba-08`).
+     **amber glow** (`--color-signal-warning-rgba-15`).
    - Avoid jarring error modals; use in-context visual indicators.
 
 3. **AI Verification (The Building):**
-   - AI-suggested requests/content must be wrapped in a **purple border** (`--color-signal-ai-rgba-25`).
+   - AI-suggested requests/content must be wrapped in a **purple border** (`--color-signal-ai-rgba-35`).
    - This signifies "Draft" status until explicitly verified or accepted.
 
 ## Tech Stack

@@ -44,7 +44,7 @@ describe('StatusBadge', () => {
 
     const badge = screen.getByTestId('status-badge');
     // Zen aesthetic: very subtle background, colored text, subtle border
-    expect(badge).toHaveClass('bg-signal-success-rgba-08');
+    expect(badge).toHaveClass('bg-signal-success-rgba-15');
     expect(badge).toHaveClass('text-signal-success');
     expect(badge).toHaveClass('border-signal-success/20');
   });
@@ -54,7 +54,7 @@ describe('StatusBadge', () => {
 
     const badge = screen.getByTestId('status-badge');
     expect(badge).toHaveTextContent('404');
-    expect(badge).toHaveClass('bg-signal-warning-rgba-08');
+    expect(badge).toHaveClass('bg-signal-warning-rgba-15');
     expect(badge).toHaveClass('text-signal-warning');
   });
 

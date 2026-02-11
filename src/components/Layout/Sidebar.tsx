@@ -3,11 +3,15 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ScrollArea } from '@base-ui/react/scroll-area';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
+import { OpenItems } from '@/components/Sidebar/OpenItems';
+import { SidebarScrollArea } from '@/components/Sidebar/SidebarScrollArea';
+import { SidebarDivider } from '@/components/Sidebar/SidebarDivider';
+import { useTabStore } from '@/stores/useTabStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { containedFocusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 
@@ -28,78 +32,6 @@ const DrawerSection = ({
 }: DrawerSectionProps): React.JSX.Element => {
   // icon parameter is kept for API consistency but not currently used in the UI
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [showScrollbar, setShowScrollbar] = useState(false);
-  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  const showBriefly = useCallback((duration = 400) => {
-    // Ensure we have the latest layout before checking scrollability
-    requestAnimationFrame(() => {
-      if (viewportRef.current === null) {
-        return;
-      }
-
-      const { scrollHeight, clientHeight } = viewportRef.current;
-      const isScrollable = scrollHeight > clientHeight + 1; // +1 for subpixel rounding
-
-      // If not scrollable, immediately hide and don't proceed
-      if (!isScrollable) {
-        setShowScrollbar(false);
-        if (scrollTimeout.current !== null) {
-          clearTimeout(scrollTimeout.current);
-          scrollTimeout.current = null;
-        }
-        return;
-      }
-
-      // Only show if it's actually scrollable
-      setShowScrollbar(true);
-      if (scrollTimeout.current !== null) {
-        clearTimeout(scrollTimeout.current);
-      }
-      scrollTimeout.current = setTimeout(() => {
-        setShowScrollbar(false);
-        scrollTimeout.current = null;
-      }, duration);
-    });
-  }, []);
-
-  const handleScroll = useCallback(() => {
-    showBriefly();
-  }, [showBriefly]);
-
-  // Show scrollbar when section opens - longer duration to clear the entry animation
-  useEffect(() => {
-    if (isOpen) {
-      showBriefly(800);
-    }
-  }, [isOpen, showBriefly]);
-
-  // Show scrollbar when content size changes (e.g. expanding a long list)
-  useEffect(() => {
-    if (!isOpen || contentRef.current === null || typeof ResizeObserver === 'undefined') {
-      return undefined;
-    }
-
-    const observer = new ResizeObserver(() => {
-      // Content size changed, might have become scrollable
-      showBriefly();
-    });
-
-    observer.observe(contentRef.current);
-    return (): void => {
-      observer.disconnect();
-    };
-  }, [isOpen, showBriefly, viewportRef]);
-
-  useEffect(() => {
-    return (): void => {
-      if (scrollTimeout.current !== null) {
-        clearTimeout(scrollTimeout.current);
-      }
-    };
-  }, []);
 
   return (
     <div
@@ -140,31 +72,7 @@ const DrawerSection = ({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="flex-1 min-h-0 flex flex-col overflow-hidden"
           >
-            <ScrollArea.Root
-              className="flex-1 min-h-0 relative group/scroll"
-              data-test-id="sidebar-scroll-root"
-            >
-              <ScrollArea.Viewport
-                ref={viewportRef}
-                className="scroll-area-viewport w-full h-full"
-                data-scroll-container
-                onScroll={handleScroll}
-              >
-                <div ref={contentRef} className="px-2 pb-3">
-                  {children}
-                </div>
-              </ScrollArea.Viewport>
-              <ScrollArea.Scrollbar
-                orientation="vertical"
-                data-test-id="sidebar-scrollbar"
-                className={cn(
-                  'scroll-area-scrollbar absolute right-0.5 top-0 bottom-0 z-20 flex touch-none select-none transition-opacity duration-300',
-                  showScrollbar ? 'opacity-100' : 'opacity-0 hover:opacity-100'
-                )}
-              >
-                <ScrollArea.Thumb className="scroll-area-thumb flex-1 rounded-full" />
-              </ScrollArea.Scrollbar>
-            </ScrollArea.Root>
+            <SidebarScrollArea testId="sidebar-scroll">{children}</SidebarScrollArea>
           </motion.div>
         )}
       </AnimatePresence>
@@ -172,9 +80,82 @@ const DrawerSection = ({
   );
 };
 
+const MIN_SECTION_HEIGHT = 60;
+
 export const Sidebar = (): React.JSX.Element => {
+  const tabOrder = useTabStore((s) => s.tabOrder);
+  const openItemsRatio = useSettingsStore((s) => s.openItemsRatio);
+  const setOpenItemsRatio = useSettingsStore((s) => s.setOpenItemsRatio);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const dragStartHeight = useRef(0);
+
+  // Measure available height with ResizeObserver
+  useEffect(() => {
+    if (containerRef.current === null || typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry !== undefined) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+
+    observer.observe(containerRef.current);
+    return (): void => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const showOpenItems = tabOrder.length > 1;
+
+  // Compute pixel heights from ratio
+  const openItemsHeight =
+    showOpenItems && containerHeight > 0
+      ? Math.max(
+          MIN_SECTION_HEIGHT,
+          Math.min(containerHeight - MIN_SECTION_HEIGHT, containerHeight * openItemsRatio)
+        )
+      : 0;
+
+  const handleDividerDrag = useCallback(
+    (deltaY: number) => {
+      if (containerHeight <= 0) {
+        return;
+      }
+      const newHeight = dragStartHeight.current + deltaY;
+      const newRatio = newHeight / containerHeight;
+      setOpenItemsRatio(newRatio);
+    },
+    [containerHeight, setOpenItemsRatio]
+  );
+
+  const handleDividerDragStart = useCallback(() => {
+    // Store the actual rendered pixel height to avoid jumps when the ratio is clamped
+    dragStartHeight.current = openItemsHeight;
+  }, [openItemsHeight]);
+
   return (
-    <aside className="flex-1 min-h-0 flex flex-col bg-bg-surface" data-test-id="sidebar-content">
+    <aside
+      ref={containerRef}
+      className="flex-1 min-h-0 flex flex-col bg-bg-surface"
+      data-test-id="sidebar-content"
+    >
+      {showOpenItems && (
+        <>
+          <OpenItems style={{ height: openItemsHeight }} />
+          <SidebarDivider
+            onDrag={handleDividerDrag}
+            onDragStart={handleDividerDragStart}
+            valuenow={Math.round(openItemsHeight)}
+            valuemin={MIN_SECTION_HEIGHT}
+            valuemax={containerHeight > 0 ? containerHeight - MIN_SECTION_HEIGHT : undefined}
+          />
+        </>
+      )}
       <DrawerSection
         title="Collections"
         icon={<Folder size={14} />}

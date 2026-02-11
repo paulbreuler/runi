@@ -46,36 +46,6 @@ export interface KeyboardShortcut {
 }
 
 /**
- * Hook to register a keyboard shortcut.
- *
- * Automatically handles cleanup when component is destroyed.
- * Uses platform-appropriate modifier keys (⌘ on Mac, Ctrl on Windows/Linux).
- *
- * @param shortcut - The keyboard shortcut configuration
- *
- * @example
- * ```tsx
- * import { useKeyboardShortcut } from '@/utils/keyboard';
- * import { useEffect } from 'react';
- *
- * function MyComponent() {
- *   useEffect(() => {
- *     return useKeyboardShortcut({
- *       key: 'b',
- *       modifier: 'meta',
- *       handler: () => toggleSidebar(),
- *       description: 'Toggle sidebar'
- *     });
- *   }, []);
- * }
- * ```
- */
-export function useKeyboardShortcut(_shortcut: KeyboardShortcut): void {
-  // This is a utility function for keyboard shortcuts.
-  // Components should use createKeyboardHandler with useEffect for proper cleanup.
-}
-
-/**
  * Creates a keyboard event handler for a shortcut.
  *
  * This is a lower-level utility that can be used with React's useEffect.

@@ -17,12 +17,8 @@ import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
-import {
-  globalEventBus,
-  type ToastEventPayload,
-  type CollectionRequestSelectedPayload,
-} from '@/events/bus';
-import type { HistoryEntry } from '@/types/generated/HistoryEntry';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
+import { useTabSync } from '@/hooks/useTabSync';
 
 const getStatusColorClass = (status: number): string => {
   if (status >= 200 && status < 300) {
@@ -50,8 +46,6 @@ export const HomePage = (): React.JSX.Element => {
     isLoading,
     setMethod,
     setUrl,
-    setHeaders,
-    setBody,
     setResponse,
     setLoading,
   } = useRequestStore();
@@ -81,49 +75,9 @@ export const HomePage = (): React.JSX.Element => {
 
   const isValidUrl = localUrl.length > 0;
 
-  // Subscribe to history entry selection events
-  useEffect(() => {
-    const unsubscribeHistory = globalEventBus.on<HistoryEntry>(
-      'history.entry-selected',
-      (event) => {
-        const entry = event.payload;
-        // Update request store with history entry data
-        setMethod(entry.request.method);
-        setUrl(entry.request.url);
-        setHeaders(entry.request.headers);
-        setBody(entry.request.body ?? '');
-        // Update local state to match
-        setLocalUrl(entry.request.url);
-        setLocalMethod(entry.request.method as HttpMethod);
-        // Clear previous response when loading from history
-        setResponse(null);
-      }
-    );
-
-    const unsubscribeCollection = globalEventBus.on<CollectionRequestSelectedPayload>(
-      'collection.request-selected',
-      (event) => {
-        const { request } = event.payload;
-        // Update request store with collection request data
-        setMethod(request.method);
-        setUrl(request.url);
-        setHeaders(request.headers);
-        setBody(request.body?.content ?? '');
-        // Update local state to match
-        setLocalUrl(request.url);
-        setLocalMethod(request.method as HttpMethod);
-        // Clear previous response when loading from collection
-        setResponse(null);
-      }
-    );
-
-    return (): void => {
-      unsubscribeHistory();
-      unsubscribeCollection();
-    };
-    // Zustand store setters are stable and don't need to be in deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Tab ↔ Request store sync: manages multi-tab state, event handlers,
+  // and bidirectional sync between useTabStore and useRequestStore.
+  useTabSync();
 
   const handleSend = async (): Promise<void> => {
     // Guard against invalid URL or double-click while loading

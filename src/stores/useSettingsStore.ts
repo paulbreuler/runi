@@ -16,6 +16,8 @@ interface SettingsState {
   metricsVisible: boolean;
   /** When true, auto-focus AI-created/modified items in the UI. */
   followAiMode: boolean;
+  /** Ratio of sidebar height allocated to Open Items (0.1–0.9, default 0.35). */
+  openItemsRatio: number;
   toggleSidebar: () => void;
   setSidebarVisible: (visible: boolean) => void;
   setSidebarEdge: (edge: SidebarEdge) => void;
@@ -24,6 +26,7 @@ interface SettingsState {
   setMetricsVisible: (visible: boolean) => void;
   toggleFollowAiMode: () => void;
   setFollowAiMode: (enabled: boolean) => void;
+  setOpenItemsRatio: (ratio: number) => void;
 }
 
 interface RuniE2EConfig {
@@ -47,6 +50,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   logLevel: 'info',
   metricsVisible: false, // Default hidden to save space
   followAiMode: false, // Default off — user opts in
+  openItemsRatio: 0.35,
   toggleSidebar: (): void => {
     set((state) => ({ sidebarVisible: !state.sidebarVisible }));
   },
@@ -76,5 +80,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   },
   setFollowAiMode: (enabled: boolean): void => {
     set({ followAiMode: enabled });
+  },
+  setOpenItemsRatio: (ratio: number): void => {
+    set({ openItemsRatio: Math.max(0.1, Math.min(0.9, ratio)) });
   },
 }));
