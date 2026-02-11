@@ -38,7 +38,6 @@ import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { useActivityStore } from '@/stores/useActivityStore';
 import { useTabStore } from '@/stores/useTabStore';
-import { CommandBar } from '@/components/CommandBar';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -130,7 +129,6 @@ export const MainLayout = ({
   const { entries } = useHistoryStore();
   const activityEntries = useActivityStore((s) => s.entries);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
 
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -183,10 +181,6 @@ export const MainLayout = ({
 
   // Listen for global UI events
   useEffect(() => {
-    const unsubCommandBar = globalEventBus.on('commandbar.toggle', () => {
-      setIsCommandBarOpen((prev) => !prev);
-    });
-
     const unsubSettings = globalEventBus.on('settings.toggle', () => {
       setIsSettingsOpen((prev) => !prev);
     });
@@ -213,7 +207,6 @@ export const MainLayout = ({
     });
 
     return (): void => {
-      unsubCommandBar();
       unsubSettings();
       unsubSidebar();
       unsubPanel();
@@ -583,13 +576,6 @@ export const MainLayout = ({
             </div>
           </div>
         )}
-        {/* Command bar overlay */}
-        <CommandBar
-          isOpen={isCommandBarOpen}
-          onClose={() => {
-            setIsCommandBarOpen(false);
-          }}
-        />
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
           <AnimatePresence>

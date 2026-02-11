@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MemoryWarningListener } from './components/Memory/MemoryWarningListener';
 import { CollectionEventProvider } from './components/providers/CollectionEventProvider';
@@ -11,6 +11,8 @@ import { FeatureFlagProvider } from './providers/FeatureFlagProvider';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastProvider } from './components/ui/Toast';
 import { TooltipProvider } from './components/ui/Tooltip';
+import { CommandBar } from './components/CommandBar';
+import { globalEventBus } from './events/bus';
 
 // Lazy load routes for code splitting
 const HomePage = lazy(() => import('./routes/index').then((m) => ({ default: m.HomePage })));
@@ -19,6 +21,18 @@ const DevToolsPopout = lazy(() =>
 );
 
 export const App = (): React.JSX.Element => {
+  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
+
+  useEffect(() => {
+    const unsubCommandBar = globalEventBus.on('commandbar.toggle', (): void => {
+      setIsCommandBarOpen((prev) => !prev);
+    });
+
+    return (): void => {
+      unsubCommandBar();
+    };
+  }, []);
+
   return (
     <ThemeProvider appearance="dark" accentColor="blue" grayColor="gray">
       <FeatureFlagProvider>
@@ -26,6 +40,12 @@ export const App = (): React.JSX.Element => {
           <ToastProvider>
             <TooltipProvider delayDuration={250}>
               <MemoryWarningListener />
+              <CommandBar
+                isOpen={isCommandBarOpen}
+                onClose={(): void => {
+                  setIsCommandBarOpen(false);
+                }}
+              />
               <BrowserRouter>
                 <Suspense
                   fallback={
