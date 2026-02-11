@@ -16,6 +16,7 @@ import type { CollectionRequest } from '@/types/collection';
 import { cn } from '@/utils/cn';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
 import { COMMAND_BAR_Z_INDEX } from '@/utils/z-index';
+import { focusRingClasses } from '@/utils/accessibility';
 import type { CommandAction } from './commands';
 import { COMMAND_ACTIONS, executeAction } from './commands';
 
@@ -151,10 +152,11 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                 <Command.Input
                   ref={inputRef}
                   className={cn(
-                    'flex h-10 w-full bg-transparent py-2 text-sm outline-none',
+                    'flex h-10 w-full bg-transparent py-2 text-sm',
                     'placeholder:text-text-muted/40',
                     'disabled:cursor-not-allowed disabled:opacity-50',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated'
+                    focusRingClasses,
+                    'focus-visible:ring-offset-bg-elevated'
                   )}
                   placeholder="Search everything..."
                   data-test-id="command-bar-input"
