@@ -66,17 +66,17 @@ const renderWithScrollContainer = (ui: React.ReactElement): ReturnType<typeof re
     </div>
   );
 
-describe('RequestItemComposite', () => {
+describe('RequestItemComposite', (): void => {
   beforeEach((): void => {
     vi.useFakeTimers();
   });
 
-  afterEach(() => {
+  afterEach((): void => {
     vi.useRealTimers();
   });
 
-  describe('popout behavior', () => {
-    it('shows popout after hover delay when text is truncated', () => {
+  describe('popout behavior', (): void => {
+    it('shows popout after hover delay when text is truncated', (): void => {
       renderWithScrollContainer(
         <RequestItemComposite request={longRequest} collectionId="col_1" />
       );
@@ -106,7 +106,7 @@ describe('RequestItemComposite', () => {
       expect(screen.getByTestId('request-popout')).toBeInTheDocument();
     });
 
-    it('does not show popout when text is not truncated', () => {
+    it('does not show popout when text is not truncated', (): void => {
       renderWithScrollContainer(
         <RequestItemComposite request={shortRequest} collectionId="col_1" />
       );
@@ -134,7 +134,7 @@ describe('RequestItemComposite', () => {
       expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
     });
 
-    it('popout shows full request name without truncation', () => {
+    it('popout shows full request name without truncation', (): void => {
       renderWithScrollContainer(
         <RequestItemComposite request={longRequest} collectionId="col_1" />
       );
@@ -167,7 +167,7 @@ describe('RequestItemComposite', () => {
       expect(popoutContent!.className).not.toContain('w-full');
     });
 
-    it('dismisses popout on mouse leave', () => {
+    it('dismisses popout on mouse leave', (): void => {
       renderWithScrollContainer(
         <RequestItemComposite request={longRequest} collectionId="col_1" />
       );
@@ -201,8 +201,8 @@ describe('RequestItemComposite', () => {
     });
   });
 
-  describe('selection', () => {
-    it('emits collection.request-selected event when clicked', () => {
+  describe('selection', (): void => {
+    it('emits collection.request-selected event when clicked', (): void => {
       const emitSpy = vi.spyOn(globalEventBus, 'emit');
 
       renderWithScrollContainer(
@@ -223,7 +223,7 @@ describe('RequestItemComposite', () => {
       emitSpy.mockRestore();
     });
 
-    it('selects via keyboard Enter', () => {
+    it('selects via keyboard Enter', (): void => {
       const emitSpy = vi.spyOn(globalEventBus, 'emit');
 
       renderWithScrollContainer(
@@ -244,7 +244,7 @@ describe('RequestItemComposite', () => {
       emitSpy.mockRestore();
     });
 
-    it('selects via keyboard Space', () => {
+    it('selects via keyboard Space', (): void => {
       const emitSpy = vi.spyOn(globalEventBus, 'emit');
 
       renderWithScrollContainer(

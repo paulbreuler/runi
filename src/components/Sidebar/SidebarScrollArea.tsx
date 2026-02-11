@@ -27,7 +27,7 @@ export const SidebarScrollArea = ({
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const showBriefly = useCallback((duration = 400) => {
+  const showBriefly = useCallback((duration = 400): void => {
     requestAnimationFrame(() => {
       if (viewportRef.current === null) {
         return;
@@ -56,7 +56,7 @@ export const SidebarScrollArea = ({
     });
   }, []);
 
-  const handleScroll = useCallback(() => {
+  const handleScroll = useCallback((): void => {
     showBriefly();
   }, [showBriefly]);
 

@@ -34,7 +34,7 @@
      Zen "Ink" Surface Palette
      ============================================ */
 
-  /* Background tokens - Lifted further for better visibility in high light environments */
+  /* Background tokens - Lifted further for better visibility in bright environments */
   --color-bg-app: #141517;
   --color-bg-surface: #1c1d21;
   --color-bg-raised: #26272b;
@@ -54,12 +54,12 @@
 
   /* Signal Colors - High chroma and lightness to cut through glare */
   --color-signal-success: oklch(0.85 0.15 150);
-  --color-signal-success-rgba-08: oklch(0.85 0.15 150 / 15%);
+  --color-signal-success-rgba-15: oklch(0.85 0.15 150 / 15%);
   --color-signal-warning: oklch(0.88 0.15 75);
-  --color-signal-warning-rgba-08: oklch(0.88 0.15 75 / 15%);
+  --color-signal-warning-rgba-15: oklch(0.88 0.15 75 / 15%);
   --color-signal-error: oklch(0.78 0.18 25);
   --color-signal-ai: oklch(0.8 0.15 300);
-  --color-signal-ai-rgba-25: oklch(0.8 0.15 300 / 35%);
+  --color-signal-ai-rgba-35: oklch(0.8 0.15 300 / 35%);
   --color-accent-blue: oklch(0.82 0.15 230);
   --color-accent-blue-hover: oklch(0.85 0.18 230);
   --color-accent-contrast: var(--color-text-primary);
@@ -189,7 +189,7 @@ body {
 
   /* Drift Highlight Utility - For CodeMirror/Editor migration */
   .drift-highlight {
-    background-color: var(--color-signal-warning-rgba-08);
+    background-color: var(--color-signal-warning-rgba-15);
     box-shadow: inset 2px 0 0 0 var(--color-signal-warning);
     position: relative;
   }
@@ -449,7 +449,7 @@ aside[data-test-id='sidebar'] {
    ============================================ */
 
 ::selection {
-  background: var(--color-signal-ai-rgba-25);
+  background: var(--color-signal-ai-rgba-35);
   color: var(--color-text-primary);
 }
 

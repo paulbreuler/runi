@@ -13,7 +13,7 @@ interface StatusBadgeProps {
 const getStatusStyles = (status: number): { bg: string; text: string; border: string } => {
   if (status >= 200 && status < 300) {
     return {
-      bg: 'bg-signal-success-rgba-08',
+      bg: 'bg-signal-success-rgba-15',
       text: 'text-signal-success',
       border: 'border-signal-success/20',
     };
@@ -27,7 +27,7 @@ const getStatusStyles = (status: number): { bg: string; text: string; border: st
   }
   if (status >= 400 && status < 500) {
     return {
-      bg: 'bg-signal-warning-rgba-08',
+      bg: 'bg-signal-warning-rgba-15',
       text: 'text-signal-warning',
       border: 'border-signal-warning/20',
     };

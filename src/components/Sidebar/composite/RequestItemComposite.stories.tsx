@@ -161,9 +161,7 @@ export const Truncated: Story = {
 
       // Popout should be wider than the sidebar container (w-80 = 320px)
       const popoutRect = popout.getBoundingClientRect();
-      if (popoutRect.width > 0) {
-        await expect(popoutRect.width).toBeGreaterThan(320);
-      }
+      await expect(popoutRect.width).toBeGreaterThan(320);
     });
 
     await step('Unhover to dismiss popout', async () => {

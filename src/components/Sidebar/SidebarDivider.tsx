@@ -6,6 +6,9 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { cn } from '@/utils/cn';
 
+/** Step size in pixels for keyboard-based resizing. */
+const KEYBOARD_STEP = 10;
+
 interface SidebarDividerProps {
   /** Called continuously during drag with cumulative deltaY from drag start. */
   onDrag: (deltaY: number) => void;
@@ -13,6 +16,12 @@ interface SidebarDividerProps {
   onDragStart?: () => void;
   /** Called when drag ends. */
   onDragEnd?: () => void;
+  /** Current value for aria-valuenow (e.g., pixel height of top section). */
+  valuenow?: number;
+  /** Minimum value for aria-valuemin. */
+  valuemin?: number;
+  /** Maximum value for aria-valuemax. */
+  valuemax?: number;
   testId?: string;
 }
 
@@ -24,6 +33,9 @@ export const SidebarDivider = ({
   onDrag,
   onDragStart,
   onDragEnd,
+  valuenow,
+  valuemin,
+  valuemax,
   testId = 'sidebar-divider',
 }: SidebarDividerProps): React.JSX.Element => {
   const [isDragging, setIsDragging] = useState(false);
@@ -78,11 +90,32 @@ export const SidebarDivider = ({
     [isDragging, onDragEnd]
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      let delta = 0;
+      if (e.key === 'ArrowDown') {
+        delta = KEYBOARD_STEP;
+      } else if (e.key === 'ArrowUp') {
+        delta = -KEYBOARD_STEP;
+      } else {
+        return;
+      }
+      e.preventDefault();
+      onDragStart?.();
+      onDrag(delta);
+      onDragEnd?.();
+    },
+    [onDrag, onDragStart, onDragEnd]
+  );
+
   return (
     <div
       role="separator"
       aria-orientation="horizontal"
       aria-label="Resize sidebar sections"
+      aria-valuenow={valuenow}
+      aria-valuemin={valuemin}
+      aria-valuemax={valuemax}
       tabIndex={0}
       data-test-id={testId}
       className={cn(
@@ -94,6 +127,7 @@ export const SidebarDivider = ({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onKeyDown={handleKeyDown}
     />
   );
 };

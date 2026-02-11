@@ -53,8 +53,11 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, tabId: string, index: number): void => {
-    const items = listRef.current?.querySelectorAll<HTMLElement>('[role="option"]');
-    if (items === undefined) {
+    if (listRef.current === null) {
+      return;
+    }
+    const items = listRef.current.querySelectorAll<HTMLElement>('[role="option"]');
+    if (items.length === 0) {
       return;
     }
 
@@ -143,7 +146,7 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                 <div
                   key={tabId}
                   role="option"
-                  tabIndex={0}
+                  tabIndex={isActive ? 0 : -1}
                   aria-selected={isActive}
                   data-active={isActive || undefined}
                   data-test-id={`open-items-tab-${tabId}`}

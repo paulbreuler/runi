@@ -86,6 +86,9 @@ export const UrlBar = ({
     );
   };
 
+  // Focus ring exception: UrlBar uses composite focus styling (compositeFocusContainerClasses /
+  // compositeFocusItemClasses) instead of the standard focusRingClasses to keep a unified bar ring
+  // across the method selector, URL input, and send button as a single composite control.
   return (
     <div
       className={cn(

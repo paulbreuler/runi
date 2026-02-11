@@ -89,7 +89,7 @@ export const Sidebar = (): React.JSX.Element => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(0);
-  const dragStartRatio = useRef(0);
+  const dragStartHeight = useRef(0);
 
   // Measure available height with ResizeObserver
   useEffect(() => {
@@ -126,8 +126,7 @@ export const Sidebar = (): React.JSX.Element => {
       if (containerHeight <= 0) {
         return;
       }
-      const baseHeight = containerHeight * dragStartRatio.current;
-      const newHeight = baseHeight + deltaY;
+      const newHeight = dragStartHeight.current + deltaY;
       const newRatio = newHeight / containerHeight;
       setOpenItemsRatio(newRatio);
     },
@@ -135,8 +134,9 @@ export const Sidebar = (): React.JSX.Element => {
   );
 
   const handleDividerDragStart = useCallback(() => {
-    dragStartRatio.current = openItemsRatio;
-  }, [openItemsRatio]);
+    // Store the actual rendered pixel height to avoid jumps when the ratio is clamped
+    dragStartHeight.current = openItemsHeight;
+  }, [openItemsHeight]);
 
   return (
     <aside
@@ -147,7 +147,13 @@ export const Sidebar = (): React.JSX.Element => {
       {showOpenItems && (
         <>
           <OpenItems style={{ height: openItemsHeight }} />
-          <SidebarDivider onDrag={handleDividerDrag} onDragStart={handleDividerDragStart} />
+          <SidebarDivider
+            onDrag={handleDividerDrag}
+            onDragStart={handleDividerDragStart}
+            valuenow={Math.round(openItemsHeight)}
+            valuemin={MIN_SECTION_HEIGHT}
+            valuemax={containerHeight > 0 ? containerHeight - MIN_SECTION_HEIGHT : undefined}
+          />
         </>
       )}
       <DrawerSection

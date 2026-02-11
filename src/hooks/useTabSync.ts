@@ -113,13 +113,14 @@ export function useTabSync(): void {
         state.body !== prevState.body;
 
       if (changed) {
-        const label = deriveTabLabel(state.url);
         useTabStore.getState().updateTab(currentActiveId, {
           method: state.method,
           url: state.url,
           headers: state.headers,
           body: state.body,
-          label,
+          // Only update the label when the URL actually changes so we don't
+          // overwrite explicit/name-based labels (e.g., collection requests).
+          ...(state.url !== prevState.url ? { label: deriveTabLabel(state.url) } : {}),
         });
       }
 

@@ -99,7 +99,13 @@ export const useTabStore = create<TabStore>()(
             type: 'warning',
             message: `Tab limit reached (${String(MAX_TABS)} max). Close a tab to open a new one.`,
           });
-          return state.activeTabId ?? '';
+          // Return an existing tab ID deterministically when at the limit
+          return (
+            state.activeTabId ??
+            state.tabOrder[state.tabOrder.length - 1] ??
+            Object.keys(state.tabs)[0] ??
+            ''
+          );
         }
 
         const newTab = createDefaultTab(partial);

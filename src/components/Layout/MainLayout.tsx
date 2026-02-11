@@ -727,7 +727,7 @@ export const MainLayout = ({
                   aria-valuemin={MIN_PANE_SIZE}
                   aria-valuemax={MAX_PANE_SIZE}
                 />
-              </motion.div>{' '}
+              </motion.div>
             </LayoutGroup>
 
             {/* Right dock panel */}

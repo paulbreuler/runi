@@ -16,7 +16,7 @@ describe('useSettingsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset store to initial state (sidebar visible by default)
-    useSettingsStore.setState({ sidebarVisible: true, logLevel: 'info' });
+    useSettingsStore.setState({ sidebarVisible: true, logLevel: 'info', openItemsRatio: 0.35 });
   });
 
   it('initializes with sidebar visible', () => {
