@@ -379,11 +379,11 @@ describe('CommandBar', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it('should execute Open Settings action via event bus', async () => {
+  it('should execute Toggle Settings action via event bus', async () => {
     const user = userEvent.setup();
     render(<CommandBar isOpen onClose={mockOnClose} />);
 
-    const action = screen.getByText(/open settings/i);
+    const action = screen.getByText(/toggle settings/i);
     await user.click(action);
 
     // eslint-disable-next-line @typescript-eslint/unbound-method

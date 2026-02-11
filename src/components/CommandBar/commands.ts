@@ -50,8 +50,8 @@ export const COMMAND_ACTIONS: CommandAction[] = [
     },
   },
   {
-    id: 'open-settings',
-    label: 'Open Settings',
+    id: 'toggle-settings',
+    label: 'Toggle Settings',
     handler: (): void => {
       globalEventBus.emit('settings.toggle', {});
     },

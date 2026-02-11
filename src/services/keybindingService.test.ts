@@ -276,6 +276,33 @@ describe('KeybindingService', () => {
       document.body.removeChild(input);
     });
 
+    it('allows settings.toggle even when focused in an input element', async () => {
+      const handler = vi.fn();
+      globalCommandRegistry.register({
+        id: 'settings.toggle',
+        title: 'Toggle Settings',
+        handler,
+      });
+
+      service.start();
+
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      const event = new KeyboardEvent('keydown', {
+        key: ',',
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      input.dispatchEvent(event);
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledTimes(1);
+      });
+      expect(event.defaultPrevented).toBe(true);
+      document.body.removeChild(input);
+    });
+
     it('handles command execution errors gracefully', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
