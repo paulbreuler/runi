@@ -103,12 +103,10 @@ export class KeybindingService {
     }
 
     // Don't intercept shortcuts when user is typing in an editable element
-    // EXCEPT for commandbar.toggle which is used to both open AND close the bar.
-    if (
-      commandId !== 'commandbar.toggle' &&
-      e.target instanceof Element &&
-      isEditableElement(e.target)
-    ) {
+    // EXCEPT for specific global commands like commandbar.toggle or settings.toggle.
+    const isGlobalExemption = commandId === 'commandbar.toggle' || commandId === 'settings.toggle';
+
+    if (!isGlobalExemption && e.target instanceof Element && isEditableElement(e.target)) {
       return;
     }
 

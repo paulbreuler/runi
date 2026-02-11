@@ -43,7 +43,7 @@ export function useLayoutCommands(): void {
       title: 'Toggle Command Bar',
       category: 'command',
       handler: (): void => {
-        // Emit event to toggle command bar (handled in MainLayout)
+        // Emit event to toggle command bar (handled in App.tsx)
         globalEventBus.emit('commandbar.toggle', {});
       },
     });
