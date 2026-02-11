@@ -164,6 +164,10 @@ runi/
 - Default to muted UI controls; only emphasize on hover or when critical
 - Format JSON with 2-space indentation in response views
 
+### MCP Accessibility
+
+Every UI action must be MCP-accessible — AI is a native co-driver. If a user can do it via UI, AI must be able to do it via MCP tool. Run `/impl-discipline` for the full checklist (discipline #7). See `.claude/skills/runi-architecture/SKILL.md` → "MCP-First Implementation" for the pattern.
+
 ### Component Pattern
 
 ```tsx
@@ -624,7 +628,7 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `.cla
 5. **Progressive disclosure:** Features reveal based on user behavior, not menus
 6. **MCP-powered:** Support MCP 2025-11-25 spec (async ops, elicitation)
 
-**Core Architectural Patterns:** See `.cursorrules` for detailed patterns including event-driven architecture, loose coupling, MCP integration, and layer-specific patterns (React/TypeScript frontend, Rust/Tauri backend).
+**Core Architectural Patterns:** See `.claude/skills/runi-architecture/SKILL.md` for detailed patterns including event-driven architecture, loose coupling, MCP integration, color/elevation layering, and layer-specific patterns (React/TypeScript frontend, Rust/Tauri backend).
 
 ---
 
@@ -709,3 +713,28 @@ Intelligence communicates through consistent visual signals:
 **Internal Docs:**
 
 - `docs/DECISIONS.md` — Historical architectural decisions
+
+---
+
+## Subagent Orchestration
+
+**Available subagents:** `tdd-implementer`, `code-reviewer`, `test-runner`, `plan-researcher`
+
+**Delegation patterns:**
+
+| Command                | Agent(s)                                                  | Mode                              |
+| ---------------------- | --------------------------------------------------------- | --------------------------------- |
+| `/run-agent`           | `tdd-implementer` → `test-runner`                         | Sequential: implement then verify |
+| `/code-review`         | `code-reviewer`                                           | Single agent, read-only           |
+| `/pr-check-fixes`      | `test-runner` (diagnose) → fix in main context            | Sequential                        |
+| `/create-feature-plan` | `plan-researcher` (gather context) → plan in main context | Sequential                        |
+| `/pr-create`           | `code-reviewer` + `test-runner`                           | Parallel: review + CI preview     |
+
+**Parallel safe:** `code-reviewer` + `test-runner` (independent read-only analysis)
+**Sequential required:** `plan-researcher` → planning, `tdd-implementer` → `test-runner`
+
+**Tool restrictions:**
+
+- `code-reviewer` and `plan-researcher` are **read-only** — cannot edit files
+- `test-runner` is **read-only** — diagnoses only, never edits
+- `tdd-implementer` has full edit access — the only agent that writes code

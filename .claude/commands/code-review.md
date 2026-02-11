@@ -158,7 +158,7 @@ code: "extractSections(doc.content).filter(s => s.title.includes('ComponentName'
 
 ### Architecture & Patterns
 
-**Cross-Cutting Patterns** (see `.cursorrules` for details):
+**Cross-Cutting Patterns** (see `runi-architecture` skill for details):
 
 - [ ] **Event-Driven**: Cross-component communication uses event bus, not direct calls
 - [ ] **Loose Coupling**: Components don't depend on specific layouts/positions
@@ -233,7 +233,7 @@ Structure your review like this:
   \`\`\`startLine:endLine:filepath
   // problematic code
   \`\`\`
-  **Fix:** [suggested fix - see .cursorrules for patterns]
+  **Fix:** [suggested fix - see runi-architecture skill for patterns]
 
 ### Quality Issues (Should Fix)
 
@@ -243,7 +243,7 @@ Structure your review like this:
 ### Architectural Improvements (Should Fix)
 
 - [Container/presentational separation, dependency injection, configuration-driven]
-  **Fix:** [suggested improvement - see .cursorrules for patterns]
+  **Fix:** [suggested improvement - see runi-architecture skill for patterns]
 
 ### Suggestions (Nice to Have)
 
@@ -356,7 +356,7 @@ Reviews all changes compared to main branch.
 ## Project Standards Reference
 
 - **CLAUDE.md** - Project conventions and standards
-- **.cursorrules** - Core architectural patterns (event-driven, loose coupling, MCP integration)
+- **`.claude/skills/runi-architecture/SKILL.md`** - Core architectural patterns (event-driven, loose coupling, MCP integration)
 - **justfile** - CI pipeline commands
 - **rustfmt.toml** - Rust formatting rules
 - **clippy.toml** - Rust linting rules
