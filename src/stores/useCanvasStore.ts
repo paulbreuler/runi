@@ -330,17 +330,23 @@ export const useCanvasStore = create<CanvasState>()(
           ...overrides,
         };
 
+        // Look up the 'request' template context to inherit panels, toolbar, and layouts
+        const templateContext = get().contexts.get('request');
+
         // Create a dynamic context descriptor for this request tab
         const descriptor: CanvasContextDescriptor = {
           id: contextId,
           label,
           icon: Send,
-          panels: {
-            request: (): null => null, // Will be replaced by actual panels
+          // Inherit panels from template, or use fallback
+          panels: templateContext?.panels ?? {
+            request: (): null => null,
             response: (): null => null,
           },
-          toolbar: undefined,
-          layouts: [], // Will use generic layouts
+          // Inherit toolbar from template
+          toolbar: templateContext?.toolbar,
+          // Inherit layouts from template, or use empty array
+          layouts: templateContext?.layouts ?? [],
           popoutEnabled: true,
           popoutDefaults: {
             width: 1200,

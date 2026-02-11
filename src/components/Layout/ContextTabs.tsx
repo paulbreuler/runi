@@ -5,7 +5,13 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, useReducedMotion, useTransform, type MotionValue } from 'motion/react';
+import {
+  motion,
+  useReducedMotion,
+  useTransform,
+  useMotionValue,
+  type MotionValue,
+} from 'motion/react';
 import { Tabs } from '@base-ui/react/tabs';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
@@ -19,7 +25,7 @@ interface ContextTabsProps {
 }
 
 // Approximate offset of title bar elements before tabs (Mac controls + drag handle + gaps)
-const TITLEBAR_LEFT_OFFSET_MAC = 98; // 8px padding + 58px controls + 8px gap + 16px drag + 8px gap
+const TITLEBAR_LEFT_OFFSET_MAC = 106; // 8px padding + 8px ml-2 + 58px controls + 8px gap + 16px drag + 8px gap
 const TITLEBAR_LEFT_OFFSET_OTHER = 32; // 8px padding + 16px drag + 8px gap
 
 /**
@@ -44,8 +50,13 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   // Calculate smooth margin offset to align tabs with canvas
   const isMac = isMacSync();
   const titleBarOffset = isMac ? TITLEBAR_LEFT_OFFSET_MAC : TITLEBAR_LEFT_OFFSET_OTHER;
-  const tabsMarginLeft = useTransform(sidebarWidth ?? null, (width) =>
-    width !== null ? Math.max(0, width - titleBarOffset) : 0
+
+  // Create a fallback MotionValue if sidebarWidth is undefined
+  const fallbackWidth = useMotionValue(0);
+  const effectiveWidth = sidebarWidth ?? fallbackWidth;
+
+  const tabsMarginLeft = useTransform(effectiveWidth, (width) =>
+    Math.max(0, width - titleBarOffset)
   );
 
   // Update scroll state
@@ -121,7 +132,7 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   return (
     <motion.div
       className="flex items-center gap-2 h-full min-w-0 flex-1"
-      style={sidebarWidth !== undefined ? { marginLeft: tabsMarginLeft } : undefined}
+      style={{ marginLeft: tabsMarginLeft }}
     >
       {/* Arrow buttons */}
       {hasOverflow && canScrollLeft && (

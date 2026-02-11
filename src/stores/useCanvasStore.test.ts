@@ -674,4 +674,142 @@ describe('useCanvasStore', () => {
       expect(persistedState?.response).toBeUndefined(); // Response should not be in partialized state
     });
   });
+
+  describe('openRequestTab - template inheritance', () => {
+    it('should inherit panels from registered "request" template context', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      // First register a template context with panels
+      const templatePanels = {
+        request: TestPanel,
+        response: TestPanel,
+      };
+      const templateContext: CanvasContextDescriptor = {
+        id: 'request',
+        label: 'Request Template',
+        icon: Square,
+        panels: templatePanels,
+        layouts: [],
+        popoutEnabled: false,
+        order: 0,
+      };
+
+      act(() => {
+        result.current.registerContext(templateContext);
+      });
+
+      // Now create a dynamic request tab
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab();
+      });
+
+      // Get the created context
+      const context = result.current.contexts.get(contextId);
+      expect(context).toBeDefined();
+      expect(context?.panels).toEqual(templatePanels);
+      expect(context?.panels.request).toBe(TestPanel);
+      expect(context?.panels.response).toBe(TestPanel);
+    });
+
+    it('should inherit layouts from registered "request" template context', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      // Register template with layouts
+      const templateLayouts = [
+        { id: 'default', label: 'Default', grid: 'single' },
+        { id: 'split', label: 'Split', grid: 'split' },
+      ];
+      const templateContext: CanvasContextDescriptor = {
+        id: 'request',
+        label: 'Request Template',
+        icon: Square,
+        panels: { request: TestPanel, response: TestPanel },
+        layouts: templateLayouts as CanvasContextDescriptor['layouts'],
+        popoutEnabled: false,
+        order: 0,
+      };
+
+      act(() => {
+        result.current.registerContext(templateContext);
+      });
+
+      // Create dynamic request tab
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab();
+      });
+
+      // Verify layouts inherited
+      const context = result.current.contexts.get(contextId);
+      expect(context).toBeDefined();
+      expect(context?.layouts).toEqual(templateLayouts);
+      expect(context?.layouts).toHaveLength(2);
+    });
+
+    it('should inherit toolbar from registered "request" template context', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      // Register template with toolbar
+      const templateContext: CanvasContextDescriptor = {
+        id: 'request',
+        label: 'Request Template',
+        icon: Square,
+        panels: { request: TestPanel },
+        toolbar: TestPanel,
+        layouts: [],
+        popoutEnabled: false,
+        order: 0,
+      };
+
+      act(() => {
+        result.current.registerContext(templateContext);
+      });
+
+      // Create dynamic request tab
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab();
+      });
+
+      // Verify toolbar inherited
+      const context = result.current.contexts.get(contextId);
+      expect(context).toBeDefined();
+      expect(context?.toolbar).toBe(TestPanel);
+    });
+
+    it('should use fallback panels when no "request" template is registered', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      // Create dynamic request tab without registering template
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab();
+      });
+
+      // Should have fallback null panels
+      const context = result.current.contexts.get(contextId);
+      expect(context).toBeDefined();
+      expect(context?.panels.request).toBeDefined();
+      expect(context?.panels.response).toBeDefined();
+      // Fallback panels should return null
+      expect(context?.panels.request()).toBeNull();
+      expect(context?.panels.response()).toBeNull();
+    });
+
+    it('should use empty layouts when no "request" template is registered', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      // Create dynamic request tab without registering template
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab();
+      });
+
+      // Should have empty layouts
+      const context = result.current.contexts.get(contextId);
+      expect(context).toBeDefined();
+      expect(context?.layouts).toEqual([]);
+    });
+  });
 });
