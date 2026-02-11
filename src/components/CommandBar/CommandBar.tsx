@@ -108,7 +108,7 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
     <AnimatePresence>
       {isOpen && (
         <div
-          className="absolute inset-0 z-80 flex items-start justify-center pt-[15vh]"
+          className="absolute inset-0 z-100 flex items-start justify-center pt-[15vh]"
           data-test-id="command-bar"
         >
           {/* Backdrop */}
@@ -126,7 +126,7 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
 
           {/* Command palette panel */}
           <motion.div
-            className="relative z-81 w-full max-w-[600px] mx-4"
+            className="relative z-101 w-full max-w-[600px] mx-4"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
@@ -178,6 +178,7 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         key={item.id}
                         value={item.value}
                         onSelect={() => {
+                          onClose();
                           handleTabSelect(item.id);
                         }}
                         className={cn(
@@ -222,6 +223,7 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         key={item.id}
                         value={item.value}
                         onSelect={() => {
+                          onClose();
                           handleCollectionSelect(item.collectionId, item.request);
                         }}
                         className={cn(
@@ -266,6 +268,7 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         key={item.id}
                         value={item.value}
                         onSelect={() => {
+                          onClose();
                           handleHistorySelect(item.entry);
                         }}
                         className={cn(
@@ -305,6 +308,7 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                       key={action.id}
                       value={action.label.toLowerCase()}
                       onSelect={() => {
+                        onClose();
                         handleActionSelect(action);
                       }}
                       className={cn(

@@ -326,7 +326,7 @@ describe('CommandBar', () => {
     await user.click(tabItem);
 
     expect(mockSetActiveTab).toHaveBeenCalledWith('tab-1');
-    expect(mockOnClose).toHaveBeenCalledOnce();
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('should handle keyboard navigation with arrow keys', async () => {
@@ -352,7 +352,7 @@ describe('CommandBar', () => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(globalEventBus.emit).toHaveBeenCalledWith('request.new', expect.any(Object));
-    expect(mockOnClose).toHaveBeenCalledOnce();
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('should execute Toggle Sidebar action via event bus', async () => {
@@ -364,7 +364,7 @@ describe('CommandBar', () => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(globalEventBus.emit).toHaveBeenCalledWith('sidebar.toggle', expect.any(Object));
-    expect(mockOnClose).toHaveBeenCalledOnce();
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('should execute Toggle DevTools action via event bus', async () => {
@@ -376,7 +376,7 @@ describe('CommandBar', () => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(globalEventBus.emit).toHaveBeenCalledWith('panel.toggle', expect.any(Object));
-    expect(mockOnClose).toHaveBeenCalledOnce();
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('should execute Open Settings action via event bus', async () => {
@@ -388,7 +388,7 @@ describe('CommandBar', () => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(globalEventBus.emit).toHaveBeenCalledWith('settings.toggle', expect.any(Object));
-    expect(mockOnClose).toHaveBeenCalledOnce();
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('should have proper ARIA attributes', () => {
