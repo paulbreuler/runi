@@ -249,6 +249,33 @@ describe('KeybindingService', () => {
       document.body.removeChild(div);
     });
 
+    it('allows commandbar.toggle even when focused in an input element', async () => {
+      const handler = vi.fn();
+      globalCommandRegistry.register({
+        id: 'commandbar.toggle',
+        title: 'Toggle Command Bar',
+        handler,
+      });
+
+      service.start();
+
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      const event = new KeyboardEvent('keydown', {
+        key: 'k',
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      input.dispatchEvent(event);
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledTimes(1);
+      });
+      expect(event.defaultPrevented).toBe(true);
+      document.body.removeChild(input);
+    });
+
     it('handles command execution errors gracefully', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
