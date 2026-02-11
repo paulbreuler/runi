@@ -20,12 +20,12 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
  * command registry. Call once in the root layout component.
  */
 export function useLayoutCommands(): void {
-  useEffect(() => {
+  useEffect((): (() => void) => {
     globalCommandRegistry.register({
       id: 'sidebar.toggle',
       title: 'Toggle Sidebar',
       category: 'view',
-      handler: () => {
+      handler: (): void => {
         useSettingsStore.getState().toggleSidebar();
       },
     });
@@ -34,7 +34,7 @@ export function useLayoutCommands(): void {
       id: 'panel.toggle',
       title: 'Toggle DevTools',
       category: 'view',
-      handler: () => {
+      handler: (): void => {
         const { isVisible, isCollapsed, setVisible, setCollapsed } = usePanelStore.getState();
 
         if (!isVisible) {

@@ -108,13 +108,13 @@ describe('useSettingsStore', () => {
     });
   });
 
-  describe('openItemsRatio', () => {
-    it('initializes with default ratio of 0.35', () => {
+  describe('openItemsRatio', (): void => {
+    it('initializes with default ratio of 0.35', (): void => {
       const { result } = renderHook(() => useSettingsStore());
       expect(result.current.openItemsRatio).toBe(0.35);
     });
 
-    it('sets ratio via setOpenItemsRatio', () => {
+    it('sets ratio via setOpenItemsRatio', (): void => {
       const { result } = renderHook(() => useSettingsStore());
 
       act(() => {
@@ -124,7 +124,7 @@ describe('useSettingsStore', () => {
       expect(result.current.openItemsRatio).toBe(0.5);
     });
 
-    it('clamps ratio to [0.1, 0.9] range', () => {
+    it('clamps ratio to [0.1, 0.9] range', (): void => {
       const { result } = renderHook(() => useSettingsStore());
 
       act(() => {

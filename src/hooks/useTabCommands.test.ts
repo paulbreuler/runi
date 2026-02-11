@@ -41,8 +41,8 @@ vi.mock('@/stores/useTabStore', () => ({
   ),
 }));
 
-describe('useTabCommands', () => {
-  beforeEach(() => {
+describe('useTabCommands', (): void => {
+  beforeEach((): void => {
     vi.clearAllMocks();
     // Clean the registry
     for (const cmd of globalCommandRegistry.getAll()) {
@@ -50,14 +50,14 @@ describe('useTabCommands', () => {
     }
   });
 
-  afterEach(() => {
+  afterEach((): void => {
     for (const cmd of globalCommandRegistry.getAll()) {
       globalCommandRegistry.unregister(cmd.id);
     }
   });
 
-  it('registers tab commands on mount', () => {
-    renderHook(() => {
+  it('registers tab commands on mount', (): void => {
+    renderHook((): void => {
       useTabCommands();
     });
 
@@ -67,8 +67,8 @@ describe('useTabCommands', () => {
     expect(globalCommandRegistry.has('tab.previous')).toBe(true);
   });
 
-  it('unregisters tab commands on unmount', () => {
-    const { unmount } = renderHook(() => {
+  it('unregisters tab commands on unmount', (): void => {
+    const { unmount } = renderHook((): void => {
       useTabCommands();
     });
     unmount();
@@ -79,32 +79,32 @@ describe('useTabCommands', () => {
     expect(globalCommandRegistry.has('tab.previous')).toBe(false);
   });
 
-  it('tab.new handler calls openTab', async () => {
-    renderHook(() => {
+  it('tab.new handler calls openTab', async (): Promise<void> => {
+    renderHook((): void => {
       useTabCommands();
     });
     await globalCommandRegistry.execute('tab.new');
     expect(mockOpenTab).toHaveBeenCalledTimes(1);
   });
 
-  it('tab.close handler calls closeTab with active tab ID', async () => {
-    renderHook(() => {
+  it('tab.close handler calls closeTab with active tab ID', async (): Promise<void> => {
+    renderHook((): void => {
       useTabCommands();
     });
     await globalCommandRegistry.execute('tab.close');
     expect(mockCloseTab).toHaveBeenCalledWith('tab-1');
   });
 
-  it('tab.next handler cycles to next tab', async () => {
-    renderHook(() => {
+  it('tab.next handler cycles to next tab', async (): Promise<void> => {
+    renderHook((): void => {
       useTabCommands();
     });
     await globalCommandRegistry.execute('tab.next');
     expect(mockSetActiveTab).toHaveBeenCalledWith('tab-2');
   });
 
-  it('tab.previous handler cycles to previous tab (wraps around)', async () => {
-    renderHook(() => {
+  it('tab.previous handler cycles to previous tab (wraps around)', async (): Promise<void> => {
+    renderHook((): void => {
       useTabCommands();
     });
     await globalCommandRegistry.execute('tab.previous');

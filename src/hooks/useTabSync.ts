@@ -32,7 +32,7 @@ export function useTabSync(): void {
   const isSyncingFromTab = useRef(false);
 
   // --- 1. Initialize default tab on mount ---
-  useEffect(() => {
+  useEffect((): void => {
     const state = useTabStore.getState();
     if (state.tabOrder.length === 0) {
       openTab();
@@ -54,7 +54,7 @@ export function useTabSync(): void {
   }, []);
 
   // --- 2. On active tab change: save outgoing, load incoming ---
-  useEffect(() => {
+  useEffect((): void => {
     const prevId = prevActiveTabIdRef.current;
 
     if (activeTabId === prevId) {
@@ -93,9 +93,9 @@ export function useTabSync(): void {
   }, [activeTabId]);
 
   // --- 3. Sync request store edits back to active tab ---
-  useEffect(() => {
+  useEffect((): (() => void) => {
     // Subscribe to request store changes (excluding response — handled separately)
-    const unsubscribe = useRequestStore.subscribe((state, prevState) => {
+    const unsubscribe = useRequestStore.subscribe((state, prevState): void => {
       if (isSyncingFromTab.current) {
         return;
       }
@@ -136,10 +136,10 @@ export function useTabSync(): void {
   }, []);
 
   // --- 4. Tab-aware event handlers ---
-  useEffect(() => {
+  useEffect((): (() => void) => {
     const unsubscribeHistory = globalEventBus.on<HistoryEntry>(
       'history.entry-selected',
-      (event) => {
+      (event): void => {
         const entry = event.payload;
         const source: TabSource = { type: 'history', historyEntryId: entry.id };
         const store = useTabStore.getState();
@@ -162,7 +162,7 @@ export function useTabSync(): void {
 
     const unsubscribeCollection = globalEventBus.on<CollectionRequestSelectedPayload>(
       'collection.request-selected',
-      (event) => {
+      (event): void => {
         const { collectionId, request } = event.payload;
         const source: TabSource = {
           type: 'collection',
