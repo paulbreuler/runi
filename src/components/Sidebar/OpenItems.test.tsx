@@ -148,6 +148,19 @@ describe('OpenItems', () => {
       expect(useTabStore.getState().activeTabId).toBe(id1);
     });
 
+    it('activates tab on Space key', async () => {
+      const [id1, _id2] = openTabs([
+        { url: 'https://one.com', label: 'First' },
+        { url: 'https://two.com', label: 'Second' },
+      ]);
+
+      render(<OpenItems />);
+      const item = screen.getByTestId(`open-items-tab-${id1}`);
+      item.focus();
+      await userEvent.keyboard(' ');
+      expect(useTabStore.getState().activeTabId).toBe(id1);
+    });
+
     it('closes tab on Delete key', async () => {
       const [id1] = openTabs([
         { url: 'https://one.com', label: 'First' },
@@ -293,6 +306,23 @@ describe('OpenItems', () => {
         'aria-label',
         'Close tab GET First'
       );
+    });
+
+    it('close button is keyboard focusable', async () => {
+      openTabs([
+        { url: 'https://one.com', label: 'First' },
+        { url: 'https://two.com', label: 'Second' },
+      ]);
+      render(<OpenItems />);
+
+      const closeButton = screen.getByTestId('open-items-close-test-uuid-001');
+
+      // Focus the close button via keyboard (it should not have tabIndex={-1})
+      closeButton.focus();
+      expect(closeButton).toHaveFocus();
+
+      // Verify it does not have tabIndex={-1} which would prevent keyboard focus
+      expect(closeButton).not.toHaveAttribute('tabIndex', '-1');
     });
   });
 });

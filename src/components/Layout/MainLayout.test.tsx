@@ -10,6 +10,11 @@ import { MainLayout } from './MainLayout';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { usePanelStore, DEFAULT_PANEL_SIZES } from '@/stores/usePanelStore';
 
+// Mock CommandBar to avoid store dependencies in MainLayout tests
+vi.mock('@/components/CommandBar/CommandBar', () => ({
+  CommandBar: (): null => null,
+}));
+
 // Mock Motion to avoid animation delays and strip motion-only props from DOM
 vi.mock('motion/react', async () => {
   const actual = await vi.importActual('motion/react');

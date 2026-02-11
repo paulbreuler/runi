@@ -19,6 +19,9 @@ import { MainLayout } from '@/components/Layout/MainLayout';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { useTabSync } from '@/hooks/useTabSync';
+import { ActionButtons } from '@/components/ActionBar/ActionButtons';
+import { useTabStore } from '@/stores/useTabStore';
+import { usePanelStore } from '@/stores/usePanelStore';
 
 const getStatusColorClass = (status: number): string => {
   if (status >= 200 && status < 300) {
@@ -50,7 +53,9 @@ export const HomePage = (): React.JSX.Element => {
     setLoading,
   } = useRequestStore();
 
-  const { addEntry, loadHistory } = useHistoryStore();
+  const { addEntry, loadHistory, entries } = useHistoryStore();
+  const { getActiveTab } = useTabStore();
+  const { toggleVisibility } = usePanelStore();
   const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
 
   const initialSidebarVisible =
@@ -212,9 +217,67 @@ export const HomePage = (): React.JSX.Element => {
     return 'Ready';
   };
 
+  // Action button handlers
+  const handleTest = (): void => {
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'info',
+      message: 'Test feature coming soon',
+    });
+  };
+
+  const handleCode = (): void => {
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'info',
+      message: 'Code generation coming soon',
+    });
+  };
+
+  const handleDocs = (): void => {
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'info',
+      message: 'API docs feature coming soon',
+    });
+  };
+
+  const handleSave = (): void => {
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'info',
+      message: 'Save to collection coming soon',
+    });
+  };
+
+  const handleHistory = (): void => {
+    toggleVisibility();
+  };
+
+  const handleEnv = (): void => {
+    globalEventBus.emit<ToastEventPayload>('toast.show', {
+      type: 'info',
+      message: 'Environment selector coming soon',
+    });
+  };
+
+  const activeTab = getActiveTab();
+  const historyCount = entries.length;
+
   return (
     <MainLayout
       initialSidebarVisible={initialSidebarVisible}
+      actionButtons={
+        <ActionButtons
+          onTest={handleTest}
+          onCode={handleCode}
+          onDocs={handleDocs}
+          onSave={handleSave}
+          onHistory={handleHistory}
+          onEnv={handleEnv}
+          hasResponse={response !== null}
+          hasUrl={localUrl.length > 0}
+          isDirty={activeTab?.isDirty ?? false}
+          historyCount={historyCount}
+          envName={undefined}
+        />
+      }
       headerContent={
         <UrlBar
           method={localMethod}

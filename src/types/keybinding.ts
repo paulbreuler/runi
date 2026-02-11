@@ -30,7 +30,8 @@ export type CommandId =
   | 'tab.next'
   | 'tab.previous'
   | 'sidebar.toggle'
-  | 'panel.toggle';
+  | 'panel.toggle'
+  | 'commandbar.toggle';
 
 /**
  * Platform discriminator for keybindings.
@@ -64,7 +65,7 @@ export interface CommandMeta {
   /** Human-readable title (e.g., "New Tab") */
   title: string;
   /** Category for grouping in palette/settings */
-  category: 'tabs' | 'view';
+  category: 'tabs' | 'view' | 'command';
   /** Optional longer description */
   description?: string;
 }

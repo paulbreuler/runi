@@ -38,6 +38,10 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { commandId: 'sidebar.toggle', key: 'b', modifier: 'ctrl', platform: 'other' },
   { commandId: 'panel.toggle', key: 'i', modifier: ['meta', 'shift'], platform: 'mac' },
   { commandId: 'panel.toggle', key: 'i', modifier: ['ctrl', 'shift'], platform: 'other' },
+
+  // --- Command ---
+  { commandId: 'commandbar.toggle', key: 'k', modifier: 'meta', platform: 'mac' },
+  { commandId: 'commandbar.toggle', key: 'k', modifier: 'ctrl', platform: 'other' },
 ];
 
 /**
@@ -51,4 +55,5 @@ export const COMMAND_METADATA: CommandMeta[] = [
   { id: 'tab.previous', title: 'Previous Tab', category: 'tabs' },
   { id: 'sidebar.toggle', title: 'Toggle Sidebar', category: 'view' },
   { id: 'panel.toggle', title: 'Toggle DevTools', category: 'view' },
+  { id: 'commandbar.toggle', title: 'Toggle Command Bar', category: 'command' },
 ];

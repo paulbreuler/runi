@@ -146,6 +146,44 @@ describe('useTabSync', () => {
       expect(activeTab?.url).toBe('https://synced.com');
     });
 
+    it('isDirty on collection tab edit', () => {
+      renderHook(() => {
+        useTabSync();
+      });
+
+      // Emit collection.request-selected to create a tab from a collection
+      act(() => {
+        globalEventBus.emit<CollectionRequestSelectedPayload>('collection.request-selected', {
+          collectionId: 'col-1',
+          request: {
+            id: 'req-1',
+            name: 'List Users',
+            seq: 1,
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: { is_manual: false },
+            intelligence: { ai_generated: false, verified: undefined },
+            tags: [],
+          },
+        });
+      });
+
+      const activeId = useTabStore.getState().activeTabId!;
+      const tabBeforeEdit = useTabStore.getState().tabs[activeId];
+      expect(tabBeforeEdit?.isDirty).toBe(false);
+
+      // Edit the tab via request store
+      act(() => {
+        useRequestStore.getState().setUrl('https://api.example.com/users/modified');
+      });
+
+      const tabAfterEdit = useTabStore.getState().tabs[activeId];
+      expect(tabAfterEdit?.isDirty).toBe(true);
+    });
+
     it('syncs response to active tab', () => {
       renderHook(() => {
         useTabSync();
