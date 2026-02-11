@@ -8,6 +8,7 @@ import { MainLayout } from '@/components/Layout/MainLayout';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { requestContextDescriptor } from '@/contexts/RequestContext';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useContextSync } from '@/hooks/useContextSync';
 
 export const HomePage = (): React.JSX.Element => {
   const { registerContext, setActiveContext } = useCanvasStore();
@@ -19,6 +20,9 @@ export const HomePage = (): React.JSX.Element => {
         (window as { __RUNI_E2E__?: { sidebarVisible?: boolean } }).__RUNI_E2E__?.sidebarVisible ===
           true)) ||
     collectionsEnabled;
+
+  // Wire up context sync (bidirectional sync between canvas contexts and request store)
+  useContextSync();
 
   useEffect(() => {
     // Register Request context on mount

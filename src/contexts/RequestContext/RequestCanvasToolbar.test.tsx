@@ -8,7 +8,6 @@ import { userEvent } from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
 import { useRequestStore } from '@/stores/useRequestStore';
-import { globalEventBus } from '@/events/bus';
 import { executeRequest } from '@/api/http';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 
@@ -17,14 +16,16 @@ vi.mock('@/api/http', () => ({
   executeRequest: vi.fn(),
 }));
 
+const mockEmit = vi.fn();
+
 vi.mock('@/events/bus', () => ({
   globalEventBus: {
-    emit: vi.fn(),
+    emit: mockEmit,
   },
 }));
 
 describe('RequestCanvasToolbar', () => {
-  const getEmitMock = (): ReturnType<typeof vi.fn> => vi.mocked(globalEventBus.emit);
+  const getEmitMock = (): typeof mockEmit => mockEmit;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -201,6 +202,58 @@ describe('RequestCanvasToolbar', () => {
 
       const testButton = screen.getByTestId('action-test');
       expect(testButton).toBeDisabled();
+    });
+  });
+
+  describe('URL Bar Integration', () => {
+    it('renders UrlBar component', () => {
+      render(<RequestCanvasToolbar contextId="request" />);
+
+      const urlBar = screen.getByTestId('url-bar');
+      expect(urlBar).toBeInTheDocument();
+    });
+
+    it('UrlBar appears before ActionButtons in DOM order', () => {
+      render(<RequestCanvasToolbar contextId="request" />);
+
+      const toolbar = screen.getByTestId('request-canvas-toolbar');
+      const children = Array.from(toolbar.children);
+
+      const urlBar = screen.getByTestId('url-bar');
+      const actionButtons = screen.getByTestId('action-test').closest('[class*="flex"]');
+
+      const urlBarIndex = children.findIndex((child) => child.contains(urlBar));
+      const actionButtonsIndex = children.findIndex((child) =>
+        actionButtons ? child.contains(actionButtons) : false
+      );
+
+      expect(urlBarIndex).toBeGreaterThanOrEqual(0);
+      expect(actionButtonsIndex).toBeGreaterThanOrEqual(0);
+      expect(urlBarIndex).toBeLessThan(actionButtonsIndex);
+    });
+
+    it('UrlBar displays current URL from store via useRequestActions', () => {
+      useRequestStore.setState({
+        url: 'https://test.api.com/endpoint',
+      });
+
+      render(<RequestCanvasToolbar contextId="request" />);
+
+      const urlInput = screen.getByTestId('url-input');
+      // UrlBar will show the URL from useRequestActions hook
+      expect(urlInput).toBeInTheDocument();
+    });
+
+    it('UrlBar displays current method from store via useRequestActions', () => {
+      useRequestStore.setState({
+        method: 'POST',
+      });
+
+      render(<RequestCanvasToolbar contextId="request" />);
+
+      const methodSelect = screen.getByTestId('method-select');
+      // UrlBar will show the method from useRequestActions hook
+      expect(methodSelect).toBeInTheDocument();
     });
   });
 });

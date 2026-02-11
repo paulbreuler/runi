@@ -35,7 +35,9 @@ export type CommandId =
   | 'commandbar.toggle'
   | 'canvas.layout.previous'
   | 'canvas.layout.next'
-  | 'canvas.context.request';
+  | 'canvas.context.request'
+  | 'canvas.context.next'
+  | 'canvas.context.previous';
 
 /**
  * Platform discriminator for keybindings.

@@ -8,18 +8,12 @@ import { KeybindingService } from '@/services/keybindingService';
 import { useTabCommands } from '@/hooks/useTabCommands';
 import { useLayoutCommands } from '@/hooks/useLayoutCommands';
 
-import {
-  motion,
-  AnimatePresence,
-  useTransform,
-  useReducedMotion,
-  useSpring,
-} from 'motion/react';
+import { motion, AnimatePresence, useTransform, useReducedMotion, useSpring } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { DockablePanel } from './DockablePanel';
 import { TitleBar } from './TitleBar';
-import { ContextBar } from './ContextBar';
+import { ContextToolbar } from './ContextToolbar';
 import { CanvasHost } from './CanvasHost';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { usePanelStore } from '@/stores/usePanelStore';
@@ -447,13 +441,13 @@ export const MainLayout = ({
     >
       <div className="shrink-0">
         <TitleBar
+          sidebarWidth={sidebarVisible ? sidebarWidthSpring : undefined}
           onSettingsClick={() => {
-            setIsSettingsOpen(true);
+            setIsSettingsOpen((prev) => !prev);
           }}
         >
           {headerContent}
         </TitleBar>
-        <ContextBar />
       </div>
       <div className="relative flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Settings overlay: contained between title bar and status bar */}
@@ -562,6 +556,9 @@ export const MainLayout = ({
         </AnimatePresence>
 
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden min-w-0">
+          {/* Context toolbar - renders toolbar for active context */}
+          <ContextToolbar />
+
           {/* Content area with panes and dockable panel */}
           <div
             className={cn(

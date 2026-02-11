@@ -15,7 +15,9 @@ export const CanvasPopout: FC = () => {
   const { contexts, setActiveContext, setPopout } = useCanvasStore();
 
   useEffect(() => {
-    if (contextId === null || contextId === undefined || contextId === '') return;
+    if (contextId === undefined) {
+      return;
+    }
 
     // Set active context for this popout
     setActiveContext(contextId);
@@ -23,7 +25,7 @@ export const CanvasPopout: FC = () => {
 
     // Restore state from URL params if provided
     const stateParam = searchParams.get('state');
-    if (stateParam !== null && stateParam !== undefined && stateParam !== '') {
+    if (stateParam !== null && stateParam !== '') {
       try {
         const state = JSON.parse(decodeURIComponent(stateParam)) as Record<string, unknown>;
         useCanvasStore.getState().setContextState(contextId, state);
@@ -48,7 +50,7 @@ export const CanvasPopout: FC = () => {
     };
   }, [contextId, searchParams, setActiveContext, setPopout]);
 
-  if (contextId === null || contextId === undefined || contextId === '') {
+  if (contextId === undefined) {
     return (
       <div className="h-screen flex items-center justify-center bg-bg-app text-text-secondary">
         Invalid popout context
@@ -58,7 +60,7 @@ export const CanvasPopout: FC = () => {
 
   const context = contexts.get(contextId);
 
-  if (context === null || context === undefined) {
+  if (context === undefined) {
     return (
       <div className="h-screen flex items-center justify-center bg-bg-app text-text-secondary">
         Context &quot;{contextId}&quot; not found
@@ -71,7 +73,7 @@ export const CanvasPopout: FC = () => {
   return (
     <div className="h-screen flex flex-col bg-bg-app">
       {/* Toolbar */}
-      {ToolbarComponent !== null && ToolbarComponent !== undefined && (
+      {ToolbarComponent !== undefined && (
         <div className="border-b border-border-default">
           <ToolbarComponent contextId={contextId} isPopout />
         </div>

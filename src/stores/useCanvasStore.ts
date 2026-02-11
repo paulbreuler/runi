@@ -7,7 +7,58 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CanvasContextDescriptor, CanvasContextId, CanvasLayout } from '@/types/canvas';
+import type {
+  CanvasContextDescriptor,
+  CanvasContextId,
+  CanvasLayout,
+  RequestTabState,
+  RequestTabSource,
+} from '@/types/canvas';
+import { GENERIC_LAYOUTS } from '@/components/Layout/layouts';
+import { Send } from 'lucide-react';
+
+/**
+ * Check if two RequestTabSource objects match
+ */
+function sourcesMatch(a: RequestTabSource, b: RequestTabSource): boolean {
+  if (a.type !== b.type) {
+    return false;
+  }
+  if (a.type === 'collection') {
+    return a.collectionId === b.collectionId && a.requestId === b.requestId;
+  }
+  // history
+  return a.historyEntryId === b.historyEntryId;
+}
+
+/**
+ * Derive a human-readable label from a URL or explicit name
+ */
+function deriveTabLabel(url: string, name?: string): string {
+  if (name !== undefined && name.length > 0) {
+    return name;
+  }
+
+  if (url.length === 0) {
+    return 'New Request';
+  }
+
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname;
+    // Use last meaningful path segment, or hostname if root
+    if (path === '/' || path === '') {
+      return parsed.hostname;
+    }
+    // Remove trailing slash and get last segment
+    const segments = path.replace(/\/$/, '').split('/').filter(Boolean);
+    const lastSegment = segments[segments.length - 1];
+    return lastSegment !== undefined ? `/${lastSegment}` : parsed.hostname;
+  } catch {
+    // Not a valid URL — return as-is (truncated)
+    return url.length > 30 ? `${url.slice(0, 30)}...` : url;
+  }
+}
 
 interface CanvasState {
   /** Currently active context ID */
@@ -53,11 +104,23 @@ interface CanvasState {
   /** Get state for a specific context */
   getContextState: (contextId: CanvasContextId) => Record<string, unknown>;
 
+  /** Update context state with partial patch */
+  updateContextState: (contextId: CanvasContextId, patch: Record<string, unknown>) => void;
+
   /** Set popout state for a context */
   setPopout: (contextId: CanvasContextId, isPopped: boolean) => void;
 
   /** Navigate back to previous context */
   goBack: () => void;
+
+  /** Open a new request tab context with optional initial state */
+  openRequestTab: (overrides?: Partial<RequestTabState> & { label?: string }) => string;
+
+  /** Close a context and activate adjacent one */
+  closeContext: (contextId: CanvasContextId) => void;
+
+  /** Find context by source (collection or history) */
+  findContextBySource: (source: RequestTabSource) => string | null;
 
   /** Reset store to initial state (for testing) */
   reset: () => void;
@@ -182,7 +245,11 @@ export const useCanvasStore = create<CanvasState>()(
         }
 
         // Find and return the full layout object
-        return context.layouts.find((layout) => layout.id === layoutId) ?? null;
+        return (
+          context.layouts.find((layout) => layout.id === layoutId) ??
+          GENERIC_LAYOUTS.find((layout) => layout.id === layoutId) ??
+          null
+        );
       },
 
       setContextState: (contextId, state): void => {
@@ -199,6 +266,18 @@ export const useCanvasStore = create<CanvasState>()(
 
       getContextState: (contextId): Record<string, unknown> => {
         return get().contextState.get(contextId) ?? {};
+      },
+
+      updateContextState: (contextId, patch): void => {
+        set((state) => {
+          const newContextState = new Map(state.contextState);
+          const existingState = newContextState.get(contextId) ?? {};
+          newContextState.set(contextId, { ...existingState, ...patch });
+
+          return {
+            contextState: newContextState,
+          };
+        });
       },
 
       setPopout: (contextId, isPopped): void => {
@@ -231,6 +310,121 @@ export const useCanvasStore = create<CanvasState>()(
         });
       },
 
+      openRequestTab: (overrides): string => {
+        const contextId: CanvasContextId = `request-${crypto.randomUUID()}`;
+        const url = overrides?.url ?? '';
+        const label = overrides?.label ?? deriveTabLabel(url);
+
+        // Create default request state
+        const defaultState: RequestTabState = {
+          method: 'GET',
+          url: '',
+          headers: {},
+          body: '',
+          isDirty: false,
+          createdAt: Date.now(),
+        };
+
+        const state: RequestTabState = {
+          ...defaultState,
+          ...overrides,
+        };
+
+        // Create a dynamic context descriptor for this request tab
+        const descriptor: CanvasContextDescriptor = {
+          id: contextId,
+          label,
+          icon: Send,
+          panels: {
+            request: (): null => null, // Will be replaced by actual panels
+            response: (): null => null,
+          },
+          toolbar: undefined,
+          layouts: [], // Will use generic layouts
+          popoutEnabled: true,
+          popoutDefaults: {
+            width: 1200,
+            height: 800,
+            title: `runi - ${label}`,
+          },
+          order: 999, // Request tabs come after static contexts
+          shortcutHint: undefined,
+        };
+
+        // Register the context and make it active
+        set((currentState) => {
+          const newContexts = new Map(currentState.contexts);
+          newContexts.set(descriptor.id, descriptor);
+
+          const newOrder = [...currentState.contextOrder];
+          if (!newOrder.includes(descriptor.id)) {
+            newOrder.push(descriptor.id);
+            newOrder.sort((a, b) => {
+              const orderA = newContexts.get(a)?.order ?? 999;
+              const orderB = newContexts.get(b)?.order ?? 999;
+              return orderA - orderB;
+            });
+          }
+
+          const newContextState = new Map(currentState.contextState);
+          newContextState.set(contextId, state as Record<string, unknown>);
+
+          return {
+            contexts: newContexts,
+            contextOrder: newOrder,
+            contextState: newContextState,
+            activeContextId: contextId, // Always set new tab as active
+          };
+        });
+
+        return contextId;
+      },
+
+      closeContext: (contextId): void => {
+        const { contextOrder, activeContextId, unregisterContext, setActiveContext } = get();
+
+        // Find the index of the context being closed
+        const closedIndex = contextOrder.indexOf(contextId);
+        if (closedIndex === -1) {
+          return;
+        }
+
+        // Determine which context to activate next
+        let newActiveId: CanvasContextId | null = activeContextId;
+        if (activeContextId === contextId) {
+          // Remove the context from the order to find adjacent contexts
+          const remainingOrder = contextOrder.filter((id) => id !== contextId);
+          if (remainingOrder.length > 0) {
+            // Prefer next context; fall back to previous
+            const newIndex = closedIndex < remainingOrder.length ? closedIndex : closedIndex - 1;
+            newActiveId = remainingOrder[Math.max(0, newIndex)] ?? null;
+          } else {
+            newActiveId = null;
+          }
+        }
+
+        // Unregister the context first
+        unregisterContext(contextId);
+
+        // Then activate the new context if needed
+        if (newActiveId !== null && newActiveId !== activeContextId) {
+          setActiveContext(newActiveId);
+        }
+      },
+
+      findContextBySource: (source): string | null => {
+        const { contextState } = get();
+
+        for (const [contextId, state] of contextState.entries()) {
+          const tabState = state as unknown as RequestTabState;
+          if (tabState.source !== undefined && sourcesMatch(tabState.source, source)) {
+            return contextId;
+          }
+        }
+
+        return null;
+      },
+
       reset: (): void => {
         set({
           activeContextId: null,
@@ -248,7 +442,14 @@ export const useCanvasStore = create<CanvasState>()(
       partialize: (state) => ({
         activeContextId: state.activeContextId,
         activeLayoutPerContext: Array.from(state.activeLayoutPerContext.entries()),
-        contextState: Array.from(state.contextState.entries()),
+        // Exclude response from persisted context state
+        contextState: Array.from(state.contextState.entries()).map(([id, stateData]) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { response, ...rest } = stateData as Record<string, unknown> & {
+            response?: unknown;
+          };
+          return [id, rest] as [CanvasContextId, Record<string, unknown>];
+        }),
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as {

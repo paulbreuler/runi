@@ -9,6 +9,8 @@ import type { LucideIcon } from 'lucide-react';
 
 /**
  * Canvas context identifier
+ * - Static contexts: 'request', 'blueprint', 'docs'
+ * - Dynamic request tabs: 'request-{uuid}'
  */
 export type CanvasContextId = 'request' | 'blueprint' | 'docs' | (string & {});
 
@@ -89,4 +91,42 @@ export interface CanvasToolbarProps {
   contextId: CanvasContextId;
   /** Whether toolbar is in popout window */
   isPopout?: boolean;
+}
+
+/**
+ * Request tab source - identifies where the request originated from
+ */
+export interface RequestTabSource {
+  type: 'collection' | 'history';
+  collectionId?: string;
+  requestId?: string;
+  historyEntryId?: string;
+}
+
+/**
+ * State for a request tab context
+ */
+export interface RequestTabState {
+  /** HTTP method */
+  method: string;
+  /** Request URL */
+  url: string;
+  /** Request headers */
+  headers: Record<string, string>;
+  /** Request body */
+  body: string;
+  /** Cached response (excluded from persistence) */
+  response?: {
+    status: number;
+    statusText: string;
+    headers: Record<string, string>;
+    body: string;
+    time: number;
+  } | null;
+  /** Whether the tab has unsaved changes */
+  isDirty?: boolean;
+  /** Origin of this tab's content */
+  source?: RequestTabSource;
+  /** Timestamp when the tab was created */
+  createdAt?: number;
 }

@@ -54,6 +54,8 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   // --- Canvas Contexts ---
   { commandId: 'canvas.context.request', key: '1', modifier: 'meta', platform: 'mac' },
   { commandId: 'canvas.context.request', key: '1', modifier: 'ctrl', platform: 'other' },
+  { commandId: 'canvas.context.next', key: ']', modifier: ['ctrl', 'shift'] },
+  { commandId: 'canvas.context.previous', key: '[', modifier: ['ctrl', 'shift'] },
 ];
 
 /**
@@ -72,4 +74,6 @@ export const COMMAND_METADATA: CommandMeta[] = [
   { id: 'canvas.layout.previous', title: 'Previous Layout', category: 'view' },
   { id: 'canvas.layout.next', title: 'Next Layout', category: 'view' },
   { id: 'canvas.context.request', title: 'Switch to Request Context', category: 'view' },
+  { id: 'canvas.context.next', title: 'Next Context', category: 'view' },
+  { id: 'canvas.context.previous', title: 'Previous Context', category: 'view' },
 ];

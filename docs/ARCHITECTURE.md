@@ -34,7 +34,7 @@ export const myContextDescriptor: CanvasContextDescriptor = {
 };
 ```
 
-2. Register on mount:
+1. Register on mount:
 
 ```typescript
 useEffect(() => {
@@ -43,7 +43,7 @@ useEffect(() => {
 }, []);
 ```
 
-3. Your context appears in the ContextBar automatically.
+1. Your context appears in the ContextBar automatically.
 
 ### Custom Layouts
 
@@ -63,7 +63,7 @@ layouts: [
       ratios: [40, 60],
     },
   },
-]
+];
 ```
 
 Generic layouts (Single, Side by Side, etc.) are always available.

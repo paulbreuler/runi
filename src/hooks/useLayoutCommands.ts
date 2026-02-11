@@ -116,6 +116,46 @@ export function useLayoutCommands(): void {
       },
     });
 
+    globalCommandRegistry.register({
+      id: 'canvas.context.next',
+      title: 'Next Context',
+      category: 'view',
+      handler: (): void => {
+        const { contextOrder, activeContextId, setActiveContext } = useCanvasStore.getState();
+        if (contextOrder.length === 0 || activeContextId === null) {
+          return;
+        }
+
+        const currentIndex = contextOrder.indexOf(activeContextId);
+        const nextIndex = (currentIndex + 1) % contextOrder.length;
+        const nextContextId = contextOrder[nextIndex];
+
+        if (nextContextId !== undefined) {
+          setActiveContext(nextContextId);
+        }
+      },
+    });
+
+    globalCommandRegistry.register({
+      id: 'canvas.context.previous',
+      title: 'Previous Context',
+      category: 'view',
+      handler: (): void => {
+        const { contextOrder, activeContextId, setActiveContext } = useCanvasStore.getState();
+        if (contextOrder.length === 0 || activeContextId === null) {
+          return;
+        }
+
+        const currentIndex = contextOrder.indexOf(activeContextId);
+        const previousIndex = (currentIndex - 1 + contextOrder.length) % contextOrder.length;
+        const previousContextId = contextOrder[previousIndex];
+
+        if (previousContextId !== undefined) {
+          setActiveContext(previousContextId);
+        }
+      },
+    });
+
     return (): void => {
       globalCommandRegistry.unregister('sidebar.toggle');
       globalCommandRegistry.unregister('panel.toggle');
@@ -124,6 +164,8 @@ export function useLayoutCommands(): void {
       globalCommandRegistry.unregister('canvas.layout.previous');
       globalCommandRegistry.unregister('canvas.layout.next');
       globalCommandRegistry.unregister('canvas.context.request');
+      globalCommandRegistry.unregister('canvas.context.next');
+      globalCommandRegistry.unregister('canvas.context.previous');
     };
   }, []);
 }

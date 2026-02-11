@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCanvasPopout } from './useCanvasPopout';
+import { useCanvasStore } from '@/stores/useCanvasStore';
 import type { CanvasContextDescriptor } from '@/types/canvas';
 import { Square } from 'lucide-react';
 import { globalEventBus } from '@/events/bus';
@@ -25,6 +26,7 @@ const mockWindow = {
   screenY: 0,
   outerWidth: 1920,
   outerHeight: 1080,
+  name: 'test-window',
 };
 
 // Test panel component
@@ -57,6 +59,15 @@ describe('useCanvasPopout', () => {
   };
 
   beforeEach(() => {
+    // Reset canvas store
+    useCanvasStore.setState({
+      contexts: new Map(),
+      activeContextId: null,
+    });
+
+    // Register test context
+    useCanvasStore.getState().registerContext(mockDescriptor);
+
     vi.stubGlobal(
       'open',
       vi.fn(() => mockWindow)
@@ -74,17 +85,17 @@ describe('useCanvasPopout', () => {
   });
 
   it('should return openPopout function and isSupported', () => {
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, {}));
+    const { result } = renderHook(() => useCanvasPopout());
 
     expect(result.current.openPopout).toBeInstanceOf(Function);
     expect(result.current.isSupported).toBe(true);
   });
 
   it('should open popout window with correct URL', () => {
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, {}));
+    const { result } = renderHook(() => useCanvasPopout());
 
     act(() => {
-      result.current.openPopout();
+      result.current.openPopout('test-context');
     });
 
     expect(window.open).toHaveBeenCalledWith(
@@ -100,10 +111,13 @@ describe('useCanvasPopout', () => {
       popoutDefaults: undefined,
     };
 
-    const { result } = renderHook(() => useCanvasPopout(descriptorWithoutDefaults, {}));
+    // Re-register with new descriptor
+    useCanvasStore.getState().registerContext(descriptorWithoutDefaults);
+
+    const { result } = renderHook(() => useCanvasPopout());
 
     act(() => {
-      result.current.openPopout();
+      result.current.openPopout('test-context');
     });
 
     expect(window.open).toHaveBeenCalledWith(
@@ -117,10 +131,10 @@ describe('useCanvasPopout', () => {
     const eventSpy = vi.fn();
     globalEventBus.on('canvas.popout-requested', eventSpy);
 
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, {}));
+    const { result } = renderHook(() => useCanvasPopout());
 
     act(() => {
-      result.current.openPopout();
+      result.current.openPopout('test-context');
     });
 
     expect(eventSpy).toHaveBeenCalledWith(
@@ -137,10 +151,10 @@ describe('useCanvasPopout', () => {
     const eventSpy = vi.fn();
     globalEventBus.on('canvas.popout-opened', eventSpy);
 
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, {}));
+    const { result } = renderHook(() => useCanvasPopout());
 
     act(() => {
-      result.current.openPopout();
+      result.current.openPopout('test-context');
     });
 
     expect(eventSpy).toHaveBeenCalledWith(
@@ -156,28 +170,16 @@ describe('useCanvasPopout', () => {
     globalEventBus.off('canvas.popout-opened', eventSpy);
   });
 
-  it('should pass current state to popout window', () => {
-    const state = { key: 'value' };
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, state));
-
-    act(() => {
-      result.current.openPopout();
-    });
-
-    // Window should be opened first
-    expect(window.open).toHaveBeenCalled();
-  });
-
   it('should handle window open failure', () => {
     vi.stubGlobal(
       'open',
       vi.fn(() => null)
     );
 
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, {}));
+    const { result } = renderHook(() => useCanvasPopout());
 
     act(() => {
-      result.current.openPopout();
+      result.current.openPopout('test-context');
     });
 
     // Should not throw, just fail silently
@@ -185,11 +187,11 @@ describe('useCanvasPopout', () => {
   });
 
   it('should prevent opening multiple popouts for same context', () => {
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, {}));
+    const { result } = renderHook(() => useCanvasPopout());
 
     act(() => {
-      result.current.openPopout();
-      result.current.openPopout();
+      result.current.openPopout('test-context');
+      result.current.openPopout('test-context');
     });
 
     // Should only open once
@@ -197,19 +199,50 @@ describe('useCanvasPopout', () => {
   });
 
   it('should allow reopening after window is closed', () => {
-    const { result } = renderHook(() => useCanvasPopout(mockDescriptor, {}));
+    const { result } = renderHook(() => useCanvasPopout());
 
     act(() => {
-      result.current.openPopout();
+      result.current.openPopout('test-context');
     });
 
     // Simulate window close
     mockWindow.closed = true;
 
     act(() => {
-      result.current.openPopout();
+      result.current.openPopout('test-context');
     });
 
     expect(window.open).toHaveBeenCalledTimes(2);
+  });
+
+  it('should focus existing window if already open', () => {
+    const { result } = renderHook(() => useCanvasPopout());
+
+    act(() => {
+      result.current.openPopout('test-context');
+    });
+
+    mockWindow.focus.mockClear();
+
+    act(() => {
+      result.current.openPopout('test-context');
+    });
+
+    expect(mockWindow.focus).toHaveBeenCalledTimes(1);
+    expect(window.open).toHaveBeenCalledTimes(1); // Should not open a new window
+  });
+
+  it('should handle unknown context ID gracefully', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { result } = renderHook(() => useCanvasPopout());
+
+    act(() => {
+      result.current.openPopout('unknown-context');
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Context "unknown-context" not found');
+    expect(window.open).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
   });
 });

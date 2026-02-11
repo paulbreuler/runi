@@ -15,15 +15,39 @@ vi.mock('@/components/CommandBar/CommandBar', () => ({
   CommandBar: (): null => null,
 }));
 
-// Mock ContextBar and CanvasHost - these are tested separately
-vi.mock('./ContextBar', () => ({
-  ContextBar: (): React.JSX.Element => <div data-test-id="context-bar">Context Bar</div>,
+// Mock ContextToolbar and CanvasHost - these are tested separately
+vi.mock('./ContextToolbar', () => ({
+  ContextToolbar: ({ className }: { className?: string }): React.JSX.Element => (
+    <div data-test-id="context-toolbar" className={className}>
+      Context Toolbar
+    </div>
+  ),
 }));
 
 vi.mock('./CanvasHost', () => ({
   CanvasHost: ({ className }: { className?: string }): React.JSX.Element => (
     <div data-test-id="canvas-host" className={className}>
       Canvas Host
+    </div>
+  ),
+}));
+
+// Mock SettingsPanel - tested separately
+vi.mock('@/components/Settings/SettingsPanel', () => ({
+  SettingsPanel: ({
+    isOpen,
+    onClose,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+  }): React.JSX.Element => (
+    <div data-test-id="settings-panel">
+      Settings Panel
+      {isOpen && (
+        <button onClick={onClose} data-test-id="close-settings">
+          Close
+        </button>
+      )}
     </div>
   ),
 }));
@@ -152,7 +176,7 @@ describe('MainLayout', () => {
     it('renders with context bar and canvas host', () => {
       render(<MainLayout />);
 
-      expect(screen.getByTestId('context-bar')).toBeInTheDocument();
+      expect(screen.getByTestId('context-toolbar')).toBeInTheDocument();
       expect(screen.getByTestId('canvas-host')).toBeInTheDocument();
     });
 
@@ -182,7 +206,7 @@ describe('MainLayout', () => {
   describe('Canvas Integration', () => {
     it('renders ContextBar', () => {
       render(<MainLayout />);
-      expect(screen.getByTestId('context-bar')).toBeInTheDocument();
+      expect(screen.getByTestId('context-toolbar')).toBeInTheDocument();
     });
 
     it('renders CanvasHost', () => {
@@ -198,7 +222,7 @@ describe('MainLayout', () => {
 
       // MainLayout should render without these props
       expect(screen.getByTestId('main-layout')).toBeInTheDocument();
-      expect(screen.getByTestId('context-bar')).toBeInTheDocument();
+      expect(screen.getByTestId('context-toolbar')).toBeInTheDocument();
       expect(screen.getByTestId('canvas-host')).toBeInTheDocument();
 
       // Old pane elements should not exist
@@ -573,6 +597,26 @@ describe('MainLayout', () => {
     });
   });
 
+  describe('Settings Toggle', () => {
+    it('toggles settings open/close on button click', () => {
+      render(<MainLayout />);
+
+      const titleBar = screen.getByTestId('titlebar');
+      const settingsButton = within(titleBar).getByTestId('titlebar-settings');
+
+      // Settings should start closed
+      expect(screen.queryByTestId('settings-overlay')).not.toBeInTheDocument();
+
+      // Click to open
+      fireEvent.click(settingsButton);
+      expect(screen.getByTestId('settings-overlay')).toBeInTheDocument();
+
+      // Click to close
+      fireEvent.click(settingsButton);
+      expect(screen.queryByTestId('settings-overlay')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Panel Position and Sidebar Interaction', () => {
     it('auto-collapses sidebar when left dock is active', () => {
       // Start with sidebar visible
@@ -619,6 +663,62 @@ describe('MainLayout', () => {
 
       // Sidebar should still be hidden
       expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ContextToolbar Positioning', () => {
+    it('renders ContextToolbar in canvas column (not in header)', () => {
+      render(<MainLayout />);
+
+      const contextToolbar = screen.getByTestId('context-toolbar');
+      const canvasHost = screen.getByTestId('canvas-host');
+      const contentArea = screen.getByTestId('content-area');
+
+      // ContextToolbar should be present
+      expect(contextToolbar).toBeInTheDocument();
+
+      // CanvasHost should be present
+      expect(canvasHost).toBeInTheDocument();
+
+      // CanvasHost should be within content area
+      expect(contentArea).toContainElement(canvasHost);
+
+      // ContextToolbar should be a sibling of content-area (both in canvas column)
+      const canvasColumn = contentArea.parentElement;
+      expect(canvasColumn).toContainElement(contextToolbar);
+      expect(canvasColumn).toContainElement(contentArea);
+    });
+
+    it('renders ContextToolbar above content-area in DOM order', () => {
+      render(<MainLayout />);
+
+      const contentArea = screen.getByTestId('content-area');
+      const contextToolbar = screen.getByTestId('context-toolbar');
+
+      // Get the canvas column (parent of both)
+      const canvasColumn = contentArea.parentElement;
+      expect(canvasColumn).not.toBeNull();
+
+      // Get direct children of canvas column
+      const children = Array.from(canvasColumn?.children ?? []);
+
+      // Find indices
+      const toolbarIndex = children.indexOf(contextToolbar);
+      const contentAreaIndex = children.indexOf(contentArea);
+
+      // ContextToolbar should come before content-area
+      expect(toolbarIndex).toBeGreaterThanOrEqual(0);
+      expect(contentAreaIndex).toBeGreaterThanOrEqual(0);
+      expect(toolbarIndex).toBeLessThan(contentAreaIndex);
+    });
+
+    it('does NOT render ContextToolbar in header area', () => {
+      render(<MainLayout />);
+
+      const titleBar = screen.getByTestId('titlebar');
+
+      // ContextToolbar should NOT be in titlebar
+      expect(within(titleBar).queryByTestId('context-toolbar')).not.toBeInTheDocument();
     });
   });
 });

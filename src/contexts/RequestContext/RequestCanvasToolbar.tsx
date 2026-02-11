@@ -6,10 +6,12 @@
 import type { FC } from 'react';
 import type { CanvasToolbarProps } from '@/types/canvas';
 import { ActionButtons } from '@/components/ActionBar/ActionButtons';
+import { UrlBar } from '@/components/UrlBar/UrlBar';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { useTabStore } from '@/stores/useTabStore';
 import { usePanelStore } from '@/stores/usePanelStore';
+import { useRequestActions } from '@/hooks/useRequestActions';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 /**
@@ -34,7 +36,11 @@ export const RequestCanvasToolbar: FC<CanvasToolbarProps> = ({
   const { getActiveTab } = useTabStore();
   const { entries } = useHistoryStore();
 
-  // Action handlers migrated from HomePage (exact same logic)
+  // Request actions from useRequestActions hook
+  const { handleSend, handleMethodChange, handleUrlChange, localUrl, localMethod, isLoading } =
+    useRequestActions();
+
+  // Secondary action handlers (test, code, docs, save, history, env)
 
   const handleTest = (): void => {
     globalEventBus.emit<ToastEventPayload>('toast.show', {
@@ -79,7 +85,15 @@ export const RequestCanvasToolbar: FC<CanvasToolbarProps> = ({
   const historyCount = entries.length;
 
   return (
-    <div className="flex items-center gap-2 px-4" data-test-id="request-canvas-toolbar">
+    <div className="flex items-center gap-2 flex-1 min-w-0" data-test-id="request-canvas-toolbar">
+      <UrlBar
+        method={localMethod}
+        url={localUrl}
+        loading={isLoading}
+        onMethodChange={handleMethodChange}
+        onUrlChange={handleUrlChange}
+        onSend={handleSend}
+      />
       <ActionButtons
         onTest={handleTest}
         onCode={handleCode}

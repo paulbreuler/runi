@@ -5,12 +5,12 @@
  */
 
 import { useRef, useCallback } from 'react';
-import type { CanvasContextDescriptor } from '@/types/canvas';
+import { useCanvasStore } from '@/stores/useCanvasStore';
 import { globalEventBus } from '@/events/bus';
 
 interface UseCanvasPopoutReturn {
-  /** Open the popout window */
-  openPopout: () => void;
+  /** Open the popout window for a given context ID */
+  openPopout: (contextId: string) => void;
   /** Whether popout windows are supported */
   isSupported: boolean;
 }
@@ -18,105 +18,95 @@ interface UseCanvasPopoutReturn {
 /**
  * Hook for managing canvas context popout windows.
  *
- * @param descriptor - The canvas context descriptor
- * @param currentState - Current state to pass to the popout window
  * @returns Popout control functions
  */
-export const useCanvasPopout = (
-  descriptor: CanvasContextDescriptor,
-  currentState: Record<string, unknown>
-): UseCanvasPopoutReturn => {
-  const popoutWindowRef = useRef<Window | null>(null);
-  const windowIdRef = useRef<string | null>(null);
+export const useCanvasPopout = (): UseCanvasPopoutReturn => {
+  const popoutWindowsRef = useRef<Map<string, Window>>(new Map());
+  const { contexts } = useCanvasStore();
 
-  // Check if popout is supported
+  // Check if popout is supported (Tauri webview context detection)
   const isSupported = typeof window !== 'undefined' && typeof window.open === 'function';
 
-  const openPopout = useCallback((): void => {
-    // Check if window already exists and is still open
-    if (popoutWindowRef.current !== null && !popoutWindowRef.current.closed) {
-      // Focus existing window
-      popoutWindowRef.current.focus();
-      return;
-    }
+  const openPopout = useCallback(
+    (contextId: string): void => {
+      // Check if window already exists and is still open
+      const existingWindow = popoutWindowsRef.current.get(contextId);
+      if (existingWindow !== undefined && !existingWindow.closed) {
+        // Focus existing window
+        existingWindow.focus();
+        return;
+      }
 
-    // Emit popout requested event
-    globalEventBus.emit('canvas.popout-requested', {
-      contextId: descriptor.id,
-    });
+      // Get context descriptor
+      const descriptor = contexts.get(contextId);
+      if (descriptor === undefined) {
+        console.error(`Context "${contextId}" not found`);
+        return;
+      }
 
-    // Get dimensions from descriptor or use defaults
-    const width = descriptor.popoutDefaults?.width ?? 1024;
-    const height = descriptor.popoutDefaults?.height ?? 768;
-    const title = descriptor.popoutDefaults?.title ?? descriptor.label;
-
-    // Calculate position to center the window
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    // Window features
-    const features = [
-      `width=${String(width)}`,
-      `height=${String(height)}`,
-      `left=${String(left)}`,
-      `top=${String(top)}`,
-      'menubar=no',
-      'toolbar=no',
-      'location=no',
-      'status=no',
-      'resizable=yes',
-      'scrollbars=yes',
-    ].join(',');
-
-    // Open the window
-    const popoutWindow = window.open(
-      `/canvas-popout/${descriptor.id}`,
-      `canvas-popout-${descriptor.id}`,
-      features
-    );
-
-    if (popoutWindow !== null) {
-      popoutWindowRef.current = popoutWindow;
-      windowIdRef.current = `canvas-popout-${descriptor.id}-${String(Date.now())}`;
-
-      // Set window title when document is ready
-      popoutWindow.document.title = title;
-
-      // Emit popout opened event
-      globalEventBus.emit('canvas.popout-opened', {
-        contextId: descriptor.id,
-        windowId: windowIdRef.current,
+      // Emit popout requested event
+      globalEventBus.emit('canvas.popout-requested', {
+        contextId,
       });
 
-      // Listen for window close
-      const checkClosed = setInterval(() => {
-        if (popoutWindow.closed) {
-          clearInterval(checkClosed);
-          const currentWindowId = windowIdRef.current;
-          if (currentWindowId !== null) {
+      // Get dimensions from descriptor or use defaults
+      const width = descriptor.popoutDefaults?.width ?? 1024;
+      const height = descriptor.popoutDefaults?.height ?? 768;
+      const title = descriptor.popoutDefaults?.title ?? descriptor.label;
+
+      // Calculate position to center the window
+      const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
+      const top = Math.round(window.screenY + (window.outerHeight - height) / 2);
+
+      // Window features
+      const features = [
+        `width=${width.toString()}`,
+        `height=${height.toString()}`,
+        `left=${left.toString()}`,
+        `top=${top.toString()}`,
+        'menubar=no',
+        'toolbar=no',
+        'location=no',
+        'status=no',
+        'resizable=yes',
+        'scrollbars=yes',
+      ].join(',');
+
+      // Open the window
+      const popoutWindow = window.open(
+        `/canvas-popout/${contextId}`,
+        `canvas-popout-${contextId}`,
+        features
+      );
+
+      if (popoutWindow !== null) {
+        popoutWindowsRef.current.set(contextId, popoutWindow);
+        const windowId = `canvas-popout-${contextId}-${String(Date.now())}`;
+
+        // Set window title when document is ready
+        popoutWindow.document.title = title;
+
+        // Emit popout opened event
+        globalEventBus.emit('canvas.popout-opened', {
+          contextId,
+          windowId,
+        });
+
+        // Listen for window close
+        const checkClosed = setInterval(() => {
+          if (popoutWindow.closed) {
+            clearInterval(checkClosed);
             globalEventBus.emit('canvas.popout-closed', {
-              contextId: descriptor.id,
-              windowId: currentWindowId,
+              contextId,
+              windowId,
             });
+            popoutWindowsRef.current.delete(contextId);
           }
-          popoutWindowRef.current = null;
-          windowIdRef.current = null;
-        }
-      }, 500);
-
-      // Pass current state to popout window when it loads
-      popoutWindow.addEventListener('load', () => {
-        popoutWindow.postMessage(
-          {
-            type: 'canvas-state',
-            contextId: descriptor.id,
-            state: currentState,
-          },
-          window.location.origin
-        );
-      });
-    }
-  }, [descriptor, currentState]);
+        }, 500);
+      }
+    },
+    [contexts]
+  );
 
   return {
     openPopout,

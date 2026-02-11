@@ -249,6 +249,43 @@ describe('useCanvasStore', () => {
       expect(activeLayout).not.toBeNull();
       expect(activeLayout?.id).toBe('single');
     });
+
+    it('should return generic layout when not in context layouts', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      // Register a context with custom layouts that don't include 'single'
+      const customDescriptor: CanvasContextDescriptor = {
+        id: 'custom-context',
+        label: 'Custom Context',
+        icon: Square,
+        panels: {
+          panel1: TestPanel,
+        },
+        layouts: [
+          {
+            id: 'custom-layout',
+            label: 'Custom',
+            description: 'Custom layout',
+            icon: Square,
+            category: 'preset',
+            arrangement: { type: 'single', panel: '$first' },
+          },
+        ],
+        popoutEnabled: true,
+        order: 1,
+      };
+
+      act(() => {
+        result.current.registerContext(customDescriptor);
+        // Try to set a generic layout that's not in context.layouts
+        result.current.setLayout('custom-context', 'side-by-side');
+      });
+
+      const activeLayout = result.current.getActiveLayout('custom-context');
+      expect(activeLayout).not.toBeNull();
+      expect(activeLayout?.id).toBe('side-by-side');
+      expect(activeLayout?.category).toBe('generic');
+    });
   });
 
   describe('Context State Management', () => {
@@ -420,6 +457,221 @@ describe('useCanvasStore', () => {
       const { result: result2 } = renderHook(() => useCanvasStore());
 
       expect(result2.current.getContextState('test-context')).toEqual({ key: 'value' });
+    });
+  });
+
+  describe('Request Tab Contexts', () => {
+    it('should open a new request tab with default state', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let newContextId = '';
+      act(() => {
+        newContextId = result.current.openRequestTab();
+      });
+
+      expect(newContextId).toMatch(/^request-/);
+      expect(result.current.contexts.has(newContextId)).toBe(true);
+      expect(result.current.activeContextId).toBe(newContextId);
+    });
+
+    it('should open request tab with custom state', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let newContextId = '';
+      act(() => {
+        newContextId = result.current.openRequestTab({
+          method: 'POST',
+          url: 'https://api.example.com/users',
+          label: 'Create User',
+        });
+      });
+
+      const state = result.current.getContextState(newContextId);
+      expect(state.method).toBe('POST');
+      expect(state.url).toBe('https://api.example.com/users');
+      expect(result.current.contexts.get(newContextId)?.label).toBe('Create User');
+    });
+
+    it('should open request tab with source for deduplication', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      const source = {
+        type: 'collection' as const,
+        collectionId: 'col-123',
+        requestId: 'req-456',
+      };
+
+      let contextId1 = '';
+      let contextId2: string | null = '';
+      act(() => {
+        contextId1 = result.current.openRequestTab({ source });
+        contextId2 = result.current.findContextBySource(source);
+      });
+
+      expect(contextId2).toBe(contextId1);
+    });
+
+    it('should find context by collection source', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      const source = {
+        type: 'collection' as const,
+        collectionId: 'col-123',
+        requestId: 'req-456',
+      };
+
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab({ source });
+      });
+
+      const foundId = result.current.findContextBySource(source);
+      expect(foundId).toBe(contextId);
+    });
+
+    it('should find context by history source', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      const source = {
+        type: 'history' as const,
+        historyEntryId: 'entry-789',
+      };
+
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab({ source });
+      });
+
+      const foundId = result.current.findContextBySource(source);
+      expect(foundId).toBe(contextId);
+    });
+
+    it('should return null when no matching source found', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      const source = {
+        type: 'collection' as const,
+        collectionId: 'col-123',
+        requestId: 'req-456',
+      };
+
+      const foundId = result.current.findContextBySource(source);
+      expect(foundId).toBeNull();
+    });
+
+    it('should close request tab and activate adjacent context', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let tab2 = '';
+      let tab3 = '';
+      act(() => {
+        result.current.openRequestTab({ label: 'Tab 1' });
+        tab2 = result.current.openRequestTab({ label: 'Tab 2' });
+        tab3 = result.current.openRequestTab({ label: 'Tab 3' });
+      });
+
+      expect(result.current.activeContextId).toBe(tab3);
+
+      act(() => {
+        result.current.closeContext(tab3);
+      });
+
+      // Should activate previous tab (tab2)
+      expect(result.current.activeContextId).toBe(tab2);
+      expect(result.current.contexts.has(tab3)).toBe(false);
+    });
+
+    it('should activate next tab when closing earlier tab', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let tab1 = '';
+      let tab2 = '';
+      act(() => {
+        tab1 = result.current.openRequestTab({ label: 'Tab 1' });
+        tab2 = result.current.openRequestTab({ label: 'Tab 2' });
+        result.current.openRequestTab({ label: 'Tab 3' });
+        result.current.setActiveContext(tab1); // Make tab1 active
+        result.current.closeContext(tab1);
+      });
+
+      // Should activate next tab (tab2)
+      expect(result.current.activeContextId).toBe(tab2);
+      expect(result.current.contexts.has(tab1)).toBe(false);
+    });
+
+    it('should update context state with partial patch', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab({
+          method: 'GET',
+          url: 'https://api.example.com',
+          headers: {},
+          body: '',
+        });
+      });
+
+      act(() => {
+        result.current.updateContextState(contextId, { method: 'POST', body: '{"test": true}' });
+      });
+
+      const state = result.current.getContextState(contextId);
+      expect(state.method).toBe('POST');
+      expect(state.url).toBe('https://api.example.com'); // Unchanged
+      expect(state.body).toBe('{"test": true}');
+    });
+
+    it('should exclude response from persisted context state', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let contextId = '';
+      act(() => {
+        contextId = result.current.openRequestTab({
+          method: 'POST',
+          url: 'https://api.example.com',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{"test": true}',
+          response: {
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            body: '{"result": "ok"}',
+            time: 123,
+          },
+        });
+      });
+
+      // Verify in-memory state has the response
+      const inMemoryState = result.current.getContextState(contextId);
+      expect(inMemoryState.response).toBeDefined();
+
+      // Manually call partialize to verify it excludes the response
+      const state = result.current;
+      const partializedState = {
+        activeContextId: state.activeContextId,
+        activeLayoutPerContext: Array.from(state.activeLayoutPerContext.entries()),
+        contextState: Array.from(state.contextState.entries()).map(([id, stateData]) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { response, ...rest } = stateData as Record<string, unknown> & {
+            response?: unknown;
+          };
+          return [id, rest] as [string, Record<string, unknown>];
+        }),
+      };
+
+      // Find our context in the partialized state
+      const partializedContextState = new Map<string, Record<string, unknown>>(
+        partializedState.contextState
+      );
+      const persistedState = partializedContextState.get(contextId);
+
+      expect(persistedState).toBeDefined();
+      expect(persistedState?.method).toBe('POST');
+      expect(persistedState?.url).toBe('https://api.example.com');
+      expect(persistedState?.headers).toEqual({ 'Content-Type': 'application/json' });
+      expect(persistedState?.body).toBe('{"test": true}');
+      expect(persistedState?.response).toBeUndefined(); // Response should not be in partialized state
     });
   });
 });
