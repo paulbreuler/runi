@@ -44,6 +44,16 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { commandId: 'commandbar.toggle', key: 'k', modifier: 'ctrl', platform: 'other' },
   { commandId: 'settings.toggle', key: ',', modifier: 'meta', platform: 'mac' },
   { commandId: 'settings.toggle', key: ',', modifier: 'ctrl', platform: 'other' },
+
+  // --- Canvas Layouts ---
+  { commandId: 'canvas.layout.previous', key: '[', modifier: 'meta', platform: 'mac' },
+  { commandId: 'canvas.layout.previous', key: '[', modifier: 'ctrl', platform: 'other' },
+  { commandId: 'canvas.layout.next', key: ']', modifier: 'meta', platform: 'mac' },
+  { commandId: 'canvas.layout.next', key: ']', modifier: 'ctrl', platform: 'other' },
+
+  // --- Canvas Contexts ---
+  { commandId: 'canvas.context.request', key: '1', modifier: 'meta', platform: 'mac' },
+  { commandId: 'canvas.context.request', key: '1', modifier: 'ctrl', platform: 'other' },
 ];
 
 /**
@@ -59,4 +69,7 @@ export const COMMAND_METADATA: CommandMeta[] = [
   { id: 'panel.toggle', title: 'Toggle DevTools', category: 'view' },
   { id: 'settings.toggle', title: 'Toggle Settings', category: 'view' },
   { id: 'commandbar.toggle', title: 'Toggle Command Bar', category: 'command' },
+  { id: 'canvas.layout.previous', title: 'Previous Layout', category: 'view' },
+  { id: 'canvas.layout.next', title: 'Next Layout', category: 'view' },
+  { id: 'canvas.context.request', title: 'Switch to Request Context', category: 'view' },
 ];

@@ -13,6 +13,8 @@
 import { useEffect } from 'react';
 import { globalCommandRegistry } from '@/commands/registry';
 import { globalEventBus } from '@/events/bus';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { GENERIC_LAYOUTS } from '@/components/Layout/layouts';
 
 /**
  * Registers layout commands (sidebar.toggle, panel.toggle, commandbar.toggle) into the global
@@ -57,11 +59,71 @@ export function useLayoutCommands(): void {
       },
     });
 
+    globalCommandRegistry.register({
+      id: 'canvas.layout.previous',
+      title: 'Previous Layout',
+      category: 'view',
+      handler: (): void => {
+        const { activeContextId, getActiveLayout, setLayout, contexts } = useCanvasStore.getState();
+        if (activeContextId === null) {
+          return;
+        }
+
+        const context = contexts.get(activeContextId);
+        if (context === undefined) {
+          return;
+        }
+
+        const allLayouts = [...context.layouts, ...GENERIC_LAYOUTS];
+        const activeLayout = getActiveLayout();
+        const currentIndex = allLayouts.findIndex((l) => l.id === activeLayout?.id);
+        const nextIndex = (currentIndex - 1 + allLayouts.length) % allLayouts.length;
+
+        setLayout(allLayouts[nextIndex].id);
+      },
+    });
+
+    globalCommandRegistry.register({
+      id: 'canvas.layout.next',
+      title: 'Next Layout',
+      category: 'view',
+      handler: (): void => {
+        const { activeContextId, getActiveLayout, setLayout, contexts } = useCanvasStore.getState();
+        if (activeContextId === null) {
+          return;
+        }
+
+        const context = contexts.get(activeContextId);
+        if (context === undefined) {
+          return;
+        }
+
+        const allLayouts = [...context.layouts, ...GENERIC_LAYOUTS];
+        const activeLayout = getActiveLayout();
+        const currentIndex = allLayouts.findIndex((l) => l.id === activeLayout?.id);
+        const nextIndex = (currentIndex + 1) % allLayouts.length;
+
+        setLayout(allLayouts[nextIndex].id);
+      },
+    });
+
+    globalCommandRegistry.register({
+      id: 'canvas.context.request',
+      title: 'Switch to Request Context',
+      category: 'view',
+      handler: (): void => {
+        useCanvasStore.getState().setActiveContext('request');
+      },
+    });
+
     return (): void => {
       globalCommandRegistry.unregister('sidebar.toggle');
       globalCommandRegistry.unregister('panel.toggle');
       globalCommandRegistry.unregister('commandbar.toggle');
       globalCommandRegistry.unregister('settings.toggle');
+      globalCommandRegistry.unregister('canvas.layout.previous');
+      globalCommandRegistry.unregister('canvas.layout.next');
+      globalCommandRegistry.unregister('canvas.context.request');
     };
   }, []);
 }

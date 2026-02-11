@@ -11,8 +11,6 @@ import { useLayoutCommands } from '@/hooks/useLayoutCommands';
 import {
   motion,
   AnimatePresence,
-  LayoutGroup,
-  useMotionValue,
   useTransform,
   useReducedMotion,
   useSpring,
@@ -21,6 +19,8 @@ import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { DockablePanel } from './DockablePanel';
 import { TitleBar } from './TitleBar';
+import { ContextBar } from './ContextBar';
+import { CanvasHost } from './CanvasHost';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -41,16 +41,8 @@ import { useTabStore } from '@/stores/useTabStore';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
-  requestContent?: React.ReactNode;
-  responseContent?: React.ReactNode;
   initialSidebarVisible?: boolean;
-  /** Optional action buttons to display in the title bar */
-  actionButtons?: React.ReactNode;
 }
-
-const MIN_PANE_SIZE = 20;
-const MAX_PANE_SIZE = 80;
-const DEFAULT_SPLIT = 50;
 
 const MIN_SIDEBAR_WIDTH = 260;
 const MAX_SIDEBAR_WIDTH = 600;
@@ -79,20 +71,6 @@ const sidebarSpring = {
   mass: 0.8,
 };
 
-const layoutTransition = {
-  layout: {
-    type: 'spring' as const,
-    stiffness: 400,
-    damping: 35,
-  },
-};
-
-const immediateTransition = {
-  layout: {
-    duration: 0,
-  },
-};
-
 /**
  * Sash classes - minimal, grounded resize handle styling
  */
@@ -108,21 +86,14 @@ const getSashClasses = (position: 'left' | 'right', isDragging: boolean): string
 
 export const MainLayout = ({
   headerContent,
-  requestContent,
-  responseContent,
   initialSidebarVisible = true, // Default to visible now that collections are supported
-  actionButtons,
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, sidebarEdge, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const { position: panelPosition, isVisible: panelVisible, setVisible } = usePanelStore();
   const { isCompact } = useResponsive();
   const prefersReducedMotion = useReducedMotion() === true;
 
-  // Pane state
-  const [requestPaneSize, setRequestPaneSize] = useState(DEFAULT_SPLIT);
-  const [isPaneDragging, setIsPaneDragging] = useState(false);
   const layoutRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Panel tab state
   const [activeTab, setActiveTab] = useState<PanelTabType>('network');
@@ -232,30 +203,6 @@ export const MainLayout = ({
     }
   }, [panelPosition, panelVisible, sidebarVisible, setSidebarVisible]);
 
-  // Pane split ratio as MotionValue (0-1)
-  const splitRatio = useMotionValue(DEFAULT_SPLIT / 100);
-
-  useEffect((): void => {
-    if (!isPaneDragging) {
-      splitRatio.set(requestPaneSize / 100);
-    }
-  }, [requestPaneSize, splitRatio, isPaneDragging]);
-
-  const requestWidth = useTransform(splitRatio, (ratio) => {
-    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
-    return `${String(clamped)}%`;
-  });
-
-  const responseWidth = useTransform(splitRatio, (ratio) => {
-    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
-    return `${String(100 - clamped)}%`;
-  });
-
-  const resizerLeft = useTransform(splitRatio, (ratio) => {
-    const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, ratio * 100));
-    return `${String(clamped)}%`;
-  });
-
   // Sidebar width with spring animation - like turning a page
   const targetSidebarWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
   const sidebarWidthSpring = useSpring(
@@ -279,10 +226,9 @@ export const MainLayout = ({
     [0, 0, 0.45, 1]
   );
 
-  // Prevent text selection during any drag
+  // Prevent text selection during sidebar drag
   useEffect((): (() => void) => {
-    const isAnyDragging = isPaneDragging || isSidebarDragging;
-    if (isAnyDragging) {
+    if (isSidebarDragging) {
       document.body.style.userSelect = 'none';
       document.body.style.cursor = 'col-resize';
     } else {
@@ -293,7 +239,7 @@ export const MainLayout = ({
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isPaneDragging, isSidebarDragging]);
+  }, [isSidebarDragging]);
 
   const getLayoutBounds = useCallback((): LayoutBounds => {
     if (layoutRef.current !== null) {
@@ -336,50 +282,6 @@ export const MainLayout = ({
   );
 
   // Pane resizer handlers
-  const handlePanePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setIsPaneDragging(true);
-  }, []);
-
-  const handlePanePointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPaneDragging) {
-        return;
-      }
-
-      if (containerRef.current !== null) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const relativeX = e.clientX - rect.left;
-        const newRatio = relativeX / rect.width;
-
-        const minRatio = MIN_PANE_SIZE / 100;
-        const maxRatio = MAX_PANE_SIZE / 100;
-        const clamped = Math.max(minRatio, Math.min(maxRatio, newRatio));
-
-        splitRatio.set(clamped);
-      }
-    },
-    [isPaneDragging, splitRatio]
-  );
-
-  const handlePanePointerUp = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPaneDragging) {
-        return;
-      }
-
-      e.currentTarget.releasePointerCapture(e.pointerId);
-
-      const finalRatio = splitRatio.get();
-      const finalPercent = finalRatio * 100;
-      const clamped = Math.max(MIN_PANE_SIZE, Math.min(MAX_PANE_SIZE, finalPercent));
-      setRequestPaneSize(clamped);
-      setIsPaneDragging(false);
-    },
-    [isPaneDragging, splitRatio]
-  );
-
   // Sidebar resizer handlers - works both expanded and collapsed
   // Uses refs for synchronous state in pointer handlers (React state updates are async)
   const handleSidebarPointerDown = useCallback(
@@ -548,10 +450,10 @@ export const MainLayout = ({
           onSettingsClick={() => {
             setIsSettingsOpen(true);
           }}
-          actionButtons={actionButtons}
         >
           {headerContent}
         </TitleBar>
+        <ContextBar />
       </div>
       <div className="relative flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Settings overlay: contained between title bar and status bar */}
@@ -697,78 +599,7 @@ export const MainLayout = ({
               </DockablePanel>
             )}
 
-            <LayoutGroup>
-              <motion.div
-                ref={containerRef}
-                className="flex-1 min-h-0 overflow-hidden flex relative min-w-0"
-                data-test-id="pane-container"
-                style={{ scrollbarGutter: 'stable' }}
-                layout
-                transition={prefersReducedMotion ? { duration: 0 } : layoutTransition}
-              >
-                <motion.div
-                  layout={!isPaneDragging}
-                  className="h-full overflow-hidden shrink-0 border-r border-border-default"
-                  data-test-id="request-pane"
-                  style={{
-                    width: requestWidth,
-                    scrollbarGutter: 'stable',
-                  }}
-                  transition={
-                    isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
-                  }
-                >
-                  {requestContent !== undefined ? (
-                    requestContent
-                  ) : (
-                    <div className="h-full p-4 text-text-secondary flex items-center justify-center">
-                      Request Builder (placeholder - will be built in Run 2B)
-                    </div>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  layout={!isPaneDragging}
-                  className="h-full overflow-hidden flex-1"
-                  data-test-id="response-pane"
-                  style={{
-                    width: responseWidth,
-                    scrollbarGutter: 'stable',
-                  }}
-                  transition={
-                    isPaneDragging || prefersReducedMotion ? immediateTransition : layoutTransition
-                  }
-                >
-                  {responseContent !== undefined ? (
-                    responseContent
-                  ) : (
-                    <div className="h-full p-4 text-text-secondary flex items-center justify-center">
-                      Response Viewer (placeholder - will be built in Run 2C)
-                    </div>
-                  )}
-                </motion.div>
-
-                {/* Pane sash */}
-                <motion.div
-                  className={getSashClasses('left', isPaneDragging)}
-                  data-test-id="pane-resizer"
-                  style={{
-                    left: resizerLeft,
-                    transform: 'translateX(-50%)',
-                  }}
-                  onPointerDown={handlePanePointerDown}
-                  onPointerMove={handlePanePointerMove}
-                  onPointerUp={handlePanePointerUp}
-                  onPointerCancel={handlePanePointerUp}
-                  role="separator"
-                  aria-label="Resize panes"
-                  aria-orientation="vertical"
-                  aria-valuenow={requestPaneSize}
-                  aria-valuemin={MIN_PANE_SIZE}
-                  aria-valuemax={MAX_PANE_SIZE}
-                />
-              </motion.div>
-            </LayoutGroup>
+            <CanvasHost className="flex-1" />
 
             {/* Right dock panel */}
             {panelPosition === 'right' && (

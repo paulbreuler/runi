@@ -333,45 +333,6 @@ test.describe('Layout Resizing', () => {
     });
   });
 
-  test.describe('Scrollbar Stability', () => {
-    test('scrollbars do not flash during resize', async ({ page }) => {
-      // Add scrollable content
-      await page.evaluate(() => {
-        const requestPane = document.querySelector('[data-test-id="request-pane"]');
-        if (requestPane) {
-          requestPane.innerHTML = `
-            <div style="height: 2000px; padding: 20px;">
-              <h2>Scrollable Content</h2>
-              ${Array.from({ length: 50 }, (_, i) => `<p>Item ${i + 1}</p>`).join('')}
-            </div>
-          `;
-        }
-      });
-
-      const resizer = page.getByTestId('pane-resizer');
-      const resizerBox = await resizer.boundingBox();
-      expect(resizerBox).not.toBeNull();
-
-      // Start dragging
-      await page.mouse.move(
-        resizerBox!.x + resizerBox!.width / 2,
-        resizerBox!.y + resizerBox!.height / 2
-      );
-      await page.mouse.down();
-
-      // Check scrollbar-gutter during drag
-      const requestPane = page.getByTestId('request-pane');
-      const scrollbarGutter = await requestPane.evaluate((el) => {
-        return window.getComputedStyle(el).scrollbarGutter;
-      });
-
-      // Should have stable scrollbar gutter
-      expect(scrollbarGutter).toBe('stable');
-
-      await page.mouse.up();
-    });
-  });
-
   test.describe('Performance', () => {
     test('resize operations are smooth and responsive', async ({ page }) => {
       const resizer = page.getByTestId('pane-resizer');

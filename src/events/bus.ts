@@ -47,7 +47,12 @@ export type EventType =
   | 'request.accept-ai'
   | 'toast.show'
   | 'settings.toggle'
-  | 'commandbar.toggle';
+  | 'commandbar.toggle'
+  | 'canvas.context-changed'
+  | 'canvas.layout-changed'
+  | 'canvas.popout-requested'
+  | 'canvas.popout-opened'
+  | 'canvas.popout-closed';
 
 /**
  * Payload for collection.request-selected event.
@@ -55,6 +60,45 @@ export type EventType =
 export interface CollectionRequestSelectedPayload {
   collectionId: string;
   request: CollectionRequest;
+}
+
+/**
+ * Payload for canvas.context-changed event.
+ */
+export interface CanvasContextChangedPayload {
+  contextId: string;
+  previousContextId: string | null;
+}
+
+/**
+ * Payload for canvas.layout-changed event.
+ */
+export interface CanvasLayoutChangedPayload {
+  contextId: string;
+  layoutId: string;
+}
+
+/**
+ * Payload for canvas.popout-requested event.
+ */
+export interface CanvasPopoutRequestedPayload {
+  contextId: string;
+}
+
+/**
+ * Payload for canvas.popout-opened event.
+ */
+export interface CanvasPopoutOpenedPayload {
+  contextId: string;
+  windowId: string;
+}
+
+/**
+ * Payload for canvas.popout-closed event.
+ */
+export interface CanvasPopoutClosedPayload {
+  contextId: string;
+  windowId: string;
 }
 
 /**

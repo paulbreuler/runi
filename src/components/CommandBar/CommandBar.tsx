@@ -18,6 +18,8 @@ import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
 import { COMMAND_BAR_Z_INDEX } from '@/utils/z-index';
 import { focusRingClasses } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useListNavigation } from '@/hooks/useListNavigation';
 import type { CommandAction } from './commands';
 import { COMMAND_ACTIONS, executeAction } from './commands';
 
@@ -33,11 +35,22 @@ interface CommandBarProps {
  * Provides global search across collections, open tabs, and history, plus quick actions.
  */
 export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactElement => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const tabs = useTabStore((state) => state.tabs);
   const setActiveTab = useTabStore((state) => state.setActiveTab);
   const collections = useCollectionStore((state) => state.collections);
   const historyEntries = useHistoryStore((state) => state.entries);
+
+  // Keyboard navigation for the list items, consistent with the sidebar
+  const { handleKeyDown: handleListKeyDown } = useListNavigation({
+    itemSelector: '[data-nav-item="true"]',
+    activeItemSelector: '[data-selected="true"]',
+    loop: true,
+  });
+
+  // Trap focus within the command bar when open
+  useFocusTrap(containerRef, isOpen);
 
   // Focus input when opened
   useEffect(() => {
@@ -45,6 +58,24 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
       focusWithVisibility(inputRef.current);
     }
   }, [isOpen]);
+
+  // Handle Escape key globally when open
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return (): void => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+    };
+  }, [isOpen, onClose]);
 
   // Convert tabs to searchable list
   const tabItems = useMemo(() => {
@@ -126,10 +157,12 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             aria-label="Close command bar"
             data-test-id="command-bar-backdrop"
+            tabIndex={-1}
           />
 
           {/* Command palette panel */}
           <motion.div
+            ref={containerRef}
             className="relative w-full max-w-[560px] mx-4"
             style={{ zIndex: COMMAND_BAR_Z_INDEX + 1 }}
             initial={{ opacity: 0, y: -8 }}
@@ -160,15 +193,14 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                   )}
                   placeholder="Search everything..."
                   data-test-id="command-bar-input"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      onClose();
-                    }
-                  }}
                 />
               </div>
 
-              <Command.List className="overflow-y-auto p-1 scrollbar-hidden">
+              <Command.List
+                className="overflow-y-auto p-1 scrollbar-hidden outline-none focus-visible:ring-1 focus-visible:ring-accent-blue/30 rounded-b-lg"
+                tabIndex={0}
+                onKeyDown={handleListKeyDown}
+              >
                 <Command.Empty className="py-8 text-center text-sm text-text-muted">
                   No results found.
                 </Command.Empty>
@@ -189,9 +221,18 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         className={cn(
                           'group relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1 text-sm outline-none mt-0.5',
                           'data-[selected=true]:bg-bg-raised data-[selected=true]:text-text-primary',
-                          'transition-colors duration-[var(--duration-zen-fast)]'
+                          'transition-colors duration-[var(--duration-zen-fast)]',
+                          focusRingClasses
                         )}
                         data-test-id={`tab-item-${item.id}`}
+                        data-nav-item="true"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleTabSelect(item.id);
+                          }
+                        }}
                       >
                         <File className="w-3 h-3 mr-2 text-text-muted group-data-[selected=true]:text-accent-blue transition-colors" />
                         <div className="flex flex-col min-w-0">
@@ -233,9 +274,18 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         className={cn(
                           'group relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1 text-sm outline-none mt-0.5',
                           'data-[selected=true]:bg-bg-raised data-[selected=true]:text-text-primary',
-                          'transition-colors duration-[var(--duration-zen-fast)]'
+                          'transition-colors duration-[var(--duration-zen-fast)]',
+                          focusRingClasses
                         )}
                         data-test-id={`collection-item-${item.id}`}
+                        data-nav-item="true"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleCollectionSelect(item.collectionId, item.request);
+                          }
+                        }}
                       >
                         <FolderSearch className="w-3 h-3 mr-2 text-text-muted group-data-[selected=true]:text-accent-blue transition-colors" />
                         <div className="flex flex-col min-w-0">
@@ -277,9 +327,18 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         className={cn(
                           'group relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1 text-sm outline-none mt-0.5',
                           'data-[selected=true]:bg-bg-raised data-[selected=true]:text-text-primary',
-                          'transition-colors duration-[var(--duration-zen-fast)]'
+                          'transition-colors duration-[var(--duration-zen-fast)]',
+                          focusRingClasses
                         )}
                         data-test-id={`history-item-${item.id}`}
+                        data-nav-item="true"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleHistorySelect(item.entry);
+                          }
+                        }}
                       >
                         <History className="w-3 h-3 mr-2 text-text-muted group-data-[selected=true]:text-accent-blue transition-colors" />
                         <div className="flex flex-col min-w-0">
@@ -316,9 +375,18 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                       className={cn(
                         'group relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1 text-sm outline-none mt-0.5',
                         'data-[selected=true]:bg-bg-raised data-[selected=true]:text-text-primary',
-                        'transition-colors duration-[var(--duration-zen-fast)]'
+                        'transition-colors duration-[var(--duration-zen-fast)]',
+                        focusRingClasses
                       )}
                       data-test-id={`action-${action.id}`}
+                      data-nav-item="true"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleActionSelect(action);
+                        }
+                      }}
                     >
                       <Zap className="w-3 h-3 mr-2 text-text-muted group-data-[selected=true]:text-accent-blue transition-colors" />
                       {action.label}

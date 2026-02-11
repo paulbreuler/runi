@@ -241,6 +241,51 @@ describe('CommandBar', () => {
     expect(mockOnClose).toHaveBeenCalledOnce();
   });
 
+  it('should call onClose when Escape is pressed anywhere while open', async () => {
+    const user = userEvent.setup();
+    render(<CommandBar isOpen onClose={mockOnClose} />);
+
+    // Press Escape without focusing any specific element
+    await user.keyboard('{Escape}');
+
+    expect(mockOnClose).toHaveBeenCalledOnce();
+  });
+
+  it('should trap focus within the command bar', async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <button data-testid="outside-button">Outside</button>
+        <CommandBar isOpen onClose={mockOnClose} />
+      </div>
+    );
+
+    const input = screen.getByTestId('command-bar-input');
+    const firstItem = screen.getByTestId('tab-item-tab-1');
+    const lastAction = screen.getByTestId('action-toggle-settings');
+
+    expect(input).toHaveFocus();
+
+    // Tab to first item
+    await user.tab();
+    expect(firstItem).toHaveFocus();
+
+    // Tab multiple times to get to the last action
+    // (There are 2 tabs, 1 collection, 1 history, 4 actions = 8 items)
+    for (let i = 0; i < 7; i++) {
+      await user.tab();
+    }
+    expect(lastAction).toHaveFocus();
+
+    // Tab wraps back to input
+    await user.tab();
+    expect(input).toHaveFocus();
+
+    // Shift+Tab wraps to last action
+    await user.tab({ shift: true });
+    expect(lastAction).toHaveFocus();
+  });
+
   it('should display open tabs section when tabs exist', () => {
     render(<CommandBar isOpen onClose={mockOnClose} />);
     expect(screen.getByText(/open tabs/i)).toBeInTheDocument();

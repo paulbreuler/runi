@@ -20,6 +20,9 @@ const HomePage = lazy(() => import('./routes/index').then((m) => ({ default: m.H
 const DevToolsPopout = lazy(() =>
   import('./routes/devtools-popout').then((m) => ({ default: m.DevToolsPopout }))
 );
+const CanvasPopout = lazy(() =>
+  import('./routes/canvas-popout').then((m) => ({ default: m.CanvasPopout }))
+);
 
 export const App = (): React.JSX.Element => {
   const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
@@ -59,6 +62,7 @@ export const App = (): React.JSX.Element => {
                     <Routes>
                       <Route path="/" element={<HomePage />} />
                       <Route path="/devtools-popout" element={<DevToolsPopout />} />
+                      <Route path="/canvas-popout/:contextId" element={<CanvasPopout />} />
                     </Routes>
                   </Suspense>
                 </BrowserRouter>

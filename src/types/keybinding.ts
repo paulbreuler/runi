@@ -32,7 +32,10 @@ export type CommandId =
   | 'sidebar.toggle'
   | 'panel.toggle'
   | 'settings.toggle'
-  | 'commandbar.toggle';
+  | 'commandbar.toggle'
+  | 'canvas.layout.previous'
+  | 'canvas.layout.next'
+  | 'canvas.context.request';
 
 /**
  * Platform discriminator for keybindings.

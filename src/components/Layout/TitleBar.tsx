@@ -255,21 +255,18 @@ interface TitleBarProps {
   title?: string;
   children?: React.ReactNode;
   onSettingsClick?: () => void;
-  /** Optional action buttons to display in the right utility rail */
-  actionButtons?: React.ReactNode;
 }
 
 export const TitleBar = ({
   title = 'runi',
   children,
   onSettingsClick,
-  actionButtons,
 }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
   const isFocused = useWindowFocus();
   const showSettingsButton = onSettingsClick !== undefined;
   const hasCustomContent = React.Children.toArray(children).length > 0;
-  const showRightActions = showSettingsButton || !isMac || actionButtons !== undefined;
+  const showRightActions = showSettingsButton || !isMac;
 
   return (
     <div
@@ -306,7 +303,6 @@ export const TitleBar = ({
           className="ml-auto flex h-full items-center gap-1 pl-1 pr-0.5"
           data-test-id="titlebar-utilities"
         >
-          {actionButtons}
           {showSettingsButton && (
             <button
               type="button"
