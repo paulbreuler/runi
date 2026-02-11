@@ -251,8 +251,8 @@ export const SplitButton = ({
                         className={cn(
                           'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
                           item.destructive === true
-                            ? 'text-signal-error hover:bg-signal-error/10 focus:bg-signal-error/10'
-                            : 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus:bg-bg-raised focus:text-text-primary',
+                            ? 'text-signal-error hover:bg-signal-error/10 focus-visible:bg-signal-error/10'
+                            : 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary',
                           item.disabled === true && 'opacity-50 cursor-not-allowed'
                         )}
                         disabled={item.disabled}

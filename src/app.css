@@ -137,6 +137,13 @@ body {
 }
 
 @layer base {
+  /* Suppress focus rings globally when using a mouse.
+     Highlights should only appear during keyboard/voice navigation. */
+  html[data-intent='mouse'] *:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   * {
     /* Focus indicator: use focusRingClasses on interactive elements; no global outline to avoid double indicators */
     @apply border-border-subtle;

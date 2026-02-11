@@ -15,6 +15,20 @@
 
 import * as React from 'react';
 
+// Inject global styles to suppress focus rings for mouse users.
+// This handles third-party components or cases where :focus-visible might still trigger.
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.id = 'suppress-mouse-focus';
+  style.innerHTML = `
+    html[data-intent="mouse"] *:focus {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 /**
  * Standard focus ring classes for interactive elements.
  *
@@ -43,16 +57,17 @@ import * as React from 'react';
 export const focusRingClasses = [
   'outline-none',
   // Native :focus-visible (Tab key, some browsers handle programmatic focus)
-  'focus-visible:ring-[1.5px]',
-  'focus-visible:ring-[color:var(--accent-a8)]',
-  'focus-visible:ring-offset-2',
-  'focus-visible:ring-offset-bg-app',
+  // Only apply when global intent is keyboard
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-offset-2',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-offset-bg-app',
   // Programmatic focus visibility (arrow key navigation)
   // Uses attribute selector with :focus to ensure element is actually focused
-  '[&[data-focus-visible-added]:focus]:ring-[1.5px]',
-  '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
-  '[&[data-focus-visible-added]:focus]:ring-offset-2',
-  '[&[data-focus-visible-added]:focus]:ring-offset-bg-app',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-offset-2',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-offset-bg-app',
 ].join(' ');
 
 /**
@@ -63,22 +78,22 @@ export const focusRingClasses = [
  */
 export const containedFocusRingClasses = [
   'outline-none',
-  'focus-visible:outline-[1.5px]',
-  'focus-visible:outline-[color:var(--accent-a8)]',
-  'focus-visible:outline-offset-[-1.5px]',
-  'focus-visible:ring-[1.5px]',
-  'focus-visible:ring-[color:var(--accent-a8)]',
-  'focus-visible:!ring-offset-0',
-  'focus-visible:ring-inset',
-  'focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
-  '[&[data-focus-visible-added]:focus]:outline-[1.5px]',
-  '[&[data-focus-visible-added]:focus]:outline-[color:var(--accent-a8)]',
-  '[&[data-focus-visible-added]:focus]:outline-offset-[-1.5px]',
-  '[&[data-focus-visible-added]:focus]:ring-[1.5px]',
-  '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
-  '[&[data-focus-visible-added]:focus]:!ring-offset-0',
-  '[&[data-focus-visible-added]:focus]:ring-inset',
-  '[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:outline-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:outline-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:outline-offset-[-1.5px]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:!ring-offset-0',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-inset',
+  '[html[data-intent="keyboard"]_&]:focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:outline-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:outline-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:outline-offset-[-1.5px]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:!ring-offset-0',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-inset',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
 ].join(' ');
 
 /**
@@ -104,17 +119,17 @@ export const compositeFocusContainerClasses = [
  * - z-index lifts focused item above separators/siblings
  */
 export const compositeFocusItemClasses = [
-  'focus-visible:ring-[1.5px]',
-  'focus-visible:ring-[color:var(--accent-a8)]',
-  'focus-visible:!ring-offset-0',
-  'focus-visible:ring-inset',
-  'focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:focus-visible:!ring-offset-0',
+  '[html[data-intent="keyboard"]_&]:focus-visible:ring-inset',
+  '[html[data-intent="keyboard"]_&]:focus-visible:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
   'focus-visible:z-10',
-  '[&[data-focus-visible-added]:focus]:ring-[1.5px]',
-  '[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
-  '[&[data-focus-visible-added]:focus]:!ring-offset-0',
-  '[&[data-focus-visible-added]:focus]:ring-inset',
-  '[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-[1.5px]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-[color:var(--accent-a8)]',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:!ring-offset-0',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:ring-inset',
+  '[html[data-intent="keyboard"]_&]:[&[data-focus-visible-added]:focus]:shadow-[inset_1.5px_0_0_var(--accent-a8),inset_-1.5px_0_0_var(--accent-a8)]',
   '[&[data-focus-visible-added]:focus]:z-10',
 ].join(' ');
 

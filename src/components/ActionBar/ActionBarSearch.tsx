@@ -126,7 +126,7 @@ export const ActionBarSearch = ({
         className={cn(
           focusRingClasses,
           'w-full pl-7 pr-2 py-1 text-sm bg-bg-surface border border-border-subtle rounded',
-          'focus:border-border-emphasis',
+          '[html[data-intent="keyboard"]_&]:focus-visible:border-border-emphasis',
           'text-text-secondary placeholder:text-text-muted',
           'transition-colors duration-200'
         )}

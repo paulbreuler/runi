@@ -9,6 +9,7 @@ import { MemoryWarningListener } from './components/Memory/MemoryWarningListener
 import { CollectionEventProvider } from './components/providers/CollectionEventProvider';
 import { FeatureFlagProvider } from './providers/FeatureFlagProvider';
 import { ThemeProvider } from './components/ThemeProvider';
+import { IntentProvider } from './providers/IntentProvider';
 import { ToastProvider } from './components/ui/Toast';
 import { TooltipProvider } from './components/ui/Tooltip';
 import { CommandBar } from './components/CommandBar';
@@ -35,35 +36,37 @@ export const App = (): React.JSX.Element => {
 
   return (
     <ThemeProvider appearance="dark" accentColor="blue" grayColor="gray">
-      <FeatureFlagProvider>
-        <CollectionEventProvider>
-          <ToastProvider>
-            <TooltipProvider delayDuration={250}>
-              <MemoryWarningListener />
-              <CommandBar
-                isOpen={isCommandBarOpen}
-                onClose={(): void => {
-                  setIsCommandBarOpen(false);
-                }}
-              />
-              <BrowserRouter>
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
-                      Loading...
-                    </div>
-                  }
-                >
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/devtools-popout" element={<DevToolsPopout />} />
-                  </Routes>
-                </Suspense>
-              </BrowserRouter>
-            </TooltipProvider>
-          </ToastProvider>
-        </CollectionEventProvider>
-      </FeatureFlagProvider>
+      <IntentProvider>
+        <FeatureFlagProvider>
+          <CollectionEventProvider>
+            <ToastProvider>
+              <TooltipProvider delayDuration={250}>
+                <MemoryWarningListener />
+                <CommandBar
+                  isOpen={isCommandBarOpen}
+                  onClose={(): void => {
+                    setIsCommandBarOpen(false);
+                  }}
+                />
+                <BrowserRouter>
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center h-screen bg-bg-app text-text-primary">
+                        Loading...
+                      </div>
+                    }
+                  >
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/devtools-popout" element={<DevToolsPopout />} />
+                    </Routes>
+                  </Suspense>
+                </BrowserRouter>
+              </TooltipProvider>
+            </ToastProvider>
+          </CollectionEventProvider>
+        </FeatureFlagProvider>
+      </IntentProvider>
     </ThemeProvider>
   );
 };
