@@ -197,10 +197,10 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                   <button
                     type="button"
                     className={cn(
+                      focusRingClasses,
                       'shrink-0 p-0.5 rounded-sm text-text-muted hover:text-text-primary transition-opacity',
                       'opacity-0 group-hover/item:opacity-100 focus-visible:opacity-100'
                     )}
-                    tabIndex={-1}
                     aria-label={`Close tab ${tab.method} ${tab.label}`}
                     data-test-id={`open-items-close-${tabId}`}
                     onClick={(e) => {

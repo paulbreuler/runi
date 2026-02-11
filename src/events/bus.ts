@@ -42,7 +42,8 @@ export type EventType =
   | 'console.error-emitted'
   | 'panel.console-requested'
   | 'request.accept-ai'
-  | 'toast.show';
+  | 'toast.show'
+  | 'commandbar.toggle';
 
 /**
  * Payload for collection.request-selected event.

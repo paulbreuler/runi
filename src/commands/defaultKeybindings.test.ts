@@ -15,6 +15,7 @@ const ALL_COMMAND_IDS: CommandId[] = [
   'tab.previous',
   'sidebar.toggle',
   'panel.toggle',
+  'commandbar.toggle',
 ];
 
 describe('defaultKeybindings', () => {

@@ -37,12 +37,15 @@ import { useHistoryStore } from '@/stores/useHistoryStore';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { useActivityStore } from '@/stores/useActivityStore';
+import { CommandBar } from '@/components/CommandBar';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
   requestContent?: React.ReactNode;
   responseContent?: React.ReactNode;
   initialSidebarVisible?: boolean;
+  /** Optional action buttons to display in the title bar */
+  actionButtons?: React.ReactNode;
 }
 
 const MIN_PANE_SIZE = 20;
@@ -108,6 +111,7 @@ export const MainLayout = ({
   requestContent,
   responseContent,
   initialSidebarVisible = true, // Default to visible now that collections are supported
+  actionButtons,
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, sidebarEdge, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const { position: panelPosition, isVisible: panelVisible, setVisible } = usePanelStore();
@@ -125,6 +129,7 @@ export const MainLayout = ({
   const { entries } = useHistoryStore();
   const activityEntries = useActivityStore((s) => s.entries);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
 
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -174,6 +179,15 @@ export const MainLayout = ({
 
     return unsubscribe;
   }, [setVisible, setActiveTab]);
+
+  // Listen for command bar toggle events
+  useEffect(() => {
+    const unsubscribe = globalEventBus.on('commandbar.toggle', () => {
+      setIsCommandBarOpen((prev) => !prev);
+    });
+
+    return unsubscribe;
+  }, []);
 
   // Auto-collapse sidebar when left dock is active
   // Store the previous state to restore when switching away from left dock
@@ -509,6 +523,7 @@ export const MainLayout = ({
           onSettingsClick={() => {
             setIsSettingsOpen(true);
           }}
+          actionButtons={actionButtons}
         >
           {headerContent}
         </TitleBar>
@@ -536,6 +551,13 @@ export const MainLayout = ({
             </div>
           </div>
         )}
+        {/* Command bar overlay */}
+        <CommandBar
+          isOpen={isCommandBarOpen}
+          onClose={() => {
+            setIsCommandBarOpen(false);
+          }}
+        />
         {/* Sidebar - animates in/out of DOM based on visibility */}
         {!isSidebarOverlay && (
           <AnimatePresence>

@@ -6,7 +6,7 @@
 /**
  * @file Layout command registration hook.
  *
- * Registers sidebar and panel toggle commands into the global command registry.
+ * Registers sidebar, panel, and command bar toggle commands into the global command registry.
  * The panel toggle follows a three-state cycle: hidden → visible → collapsed → hidden.
  */
 
@@ -14,9 +14,10 @@ import { useEffect } from 'react';
 import { globalCommandRegistry } from '@/commands/registry';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { globalEventBus } from '@/events/bus';
 
 /**
- * Registers layout commands (sidebar.toggle, panel.toggle) into the global
+ * Registers layout commands (sidebar.toggle, panel.toggle, commandbar.toggle) into the global
  * command registry. Call once in the root layout component.
  */
 export function useLayoutCommands(): void {
@@ -51,9 +52,20 @@ export function useLayoutCommands(): void {
       },
     });
 
+    globalCommandRegistry.register({
+      id: 'commandbar.toggle',
+      title: 'Toggle Command Bar',
+      category: 'command',
+      handler: (): void => {
+        // Emit event to toggle command bar (handled in MainLayout)
+        globalEventBus.emit('commandbar.toggle', {});
+      },
+    });
+
     return (): void => {
       globalCommandRegistry.unregister('sidebar.toggle');
       globalCommandRegistry.unregister('panel.toggle');
+      globalCommandRegistry.unregister('commandbar.toggle');
     };
   }, []);
 }

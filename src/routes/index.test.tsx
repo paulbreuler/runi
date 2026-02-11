@@ -51,43 +51,62 @@ describe('HomePage - Auto-save to history', () => {
     vi.clearAllMocks();
 
     // Mock request store
-    vi.mocked(useRequestStore).mockReturnValue({
-      method: 'GET',
-      url: 'https://httpbin.org/get',
-      headers: {},
-      body: '',
-      response: null,
-      isLoading: false,
-      setMethod: mockSetMethod,
-      setUrl: mockSetUrl,
-      setHeaders: vi.fn(),
-      setBody: vi.fn(),
-      setResponse: mockSetResponse,
-      setLoading: mockSetLoading,
-      reset: vi.fn(),
+    vi.mocked(useRequestStore).mockImplementation((selector) => {
+      const state = {
+        method: 'GET' as const,
+        url: 'https://httpbin.org/get',
+        headers: {},
+        body: '',
+        response: null,
+        isLoading: false,
+        setMethod: mockSetMethod,
+        setUrl: mockSetUrl,
+        setHeaders: vi.fn(),
+        setBody: vi.fn(),
+        setResponse: mockSetResponse,
+        setLoading: mockSetLoading,
+        reset: vi.fn(),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      return selector !== undefined ? selector(state) : state;
     });
 
     // Mock history store
-    vi.mocked(useHistoryStore).mockReturnValue({
-      entries: [],
-      isLoading: false,
-      error: null,
-      filters: { search: '', method: 'ALL', status: 'All', intelligence: 'All' },
-      selectedId: null,
-      expandedId: null,
-      compareMode: false,
-      compareSelection: [],
-      loadHistory: vi.fn(),
-      addEntry: mockAddEntry,
-      deleteEntry: vi.fn(),
-      clearHistory: vi.fn(),
-      setFilter: vi.fn(),
-      resetFilters: vi.fn(),
-      setSelectedId: vi.fn(),
-      setExpandedId: vi.fn(),
-      setCompareMode: vi.fn(),
-      toggleCompareSelection: vi.fn(),
-      filteredEntries: vi.fn(() => []),
+    vi.mocked(useHistoryStore).mockImplementation((selector) => {
+      const state = {
+        entries: [],
+        isLoading: false,
+        error: null,
+        filters: {
+          search: '',
+          method: 'ALL' as const,
+          status: 'All' as const,
+          intelligence: 'All' as const,
+        },
+        selectedId: null,
+        selectedIds: new Set<string>(),
+        lastSelectedIndex: null,
+        expandedId: null,
+        compareMode: false,
+        compareSelection: [],
+        loadHistory: vi.fn(),
+        addEntry: mockAddEntry,
+        deleteEntry: vi.fn(),
+        clearHistory: vi.fn(),
+        setFilter: vi.fn(),
+        resetFilters: vi.fn(),
+        setSelectedId: vi.fn(),
+        toggleSelection: vi.fn(),
+        selectRange: vi.fn(),
+        selectAll: vi.fn(),
+        deselectAll: vi.fn(),
+        setExpandedId: vi.fn(),
+        setCompareMode: vi.fn(),
+        toggleCompareSelection: vi.fn(),
+        filteredEntries: vi.fn(() => []),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      return selector !== undefined ? selector(state) : state;
     });
   });
 
