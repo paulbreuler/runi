@@ -15,6 +15,7 @@ import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 import type { CollectionRequest } from '@/types/collection';
 import { cn } from '@/utils/cn';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
+import { COMMAND_BAR_Z_INDEX } from '@/utils/z-index';
 import type { CommandAction } from './commands';
 import { COMMAND_ACTIONS, executeAction } from './commands';
 
@@ -108,7 +109,8 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
     <AnimatePresence>
       {isOpen && (
         <div
-          className="absolute inset-0 z-[1100] flex items-start justify-center pt-[12vh]"
+          className="absolute inset-0 flex items-start justify-center pt-[12vh]"
+          style={{ zIndex: COMMAND_BAR_Z_INDEX }}
           data-test-id="command-bar"
         >
           {/* Backdrop */}
@@ -126,7 +128,8 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
 
           {/* Command palette panel */}
           <motion.div
-            className="relative z-[1101] w-full max-w-[560px] mx-4"
+            className="relative w-full max-w-[560px] mx-4"
+            style={{ zIndex: COMMAND_BAR_Z_INDEX + 1 }}
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
@@ -150,7 +153,8 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                   className={cn(
                     'flex h-10 w-full bg-transparent py-2 text-sm outline-none',
                     'placeholder:text-text-muted/40',
-                    'disabled:cursor-not-allowed disabled:opacity-50'
+                    'disabled:cursor-not-allowed disabled:opacity-50',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated'
                   )}
                   placeholder="Search everything..."
                   data-test-id="command-bar-input"
@@ -162,7 +166,7 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                 />
               </div>
 
-              <Command.List className="overflow-y-auto p-1 scrollbar-none">
+              <Command.List className="overflow-y-auto p-1 scrollbar-hidden">
                 <Command.Empty className="py-8 text-center text-sm text-text-muted">
                   No results found.
                 </Command.Empty>
@@ -178,7 +182,6 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         key={item.id}
                         value={item.value}
                         onSelect={() => {
-                          onClose();
                           handleTabSelect(item.id);
                         }}
                         className={cn(
@@ -223,7 +226,6 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         key={item.id}
                         value={item.value}
                         onSelect={() => {
-                          onClose();
                           handleCollectionSelect(item.collectionId, item.request);
                         }}
                         className={cn(
@@ -268,7 +270,6 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                         key={item.id}
                         value={item.value}
                         onSelect={() => {
-                          onClose();
                           handleHistorySelect(item.entry);
                         }}
                         className={cn(
@@ -308,7 +309,6 @@ export const CommandBar = ({ isOpen, onClose }: CommandBarProps): React.ReactEle
                       key={action.id}
                       value={action.label.toLowerCase()}
                       onSelect={() => {
-                        onClose();
                         handleActionSelect(action);
                       }}
                       className={cn(

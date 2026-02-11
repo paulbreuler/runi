@@ -190,7 +190,7 @@ export const MainLayout = ({
     });
 
     const unsubPanel = globalEventBus.on('panel.toggle', () => {
-      // Re-use logic from useLayoutCommands for consistency
+      // Canonical panel-toggle behavior: all sources emit 'panel.toggle' and rely on this logic.
       const { isVisible, isCollapsed, setVisible, setCollapsed } = usePanelStore.getState();
       if (!isVisible) {
         setVisible(true);
