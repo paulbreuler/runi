@@ -840,6 +840,7 @@ export const ConsolePanel = ({
               getLogLevelClass(logLevel)
             )}
             data-row-id={row.id}
+            data-level={logLevel}
             data-test-id={`console-log-row-${entry.id}`}
             onClick={handleRowClick}
             onDoubleClick={handleRowDoubleClick}

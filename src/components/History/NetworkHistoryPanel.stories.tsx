@@ -368,6 +368,17 @@ export const DoubleClickBehaviorTest: Story = {
   },
 };
 
+/**
+ * Story specifically for testing the expander functionality.
+ */
+export const ExpanderTest: Story = {
+  render: () => (
+    <div className="h-[600px] bg-bg-app">
+      <NetworkHistoryPanel entries={mockEntries} onReplay={noop} onCopyCurl={noop} />
+    </div>
+  ),
+};
+
 // ============================================================================
 // HeaderRow Stories
 // ============================================================================
