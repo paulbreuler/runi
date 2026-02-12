@@ -7,6 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { within, expect, userEvent } from 'storybook/test';
 import { ContextBar } from './ContextBar';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
 import { requestContextDescriptor } from '@/contexts/RequestContext';
 import { FileText } from 'lucide-react';
 import type { CanvasContextDescriptor } from '@/types/canvas';
@@ -28,6 +29,9 @@ const meta = {
       // Register mock context
       useCanvasStore.getState().registerContext(requestContextDescriptor);
       useCanvasStore.getState().setActiveContext('request');
+
+      // Enable popout feature flag for testing
+      useFeatureFlagStore.getState().setFlag('canvas', 'popout', true);
 
       return (
         <div className="h-screen flex flex-col bg-bg-app">
