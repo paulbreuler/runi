@@ -319,7 +319,7 @@ impl McpServerService {
             // Canvas mutation tools (Phase 2)
             tool_def(
                 "canvas_switch_tab",
-                "Switch to a different tab by ID. Emits canvas:tab_switched event.",
+                "Switch to a different tab by ID. Emits canvas:switch_tab event.",
                 json!({
                     "type": "object",
                     "properties": {
@@ -330,7 +330,7 @@ impl McpServerService {
             ),
             tool_def(
                 "canvas_open_request_tab",
-                "Open a new request tab in the canvas. Emits canvas:tab_opened event.",
+                "Open a new request tab in the canvas. Emits canvas:open_request_tab event.",
                 json!({
                     "type": "object",
                     "properties": {
@@ -340,7 +340,7 @@ impl McpServerService {
             ),
             tool_def(
                 "canvas_close_tab",
-                "Close a tab by ID. Emits canvas:tab_closed event.",
+                "Close a tab by ID. Emits canvas:close_tab event.",
                 json!({
                     "type": "object",
                     "properties": {
