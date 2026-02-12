@@ -127,6 +127,11 @@ export const ContextTabs = (): React.JSX.Element | null => {
     }
   }, [activeContextId, contextOrder, prefersReducedMotion]);
 
+  // Recalculate overflow when contextOrder changes (tabs added/removed/reordered)
+  useEffect(() => {
+    updateScrollState();
+  }, [contextOrder, updateScrollState]);
+
   // Return null if no contexts registered
   if (contextOrder.length === 0) {
     return null;

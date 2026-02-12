@@ -81,7 +81,7 @@ const getSashClasses = (position: 'left' | 'right', isDragging: boolean): string
 
 export const MainLayout = ({
   headerContent,
-  initialSidebarVisible = true, // Default to visible now that collections are supported
+  initialSidebarVisible: _initialSidebarVisible = true, // Default to visible now that collections are supported
 }: MainLayoutProps): React.JSX.Element => {
   const { sidebarVisible, sidebarEdge, toggleSidebar, setSidebarVisible } = useSettingsStore();
   const { position: panelPosition, isVisible: panelVisible, setVisible } = usePanelStore();
@@ -99,19 +99,7 @@ export const MainLayout = ({
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
-  const isSidebarDraggingRef = useRef(false); // Sync ref for pointer handlers (state is async)
-  const sidebarDragCurrentWidth = useRef(DEFAULT_SIDEBAR_WIDTH); // Track actual drag position (spring lags)
   const [isSidebarCollapseHint, setIsSidebarCollapseHint] = useState(false);
-  const isSidebarCollapseHintRef = useRef(false);
-  const isInitialMount = useRef(true);
-
-  // Initialize sidebar visibility on mount only
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      setSidebarVisible(initialSidebarVisible);
-    }
-  }, [initialSidebarVisible, setSidebarVisible]);
 
   // Centralized keybinding system: register domain commands and start service
   useTabCommands();
@@ -278,62 +266,45 @@ export const MainLayout = ({
 
   // Pane resizer handlers
   // Sidebar resizer handlers - works both expanded and collapsed
-  // Uses refs for synchronous state in pointer handlers (React state updates are async)
   const handleSidebarPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
-
-      // Set ref synchronously so pointermove can read it immediately
-      isSidebarDraggingRef.current = true;
       setIsSidebarDragging(true);
-
-      // Track where we started for drag feedback
-      const startWidth = sidebarVisible ? sidebarWidth : COLLAPSED_SIDEBAR_WIDTH;
-      sidebarDragCurrentWidth.current = startWidth;
-      isSidebarCollapseHintRef.current = false;
-      setIsSidebarCollapseHint(false);
 
       // If collapsed, immediately set to visible so drag feels responsive
       if (!sidebarVisible) {
         setSidebarVisible(true);
       }
     },
-    [sidebarVisible, sidebarWidth, setSidebarVisible]
+    [sidebarVisible, setSidebarVisible]
   );
 
   const handleSidebarPointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      // Use ref for synchronous check (state may not have updated yet)
-      if (!isSidebarDraggingRef.current) {
+      if (!isSidebarDragging) {
         return;
       }
 
       const newWidth = getSidebarDragSize(e);
       // Allow dragging below MIN for the "page turning" feel
       const clamped = Math.max(COLLAPSED_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
-      sidebarDragCurrentWidth.current = clamped; // Track actual position (spring lags behind)
-      const shouldHint = clamped <= collapseThreshold;
-      if (shouldHint !== isSidebarCollapseHintRef.current) {
-        isSidebarCollapseHintRef.current = shouldHint;
-        setIsSidebarCollapseHint(shouldHint);
-      }
+      setIsSidebarCollapseHint(clamped <= collapseThreshold);
       sidebarWidthSpring.set(clamped);
     },
-    [collapseThreshold, getSidebarDragSize, sidebarWidthSpring]
+    [collapseThreshold, getSidebarDragSize, isSidebarDragging, sidebarWidthSpring]
   );
 
   const handleSidebarPointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      // Use ref for synchronous check
-      if (!isSidebarDraggingRef.current) {
+      if (!isSidebarDragging) {
         return;
       }
 
       e.currentTarget.releasePointerCapture(e.pointerId);
 
-      // Use tracked position, not spring (spring animates and lags behind actual drag)
-      const finalWidth = sidebarDragCurrentWidth.current;
+      // Read current value from spring for final decision
+      const finalWidth = sidebarWidthSpring.get();
 
       if (finalWidth <= collapseThreshold) {
         setSidebarVisible(false);
@@ -342,13 +313,10 @@ export const MainLayout = ({
         setSidebarWidth(clamped);
       }
 
-      // Clear both ref and state
-      isSidebarDraggingRef.current = false;
-      isSidebarCollapseHintRef.current = false;
       setIsSidebarCollapseHint(false);
       setIsSidebarDragging(false);
     },
-    [collapseThreshold, setSidebarVisible]
+    [collapseThreshold, isSidebarDragging, setSidebarVisible, sidebarWidthSpring]
   );
 
   // Double-click on sash to toggle sidebar
