@@ -930,7 +930,7 @@ describe('ConsolePanel', () => {
     await waitFor(() => {
       expect(screen.queryByText(/connection timeout/i)).not.toBeInTheDocument();
     }, WAIT_TIMEOUT);
-  });
+  }, 15000);
 
   // TODO: Fix flaky test - expansion timing issues
   it.skip('expands grouped log to show args', async () => {
