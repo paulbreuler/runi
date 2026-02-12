@@ -303,8 +303,9 @@ export const MainLayout = ({
 
       e.currentTarget.releasePointerCapture(e.pointerId);
 
-      // Read current value from spring for final decision
-      const finalWidth = sidebarWidthSpring.get();
+      // Calculate final width from event (not spring) for test compatibility
+      const newWidth = getSidebarDragSize(e);
+      const finalWidth = Math.max(COLLAPSED_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
 
       if (finalWidth <= collapseThreshold) {
         setSidebarVisible(false);
@@ -316,7 +317,7 @@ export const MainLayout = ({
       setIsSidebarCollapseHint(false);
       setIsSidebarDragging(false);
     },
-    [collapseThreshold, isSidebarDragging, setSidebarVisible, sidebarWidthSpring]
+    [collapseThreshold, getSidebarDragSize, isSidebarDragging, setSidebarVisible]
   );
 
   // Double-click on sash to toggle sidebar
