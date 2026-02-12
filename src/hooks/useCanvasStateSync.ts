@@ -23,6 +23,9 @@ import { useEffect, useCallback, useRef } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
+import type { EventEnvelope } from '@/hooks/useCollectionEvents';
 import type { CanvasStateSnapshot, TabSummary, TemplateSummary } from '@/types/generated';
 
 /**
@@ -77,24 +80,24 @@ export function buildCanvasSnapshot(state: {
 }
 
 /**
- * Payload for canvas:switch_tab event
+ * Record a canvas action in the activity feed.
+ *
+ * Mirrors `CollectionEventProvider.recordActivity()` pattern.
  */
-interface SwitchTabPayload {
-  contextId: string;
-}
-
-/**
- * Payload for canvas:open_request_tab event
- */
-interface OpenRequestTabPayload {
-  overrides?: Record<string, unknown>;
-}
-
-/**
- * Payload for canvas:close_tab event
- */
-interface CloseTabPayload {
-  contextId: string;
+function recordCanvasActivity(
+  envelope: EventEnvelope<unknown>,
+  action: ActivityAction,
+  target: string,
+  targetId?: string
+): void {
+  useActivityStore.getState().addEntry({
+    timestamp: envelope.timestamp,
+    actor: envelope.actor,
+    action,
+    target,
+    targetId,
+    seq: envelope.lamport?.seq,
+  });
 }
 
 /**
@@ -192,20 +195,53 @@ export function useCanvasStateSync(): void {
       await Promise.all([
         // Switch tab event
         addListener('canvas:switch_tab', (payload): void => {
-          const typedPayload = payload as SwitchTabPayload;
-          setActiveContext(typedPayload.contextId);
+          const envelope = payload as EventEnvelope<{ contextId: string }>;
+          const isAi = envelope.actor.type === 'ai';
+
+          // Always log activity
+          recordCanvasActivity(
+            envelope,
+            'switched_tab',
+            envelope.payload.contextId,
+            envelope.payload.contextId
+          );
+
+          // Conditionally navigate based on actor + Follow AI mode
+          if (!isAi || useSettingsStore.getState().followAiMode) {
+            setActiveContext(envelope.payload.contextId);
+          }
         }),
 
         // Open request tab event
         addListener('canvas:open_request_tab', (payload): void => {
-          const typedPayload = payload as OpenRequestTabPayload;
-          openRequestTab(typedPayload.overrides);
+          const envelope = payload as EventEnvelope<{ label?: string }>;
+          const isAi = envelope.actor.type === 'ai';
+          const shouldActivate = !isAi || useSettingsStore.getState().followAiMode;
+
+          // Always log activity
+          recordCanvasActivity(envelope, 'opened_tab', envelope.payload.label ?? 'Request');
+
+          // Open tab with conditional activation
+          openRequestTab({ label: envelope.payload.label }, { activate: shouldActivate });
         }),
 
         // Close tab event
         addListener('canvas:close_tab', (payload): void => {
-          const typedPayload = payload as CloseTabPayload;
-          closeContext(typedPayload.contextId);
+          const envelope = payload as EventEnvelope<{ contextId: string }>;
+          const isAi = envelope.actor.type === 'ai';
+          const shouldActivate = !isAi || useSettingsStore.getState().followAiMode;
+
+          // Always log activity
+          recordCanvasActivity(
+            envelope,
+            'closed_tab',
+            envelope.payload.contextId,
+            envelope.payload.contextId
+          );
+
+          // Close tab with conditional activation
+          // Note: closeContext will still activate adjacent if closing the user's active tab
+          closeContext(envelope.payload.contextId, { activate: shouldActivate });
         }),
       ]);
     };

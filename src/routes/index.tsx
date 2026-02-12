@@ -9,6 +9,7 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { requestContextDescriptor } from '@/contexts/RequestContext';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useContextSync } from '@/hooks/useContextSync';
+import { useCanvasStateSync } from '@/hooks/useCanvasStateSync';
 
 export const HomePage = (): React.JSX.Element => {
   const { registerTemplate } = useCanvasStore();
@@ -33,6 +34,9 @@ export const HomePage = (): React.JSX.Element => {
   // Wire up context sync (bidirectional sync between canvas contexts and request store)
   // This MUST come after the registration effect above to ensure template exists
   useContextSync();
+
+  // Sync canvas state to backend for MCP tool access
+  useCanvasStateSync();
 
   return <MainLayout initialSidebarVisible={initialSidebarVisible} />;
 };

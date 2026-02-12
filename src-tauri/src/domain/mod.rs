@@ -3,6 +3,7 @@
 
 // Domain layer - Core business logic and models
 
+pub mod canvas_state;
 pub mod collection;
 pub mod errors;
 pub mod features;

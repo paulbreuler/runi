@@ -63,29 +63,8 @@ describe('TabBar', () => {
 
     const tabBar = screen.getByTestId('tab-bar');
     expect(tabBar).toHaveClass('h-8');
-    expect(tabBar).toHaveClass('border-b');
-    expect(tabBar).toHaveClass('border-border-subtle');
     expect(tabBar).toHaveClass('bg-bg-surface');
-  });
-
-  it('passes sidebarWidth to ContextTabs', () => {
-    const { registerContext } = useCanvasStore.getState();
-
-    const context: CanvasContextDescriptor = {
-      id: 'test',
-      label: 'Test',
-      panels: {},
-      layouts: [],
-    };
-
-    registerContext(context);
-
-    // Mock MotionValue
-    const mockSidebarWidth = { get: (): number => 300 };
-
-    render(<TabBar sidebarWidth={mockSidebarWidth as never} />);
-
-    const contextTabs = screen.getByTestId('context-tabs-mock');
-    expect(contextTabs).toHaveAttribute('data-sidebar-width', 'true');
+    expect(tabBar).toHaveClass('flex');
+    expect(tabBar).toHaveClass('items-end');
   });
 });

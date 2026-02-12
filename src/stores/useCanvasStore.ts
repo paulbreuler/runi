@@ -121,10 +121,13 @@ interface CanvasState {
   goBack: () => void;
 
   /** Open a new request tab context with optional initial state */
-  openRequestTab: (overrides?: Partial<RequestTabState> & { label?: string }) => string;
+  openRequestTab: (
+    overrides?: Partial<RequestTabState> & { label?: string },
+    options?: { activate?: boolean }
+  ) => string;
 
   /** Close a context and activate adjacent one */
-  closeContext: (contextId: CanvasContextId) => void;
+  closeContext: (contextId: CanvasContextId, options?: { activate?: boolean }) => void;
 
   /** Find context by source (collection or history) */
   findContextBySource: (source: RequestTabSource) => string | null;
@@ -363,7 +366,8 @@ export const useCanvasStore = create<CanvasState>()(
         });
       },
 
-      openRequestTab: (overrides): string => {
+      openRequestTab: (overrides, options): string => {
+        const shouldActivate = options?.activate ?? true;
         const contextId: CanvasContextId = `request-${crypto.randomUUID()}`;
         const url = overrides?.url ?? '';
 
@@ -428,7 +432,7 @@ export const useCanvasStore = create<CanvasState>()(
           contextType: 'request', // Mark as a request instance
         };
 
-        // Register the context and make it active
+        // Register the context and optionally make it active
         set((currentState) => {
           const newContexts = new Map(currentState.contexts);
           newContexts.set(descriptor.id, descriptor);
@@ -450,7 +454,8 @@ export const useCanvasStore = create<CanvasState>()(
             contexts: newContexts,
             contextOrder: newOrder,
             contextState: newContextState,
-            activeContextId: contextId, // Always set new tab as active
+            // Only set as active if activate option is true
+            activeContextId: shouldActivate ? contextId : currentState.activeContextId,
           };
         });
 
@@ -463,8 +468,9 @@ export const useCanvasStore = create<CanvasState>()(
         return contextId;
       },
 
-      closeContext: (contextId): void => {
+      closeContext: (contextId, options): void => {
         const { contextOrder, activeContextId, unregisterContext, setActiveContext } = get();
+        const shouldActivate = options?.activate ?? true;
 
         // Find the index of the context being closed
         const closedIndex = contextOrder.indexOf(contextId);
@@ -474,15 +480,22 @@ export const useCanvasStore = create<CanvasState>()(
 
         // Determine which context to activate next
         let newActiveId: CanvasContextId | null = activeContextId;
-        if (activeContextId === contextId) {
-          // Remove the context from the order to find adjacent contexts
-          const remainingOrder = contextOrder.filter((id) => id !== contextId);
-          if (remainingOrder.length > 0) {
-            // Prefer next context; fall back to previous
-            const newIndex = closedIndex < remainingOrder.length ? closedIndex : closedIndex - 1;
-            newActiveId = remainingOrder[Math.max(0, newIndex)] ?? null;
-          } else {
-            newActiveId = null;
+
+        // Edge case: If closing the user's active tab, ALWAYS activate adjacent
+        // (even with activate=false) to avoid blank view
+        const isClosingActiveTab = activeContextId === contextId;
+
+        if (isClosingActiveTab || shouldActivate) {
+          if (activeContextId === contextId) {
+            // Remove the context from the order to find adjacent contexts
+            const remainingOrder = contextOrder.filter((id) => id !== contextId);
+            if (remainingOrder.length > 0) {
+              // Prefer next context; fall back to previous
+              const newIndex = closedIndex < remainingOrder.length ? closedIndex : closedIndex - 1;
+              newActiveId = remainingOrder[Math.max(0, newIndex)] ?? null;
+            } else {
+              newActiveId = null;
+            }
           }
         }
 

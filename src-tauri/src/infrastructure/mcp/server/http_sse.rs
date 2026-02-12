@@ -19,7 +19,10 @@ use tokio::sync::RwLock;
 use tokio_stream::wrappers::ReceiverStream;
 
 use crate::application::mcp_server_service::McpServerService;
+#[cfg(test)]
+use crate::domain::canvas_state::CanvasStateSnapshot;
 use crate::domain::mcp::events::EventEnvelope;
+use crate::infrastructure::commands::CanvasStateHandle;
 use crate::infrastructure::mcp::server::dispatcher;
 use crate::infrastructure::mcp::server::session::SessionManager;
 
@@ -72,6 +75,10 @@ pub struct McpServerState {
     pub sessions: Arc<SessionManager>,
     /// Event broadcaster for SSE push notifications.
     pub broadcaster: Arc<EventBroadcaster>,
+    /// Canvas state snapshot for MCP tools.
+    pub canvas_state: CanvasStateHandle,
+    /// Tauri app handle for mutation tools (tab switching, opening, closing).
+    pub app_handle: Option<tauri::AppHandle>,
 }
 
 /// Maximum request body size (1 MiB). Prevents memory exhaustion from oversized payloads.
@@ -104,26 +111,31 @@ async fn handle_post(
         None => state.sessions.create_session().await,
     };
 
-    dispatcher::dispatch(&body, &state.service)
-        .await
-        .map_or_else(
-            || {
-                // Notification — no response body
-                axum::response::Response::builder()
-                    .status(StatusCode::ACCEPTED)
-                    .header("Mcp-Session-Id", &session_id)
-                    .body(axum::body::Body::empty())
-                    .unwrap_or_default()
-            },
-            |response| {
-                axum::response::Response::builder()
-                    .status(StatusCode::OK)
-                    .header("Content-Type", "application/json")
-                    .header("Mcp-Session-Id", &session_id)
-                    .body(axum::body::Body::from(response))
-                    .unwrap_or_default()
-            },
-        )
+    dispatcher::dispatch(
+        &body,
+        &state.service,
+        &state.canvas_state,
+        state.app_handle.as_ref(),
+    )
+    .await
+    .map_or_else(
+        || {
+            // Notification — no response body
+            axum::response::Response::builder()
+                .status(StatusCode::ACCEPTED)
+                .header("Mcp-Session-Id", &session_id)
+                .body(axum::body::Body::empty())
+                .unwrap_or_default()
+        },
+        |response| {
+            axum::response::Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "application/json")
+                .header("Mcp-Session-Id", &session_id)
+                .body(axum::body::Body::from(response))
+                .unwrap_or_default()
+        },
+    )
 }
 
 /// Handle GET /mcp/sse — SSE stream for server notifications.
@@ -226,6 +238,8 @@ mod tests {
             service: Arc::new(RwLock::new(service)),
             sessions: Arc::new(SessionManager::new()),
             broadcaster: Arc::new(EventBroadcaster::new()),
+            canvas_state: Arc::new(RwLock::new(CanvasStateSnapshot::new())),
+            app_handle: None,
         };
         (state, dir)
     }
