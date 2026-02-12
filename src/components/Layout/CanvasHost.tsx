@@ -86,7 +86,10 @@ export const CanvasHost: FC<{ className?: string }> = ({ className }) => {
                 return null;
               }
 
-              const ratio = arrangement.ratios?.[index] ?? 50;
+              // Equal-share distribution for 3+ panels to avoid 50% fallback issue
+              const ratio =
+                arrangement.ratios?.[index] ??
+                (arrangement.panels.length >= 3 ? 100 / arrangement.panels.length : 50);
               const width = `${String(ratio)}%`;
 
               return (
@@ -114,7 +117,10 @@ export const CanvasHost: FC<{ className?: string }> = ({ className }) => {
                 return null;
               }
 
-              const ratio = arrangement.ratios?.[index] ?? 50;
+              // Equal-share distribution for 3+ panels to avoid 50% fallback issue
+              const ratio =
+                arrangement.ratios?.[index] ??
+                (arrangement.panels.length >= 3 ? 100 / arrangement.panels.length : 50);
               const height = `${String(ratio)}%`;
 
               return (

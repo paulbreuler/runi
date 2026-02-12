@@ -1032,4 +1032,111 @@ describe('useCanvasStore', () => {
       expect(context?.layouts).toEqual([]);
     });
   });
+
+  describe('activate option', () => {
+    it('should activate new tab by default when using openRequestTab', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let tab2 = '';
+      act(() => {
+        result.current.openRequestTab({ label: 'Tab 1' });
+        tab2 = result.current.openRequestTab({ label: 'Tab 2' });
+      });
+
+      // Tab 2 should be active (default behavior)
+      expect(result.current.activeContextId).toBe(tab2);
+    });
+
+    it('should not activate new tab when activate=false in openRequestTab', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let tab1 = '';
+      let tab2 = '';
+      act(() => {
+        tab1 = result.current.openRequestTab({ label: 'Tab 1' });
+        tab2 = result.current.openRequestTab({ label: 'Tab 2' }, { activate: false });
+      });
+
+      // Tab 1 should still be active
+      expect(result.current.activeContextId).toBe(tab1);
+
+      // But tab 2 should exist in context order
+      expect(result.current.contextOrder).toContain(tab2);
+      expect(result.current.contexts.has(tab2)).toBe(true);
+    });
+
+    it('should activate adjacent tab by default when closing active tab', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let tab2 = '';
+      let tab3 = '';
+      act(() => {
+        result.current.openRequestTab({ label: 'Tab 1' });
+        tab2 = result.current.openRequestTab({ label: 'Tab 2' });
+        tab3 = result.current.openRequestTab({ label: 'Tab 3' });
+      });
+
+      // Tab 3 is currently active
+      expect(result.current.activeContextId).toBe(tab3);
+
+      act(() => {
+        result.current.closeContext(tab3);
+      });
+
+      // Tab 2 should be activated (adjacent)
+      expect(result.current.activeContextId).toBe(tab2);
+    });
+
+    it('should not activate adjacent tab when activate=false in closeContext', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let tab1 = '';
+      let tab3 = '';
+      act(() => {
+        tab1 = result.current.openRequestTab({ label: 'Tab 1' });
+        result.current.openRequestTab({ label: 'Tab 2' });
+        tab3 = result.current.openRequestTab({ label: 'Tab 3' });
+      });
+
+      // Switch to tab1
+      act(() => {
+        result.current.setActiveContext(tab1);
+      });
+
+      expect(result.current.activeContextId).toBe(tab1);
+
+      // Close tab3 with activate=false
+      act(() => {
+        result.current.closeContext(tab3, { activate: false });
+      });
+
+      // Tab 1 should still be active (not switched)
+      expect(result.current.activeContextId).toBe(tab1);
+
+      // Tab 3 should be gone
+      expect(result.current.contexts.has(tab3)).toBe(false);
+    });
+
+    it('should activate adjacent tab when closing active tab even with activate=false (edge case)', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      let tab1 = '';
+      let tab2 = '';
+      act(() => {
+        tab1 = result.current.openRequestTab({ label: 'Tab 1' });
+        tab2 = result.current.openRequestTab({ label: 'Tab 2' });
+      });
+
+      // Tab 2 is currently active
+      expect(result.current.activeContextId).toBe(tab2);
+
+      // Close active tab with activate=false - should still activate adjacent
+      act(() => {
+        result.current.closeContext(tab2, { activate: false });
+      });
+
+      // Tab 1 should be activated (can't leave user on blank view)
+      expect(result.current.activeContextId).toBe(tab1);
+    });
+  });
 });

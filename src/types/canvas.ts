@@ -5,6 +5,7 @@
  * context descriptors, layouts, arrangements, and panel/toolbar props.
  */
 
+import type React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { HttpResponse } from './http';
 

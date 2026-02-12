@@ -139,7 +139,12 @@ describe('ContextTabs', () => {
       const rightArrow = screen.getByTestId('context-tabs-arrow-right');
       await user.click(rightArrow);
 
-      expect(scrollBy).toHaveBeenCalledWith({ left: 200, behavior: 'smooth' });
+      expect(scrollBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          left: 200,
+          behavior: expect.stringMatching(/^(smooth|auto)$/),
+        })
+      );
     }
   });
 

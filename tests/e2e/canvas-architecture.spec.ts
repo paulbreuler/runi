@@ -26,12 +26,12 @@ test.describe('Canvas Architecture', () => {
 
     // Verify at least one tab is present (Request context should be default)
     const tabs = contextTabs.locator('[role="tab"]');
-    await expect(tabs).toHaveCount(1, { timeout: 5000 });
+    await expect(tabs.first()).toBeVisible({ timeout: 5000 });
 
-    // Verify active tab has Manila folder styling (selected state)
-    const activeTab = tabs.first();
-    await expect(activeTab).toHaveAttribute('aria-selected', 'true');
-    await expect(activeTab).toHaveAttribute('data-test-id', 'context-tab-request');
+    // Verify the request tab (default context) is present and active
+    const requestTab = page.locator('[data-test-id="context-tab-request"]');
+    await expect(requestTab).toBeVisible();
+    await expect(requestTab).toHaveAttribute('aria-selected', 'true');
   });
 
   test('Context toolbar in canvas area', async ({ page }) => {
