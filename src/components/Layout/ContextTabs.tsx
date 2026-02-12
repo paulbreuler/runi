@@ -21,6 +21,7 @@ import {
   globalEventBus,
   type ContextActivatePayload,
   type ContextClosePayload,
+  type RequestOpenPayload,
 } from '@/events/bus';
 
 interface ContextTabsProps {
@@ -102,16 +103,24 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   };
 
   const handleTabChange = (contextId: string): void => {
-    globalEventBus.emit<ContextActivatePayload>('context.activate', { contextId });
+    globalEventBus.emit<ContextActivatePayload>('context.activate', {
+      contextId,
+      actor: 'human',
+    });
   };
 
   const handleCloseTab = (e: React.MouseEvent, contextId: string): void => {
     e.stopPropagation(); // Prevent tab activation
-    globalEventBus.emit<ContextClosePayload>('context.close', { contextId });
+    globalEventBus.emit<ContextClosePayload>('context.close', {
+      contextId,
+      actor: 'human',
+    });
   };
 
   const handleNewTab = (): void => {
-    globalEventBus.emit('request.open', {});
+    globalEventBus.emit<RequestOpenPayload>('request.open', {
+      actor: 'human',
+    });
   };
 
   // Keep the active tab visible when selection changes (including when a

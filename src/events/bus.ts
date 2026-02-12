@@ -104,6 +104,7 @@ export interface CollectionRequestSelectedPayload {
  */
 export interface ContextActivatePayload {
   contextId: string;
+  actor: 'human' | 'ai';
 }
 
 /**
@@ -111,6 +112,14 @@ export interface ContextActivatePayload {
  */
 export interface ContextClosePayload {
   contextId: string;
+  actor: 'human' | 'ai';
+}
+
+/**
+ * Payload for request.open event.
+ */
+export interface RequestOpenPayload {
+  actor: 'human' | 'ai';
 }
 
 /**
