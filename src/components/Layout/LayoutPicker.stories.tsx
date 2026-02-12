@@ -4,7 +4,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { within, expect, userEvent } from 'storybook/test';
+import { within, expect, userEvent, waitFor } from 'storybook/test';
 import { LayoutPicker } from './LayoutPicker';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { requestContextDescriptor } from '@/contexts/RequestContext';
@@ -45,6 +45,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
+    // Popover content is portaled to document body
+    const body = within(canvasElement.ownerDocument.body);
 
     await step('Open layout picker', async () => {
       const trigger = canvas.getByTestId('layout-picker-trigger');
@@ -52,13 +54,16 @@ export const Default: Story = {
     });
 
     await step('Verify sections', async () => {
-      const content = canvas.getByTestId('layout-picker-content');
-      await expect(content).toBeInTheDocument();
+      // Wait for popover to render in portal
+      await waitFor(async () => {
+        const content = body.getByTestId('layout-picker-content');
+        await expect(content).toBeInTheDocument();
+      });
     });
 
     await step('Select layout', async () => {
       // Side by Side is a generic layout
-      const option = canvas.getByTestId('layout-option-side-by-side');
+      const option = body.getByTestId('layout-option-side-by-side');
       await userEvent.click(option);
 
       // Verify picker closed and layout changed
