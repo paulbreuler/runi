@@ -4,6 +4,7 @@
  */
 
 import { useEffect, type RefObject } from 'react';
+import { focusWithVisibility } from '@/utils/focusVisibility';
 
 /**
  * Hook to trap focus within a container element.
@@ -46,13 +47,17 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active
         // Shift + Tab: wrap from first to last
         if (document.activeElement === firstElement) {
           e.preventDefault();
-          lastElement?.focus();
+          if (lastElement !== undefined) {
+            focusWithVisibility(lastElement);
+          }
         }
       } else {
         // Tab: wrap from last to first
         if (document.activeElement === lastElement) {
           e.preventDefault();
-          firstElement?.focus();
+          if (firstElement !== undefined) {
+            focusWithVisibility(firstElement);
+          }
         }
       }
     };

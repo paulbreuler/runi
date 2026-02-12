@@ -17,6 +17,11 @@ import { useCanvasStore } from '@/stores/useCanvasStore';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import type { RequestTabState } from '@/types/canvas';
+import {
+  globalEventBus,
+  type ContextActivatePayload,
+  type ContextClosePayload,
+} from '@/events/bus';
 
 interface ContextTabsProps {
   /** Sidebar width (MotionValue) for aligning tabs with canvas area */
@@ -40,15 +45,7 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const {
-    contexts,
-    contextOrder,
-    activeContextId,
-    contextState,
-    setActiveContext,
-    closeContext,
-    openRequestTab,
-  } = useCanvasStore();
+  const { contexts, contextOrder, activeContextId, contextState } = useCanvasStore();
 
   // Create a fallback MotionValue if sidebarWidth is undefined
   const fallbackWidth = useMotionValue(0);
@@ -97,25 +94,51 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   }, [updateScrollState]);
 
   const handleScrollLeft = (): void => {
-    scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' });
+    scrollRef.current?.scrollBy({ left: -200, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   };
 
   const handleScrollRight = (): void => {
-    scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' });
+    scrollRef.current?.scrollBy({ left: 200, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   };
 
   const handleTabChange = (contextId: string): void => {
-    setActiveContext(contextId);
+    globalEventBus.emit<ContextActivatePayload>('context.activate', { contextId });
   };
 
   const handleCloseTab = (e: React.MouseEvent, contextId: string): void => {
     e.stopPropagation(); // Prevent tab activation
-    closeContext(contextId);
+    globalEventBus.emit<ContextClosePayload>('context.close', { contextId });
   };
 
   const handleNewTab = (): void => {
-    openRequestTab();
+    globalEventBus.emit('request.open', {});
   };
+
+  // Keep the active tab visible when selection changes (including when a
+  // sidebar request maps to an already-open tab off-screen).
+  useEffect((): void => {
+    const container = scrollRef.current;
+    if (container === null || activeContextId === null) {
+      return;
+    }
+
+    const expectedTestId = `context-tab-${activeContextId}`;
+    const tabElement = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-test-id^="context-tab-"]')
+    ).find((element) => element.dataset.testId === expectedTestId);
+
+    if (tabElement === undefined) {
+      return;
+    }
+
+    if (typeof tabElement.scrollIntoView === 'function') {
+      tabElement.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
+    }
+  }, [activeContextId, contextOrder, prefersReducedMotion]);
 
   // Return null if no contexts registered
   if (contextOrder.length === 0) {

@@ -1,5 +1,5 @@
 import { type FC, type ReactNode } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
 
 interface CanvasPanelProps {
@@ -21,12 +21,15 @@ export const CanvasPanel: FC<CanvasPanelProps> = ({
   height,
   className,
 }) => {
+  const prefersReducedMotion = useReducedMotion() === true;
+
   return (
     <motion.div
       data-test-id={`canvas-panel-${panelId}`}
       className={cn('overflow-hidden relative', className)}
       style={{ minWidth, minHeight, width, height }}
-      layout
+      layout={!prefersReducedMotion}
+      transition={prefersReducedMotion ? { duration: 0 } : undefined}
     >
       {children}
     </motion.div>
