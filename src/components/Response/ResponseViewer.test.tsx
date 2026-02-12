@@ -33,12 +33,21 @@ describe('ResponseViewer', () => {
     render(
       <ResponseViewer
         response={mockResponse}
-        vigilanceSlot={<VigilanceMonitor visible={true} active={false} label="Vigilance Active" />}
+        vigilanceSlot={
+          <VigilanceMonitor
+            visible={true}
+            active={false}
+            status={200}
+            statusText="OK"
+            label="Analyzing..."
+          />
+        }
       />
     );
 
     expect(screen.getByTestId('vigilance-monitor')).toBeInTheDocument();
-    expect(screen.getByText('Vigilance Active')).toBeInTheDocument();
+    expect(screen.getByText('200 OK')).toBeInTheDocument();
+    expect(screen.getByText('Analyzing...')).toBeInTheDocument();
   });
 
   it('switches to timing tab when onTimingClick is triggered in VigilanceMonitor', async () => {

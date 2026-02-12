@@ -24,13 +24,6 @@ const ResponseViewerPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
   const { response, isLoading } = useRequestStore();
   const [activeTab, setActiveTab] = useState<TabId>('body');
 
-  let label = 'Vigilance Ready';
-  if (isLoading) {
-    label = 'Analyzing Response...';
-  } else if (response !== null) {
-    label = 'Vigilance Active';
-  }
-
   return (
     <ResponseViewer
       response={response}
@@ -40,7 +33,7 @@ const ResponseViewerPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
         <VigilanceMonitor
           visible={true}
           active={isLoading}
-          label={label}
+          label={isLoading ? 'Executing...' : undefined}
           status={response?.status}
           statusText={response?.status_text}
           size={response?.body.length}

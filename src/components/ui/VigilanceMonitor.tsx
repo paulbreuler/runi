@@ -130,7 +130,7 @@ export const VigilanceMonitor = ({
                   <button
                     type="button"
                     onClick={onTimingClick}
-                    className="hover:text-text-primary transition-colors cursor-pointer"
+                    className="hover:text-text-primary transition-colors cursor-pointer outline-none focus-visible:text-text-primary"
                     title="View timing waterfall"
                   >
                     {duration}ms
