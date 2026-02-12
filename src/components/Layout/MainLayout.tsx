@@ -448,7 +448,6 @@ export const MainLayout = ({
         >
           {headerContent}
         </TitleBar>
-        <TabBar sidebarWidth={sidebarVisible ? sidebarWidthSpring : undefined} />
       </div>
       <div className="relative flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Settings overlay: contained between title bar and status bar */}
@@ -557,6 +556,9 @@ export const MainLayout = ({
         </AnimatePresence>
 
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden min-w-0">
+          {/* Tabs for open contexts */}
+          <TabBar />
+
           {/* Context toolbar - renders toolbar for active context */}
           <ContextToolbar />
 

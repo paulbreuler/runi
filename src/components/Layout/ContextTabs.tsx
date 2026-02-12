@@ -5,13 +5,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
-import {
-  motion,
-  useReducedMotion,
-  useTransform,
-  useMotionValue,
-  type MotionValue,
-} from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Tabs } from '@base-ui/react/tabs';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { cn } from '@/utils/cn';
@@ -24,11 +18,6 @@ import {
   type RequestOpenPayload,
 } from '@/events/bus';
 
-interface ContextTabsProps {
-  /** Sidebar width (MotionValue) for aligning tabs with canvas area */
-  sidebarWidth?: MotionValue<number>;
-}
-
 /**
  * ContextTabs - Manila folder tabs for TitleBar
  *
@@ -37,22 +26,14 @@ interface ContextTabsProps {
  * - Horizontal scroll with arrow buttons on overflow
  * - Keyboard navigation via BaseTabsList
  * - Trackpad scroll support
- * - Aligns with canvas area when sidebar is visible (smooth spring animation)
  */
-export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Element | null => {
+export const ContextTabs = (): React.JSX.Element | null => {
   const prefersReducedMotion = useReducedMotion() === true;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const { contexts, templates, contextOrder, activeContextId, contextState } = useCanvasStore();
-
-  // Create a fallback MotionValue if sidebarWidth is undefined
-  const fallbackWidth = useMotionValue(0);
-  const effectiveWidth = sidebarWidth ?? fallbackWidth;
-
-  // Align with canvas area
-  const tabsMarginLeft = useTransform(effectiveWidth, (width) => width);
 
   // Update scroll state
   const updateScrollState = useCallback((): void => {
@@ -170,10 +151,7 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
     .filter((tab): tab is NonNullable<typeof tab> => tab !== null);
 
   return (
-    <motion.div
-      className="flex items-end gap-1 h-full min-w-0 flex-1"
-      style={{ marginLeft: tabsMarginLeft }}
-    >
+    <motion.div className="flex items-end gap-1 h-full min-w-0 flex-1">
       {/* Arrow buttons - both on the left for ergonomics, centered to tab height */}
       <div className="flex items-center h-[25px] shrink-0 gap-0.5 px-1">
         <motion.button
