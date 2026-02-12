@@ -1037,10 +1037,9 @@ describe('useCanvasStore', () => {
     it('should activate new tab by default when using openRequestTab', () => {
       const { result } = renderHook(() => useCanvasStore());
 
-      let _tab1 = '';
       let tab2 = '';
       act(() => {
-        _tab1 = result.current.openRequestTab({ label: 'Tab 1' });
+        result.current.openRequestTab({ label: 'Tab 1' });
         tab2 = result.current.openRequestTab({ label: 'Tab 2' });
       });
 
@@ -1069,11 +1068,10 @@ describe('useCanvasStore', () => {
     it('should activate adjacent tab by default when closing active tab', () => {
       const { result } = renderHook(() => useCanvasStore());
 
-      let _tab1 = '';
       let tab2 = '';
       let tab3 = '';
       act(() => {
-        _tab1 = result.current.openRequestTab({ label: 'Tab 1' });
+        result.current.openRequestTab({ label: 'Tab 1' });
         tab2 = result.current.openRequestTab({ label: 'Tab 2' });
         tab3 = result.current.openRequestTab({ label: 'Tab 3' });
       });
@@ -1093,11 +1091,10 @@ describe('useCanvasStore', () => {
       const { result } = renderHook(() => useCanvasStore());
 
       let tab1 = '';
-      let _tab2 = '';
       let tab3 = '';
       act(() => {
         tab1 = result.current.openRequestTab({ label: 'Tab 1' });
-        _tab2 = result.current.openRequestTab({ label: 'Tab 2' });
+        result.current.openRequestTab({ label: 'Tab 2' });
         tab3 = result.current.openRequestTab({ label: 'Tab 3' });
       });
 

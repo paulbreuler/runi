@@ -421,7 +421,7 @@ describe('useCanvasStateSync', () => {
 
       // Open two tabs
       const tab1 = useCanvasStore.getState().openRequestTab({ label: 'Tab 1' });
-      const _tab2 = useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
+      const tab2 = useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
 
       // tab2 is currently active
       expect(useCanvasStore.getState().activeContextId).toBe(tab2);
@@ -463,7 +463,7 @@ describe('useCanvasStateSync', () => {
 
       // Open two tabs
       const tab1 = useCanvasStore.getState().openRequestTab({ label: 'Tab 1' });
-      const _tab2 = useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
+      const tab2 = useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
 
       // tab2 is currently active
       expect(useCanvasStore.getState().activeContextId).toBe(tab2);
@@ -611,7 +611,7 @@ describe('useCanvasStateSync', () => {
 
       // Open two tabs
       const tab1 = useCanvasStore.getState().openRequestTab({ label: 'Tab 1' });
-      const _tab2 = useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
+      const tab2 = useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
 
       // tab2 is currently active
       expect(useCanvasStore.getState().activeContextId).toBe(tab2);
