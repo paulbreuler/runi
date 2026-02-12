@@ -3,5 +3,5 @@
  * SPDX-License-Identifier: MIT
  */
 
-export { requestContextDescriptor } from './descriptor.tsx';
+export { requestContextDescriptor } from './descriptor';
 export { RequestCanvasToolbar } from './RequestCanvasToolbar';

@@ -13,6 +13,13 @@ import type { CanvasContextDescriptor } from '@/types/canvas';
 describe('ContextTabs', () => {
   beforeEach(() => {
     useCanvasStore.getState().reset();
+    if (typeof HTMLElement.prototype.scrollIntoView !== 'function') {
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+        value: vi.fn(),
+        writable: true,
+        configurable: true,
+      });
+    }
   });
 
   it('renders tabs from context order', () => {
@@ -239,6 +246,50 @@ describe('ContextTabs', () => {
     await user.click(tab2);
 
     expect(useCanvasStore.getState().activeContextId).toBe('context-2');
+  });
+
+  it('scrolls active tab into view when active context changes', async () => {
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+    const scrollIntoViewSpy = vi
+      .spyOn(HTMLElement.prototype, 'scrollIntoView')
+      .mockImplementation(() => undefined);
+
+    registerContext({
+      id: 'context-1',
+      label: 'Context 1',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    registerContext({
+      id: 'context-2',
+      label: 'Context 2',
+      order: 1,
+      panels: {},
+      layouts: [],
+    });
+
+    render(<ContextTabs />);
+
+    // Clear mount-time calls before triggering the explicit context change.
+    scrollIntoViewSpy.mockClear();
+
+    setActiveContext('context-2');
+
+    await waitFor(() => {
+      expect(scrollIntoViewSpy).toHaveBeenCalled();
+      const lastCallIndex = scrollIntoViewSpy.mock.calls.length - 1;
+      const call = scrollIntoViewSpy.mock.calls[lastCallIndex]?.[0] as
+        | ScrollIntoViewOptions
+        | undefined;
+      expect(call).toMatchObject({
+        block: 'nearest',
+        inline: 'nearest',
+      });
+      expect(['auto', 'smooth']).toContain(call?.behavior ?? 'auto');
+    });
+
+    scrollIntoViewSpy.mockRestore();
   });
 
   it('returns null when no contexts registered', () => {
