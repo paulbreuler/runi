@@ -1,6 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useCanvasPopout } from '@/hooks/useCanvasPopout';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { LayoutPicker } from './LayoutPicker';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
@@ -12,6 +13,7 @@ interface ContextToolbarProps {
 export const ContextToolbar = ({ className }: ContextToolbarProps): React.JSX.Element | null => {
   const { activeContextId, contexts } = useCanvasStore();
   const { openPopout, isSupported } = useCanvasPopout();
+  const { enabled: popoutEnabled } = useFeatureFlag('canvas', 'popout');
 
   if (activeContextId === null) {
     return null;
@@ -42,7 +44,7 @@ export const ContextToolbar = ({ className }: ContextToolbarProps): React.JSX.El
       {/* Layout picker + popout */}
       <div className="flex items-center gap-1 shrink-0">
         <LayoutPicker />
-        {isSupported && (
+        {popoutEnabled && isSupported && context.popoutEnabled === true && (
           <button
             type="button"
             onClick={() => {

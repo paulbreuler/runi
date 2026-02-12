@@ -24,6 +24,12 @@ vi.mock('@/hooks/useContextSync', () => ({
   useContextSync: vi.fn(),
 }));
 
+// Mock useCanvasStateSync — it's tested in its own test file.
+// Mocking prevents Tauri API calls in JSDOM environment.
+vi.mock('@/hooks/useCanvasStateSync', () => ({
+  useCanvasStateSync: vi.fn(),
+}));
+
 // Mock event bus (needed for toast emission tests)
 vi.mock('@/events/bus', async () => {
   const actual = await vi.importActual('@/events/bus');

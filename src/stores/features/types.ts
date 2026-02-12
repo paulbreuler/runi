@@ -29,6 +29,7 @@ export interface CanvasFlags {
   minimap: boolean;
   connectionLines: boolean;
   snapToGrid: boolean;
+  popout: boolean;
 }
 
 export interface ComprehensionFlags {

@@ -46,8 +46,7 @@ Links to relevant resources.
 
 Sorted chronologically (newest first).
 
-| ADR | Title | Status | Date |
-| --- | ----- | ------ | ---- |
+_No ADRs yet. Add entries here as ADRs are created._
 
 ## Creating a New ADR
 

@@ -1,18 +1,16 @@
 import { type FC } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useCanvasPopout } from '@/hooks/useCanvasPopout';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { LayoutPicker } from './LayoutPicker';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
 export const ContextBar: FC<{ className?: string }> = ({ className }) => {
   const { activeContextId, contexts, contextOrder, setActiveContext } = useCanvasStore();
-
-  const handlePopout = (): void => {
-    // Placeholder for Phase 5
-    // eslint-disable-next-line no-console
-    console.log('Popout requested');
-  };
+  const { openPopout, isSupported } = useCanvasPopout();
+  const { enabled: popoutEnabled } = useFeatureFlag('canvas', 'popout');
 
   return (
     <div
@@ -71,20 +69,24 @@ export const ContextBar: FC<{ className?: string }> = ({ className }) => {
       <div className="flex items-center gap-2">
         <LayoutPicker />
 
-        <button
-          type="button"
-          onClick={handlePopout}
-          className={cn(
-            'flex items-center justify-center w-7 h-7 rounded',
-            'text-text-secondary hover:text-text-primary hover:bg-bg-raised',
-            'transition-colors',
-            focusRingClasses
-          )}
-          data-test-id="popout-button"
-          aria-label="Open in new window"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </button>
+        {popoutEnabled && isSupported && activeContextId !== null && (
+          <button
+            type="button"
+            onClick={() => {
+              openPopout(activeContextId);
+            }}
+            className={cn(
+              'flex items-center justify-center w-7 h-7 rounded',
+              'text-text-secondary hover:text-text-primary hover:bg-bg-raised',
+              'transition-colors',
+              focusRingClasses
+            )}
+            data-test-id="popout-button"
+            aria-label="Open in new window"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );

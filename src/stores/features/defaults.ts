@@ -21,6 +21,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
     minimap: false,
     connectionLines: false,
     snapToGrid: false,
+    popout: false,
   },
   comprehension: {
     driftDetection: false,

@@ -97,7 +97,11 @@ test.describe('Storybook Visual Regression', () => {
     await expect(iframe.locator('body')).toHaveScreenshot('code-editor-search-highlight.png');
   });
 
-  // TODO: Fix flaky visual test - sidebar timing issues in CI
+  // FIXME: Skipped due to CI flakiness - sidebar timing issues
+  // This test is quarantined until we can make it deterministic by waiting for
+  // a stable "ready" signal before taking the screenshot (e.g., wait for sidebar
+  // animations to complete, or use a test-specific flag to disable animations).
+  // Tracking: Consider adding a data-test-ready attribute when layout is stable.
   test.skip('MainLayout full composition', async ({ page }) => {
     await page.goto('/?path=/story/layout-mainlayout--playground');
     const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
