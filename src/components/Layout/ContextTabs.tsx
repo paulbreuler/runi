@@ -72,6 +72,11 @@ export const ContextTabs = (): React.JSX.Element | null => {
     };
   }, [updateScrollState]);
 
+  // Recalculate scroll state when tabs change (scrollWidth can increase without resize)
+  useEffect(() => {
+    updateScrollState();
+  }, [contextOrder.length, updateScrollState]);
+
   const handleScrollLeft = (): void => {
     scrollRef.current?.scrollBy({ left: -200, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   };

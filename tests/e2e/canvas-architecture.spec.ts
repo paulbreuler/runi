@@ -24,12 +24,12 @@ test.describe('Canvas Architecture', () => {
     const contextTabs = page.locator('[data-test-id="context-tabs"]');
     await expect(contextTabs).toBeVisible();
 
-    // Verify at least one tab is present (Request context should be default)
+    // Verify at least one tab is present (default request-{uuid} tab)
     const tabs = contextTabs.locator('[role="tab"]');
     await expect(tabs.first()).toBeVisible({ timeout: 5000 });
 
-    // Verify the request tab (default context) is present and active
-    const requestTab = page.locator('[data-test-id="context-tab-request"]');
+    // Verify a dynamic request tab is present and active (request-{uuid} format)
+    const requestTab = page.locator('[data-test-id^="context-tab-request-"]').first();
     await expect(requestTab).toBeVisible();
     await expect(requestTab).toHaveAttribute('aria-selected', 'true');
   });
@@ -104,8 +104,8 @@ test.describe('Canvas Architecture', () => {
     // Skipped: Keyboard shortcuts (Ctrl+Shift+] and Ctrl+Shift+[) do not work
     // reliably in E2E tests due to browser focus and keyboard event handling.
     // TODO: Test keyboard shortcuts via unit tests or manual verification
-    // Verify initial state (Request tab should be active)
-    const requestTab = page.locator('[data-test-id="context-tab-request"]');
+    // Verify initial state (dynamic request tab should be active)
+    const requestTab = page.locator('[data-test-id^="context-tab-request-"]').first();
     await expect(requestTab).toHaveAttribute('aria-selected', 'true');
 
     // Note: Keyboard shortcuts for tab cycling (Ctrl+Shift+] and Ctrl+Shift+[)
