@@ -218,9 +218,9 @@ export const TruncatedWithStreamBadge: Story = {
 };
 
 export const CollectionSelectionOpensCanvasContexts: Story = {
-  render: () => <CanvasSyncHarness />,
+  render: (): React.JSX.Element => <CanvasSyncHarness />,
   decorators: [
-    (Story) => {
+    (Story): React.JSX.Element => {
       useEffect(() => {
         const canvasStore = useCanvasStore.getState();
         canvasStore.reset();
@@ -245,7 +245,7 @@ export const CollectionSelectionOpensCanvasContexts: Story = {
       );
     },
   ],
-  play: async ({ canvasElement, step }) => {
+  play: async ({ canvasElement, step }): Promise<void> => {
     const canvas = within(canvasElement);
     const initialRequestTabCount = useCanvasStore
       .getState()
