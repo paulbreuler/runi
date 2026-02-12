@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: MIT
  */
 
+import { useState } from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
-import { ResponseViewer } from './ResponseViewer';
+import { ResponseViewer, type TabId } from './ResponseViewer';
 import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import type { HttpResponse } from '@/types/http';
 
@@ -38,6 +39,43 @@ describe('ResponseViewer', () => {
 
     expect(screen.getByTestId('vigilance-monitor')).toBeInTheDocument();
     expect(screen.getByText('Vigilance Active')).toBeInTheDocument();
+  });
+
+  it('switches to timing tab when onTimingClick is triggered in VigilanceMonitor', async () => {
+    const user = userEvent.setup();
+    const TestWrapper = (): React.JSX.Element => {
+      const [activeTab, setActiveTab] = useState<TabId>('body');
+      return (
+        <ResponseViewer
+          response={mockResponse}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          vigilanceSlot={
+            <VigilanceMonitor
+              visible={true}
+              active={false}
+              duration={150}
+              onTimingClick={() => {
+                setActiveTab('timing');
+              }}
+            />
+          }
+        />
+      );
+    };
+
+    render(<TestWrapper />);
+
+    // Initial tab is Body
+    expect(screen.getByTestId('response-tab-body')).toHaveClass('font-medium');
+
+    // Click timing in monitor
+    const timingButton = screen.getByText('150ms');
+    await user.click(timingButton);
+
+    // Should switch to timing tab
+    expect(screen.getByTestId('response-tab-timing')).toHaveClass('font-medium');
+    expect(screen.getByTestId('response-timing-panel')).toBeInTheDocument();
   });
 
   it('renders response viewer with tabs', () => {

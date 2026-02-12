@@ -245,7 +245,7 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
                       isRequestTab ? 'px-7' : 'px-3', // Balanced padding for request tabs to keep text centered
                       isActive
                         ? 'bg-bg-app rounded-t-lg text-text-primary border-x border-t border-border-subtle shadow-[0_-1px_3px_rgba(0,0,0,0.1)] z-30'
-                        : 'text-text-secondary hover:text-text-primary bg-transparent border-r border-border-subtle/10',
+                        : 'text-text-secondary hover:text-text-primary bg-bg-app/40 border-r border-border-subtle/10',
                       isActive &&
                         'after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[1px] after:bg-bg-app after:z-40'
                     )}

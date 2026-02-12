@@ -12,6 +12,9 @@ import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
 import { useRequestStore } from '@/stores/useRequestStore';
 
+import { useState } from 'react';
+import type { TabId } from '@/components/Response/ResponseViewer';
+
 // Wrapper components to adapt existing components to CanvasPanelProps
 const RequestBuilderPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
   return <RequestBuilder />;
@@ -19,6 +22,7 @@ const RequestBuilderPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
 
 const ResponseViewerPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
   const { response, isLoading } = useRequestStore();
+  const [activeTab, setActiveTab] = useState<TabId>('body');
 
   let label = 'Vigilance Ready';
   if (isLoading) {
@@ -30,7 +34,22 @@ const ResponseViewerPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
   return (
     <ResponseViewer
       response={response}
-      vigilanceSlot={<VigilanceMonitor visible={true} active={isLoading} label={label} />}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      vigilanceSlot={
+        <VigilanceMonitor
+          visible={true}
+          active={isLoading}
+          label={label}
+          status={response?.status}
+          statusText={response?.status_text}
+          size={response?.body.length}
+          duration={response?.timing.total_ms}
+          onTimingClick={() => {
+            setActiveTab('timing');
+          }}
+        />
+      }
     />
   );
 };
