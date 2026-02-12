@@ -47,8 +47,8 @@ describe('ContextTabs', () => {
 
     expect(screen.getByTestId('context-tab-test-1')).toBeInTheDocument();
     expect(screen.getByTestId('context-tab-test-2')).toBeInTheDocument();
-    expect(screen.getByText('Context One')).toBeInTheDocument();
-    expect(screen.getByText('Context Two')).toBeInTheDocument();
+    expect(screen.getByTestId('context-tab-test-1')).toHaveTextContent('Context One');
+    expect(screen.getByTestId('context-tab-test-2')).toHaveTextContent('Context Two');
   });
 
   it('shows active tab with Manila folder styling', () => {
