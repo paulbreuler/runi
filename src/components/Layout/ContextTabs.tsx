@@ -46,7 +46,7 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const { contexts, contextOrder, activeContextId, contextState } = useCanvasStore();
+  const { contexts, templates, contextOrder, activeContextId, contextState } = useCanvasStore();
 
   // Create a fallback MotionValue if sidebarWidth is undefined
   const fallbackWidth = useMotionValue(0);
@@ -160,6 +160,10 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
       if (context === undefined) {
         return null;
       }
+      // Belt-and-suspenders: filter out templates (shouldn't appear in contextOrder, but guard anyway)
+      if (context.contextType !== undefined && templates.has(context.id)) {
+        return null;
+      }
       return {
         value: id,
         label: context.label,
@@ -170,29 +174,48 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
 
   return (
     <motion.div
-      className="flex items-center gap-2 h-full min-w-0 flex-1"
+      className="flex items-center gap-1 h-full min-w-0 flex-1"
       style={{ marginLeft: tabsMarginLeft }}
     >
-      {/* Arrow buttons */}
-      {hasOverflow && canScrollLeft && (
-        <div className="flex items-center h-full shrink-0">
-          <motion.button
-            type="button"
-            onClick={handleScrollLeft}
-            className={cn(
-              focusRingClasses,
-              'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors'
-            )}
-            aria-label="Scroll tabs left"
-            data-test-id="context-tabs-arrow-left"
-            whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
-            whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
-          >
-            <span className="sr-only">Scroll left</span>
-            <ChevronLeft size={14} className="text-text-secondary" />
-          </motion.button>
-        </div>
-      )}
+      {/* Arrow buttons - both on the left for ergonomics */}
+      <div className="flex items-center h-full shrink-0 gap-0.5 px-1">
+        {hasOverflow && (
+          <>
+            <motion.button
+              type="button"
+              onClick={handleScrollLeft}
+              disabled={!canScrollLeft}
+              className={cn(
+                focusRingClasses,
+                'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
+              )}
+              aria-label="Scroll tabs left"
+              data-test-id="context-tabs-arrow-left"
+              whileHover={prefersReducedMotion || !canScrollLeft ? undefined : { scale: 1.05 }}
+              whileTap={prefersReducedMotion || !canScrollLeft ? undefined : { scale: 0.95 }}
+            >
+              <span className="sr-only">Scroll left</span>
+              <ChevronLeft size={14} className="text-text-secondary" />
+            </motion.button>
+            <motion.button
+              type="button"
+              onClick={handleScrollRight}
+              disabled={!canScrollRight}
+              className={cn(
+                focusRingClasses,
+                'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
+              )}
+              aria-label="Scroll tabs right"
+              data-test-id="context-tabs-arrow-right"
+              whileHover={prefersReducedMotion || !canScrollRight ? undefined : { scale: 1.05 }}
+              whileTap={prefersReducedMotion || !canScrollRight ? undefined : { scale: 0.95 }}
+            >
+              <span className="sr-only">Scroll right</span>
+              <ChevronRight size={14} className="text-text-secondary" />
+            </motion.button>
+          </>
+        )}
+      </div>
 
       {/* Scrollable tabs container */}
       <div
@@ -221,12 +244,12 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
                     }}
                     className={cn(
                       focusRingClasses,
-                      'relative px-4 py-2.5 text-xs font-medium transition-colors mb-[-1px] flex items-center gap-3 rounded-none',
-                      'max-w-[240px] min-w-[120px] h-[calc(100%+1px)]', // Match height to list + overlap
+                      'relative px-3 py-2 text-[11px] font-medium transition-colors mb-[-1px] flex items-center gap-2 rounded-none',
+                      'max-w-[180px] min-w-[80px] h-[calc(100%+1px)]', // Smaller dimensions, match height to list + overlap
                       isActive
-                        ? 'bg-bg-app rounded-t-lg text-text-primary border-x border-t border-border-subtle shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.5)]'
-                        : 'text-text-secondary hover:text-text-primary bg-transparent border-r border-border-subtle/30',
-                      isRequestTab && 'pr-9' // Leave explicit room for the close button
+                        ? 'bg-bg-app rounded-t-lg text-text-primary border-x border-t border-border-subtle shadow-[0_-1px_3px_rgba(0,0,0,0.2)] z-30'
+                        : 'text-text-secondary hover:text-text-primary bg-transparent border-r border-border-subtle/10',
+                      isRequestTab && 'pr-7' // Leave room for the close button
                     )}
                     data-test-id={tab.testId}
                     title={tab.label} // Tooltip shows full name on hover
@@ -243,13 +266,13 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
                       }}
                       className={cn(
                         focusRingClasses,
-                        'absolute right-2 bottom-2.5 opacity-40 hover:opacity-100 transition-opacity rounded p-1 hover:bg-bg-raised/80 z-20',
-                        isActive && 'opacity-60' // More visible when active
+                        'absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity rounded p-0.5 hover:bg-bg-raised/80 z-40',
+                        isActive && 'opacity-0 group-hover:opacity-100' // Hidden by default even when active
                       )}
                       aria-label={`Close ${tab.label}`}
                       data-test-id={`close-tab-${tab.value}`}
                     >
-                      <X size={14} strokeWidth={2.5} className="text-text-primary" />
+                      <X size={12} strokeWidth={2} className="text-text-primary" />
                     </button>
                   )}
                 </div>
@@ -274,26 +297,6 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
           <Plus size={16} />
         </button>
       </div>
-
-      {hasOverflow && canScrollRight && (
-        <div className="flex items-center h-full shrink-0">
-          <motion.button
-            type="button"
-            onClick={handleScrollRight}
-            className={cn(
-              focusRingClasses,
-              'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors'
-            )}
-            aria-label="Scroll tabs right"
-            data-test-id="context-tabs-arrow-right"
-            whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
-            whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
-          >
-            <span className="sr-only">Scroll right</span>
-            <ChevronRight size={14} className="text-text-secondary" />
-          </motion.button>
-        </div>
-      )}
     </motion.div>
   );
 };

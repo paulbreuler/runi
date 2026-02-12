@@ -9,6 +9,8 @@ import userEvent from '@testing-library/user-event';
 import { HomePage } from './index';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { requestContextDescriptor } from '@/contexts/RequestContext/descriptor';
 import { executeRequest } from '@/api/http';
 
 // Mock the stores
@@ -49,6 +51,13 @@ describe('HomePage - Auto-save to history', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Set up canvas store with template and a default request tab
+    // (since useContextSync is mocked, we need to do this manually)
+    const store = useCanvasStore.getState();
+    store.reset();
+    store.registerTemplate(requestContextDescriptor);
+    store.openRequestTab();
 
     // Mock request store
     vi.mocked(useRequestStore).mockImplementation((selector) => {

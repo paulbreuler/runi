@@ -68,6 +68,9 @@ interface CanvasState {
   /** Registered canvas contexts */
   contexts: Map<CanvasContextId, CanvasContextDescriptor>;
 
+  /** Context templates (not visible, used as factories) */
+  templates: Map<CanvasContextId, CanvasContextDescriptor>;
+
   /** Ordered list of context IDs for display */
   contextOrder: CanvasContextId[];
 
@@ -86,6 +89,9 @@ interface CanvasState {
   // Actions
   /** Register a new canvas context */
   registerContext: (descriptor: CanvasContextDescriptor) => void;
+
+  /** Register a template (not visible, used as a factory) */
+  registerTemplate: (descriptor: CanvasContextDescriptor) => void;
 
   /** Unregister a canvas context */
   unregisterContext: (contextId: CanvasContextId) => void;
@@ -138,11 +144,23 @@ export const useCanvasStore = create<CanvasState>()(
     (set, get) => ({
       activeContextId: null,
       contexts: new Map(),
+      templates: new Map(),
       contextOrder: [],
       activeLayoutPerContext: new Map(),
       contextState: new Map(),
       poppedOut: new Set(),
       contextHistory: [],
+
+      registerTemplate: (descriptor): void => {
+        set((state) => {
+          const newTemplates = new Map(state.templates);
+          newTemplates.set(descriptor.id, descriptor);
+
+          return {
+            templates: newTemplates,
+          };
+        });
+      },
 
       registerContext: (descriptor): void => {
         set((state) => {
@@ -377,8 +395,8 @@ export const useCanvasStore = create<CanvasState>()(
           name, // Store name in state
         };
 
-        // Look up the 'request' template context to inherit panels, toolbar, and layouts
-        const templateContext = get().contexts.get('request');
+        // Look up the 'request' template to inherit panels, toolbar, and layouts
+        const templateContext = get().templates.get('request');
         if (templateContext === undefined) {
           console.warn(
             '[canvas] openRequestTab: "request" template not registered. Panels will be empty.'
@@ -407,6 +425,7 @@ export const useCanvasStore = create<CanvasState>()(
           },
           order: 999, // Request tabs come after static contexts
           shortcutHint: undefined,
+          contextType: 'request', // Mark as a request instance
         };
 
         // Register the context and make it active
@@ -578,6 +597,7 @@ export const useCanvasStore = create<CanvasState>()(
         set({
           activeContextId: null,
           contexts: new Map(),
+          templates: new Map(),
           contextOrder: [],
           activeLayoutPerContext: new Map(),
           contextState: new Map(),

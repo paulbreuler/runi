@@ -14,6 +14,7 @@ describe('HomePage - Context Registration Timing (Feature #1)', () => {
     // Reset store before each test
     useCanvasStore.setState({
       contexts: new Map(),
+      templates: new Map(),
       contextOrder: [],
       activeContextId: null,
       contextState: new Map(),
@@ -25,9 +26,12 @@ describe('HomePage - Context Registration Timing (Feature #1)', () => {
 
     const state = useCanvasStore.getState();
 
-    // Template context should be registered
-    expect(state.contexts.has('request')).toBe(true);
-    expect(state.contexts.get('request')).toEqual(requestContextDescriptor);
+    // Template should be registered in templates Map
+    expect(state.templates.has('request')).toBe(true);
+    expect(state.templates.get('request')).toEqual(requestContextDescriptor);
+
+    // Template should NOT be in contexts
+    expect(state.contexts.has('request')).toBe(false);
 
     // Active context should be a request tab (created by useContextSync)
     expect(state.activeContextId).toMatch(/^request-/);
@@ -37,7 +41,7 @@ describe('HomePage - Context Registration Timing (Feature #1)', () => {
     render(<HomePage />);
 
     const state = useCanvasStore.getState();
-    const template = state.contexts.get('request');
+    const template = state.templates.get('request');
 
     // Template should have layouts defined
     expect(template).toBeDefined();

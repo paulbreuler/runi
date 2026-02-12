@@ -25,7 +25,8 @@ import { requestContextDescriptor } from '@/contexts/RequestContext/descriptor';
 export function useContextSync(): void {
   const { setMethod, setUrl, setHeaders, setBody, setResponse } = useRequestStore();
 
-  const { activeContextId, openRequestTab, updateContextState, registerContext } = useCanvasStore();
+  const { activeContextId, openRequestTab, updateContextState, registerTemplate } =
+    useCanvasStore();
 
   // Track previous active context to save outgoing state on switch
   const prevActiveContextIdRef = useRef<string | null>(null);
@@ -40,8 +41,8 @@ export function useContextSync(): void {
 
     if (!hasRequestContexts) {
       // Ensure template is registered before opening default tab
-      if (!state.contexts.has('request')) {
-        registerContext(requestContextDescriptor);
+      if (!state.templates.has('request')) {
+        registerTemplate(requestContextDescriptor);
       }
       openRequestTab();
     } else if (state.activeContextId !== null) {
@@ -205,8 +206,8 @@ export function useContextSync(): void {
         if (existingContextId !== null) {
           store.setActiveContext(existingContextId);
         } else {
-          if (!store.contexts.has('request')) {
-            store.registerContext(requestContextDescriptor);
+          if (!store.templates.has('request')) {
+            store.registerTemplate(requestContextDescriptor);
           }
           store.openRequestTab({
             method: entry.request.method,
@@ -251,8 +252,8 @@ export function useContextSync(): void {
             contextId: existingContextId,
           });
         } else {
-          if (!store.contexts.has('request')) {
-            store.registerContext(requestContextDescriptor);
+          if (!store.templates.has('request')) {
+            store.registerTemplate(requestContextDescriptor);
           }
           const newContextId = store.openRequestTab({
             method: request.method,

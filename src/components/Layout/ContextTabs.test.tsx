@@ -322,11 +322,94 @@ describe('ContextTabs', () => {
     const inactiveTab = screen.getByTestId('context-tab-context-2');
     expect(inactiveTab).toHaveClass('text-text-secondary');
   });
+
+  it('both arrow buttons are on the left side of the scroll container', async () => {
+    const { registerContext } = useCanvasStore.getState();
+
+    // Register many contexts to trigger overflow
+    for (let i = 0; i < 10; i++) {
+      registerContext({
+        id: `context-${i.toString()}`,
+        label: `Context ${i.toString()}`,
+        order: i,
+        panels: {},
+        layouts: [],
+      });
+    }
+
+    const { container } = render(<ContextTabs />);
+    const scrollContainer = screen.getByTestId('context-tabs-scroll');
+
+    // Mock overflow
+    Object.defineProperty(scrollContainer, 'scrollWidth', { value: 1000, configurable: true });
+    Object.defineProperty(scrollContainer, 'clientWidth', { value: 500, configurable: true });
+    Object.defineProperty(scrollContainer, 'scrollLeft', { value: 100, configurable: true });
+
+    await waitFor(() => {
+      scrollContainer.dispatchEvent(new Event('scroll'));
+    });
+
+    await waitFor(() => {
+      const leftArrow = screen.getByTestId('context-tabs-arrow-left');
+      const rightArrow = screen.getByTestId('context-tabs-arrow-right');
+      const scrollArea = screen.getByTestId('context-tabs-scroll');
+
+      // Check DOM order: leftArrow, then rightArrow, then scrollArea
+      const allElements = Array.from(container.querySelectorAll('*'));
+      const leftIndex = allElements.indexOf(leftArrow);
+      const rightIndex = allElements.indexOf(rightArrow);
+      const scrollIndex = allElements.indexOf(scrollArea);
+
+      expect(leftIndex).toBeLessThan(rightIndex);
+      expect(rightIndex).toBeLessThan(scrollIndex);
+    });
+  });
+
+  it('active tab has correct styling and dimensions', () => {
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'active-tab',
+      label: 'Active Tab',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('active-tab');
+
+    render(<ContextTabs />);
+
+    const activeTab = screen.getByTestId('context-tab-active-tab');
+    // Check for smaller dimensions (max-w-[180px] or similar)
+    expect(activeTab).toHaveClass('max-w-[180px]');
+    // Check for "full tab" feel (no bottom border, merges into app)
+    expect(activeTab).toHaveClass('bg-bg-app');
+    expect(activeTab).not.toHaveClass('border-b');
+  });
 });
 
 describe('ContextTabs - Close Button (Feature #2)', () => {
   beforeEach(() => {
     useCanvasStore.getState().reset();
+  });
+
+  it('close button is hidden by default and shows on group hover', async () => {
+    const { registerContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-1',
+      label: 'Request 1',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+
+    render(<ContextTabs />);
+
+    const closeButton = screen.getByTestId('close-tab-request-1');
+    // It should have opacity-0 and group-hover:opacity-100
+    expect(closeButton).toHaveClass('opacity-0');
+    expect(closeButton).toHaveClass('group-hover:opacity-100');
   });
 
   it('close button shows on hover for request tabs', async () => {
@@ -360,8 +443,8 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
 
     // Static context (not a request tab - doesn't start with 'request-')
     registerContext({
-      id: 'request',
-      label: 'Request Template',
+      id: 'blueprint',
+      label: 'Blueprint',
       order: 0,
       panels: {},
       layouts: [],
@@ -370,8 +453,27 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
     render(<ContextTabs />);
 
     // No close button for non-request-tab contexts
-    const closeButton = screen.queryByTestId('close-tab-request');
+    const closeButton = screen.queryByTestId('close-tab-blueprint');
     expect(closeButton).not.toBeInTheDocument();
+  });
+
+  it('templates do not appear as tabs', () => {
+    const { registerTemplate } = useCanvasStore.getState();
+
+    // Register template
+    registerTemplate({
+      id: 'request',
+      label: 'Request Template',
+      contextType: 'request',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+
+    render(<ContextTabs />);
+
+    // Template should not appear as a tab
+    expect(screen.queryByTestId('context-tab-request')).not.toBeInTheDocument();
   });
 
   it('clicking close button closes tab', async () => {

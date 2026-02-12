@@ -105,8 +105,8 @@ describe('useContextSync', () => {
           (id) => id === 'request-stale-1' || id === 'request-stale-2' || id === 'request-stale-3'
         );
         expect(staleEntries).toHaveLength(0);
-        // Should have 2 contexts: 'request' template + 1 fresh tab
-        expect(canvasState.contextOrder.length).toBe(2);
+        // Should have 1 context: 1 fresh tab (template is in templates Map, not contextOrder)
+        expect(canvasState.contextOrder.length).toBe(1);
         // Should have 1 contextState entry (the fresh tab; template has no state)
         expect(canvasState.contextState.size).toBe(1);
         // Verify the remaining state is for a fresh request tab

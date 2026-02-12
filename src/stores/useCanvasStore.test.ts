@@ -834,11 +834,62 @@ describe('useCanvasStore', () => {
     });
   });
 
-  describe('openRequestTab - template inheritance', () => {
-    it('should inherit panels from registered "request" template context', () => {
+  describe('Template Registration', () => {
+    it('should register a template without adding to contextOrder', () => {
       const { result } = renderHook(() => useCanvasStore());
 
-      // First register a template context with panels
+      const templateDescriptor: CanvasContextDescriptor = {
+        id: 'request',
+        label: 'Request Template',
+        icon: Square,
+        panels: { request: TestPanel, response: TestPanel },
+        layouts: [],
+        contextType: 'request',
+        popoutEnabled: false,
+        order: 0,
+      };
+
+      act(() => {
+        result.current.registerTemplate(templateDescriptor);
+      });
+
+      // Should be in templates Map
+      expect(result.current.templates.has('request')).toBe(true);
+      expect(result.current.templates.get('request')).toEqual(templateDescriptor);
+
+      // Should NOT be in contexts or contextOrder
+      expect(result.current.contexts.has('request')).toBe(false);
+      expect(result.current.contextOrder).not.toContain('request');
+    });
+
+    it('should not set template as active context', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      const templateDescriptor: CanvasContextDescriptor = {
+        id: 'request',
+        label: 'Request Template',
+        icon: Square,
+        panels: { request: TestPanel, response: TestPanel },
+        layouts: [],
+        contextType: 'request',
+        popoutEnabled: false,
+        order: 0,
+      };
+
+      act(() => {
+        result.current.registerTemplate(templateDescriptor);
+      });
+
+      // activeContextId should remain null
+      expect(result.current.activeContextId).toBeNull();
+    });
+  });
+
+  describe('openRequestTab - template inheritance', () => {
+    it('should inherit panels from registered "request" template', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      // First register a template with panels
       const templatePanels = {
         request: TestPanel,
         response: TestPanel,
@@ -849,12 +900,13 @@ describe('useCanvasStore', () => {
         icon: Square,
         panels: templatePanels,
         layouts: [],
+        contextType: 'request',
         popoutEnabled: false,
         order: 0,
       };
 
       act(() => {
-        result.current.registerContext(templateContext);
+        result.current.registerTemplate(templateContext);
       });
 
       // Now create a dynamic request tab
@@ -869,9 +921,10 @@ describe('useCanvasStore', () => {
       expect(context?.panels).toEqual(templatePanels);
       expect(context?.panels.request).toBe(TestPanel);
       expect(context?.panels.response).toBe(TestPanel);
+      expect(context?.contextType).toBe('request');
     });
 
-    it('should inherit layouts from registered "request" template context', () => {
+    it('should inherit layouts from registered "request" template', () => {
       const { result } = renderHook(() => useCanvasStore());
 
       // Register template with layouts
@@ -885,12 +938,13 @@ describe('useCanvasStore', () => {
         icon: Square,
         panels: { request: TestPanel, response: TestPanel },
         layouts: templateLayouts as unknown as CanvasContextDescriptor['layouts'],
+        contextType: 'request',
         popoutEnabled: false,
         order: 0,
       };
 
       act(() => {
-        result.current.registerContext(templateContext);
+        result.current.registerTemplate(templateContext);
       });
 
       // Create dynamic request tab
@@ -906,7 +960,7 @@ describe('useCanvasStore', () => {
       expect(context?.layouts).toHaveLength(2);
     });
 
-    it('should inherit toolbar from registered "request" template context', () => {
+    it('should inherit toolbar from registered "request" template', () => {
       const { result } = renderHook(() => useCanvasStore());
 
       // Register template with toolbar
@@ -917,12 +971,13 @@ describe('useCanvasStore', () => {
         panels: { request: TestPanel },
         toolbar: TestPanel,
         layouts: [],
+        contextType: 'request',
         popoutEnabled: false,
         order: 0,
       };
 
       act(() => {
-        result.current.registerContext(templateContext);
+        result.current.registerTemplate(templateContext);
       });
 
       // Create dynamic request tab

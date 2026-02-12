@@ -70,6 +70,8 @@ export interface CanvasContextDescriptor {
   order?: number;
   /** Keyboard shortcut hint */
   shortcutHint?: string;
+  /** Context type (e.g., 'request') to mark this as a template */
+  contextType?: string;
 }
 
 /**

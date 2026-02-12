@@ -11,7 +11,7 @@ import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useContextSync } from '@/hooks/useContextSync';
 
 export const HomePage = (): React.JSX.Element => {
-  const { registerContext, setActiveContext } = useCanvasStore();
+  const { registerTemplate } = useCanvasStore();
   const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
 
   const initialSidebarVisible =
@@ -24,12 +24,11 @@ export const HomePage = (): React.JSX.Element => {
   // CRITICAL: Register template BEFORE useContextSync to prevent empty layouts
   // React effects run in declaration order: template must exist before sync hook runs
   useEffect(() => {
-    // Register Request context on mount
-    registerContext(requestContextDescriptor);
-    setActiveContext('request');
+    // Register Request template on mount (not a visible context)
+    registerTemplate(requestContextDescriptor);
 
-    // No cleanup - contexts persist across navigation
-  }, [registerContext, setActiveContext]);
+    // No cleanup - templates persist across navigation
+  }, [registerTemplate]);
 
   // Wire up context sync (bidirectional sync between canvas contexts and request store)
   // This MUST come after the registration effect above to ensure template exists
