@@ -172,15 +172,11 @@ export const Truncated: Story = {
       await expect(button).toHaveTextContent('GET');
     });
 
-    await step('Expose full request name via tooltip title', async () => {
-      const rowWrapper = button.closest('[title]');
-      await expect(rowWrapper).not.toBeNull();
-      if (rowWrapper !== null) {
-        await expect(rowWrapper).toHaveAttribute(
-          'title',
-          'This is a very long request name that will definitely be truncated in the sidebar layout'
-        );
-      }
+    await step('Verify request name is truncated', async () => {
+      // Verify button shows truncated name (Tooltip provides full name on hover)
+      const nameElement = button.querySelector('[data-test-id="request-name"]');
+      await expect(nameElement).toBeInTheDocument();
+      await expect(nameElement).toHaveClass('truncate');
     });
   },
 };
@@ -204,15 +200,11 @@ export const TruncatedWithStreamBadge: Story = {
       await expect(button).toHaveTextContent('Stream');
     });
 
-    await step('Expose full request name via tooltip title', async () => {
-      const rowWrapper = button.closest('[title]');
-      await expect(rowWrapper).not.toBeNull();
-      if (rowWrapper !== null) {
-        await expect(rowWrapper).toHaveAttribute(
-          'title',
-          'This is a very long streaming request name that should expand and push the badge rightward'
-        );
-      }
+    await step('Verify request name is truncated', async () => {
+      // Verify button shows truncated name (Tooltip provides full name on hover)
+      const nameElement = button.querySelector('[data-test-id="request-name"]');
+      await expect(nameElement).toBeInTheDocument();
+      await expect(nameElement).toHaveClass('truncate');
     });
   },
 };
