@@ -266,3 +266,31 @@ feat(http): add request timeout configuration
 fix(ui): resolve header tab overflow on small screens
 test(auth): add bearer token validation tests
 ```
+
+---
+
+## Agent Orchestration
+
+**Available developer agents:** `frontend-developer`, `backend-developer`, `ui-designer`
+
+**Task execution:** Tasks are implemented by developer agents via the `/implement-feature` skill, which:
+
+- Selects next best task from limps planning docs
+- Analyzes scope to route to single agent or compose a team
+- Creates GitHub issues for tracking
+- Spawns appropriate agent(s) with context
+- Monitors execution and coordinates cross-boundary needs
+
+**Routing rules:**
+
+- **Frontend only** (logic/state/events) → `frontend-developer`
+- **Frontend only** (styling/layout) → `ui-designer`
+- **Backend only** → `backend-developer`
+- **Cross-layer** (both frontend and backend) → Team composition:
+  - Backend first when frontend needs new types/MCP tools
+  - Frontend first otherwise
+  - `test-runner` verifies after all implementation complete
+
+**Planning docs are mandatory:** All developer agents require an agent spec from limps planning docs before proceeding. Agent specs define features, files, tests, and dependencies.
+
+**Cross-boundary flagging:** When agents need changes outside their domain, they flag the need to the orchestrator (e.g., backend agent flags when types are ready for frontend).

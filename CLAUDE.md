@@ -252,6 +252,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 3. **Test isolation:** Each test must clean up its own state
 4. **Frontend build required:** Rust lint/check/test require `just build-frontend` first (Tauri context)
 5. **Motion imports:** Use `motion/react` not `framer-motion`
+6. **Live UI validation in runi/Tauri:** Use MCP-driven interaction (Follow Agent / Watch Agent), not Playwright fallback
 
 ---
 
@@ -266,7 +267,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 
 - Rust: Unit tests adjacent to source (`http_test.rs` next to `http.rs`)
 - Frontend: Component tests adjacent to components (`Component.test.tsx`)
-- E2E: Playwright tests in `tests/e2e/`
+- Runtime UI validation: MCP-driven interaction against the running runi app
 
 **TDD Workflow:**
 
@@ -279,7 +280,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 
 - **Unit tests**: Always required (≥85% coverage)
 - **Integration tests**: For multi-component interactions
-- **E2E tests**: For user-facing features and complex interactions (Playwright)
+- **Runtime UI validation**: MCP-driven live interaction is required for user-facing behavior checks
+- **E2E tests**: Secondary automation only; not a fallback for Tauri runtime validation
 - **Migration tests**: Required for overhauls that change data structures or APIs
 - **Performance tests**: Required for data-heavy features (include thresholds, e.g., render 1000 rows in <500ms)
 
@@ -470,7 +472,7 @@ export const Playground: Story = {
 **Testing Approaches:**
 
 1. **Play Functions** - For component interactions (recommended for most cases) - ✅ All 62+ stories have play functions
-2. **Playwright E2E** - For complex multi-component flows and cross-browser testing (keyboard navigation specifically)
+2. **MCP Live Flows** - For complex multi-component runtime flows in Tauri (Follow Agent / Watch Agent)
 3. **Vitest Addon** - Convert stories to test cases automatically (run via `npm run test-storybook`) - ✅ Configured
 4. **Accessibility Addon** - Automatic a11y checks on all stories - ✅ Configured
 
@@ -597,7 +599,7 @@ Use `/pr-check-fixes` to systematically fix failing CI checks. See `.claude/comm
 2. ✅ Linting: `just lint` (Rust clippy + ESLint)
 3. ✅ Type checking: `just check` (cargo check + TypeScript)
 4. ✅ Unit tests: Rust tests + frontend tests
-5. ✅ E2E tests: Playwright tests
+5. ✅ Runtime validation: MCP-driven live UI verification
 6. ✅ Migration tests: For overhauls with data structure changes
 7. ✅ Performance tests: For data-heavy features (with thresholds)
 8. ✅ Coverage: ≥85% (verify with coverage reports)
@@ -718,23 +720,56 @@ Intelligence communicates through consistent visual signals:
 
 ## Subagent Orchestration
 
-**Available subagents:** `tdd-implementer`, `code-reviewer`, `test-runner`, `plan-researcher`
+**Available subagents:** `frontend-developer`, `backend-developer`, `ui-designer`, `code-reviewer`, `test-runner`, `plan-researcher`
 
 **Delegation patterns:**
 
-| Command                | Agent(s)                                                  | Mode                              |
-| ---------------------- | --------------------------------------------------------- | --------------------------------- |
-| `/run-agent`           | `tdd-implementer` → `test-runner`                         | Sequential: implement then verify |
-| `/code-review`         | `code-reviewer`                                           | Single agent, read-only           |
-| `/pr-check-fixes`      | `test-runner` (diagnose) → fix in main context            | Sequential                        |
-| `/create-feature-plan` | `plan-researcher` (gather context) → plan in main context | Sequential                        |
-| `/pr-create`           | `code-reviewer` + `test-runner`                           | Parallel: review + CI preview     |
+| Command/Skill          | Agent(s)                                                           | Mode                              |
+| ---------------------- | ------------------------------------------------------------------ | --------------------------------- |
+| `/implement-feature`   | Single agent or team of `frontend-developer` + `backend-developer` | Skill: auto-routes based on scope |
+| `/code-review`         | `code-reviewer`                                                    | Single agent, read-only           |
+| `/pr-check-fixes`      | `test-runner` (diagnose) → fix in main context                     | Sequential                        |
+| `/create-feature-plan` | `plan-researcher` (gather context) → plan in main context          | Sequential                        |
+| `/pr-create`           | `code-reviewer` + `test-runner`                                    | Parallel: review + CI preview     |
+
+**Agent routing (for `/implement-feature` skill):**
+
+The `/implement-feature` skill intelligently analyzes task scope and decides between single-agent execution or team composition:
+
+**Composition decision tree:**
+
+```
+Agent spec files analysis:
+├── All files in src/ only?
+│   ├── Has logic/state/events? → frontend-developer (single)
+│   └── Styling/layout only?   → ui-designer (single)
+├── All files in src-tauri/ only? → backend-developer (single)
+└── Files in both src/ and src-tauri/?
+    └── Create team:
+        ├── backend-developer (if new types/MCP tools needed)
+        ├── frontend-developer (for React/TS changes)
+        ├── ui-designer (if significant visual changes)
+        └── test-runner (verification after implementation)
+```
+
+**Team composition workflow:**
+
+- Uses `TeamCreate` to create coordinated team
+- Uses `TaskCreate` to define work for each agent
+- Spawns agents as teammates via `Task` tool with `team_name`
+- Agents flag cross-boundary needs via `SendMessage`
+- Backend runs first when frontend depends on new types/MCP tools
+- Frontend runs first otherwise
+- `test-runner` verifies after all implementation complete
 
 **Parallel safe:** `code-reviewer` + `test-runner` (independent read-only analysis)
-**Sequential required:** `plan-researcher` → planning, `tdd-implementer` → `test-runner`
+**Sequential required:** `plan-researcher` → planning, developer agents → `test-runner`
 
 **Tool restrictions:**
 
 - `code-reviewer` and `plan-researcher` are **read-only** — cannot edit files
 - `test-runner` is **read-only** — diagnoses only, never edits
-- `tdd-implementer` has full edit access — the only agent that writes code
+- `frontend-developer`, `backend-developer`, and `ui-designer` have **write access** — scoped to their domain
+  - `frontend-developer` — writes React/TypeScript, flags Rust needs to user
+  - `backend-developer` — writes Rust, flags React/TypeScript needs to user
+  - `ui-designer` — writes styling/layout, flags logic/state needs to user
