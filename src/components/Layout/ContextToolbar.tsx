@@ -1,4 +1,3 @@
-import { type FC } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useCanvasPopout } from '@/hooks/useCanvasPopout';
@@ -6,7 +5,11 @@ import { LayoutPicker } from './LayoutPicker';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
-export const ContextToolbar: FC<{ className?: string }> = ({ className }) => {
+interface ContextToolbarProps {
+  className?: string;
+}
+
+export const ContextToolbar = ({ className }: ContextToolbarProps): React.JSX.Element | null => {
   const { activeContextId, contexts } = useCanvasStore();
   const { openPopout, isSupported } = useCanvasPopout();
 

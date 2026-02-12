@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import type { ReactElement } from 'react';
+import type { ReactElement, HTMLAttributes } from 'react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { CanvasHost } from './CanvasHost';
 import { FileText, LayoutGrid } from 'lucide-react';
@@ -12,7 +12,12 @@ vi.mock('motion/react', async () => {
   return {
     ...actual,
     motion: {
-      div: ({ children, ...props }: any): ReactElement => <div {...props}>{children}</div>,
+      div: ({
+        children,
+        ...props
+      }: HTMLAttributes<HTMLDivElement> & Record<string, unknown>): ReactElement => (
+        <div {...props}>{children}</div>
+      ),
     },
     AnimatePresence: ({ children }: { children: React.ReactNode }): ReactElement => <>{children}</>,
   };

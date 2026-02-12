@@ -58,6 +58,24 @@ export function useContextSync(): void {
         isSyncingFromContext.current = false;
       }
     }
+
+    // After opening/loading the default tab, clean stale persisted state
+    const freshState = useCanvasStore.getState();
+    const staleIds: string[] = [];
+    for (const contextId of freshState.contextState.keys()) {
+      if (!freshState.contexts.has(contextId)) {
+        staleIds.push(contextId);
+      }
+    }
+    if (staleIds.length > 0) {
+      // Remove stale entries from contextState
+      for (const id of staleIds) {
+        freshState.contextState.delete(id); // direct mutation is fine here, we'll set below
+      }
+      // Trigger a store update to persist the cleanup
+      useCanvasStore.setState({ contextState: new Map(freshState.contextState) });
+    }
+
     // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

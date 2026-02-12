@@ -62,6 +62,7 @@ export type EventType =
   | 'request.send'
   | 'request.method-changed'
   | 'request.url-changed'
+  | 'request.open'
   | 'response.received'
   | 'response.error'
   | 'sidebar.toggle'
@@ -82,6 +83,8 @@ export type EventType =
   | 'toast.show'
   | 'settings.toggle'
   | 'commandbar.toggle'
+  | 'context.activate'
+  | 'context.close'
   | 'canvas.context-changed'
   | 'canvas.layout-changed'
   | 'canvas.popout-requested'
@@ -94,6 +97,20 @@ export type EventType =
 export interface CollectionRequestSelectedPayload {
   collectionId: string;
   request: CollectionRequest;
+}
+
+/**
+ * Payload for context.activate event.
+ */
+export interface ContextActivatePayload {
+  contextId: string;
+}
+
+/**
+ * Payload for context.close event.
+ */
+export interface ContextClosePayload {
+  contextId: string;
 }
 
 /**

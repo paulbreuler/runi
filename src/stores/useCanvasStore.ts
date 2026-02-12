@@ -379,6 +379,11 @@ export const useCanvasStore = create<CanvasState>()(
 
         // Look up the 'request' template context to inherit panels, toolbar, and layouts
         const templateContext = get().contexts.get('request');
+        if (templateContext === undefined) {
+          console.warn(
+            '[canvas] openRequestTab: "request" template not registered. Panels will be empty.'
+          );
+        }
 
         // Create a dynamic context descriptor for this request tab
         const descriptor: CanvasContextDescriptor = {
@@ -472,9 +477,25 @@ export const useCanvasStore = create<CanvasState>()(
       },
 
       findContextBySource: (source): string | null => {
-        const { contextState } = get();
+        const { contextState, contexts, contextOrder } = get();
 
         for (const [contextId, state] of contextState.entries()) {
+          // Only request tabs are source-addressable.
+          if (!contextId.startsWith('request-')) {
+            continue;
+          }
+
+          // Ignore stale persisted state entries that no longer have a
+          // corresponding context descriptor in the active runtime.
+          if (!contexts.has(contextId)) {
+            continue;
+          }
+
+          // Ignore contexts that are not part of the tab order (ghost descriptors).
+          if (!contextOrder.includes(contextId)) {
+            continue;
+          }
+
           const tabState = state as unknown as RequestTabState;
           if (tabState.source !== undefined && sourcesMatch(tabState.source, source)) {
             return contextId;
@@ -588,7 +609,10 @@ export const useCanvasStore = create<CanvasState>()(
 
         return {
           ...currentState,
-          activeContextId: persisted.activeContextId ?? currentState.activeContextId,
+          // Don't restore activeContextId — contexts aren't persisted,
+          // so it would point to a non-existent descriptor.
+          // HomePage's effect will set the correct active context.
+          activeContextId: null,
           activeLayoutPerContext: new Map(
             persisted.activeLayoutPerContext ?? currentState.activeLayoutPerContext
           ),
@@ -598,3 +622,18 @@ export const useCanvasStore = create<CanvasState>()(
     }
   )
 );
+
+// Set up event listeners for context operations (skip in test environment)
+if (typeof globalEventBus.on === 'function') {
+  globalEventBus.on<{ contextId: string }>('context.activate', (event) => {
+    useCanvasStore.getState().setActiveContext(event.payload.contextId);
+  });
+
+  globalEventBus.on<{ contextId: string }>('context.close', (event) => {
+    useCanvasStore.getState().closeContext(event.payload.contextId);
+  });
+
+  globalEventBus.on('request.open', () => {
+    useCanvasStore.getState().openRequestTab();
+  });
+}

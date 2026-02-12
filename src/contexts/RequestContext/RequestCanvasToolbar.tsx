@@ -31,7 +31,7 @@ export const RequestCanvasToolbar: FC<CanvasToolbarProps> = ({
   contextId: _contextId,
   isPopout: _isPopout = false,
 }): React.JSX.Element => {
-  const { url, response } = useRequestStore();
+  const { response } = useRequestStore();
   const { toggleVisibility } = usePanelStore();
   const { getActiveTab } = useTabStore();
   const { entries } = useHistoryStore();
@@ -102,7 +102,7 @@ export const RequestCanvasToolbar: FC<CanvasToolbarProps> = ({
         onHistory={handleHistory}
         onEnv={handleEnv}
         hasResponse={response !== null}
-        hasUrl={url.length > 0}
+        hasUrl={localUrl.length > 0}
         isDirty={activeTab?.isDirty ?? false}
         historyCount={historyCount}
         envName={undefined}

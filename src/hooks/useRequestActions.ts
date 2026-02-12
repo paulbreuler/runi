@@ -109,6 +109,15 @@ export const useRequestActions = (): UseRequestActionsReturn => {
         },
         result
       );
+
+      // Check for history errors and surface via toast
+      const historyError = useHistoryStore.getState().error;
+      if (historyError !== null) {
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'error',
+          message: historyError,
+        });
+      }
     } catch (e) {
       // Handle AppError (includes correlation ID for tracing)
       // Extract AppError - may be directly on error object or nested in appError property
