@@ -504,7 +504,7 @@ describe('useCanvasStateSync', () => {
       useSettingsStore.getState().setFollowAiMode(false);
 
       // Open two tabs
-      const _tab1 = useCanvasStore.getState().openRequestTab({ label: 'Tab 1' });
+      const tab1 = useCanvasStore.getState().openRequestTab({ label: 'Tab 1' });
       useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
 
       await waitFor(() => {

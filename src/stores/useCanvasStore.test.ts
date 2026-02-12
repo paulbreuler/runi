@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCanvasStore } from './useCanvasStore';
-import type { CanvasContextDescriptor } from '@/types/canvas';
+import type { CanvasContextDescriptor, CanvasContextId } from '@/types/canvas';
 import { Square } from 'lucide-react';
 
 // Mock localStorage
@@ -1132,7 +1132,7 @@ describe('useCanvasStore', () => {
 
       // Close active tab with activate=false - should still activate adjacent
       act(() => {
-        result.current.closeContext(tab2, { activate: false });
+        result.current.closeContext(tab2 as CanvasContextId, { activate: false });
       });
 
       // Tab 1 should be activated (can't leave user on blank view)
