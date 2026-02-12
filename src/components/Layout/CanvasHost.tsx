@@ -20,10 +20,26 @@ export const CanvasHost: FC<{ className?: string }> = ({ className }) => {
   const context = contexts.get(activeContextId);
   const layout = getActiveLayout(activeContextId);
 
-  if (context === undefined || layout === null) {
+  if (context === undefined) {
+    const registeredContexts = Array.from(contexts.keys()).join(', ');
+    const contextList = registeredContexts.length > 0 ? registeredContexts : 'none';
     return (
-      <div className="flex-1 flex items-center justify-center text-text-secondary">
-        Context not found
+      <div className="flex-1 flex flex-col items-center justify-center text-text-secondary gap-2 p-8 text-center">
+        <div className="text-signal-error font-medium">Context not found: {activeContextId}</div>
+        <div className="text-xs">Registered contexts: {contextList}</div>
+      </div>
+    );
+  }
+
+  if (layout === null) {
+    const layoutList = context.layouts.map((l) => l.id).join(', ');
+    const availableLayouts = layoutList.length > 0 ? layoutList : 'none';
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-text-secondary gap-2 p-8 text-center">
+        <div className="text-signal-error font-medium">
+          Layout not found for context: {context.label}
+        </div>
+        <div className="text-xs">Available layouts: {availableLayouts}</div>
       </div>
     );
   }

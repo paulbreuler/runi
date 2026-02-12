@@ -6,12 +6,9 @@
 import React, { useMemo } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
 import { Minimize2, Maximize2, Settings, X } from 'lucide-react';
-import type { MotionValue } from 'motion/react';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { focusRingClasses } from '@/utils/accessibility';
 import { useWindowFocus } from '@/hooks/useWindowFocus';
-import { useCanvasStore } from '@/stores/useCanvasStore';
-import { ContextTabs } from './ContextTabs';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
@@ -258,22 +255,18 @@ interface TitleBarProps {
   title?: string;
   children?: React.ReactNode;
   onSettingsClick?: () => void;
-  sidebarWidth?: MotionValue<number>;
 }
 
 export const TitleBar = ({
   title = 'runi',
   children,
   onSettingsClick,
-  sidebarWidth,
 }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
   const isFocused = useWindowFocus();
   const showSettingsButton = onSettingsClick !== undefined;
   const hasCustomContent = React.Children.toArray(children).length > 0;
   const showRightActions = showSettingsButton || !isMac;
-  const { contextOrder } = useCanvasStore();
-  const hasContexts = contextOrder.length > 0;
 
   return (
     <div
@@ -291,24 +284,15 @@ export const TitleBar = ({
       <div className="h-full w-4 shrink-0" data-tauri-drag-region />
 
       <div
-        className={cn(
-          'flex-1 min-w-0 flex items-center',
-          !hasCustomContent && !hasContexts && 'justify-center'
-        )}
+        className={cn('flex-1 min-w-0 flex items-center', !hasCustomContent && 'justify-center')}
       >
-        {((): React.JSX.Element => {
-          if (hasCustomContent) {
-            return <div className="flex h-full w-full min-w-0 items-center">{children}</div>;
-          }
-          if (hasContexts) {
-            return <ContextTabs sidebarWidth={sidebarWidth} />;
-          }
-          return (
-            <span className="font-medium" data-tauri-drag-region data-test-id="titlebar-title">
-              {title}
-            </span>
-          );
-        })()}
+        {hasCustomContent ? (
+          <div className="flex h-full w-full min-w-0 items-center">{children}</div>
+        ) : (
+          <span className="font-medium" data-tauri-drag-region data-test-id="titlebar-title">
+            {title}
+          </span>
+        )}
       </div>
 
       {hasCustomContent && <div className="h-full w-1 shrink-0" data-tauri-drag-region />}

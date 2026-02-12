@@ -16,10 +16,10 @@ vi.mock('@/stores/useRequestStore');
 vi.mock('@/stores/useHistoryStore');
 vi.mock('@/api/http');
 
-// Mock useTabSync — it's tested in its own test file.
+// Mock useContextSync — it's tested in its own test file.
 // Mocking prevents it from crashing when useRequestStore is mocked.
-vi.mock('@/hooks/useTabSync', () => ({
-  useTabSync: vi.fn(),
+vi.mock('@/hooks/useContextSync', () => ({
+  useContextSync: vi.fn(),
 }));
 
 // Mock event bus (needed for toast emission tests)
@@ -286,12 +286,12 @@ describe('HomePage - Auto-save to history', () => {
   });
 
   // Event-driven tests (history.entry-selected, collection.request-selected) are now tested
-  // in useTabSync.test.ts. HomePage delegates to useTabSync for event handling.
-  describe('Tab sync delegation', () => {
-    it('calls useTabSync hook', async () => {
-      const { useTabSync } = await import('@/hooks/useTabSync');
+  // in useContextSync.test.ts. HomePage delegates to useContextSync for event handling.
+  describe('Context sync delegation', () => {
+    it('calls useContextSync hook', async () => {
+      const { useContextSync } = await import('@/hooks/useContextSync');
       render(<HomePage />);
-      expect(useTabSync).toHaveBeenCalled();
+      expect(useContextSync).toHaveBeenCalled();
     });
   });
 });

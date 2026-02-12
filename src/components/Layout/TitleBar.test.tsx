@@ -401,7 +401,7 @@ describe('TitleBar', () => {
   });
 
   describe('context tabs integration', () => {
-    it('shows context tabs when contexts registered', () => {
+    it('always shows title (tabs moved to TabBar)', () => {
       const { registerContext } = useCanvasStore.getState();
 
       const context1: CanvasContextDescriptor = {
@@ -422,9 +422,9 @@ describe('TitleBar', () => {
 
       render(<TitleBar />);
 
-      expect(screen.getByTestId('context-tab-test-1')).toBeInTheDocument();
-      expect(screen.getByTestId('context-tab-test-2')).toBeInTheDocument();
-      expect(screen.queryByTestId('titlebar-title')).not.toBeInTheDocument();
+      // Title should still show (tabs are now in TabBar, not TitleBar)
+      expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
+      expect(screen.queryByTestId('context-tabs-scroll')).not.toBeInTheDocument();
     });
 
     it('shows title when no contexts registered', () => {

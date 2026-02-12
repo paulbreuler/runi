@@ -261,3 +261,133 @@ describe('ContextTabs', () => {
     expect(inactiveTab).toHaveClass('text-text-secondary');
   });
 });
+
+describe('ContextTabs - Close Button (Feature #2)', () => {
+  beforeEach(() => {
+    useCanvasStore.getState().reset();
+  });
+
+  it('close button shows on hover for request tabs', async () => {
+    const user = userEvent.setup();
+    const { registerContext } = useCanvasStore.getState();
+
+    // Create a request tab (ID starts with 'request-')
+    registerContext({
+      id: 'request-12345',
+      label: 'GET /api/users',
+      order: 0,
+      layouts: [],
+    });
+
+    render(<ContextTabs />);
+
+    // Close button should exist with test ID
+    const closeButton = screen.getByTestId('close-tab-request-12345');
+    expect(closeButton).toBeInTheDocument();
+
+    // Close button should have aria-label
+    expect(closeButton).toHaveAttribute('aria-label');
+
+    // Hover should work (opacity changes are CSS, so we just verify the button exists)
+    await user.hover(closeButton);
+  });
+
+  it('no close button for static contexts', () => {
+    const { registerContext } = useCanvasStore.getState();
+
+    // Static context (not a request tab - doesn't start with 'request-')
+    registerContext({
+      id: 'request',
+      label: 'Request Template',
+      order: 0,
+      layouts: [],
+    });
+
+    render(<ContextTabs />);
+
+    // No close button for non-request-tab contexts
+    const closeButton = screen.queryByTestId('close-tab-request');
+    expect(closeButton).not.toBeInTheDocument();
+  });
+
+  it('clicking close button closes tab', async () => {
+    const user = userEvent.setup();
+    const { registerContext } = useCanvasStore.getState();
+
+    // Create a request tab
+    registerContext({
+      id: 'request-12345',
+      label: 'GET /api/users',
+      order: 0,
+      layouts: [],
+    });
+
+    render(<ContextTabs />);
+
+    // Tab should exist
+    expect(useCanvasStore.getState().contexts.has('request-12345')).toBe(true);
+
+    // Click close button
+    const closeButton = screen.getByTestId('close-tab-request-12345');
+    await user.click(closeButton);
+
+    // Tab should be closed
+    expect(useCanvasStore.getState().contexts.has('request-12345')).toBe(false);
+  });
+
+  it('close button prevents tab activation', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    // Create two request tabs
+    registerContext({
+      id: 'request-1',
+      label: 'GET /api/users',
+      order: 0,
+      layouts: [],
+    });
+    registerContext({
+      id: 'request-2',
+      label: 'POST /api/users',
+      order: 1,
+      layouts: [],
+    });
+
+    // Set first tab as active
+    setActiveContext('request-1');
+
+    render(<ContextTabs />);
+
+    // Click close button on second tab
+    const closeButton = screen.getByTestId('close-tab-request-2');
+    await user.click(closeButton);
+
+    // Active tab should still be the first one (not switched to second)
+    expect(useCanvasStore.getState().activeContextId).toBe('request-1');
+
+    // Second tab should be closed
+    expect(useCanvasStore.getState().contexts.has('request-2')).toBe(false);
+  });
+
+  it('close button has keyboard access', () => {
+    const { registerContext } = useCanvasStore.getState();
+
+    // Create a request tab
+    registerContext({
+      id: 'request-12345',
+      label: 'GET /api/users',
+      order: 0,
+      layouts: [],
+    });
+
+    render(<ContextTabs />);
+
+    const closeButton = screen.getByTestId('close-tab-request-12345');
+
+    // Should be a button element (naturally keyboard accessible)
+    expect(closeButton.tagName).toBe('BUTTON');
+
+    // Should have aria-label
+    expect(closeButton).toHaveAttribute('aria-label');
+  });
+});

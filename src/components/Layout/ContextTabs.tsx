@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import {
   motion,
   useReducedMotion,
@@ -14,10 +14,10 @@ import {
 } from 'motion/react';
 import { Tabs } from '@base-ui/react/tabs';
 import { useCanvasStore } from '@/stores/useCanvasStore';
-import { BaseTabsList } from '@/components/ui/BaseTabsList';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { isMacSync } from '@/utils/platform';
+import type { RequestTabState } from '@/types/canvas';
 
 interface ContextTabsProps {
   /** Sidebar width (MotionValue) for aligning tabs with canvas area */
@@ -45,7 +45,8 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const { contexts, contextOrder, activeContextId, setActiveContext } = useCanvasStore();
+  const { contexts, contextOrder, activeContextId, contextState, setActiveContext, closeContext } =
+    useCanvasStore();
 
   // Calculate smooth margin offset to align tabs with canvas
   const isMac = isMacSync();
@@ -110,6 +111,11 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
     setActiveContext(contextId);
   };
 
+  const handleCloseTab = (e: React.MouseEvent, contextId: string): void => {
+    e.stopPropagation(); // Prevent tab activation
+    closeContext(contextId);
+  };
+
   // Return null if no contexts registered
   if (contextOrder.length === 0) {
     return null;
@@ -159,19 +165,60 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
         data-test-id="context-tabs-scroll"
       >
         <Tabs.Root value={activeContextId ?? tabs[0]?.value ?? ''}>
-          <BaseTabsList
-            activeTab={activeContextId ?? tabs[0]?.value ?? ''}
-            onTabChange={handleTabChange}
-            tabs={tabs}
-            listClassName="flex items-end h-full gap-0 px-1"
-            tabClassName="relative px-4 py-2 text-xs font-medium transition-colors border-r border-border-subtle/50 mb-[-1px]"
-            activeTabClassName="bg-bg-app rounded-t-md border-b-2 border-b-bg-app text-text-primary shadow-sm"
-            inactiveTabClassName="text-text-secondary hover:text-text-primary bg-transparent"
-            indicatorLayoutId="context-tabs-indicator"
-            indicatorClassName="hidden"
-            listTestId="context-tabs-list"
-            activateOnFocus={false}
-          />
+          <Tabs.List className="flex items-end h-full gap-0 px-1" data-test-id="context-tabs-list">
+            {tabs.map((tab) => {
+              const isActive = activeContextId === tab.value;
+              const isRequestTab = tab.value.startsWith('request-');
+
+              // Get saved state for visual distinction
+              const tabState = isRequestTab
+                ? (contextState.get(tab.value) as unknown as RequestTabState | undefined)
+                : undefined;
+              const isSaved = tabState?.isSaved ?? false;
+
+              return (
+                <div key={tab.value} className="group relative flex items-center">
+                  <Tabs.Tab
+                    value={tab.value}
+                    onClick={() => {
+                      handleTabChange(tab.value);
+                    }}
+                    className={cn(
+                      focusRingClasses,
+                      'relative px-4 py-2 text-xs font-medium transition-colors border-r border-border-subtle/50 mb-[-1px] flex items-center gap-2',
+                      'max-w-[200px]', // Constrain tab width
+                      isActive
+                        ? 'bg-bg-app rounded-t-md border-b-2 border-b-bg-app text-text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary bg-transparent',
+                      isRequestTab && 'pr-2' // Reduce right padding to make room for close button
+                    )}
+                    data-test-id={tab.testId}
+                    title={tab.label} // Tooltip shows full name on hover
+                  >
+                    <span className={cn('relative z-10 truncate', !isSaved && 'italic opacity-75')}>
+                      {tab.label}
+                    </span>
+                  </Tabs.Tab>
+                  {isRequestTab && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        handleCloseTab(e, tab.value);
+                      }}
+                      className={cn(
+                        focusRingClasses,
+                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity rounded p-0.5 hover:bg-bg-raised/50 z-20'
+                      )}
+                      aria-label={`Close ${tab.label}`}
+                      data-test-id={`close-tab-${tab.value}`}
+                    >
+                      <X size={12} className="text-text-secondary" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </Tabs.List>
         </Tabs.Root>
       </div>
 

@@ -41,14 +41,17 @@ export function useContextSync(): void {
       openRequestTab();
     } else if (state.activeContextId !== null) {
       // Load persisted active context into request store
-      const contextState = state.getContextState(state.activeContextId) as RequestTabState;
-      isSyncingFromContext.current = true;
-      setMethod(contextState.method);
-      setUrl(contextState.url);
-      setHeaders(contextState.headers);
-      setBody(contextState.body);
-      setResponse(contextState.response ?? null);
-      isSyncingFromContext.current = false;
+      const contextState = state.getContextState(state.activeContextId);
+      if (Object.keys(contextState).length > 0) {
+        const reqState = contextState as Partial<RequestTabState>;
+        isSyncingFromContext.current = true;
+        setMethod(reqState.method ?? 'GET');
+        setUrl(reqState.url ?? '');
+        setHeaders(reqState.headers ?? {});
+        setBody(reqState.body ?? '');
+        setResponse(reqState.response ?? null);
+        isSyncingFromContext.current = false;
+      }
     }
     // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,16 +80,17 @@ export function useContextSync(): void {
 
     // Load incoming context state into request store
     if (activeContextId?.startsWith('request-') === true) {
-      const contextState = useCanvasStore
-        .getState()
-        .getContextState(activeContextId) as RequestTabState;
-      isSyncingFromContext.current = true;
-      setMethod(contextState.method);
-      setUrl(contextState.url);
-      setHeaders(contextState.headers);
-      setBody(contextState.body);
-      setResponse(contextState.response ?? null);
-      isSyncingFromContext.current = false;
+      const contextState = useCanvasStore.getState().getContextState(activeContextId);
+      if (Object.keys(contextState).length > 0) {
+        const reqState = contextState as Partial<RequestTabState>;
+        isSyncingFromContext.current = true;
+        setMethod(reqState.method ?? 'GET');
+        setUrl(reqState.url ?? '');
+        setHeaders(reqState.headers ?? {});
+        setBody(reqState.body ?? '');
+        setResponse(reqState.response ?? null);
+        isSyncingFromContext.current = false;
+      }
     }
 
     prevActiveContextIdRef.current = activeContextId;
@@ -117,18 +121,32 @@ export function useContextSync(): void {
         const currentContext = useCanvasStore
           .getState()
           .getContextState(currentActiveId) as RequestTabState;
-        const newLabel = state.url !== prevState.url ? deriveContextLabel(state.url) : undefined;
+
+        // Check if tab now has meaningful data
+        const hasMeaningfulData = useCanvasStore.getState().hasMeaningfulData(currentActiveId);
+
+        // Only derive label from URL if:
+        // 1. URL changed
+        // 2. Tab doesn't have a custom name
+        // 3. Tab hasn't been saved yet (no meaningful data previously)
+        const shouldUpdateLabel =
+          state.url !== prevState.url &&
+          currentContext.name === undefined &&
+          currentContext.isSaved !== true;
+        const newLabel = shouldUpdateLabel ? deriveContextLabel(state.url) : undefined;
 
         useCanvasStore.getState().updateContextState(currentActiveId, {
           method: state.method,
           url: state.url,
           headers: state.headers,
           body: state.body,
+          // Mark as saved if meaningful data exists
+          isSaved: hasMeaningfulData,
           // Mark as dirty if it has a source (collection or history)
           ...(currentContext.source !== undefined ? { isDirty: true } : {}),
         });
 
-        // Update context label if URL changed
+        // Update context label if URL changed and no custom name
         if (newLabel !== undefined) {
           const descriptor = useCanvasStore.getState().contexts.get(currentActiveId);
           if (descriptor !== undefined) {

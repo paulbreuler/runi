@@ -129,4 +129,8 @@ export interface RequestTabState {
   source?: RequestTabSource;
   /** Timestamp when the tab was created */
   createdAt?: number;
+  /** User-provided or AI-suggested friendly name for the tab (must be unique) */
+  name?: string;
+  /** Whether the tab has been "saved" (has meaningful data) */
+  isSaved?: boolean;
 }

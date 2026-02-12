@@ -13,6 +13,7 @@ import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { DockablePanel } from './DockablePanel';
 import { TitleBar } from './TitleBar';
+import { TabBar } from './TabBar';
 import { ContextToolbar } from './ContextToolbar';
 import { CanvasHost } from './CanvasHost';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -441,13 +442,13 @@ export const MainLayout = ({
     >
       <div className="shrink-0">
         <TitleBar
-          sidebarWidth={sidebarVisible ? sidebarWidthSpring : undefined}
           onSettingsClick={() => {
             setIsSettingsOpen((prev) => !prev);
           }}
         >
           {headerContent}
         </TitleBar>
+        <TabBar sidebarWidth={sidebarVisible ? sidebarWidthSpring : undefined} />
       </div>
       <div className="relative flex flex-1 min-h-0 overflow-hidden gap-0">
         {/* Settings overlay: contained between title bar and status bar */}

@@ -21,9 +21,8 @@ export const HomePage = (): React.JSX.Element => {
           true)) ||
     collectionsEnabled;
 
-  // Wire up context sync (bidirectional sync between canvas contexts and request store)
-  useContextSync();
-
+  // CRITICAL: Register template BEFORE useContextSync to prevent empty layouts
+  // React effects run in declaration order: template must exist before sync hook runs
   useEffect(() => {
     // Register Request context on mount
     registerContext(requestContextDescriptor);
@@ -31,6 +30,10 @@ export const HomePage = (): React.JSX.Element => {
 
     // No cleanup - contexts persist across navigation
   }, [registerContext, setActiveContext]);
+
+  // Wire up context sync (bidirectional sync between canvas contexts and request store)
+  // This MUST come after the registration effect above to ensure template exists
+  useContextSync();
 
   return <MainLayout initialSidebarVisible={initialSidebarVisible} />;
 };

@@ -122,6 +122,12 @@ interface CanvasState {
   /** Find context by source (collection or history) */
   findContextBySource: (source: RequestTabSource) => string | null;
 
+  /** Update tab name and ensure uniqueness */
+  updateTabName: (contextId: CanvasContextId, name: string) => void;
+
+  /** Check if tab has meaningful data (for autosave) */
+  hasMeaningfulData: (contextId: CanvasContextId) => boolean;
+
   /** Reset store to initial state (for testing) */
   reset: () => void;
 }
@@ -313,7 +319,10 @@ export const useCanvasStore = create<CanvasState>()(
       openRequestTab: (overrides): string => {
         const contextId: CanvasContextId = `request-${crypto.randomUUID()}`;
         const url = overrides?.url ?? '';
-        const label = overrides?.label ?? deriveTabLabel(url);
+
+        // Use name if provided, otherwise use label override, otherwise derive from URL
+        const name = overrides?.name;
+        const label = name ?? overrides?.label ?? deriveTabLabel(url, overrides?.name);
 
         // Create default request state
         const defaultState: RequestTabState = {
@@ -322,12 +331,14 @@ export const useCanvasStore = create<CanvasState>()(
           headers: {},
           body: '',
           isDirty: false,
+          isSaved: false,
           createdAt: Date.now(),
         };
 
         const state: RequestTabState = {
           ...defaultState,
           ...overrides,
+          name, // Store name in state
         };
 
         // Look up the 'request' template context to inherit panels, toolbar, and layouts
@@ -373,7 +384,7 @@ export const useCanvasStore = create<CanvasState>()(
           }
 
           const newContextState = new Map(currentState.contextState);
-          newContextState.set(contextId, state as Record<string, unknown>);
+          newContextState.set(contextId, state as unknown as Record<string, unknown>);
 
           return {
             contexts: newContexts,
@@ -429,6 +440,75 @@ export const useCanvasStore = create<CanvasState>()(
         }
 
         return null;
+      },
+
+      updateTabName: (contextId, name): void => {
+        const { contexts, contextState } = get();
+
+        // Ensure uniqueness by appending counter if needed
+        let uniqueName = name;
+        let counter = 1;
+        const existingNames = new Set<string>();
+
+        // Collect all existing names except the current context
+        for (const [id, state] of contextState.entries()) {
+          if (id !== contextId) {
+            const tabState = state as unknown as RequestTabState;
+            if (tabState.name !== undefined) {
+              existingNames.add(tabState.name);
+            }
+          }
+        }
+
+        // Ensure uniqueness
+        while (existingNames.has(uniqueName)) {
+          counter++;
+          uniqueName = `${name} (${String(counter)})`;
+        }
+
+        // Update context state
+        set((state) => {
+          const newContextState = new Map(state.contextState);
+          const existingState = newContextState.get(contextId) ?? {};
+          newContextState.set(contextId, { ...existingState, name: uniqueName });
+
+          return {
+            contextState: newContextState,
+          };
+        });
+
+        // Update context descriptor label
+        const context = contexts.get(contextId);
+        if (context !== undefined) {
+          set((state) => {
+            const newContexts = new Map(state.contexts);
+            newContexts.set(contextId, {
+              ...context,
+              label: uniqueName,
+            });
+
+            return {
+              contexts: newContexts,
+            };
+          });
+        }
+      },
+
+      hasMeaningfulData: (contextId): boolean => {
+        const { contextState } = get();
+        const state = contextState.get(contextId) as unknown as RequestTabState | undefined;
+
+        if (state === undefined) {
+          return false;
+        }
+
+        // Consider data "meaningful" if:
+        // - URL is not empty
+        // - OR headers are not empty
+        // - OR body is not empty
+        return (
+          state.url.length > 0 || Object.keys(state.headers).length > 0 || state.body.length > 0
+        );
       },
 
       reset: (): void => {
