@@ -234,11 +234,11 @@ export const ContextTabs = (): React.JSX.Element | null => {
                     }}
                     className={cn(
                       focusRingClasses,
-                      'relative py-1.5 text-[11px] font-medium transition-colors flex items-center justify-center gap-2 rounded-none',
+                      'relative py-1.5 text-[11px] font-medium transition-colors flex items-center justify-center gap-2 rounded-t-lg',
                       'max-w-[180px] min-w-[80px] h-[25px]', // Shorter height (TabBar h-8 = 32px)
                       isRequestTab ? 'px-7' : 'px-3', // Balanced padding for request tabs to keep text centered
                       isActive
-                        ? 'bg-bg-app rounded-t-lg text-text-primary border-x border-t border-border-subtle shadow-[0_-1px_3px_rgba(0,0,0,0.1)] z-30'
+                        ? 'bg-bg-app text-text-primary border-x border-t border-border-subtle shadow-[0_-1px_3px_rgba(0,0,0,0.1)] z-30'
                         : 'text-text-secondary hover:text-text-primary bg-bg-app/40 border-r border-border-subtle/10',
                       isActive &&
                         'after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-[1px] after:bg-bg-app after:z-40'

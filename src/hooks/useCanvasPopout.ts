@@ -22,7 +22,7 @@ interface UseCanvasPopoutReturn {
  */
 export const useCanvasPopout = (): UseCanvasPopoutReturn => {
   const popoutWindowsRef = useRef<Map<string, Window>>(new Map());
-  const intervalsRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  const intervalsRef = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
   const { contexts } = useCanvasStore();
 
   // Check if popout is supported (Tauri webview context detection)
