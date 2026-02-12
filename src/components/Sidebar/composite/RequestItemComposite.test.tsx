@@ -8,6 +8,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import type { CollectionRequest } from '@/types/collection';
 import { RequestItemComposite } from './RequestItemComposite';
 import { globalEventBus } from '@/events/bus';
+import { TooltipProvider } from '@/components/ui/Tooltip';
 
 // Mock motion components to avoid animation delays in tests
 vi.mock('motion/react', () => ({
@@ -45,25 +46,13 @@ const longRequest: CollectionRequest = {
   intelligence: { ai_generated: false, verified: true },
 };
 
-const shortRequest: CollectionRequest = {
-  id: 'req_short',
-  name: 'Short',
-  seq: 1,
-  method: 'GET',
-  url: 'https://api.example.com/short',
-  headers: {},
-  params: [],
-  is_streaming: false,
-  tags: [],
-  binding: { is_manual: true },
-  intelligence: { ai_generated: false, verified: true },
-};
-
 const renderWithScrollContainer = (ui: React.ReactElement): ReturnType<typeof render> =>
   render(
-    <div data-scroll-container style={{ overflow: 'auto', width: '200px' }}>
-      {ui}
-    </div>
+    <TooltipProvider>
+      <div data-scroll-container style={{ overflow: 'auto', width: '200px' }}>
+        {ui}
+      </div>
+    </TooltipProvider>
   );
 
 describe('RequestItemComposite', (): void => {
@@ -75,44 +64,30 @@ describe('RequestItemComposite', (): void => {
     vi.useRealTimers();
   });
 
-  describe('popout behavior', (): void => {
-    it('does not show popout when text is not truncated', (): void => {
-      renderWithScrollContainer(
-        <RequestItemComposite request={shortRequest} collectionId="col_1" />
-      );
-
-      const row = screen.getByTestId('request-select-req_short');
-      const nameSpan = screen.getByTestId('request-name');
-
-      // Mock no truncation
-      Object.defineProperty(nameSpan, 'scrollWidth', { value: 50, configurable: true });
-      Object.defineProperty(nameSpan, 'clientWidth', { value: 100, configurable: true });
-
-      act(() => {
-        window.dispatchEvent(new Event('resize'));
-      });
-
-      const wrapper = row.closest('.relative')!;
-      act(() => {
-        fireEvent.mouseEnter(wrapper);
-      });
-
-      act(() => {
-        vi.advanceTimersByTime(300);
-      });
-
-      expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
-    });
-
-    it('uses native tooltip for full name on hover', (): void => {
+  describe('tooltip behavior', (): void => {
+    it('uses custom Tooltip for full name on hover', async (): Promise<void> => {
       renderWithScrollContainer(
         <RequestItemComposite request={longRequest} collectionId="col_1" />
       );
 
-      // Component uses native title attribute for tooltip instead of custom popout
-      const wrapper = screen.getByTestId('request-select-req_long').closest('[title]');
-      expect(wrapper).not.toBeNull();
-      expect(wrapper).toHaveAttribute('title', longRequest.name);
+      const row = screen.getByTestId('request-select-req_long');
+
+      // Tooltip content should be hidden initially (or not in DOM depending on implementation)
+      expect(screen.queryByText(longRequest.name)).not.toBeInTheDocument();
+
+      // Trigger tooltip via focus or hover (Base UI Trigger logic)
+      act(() => {
+        fireEvent.focus(row);
+      });
+
+      // Advance timers past the 100ms delay
+      act(() => {
+        vi.advanceTimersByTime(150);
+      });
+
+      // Now tooltip content should be visible
+      expect(screen.getByTestId('request-tooltip-req_long-content')).toBeInTheDocument();
+      expect(screen.getByText(longRequest.name)).toBeInTheDocument();
     });
   });
 

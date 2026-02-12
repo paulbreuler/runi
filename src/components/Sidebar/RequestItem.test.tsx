@@ -55,7 +55,7 @@ describe('RequestItem', () => {
     vi.useRealTimers();
   });
 
-  it('shows a popout after hover delay when truncated', () => {
+  it('uses custom Tooltip for full name on hover', async (): Promise<void> => {
     render(
       <TooltipProvider>
         <RequestItem request={baseRequest} collectionId="col_1" />
@@ -63,65 +63,23 @@ describe('RequestItem', () => {
     );
 
     const row = screen.getByTestId('collection-request-req_1');
-    const name = screen.getByTestId('request-name');
 
-    // Mock truncation conditions
-    Object.defineProperty(name, 'scrollWidth', { value: 200, configurable: true });
-    Object.defineProperty(name, 'clientWidth', { value: 100, configurable: true });
+    // Tooltip content should be hidden initially
+    expect(screen.queryByText(baseRequest.name)).not.toBeInTheDocument();
 
+    // Trigger tooltip via focus
     act(() => {
-      window.dispatchEvent(new Event('resize'));
+      fireEvent.focus(row);
     });
 
-    const wrapper = row.parentElement!;
+    // Advance timers past the 100ms delay
     act(() => {
-      fireEvent.mouseEnter(wrapper);
+      vi.advanceTimersByTime(150);
     });
 
-    // Advance past the 250ms hover delay
-    act(() => {
-      vi.advanceTimersByTime(250);
-    });
-
-    expect(screen.getByTestId('request-popout')).toBeInTheDocument();
-
-    act(() => {
-      fireEvent.mouseLeave(wrapper);
-    });
-
-    expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
-  });
-
-  it('does not show a popout when text is not truncated', () => {
-    const shortRequest = { ...baseRequest, name: 'Short Name' };
-    render(
-      <TooltipProvider>
-        <RequestItem request={shortRequest} collectionId="col_1" />
-      </TooltipProvider>
-    );
-
-    const row = screen.getByTestId('collection-request-req_1');
-    const name = screen.getByTestId('request-name');
-
-    // Mock non-truncation conditions
-    Object.defineProperty(name, 'scrollWidth', { value: 100, configurable: true });
-    Object.defineProperty(name, 'clientWidth', { value: 100, configurable: true });
-
-    act(() => {
-      window.dispatchEvent(new Event('resize'));
-    });
-
-    const wrapper = row.parentElement!;
-    act(() => {
-      fireEvent.mouseEnter(wrapper);
-    });
-
-    // Advance past the hover delay
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-
-    expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
+    // Now tooltip content should be visible
+    expect(screen.getByTestId('request-tooltip-req_1-content')).toBeInTheDocument();
+    expect(screen.getByText(baseRequest.name)).toBeInTheDocument();
   });
 
   describe('Event-driven request selection', (): void => {

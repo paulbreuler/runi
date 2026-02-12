@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
@@ -13,6 +13,7 @@ import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { globalEventBus } from '@/events/bus';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 export interface RequestItemCompositeProps {
   request: CollectionRequest;
@@ -33,8 +34,6 @@ export const RequestItemComposite = ({
   const isSelected = selectedRequestId === request.id;
   const selectRequest = useCollectionStore((state) => state.selectRequest);
 
-  const [, setIsFocused] = useState(false);
-
   const methodKey = request.method as HttpMethod;
   const methodClass =
     methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
@@ -48,77 +47,74 @@ export const RequestItemComposite = ({
   }, [collectionId, request, selectRequest]);
 
   return (
-    <div
-      className={cn('relative w-full px-1', className)}
-      title={request.name} // Native tooltip for full name
+    <Tooltip
+      content={request.name}
+      delayDuration={100}
+      data-test-id={`request-tooltip-${request.id}`}
     >
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={`Select request ${request.method} ${request.name}`}
-        className={cn(
-          'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors min-h-[28px] cursor-pointer rounded-md',
-          isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
-          focusRingClasses,
-          isAiDraft && 'border border-signal-ai/25 bg-signal-ai/[0.03] my-0.5'
-        )}
-        data-test-id={`request-select-${request.id}`}
-        data-active={isSelected || undefined}
-        data-nav-item="true"
-        onFocus={() => {
-          setIsFocused(true);
-        }}
-        onBlur={() => {
-          setIsFocused(false);
-        }}
-        onClick={(e): void => {
-          (e.currentTarget as HTMLElement).focus({ preventScroll: true });
-          handleSelect();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
+      <div className={cn('relative w-full px-1', className)}>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={`Select request ${request.method} ${request.name}`}
+          className={cn(
+            'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors min-h-[28px] cursor-pointer rounded-md',
+            isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40',
+            focusRingClasses,
+            isAiDraft && 'border border-signal-ai/25 bg-signal-ai/[0.03] my-0.5'
+          )}
+          data-test-id={`request-select-${request.id}`}
+          data-active={isSelected || undefined}
+          data-nav-item="true"
+          onClick={(e): void => {
+            (e.currentTarget as HTMLElement).focus({ preventScroll: true });
             handleSelect();
-          }
-        }}
-      >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {isBound(request) && (
-            <div className="shrink-0 w-3 flex items-center justify-center">
-              <span className="h-1.5 w-1.5 rounded-full bg-signal-success" />
-            </div>
-          )}
-
-          <span
-            className={cn(
-              'text-[10px] font-bold uppercase tracking-widest shrink-0 min-w-[28px]',
-              methodClass
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleSelect();
+            }
+          }}
+        >
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {isBound(request) && (
+              <div className="shrink-0 w-3 flex items-center justify-center">
+                <span className="h-1.5 w-1.5 rounded-full bg-signal-success" />
+              </div>
             )}
-          >
-            {request.method}
-          </span>
 
-          <span
-            className="text-sm text-text-primary truncate block flex-1 min-w-0"
-            data-test-id="request-name"
-          >
-            {displayName}
-          </span>
-        </div>
+            <span
+              className={cn(
+                'text-[10px] font-bold uppercase tracking-widest shrink-0 min-w-[28px]',
+                methodClass
+              )}
+            >
+              {request.method}
+            </span>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {isAiGenerated(request) && (
-            <Sparkles size={10} className={isAiDraft ? 'text-signal-ai' : 'text-text-muted'} />
-          )}
+            <span
+              className="text-sm text-text-primary truncate block flex-1 min-w-0"
+              data-test-id="request-name"
+            >
+              {displayName}
+            </span>
+          </div>
 
-          {request.is_streaming && (
-            <div className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-1.5 py-0.5 text-[10px] text-accent-purple shrink-0 font-semibold">
-              <Radio size={10} />
-              Stream
-            </div>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isAiGenerated(request) && (
+              <Sparkles size={10} className={isAiDraft ? 'text-signal-ai' : 'text-text-muted'} />
+            )}
+
+            {request.is_streaming && (
+              <div className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-1.5 py-0.5 text-[10px] text-accent-purple shrink-0 font-semibold">
+                <Radio size={10} />
+                Stream
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Tooltip>
   );
 };
