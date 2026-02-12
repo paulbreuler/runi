@@ -20,12 +20,12 @@ test.describe('Canvas Architecture', () => {
     const titleBar = page.locator('[data-test-id="titlebar"]');
     await expect(titleBar).toBeVisible();
 
-    // Check that context tabs exist
-    const contextTabs = page.locator('[data-test-id="context-tabs"]');
-    await expect(contextTabs).toBeVisible();
+    // Check that context tabs list exists
+    const contextTabsList = page.locator('[data-test-id="context-tabs-list"]');
+    await expect(contextTabsList).toBeVisible();
 
     // Verify at least one tab is present (default request-{uuid} tab)
-    const tabs = contextTabs.locator('[role="tab"]');
+    const tabs = contextTabsList.locator('[role="tab"]');
     await expect(tabs.first()).toBeVisible({ timeout: 5000 });
 
     // Verify a dynamic request tab is present and active (request-{uuid} format)
@@ -84,9 +84,9 @@ test.describe('Canvas Architecture', () => {
     // Click to open layout picker menu
     await layoutPicker.click();
 
-    // Wait for menu to appear
-    const layoutMenu = page.locator('[role="menu"]');
-    await expect(layoutMenu).toBeVisible({ timeout: 3000 });
+    // Wait for menu to appear (portaled content in document.body)
+    const layoutPickerContent = page.locator('[data-test-id="layout-picker-content"]');
+    await expect(layoutPickerContent).toBeVisible({ timeout: 3000 });
 
     // Select a generic layout (Focus)
     const focusLayout = page.locator('[data-test-id="layout-option-focus"]');
@@ -116,22 +116,15 @@ test.describe('Canvas Architecture', () => {
   });
 
   test('Arrow buttons appear when tabs overflow', async ({ page }) => {
-    // This test would require creating multiple contexts to trigger overflow
-    // For now, we'll just verify the structure is in place
-    const contextTabs = page.locator('[data-test-id="context-tabs"]');
-    await expect(contextTabs).toBeVisible();
+    // Verify the arrow buttons exist (they're always present, just disabled when not needed)
+    const leftArrow = page.locator('[data-test-id="context-tabs-arrow-left"]');
+    const rightArrow = page.locator('[data-test-id="context-tabs-arrow-right"]');
 
-    // Check if overflow controls exist (they may be hidden if not needed)
-    const prevButton = page.locator('[data-test-id="tabs-scroll-prev"]');
-    const nextButton = page.locator('[data-test-id="tabs-scroll-next"]');
+    await expect(leftArrow).toBeVisible();
+    await expect(rightArrow).toBeVisible();
 
-    // These buttons may not be visible if there's no overflow
-    // This is expected behavior
-    const prevCount = await prevButton.count();
-    const nextCount = await nextButton.count();
-
-    // Either both buttons exist or neither (consistent state)
-    expect(prevCount === nextCount).toBeTruthy();
+    // Initially, left arrow should be disabled (no scroll)
+    await expect(leftArrow).toBeDisabled();
   });
 
   test('Layout picker displays current layout', async ({ page }) => {
@@ -152,8 +145,8 @@ test.describe('Canvas Architecture', () => {
 
     // Check that the title bar has the proper structure
     // (draggable region with tabs inside)
-    const contextTabs = titleBar.locator('[data-test-id="context-tabs"]');
-    await expect(contextTabs).toBeVisible();
+    const contextTabsList = titleBar.locator('[data-test-id="context-tabs-list"]');
+    await expect(contextTabsList).toBeVisible();
 
     // The title bar should have CSS that creates draggable regions
     // This is a basic structure check

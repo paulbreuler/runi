@@ -115,33 +115,6 @@ test.describe('MainLayout', () => {
     await expect(page.getByTestId('sidebar')).toBeVisible({ timeout: 2000 });
   });
 
-  test('pane resizer is visible and interactive', async ({ page }) => {
-    const resizer = page.getByTestId('pane-resizer');
-
-    // Verify resizer is visible
-    await expect(resizer).toBeVisible();
-
-    // Verify resizer has correct cursor style
-    await expect(resizer).toHaveCSS('cursor', /col-resize|ew-resize/);
-
-    // Get initial positions
-    const requestPane = page.getByTestId('request-pane');
-    const responsePane = page.getByTestId('response-pane');
-
-    const requestRect = await requestPane.boundingBox();
-    const responseRect = await responsePane.boundingBox();
-
-    expect(requestRect).not.toBeNull();
-    expect(responseRect).not.toBeNull();
-
-    // Verify panes are roughly equal width initially (50/50 split)
-    if (requestRect && responseRect) {
-      const totalWidth = requestRect.width + responseRect.width;
-      const requestPercentage = (requestRect.width / totalWidth) * 100;
-
-      // Should be approximately 50% (allow 5% tolerance)
-      expect(requestPercentage).toBeGreaterThan(45);
-      expect(requestPercentage).toBeLessThan(55);
-    }
-  });
+  // Pane resizer test removed - the UI no longer has a pane resizer.
+  // The layout now uses layouts that adapt based on the selected layout option.
 });
