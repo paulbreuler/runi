@@ -10,8 +10,6 @@
 import { useState, useEffect } from 'react';
 import { executeRequest } from '@/api/http';
 import { isAppError, type AppError } from '@/types/errors';
-import { getConsoleService } from '@/services/console-service';
-import { getCorrelationId } from '@/utils/correlation-id';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { useRequestStore } from '@/stores/useRequestStore';
@@ -76,27 +74,6 @@ export const useRequestActions = (): UseRequestActionsReturn => {
       });
       const result = await executeRequest(params);
       setResponse(result);
-
-      // Check for missing TLS certificate on HTTPS requests
-      const isHttps = localUrl.toLowerCase().startsWith('https://');
-      const hasTlsTiming = result.timing.tls_ms !== null && result.timing.tls_ms > 0;
-
-      if (isHttps && hasTlsTiming) {
-        // TLS was used but certificate data is not captured
-        // This is expected behavior until certificate extraction is implemented
-        getConsoleService().addLog({
-          level: 'warn',
-          message: `TLS certificate not captured for HTTPS request to ${localUrl}. Certificate extraction is not yet implemented. Consider opening an issue on GitHub if this is needed.`,
-          args: [
-            {
-              url: localUrl,
-              tlsTiming: result.timing.tls_ms,
-              note: 'Certificate data extraction from curl is not currently implemented',
-            },
-          ],
-          correlationId: getCorrelationId() ?? undefined,
-        });
-      }
 
       // Auto-save to history after successful request
       await addEntry(
