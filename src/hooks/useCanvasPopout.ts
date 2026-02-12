@@ -4,7 +4,7 @@
  * Provides functionality for popping out canvas contexts into separate windows.
  */
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { globalEventBus } from '@/events/bus';
 
@@ -22,6 +22,7 @@ interface UseCanvasPopoutReturn {
  */
 export const useCanvasPopout = (): UseCanvasPopoutReturn => {
   const popoutWindowsRef = useRef<Map<string, Window>>(new Map());
+  const intervalsRef = useRef<Set<NodeJS.Timeout>>(new Set());
   const { contexts } = useCanvasStore();
 
   // Check if popout is supported (Tauri webview context detection)
@@ -81,32 +82,34 @@ export const useCanvasPopout = (): UseCanvasPopoutReturn => {
 
       if (popoutWindow !== null) {
         popoutWindowsRef.current.set(contextId, popoutWindow);
-        const windowId = `canvas-popout-${contextId}-${String(Date.now())}`;
 
         // Set window title when document is ready
         popoutWindow.document.title = title;
-
-        // Emit popout opened event
-        globalEventBus.emit('canvas.popout-opened', {
-          contextId,
-          windowId,
-        });
 
         // Listen for window close
         const checkClosed = setInterval(() => {
           if (popoutWindow.closed) {
             clearInterval(checkClosed);
-            globalEventBus.emit('canvas.popout-closed', {
-              contextId,
-              windowId,
-            });
+            intervalsRef.current.delete(checkClosed);
             popoutWindowsRef.current.delete(contextId);
           }
         }, 500);
+        intervalsRef.current.add(checkClosed);
       }
     },
     [contexts]
   );
+
+  // Cleanup all intervals on unmount
+  useEffect(() => {
+    const intervals = intervalsRef.current;
+    return (): void => {
+      intervals.forEach((interval) => {
+        clearInterval(interval);
+      });
+      intervals.clear();
+    };
+  }, []);
 
   return {
     openPopout,

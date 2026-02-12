@@ -52,6 +52,9 @@
   --color-border-default: oklch(0.6 0.01 240 / 65%);
   --color-border-emphasis: oklch(0.75 0.01 240 / 75%);
 
+  /* Focus ring token - Blue focus indicator */
+  --color-ring: oklch(0.82 0.15 230);
+
   /* Signal Colors - High chroma and lightness to cut through glare */
   --color-signal-success: oklch(0.85 0.15 150);
   --color-signal-success-rgba-15: oklch(0.85 0.15 150 / 15%);

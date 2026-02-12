@@ -147,29 +147,6 @@ describe('useCanvasPopout', () => {
     globalEventBus.off('canvas.popout-requested', eventSpy);
   });
 
-  it('should emit canvas.popout-opened event when window opens', () => {
-    const eventSpy = vi.fn();
-    globalEventBus.on('canvas.popout-opened', eventSpy);
-
-    const { result } = renderHook(() => useCanvasPopout());
-
-    act(() => {
-      result.current.openPopout('test-context');
-    });
-
-    expect(eventSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'canvas.popout-opened',
-        payload: {
-          contextId: 'test-context',
-          windowId: expect.any(String),
-        },
-      })
-    );
-
-    globalEventBus.off('canvas.popout-opened', eventSpy);
-  });
-
   it('should handle window open failure', () => {
     vi.stubGlobal(
       'open',

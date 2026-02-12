@@ -27,7 +27,7 @@ export const CanvasPopout: FC = () => {
     const stateParam = searchParams.get('state');
     if (stateParam !== null && stateParam !== '') {
       try {
-        const state = JSON.parse(decodeURIComponent(stateParam)) as Record<string, unknown>;
+        const state = JSON.parse(stateParam) as Record<string, unknown>;
         useCanvasStore.getState().setContextState(contextId, state);
       } catch (err) {
         console.error('Failed to restore popout state:', err);
