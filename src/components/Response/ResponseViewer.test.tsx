@@ -7,6 +7,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import { ResponseViewer } from './ResponseViewer';
+import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import type { HttpResponse } from '@/types/http';
 
 describe('ResponseViewer', () => {
@@ -26,6 +27,18 @@ describe('ResponseViewer', () => {
       first_byte_ms: 40,
     },
   };
+
+  it('renders vigilance monitor when provided via slot', () => {
+    render(
+      <ResponseViewer
+        response={mockResponse}
+        vigilanceSlot={<VigilanceMonitor visible={true} active={false} label="Vigilance Active" />}
+      />
+    );
+
+    expect(screen.getByTestId('vigilance-monitor')).toBeInTheDocument();
+    expect(screen.getByText('Vigilance Active')).toBeInTheDocument();
+  });
 
   it('renders response viewer with tabs', () => {
     render(<ResponseViewer response={mockResponse} />);

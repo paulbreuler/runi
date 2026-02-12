@@ -40,7 +40,7 @@ export const VigilanceMonitor = ({
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3, ease: 'linear' }}
-          className={cn('w-full overflow-hidden', className)}
+          className={cn('w-full overflow-hidden mt-[-1px]', className)}
           data-test-id="vigilance-monitor"
         >
           <div className="flex flex-col relative">
@@ -60,8 +60,8 @@ export const VigilanceMonitor = ({
                 }}
               />
             )}
-            {label !== null && label !== undefined && label !== '' && (
-              <div className="px-3 py-0.5 bg-bg-surface/50 border-b border-border-subtle/30">
+            <div className="px-3 py-0.5 bg-bg-surface/50 border-b border-border-subtle/30 min-h-[18px] flex items-center">
+              {label !== null && label !== undefined && label !== '' && (
                 <span
                   className={cn(
                     'text-[9px] font-mono uppercase tracking-widest text-text-muted',
@@ -70,8 +70,8 @@ export const VigilanceMonitor = ({
                 >
                   {label}
                 </span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </motion.div>
       )}

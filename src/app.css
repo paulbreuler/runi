@@ -206,7 +206,7 @@ body {
 
   /* Vigilance Monitor Progress Animation */
   .vigilance-progress {
-    height: 2px;
+    height: 1px;
     background: linear-gradient(
       to right,
       var(--color-signal-ai) 0%,
@@ -219,7 +219,7 @@ body {
 
   /* Vigilance Monitor Idle State - Static line, same height as active to prevent layout shift */
   .vigilance-progress-idle {
-    height: 2px;
+    height: 1px;
     background: var(--color-border-subtle);
   }
 

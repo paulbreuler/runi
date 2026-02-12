@@ -8,6 +8,7 @@ import { Send, Square, Columns2 } from 'lucide-react';
 import type { CanvasContextDescriptor, CanvasPanelProps } from '@/types/canvas';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
+import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
 import { useRequestStore } from '@/stores/useRequestStore';
 
@@ -17,8 +18,21 @@ const RequestBuilderPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
 };
 
 const ResponseViewerPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
-  const { response } = useRequestStore();
-  return <ResponseViewer response={response} />;
+  const { response, isLoading } = useRequestStore();
+
+  let label = 'Vigilance Ready';
+  if (isLoading) {
+    label = 'Analyzing Response...';
+  } else if (response !== null) {
+    label = 'Vigilance Active';
+  }
+
+  return (
+    <ResponseViewer
+      response={response}
+      vigilanceSlot={<VigilanceMonitor visible={true} active={isLoading} label={label} />}
+    />
+  );
 };
 
 /**
