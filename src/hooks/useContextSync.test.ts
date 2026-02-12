@@ -61,6 +61,61 @@ describe('useContextSync', () => {
       expect(canvasState.activeContextId).toMatch(/^request-/);
     });
 
+    it('should clean stale contextState entries on mount', async () => {
+      // Pre-populate stale persisted state (no matching contexts)
+      act(() => {
+        useCanvasStore.setState((state) => {
+          const nextContextState = new Map(state.contextState);
+          // Add 3 stale entries with no corresponding context descriptors
+          nextContextState.set('request-stale-1', {
+            method: 'GET',
+            url: 'https://stale1.example.com',
+            headers: {},
+            body: '',
+          });
+          nextContextState.set('request-stale-2', {
+            method: 'POST',
+            url: 'https://stale2.example.com',
+            headers: {},
+            body: '',
+          });
+          nextContextState.set('request-stale-3', {
+            method: 'DELETE',
+            url: 'https://stale3.example.com',
+            headers: {},
+            body: '',
+          });
+          return { ...state, contextState: nextContextState };
+        });
+      });
+
+      // Verify stale entries exist before mounting
+      expect(useCanvasStore.getState().contextState.size).toBe(3);
+
+      // Mount the sync hook - it should clean up stale entries
+      renderHook(() => {
+        useContextSync();
+      });
+
+      // Wait for cleanup to complete
+      await waitFor(() => {
+        const canvasState = useCanvasStore.getState();
+        // All stale entries should be removed, and a fresh default tab created
+        const staleEntries = Array.from(canvasState.contextState.keys()).filter(
+          (id) => id === 'request-stale-1' || id === 'request-stale-2' || id === 'request-stale-3'
+        );
+        expect(staleEntries).toHaveLength(0);
+        // Should have 2 contexts: 'request' template + 1 fresh tab
+        expect(canvasState.contextOrder.length).toBe(2);
+        // Should have 1 contextState entry (the fresh tab; template has no state)
+        expect(canvasState.contextState.size).toBe(1);
+        // Verify the remaining state is for a fresh request tab
+        const remainingIds = Array.from(canvasState.contextState.keys());
+        expect(remainingIds[0]).toMatch(/^request-/);
+        expect(remainingIds[0]).not.toBe('request'); // Not the template
+      });
+    });
+
     it('should load persisted active context into request store on mount', () => {
       // Pre-populate a request context
       act(() => {
@@ -444,7 +499,7 @@ describe('useContextSync', () => {
       });
     });
 
-    it('should reuse existing context when source matches persisted state', async () => {
+    it('should open a new context when source matches only stale persisted state', async () => {
       renderHook(() => {
         useContextSync();
       });
@@ -456,14 +511,6 @@ describe('useContextSync', () => {
       };
 
       act(() => {
-        // Register the context so setActiveContext can find it
-        useCanvasStore.getState().registerContext({
-          id: 'request-stale',
-          label: 'Stale Request',
-          order: 10,
-          panels: {},
-          layouts: [],
-        });
         useCanvasStore.setState((state) => {
           const nextContextState = new Map(state.contextState);
           nextContextState.set('request-stale', {
@@ -476,6 +523,10 @@ describe('useContextSync', () => {
           return { ...state, contextState: nextContextState };
         });
       });
+
+      const requestContextCountBefore = useCanvasStore
+        .getState()
+        .contextOrder.filter((id) => id.startsWith('request-')).length;
 
       const payload: CollectionRequestSelectedPayload = {
         collectionId: 'col-stale',
@@ -498,10 +549,77 @@ describe('useContextSync', () => {
         globalEventBus.emit('collection.request-selected', payload);
       });
 
-      // findContextBySource finds the matching persisted state and reuses it
+      // Stale persisted source entries must be ignored, so a new tab opens.
       await waitFor(() => {
         const canvasStore = useCanvasStore.getState();
-        expect(canvasStore.activeContextId).toBe('request-stale');
+        const requestContextCountAfter = canvasStore.contextOrder.filter((id) =>
+          id.startsWith('request-')
+        ).length;
+
+        expect(requestContextCountAfter).toBe(requestContextCountBefore + 1);
+        expect(canvasStore.activeContextId).not.toBe('request-stale');
+        expect(canvasStore.activeContextId).toMatch(/^request-/);
+      });
+    });
+
+    it('should open new contexts even when many stale persisted sources exist', async () => {
+      renderHook(() => {
+        useContextSync();
+      });
+
+      act(() => {
+        useCanvasStore.setState((state) => {
+          const nextContextState = new Map(state.contextState);
+
+          for (let i = 1; i <= 10; i += 1) {
+            nextContextState.set(`request-stale-${String(i)}`, {
+              source: {
+                type: 'collection',
+                collectionId: 'col-httpbin',
+                requestId: `req-${String(i)}`,
+              },
+              method: 'GET',
+              url: `https://stale.example.com/${String(i)}`,
+              headers: {},
+              body: '',
+            });
+          }
+
+          return { ...state, contextState: nextContextState };
+        });
+      });
+
+      const requestContextCountBefore = useCanvasStore
+        .getState()
+        .contextOrder.filter((id) => id.startsWith('request-')).length;
+
+      for (let i = 1; i <= 12; i += 1) {
+        act(() => {
+          globalEventBus.emit('collection.request-selected', {
+            collectionId: 'col-httpbin',
+            request: {
+              id: `req-${String(i)}`,
+              name: `Request ${String(i)}`,
+              seq: i,
+              method: 'GET',
+              url: `https://httpbin.org/anything/${String(i)}`,
+              headers: {},
+              params: [],
+              is_streaming: false,
+              binding: { is_manual: false },
+              intelligence: { ai_generated: false },
+              tags: [],
+            },
+          } satisfies CollectionRequestSelectedPayload);
+        });
+      }
+
+      await waitFor(() => {
+        const canvasStore = useCanvasStore.getState();
+        const requestContextCountAfter = canvasStore.contextOrder.filter((id) =>
+          id.startsWith('request-')
+        ).length;
+        expect(requestContextCountAfter).toBe(requestContextCountBefore + 12);
       });
     });
   });

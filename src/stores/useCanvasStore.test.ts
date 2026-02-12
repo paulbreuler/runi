@@ -460,6 +460,92 @@ describe('useCanvasStore', () => {
     });
   });
 
+  describe('Persistence Hydration', () => {
+    it('should nullify activeContextId during merge when contexts is empty', () => {
+      // First, create a store with a persisted activeContextId
+      {
+        const { result } = renderHook(() => useCanvasStore());
+        act(() => {
+          const contextId = result.current.openRequestTab({
+            method: 'GET',
+            url: 'https://api.example.com',
+          });
+          result.current.setActiveContext(contextId);
+        });
+        // activeContextId is now persisted to localStorage
+      }
+
+      // Clear all stores and reset to simulate fresh page load
+      // Contexts won't be rehydrated (they're not persisted), but
+      // activeContextId and contextState are in localStorage
+      localStorageMock.clear();
+      act(() => {
+        useCanvasStore.getState().reset();
+      });
+
+      // Manually populate localStorage with stale activeContextId
+      // (simulating what would happen after a page reload)
+      localStorageMock.setItem(
+        'canvas-store',
+        JSON.stringify({
+          state: {
+            activeContextId: 'request-stale-abc-123',
+            activeLayoutPerContext: [],
+            contextState: [
+              [
+                'request-stale-abc-123',
+                {
+                  method: 'GET',
+                  url: 'https://api.example.com',
+                  headers: {},
+                  body: '',
+                },
+              ],
+            ],
+          },
+          version: 0,
+        })
+      );
+
+      // Create new hook instance to test persistence merge
+      // This will call the merge function with the stale persisted state
+      const { result: result2 } = renderHook(() => useCanvasStore());
+
+      // After merge, activeContextId should be null because contexts is empty
+      // (contexts aren't persisted, so they're always empty on page load)
+      expect(result2.current.activeContextId).toBeNull();
+      expect(result2.current.contexts.size).toBe(0);
+    });
+
+    it('should not restore stale activeContextId from persistence', () => {
+      // Clear everything first
+      localStorageMock.clear();
+      act(() => {
+        useCanvasStore.getState().reset();
+      });
+
+      // Manually set localStorage to simulate stale persisted state
+      localStorageMock.setItem(
+        'canvas-store',
+        JSON.stringify({
+          state: {
+            activeContextId: 'request-stale-xyz-789',
+            activeLayoutPerContext: [],
+            contextState: [],
+          },
+          version: 0,
+        })
+      );
+
+      // Create new hook instance
+      const { result } = renderHook(() => useCanvasStore());
+
+      // Should not restore the stale activeContextId because
+      // there are no contexts registered
+      expect(result.current.activeContextId).toBeNull();
+    });
+  });
+
   describe('Request Tab Contexts', () => {
     it('should open a new request tab with default state', () => {
       const { result } = renderHook(() => useCanvasStore());
@@ -557,6 +643,73 @@ describe('useCanvasStore', () => {
 
       const foundId = result.current.findContextBySource(source);
       expect(foundId).toBeNull();
+    });
+
+    it('should ignore stale source state when context descriptor is missing', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      const source = {
+        type: 'collection' as const,
+        collectionId: 'col-stale',
+        requestId: 'req-stale',
+      };
+
+      act(() => {
+        useCanvasStore.setState((state) => {
+          const nextContextState = new Map(state.contextState);
+          nextContextState.set('request-stale', {
+            source,
+            method: 'GET',
+            url: 'https://stale.example.com',
+            headers: {},
+            body: '',
+          });
+          return { ...state, contextState: nextContextState };
+        });
+      });
+
+      expect(result.current.findContextBySource(source)).toBeNull();
+    });
+
+    it('should ignore matching source state when context exists but is not in context order', () => {
+      const { result } = renderHook(() => useCanvasStore());
+
+      const source = {
+        type: 'collection' as const,
+        collectionId: 'col-ghost',
+        requestId: 'req-ghost',
+      };
+
+      act(() => {
+        useCanvasStore.setState((state) => {
+          const nextContexts = new Map(state.contexts);
+          nextContexts.set('request-ghost', {
+            id: 'request-ghost',
+            label: 'Ghost Request',
+            order: 999,
+            panels: {},
+            layouts: [],
+          });
+
+          const nextContextState = new Map(state.contextState);
+          nextContextState.set('request-ghost', {
+            source,
+            method: 'GET',
+            url: 'https://ghost.example.com',
+            headers: {},
+            body: '',
+          });
+
+          // Intentionally do not add request-ghost to contextOrder.
+          return {
+            ...state,
+            contexts: nextContexts,
+            contextState: nextContextState,
+          };
+        });
+      });
+
+      expect(result.current.findContextBySource(source)).toBeNull();
     });
 
     it('should close request tab and activate adjacent context', () => {

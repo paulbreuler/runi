@@ -4,11 +4,16 @@ This directory contains Architecture Decision Records (ADRs) for the runi projec
 
 ## What is an ADR?
 
-An ADR captures a single architectural decision along with its context and consequences. ADRs provide a historical record of why significant technical decisions were made, helping current and future contributors understand the reasoning behind the codebase's architecture.
+An ADR captures a single architectural decision along with its context and consequences. ADRs provide a historical
+record of why significant technical decisions were made, helping current and future contributors understand the
+reasoning behind the codebase's architecture.
 
 ## Format
 
-We use a hybrid format based on [Michael Nygard's ADR template](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) with elements from [MADR](https://adr.github.io/madr/):
+We use a hybrid format based on [Michael Nygard's ADR template][nygard] with elements from [MADR][madr]:
+
+[nygard]: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+[madr]: https://adr.github.io/madr/
 
 ```markdown
 # ADR-NNNN: Title
@@ -41,9 +46,8 @@ Links to relevant resources.
 
 Sorted chronologically (newest first).
 
-| ADR                                          | Title                             | Status   | Date       |
-| -------------------------------------------- | --------------------------------- | -------- | ---------- |
-| [0001](0001-migrate-from-svelte-to-react.md) | Migrate from Svelte 5 to React 19 | Accepted | 2026-01-14 |
+| ADR | Title | Status | Date |
+| --- | ----- | ------ | ---- |
 
 ## Creating a New ADR
 
@@ -66,7 +70,12 @@ For smaller tactical decisions, use `docs/DECISIONS.md` instead.
 
 ## References
 
-- [Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) - Michael Nygard
+- [Documenting Architecture Decisions][nygard-ref] - Michael Nygard
+
+[nygard-ref]: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+
 - [MADR](https://adr.github.io/madr/) - Markdown Any Decision Records
 - [ADR GitHub Organization](https://adr.github.io/)
-- [AWS ADR Best Practices](https://aws.amazon.com/blogs/architecture/master-architecture-decision-records-adrs-best-practices-for-effective-decision-making/)
+- [AWS ADR Best Practices][aws-adr]
+
+[aws-adr]: https://aws.amazon.com/blogs/architecture/master-architecture-decision-records-adrs-best-practices-for-effective-decision-making/
