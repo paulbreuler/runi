@@ -204,7 +204,13 @@ export const ContextTabs = (): React.JSX.Element | null => {
         className="flex-1 overflow-x-auto overflow-y-visible scrollbar-hidden touch-pan-x min-w-0 h-full relative"
         data-test-id="context-tabs-scroll"
       >
-        <Tabs.Root value={activeContextId ?? tabs[0]?.value ?? ''} className="h-full">
+        <Tabs.Root
+          value={activeContextId ?? tabs[0]?.value ?? ''}
+          onValueChange={(value: string) => {
+            handleTabChange(value);
+          }}
+          className="h-full"
+        >
           <Tabs.List
             className="flex items-end h-full gap-0 px-1 pt-1.5 border-b border-border-subtle/30"
             data-test-id="context-tabs-list"

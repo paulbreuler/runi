@@ -5,7 +5,11 @@ import { CanvasPanel } from './CanvasPanel';
 import { cn } from '@/utils/cn';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
-export const CanvasHost: FC<{ className?: string }> = ({ className }) => {
+interface CanvasHostProps {
+  className?: string;
+}
+
+export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
   const { activeContextId, contexts, getActiveLayout } = useCanvasStore();
 
