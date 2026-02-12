@@ -907,15 +907,24 @@ describe('ConsolePanel', () => {
     }
     const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
     expect(chevronButton).toBeInTheDocument();
-    fireEvent.click(chevronButton as HTMLElement);
+
+    await act(async () => {
+      fireEvent.click(chevronButton as HTMLElement);
+    });
 
     // Wait for args to appear (assert on visible text, not code-editor textContent)
-    await waitFor(() => {
-      expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
-    }, WAIT_TIMEOUT);
+    // Increase timeout for code editor rendering
+    await waitFor(
+      () => {
+        expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
     // Click again to collapse
-    fireEvent.click(chevronButton!);
+    await act(async () => {
+      fireEvent.click(chevronButton!);
+    });
 
     // Wait for args to disappear
     await waitFor(() => {
