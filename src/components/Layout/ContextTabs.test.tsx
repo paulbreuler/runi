@@ -22,12 +22,14 @@ describe('ContextTabs', () => {
       id: 'test-1',
       label: 'Context One',
       order: 0,
+      panels: {},
       layouts: [],
     };
     const context2: CanvasContextDescriptor = {
       id: 'test-2',
       label: 'Context Two',
       order: 1,
+      panels: {},
       layouts: [],
     };
 
@@ -49,6 +51,7 @@ describe('ContextTabs', () => {
       id: 'test-active',
       label: 'Active Context',
       order: 0,
+      panels: {},
       layouts: [],
     };
 
@@ -58,7 +61,7 @@ describe('ContextTabs', () => {
 
     const activeTab = screen.getByTestId('context-tab-test-active');
     expect(activeTab).toHaveClass('bg-bg-app');
-    expect(activeTab).toHaveClass('rounded-t-md');
+    expect(activeTab).toHaveClass('rounded-t-lg');
   });
 
   it('shows arrow buttons when overflow detected', async () => {
@@ -70,6 +73,7 @@ describe('ContextTabs', () => {
         id: `context-${i.toString()}`,
         label: `Very Long Context Name ${i.toString()}`,
         order: i,
+        panels: {},
         layouts: [],
       });
     }
@@ -117,6 +121,7 @@ describe('ContextTabs', () => {
         id: `context-${i.toString()}`,
         label: `Context ${i.toString()}`,
         order: i,
+        panels: {},
         layouts: [],
       });
     }
@@ -169,12 +174,14 @@ describe('ContextTabs', () => {
       id: 'context-1',
       label: 'Context 1',
       order: 0,
+      panels: {},
       layouts: [],
     });
     registerContext({
       id: 'context-2',
       label: 'Context 2',
       order: 1,
+      panels: {},
       layouts: [],
     });
 
@@ -212,12 +219,14 @@ describe('ContextTabs', () => {
       id: 'context-1',
       label: 'Context 1',
       order: 0,
+      panels: {},
       layouts: [],
     });
     registerContext({
       id: 'context-2',
       label: 'Context 2',
       order: 1,
+      panels: {},
       layouts: [],
     });
 
@@ -244,12 +253,14 @@ describe('ContextTabs', () => {
       id: 'context-1',
       label: 'Context 1',
       order: 0,
+      panels: {},
       layouts: [],
     });
     registerContext({
       id: 'context-2',
       label: 'Context 2',
       order: 1,
+      panels: {},
       layouts: [],
     });
 
@@ -276,6 +287,7 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
       id: 'request-12345',
       label: 'GET /api/users',
       order: 0,
+      panels: {},
       layouts: [],
     });
 
@@ -300,6 +312,7 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
       id: 'request',
       label: 'Request Template',
       order: 0,
+      panels: {},
       layouts: [],
     });
 
@@ -319,6 +332,7 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
       id: 'request-12345',
       label: 'GET /api/users',
       order: 0,
+      panels: {},
       layouts: [],
     });
 
@@ -344,12 +358,14 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
       id: 'request-1',
       label: 'GET /api/users',
       order: 0,
+      panels: {},
       layouts: [],
     });
     registerContext({
       id: 'request-2',
       label: 'POST /api/users',
       order: 1,
+      panels: {},
       layouts: [],
     });
 
@@ -377,6 +393,7 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
       id: 'request-12345',
       label: 'GET /api/users',
       order: 0,
+      panels: {},
       layouts: [],
     });
 

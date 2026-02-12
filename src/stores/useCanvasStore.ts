@@ -16,6 +16,7 @@ import type {
 } from '@/types/canvas';
 import { GENERIC_LAYOUTS } from '@/components/Layout/layouts';
 import { Send } from 'lucide-react';
+import { globalEventBus, logEventFlow } from '@/events/bus';
 
 /**
  * Check if two RequestTabSource objects match
@@ -201,8 +202,20 @@ export const useCanvasStore = create<CanvasState>()(
 
         // Only set if context exists and is different
         if (!contexts.has(contextId) || activeContextId === contextId) {
+          logEventFlow('process', 'canvas.context-changed', undefined, {
+            action: 'skipped-no-change',
+            contextId,
+            activeContextId,
+            contextExists: contexts.has(contextId),
+          });
           return;
         }
+
+        logEventFlow('process', 'canvas.context-changed', undefined, {
+          action: 'activating',
+          fromContextId: activeContextId,
+          toContextId: contextId,
+        });
 
         set((state) => {
           // Add current context to history
@@ -215,6 +228,22 @@ export const useCanvasStore = create<CanvasState>()(
             activeContextId: contextId,
             contextHistory: newHistory,
           };
+        });
+
+        // Emit event for other components to react
+        globalEventBus.emit(
+          'canvas.context-changed',
+          {
+            contextId,
+            previousContextId: activeContextId,
+          },
+          'CanvasStore'
+        );
+
+        logEventFlow('complete', 'canvas.context-changed', undefined, {
+          action: 'activated',
+          contextId,
+          previousContextId: activeContextId,
         });
       },
 
@@ -320,6 +349,13 @@ export const useCanvasStore = create<CanvasState>()(
         const contextId: CanvasContextId = `request-${crypto.randomUUID()}`;
         const url = overrides?.url ?? '';
 
+        logEventFlow('process', 'canvas.context-changed', undefined, {
+          action: 'opening-request-tab',
+          contextId,
+          url,
+          source: overrides?.source,
+        });
+
         // Use name if provided, otherwise use label override, otherwise derive from URL
         const name = overrides?.name;
         const label = name ?? overrides?.label ?? deriveTabLabel(url, overrides?.name);
@@ -392,6 +428,12 @@ export const useCanvasStore = create<CanvasState>()(
             contextState: newContextState,
             activeContextId: contextId, // Always set new tab as active
           };
+        });
+
+        logEventFlow('complete', 'canvas.context-changed', undefined, {
+          action: 'opened-request-tab',
+          contextId,
+          activeContextId: get().activeContextId,
         });
 
         return contextId;

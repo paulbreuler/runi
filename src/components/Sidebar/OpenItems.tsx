@@ -91,6 +91,9 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
         closeContext(contextId);
         break;
       }
+      // Explicitly allow Tab to escape the section (P0 fix)
+      case 'Tab':
+        return;
     }
   };
 
@@ -135,10 +138,11 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
             role="listbox"
             aria-label="Open requests"
             data-test-id="open-items-list"
+            className="outline-none"
           >
             {requestContexts.map((contextId, index) => {
               const context = contexts.get(contextId);
-              const contextState = getContextState(contextId) as RequestTabState;
+              const contextState = getContextState(contextId) as unknown as RequestTabState;
 
               if (context === undefined) {
                 return null;

@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 import {
   motion,
   useReducedMotion,
@@ -16,17 +16,12 @@ import { Tabs } from '@base-ui/react/tabs';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
-import { isMacSync } from '@/utils/platform';
 import type { RequestTabState } from '@/types/canvas';
 
 interface ContextTabsProps {
   /** Sidebar width (MotionValue) for aligning tabs with canvas area */
   sidebarWidth?: MotionValue<number>;
 }
-
-// Approximate offset of title bar elements before tabs (Mac controls + drag handle + gaps)
-const TITLEBAR_LEFT_OFFSET_MAC = 106; // 8px padding + 8px ml-2 + 58px controls + 8px gap + 16px drag + 8px gap
-const TITLEBAR_LEFT_OFFSET_OTHER = 32; // 8px padding + 16px drag + 8px gap
 
 /**
  * ContextTabs - Manila folder tabs for TitleBar
@@ -45,20 +40,22 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const { contexts, contextOrder, activeContextId, contextState, setActiveContext, closeContext } =
-    useCanvasStore();
-
-  // Calculate smooth margin offset to align tabs with canvas
-  const isMac = isMacSync();
-  const titleBarOffset = isMac ? TITLEBAR_LEFT_OFFSET_MAC : TITLEBAR_LEFT_OFFSET_OTHER;
+  const {
+    contexts,
+    contextOrder,
+    activeContextId,
+    contextState,
+    setActiveContext,
+    closeContext,
+    openRequestTab,
+  } = useCanvasStore();
 
   // Create a fallback MotionValue if sidebarWidth is undefined
   const fallbackWidth = useMotionValue(0);
   const effectiveWidth = sidebarWidth ?? fallbackWidth;
 
-  const tabsMarginLeft = useTransform(effectiveWidth, (width) =>
-    Math.max(0, width - titleBarOffset)
-  );
+  // Align with canvas area
+  const tabsMarginLeft = useTransform(effectiveWidth, (width) => width);
 
   // Update scroll state
   const updateScrollState = useCallback((): void => {
@@ -116,6 +113,10 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
     closeContext(contextId);
   };
 
+  const handleNewTab = (): void => {
+    openRequestTab();
+  };
+
   // Return null if no contexts registered
   if (contextOrder.length === 0) {
     return null;
@@ -142,29 +143,32 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
     >
       {/* Arrow buttons */}
       {hasOverflow && canScrollLeft && (
-        <motion.button
-          type="button"
-          onClick={handleScrollLeft}
-          className={cn(
-            focusRingClasses,
-            'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors shrink-0'
-          )}
-          aria-label="Scroll tabs left"
-          data-test-id="context-tabs-arrow-left"
-          whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
-          whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
-        >
-          <ChevronLeft size={14} className="text-text-secondary" />
-        </motion.button>
+        <div className="flex items-center h-full shrink-0">
+          <motion.button
+            type="button"
+            onClick={handleScrollLeft}
+            className={cn(
+              focusRingClasses,
+              'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors'
+            )}
+            aria-label="Scroll tabs left"
+            data-test-id="context-tabs-arrow-left"
+            whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+          >
+            <span className="sr-only">Scroll left</span>
+            <ChevronLeft size={14} className="text-text-secondary" />
+          </motion.button>
+        </div>
       )}
 
       {/* Scrollable tabs container */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x min-w-0"
+        className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-hidden touch-pan-x min-w-0 h-full"
         data-test-id="context-tabs-scroll"
       >
-        <Tabs.Root value={activeContextId ?? tabs[0]?.value ?? ''}>
+        <Tabs.Root value={activeContextId ?? tabs[0]?.value ?? ''} className="h-full">
           <Tabs.List className="flex items-end h-full gap-0 px-1" data-test-id="context-tabs-list">
             {tabs.map((tab) => {
               const isActive = activeContextId === tab.value;
@@ -177,7 +181,7 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
               const isSaved = tabState?.isSaved ?? false;
 
               return (
-                <div key={tab.value} className="group relative flex items-center">
+                <div key={tab.value} className="group relative flex h-full items-end">
                   <Tabs.Tab
                     value={tab.value}
                     onClick={() => {
@@ -185,12 +189,12 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
                     }}
                     className={cn(
                       focusRingClasses,
-                      'relative px-4 py-2 text-xs font-medium transition-colors border-r border-border-subtle/50 mb-[-1px] flex items-center gap-2',
-                      'max-w-[200px]', // Constrain tab width
+                      'relative px-4 py-2.5 text-xs font-medium transition-colors mb-[-1px] flex items-center gap-3 rounded-none',
+                      'max-w-[240px] min-w-[120px] h-[calc(100%+1px)]', // Match height to list + overlap
                       isActive
-                        ? 'bg-bg-app rounded-t-md border-b-2 border-b-bg-app text-text-primary shadow-sm'
-                        : 'text-text-secondary hover:text-text-primary bg-transparent',
-                      isRequestTab && 'pr-2' // Reduce right padding to make room for close button
+                        ? 'bg-bg-app rounded-t-lg text-text-primary border-x border-t border-border-subtle shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.5)]'
+                        : 'text-text-secondary hover:text-text-primary bg-transparent border-r border-border-subtle/30',
+                      isRequestTab && 'pr-9' // Leave explicit room for the close button
                     )}
                     data-test-id={tab.testId}
                     title={tab.label} // Tooltip shows full name on hover
@@ -207,12 +211,13 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
                       }}
                       className={cn(
                         focusRingClasses,
-                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity rounded p-0.5 hover:bg-bg-raised/50 z-20'
+                        'absolute right-2 bottom-2.5 opacity-40 hover:opacity-100 transition-opacity rounded p-1 hover:bg-bg-raised/80 z-20',
+                        isActive && 'opacity-60' // More visible when active
                       )}
                       aria-label={`Close ${tab.label}`}
                       data-test-id={`close-tab-${tab.value}`}
                     >
-                      <X size={12} className="text-text-secondary" />
+                      <X size={14} strokeWidth={2.5} className="text-text-primary" />
                     </button>
                   )}
                 </div>
@@ -222,21 +227,40 @@ export const ContextTabs = ({ sidebarWidth }: ContextTabsProps): React.JSX.Eleme
         </Tabs.Root>
       </div>
 
-      {hasOverflow && canScrollRight && (
-        <motion.button
+      {/* New Request Button */}
+      <div className="flex items-center h-full shrink-0 pr-2">
+        <button
           type="button"
-          onClick={handleScrollRight}
+          onClick={handleNewTab}
           className={cn(
             focusRingClasses,
-            'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors shrink-0'
+            'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/80 transition-colors text-text-secondary hover:text-text-primary'
           )}
-          aria-label="Scroll tabs right"
-          data-test-id="context-tabs-arrow-right"
-          whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
-          whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+          aria-label="New Request"
+          data-test-id="context-tabs-new-request"
         >
-          <ChevronRight size={14} className="text-text-secondary" />
-        </motion.button>
+          <Plus size={16} />
+        </button>
+      </div>
+
+      {hasOverflow && canScrollRight && (
+        <div className="flex items-center h-full shrink-0">
+          <motion.button
+            type="button"
+            onClick={handleScrollRight}
+            className={cn(
+              focusRingClasses,
+              'flex h-6 w-6 items-center justify-center rounded hover:bg-bg-raised/50 transition-colors'
+            )}
+            aria-label="Scroll tabs right"
+            data-test-id="context-tabs-arrow-right"
+            whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+          >
+            <span className="sr-only">Scroll right</span>
+            <ChevronRight size={14} className="text-text-secondary" />
+          </motion.button>
+        </div>
       )}
     </motion.div>
   );

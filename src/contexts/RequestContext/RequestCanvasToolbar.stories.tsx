@@ -24,9 +24,8 @@ const meta = {
       useRequestStore.setState({
         url: 'https://api.example.com/users',
         method: 'GET',
-        headers: [],
+        headers: {},
         body: '',
-        bodyType: 'none',
       });
 
       return (

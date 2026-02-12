@@ -6,6 +6,7 @@
  */
 
 import type { LucideIcon } from 'lucide-react';
+import type { HttpResponse } from './http';
 
 /**
  * Canvas context identifier
@@ -116,13 +117,7 @@ export interface RequestTabState {
   /** Request body */
   body: string;
   /** Cached response (excluded from persistence) */
-  response?: {
-    status: number;
-    statusText: string;
-    headers: Record<string, string>;
-    body: string;
-    time: number;
-  } | null;
+  response?: HttpResponse | null;
   /** Whether the tab has unsaved changes */
   isDirty?: boolean;
   /** Origin of this tab's content */

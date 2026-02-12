@@ -15,7 +15,7 @@ import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
 const buttonVariants = cva(
-  `${focusRingClasses} inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-colors duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4`,
+  `${focusRingClasses} inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-colors duration-200 disabled:pointer-events-none disabled:opacity-65 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4`,
   {
     variants: {
       variant: {

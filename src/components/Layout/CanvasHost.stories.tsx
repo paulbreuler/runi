@@ -46,7 +46,7 @@ type Story = StoryObj<typeof meta>;
 export const SideBySide: Story = {
   decorators: [
     (Story) => {
-      useCanvasStore.getState().setLayout('request-default'); // Side by side
+      useCanvasStore.getState().setLayout('request', 'request-default'); // Side by side
       return <Story />;
     },
   ],
@@ -69,7 +69,7 @@ export const SideBySide: Story = {
 export const SinglePanel: Story = {
   decorators: [
     (Story) => {
-      useCanvasStore.getState().setLayout('request-only');
+      useCanvasStore.getState().setLayout('request', 'request-only');
       return <Story />;
     },
   ],

@@ -75,11 +75,14 @@ export function useLayoutCommands(): void {
         }
 
         const allLayouts = [...context.layouts, ...GENERIC_LAYOUTS];
-        const activeLayout = getActiveLayout();
+        const activeLayout = getActiveLayout(activeContextId);
         const currentIndex = allLayouts.findIndex((l) => l.id === activeLayout?.id);
         const nextIndex = (currentIndex - 1 + allLayouts.length) % allLayouts.length;
+        const nextLayout = allLayouts[nextIndex];
 
-        setLayout(allLayouts[nextIndex].id);
+        if (nextLayout !== undefined) {
+          setLayout(activeContextId, nextLayout.id);
+        }
       },
     });
 
@@ -99,11 +102,14 @@ export function useLayoutCommands(): void {
         }
 
         const allLayouts = [...context.layouts, ...GENERIC_LAYOUTS];
-        const activeLayout = getActiveLayout();
+        const activeLayout = getActiveLayout(activeContextId);
         const currentIndex = allLayouts.findIndex((l) => l.id === activeLayout?.id);
         const nextIndex = (currentIndex + 1) % allLayouts.length;
+        const nextLayout = allLayouts[nextIndex];
 
-        setLayout(allLayouts[nextIndex].id);
+        if (nextLayout !== undefined) {
+          setLayout(activeContextId, nextLayout.id);
+        }
       },
     });
 

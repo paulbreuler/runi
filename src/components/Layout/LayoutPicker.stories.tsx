@@ -62,7 +62,7 @@ export const Default: Story = {
       await userEvent.click(option);
 
       // Verify picker closed and layout changed
-      await expect(useCanvasStore.getState().activeLayoutId).toBe('side-by-side');
+      await expect(useCanvasStore.getState().getActiveLayout('request')?.id).toBe('side-by-side');
     });
   },
 };

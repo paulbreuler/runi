@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { globalEventBus } from '@/events/bus';
+import { globalEventBus, logEventFlow } from '@/events/bus';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
@@ -271,9 +271,19 @@ export const RequestItem = ({ request, collectionId }: RequestItemProps): React.
     selectRequest(collectionId, request.id);
 
     // Propagate event for other components (like RequestPanel) to react
-    globalEventBus.emit('collection.request-selected', {
+    const event = globalEventBus.emit(
+      'collection.request-selected',
+      {
+        collectionId,
+        request,
+      },
+      'RequestItem'
+    );
+
+    logEventFlow('emit', 'collection.request-selected', event.correlationId, {
+      requestId: request.id,
       collectionId,
-      request,
+      requestName: request.name,
     });
   };
 

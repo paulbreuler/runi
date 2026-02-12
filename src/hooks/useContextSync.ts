@@ -6,9 +6,10 @@
 import { useEffect, useRef } from 'react';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { useCanvasStore } from '@/stores/useCanvasStore';
-import { globalEventBus, type CollectionRequestSelectedPayload } from '@/events/bus';
+import { globalEventBus, logEventFlow, type CollectionRequestSelectedPayload } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 import type { RequestTabState } from '@/types/canvas';
+import { requestContextDescriptor } from '@/contexts/RequestContext/descriptor';
 
 /**
  * Bidirectional sync between `useCanvasStore` (multi-context canvas) and `useRequestStore` (single active request).
@@ -24,7 +25,7 @@ import type { RequestTabState } from '@/types/canvas';
 export function useContextSync(): void {
   const { setMethod, setUrl, setHeaders, setBody, setResponse } = useRequestStore();
 
-  const { activeContextId, openRequestTab, updateContextState } = useCanvasStore();
+  const { activeContextId, openRequestTab, updateContextState, registerContext } = useCanvasStore();
 
   // Track previous active context to save outgoing state on switch
   const prevActiveContextIdRef = useRef<string | null>(null);
@@ -38,6 +39,10 @@ export function useContextSync(): void {
     const hasRequestContexts = state.contextOrder.some((id) => id.startsWith('request-'));
 
     if (!hasRequestContexts) {
+      // Ensure template is registered before opening default tab
+      if (!state.contexts.has('request')) {
+        registerContext(requestContextDescriptor);
+      }
       openRequestTab();
     } else if (state.activeContextId !== null) {
       // Load persisted active context into request store
@@ -120,7 +125,7 @@ export function useContextSync(): void {
       if (changed) {
         const currentContext = useCanvasStore
           .getState()
-          .getContextState(currentActiveId) as RequestTabState;
+          .getContextState(currentActiveId) as unknown as RequestTabState;
 
         // Check if tab now has meaningful data
         const hasMeaningfulData = useCanvasStore.getState().hasMeaningfulData(currentActiveId);
@@ -182,6 +187,9 @@ export function useContextSync(): void {
         if (existingContextId !== null) {
           store.setActiveContext(existingContextId);
         } else {
+          if (!store.contexts.has('request')) {
+            store.registerContext(requestContextDescriptor);
+          }
           store.openRequestTab({
             method: entry.request.method,
             url: entry.request.url,
@@ -198,6 +206,13 @@ export function useContextSync(): void {
       'collection.request-selected',
       (event): void => {
         const { collectionId, request } = event.payload;
+
+        logEventFlow('receive', 'collection.request-selected', event.correlationId, {
+          requestId: request.id,
+          collectionId,
+          requestName: request.name,
+        });
+
         const source = {
           type: 'collection' as const,
           collectionId,
@@ -206,16 +221,32 @@ export function useContextSync(): void {
         const store = useCanvasStore.getState();
         const existingContextId = store.findContextBySource(source);
 
+        logEventFlow('process', 'collection.request-selected', event.correlationId, {
+          existingContextId,
+          hasRequestContext: store.contexts.has('request'),
+        });
+
         if (existingContextId !== null) {
           store.setActiveContext(existingContextId);
+          logEventFlow('complete', 'collection.request-selected', event.correlationId, {
+            action: 'activate-existing',
+            contextId: existingContextId,
+          });
         } else {
-          store.openRequestTab({
+          if (!store.contexts.has('request')) {
+            store.registerContext(requestContextDescriptor);
+          }
+          const newContextId = store.openRequestTab({
             method: request.method,
             url: request.url,
             headers: request.headers,
             body: request.body?.content ?? '',
             source,
             label: deriveContextLabel(request.url, request.name),
+          });
+          logEventFlow('complete', 'collection.request-selected', event.correlationId, {
+            action: 'open-new-tab',
+            contextId: newContextId,
           });
         }
       }

@@ -408,12 +408,14 @@ describe('TitleBar', () => {
         id: 'test-1',
         label: 'Test 1',
         order: 0,
+        panels: {},
         layouts: [],
       };
       const context2: CanvasContextDescriptor = {
         id: 'test-2',
         label: 'Test 2',
         order: 1,
+        panels: {},
         layouts: [],
       };
 
@@ -441,6 +443,7 @@ describe('TitleBar', () => {
         id: 'test-1',
         label: 'Test 1',
         order: 0,
+        panels: {},
         layouts: [],
       });
 

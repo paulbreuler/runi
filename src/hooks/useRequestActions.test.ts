@@ -4,10 +4,43 @@ import { useRequestActions } from './useRequestActions';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { globalEventBus } from '@/events/bus';
+import type { HttpResponse } from '@/types/http';
 import * as httpModule from '@/api/http';
 
 // Mock the http module
 vi.mock('@/api/http');
+
+// Mock Tauri invoke (used by history store's addEntry)
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn().mockImplementation((cmd: string) => {
+    if (cmd === 'save_request_history') {
+      return Promise.resolve('entry-1');
+    }
+    if (cmd === 'load_request_history') {
+      return Promise.resolve([
+        {
+          id: 'entry-1',
+          timestamp: new Date().toISOString(),
+          request: {
+            url: 'https://httpbin.org/get',
+            method: 'GET',
+            headers: {},
+            body: null,
+            timeout_ms: 30000,
+          },
+          response: {
+            status: 200,
+            status_text: 'OK',
+            headers: {},
+            body: '{"success": true}',
+            timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, first_byte_ms: 40 },
+          },
+        },
+      ]);
+    }
+    return Promise.resolve(null);
+  }),
+}));
 
 // Mock console service
 vi.mock(
@@ -21,9 +54,9 @@ vi.mock(
 
 describe('useRequestActions', () => {
   beforeEach(() => {
-    // Reset stores to initial state
+    // Reset stores to initial state (URL matches hook default)
     useRequestStore.setState({
-      url: '',
+      url: 'https://httpbin.org/get',
       method: 'GET',
       headers: {},
       body: '',
@@ -85,10 +118,10 @@ describe('useRequestActions', () => {
   it('handleSend executes request successfully', async () => {
     const mockResponse = {
       status: 200,
-      statusText: 'OK',
+      status_text: 'OK',
       headers: {},
       body: '{"success": true}',
-      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, transfer_ms: 40 },
+      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, first_byte_ms: 40 },
     };
 
     vi.mocked(httpModule.executeRequest).mockResolvedValue(mockResponse);
@@ -107,10 +140,10 @@ describe('useRequestActions', () => {
   it('handleSend adds entry to history on success', async () => {
     const mockResponse = {
       status: 200,
-      statusText: 'OK',
+      status_text: 'OK',
       headers: {},
       body: '{"success": true}',
-      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, transfer_ms: 40 },
+      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, first_byte_ms: 40 },
     };
 
     vi.mocked(httpModule.executeRequest).mockResolvedValue(mockResponse);
@@ -131,6 +164,7 @@ describe('useRequestActions', () => {
       code: 'NETWORK_ERROR',
       message: 'Network request failed',
       correlationId: 'test-correlation-id',
+      source: 'frontend' as const,
     };
 
     vi.mocked(httpModule.executeRequest).mockRejectedValue(mockError);
@@ -168,21 +202,19 @@ describe('useRequestActions', () => {
 
   it('handleSend does not execute when already loading', async () => {
     let resolveRequest: (() => void) | undefined;
-    const requestPromise = new Promise<httpModule.HttpResponse>((resolve) => {
+    const requestPromise = new Promise<HttpResponse>((resolve) => {
       resolveRequest = (): void => {
         resolve({
           status: 200,
-          statusText: 'OK',
+          status_text: 'OK',
           headers: {},
           body: '{"success": true}',
-          timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, transfer_ms: 40 },
+          timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, first_byte_ms: 40 },
         });
       };
     });
 
-    vi.mocked(httpModule.executeRequest).mockReturnValue(
-      requestPromise as ReturnType<typeof httpModule.executeRequest>
-    );
+    vi.mocked(httpModule.executeRequest).mockReturnValue(requestPromise);
 
     const { result } = renderHook(() => useRequestActions());
 
@@ -212,10 +244,10 @@ describe('useRequestActions', () => {
   it('handleSend clears response before executing', async () => {
     const mockResponse = {
       status: 200,
-      statusText: 'OK',
+      status_text: 'OK',
       headers: {},
       body: '{"success": true}',
-      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, transfer_ms: 40 },
+      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, first_byte_ms: 40 },
     };
 
     vi.mocked(httpModule.executeRequest).mockResolvedValue(mockResponse);
@@ -236,10 +268,10 @@ describe('useRequestActions', () => {
   it('handleSend updates URL and method in store', async () => {
     const mockResponse = {
       status: 200,
-      statusText: 'OK',
+      status_text: 'OK',
       headers: {},
       body: '{"success": true}',
-      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, transfer_ms: 40 },
+      timing: { total_ms: 100, dns_ms: 10, tls_ms: 20, connect_ms: 30, first_byte_ms: 40 },
     };
 
     vi.mocked(httpModule.executeRequest).mockResolvedValue(mockResponse);
@@ -247,8 +279,11 @@ describe('useRequestActions', () => {
     const { result } = renderHook(() => useRequestActions());
 
     act(() => {
-      result.current.handleUrlChange('https://example.com/test');
       result.current.handleMethodChange('POST');
+    });
+
+    act(() => {
+      result.current.handleUrlChange('https://example.com/test');
     });
 
     await act(async () => {

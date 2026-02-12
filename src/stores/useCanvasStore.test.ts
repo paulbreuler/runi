@@ -634,10 +634,16 @@ describe('useCanvasStore', () => {
           body: '{"test": true}',
           response: {
             status: 200,
-            statusText: 'OK',
+            status_text: 'OK',
             headers: {},
             body: '{"result": "ok"}',
-            time: 123,
+            timing: {
+              total_ms: 123,
+              dns_ms: null,
+              connect_ms: null,
+              tls_ms: null,
+              first_byte_ms: null,
+            },
           },
         });
       });
@@ -725,7 +731,7 @@ describe('useCanvasStore', () => {
         label: 'Request Template',
         icon: Square,
         panels: { request: TestPanel, response: TestPanel },
-        layouts: templateLayouts as CanvasContextDescriptor['layouts'],
+        layouts: templateLayouts as unknown as CanvasContextDescriptor['layouts'],
         popoutEnabled: false,
         order: 0,
       };
@@ -793,8 +799,14 @@ describe('useCanvasStore', () => {
       expect(context?.panels.request).toBeDefined();
       expect(context?.panels.response).toBeDefined();
       // Fallback panels should return null
-      expect(context?.panels.request()).toBeNull();
-      expect(context?.panels.response()).toBeNull();
+      const RequestPanel = context?.panels.request;
+      const ResponsePanel = context?.panels.response;
+      expect(RequestPanel).toBeDefined();
+      expect(ResponsePanel).toBeDefined();
+
+      expect((RequestPanel as any)()).toBeNull();
+
+      expect((ResponsePanel as any)()).toBeNull();
     });
 
     it('should use empty layouts when no "request" template is registered', () => {

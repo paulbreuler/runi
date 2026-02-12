@@ -16,7 +16,41 @@
  * - Testability (easy to mock event bus)
  */
 
+import { v7 as uuidv7 } from 'uuid';
 import type { CollectionRequest } from '@/types/collection';
+
+/**
+ * Generate a UUID v7 correlation ID for event tracing.
+ *
+ * UUID v7 is time-ordered (48-bit ms timestamp) and globally unique,
+ * consistent with the Rust backend which also uses UUID v7.
+ */
+export function generateCorrelationId(): string {
+  return uuidv7();
+}
+
+/**
+ * Log event flow for debugging.
+ * Use this to trace events through the application.
+ */
+export function logEventFlow(
+  direction: 'emit' | 'receive' | 'process' | 'complete' | 'error',
+  eventType: EventType,
+  correlationId: string | undefined,
+  details?: Record<string, unknown>
+): void {
+  const prefix = `[${correlationId?.slice(0, 20) ?? 'no-corr-id'}]`;
+  let arrow = '●';
+  if (direction === 'emit') {
+    arrow = '→';
+  } else if (direction === 'receive') {
+    arrow = '←';
+  }
+  const label = direction.toUpperCase().padEnd(8);
+
+  // eslint-disable-next-line no-console
+  console.debug(`${prefix} ${arrow} [${label}] ${eventType}`, details ?? '');
+}
 
 /**
  * Event type identifiers.
@@ -137,6 +171,8 @@ export interface Event<T = unknown> {
   timestamp: number;
   /** Optional source identifier (component/plugin that emitted) */
   source?: string;
+  /** Optional correlation ID for tracing events across the application */
+  correlationId?: string;
 }
 
 /**
@@ -172,13 +208,15 @@ export class EventBus {
    * @param type - The event type
    * @param payload - The event payload
    * @param source - Optional source identifier
+   * @param correlationId - Optional correlation ID for tracing (auto-generated if not provided)
    */
-  public emit<T>(type: EventType, payload: T, source?: string): Event<T> {
+  public emit<T>(type: EventType, payload: T, source?: string, correlationId?: string): Event<T> {
     const event: Event<T> = {
       type,
       payload,
       timestamp: Date.now(),
       source,
+      correlationId: correlationId ?? generateCorrelationId(),
     };
 
     const handlers = this.listeners.get(type);

@@ -140,10 +140,11 @@ describe('RequestItem', () => {
         fireEvent.click(row);
       });
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_1',
-        request: baseRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        { collectionId: 'col_1', request: baseRequest },
+        'RequestItem'
+      );
 
       emitSpy.mockRestore();
     });
@@ -171,10 +172,11 @@ describe('RequestItem', () => {
         fireEvent.click(row);
       });
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_2',
-        request: postRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        { collectionId: 'col_2', request: postRequest },
+        'RequestItem'
+      );
 
       emitSpy.mockRestore();
     });

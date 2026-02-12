@@ -11,12 +11,14 @@ import { useRequestStore } from '@/stores/useRequestStore';
 import { executeRequest } from '@/api/http';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 
+const { mockEmit } = vi.hoisted(() => ({
+  mockEmit: vi.fn(),
+}));
+
 // Mock dependencies
 vi.mock('@/api/http', () => ({
   executeRequest: vi.fn(),
 }));
-
-const mockEmit = vi.fn();
 
 vi.mock('@/events/bus', () => ({
   globalEventBus: {

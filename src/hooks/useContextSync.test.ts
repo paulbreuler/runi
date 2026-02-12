@@ -184,10 +184,16 @@ describe('useContextSync', () => {
 
       const mockResponse = {
         status: 200,
-        statusText: 'OK',
+        status_text: 'OK',
         headers: {},
         body: '{"success": true}',
-        time: 123,
+        timing: {
+          total_ms: 123,
+          dns_ms: null,
+          connect_ms: null,
+          tls_ms: null,
+          first_byte_ms: null,
+        },
       };
 
       // Set response in request store
@@ -245,20 +251,27 @@ describe('useContextSync', () => {
 
       const mockEntry: HistoryEntry = {
         id: 'entry-123',
+        timestamp: new Date().toISOString(),
         request: {
           method: 'GET',
           url: 'https://api.example.com/users',
           headers: {},
           body: null,
+          timeout_ms: 30000,
         },
         response: {
           status: 200,
-          statusText: 'OK',
+          status_text: 'OK',
           headers: {},
           body: '[]',
-          time: 100,
+          timing: {
+            total_ms: 100,
+            dns_ms: null,
+            connect_ms: null,
+            tls_ms: null,
+            first_byte_ms: null,
+          },
         },
-        createdAt: Date.now(),
       };
 
       act(() => {
@@ -284,20 +297,27 @@ describe('useContextSync', () => {
 
       const mockEntry: HistoryEntry = {
         id: 'entry-123',
+        timestamp: new Date().toISOString(),
         request: {
           method: 'GET',
           url: 'https://api.example.com/users',
           headers: {},
           body: null,
+          timeout_ms: 30000,
         },
         response: {
           status: 200,
-          statusText: 'OK',
+          status_text: 'OK',
           headers: {},
           body: '[]',
-          time: 100,
+          timing: {
+            total_ms: 100,
+            dns_ms: null,
+            connect_ms: null,
+            tls_ms: null,
+            first_byte_ms: null,
+          },
         },
-        createdAt: Date.now(),
       };
 
       // Emit event twice
@@ -341,10 +361,15 @@ describe('useContextSync', () => {
         request: {
           id: 'req-456',
           name: 'Get Users',
+          seq: 0,
           method: 'GET',
           url: 'https://api.example.com/users',
           headers: {},
-          body: null,
+          params: [],
+          is_streaming: false,
+          binding: { is_manual: false },
+          intelligence: { ai_generated: false },
+          tags: [],
         },
       };
 
@@ -375,10 +400,15 @@ describe('useContextSync', () => {
         request: {
           id: 'req-456',
           name: 'Get Users',
+          seq: 0,
           method: 'GET',
           url: 'https://api.example.com/users',
           headers: {},
-          body: null,
+          params: [],
+          is_streaming: false,
+          binding: { is_manual: false },
+          intelligence: { ai_generated: false },
+          tags: [],
         },
       };
 
@@ -411,6 +441,67 @@ describe('useContextSync', () => {
           .getState()
           .contextOrder.filter((id) => id.startsWith('request-')).length;
         expect(contextCountAfter).toBe(contextCountBefore);
+      });
+    });
+
+    it('should reuse existing context when source matches persisted state', async () => {
+      renderHook(() => {
+        useContextSync();
+      });
+
+      const staleSource = {
+        type: 'collection' as const,
+        collectionId: 'col-stale',
+        requestId: 'req-stale',
+      };
+
+      act(() => {
+        // Register the context so setActiveContext can find it
+        useCanvasStore.getState().registerContext({
+          id: 'request-stale',
+          label: 'Stale Request',
+          order: 10,
+          panels: {},
+          layouts: [],
+        });
+        useCanvasStore.setState((state) => {
+          const nextContextState = new Map(state.contextState);
+          nextContextState.set('request-stale', {
+            source: staleSource,
+            method: 'GET',
+            url: 'https://stale.example.com',
+            headers: {},
+            body: '',
+          });
+          return { ...state, contextState: nextContextState };
+        });
+      });
+
+      const payload: CollectionRequestSelectedPayload = {
+        collectionId: 'col-stale',
+        request: {
+          id: 'req-stale',
+          name: 'Stale Source Request',
+          seq: 0,
+          method: 'GET',
+          url: 'https://api.example.com/stale',
+          headers: {},
+          params: [],
+          is_streaming: false,
+          binding: { is_manual: false },
+          intelligence: { ai_generated: false },
+          tags: [],
+        },
+      };
+
+      act(() => {
+        globalEventBus.emit('collection.request-selected', payload);
+      });
+
+      // findContextBySource finds the matching persisted state and reuses it
+      await waitFor(() => {
+        const canvasStore = useCanvasStore.getState();
+        expect(canvasStore.activeContextId).toBe('request-stale');
       });
     });
   });

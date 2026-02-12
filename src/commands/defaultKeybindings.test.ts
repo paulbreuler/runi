@@ -17,6 +17,11 @@ const ALL_COMMAND_IDS: CommandId[] = [
   'panel.toggle',
   'settings.toggle',
   'commandbar.toggle',
+  'canvas.layout.previous',
+  'canvas.layout.next',
+  'canvas.context.request',
+  'canvas.context.next',
+  'canvas.context.previous',
 ];
 
 describe('defaultKeybindings', () => {

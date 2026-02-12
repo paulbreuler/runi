@@ -11,11 +11,13 @@ import { useCanvasStore } from '@/stores/useCanvasStore';
 import type { CanvasContextDescriptor } from '@/types/canvas';
 import { useLayoutCommands } from './useLayoutCommands';
 
-// Mock event bus
+// Mock event bus — keep logEventFlow (used by useCanvasStore) but mock globalEventBus
 vi.mock('@/events/bus', () => ({
   globalEventBus: {
     emit: vi.fn(),
   },
+  generateCorrelationId: vi.fn(() => 'mock-correlation-id'),
+  logEventFlow: vi.fn(),
 }));
 
 describe('useLayoutCommands', () => {
@@ -113,12 +115,14 @@ describe('useLayoutCommands', () => {
         id: 'context-1',
         label: 'Context 1',
         order: 0,
+        panels: {},
         layouts: [],
       };
       const context2: CanvasContextDescriptor = {
         id: 'context-2',
         label: 'Context 2',
         order: 1,
+        panels: {},
         layouts: [],
       };
 
@@ -142,12 +146,14 @@ describe('useLayoutCommands', () => {
         id: 'context-1',
         label: 'Context 1',
         order: 0,
+        panels: {},
         layouts: [],
       });
       registerContext({
         id: 'context-2',
         label: 'Context 2',
         order: 1,
+        panels: {},
         layouts: [],
       });
       useCanvasStore.getState().setActiveContext('context-2');
@@ -168,12 +174,14 @@ describe('useLayoutCommands', () => {
         id: 'context-1',
         label: 'Context 1',
         order: 0,
+        panels: {},
         layouts: [],
       });
       registerContext({
         id: 'context-2',
         label: 'Context 2',
         order: 1,
+        panels: {},
         layouts: [],
       });
       useCanvasStore.getState().setActiveContext('context-2');
@@ -194,12 +202,14 @@ describe('useLayoutCommands', () => {
         id: 'context-1',
         label: 'Context 1',
         order: 0,
+        panels: {},
         layouts: [],
       });
       registerContext({
         id: 'context-2',
         label: 'Context 2',
         order: 1,
+        panels: {},
         layouts: [],
       });
       useCanvasStore.getState().setActiveContext('context-1');

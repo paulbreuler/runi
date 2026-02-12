@@ -37,14 +37,14 @@ describe('usePrefersReducedMotion', () => {
   });
 
   it('updates when media query changes', () => {
-    let listener: ((e: MediaQueryListEvent) => void) | null = null;
+    const listeners: Array<(e: MediaQueryListEvent) => void> = [];
 
     matchMediaMock.addEventListener = (
       event: string,
       callback: (e: MediaQueryListEvent) => void
     ): void => {
       if (event === 'change') {
-        listener = callback;
+        listeners.push(callback);
       }
     };
 
@@ -55,7 +55,9 @@ describe('usePrefersReducedMotion', () => {
 
     // Simulate media query change
     matchMediaMock.matches = true;
-    listener?.({ matches: true } as MediaQueryListEvent);
+    for (const listener of listeners) {
+      listener({ matches: true } as MediaQueryListEvent);
+    }
 
     rerender();
     expect(result.current).toBe(true);
