@@ -5,5 +5,4 @@
 
 export { CollectionList } from '@/components/Sidebar/CollectionList';
 export { CollectionItem } from '@/components/Sidebar/CollectionItem';
-export { RequestItem } from '@/components/Sidebar/RequestItem';
 export { CollectionEmptyState } from '@/components/Sidebar/CollectionEmptyState';

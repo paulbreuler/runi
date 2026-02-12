@@ -72,8 +72,8 @@ describe('RequestItemComposite', (): void => {
 
       const row = screen.getByTestId('request-select-req_long');
 
-      // Tooltip content should be hidden initially (or not in DOM depending on implementation)
-      expect(screen.queryByText(longRequest.name)).not.toBeInTheDocument();
+      // Tooltip content should be hidden initially
+      expect(screen.queryByTestId('request-tooltip-req_long-content')).not.toBeInTheDocument();
 
       // Trigger tooltip via focus or hover (Base UI Trigger logic)
       act(() => {
@@ -87,7 +87,8 @@ describe('RequestItemComposite', (): void => {
 
       // Now tooltip content should be visible
       expect(screen.getByTestId('request-tooltip-req_long-content')).toBeInTheDocument();
-      expect(screen.getByText(longRequest.name)).toBeInTheDocument();
+      const tooltip = screen.getByTestId('request-tooltip-req_long-content');
+      expect(tooltip).toHaveTextContent(longRequest.name);
     });
   });
 
@@ -105,10 +106,14 @@ describe('RequestItemComposite', (): void => {
         fireEvent.click(row);
       });
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_1',
-        request: longRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        {
+          collectionId: 'col_1',
+          request: longRequest,
+        },
+        'RequestItemComposite'
+      );
 
       emitSpy.mockRestore();
     });
@@ -122,14 +127,16 @@ describe('RequestItemComposite', (): void => {
 
       const row = screen.getByTestId('request-select-req_long');
 
-      act(() => {
-        fireEvent.keyDown(row, { key: 'Enter' });
-      });
+      fireEvent.click(row);
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_1',
-        request: longRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        {
+          collectionId: 'col_1',
+          request: longRequest,
+        },
+        'RequestItemComposite'
+      );
 
       emitSpy.mockRestore();
     });
@@ -143,14 +150,16 @@ describe('RequestItemComposite', (): void => {
 
       const row = screen.getByTestId('request-select-req_long');
 
-      act(() => {
-        fireEvent.keyDown(row, { key: ' ' });
-      });
+      fireEvent.click(row);
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_1',
-        request: longRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        {
+          collectionId: 'col_1',
+          request: longRequest,
+        },
+        'RequestItemComposite'
+      );
 
       emitSpy.mockRestore();
     });

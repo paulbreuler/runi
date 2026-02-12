@@ -66,12 +66,12 @@ describe('ExpandedActionButtons', () => {
       );
 
       // Check all buttons are present
-      expect(screen.getByRole('button', { name: /edit.*replay/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /copy.*curl/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /chain.*request/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /generate.*tests/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /add.*to.*collection/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /block|unblock/i })).toBeInTheDocument();
+      expect(screen.getByTestId('replay-button')).toBeInTheDocument();
+      expect(screen.getByTestId('copy-curl-button')).toBeInTheDocument();
+      expect(screen.getByTestId('chain-button')).toBeInTheDocument();
+      expect(screen.getByTestId('generate-tests-button')).toBeInTheDocument();
+      expect(screen.getByTestId('add-to-collection-button')).toBeInTheDocument();
+      expect(screen.getByTestId('block-toggle-button')).toBeInTheDocument();
     });
 
     it('Edit & Replay triggers callback', async () => {
@@ -96,7 +96,7 @@ describe('ExpandedActionButtons', () => {
         />
       );
 
-      const replayButton = screen.getByRole('button', { name: /edit.*replay/i });
+      const replayButton = screen.getByTestId('replay-button');
       await user.click(replayButton);
 
       expect(onReplay).toHaveBeenCalledTimes(1);
@@ -125,7 +125,7 @@ describe('ExpandedActionButtons', () => {
         />
       );
 
-      const copyButton = screen.getByRole('button', { name: /copy.*curl/i });
+      const copyButton = screen.getByTestId('copy-curl-button');
       await user.click(copyButton);
 
       // Verify callback is triggered (actual clipboard functionality tested in CopyButton component)
@@ -156,8 +156,8 @@ describe('ExpandedActionButtons', () => {
       );
 
       // Initially shows "Block" button
-      const blockButton = screen.getByRole('button', { name: /block/i });
-      expect(blockButton).toBeInTheDocument();
+      const blockButton = screen.getByTestId('block-toggle-button');
+      expect(blockButton).toHaveTextContent(/block/i);
 
       await user.click(blockButton);
       expect(onBlockToggle).toHaveBeenCalledTimes(1);
@@ -178,8 +178,8 @@ describe('ExpandedActionButtons', () => {
       );
 
       // Now shows "Unblock" button
-      const unblockButton = screen.getByRole('button', { name: /unblock/i });
-      expect(unblockButton).toBeInTheDocument();
+      const unblockButton = screen.getByTestId('block-toggle-button');
+      expect(unblockButton).toHaveTextContent(/unblock/i);
 
       await user.click(unblockButton);
       expect(onBlockToggle).toHaveBeenCalledTimes(2);
@@ -208,7 +208,7 @@ describe('ExpandedActionButtons', () => {
         />
       );
 
-      const chainButton = screen.getByRole('button', { name: /chain.*request/i });
+      const chainButton = screen.getByTestId('chain-button');
       await user.click(chainButton);
 
       expect(onChain).toHaveBeenCalledTimes(1);
@@ -237,7 +237,7 @@ describe('ExpandedActionButtons', () => {
         />
       );
 
-      const generateTestsButton = screen.getByRole('button', { name: /generate.*tests/i });
+      const generateTestsButton = screen.getByTestId('generate-tests-button');
       await user.click(generateTestsButton);
 
       expect(onGenerateTests).toHaveBeenCalledTimes(1);
@@ -266,7 +266,7 @@ describe('ExpandedActionButtons', () => {
         />
       );
 
-      const addToCollectionButton = screen.getByRole('button', { name: /add.*to.*collection/i });
+      const addToCollectionButton = screen.getByTestId('add-to-collection-button');
       await user.click(addToCollectionButton);
 
       expect(onAddToCollection).toHaveBeenCalledTimes(1);

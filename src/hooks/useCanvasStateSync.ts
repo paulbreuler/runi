@@ -25,6 +25,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import type { EventEnvelope } from '@/hooks/useCollectionEvents';
 import type { CanvasStateSnapshot, TabSummary, TemplateSummary } from '@/types/generated';
 
@@ -67,8 +68,9 @@ export function buildCanvasSnapshot(state: {
     templateType: template.id, // Use ID as template type for now
   }));
 
-  // Find active tab index
-  const activeTabIndex = activeContextId !== null ? contextOrder.indexOf(activeContextId) : null;
+  // Find active tab index based on constructed tabs array
+  const activeTabIndex =
+    activeContextId !== null ? tabs.findIndex((tab) => tab.id === activeContextId) : null;
 
   const snapshot: CanvasStateSnapshot = {
     tabs,
@@ -119,15 +121,13 @@ function recordCanvasActivity(
  * - `canvas:close_tab` → `closeContext(id)`
  */
 export function useCanvasStateSync(): void {
-  const {
-    contexts,
-    templates,
-    contextOrder,
-    activeContextId,
-    setActiveContext,
-    openRequestTab,
-    closeContext,
-  } = useCanvasStore();
+  const contexts = useCanvasStore((s) => s.contexts);
+  const templates = useCanvasStore((s) => s.templates);
+  const contextOrder = useCanvasStore((s) => s.contextOrder);
+  const activeContextId = useCanvasStore((s) => s.activeContextId);
+  const setActiveContext = useCanvasStore((s) => s.setActiveContext);
+  const openRequestTab = useCanvasStore((s) => s.openRequestTab);
+  const closeContext = useCanvasStore((s) => s.closeContext);
 
   // Use ref to track debounce timer
   const debounceTimerRef = useRef<number | null>(null);
@@ -144,6 +144,11 @@ export function useCanvasStateSync(): void {
     // Push to backend (async, no await)
     void invoke('sync_canvas_state', { snapshot }).catch((error: unknown) => {
       console.error('[useCanvasStateSync] Failed to sync canvas state:', error);
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: 'Failed to sync canvas state',
+        details: String(error),
+      });
     });
   }, [contexts, templates, contextOrder, activeContextId]);
 

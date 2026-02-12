@@ -77,7 +77,8 @@ export function useLayoutCommands(): void {
         const allLayouts = [...context.layouts, ...GENERIC_LAYOUTS];
         const activeLayout = getActiveLayout(activeContextId);
         const currentIndex = allLayouts.findIndex((l) => l.id === activeLayout?.id);
-        const nextIndex = (currentIndex - 1 + allLayouts.length) % allLayouts.length;
+        const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+        const nextIndex = (safeIndex - 1 + allLayouts.length) % allLayouts.length;
         const nextLayout = allLayouts[nextIndex];
 
         if (nextLayout !== undefined) {
@@ -104,7 +105,8 @@ export function useLayoutCommands(): void {
         const allLayouts = [...context.layouts, ...GENERIC_LAYOUTS];
         const activeLayout = getActiveLayout(activeContextId);
         const currentIndex = allLayouts.findIndex((l) => l.id === activeLayout?.id);
-        const nextIndex = (currentIndex + 1) % allLayouts.length;
+        const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+        const nextIndex = (safeIndex + 1) % allLayouts.length;
         const nextLayout = allLayouts[nextIndex];
 
         if (nextLayout !== undefined) {
@@ -118,7 +120,17 @@ export function useLayoutCommands(): void {
       title: 'Switch to Request Context',
       category: 'view',
       handler: (): void => {
-        useCanvasStore.getState().setActiveContext('request');
+        const { contextOrder, setActiveContext, openRequestTab } = useCanvasStore.getState();
+        const requestTabs = contextOrder.filter((id) => id.startsWith('request-'));
+        const firstRequestTab = requestTabs[0];
+
+        if (firstRequestTab !== undefined) {
+          // Switch to first request tab
+          setActiveContext(firstRequestTab);
+        } else {
+          // Open new request tab
+          openRequestTab();
+        }
       },
     });
 

@@ -147,8 +147,8 @@ describe('HomePage - Auto-save to history', () => {
     render(<HomePage />);
 
     // Find URL input and send button
-    const urlInput = screen.getByLabelText('Request URL');
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
 
     // Enter URL and send request
     await user.clear(urlInput);
@@ -184,8 +184,8 @@ describe('HomePage - Auto-save to history', () => {
 
     render(<HomePage />);
 
-    const urlInput = screen.getByLabelText('Request URL');
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
 
     await user.clear(urlInput);
     await user.type(urlInput, 'https://httpbin.org/get');
@@ -248,8 +248,8 @@ describe('HomePage - Auto-save to history', () => {
 
     render(<HomePage />);
 
-    const urlInput = screen.getByLabelText('Request URL');
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
 
     await user.clear(urlInput);
     await user.type(urlInput, 'https://httpbin.org/post');
@@ -273,7 +273,7 @@ describe('HomePage - Auto-save to history', () => {
 
   it('syncs URL and method from request store updates', async () => {
     const { rerender } = render(<HomePage />);
-    const urlInput = screen.getByLabelText<HTMLInputElement>('Request URL');
+    const urlInput = screen.getByTestId<HTMLInputElement>('url-input');
 
     expect(urlInput.value).toBe('https://httpbin.org/get');
 

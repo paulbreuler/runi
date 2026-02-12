@@ -60,6 +60,8 @@ interface SegmentOption<T extends string> {
   badge?: number;
   /** Whether this option is disabled */
   disabled?: boolean;
+  /** Custom data-test-id for this option */
+  'data-test-id'?: string;
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -387,7 +389,7 @@ export const SegmentedControl = <T extends string>({
                 transition={{ duration: transitionDuration }}
                 aria-pressed={isSelected}
                 title={getTooltip(option)}
-                data-test-id={`segment-${option.value}`}
+                data-test-id={option['data-test-id'] ?? `segment-${option.value}`}
               >
                 {option.icon !== undefined && <span className="shrink-0">{option.icon}</span>}
                 {!isIconMode && <span>{option.label}</span>}

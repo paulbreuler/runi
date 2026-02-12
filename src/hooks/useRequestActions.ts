@@ -43,8 +43,8 @@ export const useRequestActions = (): UseRequestActionsReturn => {
 
   const { addEntry } = useHistoryStore();
 
-  const [localUrl, setLocalUrl] = useState('https://httpbin.org/get');
-  const [localMethod, setLocalMethod] = useState<HttpMethod>(method as HttpMethod);
+  const [localUrl, setLocalUrl] = useState(() => url);
+  const [localMethod, setLocalMethod] = useState<HttpMethod>(() => method as HttpMethod);
 
   // Sync local state with store on mount and when store changes
   useEffect(() => {

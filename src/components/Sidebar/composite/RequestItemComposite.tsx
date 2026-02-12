@@ -12,7 +12,7 @@ import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
-import { globalEventBus } from '@/events/bus';
+import { globalEventBus, logEventFlow } from '@/events/bus';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 export interface RequestItemCompositeProps {
@@ -43,7 +43,22 @@ export const RequestItemComposite = ({
 
   const handleSelect = useCallback((): void => {
     selectRequest(collectionId, request.id);
-    globalEventBus.emit('collection.request-selected', { collectionId, request });
+
+    // Propagate event for other components (like RequestPanel) to react
+    const event = globalEventBus.emit(
+      'collection.request-selected',
+      {
+        collectionId,
+        request,
+      },
+      'RequestItemComposite'
+    );
+
+    logEventFlow('emit', 'collection.request-selected', event.correlationId, {
+      requestId: request.id,
+      collectionId,
+      requestName: request.name,
+    });
   }, [collectionId, request, selectRequest]);
 
   return (
@@ -53,9 +68,8 @@ export const RequestItemComposite = ({
       data-test-id={`request-tooltip-${request.id}`}
     >
       <div className={cn('relative w-full px-1', className)}>
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           aria-label={`Select request ${request.method} ${request.name}`}
           className={cn(
             'w-full flex items-center justify-between gap-2 px-2 py-1 text-left transition-colors min-h-[28px] cursor-pointer rounded-md',
@@ -69,12 +83,6 @@ export const RequestItemComposite = ({
           onClick={(e): void => {
             (e.currentTarget as HTMLElement).focus({ preventScroll: true });
             handleSelect();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleSelect();
-            }
           }}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -113,7 +121,7 @@ export const RequestItemComposite = ({
               </div>
             )}
           </div>
-        </div>
+        </button>
       </div>
     </Tooltip>
   );

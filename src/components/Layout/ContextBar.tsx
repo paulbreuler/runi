@@ -69,24 +69,27 @@ export const ContextBar: FC<{ className?: string }> = ({ className }) => {
       <div className="flex items-center gap-2">
         <LayoutPicker />
 
-        {popoutEnabled && isSupported && activeContextId !== null && (
-          <button
-            type="button"
-            onClick={() => {
-              openPopout(activeContextId);
-            }}
-            className={cn(
-              'flex items-center justify-center w-7 h-7 rounded',
-              'text-text-secondary hover:text-text-primary hover:bg-bg-raised',
-              'transition-colors',
-              focusRingClasses
-            )}
-            data-test-id="popout-button"
-            aria-label="Open in new window"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </button>
-        )}
+        {popoutEnabled &&
+          isSupported &&
+          activeContextId !== null &&
+          contexts.get(activeContextId)?.popoutEnabled === true && (
+            <button
+              type="button"
+              onClick={() => {
+                openPopout(activeContextId);
+              }}
+              className={cn(
+                'flex items-center justify-center w-7 h-7 rounded',
+                'text-text-secondary hover:text-text-primary hover:bg-bg-raised',
+                'transition-colors',
+                focusRingClasses
+              )}
+              data-test-id="popout-button"
+              aria-label="Open in new window"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          )}
       </div>
     </div>
   );

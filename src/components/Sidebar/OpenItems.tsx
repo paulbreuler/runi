@@ -149,6 +149,9 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
               }
 
               const isActive = contextId === activeContextId;
+              const isFirst = index === 0;
+              const hasActiveInList = requestContexts.includes(activeContextId ?? '');
+              const isTabbable = isActive || (!hasActiveInList && isFirst);
               const methodKey = contextState.method as HttpMethod;
               const methodClass =
                 methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
@@ -157,7 +160,7 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                 <div
                   key={contextId}
                   role="option"
-                  tabIndex={isActive ? 0 : -1}
+                  tabIndex={isTabbable ? 0 : -1}
                   aria-selected={isActive}
                   data-active={isActive || undefined}
                   data-test-id={`open-items-tab-${contextId}`}

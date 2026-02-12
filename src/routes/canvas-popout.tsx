@@ -4,7 +4,7 @@
  */
 
 import { type FC, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { CanvasHost } from '@/components/Layout/CanvasHost';
 import { globalEventBus } from '@/events/bus';

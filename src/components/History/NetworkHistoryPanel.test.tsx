@@ -132,9 +132,9 @@ describe('NetworkHistoryPanel', () => {
   it('renders the status bar with correct counts', () => {
     render(<NetworkHistoryPanel {...defaultProps} />);
     // NetworkStatusBar only shows intelligence counts (drift, AI, bound) - not total requests
-    expect(screen.getByText('1 with drift')).toBeInTheDocument();
-    expect(screen.getByText('1 AI-generated')).toBeInTheDocument();
-    expect(screen.getByText('2 spec-bound')).toBeInTheDocument();
+    expect(screen.getByTestId('status-drift-count')).toHaveTextContent('1 with drift');
+    expect(screen.getByTestId('status-ai-count')).toHaveTextContent('1 AI-generated');
+    expect(screen.getByTestId('status-bound-count')).toHaveTextContent('2 spec-bound');
   });
 
   it('filters entries by search query', () => {
@@ -417,7 +417,7 @@ describe('NetworkHistoryPanel', () => {
       );
 
       // Click the Save button (should save selection since we have a selection)
-      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      const saveButton = screen.getByTestId('history-save');
       fireEvent.click(saveButton);
 
       // Wait for save dialog to be called with "selected" filename pattern
@@ -449,7 +449,7 @@ describe('NetworkHistoryPanel', () => {
       render(<NetworkHistoryPanel {...defaultProps} />);
 
       // Don't select anything, just click Save
-      const saveButton = screen.getByRole('button', { name: /^save$/i });
+      const saveButton = screen.getByTestId('history-save');
       fireEvent.click(saveButton);
 
       // Wait for save dialog to be called with "all" filename pattern (no "selected")

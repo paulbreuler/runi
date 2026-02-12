@@ -6,13 +6,27 @@ import { useCanvasStore } from '@/stores/useCanvasStore';
 import { ContextBar } from './ContextBar';
 import { FileText, LayoutGrid, BookOpen } from 'lucide-react';
 import type { CanvasPanelProps } from '@/types/canvas';
+import { setFlag, resetFeatureFlags } from '@/test-utils/featureFlags';
+import * as useCanvasPopoutModule from '@/hooks/useCanvasPopout';
 
 // Mock panel component
 const TestPanel = ({ panelId }: CanvasPanelProps): ReactElement => <div>Panel: {panelId}</div>;
 
+// Mock useCanvasPopout hook
+vi.mock('@/hooks/useCanvasPopout');
+
 describe('ContextBar', () => {
   beforeEach(() => {
     useCanvasStore.getState().reset();
+    resetFeatureFlags();
+    setFlag('canvas', 'popout', true);
+    vi.clearAllMocks();
+
+    // Default mock for useCanvasPopout
+    vi.mocked(useCanvasPopoutModule.useCanvasPopout).mockReturnValue({
+      openPopout: vi.fn(),
+      isSupported: true,
+    });
   });
 
   it('renders all registered contexts as tabs', () => {
@@ -21,6 +35,7 @@ describe('ContextBar', () => {
       label: 'Context 1',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -39,6 +54,7 @@ describe('ContextBar', () => {
       label: 'Context 2',
       icon: BookOpen,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -64,6 +80,7 @@ describe('ContextBar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -89,6 +106,7 @@ describe('ContextBar', () => {
       label: 'Context 1',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -106,6 +124,7 @@ describe('ContextBar', () => {
       label: 'Context 2',
       icon: BookOpen,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -137,6 +156,7 @@ describe('ContextBar', () => {
       label: 'Context 1',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -154,6 +174,7 @@ describe('ContextBar', () => {
       label: 'Context 2',
       icon: BookOpen,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -182,6 +203,7 @@ describe('ContextBar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -207,6 +229,7 @@ describe('ContextBar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -226,15 +249,21 @@ describe('ContextBar', () => {
     expect(popoutButton).toHaveAttribute('aria-label', 'Open in new window');
   });
 
-  it('logs to console when popout button clicked (placeholder for Phase 5)', async () => {
+  it('calls openPopout when popout button clicked', async () => {
     const user = userEvent.setup();
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const mockOpenPopout = vi.fn();
+
+    vi.mocked(useCanvasPopoutModule.useCanvasPopout).mockReturnValue({
+      openPopout: mockOpenPopout,
+      isSupported: true,
+    });
 
     useCanvasStore.getState().registerContext({
       id: 'test-context',
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -252,9 +281,7 @@ describe('ContextBar', () => {
     const popoutButton = screen.getByTestId('popout-button');
     await user.click(popoutButton);
 
-    expect(consoleSpy).toHaveBeenCalledWith('Popout requested');
-
-    consoleSpy.mockRestore();
+    expect(mockOpenPopout).toHaveBeenCalledWith('test-context');
   });
 
   it('uses ARIA tablist pattern', () => {
@@ -263,6 +290,7 @@ describe('ContextBar', () => {
       label: 'Context 1',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -293,6 +321,7 @@ describe('ContextBar', () => {
       label: 'Context 1',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -310,6 +339,7 @@ describe('ContextBar', () => {
       label: 'Context 2',
       icon: BookOpen,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -339,6 +369,7 @@ describe('ContextBar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -367,6 +398,7 @@ describe('ContextBar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -390,6 +422,7 @@ describe('ContextBar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -413,6 +446,7 @@ describe('ContextBar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',

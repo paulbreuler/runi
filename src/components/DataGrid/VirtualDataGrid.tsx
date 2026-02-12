@@ -444,6 +444,7 @@ function VirtualDataGridInner<TData>(
           role="cell"
           className={cn(paddingClass, 'text-sm text-text-primary overflow-hidden', bgClass)}
           style={{ ...cellStyle, ...bgStyle }}
+          data-test-id={`datagrid-cell-${cell.id}`}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
@@ -531,6 +532,7 @@ function VirtualDataGridInner<TData>(
             'cursor-pointer'
         )}
         data-row-id={row.id}
+        data-test-id={`datagrid-row-${row.id}`}
         onClick={hookOptions.enableRowSelection === true ? handleRowClick : undefined}
         onDoubleClick={hookOptions.enableExpanding === true ? handleRowDoubleClick : undefined}
       >
@@ -799,6 +801,7 @@ function VirtualDataGridInner<TData>(
                         )}
                         style={headerStyle}
                         role="columnheader"
+                        data-test-id={`datagrid-header-${header.id}`}
                         onClick={canSort ? handleHeaderClick : undefined}
                         aria-sort={getAriaSort()}
                       >

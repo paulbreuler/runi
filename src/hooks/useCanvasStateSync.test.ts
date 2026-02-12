@@ -156,6 +156,9 @@ describe('useCanvasStateSync', () => {
     listeners.clear();
     invokeCalls.length = 0;
     useCanvasStore.getState().reset();
+    useSettingsStore.getState().setFollowAiMode(false);
+    useActivityStore.getState().clear();
+    __resetActivityIdCounter();
   });
 
   afterEach(() => {
@@ -406,11 +409,6 @@ describe('useCanvasStateSync', () => {
   });
 
   describe('Follow AI gating', () => {
-    beforeEach(() => {
-      __resetActivityIdCounter();
-      useActivityStore.getState().clear();
-    });
-
     it('should activate tab and log activity when AI switches tab with Follow AI ON', async () => {
       const { unmount } = renderHook(() => {
         useCanvasStateSync();

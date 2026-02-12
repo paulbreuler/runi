@@ -7,6 +7,7 @@ import { ContextToolbar } from './ContextToolbar';
 import { FileText, LayoutGrid } from 'lucide-react';
 import type { CanvasPanelProps, CanvasToolbarProps } from '@/types/canvas';
 import * as useCanvasPopoutModule from '@/hooks/useCanvasPopout';
+import { setFlag, resetFeatureFlags } from '@/test-utils/featureFlags';
 
 // Mock panel and toolbar components
 const TestPanel = ({ panelId }: CanvasPanelProps): ReactElement => <div>Panel: {panelId}</div>;
@@ -20,6 +21,8 @@ vi.mock('@/hooks/useCanvasPopout');
 describe('ContextToolbar', () => {
   beforeEach(() => {
     useCanvasStore.getState().reset();
+    resetFeatureFlags();
+    setFlag('canvas', 'popout', true);
     vi.clearAllMocks();
 
     // Default mock for useCanvasPopout
@@ -47,6 +50,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -72,6 +76,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -101,6 +106,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -132,6 +138,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -164,6 +171,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -191,6 +199,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -209,6 +218,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -236,6 +246,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -260,6 +271,7 @@ describe('ContextToolbar', () => {
       icon: FileText,
       panels: { panel1: TestPanel },
       toolbar: TestToolbar,
+      popoutEnabled: true,
       layouts: [
         {
           id: 'single',
@@ -283,6 +295,7 @@ describe('ContextToolbar', () => {
       label: 'Test Context',
       icon: FileText,
       panels: { panel1: TestPanel },
+      popoutEnabled: true,
       // No toolbar component
       layouts: [
         {

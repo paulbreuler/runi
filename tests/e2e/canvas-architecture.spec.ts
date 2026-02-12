@@ -25,7 +25,7 @@ test.describe('Canvas Architecture', () => {
     await expect(contextTabsList).toBeVisible();
 
     // Verify at least one tab is present (default request-{uuid} tab)
-    const tabs = contextTabsList.locator('[role="tab"]');
+    const tabs = contextTabsList.locator('[data-test-id^="context-tab-"]');
     await expect(tabs.first()).toBeVisible({ timeout: 5000 });
 
     // Verify a dynamic request tab is present and active (request-{uuid} format)

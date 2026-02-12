@@ -840,7 +840,7 @@ export const ConsolePanel = ({
               getLogLevelClass(logLevel)
             )}
             data-row-id={row.id}
-            data-test-id={`console-log-${logLevel}`}
+            data-test-id={`console-log-row-${entry.id}`}
             onClick={handleRowClick}
             onDoubleClick={handleRowDoubleClick}
             onMouseDown={(e): void => {
@@ -898,6 +898,7 @@ export const ConsolePanel = ({
                               focusRingClasses,
                               'flex items-center gap-2 px-2 py-1 text-xs text-text-muted hover:text-text-primary hover:bg-bg-raised/30 rounded transition-colors w-full'
                             )}
+                            data-test-id="console-log-occurrences-toggle"
                           >
                             {expandedLogIds.has(`${originalLog.id}_occurrences`) ? (
                               <ChevronDown size={12} />
