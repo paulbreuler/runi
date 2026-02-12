@@ -31,9 +31,8 @@ test.describe('MainLayout', () => {
     // Sidebar is visible by default
     await expect(page.getByTestId('sidebar')).toBeVisible();
 
-    // Verify request and response panes are visible
-    await expect(page.getByTestId('request-pane')).toBeVisible();
-    await expect(page.getByTestId('response-pane')).toBeVisible();
+    // Verify canvas host is visible (request/response panes removed - now using layout-based rendering)
+    await expect(page.getByTestId('canvas-host')).toBeVisible();
 
     // Verify status bar is visible
     await expect(page.getByTestId('status-bar')).toBeVisible();
