@@ -71,54 +71,24 @@ describe('ContextTabs', () => {
     expect(activeTab).toHaveClass('rounded-t-lg');
   });
 
-  it('shows arrow buttons when overflow detected', async () => {
+  it('always shows arrow buttons', async () => {
     const { registerContext } = useCanvasStore.getState();
 
-    // Register many contexts to trigger overflow
-    for (let i = 0; i < 10; i++) {
-      registerContext({
-        id: `context-${i.toString()}`,
-        label: `Very Long Context Name ${i.toString()}`,
-        order: i,
-        panels: {},
-        layouts: [],
-      });
-    }
+    registerContext({
+      id: 'context-1',
+      label: 'Context 1',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
 
-    const { container } = render(<ContextTabs />);
-    const scrollContainer = container.querySelector('[data-test-id="context-tabs-scroll"]');
+    render(<ContextTabs />);
 
-    // Mock overflow by setting scroll properties
-    if (scrollContainer) {
-      Object.defineProperty(scrollContainer, 'scrollWidth', {
-        value: 1000,
-        configurable: true,
-      });
-      Object.defineProperty(scrollContainer, 'clientWidth', {
-        value: 500,
-        configurable: true,
-      });
-      Object.defineProperty(scrollContainer, 'scrollLeft', {
-        value: 100,
-        configurable: true,
-      });
-
-      // Trigger scroll event to update state
-      await waitFor(() => {
-        scrollContainer.dispatchEvent(new Event('scroll'));
-      });
-    }
-
-    await waitFor(
-      () => {
-        expect(screen.queryByTestId('context-tabs-arrow-left')).toBeInTheDocument();
-        expect(screen.queryByTestId('context-tabs-arrow-right')).toBeInTheDocument();
-      },
-      { timeout: 2000 }
-    );
+    expect(screen.getByTestId('context-tabs-arrow-left')).toBeInTheDocument();
+    expect(screen.getByTestId('context-tabs-arrow-right')).toBeInTheDocument();
   });
 
-  it('arrow buttons scroll by tab width', async () => {
+  it('arrow buttons scroll by tab width when overflowed', async () => {
     const { registerContext } = useCanvasStore.getState();
     const user = userEvent.setup();
 

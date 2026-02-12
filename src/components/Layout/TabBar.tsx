@@ -26,10 +26,7 @@ export const TabBar = ({ sidebarWidth }: TabBarProps): React.JSX.Element | null 
   }
 
   return (
-    <div
-      className="h-8 border-b border-border-subtle bg-bg-surface flex items-center shrink-0"
-      data-test-id="tab-bar"
-    >
+    <div className="h-8 bg-bg-surface flex items-end shrink-0" data-test-id="tab-bar">
       <ContextTabs sidebarWidth={sidebarWidth} />
     </div>
   );
