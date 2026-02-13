@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { OpenItems } from './OpenItems';
 
 // Mock localStorage
@@ -47,6 +48,7 @@ function resetStore(): void {
   uuidCounter = 0;
   localStorageMock.clear();
   useCanvasStore.getState().reset();
+  useRequestStoreRaw.setState({ contexts: {} });
 }
 
 interface TabConfig {

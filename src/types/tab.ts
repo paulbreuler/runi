@@ -52,17 +52,18 @@ export interface TabState {
  * @param name - Optional explicit name (e.g., from a collection request)
  * @returns A short label for display in the tab list
  */
-export function deriveTabLabel(url: string, name?: string): string {
+export function deriveTabLabel(url: string | undefined | null, name?: string): string {
   if (name !== undefined && name.length > 0) {
     return name;
   }
 
-  if (url.length === 0) {
+  const safeUrl = url ?? '';
+  if (safeUrl.length === 0) {
     return 'New Request';
   }
 
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(safeUrl);
     const path = parsed.pathname;
     // Use last meaningful path segment, or hostname if root
     if (path === '/' || path === '') {
@@ -74,6 +75,6 @@ export function deriveTabLabel(url: string, name?: string): string {
     return lastSegment !== undefined ? `/${lastSegment}` : parsed.hostname;
   } catch {
     // Not a valid URL — return as-is (truncated)
-    return url.length > 30 ? `${url.slice(0, 30)}...` : url;
+    return safeUrl.length > 30 ? `${safeUrl.slice(0, 30)}...` : safeUrl;
   }
 }

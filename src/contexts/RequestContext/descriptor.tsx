@@ -5,22 +5,26 @@
 
 import type { FC } from 'react';
 import { Send, Square, Columns2 } from 'lucide-react';
-import type { CanvasContextDescriptor, CanvasPanelProps } from '@/types/canvas';
+import type { CanvasContextDescriptor, CanvasPanelProps, CanvasToolbarProps } from '@/types/canvas';
 import { RequestBuilder } from '@/components/Request/RequestBuilder';
 import { ResponseViewer } from '@/components/Response/ResponseViewer';
 import { VigilanceMonitor } from '@/components/ui/VigilanceMonitor';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStore, RequestContextIdContext } from '@/stores/useRequestStore';
 
 import { useState } from 'react';
 import type { TabId } from '@/components/Response/ResponseViewer';
 
 // Wrapper components to adapt existing components to CanvasPanelProps
-const RequestBuilderPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
-  return <RequestBuilder />;
+const RequestBuilderPanel: FC<CanvasPanelProps> = ({ contextId }): React.JSX.Element => {
+  return (
+    <RequestContextIdContext.Provider value={contextId}>
+      <RequestBuilder />
+    </RequestContextIdContext.Provider>
+  );
 };
 
-const ResponseViewerPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
+const ResponseViewerWrapper: FC = (): React.JSX.Element => {
   const { response, isLoading } = useRequestStore();
   const [activeTab, setActiveTab] = useState<TabId>('body');
 
@@ -47,6 +51,22 @@ const ResponseViewerPanel: FC<CanvasPanelProps> = (): React.JSX.Element => {
   );
 };
 
+const ResponseViewerPanel: FC<CanvasPanelProps> = ({ contextId }): React.JSX.Element => {
+  return (
+    <RequestContextIdContext.Provider value={contextId}>
+      <ResponseViewerWrapper />
+    </RequestContextIdContext.Provider>
+  );
+};
+
+const RequestCanvasToolbarPanel: FC<CanvasToolbarProps> = (props): React.JSX.Element => {
+  return (
+    <RequestContextIdContext.Provider value={props.contextId}>
+      <RequestCanvasToolbar {...props} />
+    </RequestContextIdContext.Provider>
+  );
+};
+
 /**
  * Request context descriptor
  *
@@ -67,7 +87,7 @@ export const requestContextDescriptor: CanvasContextDescriptor = {
   },
 
   // Context-specific toolbar
-  toolbar: RequestCanvasToolbar,
+  toolbar: RequestCanvasToolbarPanel,
 
   // Three layout presets
   layouts: [

@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCanvasStore } from './useCanvasStore';
+import { useRequestStoreRaw } from './useRequestStore';
 import type { CanvasContextDescriptor, CanvasContextId } from '@/types/canvas';
 import { Square } from 'lucide-react';
 
@@ -76,10 +77,10 @@ describe('useCanvasStore', () => {
     // Clear localStorage first
     localStorageMock.clear();
 
-    // Reset store to initial state
-    const { result } = renderHook(() => useCanvasStore());
+    // Reset stores to initial state
     act(() => {
-      result.current.reset();
+      useCanvasStore.getState().reset();
+      useRequestStoreRaw.setState({ contexts: {} });
     });
   });
 
@@ -450,13 +451,13 @@ describe('useCanvasStore', () => {
 
       act(() => {
         result.current.registerContext(mockDescriptor);
-        result.current.setContextState('test-context', { key: 'value' });
+        result.current.setContextState('test-context', { name: 'Persisted Name' });
       });
 
       // Create new hook instance to test persistence
       const { result: result2 } = renderHook(() => useCanvasStore());
 
-      expect(result2.current.getContextState('test-context')).toEqual({ key: 'value' });
+      expect(result2.current.getContextState('test-context')).toEqual({ name: 'Persisted Name' });
     });
   });
 
@@ -467,8 +468,7 @@ describe('useCanvasStore', () => {
         const { result } = renderHook(() => useCanvasStore());
         act(() => {
           const contextId = result.current.openRequestTab({
-            method: 'GET',
-            url: 'https://api.example.com',
+            name: 'Persisted Tab',
           });
           result.current.setActiveContext(contextId);
         });
@@ -495,10 +495,7 @@ describe('useCanvasStore', () => {
               [
                 'request-stale-abc-123',
                 {
-                  method: 'GET',
-                  url: 'https://api.example.com',
-                  headers: {},
-                  body: '',
+                  name: 'Stale Tab',
                 },
               ],
             ],
@@ -572,9 +569,13 @@ describe('useCanvasStore', () => {
         });
       });
 
-      const state = result.current.getContextState(newContextId);
-      expect(state.method).toBe('POST');
-      expect(state.url).toBe('https://api.example.com/users');
+      // Verify request data is in keyed store
+      const reqState = useRequestStoreRaw.getState().contexts[newContextId];
+      expect(reqState).toBeDefined();
+      expect(reqState?.method).toBe('POST');
+      expect(reqState?.url).toBe('https://api.example.com/users');
+
+      // Verify label is in canvas store
       expect(result.current.contexts.get(newContextId)?.label).toBe('Create User');
     });
 
@@ -758,65 +759,37 @@ describe('useCanvasStore', () => {
       let contextId = '';
       act(() => {
         contextId = result.current.openRequestTab({
-          method: 'GET',
-          url: 'https://api.example.com',
-          headers: {},
-          body: '',
+          label: 'Tab 1',
+          name: 'Original Name',
         });
       });
 
       act(() => {
-        result.current.updateContextState(contextId, { method: 'POST', body: '{"test": true}' });
+        result.current.updateContextState(contextId, { name: 'Updated Name', isSaved: true });
       });
 
       const state = result.current.getContextState(contextId);
-      expect(state.method).toBe('POST');
-      expect(state.url).toBe('https://api.example.com'); // Unchanged
-      expect(state.body).toBe('{"test": true}');
+      expect(state.name).toBe('Updated Name');
+      expect(state.isSaved).toBe(true);
     });
 
-    it('should exclude response from persisted context state', () => {
+    it('should exclude request data from useCanvasStore persistence', () => {
       const { result } = renderHook(() => useCanvasStore());
 
       let contextId = '';
       act(() => {
         contextId = result.current.openRequestTab({
-          method: 'POST',
-          url: 'https://api.example.com',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{"test": true}',
-          response: {
-            status: 200,
-            status_text: 'OK',
-            headers: {},
-            body: '{"result": "ok"}',
-            timing: {
-              total_ms: 123,
-              dns_ms: null,
-              connect_ms: null,
-              tls_ms: null,
-              first_byte_ms: null,
-            },
-          },
+          label: 'Tab 1',
+          name: 'My Tab',
         });
       });
 
-      // Verify in-memory state has the response
-      const inMemoryState = result.current.getContextState(contextId);
-      expect(inMemoryState.response).toBeDefined();
-
-      // Manually call partialize to verify it excludes the response
+      // Manually call partialize to verify it includes metadata
       const state = result.current;
       const partializedState = {
         activeContextId: state.activeContextId,
         activeLayoutPerContext: Array.from(state.activeLayoutPerContext.entries()),
-        contextState: Array.from(state.contextState.entries()).map(([id, stateData]) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { response, ...rest } = stateData as Record<string, unknown> & {
-            response?: unknown;
-          };
-          return [id, rest] as [string, Record<string, unknown>];
-        }),
+        contextState: Array.from(state.contextState.entries()),
       };
 
       // Find our context in the partialized state
@@ -826,11 +799,10 @@ describe('useCanvasStore', () => {
       const persistedState = partializedContextState.get(contextId);
 
       expect(persistedState).toBeDefined();
-      expect(persistedState?.method).toBe('POST');
-      expect(persistedState?.url).toBe('https://api.example.com');
-      expect(persistedState?.headers).toEqual({ 'Content-Type': 'application/json' });
-      expect(persistedState?.body).toBe('{"test": true}');
-      expect(persistedState?.response).toBeUndefined(); // Response should not be in partialized state
+      expect(persistedState?.name).toBe('My Tab');
+      // Request data should NOT be here (it's in useRequestStoreRaw)
+      expect(persistedState?.method).toBeUndefined();
+      expect(persistedState?.url).toBeUndefined();
     });
   });
 

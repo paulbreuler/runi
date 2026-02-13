@@ -8,7 +8,7 @@ import { expect, userEvent, within } from 'storybook/test';
 import { useEffect } from 'react';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
 import { RequestBuilder } from './RequestBuilder';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 
 const meta: Meta<typeof RequestBuilder> = {
   title: 'Request/RequestBuilder',
@@ -42,9 +42,9 @@ const StoreSeed = ({
   body?: string;
 }): React.JSX.Element => {
   useEffect(() => {
-    useRequestStore.setState({ url, headers, body });
+    useRequestStoreRaw.setState({ url, headers, body });
     return () => {
-      useRequestStore.getState().reset();
+      useRequestStoreRaw.getState().reset();
     };
   }, [url, headers, body]);
 
@@ -95,7 +95,7 @@ export const Playground: Story = {
     await step('Body editor supports horizontal scroll', async () => {
       const textarea = getByTestId('code-editor-textarea');
       const longLine = `{"token":"${'a'.repeat(240)}"}`;
-      useRequestStore.getState().setBody(longLine);
+      useRequestStoreRaw.getState().setBody(longLine);
       await new Promise((resolve) => setTimeout(resolve, 100));
       const scrollWidth = textarea.scrollWidth;
       const clientWidth = textarea.clientWidth;

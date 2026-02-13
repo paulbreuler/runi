@@ -140,7 +140,7 @@ export function useCanvasStateSync(): void {
     }): void => {
       // Debounced snapshot push (100ms)
       if (debounceTimerRef.current !== null) {
-        clearTimeout(debounceTimerRef.current);
+        window.clearTimeout(debounceTimerRef.current);
       }
 
       debounceTimerRef.current = window.setTimeout((): void => {
@@ -181,7 +181,7 @@ export function useCanvasStateSync(): void {
     };
 
     const unsubscribe = useCanvasStore.subscribe((state) => {
-      // Check if sync-relevant state changed
+      // Check if sync-relevant state changed (shallow equality for Maps and Arrays)
       const hasChanged =
         state.contexts !== lastStateRef.current?.contexts ||
         state.templates !== lastStateRef.current.templates ||
@@ -206,7 +206,7 @@ export function useCanvasStateSync(): void {
     return (): void => {
       unsubscribe();
       if (debounceTimerRef.current !== null) {
-        clearTimeout(debounceTimerRef.current);
+        window.clearTimeout(debounceTimerRef.current);
       }
     };
   }, [triggerSync]);

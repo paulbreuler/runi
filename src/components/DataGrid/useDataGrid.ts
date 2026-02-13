@@ -259,16 +259,30 @@ export function useDataGrid<TData>({
           const newlyExpanded = nextKeys.find((key) => !oldKeys.includes(key));
 
           if (newlyExpanded !== undefined) {
-            // Only keep the newly expanded row
-            return { [newlyExpanded]: true };
+            // Only keep the newly expanded row and its ancestors
+            const result: Record<string, boolean> = {};
+            const parts = newlyExpanded.split('.');
+            let currentPath = '';
+            for (const part of parts) {
+              currentPath = currentPath === '' ? part : `${currentPath}.${part}`;
+              result[currentPath] = true;
+            }
+            return result;
           }
 
           // If no new row was expanded (e.g., one was collapsed),
-          // return next but ensure it has at most one key
+          // return next but ensure it has at most one leaf key (and its ancestors)
           if (nextKeys.length > 1) {
             const lastKey = nextKeys[nextKeys.length - 1];
             if (lastKey !== undefined) {
-              return { [lastKey]: true };
+              const result: Record<string, boolean> = {};
+              const parts = lastKey.split('.');
+              let currentPath = '';
+              for (const part of parts) {
+                currentPath = currentPath === '' ? part : `${currentPath}.${part}`;
+                result[currentPath] = true;
+              }
+              return result;
             }
           }
         }
@@ -438,7 +452,7 @@ export function useDataGrid<TData>({
     rowSelection,
     setRowSelection,
     expanded,
-    setExpanded,
+    setExpanded: handleExpandedChange,
     // Column features
     columnSizing,
     setColumnSizing,

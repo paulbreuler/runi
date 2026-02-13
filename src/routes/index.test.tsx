@@ -7,14 +7,36 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HomePage } from './index';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStore, useRequestStoreRaw, type RequestStore } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { requestContextDescriptor } from '@/contexts/RequestContext/descriptor';
 import { executeRequest } from '@/api/http';
 
 // Mock the stores
-vi.mock('@/stores/useRequestStore');
+vi.mock('@/stores/useRequestStore', () => ({
+  useRequestStore: vi.fn(),
+  RequestContextIdContext: {
+    Provider: ({ children }: any): any => children,
+    Consumer: ({ children }: any): any => children({}),
+  },
+  useRequestStoreRaw: {
+    getState: vi.fn(() => ({
+      contexts: {},
+      initContext: vi.fn(),
+    })),
+    setState: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+  },
+  DEFAULT_REQUEST_STATE: {
+    method: 'GET',
+    url: 'https://httpbin.org/get',
+    headers: {},
+    body: '',
+    response: null,
+    isLoading: false,
+  },
+}));
 vi.mock('@/stores/useHistoryStore');
 vi.mock('@/api/http');
 
@@ -82,9 +104,23 @@ describe('HomePage - Auto-save to history', () => {
         setLoading: mockSetLoading,
         reset: vi.fn(),
       };
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
       return selector !== undefined ? selector(state) : state;
     });
+
+    vi.mocked(useRequestStoreRaw.getState).mockReturnValue({
+      contexts: {
+        'request-test-default': {
+          method: 'GET',
+          url: 'https://httpbin.org/get',
+          headers: {},
+          body: '',
+          response: null,
+          isLoading: false,
+        },
+      },
+      initContext: vi.fn(),
+    } as any as RequestStore);
 
     // Mock history store
     vi.mocked(useHistoryStore).mockImplementation((selector) => {

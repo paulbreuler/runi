@@ -6,7 +6,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { within, expect } from 'storybook/test';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 
 const meta = {
   title: 'Contexts/RequestCanvasToolbar',
@@ -21,7 +21,7 @@ const meta = {
   },
   decorators: [
     (Story) => {
-      useRequestStore.setState({
+      useRequestStoreRaw.setState({
         url: 'https://api.example.com/users',
         method: 'GET',
         headers: {},
@@ -71,7 +71,7 @@ export const Default: Story = {
 export const Disabled: Story = {
   decorators: [
     (Story) => {
-      useRequestStore.setState({ url: '' }); // Empty URL
+      useRequestStoreRaw.setState({ url: '' }); // Empty URL
       return <Story />;
     },
   ],

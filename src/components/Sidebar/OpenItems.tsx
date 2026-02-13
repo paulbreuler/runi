@@ -6,6 +6,7 @@
 import React, { useState, useRef } from 'react';
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useRequestStoreRaw, DEFAULT_REQUEST_STATE } from '@/stores/useRequestStore';
 import type { RequestTabState } from '@/types/canvas';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { containedFocusRingClasses, focusRingClasses } from '@/utils/accessibility';
@@ -28,7 +29,10 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
   const activeContextId = useCanvasStore((s) => s.activeContextId);
   const setActiveContext = useCanvasStore((s) => s.setActiveContext);
   const closeContext = useCanvasStore((s) => s.closeContext);
-  const getContextState = useCanvasStore((s) => s.getContextState);
+  const getContextMetadata = useCanvasStore((s) => s.getContextState);
+
+  // Read ALL request contexts from the keyed store
+  const requestStates = useRequestStoreRaw((s) => s.contexts);
 
   const [isOpen, setIsOpen] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
@@ -142,7 +146,8 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
           >
             {requestContexts.map((contextId, index) => {
               const context = contexts.get(contextId);
-              const contextState = getContextState(contextId) as unknown as RequestTabState;
+              const metadata = getContextMetadata(contextId) as unknown as RequestTabState;
+              const reqState = requestStates[contextId] ?? DEFAULT_REQUEST_STATE;
 
               if (context === undefined) {
                 return null;
@@ -152,7 +157,7 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
               const isFirst = index === 0;
               const hasActiveInList = requestContexts.includes(activeContextId ?? '');
               const isTabbable = isActive || (!hasActiveInList && isFirst);
-              const methodKey = contextState.method as HttpMethod;
+              const methodKey = reqState.method as HttpMethod;
               const methodClass =
                 methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
 
@@ -180,7 +185,7 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                   }}
                 >
                   {/* Dirty indicator */}
-                  {contextState.isDirty === true && (
+                  {metadata.isDirty === true && (
                     <span
                       className="shrink-0 h-1.5 w-1.5 rounded-full bg-signal-warning"
                       data-test-id={`open-items-dirty-${contextId}`}
@@ -196,7 +201,7 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                     )}
                     data-test-id={`open-items-method-${contextId}`}
                   >
-                    {contextState.method}
+                    {reqState.method}
                   </span>
 
                   {/* Label */}
@@ -215,7 +220,7 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                       'shrink-0 p-0.5 rounded-sm text-text-muted hover:text-text-primary transition-opacity',
                       'opacity-0 group-hover/item:opacity-100 focus-visible:opacity-100'
                     )}
-                    aria-label={`Close tab ${contextState.method} ${context.label}`}
+                    aria-label={`Close tab ${reqState.method} ${context.label}`}
                     data-test-id={`open-items-close-${contextId}`}
                     onClick={(e) => {
                       handleCloseClick(e, contextId);

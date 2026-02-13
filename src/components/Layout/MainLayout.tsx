@@ -32,7 +32,7 @@ import { useHistoryStore } from '@/stores/useHistoryStore';
 import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { useActivityStore } from '@/stores/useActivityStore';
-import { useTabStore } from '@/stores/useTabStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -157,7 +157,8 @@ export const MainLayout = ({
     });
 
     const unsubNewRequest = globalEventBus.on('request.new', () => {
-      useTabStore.getState().openTab();
+      const store = useCanvasStore.getState();
+      store.openRequestTab();
     });
 
     return (): void => {
