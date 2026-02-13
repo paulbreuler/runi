@@ -16,6 +16,9 @@ export const CanvasPopout: FC = () => {
   const contexts = useCanvasStore((s) => s.contexts);
   const initializedRef = useRef<string | null>(null);
 
+  // Extract window ID with fallback
+  const windowId = window.name !== '' ? window.name : 'popout';
+
   useEffect(() => {
     if (contextId === undefined || initializedRef.current === contextId) {
       return;
@@ -53,7 +56,7 @@ export const CanvasPopout: FC = () => {
     // Emit opened event
     globalEventBus.emit<{ contextId: string; windowId: string }>('canvas.popout-opened', {
       contextId,
-      windowId: window.name !== '' ? window.name : 'popout',
+      windowId,
     });
 
     initializedRef.current = contextId;
@@ -63,15 +66,18 @@ export const CanvasPopout: FC = () => {
       useCanvasStore.getState().setPopout(contextId, false);
       globalEventBus.emit<{ contextId: string; windowId: string }>('canvas.popout-closed', {
         contextId,
-        windowId: window.name !== '' ? window.name : 'popout',
+        windowId,
       });
       initializedRef.current = null;
     };
-  }, [contextId, searchParams]);
+  }, [contextId, searchParams, windowId]);
 
   if (contextId === undefined) {
     return (
-      <div className="h-screen flex items-center justify-center bg-bg-app text-text-secondary">
+      <div
+        className="h-screen flex items-center justify-center bg-bg-app text-text-secondary"
+        data-test-id="canvas-popout-invalid-context"
+      >
         Invalid popout context
       </div>
     );
@@ -81,7 +87,10 @@ export const CanvasPopout: FC = () => {
 
   if (context === undefined) {
     return (
-      <div className="h-screen flex items-center justify-center bg-bg-app text-text-secondary">
+      <div
+        className="h-screen flex items-center justify-center bg-bg-app text-text-secondary"
+        data-test-id="canvas-popout-context-not-found"
+      >
         Context &quot;{contextId}&quot; not found
       </div>
     );

@@ -946,9 +946,7 @@ pub async fn sync_canvas_state(
     state: tauri::State<'_, CanvasStateHandle>,
     snapshot: CanvasStateSnapshot,
 ) -> Result<(), String> {
-    let mut guard = state.write().await;
-    *guard = snapshot;
-    drop(guard);
+    *state.write().await = snapshot;
     Ok(())
 }
 
@@ -1342,12 +1340,14 @@ mod tests {
         }
 
         // Verify state was updated
-        let guard = state.read().await;
-        assert_eq!(guard.tabs.len(), 1);
-        assert_eq!(guard.tabs[0].id, "tab-1");
-        assert_eq!(guard.active_tab_index, Some(0));
-        assert_eq!(guard.templates.len(), 1);
-        drop(guard);
+        {
+            let guard = state.read().await;
+            assert_eq!(guard.tabs.len(), 1);
+            assert_eq!(guard.tabs[0].id, "tab-1");
+            assert_eq!(guard.active_tab_index, Some(0));
+            assert_eq!(guard.templates.len(), 1);
+            drop(guard);
+        }
     }
 
     #[tokio::test]
@@ -1385,10 +1385,12 @@ mod tests {
         }
 
         // Verify new state replaced old
-        let guard = state.read().await;
-        assert_eq!(guard.tabs.len(), 1);
-        assert_eq!(guard.tabs[0].id, "tab-new");
-        assert_eq!(guard.active_tab_index, None);
-        drop(guard);
+        {
+            let guard = state.read().await;
+            assert_eq!(guard.tabs.len(), 1);
+            assert_eq!(guard.tabs[0].id, "tab-new");
+            assert_eq!(guard.active_tab_index, None);
+            drop(guard);
+        }
     }
 }

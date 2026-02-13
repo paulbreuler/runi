@@ -5,6 +5,10 @@
 
 import React, { useEffect } from 'react';
 
+interface IntentProviderProps {
+  children: React.ReactNode;
+}
+
 /**
  * IntentProvider tracks whether the user is currently using a mouse or keyboard.
  * It applies a `data-intent` attribute to document.documentElement (html).
@@ -12,7 +16,7 @@ import React, { useEffect } from 'react';
  * CSS can then use this attribute to suppress focus rings for mouse users:
  * html[data-intent="mouse"] *:focus { outline: none; }
  */
-export const IntentProvider = ({ children }: { children: React.ReactNode }): React.JSX.Element => {
+export const IntentProvider = ({ children }: IntentProviderProps): React.JSX.Element => {
   useEffect(() => {
     const root = document.documentElement;
 

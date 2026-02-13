@@ -5,15 +5,12 @@
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
 import { useRequestStore, useRequestStoreRaw } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { useRequestActions } from '@/hooks/useRequestActions';
-
-const { mockEmit } = vi.hoisted(() => ({
-  mockEmit: vi.fn(),
-}));
+import { globalEventBus } from '@/events/bus';
 
 // Mock dependencies
 vi.mock('@/api/http', () => ({
@@ -30,19 +27,20 @@ vi.mock('@/stores/useRequestStore', async () => {
 
 vi.mock('@/hooks/useRequestActions');
 
-vi.mock('@/events/bus', () => ({
-  globalEventBus: {
-    emit: mockEmit,
-  },
-}));
-
 describe('RequestCanvasToolbar', () => {
-  const getEmitMock = (): typeof mockEmit => mockEmit;
+  let emitSpy: ReturnType<typeof vi.spyOn>;
   const mockHandleSend = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    emitSpy = vi.spyOn(globalEventBus, 'emit');
+  });
 
+  afterEach(() => {
+    emitSpy.mockRestore();
+  });
+
+  beforeEach(() => {
     vi.mocked(useRequestStore).mockReturnValue({
       response: null,
     } as any as ReturnType<typeof useRequestStore>);
@@ -161,7 +159,7 @@ describe('RequestCanvasToolbar', () => {
       await user.click(codeButton);
 
       await waitFor(() => {
-        expect(getEmitMock()).toHaveBeenCalledWith(
+        expect(emitSpy).toHaveBeenCalledWith(
           'toast.show',
           expect.objectContaining({
             type: 'info',
@@ -182,7 +180,7 @@ describe('RequestCanvasToolbar', () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(getEmitMock()).toHaveBeenCalledWith(
+        expect(emitSpy).toHaveBeenCalledWith(
           'toast.show',
           expect.objectContaining({
             type: 'info',

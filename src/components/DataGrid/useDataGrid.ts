@@ -243,9 +243,10 @@ export function useDataGrid<TData>({
         // If multi-expansion is disabled, only keep the newest expanded row
         if (!enableMultiExpansion) {
           // ExpandedState can be `true` (expand all) or a record.
-          // When single-expansion is enabled, disallow "expand all".
+          // When single-expansion is enabled, disallow "expand all" but allow "collapse all".
           if (typeof next === 'boolean') {
-            // If it's true (expand all), keep the previous record or collapse all.
+            // `next` can only be `true` here (expand all), block it
+            // Collapse all is represented by an empty record {}, not false
             return typeof old !== 'boolean' ? old : {};
           }
 

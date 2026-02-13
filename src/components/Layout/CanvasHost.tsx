@@ -81,6 +81,11 @@ export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
       }
 
       case 'columns': {
+        // Helper to calculate panel ratio with equal-share fallback for 3+ panels
+        const getPanelRatio = (index: number): number =>
+          arrangement.ratios?.[index] ??
+          (arrangement.panels.length >= 3 ? 100 / arrangement.panels.length : 50);
+
         return (
           <div className="flex flex-row h-full">
             {arrangement.panels.map((placeholder, index) => {
@@ -90,11 +95,7 @@ export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
                 return null;
               }
 
-              // Equal-share distribution for 3+ panels to avoid 50% fallback issue
-              const ratio =
-                arrangement.ratios?.[index] ??
-                (arrangement.panels.length >= 3 ? 100 / arrangement.panels.length : 50);
-              const width = `${String(ratio)}%`;
+              const width = `${String(getPanelRatio(index))}%`;
 
               return (
                 <CanvasPanel
@@ -112,6 +113,11 @@ export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
       }
 
       case 'rows': {
+        // Helper to calculate panel ratio with equal-share fallback for 3+ panels
+        const getPanelRatio = (index: number): number =>
+          arrangement.ratios?.[index] ??
+          (arrangement.panels.length >= 3 ? 100 / arrangement.panels.length : 50);
+
         return (
           <div className="flex flex-col h-full">
             {arrangement.panels.map((placeholder, index) => {
@@ -121,11 +127,7 @@ export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
                 return null;
               }
 
-              // Equal-share distribution for 3+ panels to avoid 50% fallback issue
-              const ratio =
-                arrangement.ratios?.[index] ??
-                (arrangement.panels.length >= 3 ? 100 / arrangement.panels.length : 50);
-              const height = `${String(ratio)}%`;
+              const height = `${String(getPanelRatio(index))}%`;
 
               return (
                 <CanvasPanel

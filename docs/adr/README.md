@@ -46,7 +46,10 @@ Links to relevant resources.
 
 Sorted chronologically (newest first).
 
-_No ADRs yet. Add entries here as ADRs are created._
+_Previously defined ADRs (for example ADR-0001) have been archived or removed from this repository.
+There are currently no active ADRs listed._
+
+_Add new entries here as ADRs are created._
 
 ## Creating a New ADR
 

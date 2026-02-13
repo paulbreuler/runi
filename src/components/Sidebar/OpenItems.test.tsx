@@ -17,7 +17,7 @@ const localStorageMock = ((): {
   removeItem: (key: string) => void;
   clear: () => void;
 } => {
-  let store: Record<string, string> = {};
+  let store = {} as Record<string, string>;
   return {
     getItem: (key: string): string | null => store[key] ?? null,
     setItem: (key: string, value: string): void => {
@@ -28,7 +28,7 @@ const localStorageMock = ((): {
       delete store[key];
     },
     clear: (): void => {
-      store = {};
+      store = {} as Record<string, string>;
     },
   };
 })();

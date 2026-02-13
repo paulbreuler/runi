@@ -104,7 +104,7 @@ describe('HomePage - Auto-save to history', () => {
       reset: vi.fn(),
     });
 
-    vi.mocked(useRequestStoreRaw.getState).mockReturnValue({
+    const requestStoreState: RequestStore = {
       contexts: {
         'request-test-default': {
           method: 'GET',
@@ -115,8 +115,16 @@ describe('HomePage - Auto-save to history', () => {
           isLoading: false,
         },
       },
+      setMethod: vi.fn(),
+      setUrl: vi.fn(),
+      setHeaders: vi.fn(),
+      setBody: vi.fn(),
+      setResponse: vi.fn(),
+      setLoading: vi.fn(),
+      reset: vi.fn(),
       initContext: vi.fn(),
-    } as any as RequestStore);
+    };
+    vi.mocked(useRequestStoreRaw.getState).mockReturnValue(requestStoreState);
 
     // Mock history store
     vi.mocked(useHistoryStore).mockImplementation((selector) => {
