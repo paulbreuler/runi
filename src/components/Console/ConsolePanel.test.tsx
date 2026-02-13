@@ -37,8 +37,6 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
 // CI environments may be slower, so use a generous timeout
 const WAIT_TIMEOUT = { timeout: 5000 };
 
-const isCI = process.env.CI === 'true';
-
 describe('ConsolePanel', () => {
   beforeEach(() => {
     // Reset console service before each test
@@ -334,12 +332,12 @@ describe('ConsolePanel', () => {
   });
 
   // TODO: Fix flaky test - log grouping interaction is complex and timing-dependent
-  it.skip('displays correlation ID in grouped log entries when expanded', async () => {
+  it('displays correlation ID in grouped log entries when expanded', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
     const correlationId = 'test-correlation-12345678';
 
-    // Add multiple identical logs to create a group (same level, message, args)
+    // Add multiple identical logs to create a group (same level, message, args, correlationId)
     await act(async () => {
       service.addLog({
         level: 'debug',
@@ -353,17 +351,18 @@ describe('ConsolePanel', () => {
         message: 'Test message',
         args: [],
         timestamp: Date.now() + 1000,
-        correlationId: 'test-correlation-87654321',
+        correlationId, // MUST BE IDENTICAL TO GROUP
       });
     });
 
     // Wait for grouped log to appear with count badge
     await waitFor(() => {
-      expect(screen.getByTestId('console-log-group-count')).toHaveTextContent('2');
+      expect(screen.getByTestId('console-log-group-count')).toHaveTextContent('×2');
     }, WAIT_TIMEOUT);
 
     // Double-click to expand the grouped log
-    const logRow = screen.getByTestId('console-log-group-count').closest('tr');
+    const countBadge = screen.getByTestId('console-log-group-count');
+    const logRow = countBadge.closest('tr');
     expect(logRow).toBeInTheDocument();
     if (logRow !== null) {
       await act(async () => {
@@ -377,14 +376,15 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
 
     // Click the occurrences toggle to show individual logs
-    const occurrencesButton = screen.getByTestId('console-log-row-occurrences-toggle');
+    const occurrencesButton = screen.getByTestId('console-log-occurrences-toggle');
     await act(async () => {
       fireEvent.click(occurrencesButton);
     });
 
     // Now correlation IDs should be visible with title attribute
     await waitFor(() => {
-      expect(screen.getByTitle(correlationId)).toBeInTheDocument();
+      const elements = screen.getAllByTitle(correlationId);
+      expect(elements.length).toBeGreaterThanOrEqual(2);
     }, WAIT_TIMEOUT);
   });
 
@@ -586,7 +586,7 @@ describe('ConsolePanel', () => {
   });
 
   // TODO: Fix flaky test - log grouping interaction timing issues
-  it.skip('groups logs with identical level, message, correlationId, AND args', async () => {
+  it('groups logs with identical level, message, correlationId, AND args', async () => {
     const service = getConsoleService();
     service.clear(); // Ensure clean state
     render(<ConsolePanel />);
@@ -707,7 +707,7 @@ describe('ConsolePanel', () => {
   });
 
   // TODO: Fix flaky test - grouped log delete interaction timing
-  it.skip('deletes all instances when deleting a grouped log', async () => {
+  it('deletes all instances when deleting a grouped log', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
 
@@ -858,57 +858,46 @@ describe('ConsolePanel', () => {
     expect(copiedData.log.correlationId).toBe(correlationId);
   });
 
-  it.skipIf(isCI)(
-    'pretty-prints JSON strings in log args when expanded',
-    async () => {
-      render(<ConsolePanel />);
-      const service = getConsoleService();
+  it('pretty-prints JSON strings in log args when expanded', async () => {
+    render(<ConsolePanel />);
+    const service = getConsoleService();
 
-      const jsonString = '{"error":{"code":123,"message":"boom"}}';
-      await act(async () => {
-        service.addLog({
-          id: 'json-log',
-          level: 'error',
-          message: 'API error response',
-          args: [jsonString],
-          timestamp: Date.now(),
-        });
+    const jsonString = '{"error":{"code":123,"message":"boom"}}';
+    await act(async () => {
+      service.addLog({
+        id: 'json-log',
+        level: 'error',
+        message: 'API error response',
+        args: [jsonString],
+        timestamp: Date.now(),
       });
+    });
 
-      await waitFor(() => {
-        expect(screen.getByTestId('console-log-row-json-log')).toBeInTheDocument();
-      }, WAIT_TIMEOUT);
+    await waitFor(() => {
+      expect(screen.getByTestId('console-log-row-json-log')).toBeInTheDocument();
+    }, WAIT_TIMEOUT);
 
-      const logEntry = screen.getByTestId('console-log-row-json-log');
-      const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
-      expect(chevronButton).toBeInTheDocument();
+    const logEntry = screen.getByTestId('console-log-row-json-log');
+    const chevronButton = logEntry.querySelector('[data-test-id="expand-button"]');
+    expect(chevronButton).toBeInTheDocument();
 
-      // Click chevron to expand (matching pattern from 'collapses expanded args' test)
-      fireEvent.click(chevronButton as HTMLElement);
+    // Click chevron to expand (matching pattern from 'collapses expanded args' test)
+    fireEvent.click(chevronButton as HTMLElement);
 
-      // Wait for the parsed JSON content to appear (more reliable than waiting for expanded-section)
-      // The JSON string '{"error":{"code":123,"message":"boom"}}' will be pretty-printed
-      await waitFor(
-        () => {
-          // Look for the pretty-printed JSON structure
-          expect(screen.getByText(/"code"/)).toBeInTheDocument();
-          expect(screen.getByText(/123/)).toBeInTheDocument();
-        },
-        { timeout: 10000 }
-      );
+    // Wait for the expanded section to appear and verify JSON content
+    const expandedSection = await screen.findByTestId('expanded-section', undefined, {
+      timeout: 10000,
+    });
+    const editor = within(expandedSection).getByTestId('code-editor');
 
-      // Verify the full JSON structure is visible
-      const expandedSection = screen.getByTestId('expanded-section');
-      const editor = within(expandedSection).getByTestId('code-editor');
-      expect(editor.textContent).toMatch(/"code":\s*123/);
-      expect(editor.textContent).toMatch(/"message":\s*"boom"/);
-      expect(editor.textContent).toMatch(/"error":/);
-    },
-    15000
-  );
+    // Verify the full pretty-printed JSON structure is visible
+    expect(editor.textContent).toMatch(/"code":\s*123/);
+    expect(editor.textContent).toMatch(/"message":\s*"boom"/);
+    expect(editor.textContent).toMatch(/"error":/);
+  }, 15000);
 
   // TODO: Fix flaky test - code editor rendering timing varies in CI
-  it.skip('collapses expanded args when chevron is clicked again', async () => {
+  it('collapses expanded args when chevron is clicked again', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
 
@@ -958,7 +947,7 @@ describe('ConsolePanel', () => {
   }, 15000);
 
   // TODO: Fix flaky test - expansion timing issues
-  it.skip('expands grouped log to show args', async () => {
+  it('expands grouped log to show args', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
 
@@ -1010,22 +999,24 @@ describe('ConsolePanel', () => {
   });
 
   // TODO: Fix flaky test - occurrences expansion timing
-  it.skip('expands occurrences sublist when button is clicked', async () => {
+  it('expands occurrences sublist when button is clicked', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
 
     // Add 3 identical logs to create a group
     const identicalArgs = [{ error: 'Connection timeout', code: 500 }];
-    const timestamps = [Date.now(), Date.now() + 100, Date.now() + 200];
+    const now: number = Date.now();
     await act(async () => {
-      for (const ts of timestamps) {
+      [1, 2, 3].forEach((i) => {
         service.addLog({
+          id: `occ-log-${String(i)}`,
           level: 'error',
           message: 'Request failed',
           args: identicalArgs,
-          timestamp: ts,
+          timestamp: now + i * 100,
+          correlationId: 'test-corr',
         });
-      }
+      });
     });
 
     // Wait for grouped log to appear
@@ -1034,12 +1025,13 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
 
     // Expand the grouped log first
-    const logEntry = screen.getByTestId('console-log-group-count').closest('tr');
-    if (logEntry === null) {
+    const countBadge = screen.getByTestId('console-log-group-count');
+    const logRow = countBadge.closest('tr');
+    if (logRow === null) {
       throw new Error('Log entry not found');
     }
 
-    const chevronButtons = logEntry.querySelectorAll('button');
+    const chevronButtons = logRow.querySelectorAll('button');
     const expandButton = Array.from(chevronButtons).find(
       (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
     );
@@ -1051,7 +1043,7 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
 
     // Find the occurrences button
-    const occurrencesButton = screen.getByTestId('console-log-row-occurrences-toggle');
+    const occurrencesButton = screen.getByTestId('console-log-occurrences-toggle');
     expect(occurrencesButton).toBeInTheDocument();
 
     // Click to expand occurrences
@@ -1065,25 +1057,29 @@ describe('ConsolePanel', () => {
     }, WAIT_TIMEOUT);
   });
 
-  // TODO: Fix flaky test - collapse timing
-  it.skip('collapses occurrences sublist when button is clicked again', async () => {
+  it('collapses occurrences sublist when button is clicked again', async () => {
     render(<ConsolePanel />);
     const service = getConsoleService();
 
     // Add 2 identical logs to create a group
     const identicalArgs = [{ error: 'Connection timeout', code: 500 }];
+    const now: number = Date.now();
     await act(async () => {
       service.addLog({
+        id: 'log-1',
         level: 'error',
         message: 'Request failed',
         args: identicalArgs,
-        timestamp: Date.now(),
+        timestamp: now,
+        correlationId: 'test-corr',
       });
       service.addLog({
+        id: 'log-2',
         level: 'error',
         message: 'Request failed',
         args: identicalArgs,
-        timestamp: Date.now() + 1,
+        timestamp: now + 1,
+        correlationId: 'test-corr',
       });
     });
 
@@ -1092,12 +1088,13 @@ describe('ConsolePanel', () => {
       expect(screen.getByTestId('console-log-group-count')).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
-    const logEntry = screen.getByTestId('console-log-group-count').closest('tr');
-    if (logEntry === null) {
+    const countBadge = screen.getByTestId('console-log-group-count');
+    const logRow = countBadge.closest('tr');
+    if (logRow === null) {
       throw new Error('Log entry not found');
     }
 
-    const chevronButtons = logEntry.querySelectorAll('button');
+    const chevronButtons = logRow.querySelectorAll('button');
     const expandButton = Array.from(chevronButtons).find(
       (btn) => btn.querySelector('svg') && btn.getAttribute('role') !== 'checkbox'
     );
@@ -1108,15 +1105,8 @@ describe('ConsolePanel', () => {
       expect(screen.getByText(/connection timeout/i)).toBeInTheDocument();
     }, WAIT_TIMEOUT);
 
-    // Find occurrences button by searching within the expanded grouped log area
-    const expandedArea = logEntry.querySelector('.ml-8');
-    expect(expandedArea).toBeInTheDocument();
-    if (expandedArea === null) {
-      throw new Error('Expanded area not found');
-    }
-
-    // Find the occurrences button within the expanded area
-    const occurrencesButton = screen.getByTestId('console-log-row-occurrences-toggle');
+    // Find the occurrences button
+    const occurrencesButton = screen.getByTestId('console-log-occurrences-toggle');
     expect(occurrencesButton).toBeInTheDocument();
 
     // Click to expand occurrences
@@ -1124,8 +1114,9 @@ describe('ConsolePanel', () => {
 
     // Wait for occurrences to appear
     await waitFor(() => {
-      const occurrenceItems = expandedArea.querySelectorAll('.ml-6 .text-xs.font-mono');
-      expect(occurrenceItems.length).toBeGreaterThanOrEqual(2);
+      // Look for timestamp elements within the table
+      const timestampElements = screen.getAllByText(/\d{2}:\d{2}:\d{2}/);
+      expect(timestampElements.length).toBeGreaterThanOrEqual(2);
     }, WAIT_TIMEOUT);
 
     // Click again to collapse
@@ -1133,10 +1124,10 @@ describe('ConsolePanel', () => {
 
     // Wait for occurrences list to be hidden
     await waitFor(() => {
-      // After collapsing, the occurrences list items should not be visible
-      const occurrenceItemsAfter = expandedArea.querySelectorAll('.ml-6 .text-xs.font-mono');
-      // When collapsed, there should be no occurrence items
-      expect(occurrenceItemsAfter.length).toBe(0);
+      // After collapsing, the individual timestamps should be gone (except for main row if applicable)
+      const timestampElements = screen.queryAllByText(/\d{2}:\d{2}:\d{2}/);
+      // Grouped logs use firstTimestamp for display in main row, so at least 1 might remain
+      expect(timestampElements.length).toBeLessThan(2);
     }, WAIT_TIMEOUT);
   });
 

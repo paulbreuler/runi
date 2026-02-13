@@ -17,6 +17,11 @@ import type {
 import { GENERIC_LAYOUTS } from '@/components/Layout/layouts';
 import { Send } from 'lucide-react';
 import { globalEventBus, logEventFlow } from '@/events/bus';
+import {
+  useRequestStoreRaw,
+  DEFAULT_REQUEST_STATE,
+  type RequestContextState,
+} from './useRequestStore';
 
 /**
  * Check if two RequestTabSource objects match
@@ -35,17 +40,18 @@ function sourcesMatch(a: RequestTabSource, b: RequestTabSource): boolean {
 /**
  * Derive a human-readable label from a URL or explicit name
  */
-function deriveTabLabel(url: string, name?: string): string {
+function deriveTabLabel(url: string | undefined | null, name?: string): string {
   if (name !== undefined && name.length > 0) {
     return name;
   }
 
-  if (url.length === 0) {
+  const safeUrl = url ?? '';
+  if (safeUrl.length === 0) {
     return 'New Request';
   }
 
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(safeUrl);
     const path = parsed.pathname;
     // Use last meaningful path segment, or hostname if root
     if (path === '/' || path === '') {
@@ -57,7 +63,7 @@ function deriveTabLabel(url: string, name?: string): string {
     return lastSegment !== undefined ? `/${lastSegment}` : parsed.hostname;
   } catch {
     // Not a valid URL — return as-is (truncated)
-    return url.length > 30 ? `${url.slice(0, 30)}...` : url;
+    return safeUrl.length > 30 ? `${safeUrl.slice(0, 30)}...` : safeUrl;
   }
 }
 
@@ -122,7 +128,7 @@ interface CanvasState {
 
   /** Open a new request tab context with optional initial state */
   openRequestTab: (
-    overrides?: Partial<RequestTabState> & { label?: string },
+    overrides?: Partial<RequestTabState & RequestContextState> & { label?: string },
     options?: { activate?: boolean }
   ) => string;
 
@@ -312,8 +318,16 @@ export const useCanvasStore = create<CanvasState>()(
         set((currentState) => {
           const newContextState = new Map(currentState.contextState);
           const existingState = newContextState.get(contextId) ?? {};
-          newContextState.set(contextId, { ...existingState, ...state });
 
+          // Filter out request-specific data that should live in useRequestStoreRaw
+          const metadata = { ...state } as Record<string, unknown>;
+          delete metadata.method;
+          delete metadata.url;
+          delete metadata.headers;
+          delete metadata.body;
+          delete metadata.response;
+
+          newContextState.set(contextId, { ...existingState, ...metadata });
           return {
             contextState: newContextState,
           };
@@ -328,7 +342,16 @@ export const useCanvasStore = create<CanvasState>()(
         set((state) => {
           const newContextState = new Map(state.contextState);
           const existingState = newContextState.get(contextId) ?? {};
-          newContextState.set(contextId, { ...existingState, ...patch });
+
+          // Filter out request-specific data that should live in useRequestStoreRaw
+          const metadata = { ...patch } as Record<string, unknown>;
+          delete metadata.method;
+          delete metadata.url;
+          delete metadata.headers;
+          delete metadata.body;
+          delete metadata.response;
+
+          newContextState.set(contextId, { ...existingState, ...metadata });
 
           return {
             contextState: newContextState,
@@ -369,35 +392,38 @@ export const useCanvasStore = create<CanvasState>()(
       openRequestTab: (overrides, options): string => {
         const shouldActivate = options?.activate ?? true;
         const contextId: CanvasContextId = `request-${crypto.randomUUID()}`;
-        const url = overrides?.url ?? '';
+
+        interface OpenRequestOverrides
+          extends Partial<RequestTabState>, Partial<RequestContextState> {
+          label?: string;
+        }
+        const typedOverrides = overrides as OpenRequestOverrides | undefined;
+        const url = typedOverrides?.url ?? '';
 
         logEventFlow('process', 'canvas.context-changed', undefined, {
           action: 'opening-request-tab',
           contextId,
           url,
-          source: overrides?.source,
+          source: typedOverrides?.source,
         });
 
         // Use name if provided, otherwise use label override, otherwise derive from URL
-        const name = overrides?.name;
-        const label = name ?? overrides?.label ?? deriveTabLabel(url, overrides?.name);
+        const name = typedOverrides?.name;
+        const label = name ?? typedOverrides?.label ?? deriveTabLabel(url, name);
 
-        // Create default request state
-        const defaultState: RequestTabState = {
-          method: 'GET',
-          url: '',
-          headers: {},
-          body: '',
-          isDirty: false,
-          isSaved: false,
-          createdAt: Date.now(),
+        // Create default request state for useRequestStoreRaw
+        const requestState: RequestContextState = {
+          ...DEFAULT_REQUEST_STATE,
+          method: typedOverrides?.method ?? DEFAULT_REQUEST_STATE.method,
+          url: typedOverrides?.url ?? DEFAULT_REQUEST_STATE.url,
+          headers: typedOverrides?.headers ?? DEFAULT_REQUEST_STATE.headers,
+          body: typedOverrides?.body ?? DEFAULT_REQUEST_STATE.body,
+          response: typedOverrides?.response ?? DEFAULT_REQUEST_STATE.response,
+          isLoading: false,
         };
 
-        const state: RequestTabState = {
-          ...defaultState,
-          ...overrides,
-          name, // Store name in state
-        };
+        // Initialize keyed request store
+        useRequestStoreRaw.getState().initContext(contextId, requestState);
 
         // Look up the 'request' template to inherit panels, toolbar, and layouts
         const templateContext = get().templates.get('request');
@@ -448,7 +474,14 @@ export const useCanvasStore = create<CanvasState>()(
           }
 
           const newContextState = new Map(currentState.contextState);
-          newContextState.set(contextId, state as unknown as Record<string, unknown>);
+          const metadata: Record<string, unknown> = {
+            source: typedOverrides?.source,
+            name,
+            isDirty: typedOverrides?.isDirty ?? false,
+            isSaved: typedOverrides?.isSaved ?? false,
+            createdAt: typedOverrides?.createdAt ?? Date.now(),
+          };
+          newContextState.set(contextId, metadata);
 
           return {
             contexts: newContexts,
@@ -462,7 +495,7 @@ export const useCanvasStore = create<CanvasState>()(
         logEventFlow('complete', 'canvas.context-changed', undefined, {
           action: 'opened-request-tab',
           contextId,
-          activeContextId: get().activeContextId,
+          label,
         });
 
         return contextId;
@@ -590,19 +623,27 @@ export const useCanvasStore = create<CanvasState>()(
       },
 
       hasMeaningfulData: (contextId): boolean => {
-        const { contextState } = get();
-        const state = contextState.get(contextId) as unknown as RequestTabState | undefined;
+        // Read request state from keyed store
+        const reqStore = useRequestStoreRaw.getState();
+        const reqState = reqStore.contexts[contextId];
 
-        if (state === undefined) {
+        // Guard against missing context or missing URL
+        if (reqState === undefined) {
           return false;
         }
 
+        const url = reqState.url;
+        const headers = reqState.headers;
+        const body = reqState.body;
+
         // Consider data "meaningful" if:
-        // - URL is not empty
+        // - URL is not empty (and not default)
         // - OR headers are not empty
         // - OR body is not empty
         return (
-          state.url.length > 0 || Object.keys(state.headers).length > 0 || state.body.length > 0
+          (url.length > 0 && url !== DEFAULT_REQUEST_STATE.url) ||
+          Object.keys(headers).length > 0 ||
+          body.length > 0
         );
       },
 
@@ -624,14 +665,7 @@ export const useCanvasStore = create<CanvasState>()(
       partialize: (state) => ({
         activeContextId: state.activeContextId,
         activeLayoutPerContext: Array.from(state.activeLayoutPerContext.entries()),
-        // Exclude response from persisted context state
-        contextState: Array.from(state.contextState.entries()).map(([id, stateData]) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { response, ...rest } = stateData as Record<string, unknown> & {
-            response?: unknown;
-          };
-          return [id, rest] as [CanvasContextId, Record<string, unknown>];
-        }),
+        contextState: Array.from(state.contextState.entries()),
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as {

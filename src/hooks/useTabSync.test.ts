@@ -7,17 +7,20 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTabSync } from './useTabSync';
 import { useTabStore } from '@/stores/useTabStore';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { globalEventBus } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 import type { CollectionRequestSelectedPayload } from '@/events/bus';
 
 describe('useTabSync', () => {
+  const getActions = (): any => useRequestStoreRaw.getState();
+  const getContext = (id: string): any => useRequestStoreRaw.getState().contexts[id];
+
   beforeEach(() => {
     // Reset both stores to clean state
     useTabStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
     act(() => {
-      useRequestStore.getState().reset();
+      useRequestStoreRaw.setState({ contexts: {} });
     });
     globalEventBus.removeAllListeners();
   });
@@ -58,11 +61,12 @@ describe('useTabSync', () => {
         useTabSync();
       });
 
-      const reqState = useRequestStore.getState();
-      expect(reqState.method).toBe('POST');
-      expect(reqState.url).toBe('https://api.example.com/users');
-      expect(reqState.headers).toEqual({ 'Content-Type': 'application/json' });
-      expect(reqState.body).toBe('{"name":"test"}');
+      const reqState = getContext(tabId);
+      expect(reqState).toBeDefined();
+      expect(reqState?.method).toBe('POST');
+      expect(reqState?.url).toBe('https://api.example.com/users');
+      expect(reqState?.headers).toEqual({ 'Content-Type': 'application/json' });
+      expect(reqState?.body).toBe('{"name":"test"}');
     });
   });
 
@@ -104,12 +108,12 @@ describe('useTabSync', () => {
         useTabSync();
       });
 
-      // Request store should have tab1's data
-      expect(useRequestStore.getState().url).toBe('https://one.com');
+      // Keyed store should have tab1's data
+      expect(getContext(tab1Id)?.url).toBe('https://one.com');
 
       // Edit request store (simulating user typing)
       act(() => {
-        useRequestStore.getState().setUrl('https://one.com/edited');
+        getActions().setUrl(tab1Id, 'https://one.com/edited');
       });
 
       // Switch to tab2
@@ -117,10 +121,10 @@ describe('useTabSync', () => {
         useTabStore.getState().setActiveTab(tab2Id);
       });
 
-      // Request store should now have tab2's data
-      expect(useRequestStore.getState().method).toBe('DELETE');
-      expect(useRequestStore.getState().url).toBe('https://two.com');
-      expect(useRequestStore.getState().headers).toEqual({ Authorization: 'Bearer xyz' });
+      // Keyed store should now have tab2's data
+      expect(getContext(tab2Id)?.method).toBe('DELETE');
+      expect(getContext(tab2Id)?.url).toBe('https://two.com');
+      expect(getContext(tab2Id)?.headers).toEqual({ Authorization: 'Bearer xyz' });
 
       // Tab1 should have saved the edited URL
       const tab1 = useTabStore.getState().tabs[tab1Id];
@@ -138,7 +142,7 @@ describe('useTabSync', () => {
       const activeId = useTabStore.getState().activeTabId!;
 
       act(() => {
-        useRequestStore.getState().setUrl('https://synced.com');
+        getActions().setUrl(activeId, 'https://synced.com');
       });
 
       const activeTab = useTabStore.getState().tabs[activeId];
@@ -177,7 +181,7 @@ describe('useTabSync', () => {
 
       // Edit the tab via request store
       act(() => {
-        useRequestStore.getState().setUrl('https://api.example.com/users/modified');
+        getActions().setUrl(activeId, 'https://api.example.com/users/modified');
       });
 
       const tabAfterEdit = useTabStore.getState().tabs[activeId];
@@ -205,7 +209,7 @@ describe('useTabSync', () => {
       };
 
       act(() => {
-        useRequestStore.getState().setResponse(mockResponse);
+        getActions().setResponse(activeId, mockResponse);
       });
 
       const activeTab = useTabStore.getState().tabs[activeId];
@@ -250,8 +254,9 @@ describe('useTabSync', () => {
       });
 
       expect(useTabStore.getState().tabOrder.length).toBe(initialTabCount + 1);
-      // Request store should be loaded with the history entry data
-      expect(useRequestStore.getState().url).toBe('https://api.example.com/history');
+      const activeId = useTabStore.getState().activeTabId!;
+      // Keyed store should be loaded with the history entry data
+      expect(getContext(activeId)?.url).toBe('https://api.example.com/history');
     });
 
     it('history.entry-selected activates existing tab for same entry', () => {
@@ -332,7 +337,8 @@ describe('useTabSync', () => {
       });
 
       expect(useTabStore.getState().tabOrder.length).toBe(initialTabCount + 1);
-      expect(useRequestStore.getState().url).toBe('https://api.example.com/users');
+      const activeId = useTabStore.getState().activeTabId!;
+      expect(getContext(activeId)?.url).toBe('https://api.example.com/users');
     });
 
     it('collection.request-selected activates existing tab for same request', () => {

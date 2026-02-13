@@ -6,6 +6,7 @@
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 interface VigilanceMonitorProps {
   /** Whether the monitor strip is visible (controls mount/unmount with animated enter/exit) */
@@ -130,7 +131,10 @@ export const VigilanceMonitor = ({
                   <button
                     type="button"
                     onClick={onTimingClick}
-                    className="hover:text-text-primary transition-colors cursor-pointer outline-none focus-visible:text-text-primary"
+                    className={cn(
+                      'hover:text-text-primary transition-colors cursor-pointer outline-none focus-visible:text-text-primary rounded-sm px-0.5',
+                      focusRingClasses
+                    )}
                     title="View timing waterfall"
                   >
                     {duration}ms

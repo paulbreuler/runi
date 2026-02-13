@@ -186,7 +186,7 @@ storybook-serve: storybook-build
 # ============================================================================
 
 # Run complete CI pipeline locally (use before pushing)
-# Runs tests in parallel: unit tests and E2E tests can run concurrently
+# Runs full CI suite: formatting, linting, unit tests, E2E tests, and docs checks
 ci: fmt-check lint check test test-e2e docs-check
     @echo "✅ All CI checks passed!"
 

@@ -242,8 +242,16 @@ export function useDataGrid<TData>({
 
         // If multi-expansion is disabled, only keep the newest expanded row
         if (!enableMultiExpansion) {
-          const oldRecord = old as Record<string, boolean>;
-          const nextRecord = next as Record<string, boolean>;
+          // ExpandedState can be `true` (expand all) or a record.
+          // When single-expansion is enabled, disallow "expand all" but allow "collapse all".
+          if (typeof next === 'boolean') {
+            // `next` can only be `true` here (expand all), block it
+            // Collapse all is represented by an empty record {}, not false
+            return typeof old !== 'boolean' ? old : {};
+          }
+
+          const oldRecord = typeof old === 'boolean' ? {} : old;
+          const nextRecord = next;
 
           const oldKeys = Object.keys(oldRecord).filter((key) => oldRecord[key] === true);
           const nextKeys = Object.keys(nextRecord).filter((key) => nextRecord[key] === true);
@@ -252,16 +260,30 @@ export function useDataGrid<TData>({
           const newlyExpanded = nextKeys.find((key) => !oldKeys.includes(key));
 
           if (newlyExpanded !== undefined) {
-            // Only keep the newly expanded row
-            return { [newlyExpanded]: true };
+            // Only keep the newly expanded row and its ancestors
+            const result: Record<string, boolean> = {};
+            const parts = newlyExpanded.split('.');
+            let currentPath = '';
+            for (const part of parts) {
+              currentPath = currentPath === '' ? part : `${currentPath}.${part}`;
+              result[currentPath] = true;
+            }
+            return result;
           }
 
           // If no new row was expanded (e.g., one was collapsed),
-          // return next but ensure it has at most one key
+          // return next but ensure it has at most one leaf key (and its ancestors)
           if (nextKeys.length > 1) {
             const lastKey = nextKeys[nextKeys.length - 1];
             if (lastKey !== undefined) {
-              return { [lastKey]: true };
+              const result: Record<string, boolean> = {};
+              const parts = lastKey.split('.');
+              let currentPath = '';
+              for (const part of parts) {
+                currentPath = currentPath === '' ? part : `${currentPath}.${part}`;
+                result[currentPath] = true;
+              }
+              return result;
             }
           }
         }
@@ -431,7 +453,7 @@ export function useDataGrid<TData>({
     rowSelection,
     setRowSelection,
     expanded,
-    setExpanded,
+    setExpanded: handleExpandedChange,
     // Column features
     columnSizing,
     setColumnSizing,

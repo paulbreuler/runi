@@ -121,57 +121,95 @@ function recordCanvasActivity(
  * - `canvas:close_tab` → `closeContext(id)`
  */
 export function useCanvasStateSync(): void {
-  const contexts = useCanvasStore((s) => s.contexts);
-  const templates = useCanvasStore((s) => s.templates);
-  const contextOrder = useCanvasStore((s) => s.contextOrder);
-  const activeContextId = useCanvasStore((s) => s.activeContextId);
-  const setActiveContext = useCanvasStore((s) => s.setActiveContext);
-  const openRequestTab = useCanvasStore((s) => s.openRequestTab);
-  const closeContext = useCanvasStore((s) => s.closeContext);
-
-  // Use ref to track debounce timer
+  // Use ref to track debounce timer and last synced state
   const debounceTimerRef = useRef<number | null>(null);
+  const lastStateRef = useRef<{
+    contexts: Map<string, unknown>;
+    templates: Map<string, unknown>;
+    contextOrder: string[];
+    activeContextId: string | null;
+  } | null>(null);
 
-  // Build and sync snapshot to backend
-  const syncSnapshot = useCallback((): void => {
-    const snapshot = buildCanvasSnapshot({
-      contexts,
-      templates,
-      contextOrder,
-      activeContextId,
-    });
-
-    // Push to backend (async, no await)
-    void invoke('sync_canvas_state', { snapshot }).catch((error: unknown) => {
-      console.error('[useCanvasStateSync] Failed to sync canvas state:', error);
-      globalEventBus.emit<ToastEventPayload>('toast.show', {
-        type: 'error',
-        message: 'Failed to sync canvas state',
-        details: String(error),
-      });
-    });
-  }, [contexts, templates, contextOrder, activeContextId]);
-
-  // Debounced snapshot push (100ms)
-  useEffect((): (() => void) => {
-    // Clear existing timer
-    if (debounceTimerRef.current !== null) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Set new timer
-    debounceTimerRef.current = window.setTimeout((): void => {
-      syncSnapshot();
-      debounceTimerRef.current = null;
-    }, 100);
-
-    // Cleanup on unmount
-    return (): void => {
+  // Helper to trigger debounced sync
+  const triggerSync = useCallback(
+    (state: {
+      contexts: Map<string, { id: string; label: string; contextType?: string }>;
+      templates: Map<string, { id: string; label: string }>;
+      contextOrder: string[];
+      activeContextId: string | null;
+    }): void => {
+      // Debounced snapshot push (100ms)
       if (debounceTimerRef.current !== null) {
-        clearTimeout(debounceTimerRef.current);
+        window.clearTimeout(debounceTimerRef.current);
+      }
+
+      debounceTimerRef.current = window.setTimeout((): void => {
+        const snapshot = buildCanvasSnapshot({
+          contexts: state.contexts,
+          templates: state.templates,
+          contextOrder: state.contextOrder,
+          activeContextId: state.activeContextId,
+        });
+
+        // Push to backend (async, no await)
+        void invoke('sync_canvas_state', { snapshot }).catch((error: unknown) => {
+          console.error('[useCanvasStateSync] Failed to sync canvas state:', error);
+          globalEventBus.emit<ToastEventPayload>('toast.show', {
+            type: 'error',
+            message: 'Failed to sync canvas state',
+            details: String(error),
+          });
+        });
+
+        debounceTimerRef.current = null;
+      }, 100);
+    },
+    []
+  );
+
+  // Store subscription for backend sync
+  useEffect((): (() => void) => {
+    const initialState = useCanvasStore.getState();
+
+    // Trigger initial sync on mount
+    triggerSync(initialState);
+    lastStateRef.current = {
+      contexts: initialState.contexts,
+      templates: initialState.templates,
+      contextOrder: initialState.contextOrder,
+      activeContextId: initialState.activeContextId,
+    };
+
+    const unsubscribe = useCanvasStore.subscribe((state) => {
+      // Check if sync-relevant state changed (shallow equality for Maps and Arrays)
+      const hasChanged =
+        state.contexts !== lastStateRef.current?.contexts ||
+        state.templates !== lastStateRef.current.templates ||
+        state.contextOrder !== lastStateRef.current.contextOrder ||
+        state.activeContextId !== lastStateRef.current.activeContextId;
+
+      if (!hasChanged) {
+        return;
+      }
+
+      // Update last state
+      lastStateRef.current = {
+        contexts: state.contexts,
+        templates: state.templates,
+        contextOrder: state.contextOrder,
+        activeContextId: state.activeContextId,
+      };
+
+      triggerSync(state);
+    });
+
+    return (): void => {
+      unsubscribe();
+      if (debounceTimerRef.current !== null) {
+        window.clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [syncSnapshot]);
+  }, [triggerSync]);
 
   // MCP event listeners
   useEffect((): (() => void) => {
@@ -213,7 +251,7 @@ export function useCanvasStateSync(): void {
 
           // Conditionally navigate based on actor + Follow AI mode
           if (!isAi || useSettingsStore.getState().followAiMode) {
-            setActiveContext(envelope.payload.contextId);
+            useCanvasStore.getState().setActiveContext(envelope.payload.contextId);
           }
         }),
 
@@ -227,7 +265,9 @@ export function useCanvasStateSync(): void {
           recordCanvasActivity(envelope, 'opened_tab', envelope.payload.label ?? 'Request');
 
           // Open tab with conditional activation
-          openRequestTab({ label: envelope.payload.label }, { activate: shouldActivate });
+          useCanvasStore
+            .getState()
+            .openRequestTab({ label: envelope.payload.label }, { activate: shouldActivate });
         }),
 
         // Close tab event
@@ -245,8 +285,9 @@ export function useCanvasStateSync(): void {
           );
 
           // Close tab with conditional activation
-          // Note: closeContext will still activate adjacent if closing the user's active tab
-          closeContext(envelope.payload.contextId, { activate: shouldActivate });
+          useCanvasStore
+            .getState()
+            .closeContext(envelope.payload.contextId, { activate: shouldActivate });
         }),
       ]);
     };
@@ -259,5 +300,5 @@ export function useCanvasStateSync(): void {
         unlisten();
       }
     };
-  }, [setActiveContext, openRequestTab, closeContext]);
+  }, []);
 }

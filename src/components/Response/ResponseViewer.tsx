@@ -106,7 +106,9 @@ export const ResponseViewer = ({
   const [internalActiveTab, setInternalActiveTab] = useState<TabId>('body');
   const activeTab = activeTabProp ?? internalActiveTab;
   const setActiveTab = (tabId: TabId): void => {
-    setInternalActiveTab(tabId);
+    if (activeTabProp === undefined) {
+      setInternalActiveTab(tabId);
+    }
     onTabChange?.(tabId);
   };
 
