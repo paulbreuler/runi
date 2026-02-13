@@ -884,20 +884,13 @@ describe('ConsolePanel', () => {
     // Click chevron to expand (matching pattern from 'collapses expanded args' test)
     fireEvent.click(chevronButton as HTMLElement);
 
-    // Wait for the parsed JSON content to appear (more reliable than waiting for expanded-section)
-    // The JSON string '{"error":{"code":123,"message":"boom"}}' will be pretty-printed
-    await waitFor(
-      () => {
-        // Look for the pretty-printed JSON structure
-        expect(screen.getByText(/"code"/)).toBeInTheDocument();
-        expect(screen.getByText(/123/)).toBeInTheDocument();
-      },
-      { timeout: 10000 }
-    );
-
-    // Verify the full JSON structure is visible
-    const expandedSection = screen.getByTestId('expanded-section');
+    // Wait for the expanded section to appear and verify JSON content
+    const expandedSection = await screen.findByTestId('expanded-section', undefined, {
+      timeout: 10000,
+    });
     const editor = within(expandedSection).getByTestId('code-editor');
+
+    // Verify the full pretty-printed JSON structure is visible
     expect(editor.textContent).toMatch(/"code":\s*123/);
     expect(editor.textContent).toMatch(/"message":\s*"boom"/);
     expect(editor.textContent).toMatch(/"error":/);
