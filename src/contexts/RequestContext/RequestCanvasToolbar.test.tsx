@@ -4,7 +4,7 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
 import { useRequestStore } from '@/stores/useRequestStore';
@@ -62,15 +62,15 @@ describe('RequestCanvasToolbar', () => {
       expect(screen.getByTestId('action-save')).toBeInTheDocument();
     });
 
-    it('disables Send action when URL is empty', () => {
-      useRequestStore.setState({ url: '' });
+    it('disables Test action when response is null', () => {
+      useRequestStore.setState({ response: null });
       render(<RequestCanvasToolbar contextId="request" />);
 
       const testButton = screen.getByTestId('action-test');
       expect(testButton).toBeDisabled();
     });
 
-    it('enables Send action when URL is provided', () => {
+    it('enables Code action when URL is provided', () => {
       render(<RequestCanvasToolbar contextId="request" />);
 
       const codeButton = screen.getByTestId('action-code');

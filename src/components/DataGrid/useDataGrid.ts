@@ -242,8 +242,15 @@ export function useDataGrid<TData>({
 
         // If multi-expansion is disabled, only keep the newest expanded row
         if (!enableMultiExpansion) {
-          const oldRecord = old as Record<string, boolean>;
-          const nextRecord = next as Record<string, boolean>;
+          // ExpandedState can be `true` (expand all) or a record.
+          // When single-expansion is enabled, disallow "expand all".
+          if (typeof next === 'boolean') {
+            // If it's true (expand all), keep the previous record or collapse all.
+            return typeof old !== 'boolean' ? old : {};
+          }
+
+          const oldRecord = typeof old === 'boolean' ? {} : old;
+          const nextRecord = next;
 
           const oldKeys = Object.keys(oldRecord).filter((key) => oldRecord[key] === true);
           const nextKeys = Object.keys(nextRecord).filter((key) => nextRecord[key] === true);

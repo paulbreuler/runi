@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { type FC, useEffect } from 'react';
+import { type FC, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { CanvasHost } from '@/components/Layout/CanvasHost';
@@ -13,36 +13,38 @@ import { requestContextDescriptor } from '@/contexts/RequestContext';
 export const CanvasPopout: FC = () => {
   const { contextId } = useParams<{ contextId: string }>();
   const [searchParams] = useSearchParams();
-  const { contexts, setActiveContext, setPopout, registerTemplate, registerContext } =
-    useCanvasStore();
+  const contexts = useCanvasStore((s) => s.contexts);
+  const initializedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (contextId === undefined) {
+    if (contextId === undefined || initializedRef.current === contextId) {
       return;
     }
 
+    const store = useCanvasStore.getState();
+
     // Ensure templates are registered (required for reconstructing request contexts)
-    registerTemplate(requestContextDescriptor);
+    store.registerTemplate(requestContextDescriptor);
 
     // If this is a request tab and context descriptor is missing (e.g. page reload),
     // reconstruct it from the template.
-    if (contextId.startsWith('request-') && !contexts.has(contextId)) {
-      registerContext({
+    if (contextId.startsWith('request-') && !store.contexts.has(contextId)) {
+      store.registerContext({
         ...requestContextDescriptor,
         id: contextId,
       });
     }
 
     // Set active context for this popout
-    setActiveContext(contextId);
-    setPopout(contextId, true);
+    store.setActiveContext(contextId);
+    store.setPopout(contextId, true);
 
     // Restore state from URL params if provided
     const stateParam = searchParams.get('state');
     if (stateParam !== null && stateParam !== '') {
       try {
         const state = JSON.parse(stateParam) as Record<string, unknown>;
-        useCanvasStore.getState().setContextState(contextId, state);
+        store.setContextState(contextId, state);
       } catch (err) {
         console.error('Failed to restore popout state:', err);
       }
@@ -54,23 +56,18 @@ export const CanvasPopout: FC = () => {
       windowId: window.name !== '' ? window.name : 'popout',
     });
 
+    initializedRef.current = contextId;
+
     // Cleanup on unmount
     return (): void => {
-      setPopout(contextId, false);
+      useCanvasStore.getState().setPopout(contextId, false);
       globalEventBus.emit<{ contextId: string; windowId: string }>('canvas.popout-closed', {
         contextId,
         windowId: window.name !== '' ? window.name : 'popout',
       });
+      initializedRef.current = null;
     };
-  }, [
-    contextId,
-    searchParams,
-    setActiveContext,
-    setPopout,
-    contexts,
-    registerContext,
-    registerTemplate,
-  ]);
+  }, [contextId, searchParams]);
 
   if (contextId === undefined) {
     return (

@@ -58,7 +58,7 @@ export const requestContextDescriptor: CanvasContextDescriptor = {
   id: 'request',
   label: 'Request',
   icon: Send,
-  contextType: 'request', // Mark this as a template
+  contextType: 'request', // Identify this descriptor as the "request" context
 
   // Existing components as panel slots
   panels: {
