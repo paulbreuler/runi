@@ -1380,7 +1380,7 @@ mod tests {
         let data = json!({
             "snapshot": snapshot_value,
             "detail": hint_value,
-            "actor": "human",
+            "actor": "user",
             "timestamp": "2026-02-13T00:00:00Z",
         });
         let sse_event =
@@ -1478,7 +1478,7 @@ mod tests {
         let data = json!({
             "snapshot": snapshot_value,
             "detail": hint_value,
-            "actor": "human",
+            "actor": "user",
             "timestamp": "2026-02-13T00:00:00Z",
         });
         let sse_event =
@@ -1489,7 +1489,7 @@ mod tests {
         // Verify subscriber received the event
         let received = rx.recv().await.unwrap();
         assert_eq!(received.event_type, "canvas:tab_switched");
-        assert_eq!(received.data["actor"], "human");
+        assert_eq!(received.data["actor"], "user");
         assert_eq!(received.data["detail"]["kind"], "tab_switched");
         assert_eq!(received.data["detail"]["tab_id"], "tab-1");
         assert!(received.data["snapshot"]["tabs"].is_array());
@@ -1512,9 +1512,16 @@ mod tests {
                 "canvas:tab_opened",
             ),
             (
-                CanvasEventHint::TabClosed {
+                CanvasEventHint::TabSwitched {
                     tab_id: "t2".to_string(),
                     label: "Tab 2".to_string(),
+                },
+                "canvas:tab_switched",
+            ),
+            (
+                CanvasEventHint::TabClosed {
+                    tab_id: "t3".to_string(),
+                    label: "Tab 3".to_string(),
                 },
                 "canvas:tab_closed",
             ),
