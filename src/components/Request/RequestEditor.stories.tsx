@@ -327,7 +327,8 @@ const BodyEditorWrapper = ({ initialBody = '' }: { initialBody?: string }): Reac
     return () => {
       useRequestStoreRaw.getState().reset('global');
     };
-  }, [initialBody, setBody]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBody]);
 
   const handleChange = (value: string): void => {
     setLocalBody(value);
