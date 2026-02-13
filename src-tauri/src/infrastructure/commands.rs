@@ -4,6 +4,7 @@
 // Tauri command handlers
 
 use crate::application::proxy_service::ProxyService;
+use crate::domain::canvas_state::CanvasStateSnapshot;
 use crate::domain::collection::Collection;
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
@@ -23,6 +24,7 @@ use serde_json::json;
 use std::sync::{Arc, LazyLock};
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use tracing::error;
 
 /// Global history storage instance (in-memory by default).
@@ -34,6 +36,13 @@ use tracing::error;
 /// via feature flags or configuration in the future.
 static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
     LazyLock::new(|| Arc::new(MemoryHistoryStorage::new()));
+
+/// Managed state type for canvas state snapshots.
+///
+/// The frontend pushes canvas state updates to this shared state via the
+/// `sync_canvas_state` command. MCP tools read from this state to understand
+/// the user's current context.
+pub type CanvasStateHandle = Arc<RwLock<CanvasStateSnapshot>>;
 
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
 
@@ -923,6 +932,26 @@ pub async fn write_startup_timing(
     Ok(())
 }
 
+/// Sync canvas state from the frontend to the backend.
+///
+/// The frontend calls this command whenever significant canvas state changes occur
+/// (tab switches, tab opens/closes, template selection). MCP tools read from this
+/// state to understand what the user is currently working on.
+///
+/// # Errors
+///
+/// Returns an error if the canvas state cannot be updated.
+#[tauri::command]
+pub async fn sync_canvas_state(
+    state: tauri::State<'_, CanvasStateHandle>,
+    snapshot: CanvasStateSnapshot,
+) -> Result<(), String> {
+    let mut guard = state.write().await;
+    *guard = snapshot;
+    drop(guard);
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1284,5 +1313,82 @@ mod tests {
         .await;
         let collection = result.unwrap();
         assert!(collection.metadata.name.to_lowercase().contains("httpbin"));
+    }
+
+    #[tokio::test]
+    async fn test_sync_canvas_state_updates_state() {
+        use crate::domain::canvas_state::{TabSummary, TabType, TemplateSummary};
+
+        let state: CanvasStateHandle = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
+
+        let snapshot = CanvasStateSnapshot {
+            tabs: vec![TabSummary {
+                id: "tab-1".to_string(),
+                label: "Request".to_string(),
+                tab_type: TabType::Request,
+            }],
+            active_tab_index: Some(0),
+            templates: vec![TemplateSummary {
+                id: "tpl-1".to_string(),
+                name: "Test API".to_string(),
+                template_type: "openapi".to_string(),
+            }],
+        };
+
+        // Call the command (we can't use tauri::State in tests, so we test the logic directly)
+        {
+            let mut guard = state.write().await;
+            *guard = snapshot.clone();
+        }
+
+        // Verify state was updated
+        let guard = state.read().await;
+        assert_eq!(guard.tabs.len(), 1);
+        assert_eq!(guard.tabs[0].id, "tab-1");
+        assert_eq!(guard.active_tab_index, Some(0));
+        assert_eq!(guard.templates.len(), 1);
+        drop(guard);
+    }
+
+    #[tokio::test]
+    async fn test_sync_canvas_state_overwrites_previous_state() {
+        use crate::domain::canvas_state::{TabSummary, TabType};
+
+        let state: CanvasStateHandle = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
+
+        // Set initial state
+        {
+            let mut guard = state.write().await;
+            *guard = CanvasStateSnapshot {
+                tabs: vec![TabSummary {
+                    id: "tab-old".to_string(),
+                    label: "Old".to_string(),
+                    tab_type: TabType::Request,
+                }],
+                active_tab_index: Some(0),
+                templates: vec![],
+            };
+        }
+
+        // Update with new state
+        {
+            let mut guard = state.write().await;
+            *guard = CanvasStateSnapshot {
+                tabs: vec![TabSummary {
+                    id: "tab-new".to_string(),
+                    label: "New".to_string(),
+                    tab_type: TabType::Template,
+                }],
+                active_tab_index: None,
+                templates: vec![],
+            };
+        }
+
+        // Verify new state replaced old
+        let guard = state.read().await;
+        assert_eq!(guard.tabs.len(), 1);
+        assert_eq!(guard.tabs[0].id, "tab-new");
+        assert_eq!(guard.active_tab_index, None);
+        drop(guard);
     }
 }

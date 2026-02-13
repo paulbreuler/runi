@@ -16,7 +16,41 @@
  * - Testability (easy to mock event bus)
  */
 
+import { v7 as uuidv7 } from 'uuid';
 import type { CollectionRequest } from '@/types/collection';
+
+/**
+ * Generate a UUID v7 correlation ID for event tracing.
+ *
+ * UUID v7 is time-ordered (48-bit ms timestamp) and globally unique,
+ * consistent with the Rust backend which also uses UUID v7.
+ */
+export function generateCorrelationId(): string {
+  return uuidv7();
+}
+
+/**
+ * Log event flow for debugging.
+ * Use this to trace events through the application.
+ */
+export function logEventFlow(
+  direction: 'emit' | 'receive' | 'process' | 'complete' | 'error',
+  eventType: EventType,
+  correlationId: string | undefined,
+  details?: Record<string, unknown>
+): void {
+  const prefix = `[${correlationId?.slice(0, 20) ?? 'no-corr-id'}]`;
+  let arrow = '●';
+  if (direction === 'emit') {
+    arrow = '→';
+  } else if (direction === 'receive') {
+    arrow = '←';
+  }
+  const label = direction.toUpperCase().padEnd(8);
+
+  // eslint-disable-next-line no-console
+  console.debug(`${prefix} ${arrow} [${label}] ${eventType}`, details ?? '');
+}
 
 /**
  * Event type identifiers.
@@ -24,11 +58,14 @@ import type { CollectionRequest } from '@/types/collection';
  * Use dot notation for namespacing (e.g., 'request.send', 'response.received').
  */
 export type EventType =
+  | 'request.new'
   | 'request.send'
   | 'request.method-changed'
   | 'request.url-changed'
+  | 'request.open'
   | 'response.received'
   | 'response.error'
+  | 'sidebar.toggle'
   | 'sidebar.toggled'
   | 'sidebar.visible-changed'
   | 'collection.request-selected'
@@ -40,10 +77,19 @@ export type EventType =
   | 'console.info-emitted'
   | 'console.warn-emitted'
   | 'console.error-emitted'
+  | 'panel.toggle'
   | 'panel.console-requested'
   | 'request.accept-ai'
   | 'toast.show'
-  | 'commandbar.toggle';
+  | 'settings.toggle'
+  | 'commandbar.toggle'
+  | 'context.activate'
+  | 'context.close'
+  | 'canvas.context-changed'
+  | 'canvas.layout-changed'
+  | 'canvas.popout-requested'
+  | 'canvas.popout-opened'
+  | 'canvas.popout-closed';
 
 /**
  * Payload for collection.request-selected event.
@@ -51,6 +97,68 @@ export type EventType =
 export interface CollectionRequestSelectedPayload {
   collectionId: string;
   request: CollectionRequest;
+}
+
+/**
+ * Payload for context.activate event.
+ */
+export interface ContextActivatePayload {
+  contextId: string;
+  actor: 'human' | 'ai';
+}
+
+/**
+ * Payload for context.close event.
+ */
+export interface ContextClosePayload {
+  contextId: string;
+  actor: 'human' | 'ai';
+}
+
+/**
+ * Payload for request.open event.
+ */
+export interface RequestOpenPayload {
+  actor: 'human' | 'ai';
+}
+
+/**
+ * Payload for canvas.context-changed event.
+ */
+export interface CanvasContextChangedPayload {
+  contextId: string;
+  previousContextId: string | null;
+}
+
+/**
+ * Payload for canvas.layout-changed event.
+ */
+export interface CanvasLayoutChangedPayload {
+  contextId: string;
+  layoutId: string;
+}
+
+/**
+ * Payload for canvas.popout-requested event.
+ */
+export interface CanvasPopoutRequestedPayload {
+  contextId: string;
+}
+
+/**
+ * Payload for canvas.popout-opened event.
+ */
+export interface CanvasPopoutOpenedPayload {
+  contextId: string;
+  windowId: string;
+}
+
+/**
+ * Payload for canvas.popout-closed event.
+ */
+export interface CanvasPopoutClosedPayload {
+  contextId: string;
+  windowId: string;
 }
 
 /**
@@ -89,6 +197,8 @@ export interface Event<T = unknown> {
   timestamp: number;
   /** Optional source identifier (component/plugin that emitted) */
   source?: string;
+  /** Optional correlation ID for tracing events across the application */
+  correlationId?: string;
 }
 
 /**
@@ -124,13 +234,15 @@ export class EventBus {
    * @param type - The event type
    * @param payload - The event payload
    * @param source - Optional source identifier
+   * @param correlationId - Optional correlation ID for tracing (auto-generated if not provided)
    */
-  public emit<T>(type: EventType, payload: T, source?: string): Event<T> {
+  public emit<T>(type: EventType, payload: T, source?: string, correlationId?: string): Event<T> {
     const event: Event<T> = {
       type,
       payload,
       timestamp: Date.now(),
       source,
+      correlationId: correlationId ?? generateCorrelationId(),
     };
 
     const handlers = this.listeners.get(type);

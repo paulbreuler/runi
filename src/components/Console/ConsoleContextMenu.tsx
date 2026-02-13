@@ -134,6 +134,7 @@ export const ConsoleContextMenu = ({
           'w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors'
         )}
         role="menuitem"
+        data-test-id="console-context-menu-copy-message"
       >
         Copy message
       </button>
@@ -146,6 +147,7 @@ export const ConsoleContextMenu = ({
             'w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors'
           )}
           role="menuitem"
+          data-test-id="console-context-menu-copy-correlation-id"
         >
           Copy correlation ID
         </button>
@@ -158,6 +160,7 @@ export const ConsoleContextMenu = ({
           'w-full px-3 py-1.5 text-left text-sm text-text-primary hover:bg-bg-raised transition-colors'
         )}
         role="menuitem"
+        data-test-id="console-context-menu-copy-all"
       >
         Copy all
       </button>

@@ -3,10 +3,16 @@
  * SPDX-License-Identifier: MIT
  */
 
+import React, { useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RequestItemComposite } from './RequestItemComposite';
 import type { CollectionRequest } from '@/types/collection';
+import type { RequestTabState } from '@/types/canvas';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { requestContextDescriptor } from '@/contexts/RequestContext/descriptor';
+import { useContextSync } from '@/hooks/useContextSync';
 
 const meta: Meta<typeof RequestItemComposite> = {
   title: 'Sidebar/RequestItemComposite',
@@ -47,6 +53,30 @@ const baseRequest: CollectionRequest = {
     ai_generated: false,
     verified: true,
   },
+};
+
+const syncTestRequests: CollectionRequest[] = Array.from({ length: 11 }, (_, index) => {
+  const seq = index + 1;
+  return {
+    ...baseRequest,
+    id: `req_first_${String(seq).padStart(2, '0')}`,
+    seq,
+    method: seq % 2 === 0 ? 'POST' : 'GET',
+    name: seq <= 10 ? 'Returns anything passed in request data.' : `Request ${String(seq)}`,
+    url: `https://httpbin.org/anything/${String(seq)}`,
+  };
+});
+
+const CanvasSyncHarness = (): React.JSX.Element => {
+  useContextSync();
+
+  return (
+    <div className="flex flex-col gap-1" data-test-id="request-sync-harness">
+      {syncTestRequests.map((request) => (
+        <RequestItemComposite key={request.id} request={request} collectionId="col_1" />
+      ))}
+    </div>
+  );
 };
 
 export const Default: Story = {
@@ -137,38 +167,16 @@ export const Truncated: Story = {
     const canvas = within(canvasElement);
     const button = canvas.getByTestId('request-select-req_long');
 
-    await step('Hover to trigger popout after delay', async () => {
-      await userEvent.hover(button);
-      // Wait for 250ms hover delay + animation
-      await new Promise((resolve) => {
-        setTimeout(resolve, 400);
-      });
+    await step('Render truncated request row', async () => {
+      await expect(button).toBeInTheDocument();
+      await expect(button).toHaveTextContent('GET');
     });
 
-    await step('Verify popout appears and expands beyond sidebar width', async () => {
-      const popout = document.querySelector('[data-test-id="request-popout"]');
-      await expect(popout).not.toBeNull();
-      if (popout === null) {
-        return;
-      }
-
-      // Popout content should not have w-full (constrains expansion)
-      const content = popout.querySelector('[data-test-id="request-item-content"]');
-      await expect(content).not.toBeNull();
-      if (content !== null) {
-        await expect(content.className).not.toContain('w-full');
-      }
-
-      // Popout should be wider than the sidebar container (w-80 = 320px)
-      const popoutRect = popout.getBoundingClientRect();
-      await expect(popoutRect.width).toBeGreaterThan(320);
-    });
-
-    await step('Unhover to dismiss popout', async () => {
-      await userEvent.unhover(button);
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100);
-      });
+    await step('Verify request name is truncated', async () => {
+      // Verify button shows truncated name (Tooltip provides full name on hover)
+      const nameElement = button.querySelector('[data-test-id="request-name"]');
+      await expect(nameElement).toBeInTheDocument();
+      await expect(nameElement).toHaveClass('truncate');
     });
   },
 };
@@ -187,30 +195,103 @@ export const TruncatedWithStreamBadge: Story = {
     const canvas = within(canvasElement);
     const button = canvas.getByTestId('request-select-req_long_stream');
 
-    await step('Hover to trigger popout', async () => {
-      await userEvent.hover(button);
-      await new Promise((resolve) => {
-        setTimeout(resolve, 400);
+    await step('Render row and keep stream badge visible', async () => {
+      await expect(button).toBeInTheDocument();
+      await expect(button).toHaveTextContent('Stream');
+    });
+
+    await step('Verify request name is truncated', async () => {
+      // Verify button shows truncated name (Tooltip provides full name on hover)
+      const nameElement = button.querySelector('[data-test-id="request-name"]');
+      await expect(nameElement).toBeInTheDocument();
+      await expect(nameElement).toHaveClass('truncate');
+    });
+  },
+};
+
+export const CollectionSelectionOpensCanvasContexts: Story = {
+  render: (): React.JSX.Element => <CanvasSyncHarness />,
+  decorators: [
+    (Story): React.JSX.Element => {
+      useEffect(() => {
+        const canvasStore = useCanvasStore.getState();
+        canvasStore.reset();
+        canvasStore.registerContext(requestContextDescriptor);
+        canvasStore.setActiveContext('request');
+
+        useCollectionStore.setState((state) => ({
+          ...state,
+          selectedCollectionId: null,
+          selectedRequestId: null,
+        }));
+      }, []);
+
+      return (
+        <div
+          className="w-80 bg-bg-app p-4 border border-border-subtle"
+          data-scroll-container
+          style={{ overflow: 'auto', maxHeight: '400px' }}
+        >
+          <Story />
+        </div>
+      );
+    },
+  ],
+  play: async ({ canvasElement, step }): Promise<void> => {
+    const canvas = within(canvasElement);
+    const initialRequestTabCount = useCanvasStore
+      .getState()
+      .contextOrder.filter((id) => id.startsWith('request-')).length;
+
+    await step('Select first request item and verify a request context opens', async () => {
+      await userEvent.click(canvas.getByTestId('request-select-req_first_01'));
+
+      await waitFor(() => {
+        const store = useCanvasStore.getState();
+        const requestTabCount = store.contextOrder.filter((id) => id.startsWith('request-')).length;
+        void expect(requestTabCount).toBe(initialRequestTabCount + 1);
+
+        const activeContextId = store.activeContextId;
+        void expect(activeContextId).toMatch(/^request-/);
+        if (activeContextId === null) {
+          return;
+        }
+
+        const activeState = store.getContextState(activeContextId) as Partial<RequestTabState>;
+        void expect(activeState.source).toMatchObject({
+          type: 'collection',
+          collectionId: 'col_1',
+          requestId: 'req_first_01',
+        });
       });
     });
 
-    await step('Verify popout shows full name with badge after text', async () => {
-      const popout = document.querySelector('[data-test-id="request-popout"]');
-      await expect(popout).not.toBeNull();
-      if (popout === null) {
-        return;
+    await step(
+      'Select eleventh request item and verify it opens through the same path',
+      async () => {
+        await userEvent.click(canvas.getByTestId('request-select-req_first_11'));
+
+        await waitFor(() => {
+          const store = useCanvasStore.getState();
+          const requestTabCount = store.contextOrder.filter((id) =>
+            id.startsWith('request-')
+          ).length;
+          void expect(requestTabCount).toBe(initialRequestTabCount + 2);
+
+          const activeContextId = store.activeContextId;
+          void expect(activeContextId).toMatch(/^request-/);
+          if (activeContextId === null) {
+            return;
+          }
+
+          const activeState = store.getContextState(activeContextId) as Partial<RequestTabState>;
+          void expect(activeState.source).toMatchObject({
+            type: 'collection',
+            collectionId: 'col_1',
+            requestId: 'req_first_11',
+          });
+        });
       }
-      // Full name should be visible (not truncated)
-      await expect(popout.textContent).toContain('push the badge rightward');
-      // Stream badge should also be present
-      await expect(popout.textContent).toContain('Stream');
-    });
-
-    await step('Unhover to dismiss', async () => {
-      await userEvent.unhover(button);
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100);
-      });
-    });
+    );
   },
 };

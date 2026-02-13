@@ -3,15 +3,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
-import { OpenItems } from '@/components/Sidebar/OpenItems';
 import { SidebarScrollArea } from '@/components/Sidebar/SidebarScrollArea';
-import { SidebarDivider } from '@/components/Sidebar/SidebarDivider';
-import { useTabStore } from '@/stores/useTabStore';
-import { useSettingsStore } from '@/stores/useSettingsStore';
 import { containedFocusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
 
@@ -80,82 +76,9 @@ const DrawerSection = ({
   );
 };
 
-const MIN_SECTION_HEIGHT = 60;
-
 export const Sidebar = (): React.JSX.Element => {
-  const tabOrder = useTabStore((s) => s.tabOrder);
-  const openItemsRatio = useSettingsStore((s) => s.openItemsRatio);
-  const setOpenItemsRatio = useSettingsStore((s) => s.setOpenItemsRatio);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState(0);
-  const dragStartHeight = useRef(0);
-
-  // Measure available height with ResizeObserver
-  useEffect(() => {
-    if (containerRef.current === null || typeof ResizeObserver === 'undefined') {
-      return undefined;
-    }
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry !== undefined) {
-        setContainerHeight(entry.contentRect.height);
-      }
-    });
-
-    observer.observe(containerRef.current);
-    return (): void => {
-      observer.disconnect();
-    };
-  }, []);
-
-  const showOpenItems = tabOrder.length > 1;
-
-  // Compute pixel heights from ratio
-  const openItemsHeight =
-    showOpenItems && containerHeight > 0
-      ? Math.max(
-          MIN_SECTION_HEIGHT,
-          Math.min(containerHeight - MIN_SECTION_HEIGHT, containerHeight * openItemsRatio)
-        )
-      : 0;
-
-  const handleDividerDrag = useCallback(
-    (deltaY: number) => {
-      if (containerHeight <= 0) {
-        return;
-      }
-      const newHeight = dragStartHeight.current + deltaY;
-      const newRatio = newHeight / containerHeight;
-      setOpenItemsRatio(newRatio);
-    },
-    [containerHeight, setOpenItemsRatio]
-  );
-
-  const handleDividerDragStart = useCallback(() => {
-    // Store the actual rendered pixel height to avoid jumps when the ratio is clamped
-    dragStartHeight.current = openItemsHeight;
-  }, [openItemsHeight]);
-
   return (
-    <aside
-      ref={containerRef}
-      className="flex-1 min-h-0 flex flex-col bg-bg-surface"
-      data-test-id="sidebar-content"
-    >
-      {showOpenItems && (
-        <>
-          <OpenItems style={{ height: openItemsHeight }} />
-          <SidebarDivider
-            onDrag={handleDividerDrag}
-            onDragStart={handleDividerDragStart}
-            valuenow={Math.round(openItemsHeight)}
-            valuemin={MIN_SECTION_HEIGHT}
-            valuemax={containerHeight > 0 ? containerHeight - MIN_SECTION_HEIGHT : undefined}
-          />
-        </>
-      )}
+    <aside className="flex-1 min-h-0 flex flex-col bg-bg-surface" data-test-id="sidebar-content">
       <DrawerSection
         title="Collections"
         icon={<Folder size={14} />}

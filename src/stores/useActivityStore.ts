@@ -32,7 +32,10 @@ export type ActivityAction =
   | 'added_request'
   | 'updated_request'
   | 'executed_request'
-  | 'saved_collection';
+  | 'saved_collection'
+  | 'switched_tab'
+  | 'opened_tab'
+  | 'closed_tab';
 
 /** Maximum entries to keep in memory. */
 const MAX_ENTRIES = 100;

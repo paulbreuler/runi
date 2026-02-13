@@ -31,10 +31,15 @@ interface CollectionState {
 const normalizeCollection = (collection: Collection): Collection => ({
   ...collection,
   requests: collection.requests.map((request) => {
-    const headers = Object.prototype.hasOwnProperty.call(request, 'headers') ? request.headers : {};
+    // Runtime data from Tauri may omit fields that the type declares as required.
+    // Cast through unknown to safely provide defaults for potentially missing fields.
+    const raw = request as unknown as Record<string, unknown>;
     return {
       ...request,
-      headers,
+      headers: (raw.headers as Record<string, string> | undefined) ?? {},
+      intelligence: (raw.intelligence as typeof request.intelligence | undefined) ?? {
+        ai_generated: false,
+      },
     };
   }),
 });

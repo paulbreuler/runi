@@ -110,7 +110,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
     const consoleLogs = page.locator('[data-test-id="console-logs"]');
 
     // Check for error log
-    const errorLog = consoleLogs.locator('[data-test-id*="console-log-error"]');
+    const errorLog = consoleLogs.locator('[data-level="error"]');
     await expect(errorLog.first()).toBeVisible({ timeout: 5000 });
 
     // Verify error message contains expected content
@@ -176,7 +176,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
 
     // Get correlation ID from console log
     const consoleLogs = page.locator('[data-test-id="console-logs"]');
-    const errorLog = consoleLogs.locator('[data-test-id*="console-log-error"]').first();
+    const errorLog = consoleLogs.locator('[data-level="error"]').first();
     await errorLog.waitFor({ timeout: 5000 });
 
     // Extract correlation ID from error log (check for UUID pattern or first 8 chars)

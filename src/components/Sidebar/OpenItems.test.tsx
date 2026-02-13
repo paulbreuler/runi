@@ -6,8 +6,35 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useTabStore } from '@/stores/useTabStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
 import { OpenItems } from './OpenItems';
+
+// Mock localStorage
+const localStorageMock = ((): {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+  clear: () => void;
+} => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string): string | null => store[key] ?? null,
+    setItem: (key: string, value: string): void => {
+      store[key] = value;
+    },
+    removeItem: (key: string): void => {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete store[key];
+    },
+    clear: (): void => {
+      store = {};
+    },
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+});
 
 // Mock crypto.randomUUID for deterministic tests
 let uuidCounter = 0;
@@ -18,7 +45,8 @@ vi.stubGlobal('crypto', mockCrypto);
 
 function resetStore(): void {
   uuidCounter = 0;
-  useTabStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
+  localStorageMock.clear();
+  useCanvasStore.getState().reset();
 }
 
 interface TabConfig {
@@ -32,7 +60,7 @@ type StringTuple<T extends readonly TabConfig[]> = { [K in keyof T]: string };
 function openTabs<const T extends readonly TabConfig[]>(configs: T): StringTuple<T> {
   const ids: string[] = [];
   for (const config of configs) {
-    ids.push(useTabStore.getState().openTab(config));
+    ids.push(useCanvasStore.getState().openRequestTab(config));
   }
   return ids as StringTuple<T>;
 }
@@ -61,8 +89,8 @@ describe('OpenItems', () => {
       ]);
       render(<OpenItems />);
       expect(screen.getByTestId('open-items-section')).toBeInTheDocument();
-      expect(screen.getByTestId('open-items-tab-test-uuid-001')).toBeInTheDocument();
-      expect(screen.getByTestId('open-items-tab-test-uuid-002')).toBeInTheDocument();
+      expect(screen.getByTestId('open-items-tab-request-test-uuid-001')).toBeInTheDocument();
+      expect(screen.getByTestId('open-items-tab-request-test-uuid-002')).toBeInTheDocument();
     });
   });
 
@@ -72,7 +100,7 @@ describe('OpenItems', () => {
         { url: 'https://one.com', label: 'First' },
         { url: 'https://two.com', label: 'Second' },
       ]);
-      useTabStore.getState().setActiveTab(id1);
+      useCanvasStore.getState().setActiveContext(id1);
 
       render(<OpenItems />);
       const activeItem = screen.getByTestId(`open-items-tab-${id1}`);
@@ -87,8 +115,12 @@ describe('OpenItems', () => {
         { method: 'POST', url: 'https://two.com', label: 'Post' },
       ]);
       render(<OpenItems />);
-      expect(screen.getByTestId('open-items-method-test-uuid-001')).toHaveTextContent('GET');
-      expect(screen.getByTestId('open-items-method-test-uuid-002')).toHaveTextContent('POST');
+      expect(screen.getByTestId('open-items-method-request-test-uuid-001')).toHaveTextContent(
+        'GET'
+      );
+      expect(screen.getByTestId('open-items-method-request-test-uuid-002')).toHaveTextContent(
+        'POST'
+      );
     });
   });
 
@@ -99,8 +131,10 @@ describe('OpenItems', () => {
         { url: 'https://two.com', label: 'Dirty', isDirty: true },
       ]);
       render(<OpenItems />);
-      expect(screen.queryByTestId('open-items-dirty-test-uuid-001')).not.toBeInTheDocument();
-      expect(screen.getByTestId('open-items-dirty-test-uuid-002')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('open-items-dirty-request-test-uuid-001')
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('open-items-dirty-request-test-uuid-002')).toBeInTheDocument();
     });
   });
 
@@ -111,11 +145,11 @@ describe('OpenItems', () => {
         { url: 'https://two.com', label: 'Second' },
       ]);
       // id2 is active (last opened)
-      expect(useTabStore.getState().activeTabId).toBe(id2);
+      expect(useCanvasStore.getState().activeContextId).toBe(id2);
 
       render(<OpenItems />);
       await userEvent.click(screen.getByTestId(`open-items-tab-${id1}`));
-      expect(useTabStore.getState().activeTabId).toBe(id1);
+      expect(useCanvasStore.getState().activeContextId).toBe(id1);
     });
 
     it('closes tab on close button click without activating', async () => {
@@ -125,14 +159,14 @@ describe('OpenItems', () => {
         { url: 'https://three.com', label: 'Third' },
       ]);
       // id3 is active
-      const id3 = useTabStore.getState().activeTabId!;
+      const id3 = useCanvasStore.getState().activeContextId!;
 
       render(<OpenItems />);
       await userEvent.click(screen.getByTestId(`open-items-close-${id1}`));
 
-      expect(useTabStore.getState().tabs[id1]).toBeUndefined();
+      expect(useCanvasStore.getState().contexts.has(id1)).toBe(false);
       // Active tab should remain unchanged
-      expect(useTabStore.getState().activeTabId).toBe(id3);
+      expect(useCanvasStore.getState().activeContextId).toBe(id3);
     });
 
     it('activates tab on Enter key', async () => {
@@ -145,7 +179,7 @@ describe('OpenItems', () => {
       const item = screen.getByTestId(`open-items-tab-${id1}`);
       item.focus();
       await userEvent.keyboard('{Enter}');
-      expect(useTabStore.getState().activeTabId).toBe(id1);
+      expect(useCanvasStore.getState().activeContextId).toBe(id1);
     });
 
     it('activates tab on Space key', async () => {
@@ -158,7 +192,7 @@ describe('OpenItems', () => {
       const item = screen.getByTestId(`open-items-tab-${id1}`);
       item.focus();
       await userEvent.keyboard(' ');
-      expect(useTabStore.getState().activeTabId).toBe(id1);
+      expect(useCanvasStore.getState().activeContextId).toBe(id1);
     });
 
     it('closes tab on Delete key', async () => {
@@ -172,7 +206,7 @@ describe('OpenItems', () => {
       const item = screen.getByTestId(`open-items-tab-${id1}`);
       item.focus();
       await userEvent.keyboard('{Delete}');
-      expect(useTabStore.getState().tabs[id1]).toBeUndefined();
+      expect(useCanvasStore.getState().contexts.has(id1)).toBe(false);
     });
 
     it('closes tab on middle-click', () => {
@@ -185,7 +219,7 @@ describe('OpenItems', () => {
       render(<OpenItems />);
       const item = screen.getByTestId(`open-items-tab-${id1}`);
       fireEvent.mouseDown(item, { button: 1 });
-      expect(useTabStore.getState().tabs[id1]).toBeUndefined();
+      expect(useCanvasStore.getState().contexts.has(id1)).toBe(false);
     });
 
     it('navigates between items with arrow keys', async () => {
@@ -236,7 +270,9 @@ describe('OpenItems', () => {
         { url: 'https://two.com', label: 'Short2' },
       ]);
       render(<OpenItems />);
-      expect(screen.getByTestId('open-items-label-test-uuid-001')).toHaveTextContent('Short');
+      expect(screen.getByTestId('open-items-label-request-test-uuid-001')).toHaveTextContent(
+        'Short'
+      );
     });
   });
 
@@ -302,7 +338,7 @@ describe('OpenItems', () => {
       ]);
       render(<OpenItems />);
 
-      expect(screen.getByTestId('open-items-close-test-uuid-001')).toHaveAttribute(
+      expect(screen.getByTestId('open-items-close-request-test-uuid-001')).toHaveAttribute(
         'aria-label',
         'Close tab GET First'
       );
@@ -315,7 +351,7 @@ describe('OpenItems', () => {
       ]);
       render(<OpenItems />);
 
-      const closeButton = screen.getByTestId('open-items-close-test-uuid-001');
+      const closeButton = screen.getByTestId('open-items-close-request-test-uuid-001');
 
       // Focus the close button via keyboard (it should not have tabIndex={-1})
       closeButton.focus();

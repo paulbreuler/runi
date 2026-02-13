@@ -54,13 +54,13 @@ describe('VirtualDataGrid', () => {
 
       render(<VirtualDataGrid data={testData} columns={testColumns} getRowId={(row) => row.id} />);
 
-      // Should render the header
+      // Should render the header (ARIA check)
       expect(screen.getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: /value/i })).toBeInTheDocument();
 
-      // Should render the rows
-      expect(screen.getByText('Item 1')).toBeInTheDocument();
-      expect(screen.getByText('Item 5')).toBeInTheDocument();
+      // Should render the rows (Component identification)
+      expect(screen.getByTestId('datagrid-row-1')).toBeInTheDocument();
+      expect(screen.getByTestId('datagrid-row-5')).toBeInTheDocument();
     });
 
     it('handles empty data', () => {
@@ -128,7 +128,7 @@ describe('VirtualDataGrid', () => {
 
       // With 400px height and 40px rows, roughly 10 rows visible + 5 overscan = 15-20 rows
       // The first items should be rendered
-      expect(screen.getByText('Item 1')).toBeInTheDocument();
+      expect(screen.getByTestId('datagrid-row-1')).toBeInTheDocument();
 
       // NOTE: In jsdom, virtualization doesn't work (no real scroll dimensions)
       // so we fall back to rendering all rows. This test verifies the component
@@ -161,11 +161,11 @@ describe('VirtualDataGrid', () => {
 
       render(<VirtualDataGrid data={testData} columns={testColumns} getRowId={(row) => row.id} />);
 
-      // Each cell should be rendered
-      expect(screen.getByText('Item 1')).toBeInTheDocument();
-      expect(screen.getByText('0')).toBeInTheDocument();
-      expect(screen.getByText('Item 2')).toBeInTheDocument();
-      expect(screen.getByText('100')).toBeInTheDocument();
+      // Each cell should be rendered (Component identification - use cell-based test IDs)
+      expect(screen.getByTestId('datagrid-cell-1_name')).toHaveTextContent('Item 1');
+      expect(screen.getByTestId('datagrid-cell-1_value')).toHaveTextContent('0');
+      expect(screen.getByTestId('datagrid-cell-2_name')).toHaveTextContent('Item 2');
+      expect(screen.getByTestId('datagrid-cell-2_value')).toHaveTextContent('100');
     });
 
     it('supports custom row renderer', () => {
@@ -251,14 +251,12 @@ describe('VirtualDataGrid', () => {
           />
         );
 
-        // Find first row by data-row-id
-        const firstRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="1"]');
+        // Find first row by test ID
+        const firstRow = screen.getByTestId('datagrid-row-1');
         expect(firstRow).toBeInTheDocument();
 
         // Click on the row (not on checkbox)
-        if (firstRow !== null) {
-          fireEvent.click(firstRow);
-        }
+        fireEvent.click(firstRow);
 
         // Should select only the first row
         expect(onRowSelectionChange).toHaveBeenCalledWith({ '1': true });
@@ -280,13 +278,11 @@ describe('VirtualDataGrid', () => {
         );
 
         // Find second row
-        const secondRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="2"]');
+        const secondRow = screen.getByTestId('datagrid-row-2');
         expect(secondRow).toBeInTheDocument();
 
         // Click on the second row
-        if (secondRow !== null) {
-          fireEvent.click(secondRow);
-        }
+        fireEvent.click(secondRow);
 
         // Should deselect first row and select second row
         expect(onRowSelectionChange).toHaveBeenCalledWith({ '2': true });
@@ -308,13 +304,11 @@ describe('VirtualDataGrid', () => {
         );
 
         // Find first row (already selected)
-        const firstRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="1"]');
+        const firstRow = screen.getByTestId('datagrid-row-1');
         expect(firstRow).toBeInTheDocument();
 
         // Click on the same row again
-        if (firstRow !== null) {
-          fireEvent.click(firstRow);
-        }
+        fireEvent.click(firstRow);
 
         // Should deselect the row (empty selection)
         expect(onRowSelectionChange).toHaveBeenCalledWith({});
@@ -426,7 +420,7 @@ describe('VirtualDataGrid', () => {
         );
 
         // Find sortable column header
-        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        const nameHeader = screen.getByTestId('datagrid-header-name');
         expect(nameHeader).toBeInTheDocument();
 
         // Click header to sort
@@ -452,7 +446,7 @@ describe('VirtualDataGrid', () => {
         );
 
         // Find sortable column header
-        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        const nameHeader = screen.getByTestId('datagrid-header-name');
         expect(nameHeader).toBeInTheDocument();
 
         // Click header again to reverse sort
@@ -478,7 +472,7 @@ describe('VirtualDataGrid', () => {
         );
 
         // Find sortable column header
-        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        const nameHeader = screen.getByTestId('datagrid-header-name');
         expect(nameHeader).toBeInTheDocument();
 
         // Click header to clear sort (third click)
@@ -502,7 +496,7 @@ describe('VirtualDataGrid', () => {
         );
 
         // Sort indicator should be visible (aria-label for sorted state)
-        const nameHeader = screen.getByRole('columnheader', { name: /name/i });
+        const nameHeader = screen.getByTestId('datagrid-header-name');
         expect(nameHeader).toHaveAttribute('aria-sort', 'ascending');
       });
     });
@@ -540,14 +534,12 @@ describe('VirtualDataGrid', () => {
           />
         );
 
-        // Find first row by data-row-id
-        const firstRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="1"]');
+        // Find first row by test ID
+        const firstRow = screen.getByTestId('datagrid-row-1');
         expect(firstRow).toBeInTheDocument();
 
         // Double-click on the row
-        if (firstRow !== null) {
-          fireEvent.doubleClick(firstRow);
-        }
+        fireEvent.doubleClick(firstRow);
 
         // Should expand the row
         expect(onExpandedChange).toHaveBeenCalledWith({ '1': true });
@@ -570,13 +562,11 @@ describe('VirtualDataGrid', () => {
         );
 
         // Find first row (already expanded)
-        const firstRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="1"]');
+        const firstRow = screen.getByTestId('datagrid-row-1');
         expect(firstRow).toBeInTheDocument();
 
         // Double-click on the same row again
-        if (firstRow !== null) {
-          fireEvent.doubleClick(firstRow);
-        }
+        fireEvent.doubleClick(firstRow);
 
         // Should collapse the row
         expect(onExpandedChange).toHaveBeenCalledWith({});
@@ -646,15 +636,13 @@ describe('VirtualDataGrid', () => {
         );
 
         // Find first row
-        const firstRow = screen.getByTestId('virtual-datagrid').querySelector('[data-row-id="1"]');
+        const firstRow = screen.getByTestId('datagrid-row-1');
         expect(firstRow).toBeInTheDocument();
 
         // Double-click on the row
         // This fires: click -> click -> dblclick events
         // Both onClick (selection) and onDoubleClick (expansion) handlers are triggered
-        if (firstRow !== null) {
-          fireEvent.doubleClick(firstRow);
-        }
+        fireEvent.doubleClick(firstRow);
 
         // Selection handler fires twice during double-click (once per click)
         // First click: selects row, second click: deselects row (toggle behavior)

@@ -62,6 +62,7 @@ export const Playground: Story = {
         const position = context.args.position ?? 'bottom';
         const collapsed = context.args.collapsed ?? false;
         usePanelStore.setState({
+          isVisible: true,
           position,
           isCollapsed: collapsed,
         });
@@ -82,4 +83,12 @@ export const Playground: Story = {
       <div className="p-4">Panel content</div>
     </DockablePanel>
   ),
+};
+
+/**
+ * Story specifically for testing focus restoration during dock position changes.
+ */
+export const FocusRestorationTest: Story = {
+  decorators: Playground.decorators,
+  render: Playground.render,
 };

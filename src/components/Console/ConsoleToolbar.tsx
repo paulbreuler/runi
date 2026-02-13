@@ -101,6 +101,7 @@ const ConsoleToolbarActions = ({
           size="icon-xs"
           title="Copy selected logs"
           aria-label="Copy selected logs"
+          data-test-id="console-copy-button"
         >
           <CopyIcon size={14} />
         </Button>
@@ -111,6 +112,7 @@ const ConsoleToolbarActions = ({
           size="icon-xs"
           title="Clear console"
           aria-label="Clear console"
+          data-test-id="console-clear-button"
         >
           <Trash2 size={14} />
         </Button>
@@ -128,6 +130,7 @@ const ConsoleToolbarActions = ({
         variant="ghost"
         size="xs"
         dropdownAriaLabel="More save options"
+        data-test-id="console-save-split-button"
         items={[
           {
             id: 'save-selection',
@@ -151,6 +154,7 @@ const ConsoleToolbarActions = ({
         variant="ghost"
         size="xs"
         title="Copy selected logs"
+        data-test-id="console-copy-button"
       >
         <CopyIcon size={12} />
         <span>Copy</span>
@@ -161,6 +165,7 @@ const ConsoleToolbarActions = ({
         variant="destructive-outline"
         size="xs"
         title="Clear console"
+        data-test-id="console-clear-button"
       >
         <Trash2 size={12} />
         <span>Clear</span>
@@ -198,31 +203,40 @@ export const ConsoleToolbar = ({
         <ActionBarSegment
           value={filter}
           onValueChange={onFilterChange}
+          data-test-id="console-filter-segment"
           options={[
-            { value: 'all', label: `All (${String(totalCount)})` },
+            {
+              value: 'all',
+              label: `All (${String(totalCount)})`,
+              'data-test-id': 'console-filter-all',
+            },
             {
               value: 'error',
               label: 'Errors',
               icon: <AlertCircle size={12} className="text-signal-error" />,
               badge: counts.error,
+              'data-test-id': 'console-filter-error',
             },
             {
               value: 'warn',
               label: 'Warnings',
               icon: <AlertTriangle size={12} className="text-signal-warning" />,
               badge: counts.warn,
+              'data-test-id': 'console-filter-warn',
             },
             {
               value: 'info',
               label: 'Info',
               icon: <Info size={12} className="text-accent-blue" />,
               badge: counts.info,
+              'data-test-id': 'console-filter-info',
             },
             {
               value: 'debug',
               label: 'Debug',
               icon: <Terminal size={12} className="text-text-muted" />,
               badge: counts.debug,
+              'data-test-id': 'console-filter-debug',
             },
           ]}
           aria-label="Filter by log level"
@@ -233,6 +247,7 @@ export const ConsoleToolbar = ({
             onChange={onSearchFilterChange}
             placeholder="Search logs..."
             aria-label="Search logs"
+            data-test-id="console-search-input"
           />
           {searchActive && (
             <Button

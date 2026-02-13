@@ -5,7 +5,8 @@
 
 import React, { useState, useRef } from 'react';
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
-import { useTabStore } from '@/stores/useTabStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import type { RequestTabState } from '@/types/canvas';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { containedFocusRingClasses, focusRingClasses } from '@/utils/accessibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
@@ -18,41 +19,45 @@ interface OpenItemsProps {
 }
 
 /**
- * Sidebar section showing all open tabs as a flat list.
+ * Sidebar section showing all open request tabs as a flat list.
  * Implements progressive disclosure: hidden when 0–1 tabs.
  */
 export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Element | null => {
-  const tabs = useTabStore((s) => s.tabs);
-  const tabOrder = useTabStore((s) => s.tabOrder);
-  const activeTabId = useTabStore((s) => s.activeTabId);
-  const setActiveTab = useTabStore((s) => s.setActiveTab);
-  const closeTab = useTabStore((s) => s.closeTab);
+  const contexts = useCanvasStore((s) => s.contexts);
+  const contextOrder = useCanvasStore((s) => s.contextOrder);
+  const activeContextId = useCanvasStore((s) => s.activeContextId);
+  const setActiveContext = useCanvasStore((s) => s.setActiveContext);
+  const closeContext = useCanvasStore((s) => s.closeContext);
+  const getContextState = useCanvasStore((s) => s.getContextState);
 
   const [isOpen, setIsOpen] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Progressive disclosure: hidden when 0–1 tabs
-  if (tabOrder.length <= 1) {
+  // Filter to only show request-type contexts
+  const requestContexts = contextOrder.filter((id) => id.startsWith('request-'));
+
+  // Progressive disclosure: hidden when 0–1 request tabs
+  if (requestContexts.length <= 1) {
     return null;
   }
 
-  const handleItemClick = (tabId: string): void => {
-    setActiveTab(tabId);
+  const handleItemClick = (contextId: string): void => {
+    setActiveContext(contextId);
   };
 
-  const handleCloseClick = (e: React.MouseEvent, tabId: string): void => {
+  const handleCloseClick = (e: React.MouseEvent, contextId: string): void => {
     e.stopPropagation();
-    closeTab(tabId);
+    closeContext(contextId);
   };
 
-  const handleMiddleClick = (e: React.MouseEvent, tabId: string): void => {
+  const handleMiddleClick = (e: React.MouseEvent, contextId: string): void => {
     if (e.button === 1) {
       e.preventDefault();
-      closeTab(tabId);
+      closeContext(contextId);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, tabId: string, index: number): void => {
+  const handleKeyDown = (e: React.KeyboardEvent, contextId: string, index: number): void => {
     if (listRef.current === null) {
       return;
     }
@@ -77,15 +82,18 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
       case 'Enter':
       case ' ': {
         e.preventDefault();
-        setActiveTab(tabId);
+        setActiveContext(contextId);
         break;
       }
       case 'Delete':
       case 'Backspace': {
         e.preventDefault();
-        closeTab(tabId);
+        closeContext(contextId);
         break;
       }
+      // Explicitly allow Tab to escape the section (P0 fix)
+      case 'Tab':
+        return;
     }
   };
 
@@ -118,7 +126,7 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
           Open
         </span>
         <span className="text-[10px] text-text-muted tabular-nums" data-test-id="open-items-count">
-          {tabOrder.length}
+          {requestContexts.length}
         </span>
       </button>
 
@@ -130,46 +138,52 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
             role="listbox"
             aria-label="Open requests"
             data-test-id="open-items-list"
+            className="outline-none"
           >
-            {tabOrder.map((tabId, index) => {
-              const tab = tabs[tabId];
-              if (tab === undefined) {
+            {requestContexts.map((contextId, index) => {
+              const context = contexts.get(contextId);
+              const contextState = getContextState(contextId) as unknown as RequestTabState;
+
+              if (context === undefined) {
                 return null;
               }
 
-              const isActive = tabId === activeTabId;
-              const methodKey = tab.method as HttpMethod;
+              const isActive = contextId === activeContextId;
+              const isFirst = index === 0;
+              const hasActiveInList = requestContexts.includes(activeContextId ?? '');
+              const isTabbable = isActive || (!hasActiveInList && isFirst);
+              const methodKey = contextState.method as HttpMethod;
               const methodClass =
                 methodKey in methodTextColors ? methodTextColors[methodKey] : 'text-text-muted';
 
               return (
                 <div
-                  key={tabId}
+                  key={contextId}
                   role="option"
-                  tabIndex={isActive ? 0 : -1}
+                  tabIndex={isTabbable ? 0 : -1}
                   aria-selected={isActive}
                   data-active={isActive || undefined}
-                  data-test-id={`open-items-tab-${tabId}`}
+                  data-test-id={`open-items-tab-${contextId}`}
                   className={cn(
                     focusRingClasses,
                     'w-full flex items-center gap-2 py-1 px-2 min-h-[28px] cursor-pointer transition-colors group/item rounded-sm',
                     isActive ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40'
                   )}
                   onClick={() => {
-                    handleItemClick(tabId);
+                    handleItemClick(contextId);
                   }}
                   onMouseDown={(e) => {
-                    handleMiddleClick(e, tabId);
+                    handleMiddleClick(e, contextId);
                   }}
                   onKeyDown={(e) => {
-                    handleKeyDown(e, tabId, index);
+                    handleKeyDown(e, contextId, index);
                   }}
                 >
                   {/* Dirty indicator */}
-                  {tab.isDirty && (
+                  {contextState.isDirty === true && (
                     <span
                       className="shrink-0 h-1.5 w-1.5 rounded-full bg-signal-warning"
-                      data-test-id={`open-items-dirty-${tabId}`}
+                      data-test-id={`open-items-dirty-${contextId}`}
                       aria-label="Unsaved changes"
                     />
                   )}
@@ -180,17 +194,17 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                       'text-[10px] font-bold uppercase tracking-widest shrink-0 min-w-[28px]',
                       methodClass
                     )}
-                    data-test-id={`open-items-method-${tabId}`}
+                    data-test-id={`open-items-method-${contextId}`}
                   >
-                    {tab.method}
+                    {contextState.method}
                   </span>
 
                   {/* Label */}
                   <span
                     className="text-sm text-text-primary truncate flex-1 min-w-0"
-                    data-test-id={`open-items-label-${tabId}`}
+                    data-test-id={`open-items-label-${contextId}`}
                   >
-                    {truncateNavLabel(tab.label)}
+                    {truncateNavLabel(context.label)}
                   </span>
 
                   {/* Close button */}
@@ -201,10 +215,10 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                       'shrink-0 p-0.5 rounded-sm text-text-muted hover:text-text-primary transition-opacity',
                       'opacity-0 group-hover/item:opacity-100 focus-visible:opacity-100'
                     )}
-                    aria-label={`Close tab ${tab.method} ${tab.label}`}
-                    data-test-id={`open-items-close-${tabId}`}
+                    aria-label={`Close tab ${contextState.method} ${context.label}`}
+                    data-test-id={`open-items-close-${contextId}`}
                     onClick={(e) => {
-                      handleCloseClick(e, tabId);
+                      handleCloseClick(e, contextId);
                     }}
                   >
                     <X size={14} />

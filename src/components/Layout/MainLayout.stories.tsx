@@ -14,12 +14,15 @@ import { useEffect } from 'react';
 import { MainLayout, type MainLayoutProps } from './MainLayout';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { requestContextDescriptor } from '@/contexts/RequestContext';
 
 // Custom args for story controls (not part of component props - controls store state)
 interface MainLayoutStoryArgs {
   sidebarCollapsed?: boolean;
   devToolsPosition?: 'bottom' | 'left' | 'right' | 'hidden';
   devToolsCollapsed?: boolean;
+  hasOpenTabs?: boolean;
 }
 
 const meta = {
@@ -57,11 +60,16 @@ Use controls to explore different configurations.
       control: 'boolean',
       description: 'DevTools panel collapsed',
     },
+    hasOpenTabs: {
+      control: 'boolean',
+      description: 'Whether to show multiple open tabs',
+    },
   },
   args: {
     sidebarCollapsed: false,
     devToolsPosition: 'bottom',
     devToolsCollapsed: false,
+    hasOpenTabs: true,
   },
 } satisfies Meta<MainLayoutProps & MainLayoutStoryArgs>;
 
@@ -74,26 +82,39 @@ type Story = StoryObj<MainLayoutProps & MainLayoutStoryArgs>;
 export const Playground: Story = {
   decorators: [
     (Story, context) => {
+      const storyArgs = context.args as MainLayoutStoryArgs;
+      const sidebarCollapsed = storyArgs.sidebarCollapsed ?? false;
+      const devToolsPosition = storyArgs.devToolsPosition ?? 'bottom';
+      const devToolsCollapsed = storyArgs.devToolsCollapsed ?? false;
+      const hasOpenTabs = storyArgs.hasOpenTabs ?? true;
+
       useEffect(() => {
-        const storyArgs = context.args as MainLayoutStoryArgs;
-        const sidebarCollapsed = storyArgs.sidebarCollapsed ?? false;
-        const devToolsPosition = storyArgs.devToolsPosition ?? 'bottom';
-        const devToolsCollapsed = storyArgs.devToolsCollapsed ?? false;
+        // Initialize template
+        useCanvasStore.getState().registerTemplate(requestContextDescriptor);
+
+        if (hasOpenTabs && useCanvasStore.getState().contextOrder.length === 0) {
+          useCanvasStore.getState().openRequestTab({ label: 'GET /api/users' });
+          useCanvasStore.getState().openRequestTab({ label: 'POST /api/login' });
+          useCanvasStore.getState().openRequestTab({ label: 'PUT /api/orders/123' });
+        }
 
         useSettingsStore.setState({
           sidebarVisible: !sidebarCollapsed,
         });
 
-        if (devToolsPosition !== 'hidden') {
+        if (devToolsPosition === 'hidden') {
+          usePanelStore.setState({ isVisible: false });
+        } else {
           usePanelStore.setState({
+            isVisible: true,
             position: devToolsPosition,
             isCollapsed: devToolsCollapsed,
           });
         }
-      }, [context.args]);
+      }, [sidebarCollapsed, devToolsPosition, devToolsCollapsed, hasOpenTabs]);
 
       return (
-        <div className="h-screen">
+        <div className="h-screen w-screen overflow-hidden bg-bg-app">
           <Story />
         </div>
       );

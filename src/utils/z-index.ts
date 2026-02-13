@@ -11,6 +11,12 @@
 export const OVERLAY_Z_INDEX = 1000;
 
 /**
+ * Shared z-index for the global command bar palette.
+ * Must be topmost to ensure search visibility over all panels and overlays.
+ */
+export const COMMAND_BAR_Z_INDEX = OVERLAY_Z_INDEX + 100;
+
+/**
  * Z-index for the status bar so it (and its metrics popover trigger) stay above
  * the dockable tray and any expanded row content. Just below OVERLAY_Z_INDEX so
  * popovers/modals still appear above the bar.

@@ -497,6 +497,7 @@ export const DockablePanel = ({
       <motion.div
         ref={panelRef}
         data-test-id="dockable-panel"
+        data-collapsed={isCollapsed}
         className={cn(
           getPanelClasses(),
           isCollapsed && 'overflow-visible pointer-events-none',

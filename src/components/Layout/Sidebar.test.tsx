@@ -8,7 +8,6 @@ import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { Collection, CollectionSummary } from '@/types/collection';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
 import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
-import { useTabStore } from '@/stores/useTabStore';
 import { Sidebar } from './Sidebar';
 
 interface MockCollectionStoreState {
@@ -147,64 +146,9 @@ describe('Sidebar', (): void => {
   });
 });
 
-describe('Sidebar OpenItems integration', (): void => {
-  beforeEach((): void => {
-    useFeatureFlagStore.getState().resetToDefaults();
-    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
-    mockCollectionState = createCollectionState();
-    useTabStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
-  });
-
-  it('renders OpenItems above Collections when multiple tabs exist', (): void => {
-    // Open 2 tabs so OpenItems is visible
-    useTabStore.getState().openTab({ url: 'https://one.com', label: 'First' });
-    useTabStore.getState().openTab({ url: 'https://two.com', label: 'Second' });
-
-    render(<Sidebar />);
-
-    const sidebar = screen.getByTestId('sidebar-content');
-    const openItems = screen.getByTestId('open-items-section');
-    const collections = screen.getByTestId('collections-drawer');
-
-    // Verify both exist within sidebar
-    expect(sidebar).toContainElement(openItems);
-    expect(sidebar).toContainElement(collections);
-
-    // OpenItems should appear before Collections in DOM order
-    const children = Array.from(sidebar.children);
-    const openItemsIndex = children.indexOf(openItems);
-    const collectionsIndex = children.indexOf(collections);
-    expect(openItemsIndex).toBeLessThan(collectionsIndex);
-  });
-
-  it('shows divider between OpenItems and Collections when multiple tabs', (): void => {
-    useTabStore.getState().openTab({ url: 'https://one.com', label: 'First' });
-    useTabStore.getState().openTab({ url: 'https://two.com', label: 'Second' });
-
-    render(<Sidebar />);
-
-    const divider = screen.getByTestId('sidebar-divider');
-    expect(divider).toBeInTheDocument();
-    expect(divider).toHaveAttribute('role', 'separator');
-  });
-
-  it('hides divider when 1 or fewer tabs', (): void => {
-    useTabStore.getState().openTab({ url: 'https://one.com', label: 'Only' });
-
-    render(<Sidebar />);
-
-    expect(screen.queryByTestId('sidebar-divider')).not.toBeInTheDocument();
-  });
-
-  it('hides OpenItems when 1 or fewer tabs', (): void => {
-    useTabStore.getState().openTab({ url: 'https://one.com', label: 'Only' });
-
-    render(<Sidebar />);
-
-    expect(screen.queryByTestId('open-items-section')).not.toBeInTheDocument();
-    expect(screen.getByTestId('collections-drawer')).toBeInTheDocument();
-  });
-});
+// Note: OpenItems integration tests removed — Sidebar currently renders
+// only the Collections drawer. OpenItems will be re-added when the
+// tab-based sidebar section is implemented.
 
 describe('CollectionList', (): void => {
   beforeEach((): void => {

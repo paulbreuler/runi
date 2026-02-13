@@ -124,7 +124,10 @@ export const MessageCell = ({
         {truncatedMessage}
       </span>
       {count !== undefined && count > 1 && (
-        <span className="shrink-0 px-1.5 py-0.5 text-xs font-medium bg-bg-raised rounded text-text-muted">
+        <span
+          className="shrink-0 px-1.5 py-0.5 text-xs font-medium bg-bg-raised rounded text-text-muted"
+          data-test-id="console-log-group-count"
+        >
           ×{count}
         </span>
       )}

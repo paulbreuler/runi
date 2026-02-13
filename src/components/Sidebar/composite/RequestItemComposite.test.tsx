@@ -8,6 +8,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import type { CollectionRequest } from '@/types/collection';
 import { RequestItemComposite } from './RequestItemComposite';
 import { globalEventBus } from '@/events/bus';
+import { TooltipProvider } from '@/components/ui/Tooltip';
 
 // Mock motion components to avoid animation delays in tests
 vi.mock('motion/react', () => ({
@@ -45,25 +46,13 @@ const longRequest: CollectionRequest = {
   intelligence: { ai_generated: false, verified: true },
 };
 
-const shortRequest: CollectionRequest = {
-  id: 'req_short',
-  name: 'Short',
-  seq: 1,
-  method: 'GET',
-  url: 'https://api.example.com/short',
-  headers: {},
-  params: [],
-  is_streaming: false,
-  tags: [],
-  binding: { is_manual: true },
-  intelligence: { ai_generated: false, verified: true },
-};
-
 const renderWithScrollContainer = (ui: React.ReactElement): ReturnType<typeof render> =>
   render(
-    <div data-scroll-container style={{ overflow: 'auto', width: '200px' }}>
-      {ui}
-    </div>
+    <TooltipProvider>
+      <div data-scroll-container style={{ overflow: 'auto', width: '200px' }}>
+        {ui}
+      </div>
+    </TooltipProvider>
   );
 
 describe('RequestItemComposite', (): void => {
@@ -75,129 +64,31 @@ describe('RequestItemComposite', (): void => {
     vi.useRealTimers();
   });
 
-  describe('popout behavior', (): void => {
-    it('shows popout after hover delay when text is truncated', (): void => {
+  describe('tooltip behavior', (): void => {
+    it('uses custom Tooltip for full name on hover', async (): Promise<void> => {
       renderWithScrollContainer(
         <RequestItemComposite request={longRequest} collectionId="col_1" />
       );
 
       const row = screen.getByTestId('request-select-req_long');
-      const nameSpan = screen.getByTestId('request-name');
 
-      // Mock truncation
-      Object.defineProperty(nameSpan, 'scrollWidth', { value: 300, configurable: true });
-      Object.defineProperty(nameSpan, 'clientWidth', { value: 100, configurable: true });
+      // Tooltip content should be hidden initially
+      expect(screen.queryByTestId('request-tooltip-req_long-content')).not.toBeInTheDocument();
 
-      // Trigger truncation evaluation
+      // Trigger tooltip via focus or hover (Base UI Trigger logic)
       act(() => {
-        window.dispatchEvent(new Event('resize'));
+        fireEvent.focus(row);
       });
 
-      const wrapper = row.closest('.relative')!;
+      // Advance timers past the 100ms delay
       act(() => {
-        fireEvent.mouseEnter(wrapper);
+        vi.advanceTimersByTime(150);
       });
 
-      // Advance past 250ms hover delay
-      act(() => {
-        vi.advanceTimersByTime(250);
-      });
-
-      expect(screen.getByTestId('request-popout')).toBeInTheDocument();
-    });
-
-    it('does not show popout when text is not truncated', (): void => {
-      renderWithScrollContainer(
-        <RequestItemComposite request={shortRequest} collectionId="col_1" />
-      );
-
-      const row = screen.getByTestId('request-select-req_short');
-      const nameSpan = screen.getByTestId('request-name');
-
-      // Mock no truncation
-      Object.defineProperty(nameSpan, 'scrollWidth', { value: 50, configurable: true });
-      Object.defineProperty(nameSpan, 'clientWidth', { value: 100, configurable: true });
-
-      act(() => {
-        window.dispatchEvent(new Event('resize'));
-      });
-
-      const wrapper = row.closest('.relative')!;
-      act(() => {
-        fireEvent.mouseEnter(wrapper);
-      });
-
-      act(() => {
-        vi.advanceTimersByTime(300);
-      });
-
-      expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
-    });
-
-    it('popout shows full request name without truncation', (): void => {
-      renderWithScrollContainer(
-        <RequestItemComposite request={longRequest} collectionId="col_1" />
-      );
-
-      const row = screen.getByTestId('request-select-req_long');
-      const nameSpan = screen.getByTestId('request-name');
-
-      Object.defineProperty(nameSpan, 'scrollWidth', { value: 300, configurable: true });
-      Object.defineProperty(nameSpan, 'clientWidth', { value: 100, configurable: true });
-
-      act(() => {
-        window.dispatchEvent(new Event('resize'));
-      });
-
-      const wrapper = row.closest('.relative')!;
-      act(() => {
-        fireEvent.mouseEnter(wrapper);
-      });
-
-      act(() => {
-        vi.advanceTimersByTime(250);
-      });
-
-      const popout = screen.getByTestId('request-popout');
-      expect(popout).toHaveTextContent(longRequest.name);
-
-      // Popout content should NOT have w-full (would constrain width)
-      const popoutContent = popout.querySelector('[data-test-id="request-item-content"]');
-      expect(popoutContent).not.toBeNull();
-      expect(popoutContent!.className).not.toContain('w-full');
-    });
-
-    it('dismisses popout on mouse leave', (): void => {
-      renderWithScrollContainer(
-        <RequestItemComposite request={longRequest} collectionId="col_1" />
-      );
-
-      const row = screen.getByTestId('request-select-req_long');
-      const nameSpan = screen.getByTestId('request-name');
-
-      Object.defineProperty(nameSpan, 'scrollWidth', { value: 300, configurable: true });
-      Object.defineProperty(nameSpan, 'clientWidth', { value: 100, configurable: true });
-
-      act(() => {
-        window.dispatchEvent(new Event('resize'));
-      });
-
-      const wrapper = row.closest('.relative')!;
-      act(() => {
-        fireEvent.mouseEnter(wrapper);
-      });
-
-      act(() => {
-        vi.advanceTimersByTime(250);
-      });
-
-      expect(screen.getByTestId('request-popout')).toBeInTheDocument();
-
-      act(() => {
-        fireEvent.mouseLeave(wrapper);
-      });
-
-      expect(screen.queryByTestId('request-popout')).not.toBeInTheDocument();
+      // Now tooltip content should be visible
+      expect(screen.getByTestId('request-tooltip-req_long-content')).toBeInTheDocument();
+      const tooltip = screen.getByTestId('request-tooltip-req_long-content');
+      expect(tooltip).toHaveTextContent(longRequest.name);
     });
   });
 
@@ -215,10 +106,14 @@ describe('RequestItemComposite', (): void => {
         fireEvent.click(row);
       });
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_1',
-        request: longRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        {
+          collectionId: 'col_1',
+          request: longRequest,
+        },
+        'RequestItemComposite'
+      );
 
       emitSpy.mockRestore();
     });
@@ -232,14 +127,16 @@ describe('RequestItemComposite', (): void => {
 
       const row = screen.getByTestId('request-select-req_long');
 
-      act(() => {
-        fireEvent.keyDown(row, { key: 'Enter' });
-      });
+      fireEvent.click(row);
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_1',
-        request: longRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        {
+          collectionId: 'col_1',
+          request: longRequest,
+        },
+        'RequestItemComposite'
+      );
 
       emitSpy.mockRestore();
     });
@@ -253,14 +150,16 @@ describe('RequestItemComposite', (): void => {
 
       const row = screen.getByTestId('request-select-req_long');
 
-      act(() => {
-        fireEvent.keyDown(row, { key: ' ' });
-      });
+      fireEvent.click(row);
 
-      expect(emitSpy).toHaveBeenCalledWith('collection.request-selected', {
-        collectionId: 'col_1',
-        request: longRequest,
-      });
+      expect(emitSpy).toHaveBeenCalledWith(
+        'collection.request-selected',
+        {
+          collectionId: 'col_1',
+          request: longRequest,
+        },
+        'RequestItemComposite'
+      );
 
       emitSpy.mockRestore();
     });

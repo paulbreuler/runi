@@ -8,13 +8,18 @@
 use std::sync::Arc;
 
 use serde_json::json;
+use tauri::Emitter;
 use tokio::sync::RwLock;
 
 use crate::application::mcp_server_service::McpServerService;
+#[cfg(test)]
+use crate::domain::canvas_state::CanvasStateSnapshot;
+use crate::domain::mcp::events::{Actor, EventEnvelope};
 use crate::domain::mcp::jsonrpc::{JsonRpcError, JsonRpcId, JsonRpcRequest, JsonRpcResponse};
 use crate::domain::mcp::protocol::{
     InitializeResult, ToolCallParams, ToolCallResult, ToolResponseContent, ToolsListResult,
 };
+use crate::infrastructure::commands::CanvasStateHandle;
 use crate::infrastructure::http::execute_http_request;
 
 /// Dispatch a JSON-RPC request string to the appropriate handler.
@@ -24,7 +29,12 @@ use crate::infrastructure::http::execute_http_request;
 /// # Errors
 ///
 /// Parse errors return a JSON-RPC error response.
-pub async fn dispatch(raw: &str, service: &Arc<RwLock<McpServerService>>) -> Option<String> {
+pub async fn dispatch(
+    raw: &str,
+    service: &Arc<RwLock<McpServerService>>,
+    canvas_state: &CanvasStateHandle,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Option<String> {
     let request: JsonRpcRequest = match serde_json::from_str(raw) {
         Ok(r) => r,
         Err(e) => {
@@ -46,7 +56,7 @@ pub async fn dispatch(raw: &str, service: &Arc<RwLock<McpServerService>>) -> Opt
     let response = match request.method.as_str() {
         "initialize" => handle_initialize(id),
         "tools/list" => handle_tools_list(id, service).await,
-        "tools/call" => handle_tools_call(id, &request, service).await,
+        "tools/call" => handle_tools_call(id, &request, service, canvas_state, app_handle).await,
         "ping" => handle_ping(id),
         _ => JsonRpcResponse::error(id, JsonRpcError::method_not_found(&request.method)),
     };
@@ -95,6 +105,8 @@ async fn handle_tools_call(
     id: Option<JsonRpcId>,
     request: &JsonRpcRequest,
     service: &Arc<RwLock<McpServerService>>,
+    canvas_state: &CanvasStateHandle,
+    app_handle: Option<&tauri::AppHandle>,
 ) -> JsonRpcResponse {
     let params: ToolCallParams = match request.params.as_ref() {
         Some(p) => match serde_json::from_value(p.clone()) {
@@ -112,6 +124,12 @@ async fn handle_tools_call(
     // holding the RwLock read guard across an .await point.
     if params.name == "execute_request" {
         return handle_execute_request(id, params.arguments, service).await;
+    }
+
+    // Canvas tools read from/write to external state
+    if params.name.starts_with("canvas_") {
+        return handle_canvas_tool(id, &params.name, params.arguments, canvas_state, app_handle)
+            .await;
     }
 
     let mut svc = service.write().await;
@@ -217,20 +235,217 @@ fn handle_ping(id: Option<JsonRpcId>) -> JsonRpcResponse {
     JsonRpcResponse::success(id, json!({}))
 }
 
+/// Handle canvas tools (observation and mutation).
+async fn handle_canvas_tool(
+    id: Option<JsonRpcId>,
+    tool_name: &str,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    canvas_state: &CanvasStateHandle,
+    app_handle: Option<&tauri::AppHandle>,
+) -> JsonRpcResponse {
+    let result = match tool_name {
+        // Phase 1: Observation tools (read from canvas state)
+        "canvas_list_tabs" => handle_canvas_list_tabs(canvas_state).await,
+        "canvas_get_active_tab" => handle_canvas_get_active_tab(canvas_state).await,
+        "canvas_list_templates" => handle_canvas_list_templates(canvas_state).await,
+
+        // Phase 2: Mutation tools (emit events via app handle)
+        "canvas_switch_tab" => handle_canvas_switch_tab(arguments, app_handle),
+        "canvas_open_request_tab" => handle_canvas_open_request_tab(arguments, app_handle),
+        "canvas_close_tab" => handle_canvas_close_tab(arguments, app_handle),
+
+        _ => Err(format!("Unknown canvas tool: {tool_name}")),
+    };
+
+    match result {
+        Ok(tool_result) => JsonRpcResponse::success(
+            id,
+            serde_json::to_value(tool_result).unwrap_or_else(|_| json!({})),
+        ),
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
+/// Construct an `EventEnvelope` with AI actor provenance for canvas events.
+///
+/// Canvas mutation tools emit events attributed to AI (via MCP), enabling
+/// the frontend to distinguish AI actions from user actions and gate viewport
+/// navigation based on Follow AI mode.
+fn canvas_event_envelope(payload: serde_json::Value) -> serde_json::Value {
+    let envelope = EventEnvelope {
+        actor: Actor::Ai {
+            model: None,
+            session_id: None,
+        },
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        correlation_id: None,
+        lamport: None,
+        payload,
+    };
+    serde_json::to_value(envelope).unwrap_or_else(|_| serde_json::json!({}))
+}
+
+// Phase 1: Canvas observation tools
+
+async fn handle_canvas_list_tabs(
+    canvas_state: &CanvasStateHandle,
+) -> Result<ToolCallResult, String> {
+    let state = canvas_state.read().await;
+    let tabs_json =
+        serde_json::to_value(&state.tabs).map_err(|e| format!("Failed to serialize tabs: {e}"))?;
+    drop(state);
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: tabs_json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+async fn handle_canvas_get_active_tab(
+    canvas_state: &CanvasStateHandle,
+) -> Result<ToolCallResult, String> {
+    let state = canvas_state.read().await;
+    let active_tab_json = match state.active_tab() {
+        Some(tab) => {
+            serde_json::to_value(tab).map_err(|e| format!("Failed to serialize active tab: {e}"))?
+        }
+        None => json!(null),
+    };
+    drop(state);
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: active_tab_json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+async fn handle_canvas_list_templates(
+    canvas_state: &CanvasStateHandle,
+) -> Result<ToolCallResult, String> {
+    let state = canvas_state.read().await;
+    let templates_json = serde_json::to_value(&state.templates)
+        .map_err(|e| format!("Failed to serialize templates: {e}"))?;
+    drop(state);
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: templates_json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+// Phase 2: Canvas mutation tools
+
+fn handle_canvas_switch_tab(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let Some(app) = app_handle else {
+        return Err("App handle not available (MCP server running without UI)".to_string());
+    };
+
+    let args = arguments.unwrap_or_default();
+    let tab_id = args
+        .get("tab_id")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: tab_id".to_string())?;
+
+    // Emit event to frontend with AI actor provenance
+    let envelope = canvas_event_envelope(json!({"contextId": tab_id}));
+    app.emit("canvas:switch_tab", envelope)
+        .map_err(|e| format!("Failed to emit canvas:switch_tab event: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json!({"tab_id": tab_id, "message": "Tab switch requested"}).to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+fn handle_canvas_open_request_tab(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let Some(app) = app_handle else {
+        return Err("App handle not available (MCP server running without UI)".to_string());
+    };
+
+    let args = arguments.unwrap_or_default();
+    let label = args
+        .get("label")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("Request");
+
+    // Emit event to frontend with AI actor provenance
+    let envelope = canvas_event_envelope(json!({"label": label}));
+    app.emit("canvas:open_request_tab", envelope)
+        .map_err(|e| format!("Failed to emit canvas:open_request_tab event: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json!({"label": label, "message": "Request tab open requested"}).to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+fn handle_canvas_close_tab(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let Some(app) = app_handle else {
+        return Err("App handle not available (MCP server running without UI)".to_string());
+    };
+
+    let args = arguments.unwrap_or_default();
+    let tab_id = args
+        .get("tab_id")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: tab_id".to_string())?;
+
+    // Emit event to frontend with AI actor provenance
+    let envelope = canvas_event_envelope(json!({"contextId": tab_id}));
+    app.emit("canvas:close_tab", envelope)
+        .map_err(|e| format!("Failed to emit canvas:close_tab event: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json!({"tab_id": tab_id, "message": "Tab close requested"}).to_string(),
+        }],
+        is_error: false,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use tempfile::TempDir;
 
-    fn make_service() -> (Arc<RwLock<McpServerService>>, TempDir) {
+    fn make_service() -> (Arc<RwLock<McpServerService>>, CanvasStateHandle, TempDir) {
         let dir = TempDir::new().unwrap();
         let service = McpServerService::new(dir.path().to_path_buf());
-        (Arc::new(RwLock::new(service)), dir)
+        let canvas_state = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
+        (Arc::new(RwLock::new(service)), canvas_state, dir)
     }
 
     #[tokio::test]
     async fn test_dispatch_initialize() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 1,
@@ -239,7 +454,7 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -249,7 +464,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_tools_list() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 2,
@@ -257,17 +472,18 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 6);
+        // 6 collection tools + 6 canvas tools = 12 total
+        assert_eq!(tools.len(), 12);
     }
 
     #[tokio::test]
     async fn test_dispatch_tools_call_create_collection() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 3,
@@ -279,7 +495,7 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -288,7 +504,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_tools_call_unknown_tool() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 4,
@@ -300,7 +516,7 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         // Tool errors are returned as success with is_error=true
         assert!(parsed.error.is_none());
@@ -310,7 +526,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_tools_call_missing_params() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 5,
@@ -318,7 +534,7 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         assert_eq!(parsed.error.unwrap().code, -32602);
@@ -326,7 +542,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_unknown_method() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 6,
@@ -334,7 +550,7 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         let err = parsed.error.unwrap();
@@ -344,21 +560,23 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_notification_returns_none() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "method": "notifications/initialized"
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await;
+        let resp = dispatch(&req, &service, &canvas_state, None).await;
         assert!(resp.is_none());
     }
 
     #[tokio::test]
     async fn test_dispatch_parse_error() {
-        let (service, _dir) = make_service();
-        let resp = dispatch("not valid json", &service).await.unwrap();
+        let (service, canvas_state, _dir) = make_service();
+        let resp = dispatch("not valid json", &service, &canvas_state, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         assert_eq!(parsed.error.unwrap().code, -32700);
@@ -366,7 +584,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_ping() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 7,
@@ -374,14 +592,14 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
     }
 
     #[tokio::test]
     async fn test_dispatch_string_id() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": "abc-123",
@@ -389,7 +607,7 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert_eq!(parsed.id, Some(JsonRpcId::String("abc-123".to_string())));
     }
@@ -399,7 +617,7 @@ mod tests {
         use crate::domain::mcp::transport::Transport;
         use crate::infrastructure::mcp::fake_transport::FakeTransport;
 
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
         let transport = FakeTransport::new();
 
         // Inject initialize request
@@ -415,7 +633,7 @@ mod tests {
         // Read from receiver, dispatch, send response
         let mut rx = transport.receiver().await;
         let msg = rx.recv().await.unwrap();
-        if let Some(response) = dispatch(&msg, &service).await {
+        if let Some(response) = dispatch(&msg, &service, &canvas_state, None).await {
             transport.send(response).await.unwrap();
         }
 
@@ -457,7 +675,7 @@ mod tests {
             stream.write_all(response.as_bytes()).unwrap();
         });
 
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
 
         // Create collection
         let create_req = json!({
@@ -465,7 +683,9 @@ mod tests {
             "params": { "name": "create_collection", "arguments": { "name": "Test" } }
         })
         .to_string();
-        let resp = dispatch(&create_req, &service).await.unwrap();
+        let resp = dispatch(&create_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let create_result = parsed.result.unwrap();
         let content_text: serde_json::Value =
@@ -486,7 +706,9 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&add_req, &service).await.unwrap();
+        let resp = dispatch(&add_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let add_result = parsed.result.unwrap();
         let add_text: serde_json::Value =
@@ -506,7 +728,9 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&exec_req, &service).await.unwrap();
+        let resp = dispatch(&exec_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none(), "JSON-RPC should succeed");
         let exec_result = parsed.result.unwrap();
@@ -524,7 +748,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_execute_request_missing_collection() {
-        let (service, _dir) = make_service();
+        let (service, canvas_state, _dir) = make_service();
 
         let exec_req = json!({
             "jsonrpc": "2.0", "id": 1, "method": "tools/call",
@@ -537,7 +761,9 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&exec_req, &service).await.unwrap();
+        let resp = dispatch(&exec_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(
             parsed.error.is_none(),
@@ -548,5 +774,35 @@ mod tests {
             result["isError"].as_bool().unwrap_or(false),
             "Tool should return error"
         );
+    }
+
+    #[test]
+    fn test_canvas_event_envelope_produces_ai_actor() {
+        use crate::domain::mcp::events::{Actor, EventEnvelope};
+
+        let payload = json!({"contextId": "tab_1"});
+        let envelope_value = canvas_event_envelope(payload.clone());
+
+        let envelope: EventEnvelope = serde_json::from_value(envelope_value).unwrap();
+
+        // Verify actor is AI with no model/session info
+        assert_eq!(
+            envelope.actor,
+            Actor::Ai {
+                model: None,
+                session_id: None
+            }
+        );
+
+        // Verify payload is preserved
+        assert_eq!(envelope.payload, payload);
+
+        // Verify timestamp is present and valid ISO 8601
+        assert!(!envelope.timestamp.is_empty());
+        chrono::DateTime::parse_from_rfc3339(&envelope.timestamp).unwrap();
+
+        // Verify optional fields are None
+        assert!(envelope.correlation_id.is_none());
+        assert!(envelope.lamport.is_none());
     }
 }

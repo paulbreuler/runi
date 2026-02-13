@@ -35,6 +35,7 @@ describe('feature flag types', () => {
       'connectionLines',
       'enabled',
       'minimap',
+      'popout',
       'snapToGrid',
     ]);
   });

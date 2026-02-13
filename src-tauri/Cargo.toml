@@ -41,9 +41,10 @@ tokio-stream = "0.1"
 aes-gcm = "0.10.3"
 base64 = "0.22.1"
 keyring = "3.6"
+# Type generation
+ts-rs = "12"
 
 [dev-dependencies]
-ts-rs = "12"
 serial_test = "3"
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }

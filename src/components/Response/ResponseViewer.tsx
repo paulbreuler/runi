@@ -10,15 +10,21 @@ import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLangua
 import { motion, useReducedMotion } from 'motion/react';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
+import { TimingWaterfall } from '@/components/History/TimingWaterfall';
+import { calculateWaterfallSegments } from '@/types/history';
 
 export interface ResponseViewerProps {
   /** Current response, or null while loading */
   response: HttpResponse | null;
   /** Slot rendered below the tab bar (e.g. VigilanceMonitor) */
   vigilanceSlot?: React.ReactNode;
+  /** Active tab ID override */
+  activeTab?: TabId;
+  /** Callback when tab changes */
+  onTabChange?: (tabId: TabId) => void;
 }
 
-type TabId = 'body' | 'headers' | 'raw';
+export type TabId = 'body' | 'headers' | 'timing' | 'raw';
 
 interface Tab {
   id: TabId;
@@ -28,6 +34,7 @@ interface Tab {
 const tabs: Tab[] = [
   { id: 'body', label: 'Body' },
   { id: 'headers', label: 'Headers' },
+  { id: 'timing', label: 'Timing' },
   { id: 'raw', label: 'Raw' },
 ];
 
@@ -93,8 +100,16 @@ function getStatusTextClass(status: number): string {
 export const ResponseViewer = ({
   response,
   vigilanceSlot,
+  activeTab: activeTabProp,
+  onTabChange,
 }: ResponseViewerProps): React.JSX.Element => {
-  const [activeTab, setActiveTab] = useState<TabId>('body');
+  const [internalActiveTab, setInternalActiveTab] = useState<TabId>('body');
+  const activeTab = activeTabProp ?? internalActiveTab;
+  const setActiveTab = (tabId: TabId): void => {
+    setInternalActiveTab(tabId);
+    onTabChange?.(tabId);
+  };
+
   const prefersReducedMotion = useReducedMotion() === true;
   const tabScrollRef = useRef<HTMLDivElement>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
@@ -185,6 +200,8 @@ export const ResponseViewer = ({
     ? { duration: 0 }
     : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' as const };
 
+  const segments = response !== null ? calculateWaterfallSegments(response.timing) : undefined;
+
   return (
     <div className="h-full flex flex-col" data-test-id="response-viewer">
       <Tabs.Root
@@ -206,7 +223,9 @@ export const ResponseViewer = ({
             >
               <BaseTabsList
                 activeTab={activeTab}
-                onTabChange={setActiveTab}
+                onTabChange={(id) => {
+                  setActiveTab(id);
+                }}
                 tabs={tabs.map((tab) => ({
                   value: tab.id,
                   testId: `response-tab-${tab.id}`,
@@ -309,6 +328,35 @@ export const ResponseViewer = ({
                       <span className="text-text-secondary break-all">{value}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+          </Tabs.Panel>
+
+          <Tabs.Panel
+            value="timing"
+            className="h-full min-h-0"
+            tabIndex={-1}
+            data-test-id="response-timing-panel"
+          >
+            {response !== null && (
+              <div className="p-4 h-full min-h-0 overflow-auto">
+                <div className="bg-bg-raised rounded border border-border-default p-4 space-y-5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                      Timing Waterfall
+                    </span>
+                    <span className="text-sm font-mono text-text-primary">
+                      {response.timing.total_ms}ms
+                    </span>
+                  </div>
+                  <TimingWaterfall
+                    segments={segments}
+                    totalMs={response.timing.total_ms}
+                    showLegend
+                    height="h-7"
+                    showInlineLabels
+                  />
                 </div>
               </div>
             )}

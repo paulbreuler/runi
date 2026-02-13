@@ -52,6 +52,9 @@
   --color-border-default: oklch(0.6 0.01 240 / 65%);
   --color-border-emphasis: oklch(0.75 0.01 240 / 75%);
 
+  /* Focus ring token - Blue focus indicator */
+  --color-ring: oklch(0.82 0.15 230);
+
   /* Signal Colors - High chroma and lightness to cut through glare */
   --color-signal-success: oklch(0.85 0.15 150);
   --color-signal-success-rgba-15: oklch(0.85 0.15 150 / 15%);
@@ -137,6 +140,13 @@ body {
 }
 
 @layer base {
+  /* Suppress focus rings globally when using a mouse.
+     Highlights should only appear during keyboard/voice navigation. */
+  html[data-intent='mouse'] *:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   * {
     /* Focus indicator: use focusRingClasses on interactive elements; no global outline to avoid double indicators */
     @apply border-border-subtle;
@@ -196,7 +206,7 @@ body {
 
   /* Vigilance Monitor Progress Animation */
   .vigilance-progress {
-    height: 2px;
+    height: 1px;
     background: linear-gradient(
       to right,
       var(--color-signal-ai) 0%,
@@ -209,7 +219,7 @@ body {
 
   /* Vigilance Monitor Idle State - Static line, same height as active to prevent layout shift */
   .vigilance-progress-idle {
-    height: 2px;
+    height: 1px;
     background: var(--color-border-subtle);
   }
 

@@ -106,7 +106,7 @@ export const UrlBar = ({
             'relative min-w-24 w-auto h-7 font-mono text-xs font-semibold bg-transparent border-0 transition-all duration-300 whitespace-nowrap',
             compositeFocusItemClasses,
             methodColor,
-            'hover:brightness-125 focus:brightness-125'
+            'hover:brightness-125 focus-visible:brightness-125'
           )}
           data-test-id="method-select"
           disabled={loading}

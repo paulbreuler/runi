@@ -7,6 +7,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TitleBar } from './TitleBar';
 import { globalEventBus } from '@/events/bus';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import type { CanvasContextDescriptor } from '@/types/canvas';
 import * as platformUtils from '@/utils/platform';
 
 // Mock Tauri window API
@@ -48,6 +50,8 @@ describe('TitleBar', () => {
     vi.mocked(platformUtils.isMacSync).mockReturnValue(true);
     mockUseWindowFocus.mockReturnValue(true);
     vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+    // Reset canvas store
+    useCanvasStore.getState().reset();
   });
 
   afterEach(() => {
@@ -393,6 +397,61 @@ describe('TitleBar', () => {
       const minimizeButton = screen.getByTestId('titlebar-minimize');
       fireEvent.click(minimizeButton);
       expect(getCurrentWindow).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('context tabs integration', () => {
+    it('always shows title (tabs moved to TabBar)', () => {
+      const { registerContext } = useCanvasStore.getState();
+
+      const context1: CanvasContextDescriptor = {
+        id: 'test-1',
+        label: 'Test 1',
+        order: 0,
+        panels: {},
+        layouts: [],
+      };
+      const context2: CanvasContextDescriptor = {
+        id: 'test-2',
+        label: 'Test 2',
+        order: 1,
+        panels: {},
+        layouts: [],
+      };
+
+      registerContext(context1);
+      registerContext(context2);
+
+      render(<TitleBar />);
+
+      // Title should still show (tabs are now in TabBar, not TitleBar)
+      expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
+      expect(screen.queryByTestId('context-tabs-scroll')).not.toBeInTheDocument();
+    });
+
+    it('shows title when no contexts registered', () => {
+      render(<TitleBar />);
+
+      expect(screen.getByTestId('titlebar-title')).toBeInTheDocument();
+      expect(screen.queryByTestId('context-tabs-scroll')).not.toBeInTheDocument();
+    });
+
+    it('tabs respect drag region', () => {
+      const { registerContext } = useCanvasStore.getState();
+
+      registerContext({
+        id: 'test-1',
+        label: 'Test 1',
+        order: 0,
+        panels: {},
+        layouts: [],
+      });
+
+      const { container } = render(<TitleBar />);
+
+      // Check that there are multiple elements with data-tauri-drag-region
+      const dragRegions = container.querySelectorAll('[data-tauri-drag-region]');
+      expect(dragRegions.length).toBeGreaterThan(0);
     });
   });
 });

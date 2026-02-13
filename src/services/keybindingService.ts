@@ -94,17 +94,19 @@ export class KeybindingService {
       return;
     }
 
-    // Don't intercept shortcuts when user is typing in an editable element
-    // (checked early to avoid store lookup on every modified keypress in inputs)
-    if (e.target instanceof Element && isEditableElement(e.target)) {
-      return;
-    }
-
     // Look up the command for this key combo
     const { getCommandForKey } = useKeybindingStore.getState();
     const commandId = getCommandForKey(e.key, modifiers);
 
     if (commandId === undefined) {
+      return;
+    }
+
+    // Don't intercept shortcuts when user is typing in an editable element
+    // EXCEPT for specific global commands like commandbar.toggle or settings.toggle.
+    const isGlobalExemption = commandId === 'commandbar.toggle' || commandId === 'settings.toggle';
+
+    if (!isGlobalExemption && e.target instanceof Element && isEditableElement(e.target)) {
       return;
     }
 

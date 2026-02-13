@@ -177,7 +177,7 @@ test.describe('Console Panel', () => {
     expect(warnButtonText).toContain('2');
 
     // Info button should show badge with count 3
-    const infoButton = page.locator('[data-test-id="segment-info"]');
+    const infoButton = page.locator('[data-test-id="console-filter-info"]');
     await expect(infoButton).toBeVisible();
     const infoButtonText = await infoButton.textContent();
     expect(infoButtonText).toContain('3');

@@ -188,6 +188,9 @@ impl McpServerService {
     /// # Errors
     ///
     /// Returns an error if the tool is not found or the call fails.
+    ///
+    /// Note: Canvas tools (`canvas_list_tabs`, `canvas_get_active_tab`, etc.) require
+    /// external state and are handled separately in the dispatcher.
     pub fn call_tool(
         &mut self,
         name: &str,
@@ -200,10 +203,20 @@ impl McpServerService {
             "add_request" => self.handle_add_request(&args),
             "update_request" => self.handle_update_request(&args),
             "delete_collection" => self.handle_delete_collection(&args),
+            // Canvas tools are handled in dispatcher with external state
+            "canvas_list_tabs"
+            | "canvas_get_active_tab"
+            | "canvas_list_templates"
+            | "canvas_switch_tab"
+            | "canvas_open_request_tab"
+            | "canvas_close_tab" => Err(format!(
+                "Canvas tool '{name}' must be handled by dispatcher"
+            )),
             _ => Err(format!("Unknown tool: {name}")),
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn register_tools(&mut self) {
         self.tools = vec![
             tool_def(
@@ -276,6 +289,64 @@ impl McpServerService {
                         "timeout_ms": { "type": "integer", "description": "Request timeout in milliseconds (default: 30000)" }
                     },
                     "required": ["collection_id", "request_id"]
+                }),
+            ),
+            // Canvas observation tools (Phase 1)
+            tool_def(
+                "canvas_list_tabs",
+                "List all open context tabs in the canvas. Returns tab IDs, labels, and types.",
+                json!({
+                    "type": "object",
+                    "properties": {}
+                }),
+            ),
+            tool_def(
+                "canvas_get_active_tab",
+                "Get the currently active tab in the canvas. Returns null if no tab is active.",
+                json!({
+                    "type": "object",
+                    "properties": {}
+                }),
+            ),
+            tool_def(
+                "canvas_list_templates",
+                "List all available templates (OpenAPI specs, workflows, etc).",
+                json!({
+                    "type": "object",
+                    "properties": {}
+                }),
+            ),
+            // Canvas mutation tools (Phase 2)
+            tool_def(
+                "canvas_switch_tab",
+                "Switch to a different tab by ID. Emits canvas:switch_tab event.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "tab_id": { "type": "string", "description": "ID of the tab to switch to" }
+                    },
+                    "required": ["tab_id"]
+                }),
+            ),
+            tool_def(
+                "canvas_open_request_tab",
+                "Open a new request tab in the canvas. Emits canvas:open_request_tab event.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "label": { "type": "string", "description": "Label for the new tab (default: 'Request')" }
+                    }
+                }),
+            ),
+            tool_def(
+                "canvas_close_tab",
+                "Close a tab by ID. Emits canvas:close_tab event.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "tab_id": { "type": "string", "description": "ID of the tab to close" }
+                    },
+                    "required": ["tab_id"]
                 }),
             ),
         ];
@@ -531,17 +602,26 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_six_tools() {
+    fn test_registers_twelve_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
-        assert_eq!(tools.len(), 6);
+        // 6 collection tools + 6 canvas tools = 12 total
+        assert_eq!(tools.len(), 12);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
+        // Collection tools
         assert!(names.contains(&"create_collection"));
         assert!(names.contains(&"list_collections"));
         assert!(names.contains(&"add_request"));
         assert!(names.contains(&"update_request"));
         assert!(names.contains(&"delete_collection"));
         assert!(names.contains(&"execute_request"));
+        // Canvas tools
+        assert!(names.contains(&"canvas_list_tabs"));
+        assert!(names.contains(&"canvas_get_active_tab"));
+        assert!(names.contains(&"canvas_list_templates"));
+        assert!(names.contains(&"canvas_switch_tab"));
+        assert!(names.contains(&"canvas_open_request_tab"));
+        assert!(names.contains(&"canvas_close_tab"));
     }
 
     #[test]

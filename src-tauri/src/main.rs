@@ -16,7 +16,7 @@ use infrastructure::commands::{
     cmd_write_frontend_error_report, create_proxy_service, delete_history_entry, get_config_dir,
     get_history_batch, get_history_count, get_history_ids, get_platform, get_process_startup_time,
     get_system_specs, hello_world, load_feature_flags, load_request_history, save_request_history,
-    set_log_level, write_startup_timing,
+    set_log_level, sync_canvas_state, write_startup_timing,
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
@@ -50,6 +50,9 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(create_mcp_server_state())
+        .manage(std::sync::Arc::new(tokio::sync::RwLock::new(
+            domain::canvas_state::CanvasStateSnapshot::new(),
+        )))
         .setup(move |app| {
             #[cfg(debug_assertions)]
             {
@@ -122,6 +125,7 @@ pub fn run() {
             cmd_write_frontend_error_report,
             set_log_level,
             write_startup_timing,
+            sync_canvas_state,
             mcp_server_start,
             mcp_server_stop,
             mcp_server_status

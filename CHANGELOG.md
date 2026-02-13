@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Context-aware canvas architecture for multi-view support
+- ContextBar with tab navigation and layout picker
+- Layout system with preset and generic layouts
+- RequestContext as pluggable context (first context)
+- Popout window support for contexts
+- Keyboard shortcuts: Cmd+[ (prev layout), Cmd+] (next layout), Cmd+1 (Request)
+
+### Changed
+- Request/Response view now rendered via canvas architecture
+- ActionButtons moved from TitleBar to RequestCanvasToolbar
+- TitleBar simplified to title + settings only
+
+### Internal
+- Canvas foundation: types, store, events, popout hook
+- CanvasHost component for dynamic panel arrangement
+- LayoutPicker component for layout selection
+- ContextBar component for context tabs
+
 ## [0.7.0](https://github.com/paulbreuler/runi/compare/runi-v0.6.0...runi-v0.7.0) (2026-02-08)
 
 

@@ -9,6 +9,8 @@ import userEvent from '@testing-library/user-event';
 import { HomePage } from './index';
 import { useRequestStore } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { requestContextDescriptor } from '@/contexts/RequestContext/descriptor';
 import { executeRequest } from '@/api/http';
 
 // Mock the stores
@@ -16,10 +18,16 @@ vi.mock('@/stores/useRequestStore');
 vi.mock('@/stores/useHistoryStore');
 vi.mock('@/api/http');
 
-// Mock useTabSync — it's tested in its own test file.
+// Mock useContextSync — it's tested in its own test file.
 // Mocking prevents it from crashing when useRequestStore is mocked.
-vi.mock('@/hooks/useTabSync', () => ({
-  useTabSync: vi.fn(),
+vi.mock('@/hooks/useContextSync', () => ({
+  useContextSync: vi.fn(),
+}));
+
+// Mock useCanvasStateSync — it's tested in its own test file.
+// Mocking prevents Tauri API calls in JSDOM environment.
+vi.mock('@/hooks/useCanvasStateSync', () => ({
+  useCanvasStateSync: vi.fn(),
 }));
 
 // Mock event bus (needed for toast emission tests)
@@ -49,6 +57,13 @@ describe('HomePage - Auto-save to history', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Set up canvas store with template and a default request tab
+    // (since useContextSync is mocked, we need to do this manually)
+    const store = useCanvasStore.getState();
+    store.reset();
+    store.registerTemplate(requestContextDescriptor);
+    store.openRequestTab();
 
     // Mock request store
     vi.mocked(useRequestStore).mockImplementation((selector) => {
@@ -132,8 +147,8 @@ describe('HomePage - Auto-save to history', () => {
     render(<HomePage />);
 
     // Find URL input and send button
-    const urlInput = screen.getByLabelText('Request URL');
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
 
     // Enter URL and send request
     await user.clear(urlInput);
@@ -169,8 +184,8 @@ describe('HomePage - Auto-save to history', () => {
 
     render(<HomePage />);
 
-    const urlInput = screen.getByLabelText('Request URL');
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
 
     await user.clear(urlInput);
     await user.type(urlInput, 'https://httpbin.org/get');
@@ -233,8 +248,8 @@ describe('HomePage - Auto-save to history', () => {
 
     render(<HomePage />);
 
-    const urlInput = screen.getByLabelText('Request URL');
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const urlInput = screen.getByTestId('url-input');
+    const sendButton = screen.getByTestId('send-button');
 
     await user.clear(urlInput);
     await user.type(urlInput, 'https://httpbin.org/post');
@@ -258,7 +273,7 @@ describe('HomePage - Auto-save to history', () => {
 
   it('syncs URL and method from request store updates', async () => {
     const { rerender } = render(<HomePage />);
-    const urlInput = screen.getByLabelText<HTMLInputElement>('Request URL');
+    const urlInput = screen.getByTestId<HTMLInputElement>('url-input');
 
     expect(urlInput.value).toBe('https://httpbin.org/get');
 
@@ -286,12 +301,12 @@ describe('HomePage - Auto-save to history', () => {
   });
 
   // Event-driven tests (history.entry-selected, collection.request-selected) are now tested
-  // in useTabSync.test.ts. HomePage delegates to useTabSync for event handling.
-  describe('Tab sync delegation', () => {
-    it('calls useTabSync hook', async () => {
-      const { useTabSync } = await import('@/hooks/useTabSync');
+  // in useContextSync.test.ts. HomePage delegates to useContextSync for event handling.
+  describe('Context sync delegation', () => {
+    it('calls useContextSync hook', async () => {
+      const { useContextSync } = await import('@/hooks/useContextSync');
       render(<HomePage />);
-      expect(useTabSync).toHaveBeenCalled();
+      expect(useContextSync).toHaveBeenCalled();
     });
   });
 });

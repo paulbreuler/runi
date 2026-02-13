@@ -109,6 +109,12 @@ Every UI action must be achievable via MCP tool (AI is a native co-driver):
 5. **Subscribe in UI** — Component subscribes to event, updates state regardless of actor
 6. **Test both paths** — Verify UI click and MCP tool produce identical results
 
+### MCP-First Live Validation
+
+- For live repro/debug/verification in runi, drive the running application through MCP tools.
+- Use Follow Agent / Watch Agent flows so MCP actions are visible in the UI.
+- Do not use Playwright as a fallback for Tauri runtime validation.
+
 **Decision table:**
 
 | Feature type                           | MCP tool required? |
@@ -173,7 +179,8 @@ Every UI action must be achievable via MCP tool (AI is a native co-driver):
 
 - **Unit tests**: Always required (≥85% coverage)
 - **Integration tests**: For multi-component interactions
-- **E2E tests**: For user-facing features and complex interactions (Playwright)
+- **Runtime validation**: MCP-driven live UI interaction against the running app (mandatory for UI behavior verification)
+- **E2E tests**: Optional/secondary automation only; not a fallback for Tauri live validation
 - **Migration tests**: Required for overhauls that change data structures or APIs
 - **Performance tests**: Required for data-heavy features (include thresholds, e.g., render 1000 rows in <500ms)
 

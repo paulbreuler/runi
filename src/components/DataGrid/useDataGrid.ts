@@ -63,6 +63,9 @@ export interface UseDataGridOptions<TData> {
   /** Initial expansion state */
   initialExpanded?: ExpandedState;
 
+  /** Enable multiple rows to be expanded simultaneously (defaults to false) */
+  enableMultiExpansion?: boolean;
+
   /** Custom function to get unique row ID */
   getRowId?: (originalRow: TData, index: number, parent?: unknown) => string;
 
@@ -184,6 +187,7 @@ export function useDataGrid<TData>({
   initialRowSelection = {},
   enableExpanding = false,
   initialExpanded = {},
+  enableMultiExpansion = false,
   getRowId,
   getRowCanExpand,
   // Column features (Phase 8)
@@ -229,6 +233,44 @@ export function useDataGrid<TData>({
 
   // Expanded rows state
   const [expanded, setExpanded] = useState<ExpandedState>(initialExpanded);
+
+  // Wrap setExpanded to enforce single expansion if requested
+  const handleExpandedChange: OnChangeFn<ExpandedState> = useCallback(
+    (updater) => {
+      setExpanded((old) => {
+        const next = typeof updater === 'function' ? updater(old) : updater;
+
+        // If multi-expansion is disabled, only keep the newest expanded row
+        if (!enableMultiExpansion) {
+          const oldRecord = old as Record<string, boolean>;
+          const nextRecord = next as Record<string, boolean>;
+
+          const oldKeys = Object.keys(oldRecord).filter((key) => oldRecord[key] === true);
+          const nextKeys = Object.keys(nextRecord).filter((key) => nextRecord[key] === true);
+
+          // Find if a new row was expanded
+          const newlyExpanded = nextKeys.find((key) => !oldKeys.includes(key));
+
+          if (newlyExpanded !== undefined) {
+            // Only keep the newly expanded row
+            return { [newlyExpanded]: true };
+          }
+
+          // If no new row was expanded (e.g., one was collapsed),
+          // return next but ensure it has at most one key
+          if (nextKeys.length > 1) {
+            const lastKey = nextKeys[nextKeys.length - 1];
+            if (lastKey !== undefined) {
+              return { [lastKey]: true };
+            }
+          }
+        }
+
+        return next;
+      });
+    },
+    [enableMultiExpansion]
+  );
 
   // === Column Features State (Phase 8) ===
 
@@ -304,7 +346,7 @@ export function useDataGrid<TData>({
       onColumnFiltersChange: setColumnFilters,
       onGlobalFilterChange: setGlobalFilter,
       onRowSelectionChange: setRowSelection,
-      onExpandedChange: setExpanded,
+      onExpandedChange: handleExpandedChange,
       // Column features handlers
       onColumnSizingChange: setColumnSizing,
       onColumnOrderChange: setColumnOrder,
@@ -330,6 +372,7 @@ export function useDataGrid<TData>({
       globalFilter,
       rowSelection,
       expanded,
+      handleExpandedChange,
       columnSizing,
       columnOrder,
       columnPinning,

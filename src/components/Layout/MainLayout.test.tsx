@@ -15,6 +15,43 @@ vi.mock('@/components/CommandBar/CommandBar', () => ({
   CommandBar: (): null => null,
 }));
 
+// Mock ContextToolbar and CanvasHost - these are tested separately
+vi.mock('./ContextToolbar', () => ({
+  ContextToolbar: ({ className }: { className?: string }): React.JSX.Element => (
+    <div data-test-id="context-toolbar" className={className}>
+      Context Toolbar
+    </div>
+  ),
+}));
+
+vi.mock('./CanvasHost', () => ({
+  CanvasHost: ({ className }: { className?: string }): React.JSX.Element => (
+    <div data-test-id="canvas-host" className={className}>
+      Canvas Host
+    </div>
+  ),
+}));
+
+// Mock SettingsPanel - tested separately
+vi.mock('@/components/Settings/SettingsPanel', () => ({
+  SettingsPanel: ({
+    isOpen,
+    onClose,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+  }): React.JSX.Element => (
+    <div data-test-id="settings-panel">
+      Settings Panel
+      {isOpen && (
+        <button onClick={onClose} data-test-id="close-settings">
+          Close
+        </button>
+      )}
+    </div>
+  ),
+}));
+
 // Mock Motion to avoid animation delays and strip motion-only props from DOM
 vi.mock('motion/react', async () => {
   const actual = await vi.importActual('motion/react');
@@ -136,17 +173,11 @@ describe('MainLayout', () => {
   });
 
   describe('Basic Rendering', () => {
-    it('renders with request and response panes', () => {
-      render(
-        <MainLayout
-          requestContent={<div>Request Content</div>}
-          responseContent={<div>Response Content</div>}
-        />
-      );
+    it('renders with context bar and canvas host', () => {
+      render(<MainLayout />);
 
-      expect(screen.getByTestId('request-pane')).toBeInTheDocument();
-      expect(screen.getByTestId('response-pane')).toBeInTheDocument();
-      expect(screen.getByTestId('pane-resizer')).toBeInTheDocument();
+      expect(screen.getByTestId('context-toolbar')).toBeInTheDocument();
+      expect(screen.getByTestId('canvas-host')).toBeInTheDocument();
     });
 
     it('renders sidebar when visible', () => {
@@ -170,50 +201,34 @@ describe('MainLayout', () => {
     });
   });
 
-  describe('Pane Resizing', () => {
-    it('panes start at 50/50 split', () => {
+  // Pane resizing tests removed - functionality moved to CanvasHost (tested separately)
+
+  describe('Canvas Integration', () => {
+    it('renders ContextBar', () => {
       render(<MainLayout />);
-
-      const requestPane = screen.getByTestId('request-pane');
-      const responsePane = screen.getByTestId('response-pane');
-
-      // Both panes should exist and be rendered
-      // In mocked Motion, width is set via style attribute or transform
-      // The actual width calculation is tested in E2E tests
-      expect(requestPane).toBeInTheDocument();
-      expect(responsePane).toBeInTheDocument();
-
-      // Check that they have style attributes (MotionValues set width)
-      const requestStyle = requestPane.getAttribute('style');
-      const responseStyle = responsePane.getAttribute('style');
-      expect(requestStyle).toBeTruthy();
-      expect(responseStyle).toBeTruthy();
+      expect(screen.getByTestId('context-toolbar')).toBeInTheDocument();
     });
 
-    it('pane resizer has correct accessibility attributes', () => {
+    it('renders CanvasHost', () => {
       render(<MainLayout />);
-
-      const resizer = screen.getByTestId('pane-resizer');
-      expect(resizer).toHaveAttribute('role', 'separator');
-      expect(resizer).toHaveAttribute('aria-label', 'Resize panes');
-      expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
-      expect(resizer).toHaveAttribute('aria-valuenow', '50');
-      expect(resizer).toHaveAttribute('aria-valuemin', '20');
-      expect(resizer).toHaveAttribute('aria-valuemax', '80');
+      const canvasHost = screen.getByTestId('canvas-host');
+      expect(canvasHost).toBeInTheDocument();
+      expect(canvasHost).toHaveClass('flex-1');
     });
 
-    it('pane resizer has col-resize cursor', () => {
+    it('no longer accepts requestContent, responseContent, or actionButtons props', () => {
+      // TypeScript will catch this at compile time, but verify the props are removed
       render(<MainLayout />);
 
-      const resizer = screen.getByTestId('pane-resizer');
-      expect(resizer).toHaveClass('cursor-col-resize');
-    });
+      // MainLayout should render without these props
+      expect(screen.getByTestId('main-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('context-toolbar')).toBeInTheDocument();
+      expect(screen.getByTestId('canvas-host')).toBeInTheDocument();
 
-    it('pane resizer has touch-none for pointer capture', () => {
-      render(<MainLayout />);
-
-      const resizer = screen.getByTestId('pane-resizer');
-      expect(resizer).toHaveClass('touch-none');
+      // Old pane elements should not exist
+      expect(screen.queryByTestId('request-pane')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('response-pane')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('pane-resizer')).not.toBeInTheDocument();
     });
   });
 
@@ -285,21 +300,6 @@ describe('MainLayout', () => {
     });
   });
 
-  describe('Scrollbar Stability', () => {
-    it('panes have scrollbar-gutter stable for preventing flashing', () => {
-      render(<MainLayout />);
-
-      const requestPane = screen.getByTestId('request-pane');
-      const responsePane = screen.getByTestId('response-pane');
-      const container = screen.getByTestId('pane-container');
-
-      // Check inline styles for scrollbar-gutter
-      expect(requestPane).toHaveStyle({ scrollbarGutter: 'stable' });
-      expect(responsePane).toHaveStyle({ scrollbarGutter: 'stable' });
-      expect(container).toHaveStyle({ scrollbarGutter: 'stable' });
-    });
-  });
-
   describe('Custom Content', () => {
     it('renders custom header content', () => {
       render(<MainLayout headerContent={<div data-test-id="custom-header">Custom Header</div>} />);
@@ -309,21 +309,7 @@ describe('MainLayout', () => {
       expect(screen.queryByTestId('header-bar')).not.toBeInTheDocument();
     });
 
-    it('renders custom request content', () => {
-      render(
-        <MainLayout requestContent={<div data-test-id="custom-request">Custom Request</div>} />
-      );
-
-      expect(screen.getByTestId('custom-request')).toBeInTheDocument();
-    });
-
-    it('renders custom response content', () => {
-      render(
-        <MainLayout responseContent={<div data-test-id="custom-response">Custom Response</div>} />
-      );
-
-      expect(screen.getByTestId('custom-response')).toBeInTheDocument();
-    });
+    // Request/response content tests removed - content is now managed by CanvasHost
   });
 
   describe('Initial Sidebar State', () => {
@@ -344,37 +330,7 @@ describe('MainLayout', () => {
     });
   });
 
-  describe('Performance and Animations', () => {
-    it('uses MotionValues for immediate updates during drag', () => {
-      render(<MainLayout />);
-
-      // The component should use MotionValues internally
-      // This is verified by the presence of motion components
-      const requestPane = screen.getByTestId('request-pane');
-      const responsePane = screen.getByTestId('response-pane');
-
-      // Both should have style attributes (MotionValues set width via style)
-      // In mocked Motion, style may be set differently, but should exist
-      const requestStyle = requestPane.getAttribute('style');
-      const responseStyle = responsePane.getAttribute('style');
-
-      // Style should exist (may contain scrollbar-gutter or width)
-      expect(requestStyle).toBeTruthy();
-      expect(responseStyle).toBeTruthy();
-    });
-
-    it('disables layout animations during drag', () => {
-      render(<MainLayout />);
-
-      const requestPane = screen.getByTestId('request-pane');
-      const responsePane = screen.getByTestId('response-pane');
-
-      // Components should have layout prop (controlled by isDragging state)
-      // This is tested via interaction tests
-      expect(requestPane).toBeInTheDocument();
-      expect(responsePane).toBeInTheDocument();
-    });
-  });
+  // Performance and animation tests removed - pane functionality moved to CanvasHost
 
   describe('Sidebar Drag-to-Close', () => {
     it('does not collapse when dragged slightly toward the edge', () => {
@@ -498,15 +454,6 @@ describe('MainLayout', () => {
   });
 
   describe('Visual Feedback', () => {
-    it('resizer has hover styles', () => {
-      render(<MainLayout />);
-
-      const resizer = screen.getByTestId('pane-resizer');
-
-      // Should have hover class for background hint
-      expect(resizer).toHaveClass('hover:bg-border-subtle/50');
-    });
-
     it('sidebar resizer has hover styles', () => {
       render(<MainLayout />);
 
@@ -516,40 +463,10 @@ describe('MainLayout', () => {
       expect(resizer).toHaveClass('hover:bg-border-subtle/50');
     });
 
-    it('resizer has minimal styling (transparent at rest)', () => {
-      render(<MainLayout />);
-
-      const resizer = screen.getByTestId('pane-resizer');
-
-      // Should be transparent at rest (zen aesthetic)
-      expect(resizer).toHaveClass('bg-transparent');
-    });
+    // Pane resizer tests removed - functionality moved to CanvasHost
   });
 
   describe('Resizer Positioning Strategy', () => {
-    it('pane resizer uses absolute positioning like sidebar (no flex flow interference)', () => {
-      render(<MainLayout />);
-
-      const resizer = screen.getByTestId('pane-resizer');
-
-      // Resizer must be absolutely positioned to avoid competing forces
-      // between Motion's drag transform and flex layout repositioning
-      expect(resizer).toHaveClass('absolute');
-    });
-
-    it('pane resizer is positioned at the split point via style transform', () => {
-      render(<MainLayout />);
-
-      const resizer = screen.getByTestId('pane-resizer');
-      const style = resizer.getAttribute('style') ?? '';
-
-      // Should have transform for centering on split point
-      // Note: The `left` style uses a MotionValue which Motion converts at runtime.
-      // In mocked tests, we verify the transform is present (translateX for centering).
-      // Full left positioning is verified via Storybook interactive tests.
-      expect(style).toContain('translateX(-50%)');
-    });
-
     it('sidebar resizer uses absolute positioning within sidebar', () => {
       render(<MainLayout />);
 
@@ -562,28 +479,7 @@ describe('MainLayout', () => {
       expect(sidebarResizer).toHaveClass('w-[2px]');
     });
 
-    it('panes are siblings without resizer in flex flow', () => {
-      render(<MainLayout />);
-
-      const container = screen.getByTestId('pane-container');
-      const requestPane = screen.getByTestId('request-pane');
-      const responsePane = screen.getByTestId('response-pane');
-      const resizer = screen.getByTestId('pane-resizer');
-
-      // All three should be direct children of container
-      expect(requestPane.parentElement).toBe(container);
-      expect(responsePane.parentElement).toBe(container);
-      expect(resizer.parentElement).toBe(container);
-
-      // Request and response should be adjacent in DOM (no resizer between)
-      // This verifies the resizer is absolutely positioned, not in flex flow
-      const children = Array.from(container.children);
-      const requestIndex = children.indexOf(requestPane);
-      const responseIndex = children.indexOf(responsePane);
-
-      // They should be adjacent (index difference of 1)
-      expect(Math.abs(responseIndex - requestIndex)).toBe(1);
-    });
+    // Pane resizer tests removed - functionality moved to CanvasHost
   });
 
   describe('DevTools Panel Integration', () => {
@@ -701,6 +597,26 @@ describe('MainLayout', () => {
     });
   });
 
+  describe('Settings Toggle', () => {
+    it('toggles settings open/close on button click', () => {
+      render(<MainLayout />);
+
+      const titleBar = screen.getByTestId('titlebar');
+      const settingsButton = within(titleBar).getByTestId('titlebar-settings');
+
+      // Settings should start closed
+      expect(screen.queryByTestId('settings-overlay')).not.toBeInTheDocument();
+
+      // Click to open
+      fireEvent.click(settingsButton);
+      expect(screen.getByTestId('settings-overlay')).toBeInTheDocument();
+
+      // Click to close
+      fireEvent.click(settingsButton);
+      expect(screen.queryByTestId('settings-overlay')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Panel Position and Sidebar Interaction', () => {
     it('auto-collapses sidebar when left dock is active', () => {
       // Start with sidebar visible
@@ -747,6 +663,62 @@ describe('MainLayout', () => {
 
       // Sidebar should still be hidden
       expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ContextToolbar Positioning', () => {
+    it('renders ContextToolbar in canvas column (not in header)', () => {
+      render(<MainLayout />);
+
+      const contextToolbar = screen.getByTestId('context-toolbar');
+      const canvasHost = screen.getByTestId('canvas-host');
+      const contentArea = screen.getByTestId('content-area');
+
+      // ContextToolbar should be present
+      expect(contextToolbar).toBeInTheDocument();
+
+      // CanvasHost should be present
+      expect(canvasHost).toBeInTheDocument();
+
+      // CanvasHost should be within content area
+      expect(contentArea).toContainElement(canvasHost);
+
+      // ContextToolbar should be a sibling of content-area (both in canvas column)
+      const canvasColumn = contentArea.parentElement;
+      expect(canvasColumn).toContainElement(contextToolbar);
+      expect(canvasColumn).toContainElement(contentArea);
+    });
+
+    it('renders ContextToolbar above content-area in DOM order', () => {
+      render(<MainLayout />);
+
+      const contentArea = screen.getByTestId('content-area');
+      const contextToolbar = screen.getByTestId('context-toolbar');
+
+      // Get the canvas column (parent of both)
+      const canvasColumn = contentArea.parentElement;
+      expect(canvasColumn).not.toBeNull();
+
+      // Get direct children of canvas column
+      const children = Array.from(canvasColumn?.children ?? []);
+
+      // Find indices
+      const toolbarIndex = children.indexOf(contextToolbar);
+      const contentAreaIndex = children.indexOf(contentArea);
+
+      // ContextToolbar should come before content-area
+      expect(toolbarIndex).toBeGreaterThanOrEqual(0);
+      expect(contentAreaIndex).toBeGreaterThanOrEqual(0);
+      expect(toolbarIndex).toBeLessThan(contentAreaIndex);
+    });
+
+    it('does NOT render ContextToolbar in header area', () => {
+      render(<MainLayout />);
+
+      const titleBar = screen.getByTestId('titlebar');
+
+      // ContextToolbar should NOT be in titlebar
+      expect(within(titleBar).queryByTestId('context-toolbar')).not.toBeInTheDocument();
     });
   });
 });

@@ -17,6 +17,8 @@ interface SegmentOption<T extends string> {
   badge?: number;
   /** Whether this option is disabled */
   disabled?: boolean;
+  /** Custom data-test-id for this option */
+  'data-test-id'?: string;
 }
 
 interface ActionBarSegmentProps<T extends string> {
