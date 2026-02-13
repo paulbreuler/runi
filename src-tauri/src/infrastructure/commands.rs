@@ -1368,6 +1368,7 @@ mod tests {
         // Simulate the sync_canvas_state logic (we can't use tauri::State in tests)
         let hint = CanvasEventHint::TabOpened {
             tab_id: "tab-1".to_string(),
+            label: "Test Tab".to_string(),
         };
         {
             let mut guard = state.write().await;
@@ -1465,6 +1466,7 @@ mod tests {
         // Simulate the sync_canvas_state logic
         let hint = CanvasEventHint::TabSwitched {
             tab_id: "tab-1".to_string(),
+            label: "Test Tab".to_string(),
         };
         {
             let mut guard = state.write().await;
@@ -1505,12 +1507,14 @@ mod tests {
             (
                 CanvasEventHint::TabOpened {
                     tab_id: "t1".to_string(),
+                    label: "Tab 1".to_string(),
                 },
                 "canvas:tab_opened",
             ),
             (
                 CanvasEventHint::TabClosed {
                     tab_id: "t2".to_string(),
+                    label: "Tab 2".to_string(),
                 },
                 "canvas:tab_closed",
             ),

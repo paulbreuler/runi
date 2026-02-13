@@ -102,7 +102,8 @@ interface DiffableState {
  */
 export function deriveEventHint(
   previous: DiffableState | null,
-  current: DiffableState
+  current: DiffableState,
+  contexts: Map<string, { id: string; label: string; contextType?: string }>
 ): CanvasEventHint {
   if (previous === null) {
     return { kind: 'state_sync' };
@@ -116,7 +117,8 @@ export function deriveEventHint(
     const prevSet = new Set(prevOrder);
     const newId = currOrder.find((id) => !prevSet.has(id));
     if (newId !== undefined) {
-      return { kind: 'tab_opened', tab_id: newId };
+      const label = contexts.get(newId)?.label ?? 'Unknown';
+      return { kind: 'tab_opened', tab_id: newId, label };
     }
   }
 
@@ -125,7 +127,9 @@ export function deriveEventHint(
     const currSet = new Set(currOrder);
     const removedId = prevOrder.find((id) => !currSet.has(id));
     if (removedId !== undefined) {
-      return { kind: 'tab_closed', tab_id: removedId };
+      // For closed tabs, try current contexts first, then previous state if available
+      const label = contexts.get(removedId)?.label ?? 'Unknown';
+      return { kind: 'tab_closed', tab_id: removedId, label };
     }
   }
 
@@ -135,7 +139,8 @@ export function deriveEventHint(
     current.activeContextId !== previous.activeContextId &&
     current.activeContextId !== null
   ) {
-    return { kind: 'tab_switched', tab_id: current.activeContextId };
+    const label = contexts.get(current.activeContextId)?.label ?? 'Unknown';
+    return { kind: 'tab_switched', tab_id: current.activeContextId, label };
   }
 
   return { kind: 'state_sync' };
@@ -218,10 +223,14 @@ export function useCanvasStateSync(): void {
         });
 
         // Derive event hint from state diff
-        const eventHint = deriveEventHint(previousStateRef.current, {
-          contextOrder: state.contextOrder,
-          activeContextId: state.activeContextId,
-        });
+        const eventHint = deriveEventHint(
+          previousStateRef.current,
+          {
+            contextOrder: state.contextOrder,
+            activeContextId: state.activeContextId,
+          },
+          state.contexts
+        );
 
         // Read and reset actor provenance
         const actor = aiMutationRef.current ? 'ai' : 'user';

@@ -643,47 +643,61 @@ describe('useCanvasStateSync', () => {
   });
 
   describe('deriveEventHint', () => {
+    const mockContexts = new Map([
+      ['tab-1', { id: 'tab-1', label: 'Tab 1' }],
+      ['tab-2', { id: 'tab-2', label: 'Tab 2' }],
+      ['tab-3', { id: 'tab-3', label: 'Tab 3' }],
+    ]);
+
     it('returns tab_opened when contextOrder grew', () => {
       const hint = deriveEventHint(
         { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
-        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' }
+        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
+        mockContexts
       );
 
-      expect(hint).toEqual({ kind: 'tab_opened', tab_id: 'tab-2' });
+      expect(hint).toEqual({ kind: 'tab_opened', tab_id: 'tab-2', label: 'Tab 2' });
     });
 
     it('returns tab_closed when contextOrder shrank', () => {
       const hint = deriveEventHint(
         { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
-        { contextOrder: ['tab-1'], activeContextId: 'tab-1' }
+        { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
+        mockContexts
       );
 
-      expect(hint).toEqual({ kind: 'tab_closed', tab_id: 'tab-2' });
+      expect(hint).toEqual({ kind: 'tab_closed', tab_id: 'tab-2', label: 'Tab 2' });
     });
 
     it('returns tab_switched when activeContextId changed with same length', () => {
       const hint = deriveEventHint(
         { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-1' },
-        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' }
+        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
+        mockContexts
       );
 
-      expect(hint).toEqual({ kind: 'tab_switched', tab_id: 'tab-2' });
+      expect(hint).toEqual({ kind: 'tab_switched', tab_id: 'tab-2', label: 'Tab 2' });
     });
 
     it('returns state_sync when nothing meaningful changed', () => {
       const hint = deriveEventHint(
         { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
-        { contextOrder: ['tab-1'], activeContextId: 'tab-1' }
+        { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
+        mockContexts
       );
 
       expect(hint).toEqual({ kind: 'state_sync' });
     });
 
     it('returns state_sync when previous state is null (initial mount)', () => {
-      const hint = deriveEventHint(null, {
-        contextOrder: ['tab-1'],
-        activeContextId: 'tab-1',
-      });
+      const hint = deriveEventHint(
+        null,
+        {
+          contextOrder: ['tab-1'],
+          activeContextId: 'tab-1',
+        },
+        mockContexts
+      );
 
       expect(hint).toEqual({ kind: 'state_sync' });
     });
@@ -691,19 +705,21 @@ describe('useCanvasStateSync', () => {
     it('identifies the correct new tab when multiple tabs exist', () => {
       const hint = deriveEventHint(
         { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
-        { contextOrder: ['tab-1', 'tab-2', 'tab-3'], activeContextId: 'tab-3' }
+        { contextOrder: ['tab-1', 'tab-2', 'tab-3'], activeContextId: 'tab-3' },
+        mockContexts
       );
 
-      expect(hint).toEqual({ kind: 'tab_opened', tab_id: 'tab-3' });
+      expect(hint).toEqual({ kind: 'tab_opened', tab_id: 'tab-3', label: 'Tab 3' });
     });
 
     it('identifies the correct removed tab', () => {
       const hint = deriveEventHint(
         { contextOrder: ['tab-1', 'tab-2', 'tab-3'], activeContextId: 'tab-2' },
-        { contextOrder: ['tab-1', 'tab-3'], activeContextId: 'tab-3' }
+        { contextOrder: ['tab-1', 'tab-3'], activeContextId: 'tab-3' },
+        mockContexts
       );
 
-      expect(hint).toEqual({ kind: 'tab_closed', tab_id: 'tab-2' });
+      expect(hint).toEqual({ kind: 'tab_closed', tab_id: 'tab-2', label: 'Tab 2' });
     });
   });
 

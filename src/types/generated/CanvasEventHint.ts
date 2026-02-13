@@ -10,15 +10,27 @@ export type CanvasEventHint = { "kind": "tab_opened",
 /**
  * The ID of the opened tab.
  */
-tab_id: string, } | { "kind": "tab_switched", 
+tab_id: string, 
+/**
+ * The user-friendly label of the opened tab.
+ */
+label: string, } | { "kind": "tab_switched", 
 /**
  * The ID of the tab that is now active.
  */
-tab_id: string, } | { "kind": "tab_closed", 
+tab_id: string, 
+/**
+ * The user-friendly label of the switched-to tab.
+ */
+label: string, } | { "kind": "tab_closed", 
 /**
  * The ID of the closed tab.
  */
-tab_id: string, } | { "kind": "layout_changed", 
+tab_id: string, 
+/**
+ * The user-friendly label of the closed tab.
+ */
+label: string, } | { "kind": "layout_changed", 
 /**
  * The context/tab ID where the layout changed.
  */
