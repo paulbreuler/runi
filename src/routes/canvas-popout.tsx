@@ -8,15 +8,29 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { CanvasHost } from '@/components/Layout/CanvasHost';
 import { globalEventBus } from '@/events/bus';
+import { requestContextDescriptor } from '@/contexts/RequestContext';
 
 export const CanvasPopout: FC = () => {
   const { contextId } = useParams<{ contextId: string }>();
   const [searchParams] = useSearchParams();
-  const { contexts, setActiveContext, setPopout } = useCanvasStore();
+  const { contexts, setActiveContext, setPopout, registerTemplate, registerContext } =
+    useCanvasStore();
 
   useEffect(() => {
     if (contextId === undefined) {
       return;
+    }
+
+    // Ensure templates are registered (required for reconstructing request contexts)
+    registerTemplate(requestContextDescriptor);
+
+    // If this is a request tab and context descriptor is missing (e.g. page reload),
+    // reconstruct it from the template.
+    if (contextId.startsWith('request-') && !contexts.has(contextId)) {
+      registerContext({
+        ...requestContextDescriptor,
+        id: contextId,
+      });
     }
 
     // Set active context for this popout
@@ -48,7 +62,15 @@ export const CanvasPopout: FC = () => {
         windowId: window.name !== '' ? window.name : 'popout',
       });
     };
-  }, [contextId, searchParams, setActiveContext, setPopout]);
+  }, [
+    contextId,
+    searchParams,
+    setActiveContext,
+    setPopout,
+    contexts,
+    registerContext,
+    registerTemplate,
+  ]);
 
   if (contextId === undefined) {
     return (
