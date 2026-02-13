@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useRequestActions } from './useRequestActions';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { globalEventBus } from '@/events/bus';
 import type { HttpResponse } from '@/types/http';
@@ -53,9 +53,12 @@ vi.mock(
 );
 
 describe('useRequestActions', () => {
+  const getContextState = (): any => useRequestStoreRaw.getState().contexts.global;
+  const getActions = (): any => useRequestStoreRaw.getState();
+
   beforeEach(() => {
     // Reset stores to initial state (URL matches hook default)
-    useRequestStore.setState({
+    getActions().initContext('global', {
       url: 'https://httpbin.org/get',
       method: 'GET',
       headers: {},
@@ -92,7 +95,7 @@ describe('useRequestActions', () => {
     });
 
     expect(result.current.localMethod).toBe('POST');
-    expect(useRequestStore.getState().method).toBe('POST');
+    expect(getContextState().method).toBe('POST');
   });
 
   it('handleUrlChange updates local URL', () => {
@@ -133,7 +136,7 @@ describe('useRequestActions', () => {
     });
 
     expect(httpModule.executeRequest).toHaveBeenCalledTimes(1);
-    expect(useRequestStore.getState().response).toEqual(mockResponse);
+    expect(getContextState().response).toEqual(mockResponse);
     expect(result.current.isLoading).toBe(false);
   });
 
@@ -253,7 +256,7 @@ describe('useRequestActions', () => {
     vi.mocked(httpModule.executeRequest).mockResolvedValue(mockResponse);
 
     // Set initial response
-    useRequestStore.getState().setResponse(mockResponse);
+    getActions().setResponse('global', mockResponse);
 
     const { result } = renderHook(() => useRequestActions());
 
@@ -262,7 +265,7 @@ describe('useRequestActions', () => {
     });
 
     // Response should be cleared and then set again
-    expect(useRequestStore.getState().response).toEqual(mockResponse);
+    expect(getContextState().response).toEqual(mockResponse);
   });
 
   it('handleSend updates URL and method in store', async () => {
@@ -290,13 +293,13 @@ describe('useRequestActions', () => {
       await result.current.handleSend();
     });
 
-    expect(useRequestStore.getState().url).toBe('https://example.com/test');
-    expect(useRequestStore.getState().method).toBe('POST');
+    expect(getContextState().url).toBe('https://example.com/test');
+    expect(getContextState().method).toBe('POST');
   });
 
   it('syncs local state with store on mount', () => {
-    useRequestStore.getState().setUrl('https://test.com');
-    useRequestStore.getState().setMethod('PUT');
+    getActions().setUrl('global', 'https://test.com');
+    getActions().setMethod('global', 'PUT');
 
     const { result } = renderHook(() => useRequestActions());
 

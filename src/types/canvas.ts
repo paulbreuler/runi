@@ -7,7 +7,6 @@
 
 import type React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import type { HttpResponse } from './http';
 
 /**
  * Canvas context identifier
@@ -109,18 +108,12 @@ export interface RequestTabSource {
 
 /**
  * State for a request tab context
+ *
+ * Request-specific data (method, url, headers, body, response) is managed
+ * by useRequestStore (keyed by contextId). This interface defines the
+ * metadata managed by useCanvasStore.
  */
 export interface RequestTabState {
-  /** HTTP method */
-  method: string;
-  /** Request URL */
-  url: string;
-  /** Request headers */
-  headers: Record<string, string>;
-  /** Request body */
-  body: string;
-  /** Cached response (excluded from persistence) */
-  response?: HttpResponse | null;
   /** Whether the tab has unsaved changes */
   isDirty?: boolean;
   /** Origin of this tab's content */

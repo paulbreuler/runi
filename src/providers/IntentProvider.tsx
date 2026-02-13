@@ -5,6 +5,10 @@
 
 import React, { useEffect } from 'react';
 
+interface IntentProviderProps {
+  children: React.ReactNode;
+}
+
 /**
  * IntentProvider tracks whether the user is currently using a mouse or keyboard.
  * It applies a `data-intent` attribute to document.documentElement (html).
@@ -12,7 +16,7 @@ import React, { useEffect } from 'react';
  * CSS can then use this attribute to suppress focus rings for mouse users:
  * html[data-intent="mouse"] *:focus { outline: none; }
  */
-export const IntentProvider = ({ children }: { children: React.ReactNode }): React.JSX.Element => {
+export const IntentProvider = ({ children }: IntentProviderProps): React.JSX.Element => {
   useEffect(() => {
     const root = document.documentElement;
 
@@ -21,20 +25,22 @@ export const IntentProvider = ({ children }: { children: React.ReactNode }): Rea
     };
 
     const handleKeyDown = (e: KeyboardEvent): void => {
-      // Tab, Arrow keys, etc. indicate keyboard intent
-      if (
-        [
-          'Tab',
-          'ArrowUp',
-          'ArrowDown',
-          'ArrowLeft',
-          'ArrowRight',
-          'Home',
-          'End',
-          'PageUp',
-          'PageDown',
-        ].includes(e.key)
-      ) {
+      // Treat any non-modifier key press as keyboard intent.
+      // This covers navigation keys (Tab, arrows, Home/End, PageUp/PageDown),
+      // activation keys (Enter, Space, Escape), character keys, and shortcuts
+      // involving Ctrl/Cmd/Alt that may move focus or open focusable UI.
+      const modifierKeys = [
+        'Shift',
+        'Control',
+        'Alt',
+        'Meta',
+        'AltGraph',
+        'CapsLock',
+        'NumLock',
+        'ScrollLock',
+      ];
+
+      if (!modifierKeys.includes(e.key)) {
         root.setAttribute('data-intent', 'keyboard');
       }
     };

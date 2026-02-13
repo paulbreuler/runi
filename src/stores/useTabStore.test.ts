@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTabStore } from './useTabStore';
+import { useRequestStoreRaw } from './useRequestStore';
 import { deriveTabLabel } from '@/types/tab';
 import { globalEventBus } from '@/events/bus';
 
@@ -21,14 +22,12 @@ vi.stubGlobal(
 describe('useTabStore', () => {
   beforeEach(() => {
     uuidCounter = 0;
-    // Reset store to initial state by clearing all tabs
-    const { result } = renderHook(() => useTabStore());
+    // Reset stores to initial state
     act(() => {
-      result.current.closeAllTabs();
+      useTabStore.getState().closeAllTabs();
+      useTabStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
+      useRequestStoreRaw.setState({ contexts: {} });
     });
-    // closeAllTabs creates an empty tab — close tracking for clean slate
-    useTabStore.getState();
-    useTabStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
   });
 
   describe('initial state', () => {

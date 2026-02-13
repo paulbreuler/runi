@@ -43,10 +43,7 @@ export const RequestCanvasToolbar: FC<CanvasToolbarProps> = ({
   // Secondary action handlers (test, code, docs, save, history, env)
 
   const handleTest = (): void => {
-    globalEventBus.emit<ToastEventPayload>('toast.show', {
-      type: 'info',
-      message: 'Test feature coming soon',
-    });
+    void handleSend();
   };
 
   const handleCode = (): void => {

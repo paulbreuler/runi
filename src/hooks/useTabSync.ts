@@ -4,31 +4,26 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { useTabStore } from '@/stores/useTabStore';
 import { deriveTabLabel, type TabSource } from '@/types/tab';
 import { globalEventBus, type CollectionRequestSelectedPayload } from '@/events/bus';
 import type { HistoryEntry } from '@/types/generated/HistoryEntry';
 
 /**
- * Bidirectional sync between `useTabStore` (multi-tab) and `useRequestStore` (single active request).
+ * Bidirectional sync between `useTabStore` (multi-tab) and `useRequestStoreRaw` (keyed store).
  *
  * This hook:
  * 1. Initializes a default tab on mount if none exist
- * 2. Loads the active tab's state into the request store on tab switch
- * 3. Syncs request store edits back to the active tab
- * 4. Replaces direct event handlers with tab-aware versions
+ * 2. Loads tab state into the keyed request store when tabs are created/switched
+ * 3. Syncs request store edits back to the tab store
  *
- * Call this once in HomePage.
+ * Call this once in HomePage or App root.
  */
 export function useTabSync(): void {
-  const { setMethod, setUrl, setHeaders, setBody, setResponse } = useRequestStore();
+  const { activeTabId, openTab } = useTabStore();
 
-  const { activeTabId, openTab, updateTab } = useTabStore();
-
-  // Track previous active tab to save outgoing state on switch
-  const prevActiveTabIdRef = useRef<string | null>(null);
-  // Guard against sync loops: when we're loading tab → request store, skip syncing back
+  // Guard against sync loops
   const isSyncingFromTab = useRef(false);
 
   // --- 1. Initialize default tab on mount ---
@@ -36,103 +31,78 @@ export function useTabSync(): void {
     const state = useTabStore.getState();
     if (state.tabOrder.length === 0) {
       openTab();
-    } else if (state.activeTabId !== null) {
-      // Load persisted active tab into request store
-      const tab = state.tabs[state.activeTabId];
-      if (tab !== undefined) {
-        isSyncingFromTab.current = true;
-        setMethod(tab.method);
-        setUrl(tab.url);
-        setHeaders(tab.headers);
-        setBody(tab.body);
-        setResponse(tab.response);
-        isSyncingFromTab.current = false;
-      }
     }
-    // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- 2. On active tab change: save outgoing, load incoming ---
+  // --- 2. On active tab change: ensure keyed store is initialized ---
   useEffect((): void => {
-    const prevId = prevActiveTabIdRef.current;
-
-    if (activeTabId === prevId) {
-      prevActiveTabIdRef.current = activeTabId;
-      return;
-    }
-
-    // Save outgoing tab state from request store
-    if (prevId !== null) {
-      const reqState = useRequestStore.getState();
-      updateTab(prevId, {
-        method: reqState.method,
-        url: reqState.url,
-        headers: reqState.headers,
-        body: reqState.body,
-        response: reqState.response,
-      });
-    }
-
-    // Load incoming tab state into request store
     if (activeTabId !== null) {
-      const tab = useTabStore.getState().tabs[activeTabId];
-      if (tab !== undefined) {
-        isSyncingFromTab.current = true;
-        setMethod(tab.method);
-        setUrl(tab.url);
-        setHeaders(tab.headers);
-        setBody(tab.body);
-        setResponse(tab.response);
-        isSyncingFromTab.current = false;
+      const storeRaw = useRequestStoreRaw.getState();
+      const existingRequestState = storeRaw.contexts[activeTabId];
+
+      if (existingRequestState === undefined) {
+        const tab = useTabStore.getState().tabs[activeTabId];
+        if (tab !== undefined) {
+          isSyncingFromTab.current = true;
+          storeRaw.initContext(activeTabId, {
+            method: tab.method,
+            url: tab.url,
+            headers: tab.headers,
+            body: tab.body,
+            response: tab.response,
+          });
+          isSyncingFromTab.current = false;
+        }
       }
     }
-
-    prevActiveTabIdRef.current = activeTabId;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTabId]);
 
-  // --- 3. Sync request store edits back to active tab ---
+  // --- 3. Sync request store edits back to tabs ---
   useEffect((): (() => void) => {
-    // Subscribe to request store changes (excluding response — handled separately)
-    const unsubscribe = useRequestStore.subscribe((state, prevState): void => {
-      if (isSyncingFromTab.current) {
-        return;
-      }
+    // Subscribe to ALL request store changes
+    const unsubscribe = useRequestStoreRaw.subscribe((state, prevState): void => {
+      // Check every context that might have changed
+      Object.keys(state.contexts).forEach((tabId) => {
+        const activeState = state.contexts[tabId];
+        const prevActiveState = prevState.contexts[tabId];
 
-      const currentActiveId = useTabStore.getState().activeTabId;
-      if (currentActiveId === null) {
-        return;
-      }
+        if (activeState === undefined || activeState === prevActiveState) {
+          return;
+        }
 
-      // Check if any request fields changed
-      const changed =
-        state.method !== prevState.method ||
-        state.url !== prevState.url ||
-        state.headers !== prevState.headers ||
-        state.body !== prevState.body;
+        if (isSyncingFromTab.current) {
+          return;
+        }
 
-      if (changed) {
-        const currentTab = useTabStore.getState().tabs[currentActiveId];
-        useTabStore.getState().updateTab(currentActiveId, {
-          method: state.method,
-          url: state.url,
-          headers: state.headers,
-          body: state.body,
-          // Only update the label when the URL actually changes so we don't
-          // overwrite explicit/name-based labels (e.g., collection requests).
-          ...(state.url !== prevState.url ? { label: deriveTabLabel(state.url) } : {}),
-          // Mark tab as dirty if it has a source (collection or history)
-          ...(currentTab?.source !== undefined ? { isDirty: true } : {}),
-        });
-      }
+        // Check if any request fields changed
+        const changed =
+          prevActiveState !== undefined &&
+          (activeState.method !== prevActiveState.method ||
+            activeState.url !== prevActiveState.url ||
+            activeState.headers !== prevActiveState.headers ||
+            activeState.body !== prevActiveState.body ||
+            activeState.response !== prevActiveState.response);
 
-      // Sync response separately (set on execution)
-      if (state.response !== prevState.response) {
-        useTabStore.getState().updateTab(currentActiveId, {
-          response: state.response,
-        });
-      }
+        if (changed) {
+          const tab = useTabStore.getState().tabs[tabId];
+          if (tab !== undefined) {
+            useTabStore.getState().updateTab(tabId, {
+              method: activeState.method,
+              url: activeState.url,
+              headers: activeState.headers,
+              body: activeState.body,
+              response: activeState.response,
+              // Only update the label when the URL actually changes
+              ...(activeState.url !== prevActiveState.url
+                ? { label: deriveTabLabel(activeState.url) }
+                : {}),
+              // Mark tab as dirty if it has a source
+              ...(tab.source !== undefined ? { isDirty: true } : {}),
+            });
+          }
+        }
+      });
     });
 
     return unsubscribe;

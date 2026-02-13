@@ -10,13 +10,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { render, act, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
 import { CollectionEventProvider } from './CollectionEventProvider';
 import { useActivityStore, __resetActivityIdCounter } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useTabStore } from '@/stores/useTabStore';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { useTabSync } from '@/hooks/useTabSync';
 import { globalEventBus, type CollectionRequestSelectedPayload } from '@/events/bus';
 import type { EventEnvelope } from '@/hooks/useCollectionEvents';
@@ -110,7 +110,7 @@ describe('MCP → CollectionEventProvider → Tab Integration', () => {
     useSettingsStore.setState({ followAiMode: true });
     useTabStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
     act(() => {
-      useRequestStore.getState().reset();
+      useRequestStoreRaw.getState().reset('global');
     });
     globalEventBus.removeAllListeners();
     mockCollectionState.selectedCollectionId = null;
@@ -240,9 +240,21 @@ describe('MCP → CollectionEventProvider → Tab Integration', () => {
     // A new tab should have been created for the AI-generated request
     expect(useTabStore.getState().tabOrder.length).toBe(initialTabCount + 1);
 
-    // Request store should reflect the AI-generated request
-    expect(useRequestStore.getState().method).toBe('POST');
-    expect(useRequestStore.getState().url).toBe('https://api.example.com/ai-endpoint');
+    // Get the newly created tab ID from the tab store
+    const newTabId = useTabStore.getState().activeTabId;
+    expect(newTabId).not.toBeNull();
+
+    // Wait for the actual sync mechanism to populate the request store
+    // useTabSync should have synced the tab data to the request store
+    await waitFor(() => {
+      const context = useRequestStoreRaw.getState().contexts[newTabId!];
+      expect(context).toBeDefined();
+    });
+
+    // Verify the request store was populated by the sync mechanism, not manual seeding
+    const context = useRequestStoreRaw.getState().contexts[newTabId!];
+    expect(context?.method).toBe('POST');
+    expect(context?.url).toBe('https://api.example.com/ai-endpoint');
 
     // Activity feed should have the request:added event
     const entries = useActivityStore.getState().entries;

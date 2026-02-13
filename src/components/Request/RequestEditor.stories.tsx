@@ -24,7 +24,7 @@ import { ParamsEditor } from './ParamsEditor';
 import { HeaderEditor } from './HeaderEditor';
 import { AuthEditor } from './AuthEditor';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStore, useRequestStoreRaw } from '@/stores/useRequestStore';
 
 // Custom args for story controls (not part of component props)
 interface RequestEditorStoryArgs {
@@ -81,19 +81,9 @@ const StoreSeed = ({
   children: React.ReactNode;
 }): React.JSX.Element => {
   useEffect(() => {
-    const state: { url?: string; headers?: Record<string, string>; body?: string } = {};
-    if (url !== undefined) {
-      state.url = url;
-    }
-    if (headers !== undefined) {
-      state.headers = headers;
-    }
-    if (body !== undefined) {
-      state.body = body;
-    }
-    useRequestStore.setState(state);
+    useRequestStoreRaw.getState().initContext('global', { url, headers, body });
     return () => {
-      useRequestStore.getState().reset();
+      useRequestStoreRaw.getState().reset('global');
     };
   }, [url, headers, body]);
 
@@ -335,7 +325,7 @@ const BodyEditorWrapper = ({ initialBody = '' }: { initialBody?: string }): Reac
     setBody(initialBody);
     setLocalBody(initialBody);
     return () => {
-      useRequestStore.getState().reset();
+      useRequestStoreRaw.getState().reset('global');
     };
   }, [initialBody, setBody]);
 
@@ -482,7 +472,7 @@ export const AuthEditorEmpty: Story = {
     editorType: 'auth',
   },
   render: () => {
-    useRequestStore.setState({ headers: {} });
+    useRequestStoreRaw.getState().initContext('global', { headers: {} });
     return (
       <div className="min-h-[420px] bg-bg-app p-6">
         <AuthEditor />
@@ -499,7 +489,9 @@ export const AuthEditorBearerToken: Story = {
     editorType: 'auth',
   },
   render: () => {
-    useRequestStore.setState({ headers: { Authorization: 'Bearer sk-live-demo-token' } });
+    useRequestStoreRaw
+      .getState()
+      .initContext('global', { headers: { Authorization: 'Bearer sk-live-demo-token' } });
     return (
       <div className="min-h-[420px] bg-bg-app p-6">
         <AuthEditor />
@@ -516,7 +508,7 @@ export const AuthEditorFormInteractionsTest: Story = {
     editorType: 'auth',
   },
   render: () => {
-    useRequestStore.setState({ headers: {} });
+    useRequestStoreRaw.getState().initContext('global', { headers: {} });
     return (
       <div className="min-h-[420px] bg-bg-app p-6">
         <AuthEditor />
@@ -558,7 +550,7 @@ export const AuthEditorKeyboardNavigationTest: Story = {
     editorType: 'auth',
   },
   render: () => {
-    useRequestStore.setState({ headers: {} });
+    useRequestStoreRaw.getState().initContext('global', { headers: {} });
     return (
       <div className="min-h-[420px] bg-bg-app p-6">
         <AuthEditor />

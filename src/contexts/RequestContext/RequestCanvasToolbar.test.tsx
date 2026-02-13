@@ -4,36 +4,58 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RequestCanvasToolbar } from './RequestCanvasToolbar';
-import { useRequestStore } from '@/stores/useRequestStore';
-import { executeRequest } from '@/api/http';
+import { useRequestStore, useRequestStoreRaw } from '@/stores/useRequestStore';
 import { useHistoryStore } from '@/stores/useHistoryStore';
-
-const { mockEmit } = vi.hoisted(() => ({
-  mockEmit: vi.fn(),
-}));
+import { useRequestActions } from '@/hooks/useRequestActions';
+import { globalEventBus } from '@/events/bus';
 
 // Mock dependencies
 vi.mock('@/api/http', () => ({
   executeRequest: vi.fn(),
 }));
 
-vi.mock('@/events/bus', () => ({
-  globalEventBus: {
-    emit: mockEmit,
-  },
-}));
+vi.mock('@/stores/useRequestStore', async () => {
+  const actual = await vi.importActual('@/stores/useRequestStore');
+  return {
+    ...actual,
+    useRequestStore: vi.fn(),
+  };
+});
+
+vi.mock('@/hooks/useRequestActions');
 
 describe('RequestCanvasToolbar', () => {
-  const getEmitMock = (): typeof mockEmit => mockEmit;
+  let emitSpy: ReturnType<typeof vi.spyOn>;
+  const mockHandleSend = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    emitSpy = vi.spyOn(globalEventBus, 'emit');
+  });
+
+  afterEach(() => {
+    emitSpy.mockRestore();
+  });
+
+  beforeEach(() => {
+    vi.mocked(useRequestStore).mockReturnValue({
+      response: null,
+    } as any as ReturnType<typeof useRequestStore>);
+
+    vi.mocked(useRequestActions).mockReturnValue({
+      handleSend: mockHandleSend,
+      handleMethodChange: vi.fn(),
+      handleUrlChange: vi.fn(),
+      localUrl: '',
+      localMethod: 'GET',
+      isLoading: false,
+    } as any as ReturnType<typeof useRequestActions>);
 
     // Reset stores to initial state
-    useRequestStore.setState({
+    useRequestStoreRaw.getState().initContext('request', {
       url: 'https://api.example.com/users',
       method: 'GET',
       headers: {},
@@ -62,15 +84,24 @@ describe('RequestCanvasToolbar', () => {
       expect(screen.getByTestId('action-save')).toBeInTheDocument();
     });
 
-    it('disables Send action when URL is empty', () => {
-      useRequestStore.setState({ url: '' });
+    it('disables Test action when response is null', () => {
+      useRequestStoreRaw.getState().initContext('request', { response: null });
       render(<RequestCanvasToolbar contextId="request" />);
 
       const testButton = screen.getByTestId('action-test');
       expect(testButton).toBeDisabled();
     });
 
-    it('enables Send action when URL is provided', () => {
+    it('enables Code action when URL is provided', () => {
+      vi.mocked(useRequestActions).mockReturnValue({
+        handleSend: vi.fn(),
+        handleMethodChange: vi.fn(),
+        handleUrlChange: vi.fn(),
+        localUrl: 'https://api.example.com',
+        localMethod: 'GET',
+        isLoading: false,
+      } as any as ReturnType<typeof useRequestActions>);
+
       render(<RequestCanvasToolbar contextId="request" />);
 
       const codeButton = screen.getByTestId('action-code');
@@ -79,47 +110,33 @@ describe('RequestCanvasToolbar', () => {
   });
 
   describe('Action Handlers - handleTest', () => {
-    it('calls executeRequest with correct params when Test is clicked', async () => {
+    it('calls handleSend when Test is clicked', async () => {
       const user = userEvent.setup();
-      const mockResponse = {
-        status: 200,
-        status_text: 'OK',
-        headers: {},
-        body: '{"success":true}',
-        timing: {
-          total_ms: 123,
-          dns_ms: 10,
-          connect_ms: 20,
-          tls_ms: null,
-          first_byte_ms: 50,
-        },
-      };
 
-      vi.mocked(executeRequest).mockResolvedValue(mockResponse);
+      vi.mocked(useRequestActions).mockReturnValue({
+        handleSend: mockHandleSend,
+        handleMethodChange: vi.fn(),
+        handleUrlChange: vi.fn(),
+        localUrl: 'https://api.example.com',
+        localMethod: 'GET',
+        isLoading: false,
+      } as any as ReturnType<typeof useRequestActions>);
 
-      useRequestStore.setState({
-        url: 'https://api.example.com/users',
-        method: 'GET',
-        headers: { Authorization: 'Bearer token' },
-        body: '',
-        response: mockResponse,
-      });
+      // We also need to mock useRequestStore to return a non-null response
+      // because ActionButtons uses hasResponse={response !== null}
+      vi.mocked(useRequestStore).mockReturnValue({
+        response: { status: 200 } as any,
+      } as any as ReturnType<typeof useRequestStore>);
 
       render(<RequestCanvasToolbar contextId="request" />);
 
       const testButton = screen.getByTestId('action-test');
+      // Verify button is enabled
+      expect(testButton).not.toBeDisabled();
+
       await user.click(testButton);
 
-      // Should show "coming soon" toast
-      await waitFor(() => {
-        expect(getEmitMock()).toHaveBeenCalledWith(
-          'toast.show',
-          expect.objectContaining({
-            type: 'info',
-            message: 'Test feature coming soon',
-          })
-        );
-      });
+      expect(mockHandleSend).toHaveBeenCalled();
     });
   });
 
@@ -127,13 +144,22 @@ describe('RequestCanvasToolbar', () => {
     it('shows toast when Code is clicked', async (): Promise<void> => {
       const user = userEvent.setup();
 
+      vi.mocked(useRequestActions).mockReturnValue({
+        handleSend: vi.fn(),
+        handleMethodChange: vi.fn(),
+        handleUrlChange: vi.fn(),
+        localUrl: 'https://api.example.com',
+        localMethod: 'GET',
+        isLoading: false,
+      } as any as ReturnType<typeof useRequestActions>);
+
       render(<RequestCanvasToolbar contextId="request" />);
 
       const codeButton = screen.getByTestId('action-code');
       await user.click(codeButton);
 
       await waitFor(() => {
-        expect(getEmitMock()).toHaveBeenCalledWith(
+        expect(emitSpy).toHaveBeenCalledWith(
           'toast.show',
           expect.objectContaining({
             type: 'info',
@@ -154,7 +180,7 @@ describe('RequestCanvasToolbar', () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(getEmitMock()).toHaveBeenCalledWith(
+        expect(emitSpy).toHaveBeenCalledWith(
           'toast.show',
           expect.objectContaining({
             type: 'info',
@@ -182,7 +208,7 @@ describe('RequestCanvasToolbar', () => {
 
   describe('Store Integration', () => {
     it('reads from request store for action states', () => {
-      useRequestStore.setState({
+      useRequestStoreRaw.getState().initContext('request', {
         url: 'https://api.example.com/users',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -196,7 +222,7 @@ describe('RequestCanvasToolbar', () => {
     });
 
     it('handles missing response gracefully', () => {
-      useRequestStore.setState({
+      useRequestStoreRaw.getState().initContext('request', {
         response: null,
       });
 
@@ -235,7 +261,7 @@ describe('RequestCanvasToolbar', () => {
     });
 
     it('UrlBar displays current URL from store via useRequestActions', () => {
-      useRequestStore.setState({
+      useRequestStoreRaw.getState().initContext('request', {
         url: 'https://test.api.com/endpoint',
       });
 
@@ -247,7 +273,7 @@ describe('RequestCanvasToolbar', () => {
     });
 
     it('UrlBar displays current method from store via useRequestActions', () => {
-      useRequestStore.setState({
+      useRequestStoreRaw.getState().initContext('request', {
         method: 'POST',
       });
 

@@ -2,8 +2,15 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 
+interface MockMediaQueryList {
+  matches: boolean;
+  media: string;
+  addEventListener: (event: string, callback: (e: MediaQueryListEvent) => void) => void;
+  removeEventListener: (event: string, callback: (e: MediaQueryListEvent) => void) => void;
+}
+
 describe('usePrefersReducedMotion', () => {
-  let matchMediaMock: any;
+  let matchMediaMock: MockMediaQueryList;
 
   beforeEach(() => {
     // Mock matchMedia
@@ -14,7 +21,7 @@ describe('usePrefersReducedMotion', () => {
       removeEventListener: (): void => {},
     };
 
-    window.matchMedia = (): typeof matchMediaMock => matchMediaMock;
+    window.matchMedia = (): MediaQueryList => matchMediaMock as unknown as MediaQueryList;
   });
 
   afterEach(() => {
