@@ -151,11 +151,11 @@ impl SseBroadcaster {
                     }
                     Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => {
                         // Buffer full - drop event (backpressure)
+                        // Don't increment sent_count since event wasn't actually received
                         tracing::warn!(
                             "SSE subscriber {} buffer full, dropping event",
                             sub.id.as_str()
                         );
-                        sent_count += 1; // Still count as "sent" since subscriber is alive
                     }
                     Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => {
                         // Subscriber disconnected
