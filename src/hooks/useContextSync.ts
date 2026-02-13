@@ -147,6 +147,7 @@ export function useContextSync(): void {
           isDirty:
             (currentContextMetadata.isDirty ?? false) ||
             (currentContextMetadata.source !== undefined &&
+              prevActiveState !== undefined &&
               (activeState.method !== prevActiveState.method ||
                 activeState.url !== prevActiveState.url ||
                 activeState.headers !== prevActiveState.headers ||

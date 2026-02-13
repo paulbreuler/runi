@@ -21,7 +21,7 @@ const meta = {
   },
   decorators: [
     (Story) => {
-      useRequestStoreRaw.setState({
+      useRequestStoreRaw.getState().initContext('global', {
         url: 'https://api.example.com/users',
         method: 'GET',
         headers: {},
@@ -71,7 +71,7 @@ export const Default: Story = {
 export const Disabled: Story = {
   decorators: [
     (Story) => {
-      useRequestStoreRaw.setState({ url: '' }); // Empty URL
+      useRequestStoreRaw.getState().initContext('global', { url: '' }); // Empty URL
       return <Story />;
     },
   ],

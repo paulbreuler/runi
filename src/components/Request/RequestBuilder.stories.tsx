@@ -42,9 +42,9 @@ const StoreSeed = ({
   body?: string;
 }): React.JSX.Element => {
   useEffect(() => {
-    useRequestStoreRaw.setState({ url, headers, body });
+    useRequestStoreRaw.getState().initContext('global', { url, headers, body });
     return () => {
-      useRequestStoreRaw.getState().reset();
+      useRequestStoreRaw.getState().reset('global');
     };
   }, [url, headers, body]);
 
@@ -95,7 +95,7 @@ export const Playground: Story = {
     await step('Body editor supports horizontal scroll', async () => {
       const textarea = getByTestId('code-editor-textarea');
       const longLine = `{"token":"${'a'.repeat(240)}"}`;
-      useRequestStoreRaw.getState().setBody(longLine);
+      useRequestStoreRaw.getState().setBody('global', longLine);
       await new Promise((resolve) => setTimeout(resolve, 100));
       const scrollWidth = textarea.scrollWidth;
       const clientWidth = textarea.clientWidth;

@@ -88,24 +88,20 @@ describe('HomePage - Auto-save to history', () => {
     store.openRequestTab();
 
     // Mock request store
-    vi.mocked(useRequestStore).mockImplementation((selector) => {
-      const state = {
-        method: 'GET' as const,
-        url: 'https://httpbin.org/get',
-        headers: {},
-        body: '',
-        response: null,
-        isLoading: false,
-        setMethod: mockSetMethod,
-        setUrl: mockSetUrl,
-        setHeaders: vi.fn(),
-        setBody: vi.fn(),
-        setResponse: mockSetResponse,
-        setLoading: mockSetLoading,
-        reset: vi.fn(),
-      };
-
-      return selector !== undefined ? selector(state) : state;
+    vi.mocked(useRequestStore).mockReturnValue({
+      method: 'GET' as const,
+      url: 'https://httpbin.org/get',
+      headers: {},
+      body: '',
+      response: null,
+      isLoading: false,
+      setMethod: mockSetMethod,
+      setUrl: mockSetUrl,
+      setHeaders: vi.fn(),
+      setBody: vi.fn(),
+      setResponse: mockSetResponse,
+      setLoading: mockSetLoading,
+      reset: vi.fn(),
     });
 
     vi.mocked(useRequestStoreRaw.getState).mockReturnValue({

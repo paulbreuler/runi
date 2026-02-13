@@ -128,7 +128,7 @@ interface CanvasState {
 
   /** Open a new request tab context with optional initial state */
   openRequestTab: (
-    overrides?: Partial<RequestTabState> & { label?: string },
+    overrides?: Partial<RequestTabState & RequestContextState> & { label?: string },
     options?: { activate?: boolean }
   ) => string;
 

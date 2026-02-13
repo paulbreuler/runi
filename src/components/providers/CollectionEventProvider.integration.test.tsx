@@ -111,7 +111,7 @@ describe('MCP → CollectionEventProvider → Tab Integration', () => {
     useSettingsStore.setState({ followAiMode: true });
     useTabStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
     act(() => {
-      useRequestStoreRaw.getState().reset();
+      useRequestStoreRaw.getState().reset('global');
     });
     globalEventBus.removeAllListeners();
     mockCollectionState.selectedCollectionId = null;
