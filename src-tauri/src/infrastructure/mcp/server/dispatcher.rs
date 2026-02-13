@@ -448,6 +448,19 @@ fn handle_canvas_subscribe_stream(
         .and_then(serde_json::Value::as_str)
         .unwrap_or("canvas");
 
+    // Validate stream name to prevent URL injection
+    if !stream
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    {
+        return ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({"error": "Invalid stream name. Only alphanumerics, hyphens, and underscores allowed."}).to_string(),
+            }],
+            is_error: true,
+        };
+    }
+
     let url = format!("http://127.0.0.1:{DEFAULT_SSE_PORT}/mcp/sse/subscribe?stream={stream}");
 
     ToolCallResult {

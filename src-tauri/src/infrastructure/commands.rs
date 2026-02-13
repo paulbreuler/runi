@@ -940,7 +940,7 @@ pub async fn write_startup_timing(
 ///
 /// Broadcasts an SSE event on the `"canvas"` stream so that MCP subscribers
 /// receive real-time updates. The `event_hint` describes *what* changed and the
-/// `actor` indicates *who* triggered the change (`"human"` or `"ai"`).
+/// `actor` indicates *who* triggered the change (`"user"` or `"ai"`).
 ///
 /// # Errors
 ///

@@ -251,18 +251,24 @@ async fn handle_sse_subscribe(
     let stream_name = params.stream;
 
     // Subscribe to the stream
-    let (_sub_id, mut stream_rx) = state.sse_broadcaster.subscribe(&stream_name).await;
+    let (sub_id, mut stream_rx) = state.sse_broadcaster.subscribe(&stream_name).await;
 
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(32);
+
+    // Clone broadcaster for cleanup on disconnect
+    let broadcaster = Arc::clone(&state.sse_broadcaster);
 
     // Spawn task to relay events and send keepalive pings
     tokio::spawn(async move {
         // Send initial connection event
+        let connected_data = serde_json::json!({"stream": stream_name});
         let init_event = Event::default()
             .event("connected")
-            .data(format!("{{\"stream\":\"{stream_name}\"}}"));
+            .data(connected_data.to_string());
         if tx.send(Ok(init_event)).await.is_err() {
-            return; // Client already disconnected.
+            // Client already disconnected - clean up subscription
+            broadcaster.unsubscribe(&sub_id).await;
+            return;
         }
 
         let mut keepalive_interval = tokio::time::interval(std::time::Duration::from_secs(30));
@@ -298,6 +304,9 @@ async fn handle_sse_subscribe(
                 }
             }
         }
+
+        // Clean up subscription when relay loop exits
+        broadcaster.unsubscribe(&sub_id).await;
     });
 
     // Keepalive is handled by the spawned task above (typed `event: keepalive`

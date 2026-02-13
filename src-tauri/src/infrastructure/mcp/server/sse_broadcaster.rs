@@ -9,9 +9,10 @@
 //! Unlike `EventBroadcaster` which is specific to `EventEnvelope`, this
 //! broadcaster is generic over the event type and supports multiple streams.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 
@@ -52,6 +53,10 @@ impl SubscriptionId {
     }
 }
 
+/// Channel capacity per subscriber. Limits memory growth from slow/stalled clients.
+/// If a subscriber's channel fills up, old events are dropped (backpressure).
+const SUBSCRIBER_CHANNEL_CAPACITY: usize = 256;
+
 /// A subscription to a specific stream.
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -59,7 +64,7 @@ struct Subscription {
     /// Unique identifier for this subscription.
     id: SubscriptionId,
     /// Channel sender for delivering events to this subscriber.
-    tx: tokio::sync::mpsc::UnboundedSender<SseEvent>,
+    tx: tokio::sync::mpsc::Sender<SseEvent>,
 }
 
 /// Broadcasts SSE events to subscribers on named streams.
@@ -87,17 +92,17 @@ impl SseBroadcaster {
 
     /// Subscribe to a named stream.
     ///
-    /// Returns a tuple of `(SubscriptionId, UnboundedReceiver<SseEvent>)`.
+    /// Returns a tuple of `(SubscriptionId, Receiver<SseEvent>)`.
     /// The receiver will get all events broadcast to this stream until
     /// the subscription is explicitly unsubscribed or the receiver is dropped.
+    ///
+    /// The channel has a bounded capacity to prevent unbounded memory growth.
+    /// If a slow subscriber's buffer fills up, old events will be dropped.
     pub async fn subscribe(
         &self,
         stream_name: &str,
-    ) -> (
-        SubscriptionId,
-        tokio::sync::mpsc::UnboundedReceiver<SseEvent>,
-    ) {
-        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+    ) -> (SubscriptionId, tokio::sync::mpsc::Receiver<SseEvent>) {
+        let (tx, rx) = tokio::sync::mpsc::channel(SUBSCRIBER_CHANNEL_CAPACITY);
         let id = SubscriptionId::generate();
 
         let subscription = Subscription { id: id.clone(), tx };
@@ -124,6 +129,9 @@ impl SseBroadcaster {
     ///
     /// Returns the number of subscribers that received the event.
     /// Automatically removes any closed subscriptions encountered.
+    ///
+    /// For slow subscribers whose buffers are full, the event is dropped
+    /// (backpressure policy). This prevents unbounded memory growth.
     #[allow(dead_code)]
     #[allow(clippy::significant_drop_tightening)]
     pub async fn broadcast(&self, stream_name: &str, event: SseEvent) -> usize {
@@ -137,10 +145,22 @@ impl SseBroadcaster {
             };
 
             for sub in subscriptions.iter() {
-                if sub.tx.send(event.clone()).is_ok() {
-                    sent_count += 1;
-                } else {
-                    closed_ids.push(sub.id.clone());
+                match sub.tx.try_send(event.clone()) {
+                    Ok(()) => {
+                        sent_count += 1;
+                    }
+                    Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => {
+                        // Buffer full - drop event (backpressure)
+                        tracing::warn!(
+                            "SSE subscriber {} buffer full, dropping event",
+                            sub.id.as_str()
+                        );
+                        sent_count += 1; // Still count as "sent" since subscriber is alive
+                    }
+                    Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => {
+                        // Subscriber disconnected
+                        closed_ids.push(sub.id.clone());
+                    }
                 }
             }
 
