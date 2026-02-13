@@ -254,6 +254,9 @@ async fn handle_canvas_tool(
         "canvas_open_request_tab" => handle_canvas_open_request_tab(arguments, app_handle),
         "canvas_close_tab" => handle_canvas_close_tab(arguments, app_handle),
 
+        // Phase 3: Streaming tools
+        "canvas_subscribe_stream" => Ok(handle_canvas_subscribe_stream(arguments)),
+
         _ => Err(format!("Unknown canvas tool: {tool_name}")),
     };
 
@@ -431,6 +434,30 @@ fn handle_canvas_close_tab(
     })
 }
 
+// Phase 3: Canvas streaming tools
+
+/// Default port for the MCP server's SSE endpoint.
+const DEFAULT_SSE_PORT: u16 = crate::infrastructure::mcp::commands::DEFAULT_MCP_PORT;
+
+fn handle_canvas_subscribe_stream(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+) -> ToolCallResult {
+    let args = arguments.unwrap_or_default();
+    let stream = args
+        .get("stream")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("canvas");
+
+    let url = format!("http://127.0.0.1:{DEFAULT_SSE_PORT}/mcp/sse/subscribe?stream={stream}");
+
+    ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json!({"url": url}).to_string(),
+        }],
+        is_error: false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -477,8 +504,8 @@ mod tests {
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        // 6 collection tools + 6 canvas tools = 12 total
-        assert_eq!(tools.len(), 12);
+        // 6 collection tools + 6 canvas tools + 1 streaming tool = 13 total
+        assert_eq!(tools.len(), 13);
     }
 
     #[tokio::test]
@@ -774,6 +801,56 @@ mod tests {
             result["isError"].as_bool().unwrap_or(false),
             "Tool should return error"
         );
+    }
+
+    #[tokio::test]
+    async fn test_canvas_subscribe_stream_returns_url() {
+        let (service, canvas_state, _dir) = make_service();
+        let req = json!({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+                "name": "canvas_subscribe_stream",
+                "arguments": {}
+            }
+        })
+        .to_string();
+
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(parsed.error.is_none());
+        let result = parsed.result.unwrap();
+        assert!(!result["isError"].as_bool().unwrap_or(false));
+
+        let text = result["content"][0]["text"].as_str().unwrap();
+        let url_result: serde_json::Value = serde_json::from_str(text).unwrap();
+        let url = url_result["url"].as_str().unwrap();
+        assert!(url.contains("/mcp/sse/subscribe?stream=canvas"));
+        assert!(url.contains("127.0.0.1:3002"));
+    }
+
+    #[tokio::test]
+    async fn test_canvas_subscribe_stream_custom_stream() {
+        let (service, canvas_state, _dir) = make_service();
+        let req = json!({
+            "jsonrpc": "2.0",
+            "id": 11,
+            "method": "tools/call",
+            "params": {
+                "name": "canvas_subscribe_stream",
+                "arguments": { "stream": "collections" }
+            }
+        })
+        .to_string();
+
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        let result = parsed.result.unwrap();
+        let text = result["content"][0]["text"].as_str().unwrap();
+        let url_result: serde_json::Value = serde_json::from_str(text).unwrap();
+        let url = url_result["url"].as_str().unwrap();
+        assert!(url.contains("stream=collections"));
     }
 
     #[test]

@@ -1,6 +1,7 @@
 // Re-export all generated types from ts-rs
 // These types are generated from Rust structs - do not edit manually
 
+export type { CanvasEventHint } from './CanvasEventHint';
 export type { CanvasStateSnapshot } from './CanvasStateSnapshot';
 export type { HistoryEntry } from './HistoryEntry';
 export type { HttpResponse } from './HttpResponse';

@@ -209,7 +209,8 @@ impl McpServerService {
             | "canvas_list_templates"
             | "canvas_switch_tab"
             | "canvas_open_request_tab"
-            | "canvas_close_tab" => Err(format!(
+            | "canvas_close_tab"
+            | "canvas_subscribe_stream" => Err(format!(
                 "Canvas tool '{name}' must be handled by dispatcher"
             )),
             _ => Err(format!("Unknown tool: {name}")),
@@ -347,6 +348,21 @@ impl McpServerService {
                         "tab_id": { "type": "string", "description": "ID of the tab to close" }
                     },
                     "required": ["tab_id"]
+                }),
+            ),
+            // Canvas streaming tools
+            tool_def(
+                "canvas_subscribe_stream",
+                "Subscribe to real-time canvas state changes via SSE. Returns the SSE endpoint URL.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "stream": {
+                            "type": "string",
+                            "description": "Stream name (default: 'canvas')",
+                            "default": "canvas"
+                        }
+                    }
                 }),
             ),
         ];
@@ -602,11 +618,11 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_twelve_tools() {
+    fn test_registers_thirteen_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
-        // 6 collection tools + 6 canvas tools = 12 total
-        assert_eq!(tools.len(), 12);
+        // 6 collection tools + 6 canvas tools + 1 streaming tool = 13 total
+        assert_eq!(tools.len(), 13);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
@@ -622,6 +638,8 @@ mod tests {
         assert!(names.contains(&"canvas_switch_tab"));
         assert!(names.contains(&"canvas_open_request_tab"));
         assert!(names.contains(&"canvas_close_tab"));
+        // Streaming tools
+        assert!(names.contains(&"canvas_subscribe_stream"));
     }
 
     #[test]

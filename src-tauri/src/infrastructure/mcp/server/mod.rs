@@ -9,3 +9,5 @@ pub mod dispatcher;
 pub mod http_sse;
 /// Session management with `Mcp-Session-Id` tracking.
 pub mod session;
+/// Generic SSE broadcaster for multi-stream support.
+pub mod sse_broadcaster;

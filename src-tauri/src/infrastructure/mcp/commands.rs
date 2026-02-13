@@ -18,9 +18,17 @@ use crate::infrastructure::commands::CanvasStateHandle;
 use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::mcp::server::http_sse::{self, EventBroadcaster, McpServerState};
 use crate::infrastructure::mcp::server::session::SessionManager;
+use crate::infrastructure::mcp::server::sse_broadcaster::SseBroadcaster;
 
 /// Managed state type for the MCP server.
 pub type McpServerServiceState = Arc<RwLock<Option<McpServerHandle>>>;
+
+/// Shared `SseBroadcaster` handle managed as Tauri state.
+///
+/// This is the same instance used by the MCP server and Tauri commands,
+/// allowing commands like `sync_canvas_state` to broadcast SSE events
+/// that MCP clients can subscribe to.
+pub type SseBroadcasterHandle = Arc<SseBroadcaster>;
 
 /// Handle to a running MCP server (Axum + session manager).
 pub struct McpServerHandle {
@@ -60,6 +68,10 @@ pub const DEFAULT_MCP_PORT: u16 = 3002;
 /// When an `AppHandle` is provided, MCP events (collection/request changes)
 /// are broadcast to the React UI via Tauri events.
 ///
+/// The `sse_broadcaster` parameter is the shared `SseBroadcaster` instance
+/// managed as Tauri state. Passing it in ensures the same broadcaster is used
+/// by both the MCP server and Tauri commands (e.g., `sync_canvas_state`).
+///
 /// # Errors
 ///
 /// Returns an error if the server is already running, the collections directory
@@ -68,6 +80,7 @@ pub async fn start_server(
     port: u16,
     state: &McpServerServiceState,
     app_handle: Option<tauri::AppHandle>,
+    sse_broadcaster: Arc<SseBroadcaster>,
 ) -> Result<(), String> {
     // Prepare everything outside the lock — no I/O while holding the lock.
     let broadcaster = Arc::new(EventBroadcaster::new());
@@ -98,6 +111,7 @@ pub async fn start_server(
         service: Arc::new(RwLock::new(service)),
         sessions: Arc::clone(&sessions),
         broadcaster,
+        sse_broadcaster,
         canvas_state,
         app_handle: app_handle.clone(),
     };
@@ -150,8 +164,15 @@ pub async fn mcp_server_start(
     port: u16,
     app_handle: tauri::AppHandle,
     server_state: tauri::State<'_, McpServerServiceState>,
+    sse_broadcaster: tauri::State<'_, SseBroadcasterHandle>,
 ) -> Result<(), String> {
-    start_server(port, &server_state, Some(app_handle)).await
+    start_server(
+        port,
+        &server_state,
+        Some(app_handle),
+        sse_broadcaster.inner().clone(),
+    )
+    .await
 }
 
 /// Stop the MCP HTTP/SSE server.
