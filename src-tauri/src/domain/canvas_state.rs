@@ -88,6 +88,60 @@ pub struct TemplateSummary {
     pub template_type: String,
 }
 
+/// Hint describing what kind of canvas mutation occurred.
+///
+/// Sent alongside canvas state syncs so that SSE subscribers can react
+/// to specific changes without diffing the full snapshot.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum CanvasEventHint {
+    /// A new tab was opened.
+    TabOpened {
+        /// The ID of the opened tab.
+        tab_id: String,
+        /// The user-friendly label of the opened tab.
+        label: String,
+    },
+    /// The active tab was switched.
+    TabSwitched {
+        /// The ID of the tab that is now active.
+        tab_id: String,
+        /// The user-friendly label of the switched-to tab.
+        label: String,
+    },
+    /// A tab was closed.
+    TabClosed {
+        /// The ID of the closed tab.
+        tab_id: String,
+        /// The user-friendly label of the closed tab.
+        label: String,
+    },
+    /// The layout within a context changed (e.g., template selection).
+    LayoutChanged {
+        /// The context/tab ID where the layout changed.
+        context_id: String,
+        /// The new layout identifier.
+        layout_id: String,
+    },
+    /// Initial mount or non-specific full state refresh.
+    StateSync,
+}
+
+impl CanvasEventHint {
+    /// Return the SSE event type string for this hint.
+    #[must_use]
+    pub const fn event_type(&self) -> &'static str {
+        match self {
+            Self::TabOpened { .. } => "canvas:tab_opened",
+            Self::TabSwitched { .. } => "canvas:tab_switched",
+            Self::TabClosed { .. } => "canvas:tab_closed",
+            Self::LayoutChanged { .. } => "canvas:layout_changed",
+            Self::StateSync => "canvas:state_sync",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -230,5 +284,120 @@ mod tests {
         assert_eq!(snapshot.active_tab_index, Some(0));
         assert_eq!(snapshot.tabs[0].id, "tab-1");
         assert_eq!(snapshot.tabs[0].tab_type, TabType::Request);
+    }
+
+    // ========================================================================
+    // CanvasEventHint tests
+    // ========================================================================
+
+    #[test]
+    fn test_canvas_event_hint_tab_opened_serialization() {
+        let hint = CanvasEventHint::TabOpened {
+            tab_id: "tab-1".to_string(),
+            label: "Test Tab".to_string(),
+        };
+        let json = serde_json::to_string(&hint).unwrap();
+        assert!(json.contains(r#""kind":"tab_opened""#));
+        assert!(json.contains(r#""tab_id":"tab-1""#));
+        assert!(json.contains(r#""label":"Test Tab""#));
+    }
+
+    #[test]
+    fn test_canvas_event_hint_tab_switched_serialization() {
+        let hint = CanvasEventHint::TabSwitched {
+            tab_id: "tab-2".to_string(),
+            label: "Switched Tab".to_string(),
+        };
+        let json = serde_json::to_string(&hint).unwrap();
+        assert!(json.contains(r#""kind":"tab_switched""#));
+        assert!(json.contains(r#""tab_id":"tab-2""#));
+        assert!(json.contains(r#""label":"Switched Tab""#));
+    }
+
+    #[test]
+    fn test_canvas_event_hint_tab_closed_serialization() {
+        let hint = CanvasEventHint::TabClosed {
+            tab_id: "tab-3".to_string(),
+            label: "Closed Tab".to_string(),
+        };
+        let json = serde_json::to_string(&hint).unwrap();
+        assert!(json.contains(r#""kind":"tab_closed""#));
+        assert!(json.contains(r#""label":"Closed Tab""#));
+    }
+
+    #[test]
+    fn test_canvas_event_hint_layout_changed_serialization() {
+        let hint = CanvasEventHint::LayoutChanged {
+            context_id: "ctx-1".to_string(),
+            layout_id: "layout-a".to_string(),
+        };
+        let json = serde_json::to_string(&hint).unwrap();
+        assert!(json.contains(r#""kind":"layout_changed""#));
+        assert!(json.contains(r#""context_id":"ctx-1""#));
+        assert!(json.contains(r#""layout_id":"layout-a""#));
+    }
+
+    #[test]
+    fn test_canvas_event_hint_state_sync_serialization() {
+        let hint = CanvasEventHint::StateSync;
+        let json = serde_json::to_string(&hint).unwrap();
+        assert_eq!(json, r#"{"kind":"state_sync"}"#);
+    }
+
+    #[test]
+    fn test_canvas_event_hint_deserialization() {
+        let json = r#"{"kind":"tab_opened","tab_id":"tab-42","label":"Test"}"#;
+        let hint: CanvasEventHint = serde_json::from_str(json).unwrap();
+        assert_eq!(
+            hint,
+            CanvasEventHint::TabOpened {
+                tab_id: "tab-42".to_string(),
+                label: "Test".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn test_canvas_event_hint_state_sync_deserialization() {
+        let json = r#"{"kind":"state_sync"}"#;
+        let hint: CanvasEventHint = serde_json::from_str(json).unwrap();
+        assert_eq!(hint, CanvasEventHint::StateSync);
+    }
+
+    #[test]
+    fn test_canvas_event_hint_event_type_mapping() {
+        assert_eq!(
+            CanvasEventHint::TabOpened {
+                tab_id: String::new(),
+                label: String::new(),
+            }
+            .event_type(),
+            "canvas:tab_opened"
+        );
+        assert_eq!(
+            CanvasEventHint::TabSwitched {
+                tab_id: String::new(),
+                label: String::new(),
+            }
+            .event_type(),
+            "canvas:tab_switched"
+        );
+        assert_eq!(
+            CanvasEventHint::TabClosed {
+                tab_id: String::new(),
+                label: String::new(),
+            }
+            .event_type(),
+            "canvas:tab_closed"
+        );
+        assert_eq!(
+            CanvasEventHint::LayoutChanged {
+                context_id: String::new(),
+                layout_id: String::new()
+            }
+            .event_type(),
+            "canvas:layout_changed"
+        );
+        assert_eq!(CanvasEventHint::StateSync.event_type(), "canvas:state_sync");
     }
 }

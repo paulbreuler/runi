@@ -5,10 +5,11 @@
 
 import React, { useMemo } from 'react';
 import { getCurrentWindow, type Window } from '@tauri-apps/api/window';
-import { Minimize2, Maximize2, Settings, X } from 'lucide-react';
+import { Minimize2, Maximize2, Settings, X, Eye, EyeOff } from 'lucide-react';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { focusRingClasses } from '@/utils/accessibility';
 import { useWindowFocus } from '@/hooks/useWindowFocus';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { cn } from '@/utils/cn';
 import { isMacSync } from '@/utils/platform';
 
@@ -264,6 +265,8 @@ export const TitleBar = ({
 }: TitleBarProps): React.JSX.Element => {
   const isMac = isMacSync();
   const isFocused = useWindowFocus();
+  const followAiMode = useSettingsStore((state) => state.followAiMode);
+  const toggleFollowAiMode = useSettingsStore((state) => state.toggleFollowAiMode);
   const showSettingsButton = onSettingsClick !== undefined;
   const hasCustomContent = React.Children.toArray(children).length > 0;
   const showRightActions = showSettingsButton || !isMac;
@@ -285,9 +288,12 @@ export const TitleBar = ({
 
       <div
         className={cn('flex-1 min-w-0 flex items-center', !hasCustomContent && 'justify-center')}
+        data-tauri-drag-region
       >
         {hasCustomContent ? (
-          <div className="flex h-full w-full min-w-0 items-center">{children}</div>
+          <div className="flex h-full w-full min-w-0 items-center" data-tauri-drag-region>
+            {children}
+          </div>
         ) : (
           <span className="font-medium" data-tauri-drag-region data-test-id="titlebar-title">
             {title}
@@ -303,6 +309,33 @@ export const TitleBar = ({
           className="ml-auto flex h-full items-center gap-1 pl-1 pr-0.5"
           data-test-id="titlebar-utilities"
         >
+          {/* Follow AI Mode toggle */}
+          <button
+            type="button"
+            onClick={toggleFollowAiMode}
+            className={cn(
+              focusRingClasses,
+              'flex h-[34px] w-[34px] items-center justify-center transition-colors rounded',
+              followAiMode
+                ? 'bg-signal-action/20 text-signal-action hover:bg-signal-action/30'
+                : 'hover:bg-bg-raised/50 text-text-muted'
+            )}
+            aria-label={followAiMode ? 'Disable Follow AI Mode' : 'Enable Follow AI Mode'}
+            aria-pressed={followAiMode}
+            title={
+              followAiMode
+                ? 'Follow AI Mode: ON - AI can navigate canvas'
+                : 'Follow AI Mode: OFF - AI actions logged but not applied'
+            }
+            data-test-id="titlebar-follow-ai"
+          >
+            {followAiMode ? (
+              <Eye size={16} className="transition-opacity" />
+            ) : (
+              <EyeOff size={16} className="transition-opacity" />
+            )}
+          </button>
+
           {showSettingsButton && (
             <button
               type="button"

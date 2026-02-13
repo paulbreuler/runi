@@ -938,15 +938,45 @@ pub async fn write_startup_timing(
 /// (tab switches, tab opens/closes, template selection). MCP tools read from this
 /// state to understand what the user is currently working on.
 ///
+/// Broadcasts an SSE event on the `"canvas"` stream so that MCP subscribers
+/// receive real-time updates. The `event_hint` describes *what* changed and the
+/// `actor` indicates *who* triggered the change (`"user"` or `"ai"`).
+///
 /// # Errors
 ///
 /// Returns an error if the canvas state cannot be updated.
 #[tauri::command]
 pub async fn sync_canvas_state(
     state: tauri::State<'_, CanvasStateHandle>,
+    broadcaster: tauri::State<'_, crate::infrastructure::mcp::commands::SseBroadcasterHandle>,
     snapshot: CanvasStateSnapshot,
+    event_hint: crate::domain::canvas_state::CanvasEventHint,
+    actor: String,
 ) -> Result<(), String> {
-    *state.write().await = snapshot;
+    use crate::infrastructure::mcp::server::sse_broadcaster::SseEvent;
+
+    // Update the shared state
+    *state.write().await = snapshot.clone();
+
+    // Build SSE event data
+    let event_type = event_hint.event_type().to_string();
+    let hint_value =
+        serde_json::to_value(&event_hint).map_err(|e| format!("Failed to serialize hint: {e}"))?;
+    let snapshot_value = serde_json::to_value(&snapshot)
+        .map_err(|e| format!("Failed to serialize snapshot: {e}"))?;
+
+    let data = json!({
+        "snapshot": snapshot_value,
+        "detail": hint_value,
+        "actor": actor,
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+    });
+
+    // Broadcast to all SSE subscribers on the "canvas" stream
+    broadcaster
+        .broadcast("canvas", SseEvent::new(event_type, data))
+        .await;
+
     Ok(())
 }
 
@@ -1315,9 +1345,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_sync_canvas_state_updates_state() {
-        use crate::domain::canvas_state::{TabSummary, TabType, TemplateSummary};
+        use crate::domain::canvas_state::{CanvasEventHint, TabSummary, TabType, TemplateSummary};
+        use crate::infrastructure::mcp::server::sse_broadcaster::SseBroadcaster;
 
         let state: CanvasStateHandle = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
+        let broadcaster = Arc::new(SseBroadcaster::new());
 
         let snapshot = CanvasStateSnapshot {
             tabs: vec![TabSummary {
@@ -1333,11 +1365,27 @@ mod tests {
             }],
         };
 
-        // Call the command (we can't use tauri::State in tests, so we test the logic directly)
+        // Simulate the sync_canvas_state logic (we can't use tauri::State in tests)
+        let hint = CanvasEventHint::TabOpened {
+            tab_id: "tab-1".to_string(),
+            label: "Test Tab".to_string(),
+        };
         {
             let mut guard = state.write().await;
             *guard = snapshot.clone();
         }
+        let event_type = hint.event_type().to_string();
+        let hint_value = serde_json::to_value(&hint).unwrap();
+        let snapshot_value = serde_json::to_value(&snapshot).unwrap();
+        let data = json!({
+            "snapshot": snapshot_value,
+            "detail": hint_value,
+            "actor": "human",
+            "timestamp": "2026-02-13T00:00:00Z",
+        });
+        let sse_event =
+            crate::infrastructure::mcp::server::sse_broadcaster::SseEvent::new(event_type, data);
+        broadcaster.broadcast("canvas", sse_event).await;
 
         // Verify state was updated
         {
@@ -1391,6 +1439,105 @@ mod tests {
             assert_eq!(guard.tabs[0].id, "tab-new");
             assert_eq!(guard.active_tab_index, None);
             drop(guard);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_sync_canvas_state_broadcasts_sse_event() {
+        use crate::domain::canvas_state::{CanvasEventHint, TabSummary, TabType};
+        use crate::infrastructure::mcp::server::sse_broadcaster::SseBroadcaster;
+
+        let state: CanvasStateHandle = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
+        let broadcaster = Arc::new(SseBroadcaster::new());
+
+        // Subscribe to the canvas stream before broadcasting
+        let (_sub_id, mut rx) = broadcaster.subscribe("canvas").await;
+
+        let snapshot = CanvasStateSnapshot {
+            tabs: vec![TabSummary {
+                id: "tab-1".to_string(),
+                label: "Request".to_string(),
+                tab_type: TabType::Request,
+            }],
+            active_tab_index: Some(0),
+            templates: vec![],
+        };
+
+        // Simulate the sync_canvas_state logic
+        let hint = CanvasEventHint::TabSwitched {
+            tab_id: "tab-1".to_string(),
+            label: "Test Tab".to_string(),
+        };
+        {
+            let mut guard = state.write().await;
+            *guard = snapshot.clone();
+        }
+        let event_type = hint.event_type().to_string();
+        let hint_value = serde_json::to_value(&hint).unwrap();
+        let snapshot_value = serde_json::to_value(&snapshot).unwrap();
+        let data = json!({
+            "snapshot": snapshot_value,
+            "detail": hint_value,
+            "actor": "human",
+            "timestamp": "2026-02-13T00:00:00Z",
+        });
+        let sse_event =
+            crate::infrastructure::mcp::server::sse_broadcaster::SseEvent::new(event_type, data);
+        let sent = broadcaster.broadcast("canvas", sse_event).await;
+        assert_eq!(sent, 1, "Should broadcast to 1 subscriber");
+
+        // Verify subscriber received the event
+        let received = rx.recv().await.unwrap();
+        assert_eq!(received.event_type, "canvas:tab_switched");
+        assert_eq!(received.data["actor"], "human");
+        assert_eq!(received.data["detail"]["kind"], "tab_switched");
+        assert_eq!(received.data["detail"]["tab_id"], "tab-1");
+        assert!(received.data["snapshot"]["tabs"].is_array());
+    }
+
+    #[tokio::test]
+    async fn test_sync_canvas_state_broadcasts_each_hint_variant() {
+        use crate::domain::canvas_state::CanvasEventHint;
+        use crate::infrastructure::mcp::server::sse_broadcaster::{SseBroadcaster, SseEvent};
+
+        let broadcaster = Arc::new(SseBroadcaster::new());
+        let (_sub_id, mut rx) = broadcaster.subscribe("canvas").await;
+
+        let hints = vec![
+            (
+                CanvasEventHint::TabOpened {
+                    tab_id: "t1".to_string(),
+                    label: "Tab 1".to_string(),
+                },
+                "canvas:tab_opened",
+            ),
+            (
+                CanvasEventHint::TabClosed {
+                    tab_id: "t2".to_string(),
+                    label: "Tab 2".to_string(),
+                },
+                "canvas:tab_closed",
+            ),
+            (
+                CanvasEventHint::LayoutChanged {
+                    context_id: "ctx".to_string(),
+                    layout_id: "lay".to_string(),
+                },
+                "canvas:layout_changed",
+            ),
+            (CanvasEventHint::StateSync, "canvas:state_sync"),
+        ];
+
+        for (hint, expected_type) in hints {
+            let event_type = hint.event_type().to_string();
+            let data = json!({"detail": serde_json::to_value(&hint).unwrap(), "actor": "ai"});
+            broadcaster
+                .broadcast("canvas", SseEvent::new(event_type, data))
+                .await;
+
+            let received = rx.recv().await.unwrap();
+            assert_eq!(received.event_type, expected_type);
+            assert_eq!(received.data["actor"], "ai");
         }
     }
 }

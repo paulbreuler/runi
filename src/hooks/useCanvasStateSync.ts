@@ -27,7 +27,12 @@ import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import type { EventEnvelope } from '@/hooks/useCollectionEvents';
-import type { CanvasStateSnapshot, TabSummary, TemplateSummary } from '@/types/generated';
+import type {
+  CanvasEventHint,
+  CanvasStateSnapshot,
+  TabSummary,
+  TemplateSummary,
+} from '@/types/generated';
 
 /**
  * Build a serializable canvas snapshot from store state.
@@ -81,6 +86,66 @@ export function buildCanvasSnapshot(state: {
   return snapshot;
 }
 
+/** Diffable subset of canvas state used for event hint derivation. */
+interface DiffableState {
+  contextOrder: string[];
+  activeContextId: string | null;
+}
+
+/**
+ * Derive a `CanvasEventHint` by comparing previous and current canvas state.
+ *
+ * - `contextOrder` grew   → `tab_opened` (finds the new ID)
+ * - `contextOrder` shrank → `tab_closed` (finds the removed ID)
+ * - `activeContextId` changed, same length → `tab_switched`
+ * - Otherwise (or null previous)           → `state_sync`
+ */
+export function deriveEventHint(
+  previous: DiffableState | null,
+  current: DiffableState,
+  contexts: Map<string, { id: string; label: string; contextType?: string }>
+): CanvasEventHint {
+  if (previous === null) {
+    return { kind: 'state_sync' };
+  }
+
+  const prevOrder = previous.contextOrder;
+  const currOrder = current.contextOrder;
+
+  // Tab opened: contextOrder grew
+  if (currOrder.length > prevOrder.length) {
+    const prevSet = new Set(prevOrder);
+    const newId = currOrder.find((id) => !prevSet.has(id));
+    if (newId !== undefined) {
+      const label = contexts.get(newId)?.label ?? 'Unknown';
+      return { kind: 'tab_opened', tab_id: newId, label };
+    }
+  }
+
+  // Tab closed: contextOrder shrank
+  if (currOrder.length < prevOrder.length) {
+    const currSet = new Set(currOrder);
+    const removedId = prevOrder.find((id) => !currSet.has(id));
+    if (removedId !== undefined) {
+      // For closed tabs, try current contexts first, then previous state if available
+      const label = contexts.get(removedId)?.label ?? 'Unknown';
+      return { kind: 'tab_closed', tab_id: removedId, label };
+    }
+  }
+
+  // Tab switched: same length, different active ID
+  if (
+    currOrder.length === prevOrder.length &&
+    current.activeContextId !== previous.activeContextId &&
+    current.activeContextId !== null
+  ) {
+    const label = contexts.get(current.activeContextId)?.label ?? 'Unknown';
+    return { kind: 'tab_switched', tab_id: current.activeContextId, label };
+  }
+
+  return { kind: 'state_sync' };
+}
+
 /**
  * Record a canvas action in the activity feed.
  *
@@ -130,6 +195,12 @@ export function useCanvasStateSync(): void {
     activeContextId: string | null;
   } | null>(null);
 
+  // Track previous state for event hint derivation
+  const previousStateRef = useRef<DiffableState | null>(null);
+
+  // Track whether the current mutation was triggered by an AI/MCP event
+  const aiMutationRef = useRef<boolean>(false);
+
   // Helper to trigger debounced sync
   const triggerSync = useCallback(
     (state: {
@@ -151,8 +222,28 @@ export function useCanvasStateSync(): void {
           activeContextId: state.activeContextId,
         });
 
+        // Derive event hint from state diff
+        const eventHint = deriveEventHint(
+          previousStateRef.current,
+          {
+            contextOrder: state.contextOrder,
+            activeContextId: state.activeContextId,
+          },
+          state.contexts
+        );
+
+        // Read and reset actor provenance
+        const actor = aiMutationRef.current ? 'ai' : 'user';
+        aiMutationRef.current = false;
+
+        // Update previous state for next diff
+        previousStateRef.current = {
+          contextOrder: state.contextOrder,
+          activeContextId: state.activeContextId,
+        };
+
         // Push to backend (async, no await)
-        void invoke('sync_canvas_state', { snapshot }).catch((error: unknown) => {
+        void invoke('sync_canvas_state', { snapshot, eventHint, actor }).catch((error: unknown) => {
           console.error('[useCanvasStateSync] Failed to sync canvas state:', error);
           globalEventBus.emit<ToastEventPayload>('toast.show', {
             type: 'error',
@@ -251,6 +342,10 @@ export function useCanvasStateSync(): void {
 
           // Conditionally navigate based on actor + Follow AI mode
           if (!isAi || useSettingsStore.getState().followAiMode) {
+            // Mark as AI mutation before store action so triggerSync picks it up
+            if (isAi) {
+              aiMutationRef.current = true;
+            }
             useCanvasStore.getState().setActiveContext(envelope.payload.contextId);
           }
         }),
@@ -263,6 +358,11 @@ export function useCanvasStateSync(): void {
 
           // Always log activity
           recordCanvasActivity(envelope, 'opened_tab', envelope.payload.label ?? 'Request');
+
+          // Mark as AI mutation before store action so triggerSync picks it up
+          if (isAi) {
+            aiMutationRef.current = true;
+          }
 
           // Open tab with conditional activation
           useCanvasStore
@@ -283,6 +383,11 @@ export function useCanvasStateSync(): void {
             envelope.payload.contextId,
             envelope.payload.contextId
           );
+
+          // Mark as AI mutation before store action so triggerSync picks it up
+          if (isAi) {
+            aiMutationRef.current = true;
+          }
 
           // Close tab with conditional activation
           useCanvasStore

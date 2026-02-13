@@ -23,8 +23,10 @@ use infrastructure::logging::init_logging;
 #[cfg(debug_assertions)]
 use infrastructure::mcp::commands::{DEFAULT_MCP_PORT, start_server};
 use infrastructure::mcp::commands::{
-    create_mcp_server_state, mcp_server_start, mcp_server_status, mcp_server_stop,
+    SseBroadcasterHandle, create_mcp_server_state, mcp_server_start, mcp_server_status,
+    mcp_server_stop,
 };
+use infrastructure::mcp::server::sse_broadcaster::SseBroadcaster;
 use infrastructure::memory_monitor::{
     collect_ram_sample, get_ram_stats, set_memory_monitoring_enabled, start_memory_monitor,
 };
@@ -50,6 +52,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(create_mcp_server_state())
+        .manage::<SseBroadcasterHandle>(std::sync::Arc::new(SseBroadcaster::new()))
         .manage(std::sync::Arc::new(tokio::sync::RwLock::new(
             domain::canvas_state::CanvasStateSnapshot::new(),
         )))
@@ -85,10 +88,16 @@ pub fn run() {
             {
                 let mcp_state = app.state::<infrastructure::mcp::commands::McpServerServiceState>();
                 let mcp_state_clone = mcp_state.inner().clone();
+                let sse_bc = app.state::<SseBroadcasterHandle>().inner().clone();
                 let mcp_app_handle = app.handle().clone();
                 tauri::async_runtime::spawn(async move {
-                    if let Err(e) =
-                        start_server(DEFAULT_MCP_PORT, &mcp_state_clone, Some(mcp_app_handle)).await
+                    if let Err(e) = start_server(
+                        DEFAULT_MCP_PORT,
+                        &mcp_state_clone,
+                        Some(mcp_app_handle),
+                        sse_bc,
+                    )
+                    .await
                     {
                         tracing::warn!("Failed to auto-start MCP server: {e}");
                     }

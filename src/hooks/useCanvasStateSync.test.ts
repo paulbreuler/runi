@@ -10,11 +10,11 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { buildCanvasSnapshot, useCanvasStateSync } from './useCanvasStateSync';
+import { buildCanvasSnapshot, deriveEventHint, useCanvasStateSync } from './useCanvasStateSync';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useActivityStore, __resetActivityIdCounter } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import type { CanvasStateSnapshot } from '@/types/generated';
+import type { CanvasEventHint, CanvasStateSnapshot } from '@/types/generated';
 
 // Mock event listener
 type EventCallback = (event: { payload: unknown }) => void;
@@ -637,6 +637,371 @@ describe('useCanvasStateSync', () => {
       const activities = useActivityStore.getState().entries;
       expect(activities.length).toBe(1);
       expect(activities[0]?.action).toBe('closed_tab');
+
+      unmount();
+    });
+  });
+
+  describe('deriveEventHint', () => {
+    const mockContexts = new Map([
+      ['tab-1', { id: 'tab-1', label: 'Tab 1' }],
+      ['tab-2', { id: 'tab-2', label: 'Tab 2' }],
+      ['tab-3', { id: 'tab-3', label: 'Tab 3' }],
+    ]);
+
+    it('returns tab_opened when contextOrder grew', () => {
+      const hint = deriveEventHint(
+        { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
+        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
+        mockContexts
+      );
+
+      expect(hint).toEqual({ kind: 'tab_opened', tab_id: 'tab-2', label: 'Tab 2' });
+    });
+
+    it('returns tab_closed when contextOrder shrank', () => {
+      const hint = deriveEventHint(
+        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
+        { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
+        mockContexts
+      );
+
+      expect(hint).toEqual({ kind: 'tab_closed', tab_id: 'tab-2', label: 'Tab 2' });
+    });
+
+    it('returns tab_switched when activeContextId changed with same length', () => {
+      const hint = deriveEventHint(
+        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-1' },
+        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
+        mockContexts
+      );
+
+      expect(hint).toEqual({ kind: 'tab_switched', tab_id: 'tab-2', label: 'Tab 2' });
+    });
+
+    it('returns state_sync when nothing meaningful changed', () => {
+      const hint = deriveEventHint(
+        { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
+        { contextOrder: ['tab-1'], activeContextId: 'tab-1' },
+        mockContexts
+      );
+
+      expect(hint).toEqual({ kind: 'state_sync' });
+    });
+
+    it('returns state_sync when previous state is null (initial mount)', () => {
+      const hint = deriveEventHint(
+        null,
+        {
+          contextOrder: ['tab-1'],
+          activeContextId: 'tab-1',
+        },
+        mockContexts
+      );
+
+      expect(hint).toEqual({ kind: 'state_sync' });
+    });
+
+    it('identifies the correct new tab when multiple tabs exist', () => {
+      const hint = deriveEventHint(
+        { contextOrder: ['tab-1', 'tab-2'], activeContextId: 'tab-2' },
+        { contextOrder: ['tab-1', 'tab-2', 'tab-3'], activeContextId: 'tab-3' },
+        mockContexts
+      );
+
+      expect(hint).toEqual({ kind: 'tab_opened', tab_id: 'tab-3', label: 'Tab 3' });
+    });
+
+    it('identifies the correct removed tab', () => {
+      const hint = deriveEventHint(
+        { contextOrder: ['tab-1', 'tab-2', 'tab-3'], activeContextId: 'tab-2' },
+        { contextOrder: ['tab-1', 'tab-3'], activeContextId: 'tab-3' },
+        mockContexts
+      );
+
+      expect(hint).toEqual({ kind: 'tab_closed', tab_id: 'tab-2', label: 'Tab 2' });
+    });
+  });
+
+  describe('event hint in sync calls', () => {
+    it('sends state_sync hint on initial mount', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(0);
+        },
+        { timeout: 500 }
+      );
+
+      const syncCall = invokeCalls.find((call) => call.command === 'sync_canvas_state');
+      expect(syncCall).toBeDefined();
+      expect(syncCall?.args.eventHint).toEqual({ kind: 'state_sync' });
+
+      unmount();
+    });
+
+    it('sends tab_opened hint when a tab is added', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      // Wait for initial sync
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(0);
+        },
+        { timeout: 500 }
+      );
+
+      const initialCallCount = invokeCalls.length;
+
+      // Open a tab
+      let tabId = '';
+      act(() => {
+        tabId = useCanvasStore.getState().openRequestTab({ label: 'Test Tab' });
+      });
+
+      // Wait for debounced sync
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(initialCallCount);
+        },
+        { timeout: 500 }
+      );
+
+      const syncCall = invokeCalls[invokeCalls.length - 1];
+      expect(syncCall?.command).toBe('sync_canvas_state');
+      const hint = syncCall?.args.eventHint as CanvasEventHint;
+      expect(hint.kind).toBe('tab_opened');
+      if (hint.kind === 'tab_opened') {
+        expect(hint.tab_id).toBe(tabId);
+      }
+
+      unmount();
+    });
+
+    it('sends tab_closed hint when a tab is removed', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      // Open a tab first
+      let tabId = '';
+      act(() => {
+        tabId = useCanvasStore.getState().openRequestTab({ label: 'Tab to close' });
+      });
+
+      // Wait for sync after open to settle (any sync call with the tab present)
+      await waitFor(
+        () => {
+          const syncCalls = invokeCalls.filter((c) => c.command === 'sync_canvas_state');
+          const hasTabInSnapshot = syncCalls.some((c) => {
+            const snapshot = c.args.snapshot as CanvasStateSnapshot;
+            return snapshot.tabs.some((t) => t.id === tabId);
+          });
+          expect(hasTabInSnapshot).toBe(true);
+        },
+        { timeout: 500 }
+      );
+
+      const callCountBeforeClose = invokeCalls.length;
+
+      // Close the tab
+      act(() => {
+        useCanvasStore.getState().closeContext(tabId);
+      });
+
+      // Wait for debounced sync
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(callCountBeforeClose);
+        },
+        { timeout: 500 }
+      );
+
+      const syncCall = invokeCalls[invokeCalls.length - 1];
+      expect(syncCall?.command).toBe('sync_canvas_state');
+      const hint = syncCall?.args.eventHint as CanvasEventHint;
+      expect(hint.kind).toBe('tab_closed');
+      if (hint.kind === 'tab_closed') {
+        expect(hint.tab_id).toBe(tabId);
+      }
+
+      unmount();
+    });
+
+    it('sends tab_switched hint when active tab changes', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      // Open two tabs
+      let tab1 = '';
+      act(() => {
+        tab1 = useCanvasStore.getState().openRequestTab({ label: 'Tab 1' });
+        useCanvasStore.getState().openRequestTab({ label: 'Tab 2' });
+      });
+
+      // Wait for sync to settle
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(0);
+        },
+        { timeout: 500 }
+      );
+
+      const callCountBeforeSwitch = invokeCalls.length;
+
+      // Switch to tab1
+      act(() => {
+        useCanvasStore.getState().setActiveContext(tab1);
+      });
+
+      // Wait for debounced sync
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(callCountBeforeSwitch);
+        },
+        { timeout: 500 }
+      );
+
+      const syncCall = invokeCalls[invokeCalls.length - 1];
+      expect(syncCall?.command).toBe('sync_canvas_state');
+      const hint = syncCall?.args.eventHint as CanvasEventHint;
+      expect(hint.kind).toBe('tab_switched');
+      if (hint.kind === 'tab_switched') {
+        expect(hint.tab_id).toBe(tab1);
+      }
+
+      unmount();
+    });
+  });
+
+  describe('actor tracking', () => {
+    it('sends actor "user" for user-initiated changes', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      // Wait for initial sync
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(0);
+        },
+        { timeout: 500 }
+      );
+
+      const syncCall = invokeCalls.find((call) => call.command === 'sync_canvas_state');
+      expect(syncCall?.args.actor).toBe('user');
+
+      unmount();
+    });
+
+    it('sends actor "ai" when MCP event triggers a store mutation', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      // Wait for listeners
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_request_tab')?.length).toBe(1);
+      });
+
+      // Wait for initial sync to settle
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(0);
+        },
+        { timeout: 500 }
+      );
+
+      const callCountBeforeAi = invokeCalls.length;
+
+      // Emit AI-attributed open event
+      act(() => {
+        emitEvent('canvas:open_request_tab', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: { label: 'AI Tab' },
+        });
+      });
+
+      // Wait for debounced sync
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(callCountBeforeAi);
+        },
+        { timeout: 500 }
+      );
+
+      const syncCall = invokeCalls[invokeCalls.length - 1];
+      expect(syncCall?.command).toBe('sync_canvas_state');
+      expect(syncCall?.args.actor).toBe('ai');
+
+      unmount();
+    });
+
+    it('resets aiMutationRef after sync (subsequent user change reports "user")', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      // Wait for listeners and initial sync
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_request_tab')?.length).toBe(1);
+      });
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(0);
+        },
+        { timeout: 500 }
+      );
+
+      // Trigger AI mutation
+      act(() => {
+        emitEvent('canvas:open_request_tab', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: { label: 'AI Tab' },
+        });
+      });
+
+      // Wait for AI sync
+      await waitFor(
+        () => {
+          const aiCalls = invokeCalls.filter(
+            (c) => c.command === 'sync_canvas_state' && c.args.actor === 'ai'
+          );
+          expect(aiCalls.length).toBeGreaterThan(0);
+        },
+        { timeout: 500 }
+      );
+
+      const callCountBeforeUser = invokeCalls.length;
+
+      // Now do a user-initiated change
+      act(() => {
+        useCanvasStore.getState().openRequestTab({ label: 'User Tab' });
+      });
+
+      // Wait for user sync
+      await waitFor(
+        () => {
+          expect(invokeCalls.length).toBeGreaterThan(callCountBeforeUser);
+        },
+        { timeout: 500 }
+      );
+
+      const lastCall = invokeCalls[invokeCalls.length - 1];
+      expect(lastCall?.command).toBe('sync_canvas_state');
+      expect(lastCall?.args.actor).toBe('user');
 
       unmount();
     });

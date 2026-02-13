@@ -49,7 +49,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   sidebarEdge: 'left',
   logLevel: 'info',
   metricsVisible: false, // Default hidden to save space
-  followAiMode: false, // Default off — user opts in
+  followAiMode: true, // Default on to showcase AI integration
   openItemsRatio: 0.35,
   toggleSidebar: (): void => {
     set((state) => ({ sidebarVisible: !state.sidebarVisible }));
