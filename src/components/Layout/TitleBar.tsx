@@ -288,9 +288,12 @@ export const TitleBar = ({
 
       <div
         className={cn('flex-1 min-w-0 flex items-center', !hasCustomContent && 'justify-center')}
+        data-tauri-drag-region
       >
         {hasCustomContent ? (
-          <div className="flex h-full w-full min-w-0 items-center">{children}</div>
+          <div className="flex h-full w-full min-w-0 items-center" data-tauri-drag-region>
+            {children}
+          </div>
         ) : (
           <span className="font-medium" data-tauri-drag-region data-test-id="titlebar-title">
             {title}
