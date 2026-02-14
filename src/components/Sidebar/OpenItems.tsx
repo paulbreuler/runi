@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, CircleDot, X } from 'lucide-react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useRequestStoreRaw, DEFAULT_REQUEST_STATE } from '@/stores/useRequestStore';
 import type { RequestTabState } from '@/types/canvas';
@@ -186,8 +186,9 @@ export const OpenItems = ({ className, style }: OpenItemsProps): React.JSX.Eleme
                 >
                   {/* Dirty indicator */}
                   {metadata.isDirty === true && (
-                    <span
-                      className="shrink-0 h-1.5 w-1.5 rounded-full bg-signal-warning"
+                    <CircleDot
+                      size={10}
+                      className="shrink-0 text-signal-warning"
                       data-test-id={`open-items-dirty-${contextId}`}
                       aria-label="Unsaved changes"
                     />

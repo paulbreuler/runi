@@ -169,4 +169,41 @@ describe('UrlBar', () => {
     expect(control.className).toContain('focus-within:border-border-default');
     expect(control.className).toContain('focus-within:ring-1');
   });
+
+  describe('AI activity vigilance line', () => {
+    it('renders vigilance line element', () => {
+      render(<UrlBar {...defaultProps} />);
+      expect(screen.getByTestId('url-bar-vigilance-line')).toBeInTheDocument();
+    });
+
+    it('shows idle state by default', () => {
+      render(<UrlBar {...defaultProps} />);
+      const line = screen.getByTestId('url-bar-vigilance-line');
+      expect(line).toHaveClass('vigilance-progress-idle');
+    });
+
+    it('shows editing state with animated gradient', () => {
+      render(<UrlBar {...defaultProps} aiState="editing" />);
+      const line = screen.getByTestId('url-bar-vigilance-line');
+      expect(line).toHaveClass('vigilance-progress');
+    });
+
+    it('shows executing state with fast gradient', () => {
+      render(<UrlBar {...defaultProps} aiState="executing" />);
+      const line = screen.getByTestId('url-bar-vigilance-line');
+      expect(line).toHaveClass('vigilance-progress-fast');
+    });
+
+    it('shows complete state with success color', () => {
+      render(<UrlBar {...defaultProps} aiState="complete" />);
+      const line = screen.getByTestId('url-bar-vigilance-line');
+      expect(line).toHaveClass('vigilance-progress-complete');
+    });
+
+    it('is hidden from screen readers', () => {
+      render(<UrlBar {...defaultProps} />);
+      const line = screen.getByTestId('url-bar-vigilance-line');
+      expect(line).toHaveAttribute('aria-hidden', 'true');
+    });
+  });
 });

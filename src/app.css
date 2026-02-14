@@ -217,6 +217,26 @@ body {
     animation: vigilance-flow 2s linear infinite;
   }
 
+  /* Vigilance Monitor Fast State - Executing (1s cycle) */
+  .vigilance-progress-fast {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      var(--color-signal-ai) 0%,
+      var(--color-accent-blue) 50%,
+      var(--color-signal-success) 100%
+    );
+    background-size: 200% 100%;
+    animation: vigilance-flow 1s linear infinite;
+  }
+
+  /* Vigilance Monitor Complete State - Solid green flash */
+  .vigilance-progress-complete {
+    height: 1px;
+    background: var(--color-signal-success);
+    transition: background 0.3s ease-out;
+  }
+
   /* Vigilance Monitor Idle State - Static line, same height as active to prevent layout shift */
   .vigilance-progress-idle {
     height: 1px;

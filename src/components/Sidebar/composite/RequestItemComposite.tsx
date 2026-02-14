@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback, useRef, useState } from 'react';
-import { Pencil, Radio, Sparkles, Trash2 } from 'lucide-react';
+import { Link, Pencil, Radio, Sparkles, Trash2 } from 'lucide-react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
@@ -190,9 +190,10 @@ export const RequestItemComposite = ({
             )}
 
             {isBound(request) && (
-              <div className="shrink-0 w-3 flex items-center justify-center">
-                <span className="h-1.5 w-1.5 rounded-full bg-signal-success" />
-              </div>
+              <Link
+                size={10}
+                className="shrink-0 text-accent-blue"
+              />
             )}
 
             <span

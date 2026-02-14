@@ -12,10 +12,13 @@ import { cn } from '@/utils/cn';
 import { compositeFocusContainerClasses, compositeFocusItemClasses } from '@/utils/accessibility';
 import { getMethodColor, type HttpMethod } from '@/utils/http-colors';
 
+export type AiActivityState = 'idle' | 'editing' | 'executing' | 'complete';
+
 interface UrlBarProps {
   method: HttpMethod;
   url?: string;
   loading?: boolean;
+  aiState?: AiActivityState;
   onMethodChange?: (method: HttpMethod) => void;
   onUrlChange?: (url: string) => void;
   onSend?: () => void;
@@ -26,10 +29,18 @@ interface UrlBarProps {
  * Currently handles Method selection, URL input, and Send action.
  * Future evolution will include intent detection and natural language commands.
  */
+const aiStateClasses: Record<AiActivityState, string> = {
+  idle: 'vigilance-progress-idle',
+  editing: 'vigilance-progress',
+  executing: 'vigilance-progress-fast',
+  complete: 'vigilance-progress-complete',
+};
+
 export const UrlBar = ({
   method,
   url = '',
   loading = false,
+  aiState = 'idle',
   onMethodChange,
   onUrlChange,
   onSend,
@@ -92,7 +103,7 @@ export const UrlBar = ({
   return (
     <div
       className={cn(
-        'flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300',
+        'relative flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300',
         compositeFocusContainerClasses
       )}
       data-test-id="url-bar"
@@ -166,6 +177,13 @@ export const UrlBar = ({
           {loading ? renderLoadingState() : 'Send'}
         </Button>
       </div>
+
+      {/* AI activity vigilance line — 1px bottom-edge progress indicator */}
+      <div
+        className={cn('absolute bottom-0 left-0 right-0', aiStateClasses[aiState])}
+        data-test-id="url-bar-vigilance-line"
+        aria-hidden="true"
+      />
     </div>
   );
 };

@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { CaseSensitive, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { CaseSensitive, CheckCircle, ChevronDown, ChevronUp, Search, X, XCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { CodeBox } from '@/components/History/CodeBox';
@@ -659,7 +659,7 @@ export const CodeEditor = ({
                 className="flex items-center gap-2 px-2 py-1 rounded bg-signal-success/10 text-signal-success text-xs"
                 data-test-id="json-valid-indicator"
               >
-                <span className="size-1.5 rounded-full bg-signal-success" />
+                <CheckCircle size={12} />
                 Valid JSON
               </div>
             ) : (
@@ -667,7 +667,7 @@ export const CodeEditor = ({
                 className="flex items-center gap-2 px-2 py-1 rounded bg-signal-error/10 text-signal-error text-xs"
                 data-test-id="json-invalid-indicator"
               >
-                <span className="size-1.5 rounded-full bg-signal-error" />
+                <XCircle size={12} />
                 Invalid JSON
               </div>
             )}

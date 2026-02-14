@@ -15,7 +15,6 @@ import { MetricsGrid } from '@/components/Metrics/MetricsGrid';
 import { AppMetricsContainer } from '@/components/Console/AppMetricsContainer';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
-import { useHistoryStore } from '@/stores/useHistoryStore';
 import { focusRingClasses } from '@/utils/accessibility';
 import { STATUS_BAR_Z_INDEX } from '@/utils/z-index';
 import { cn } from '@/utils/cn';
@@ -113,12 +112,7 @@ export const StatusBar = (): React.JSX.Element => {
   const setMetricsVisible = useSettingsStore((state) => state.setMetricsVisible);
   const setMetricsStore = useMetricsStore((state) => state.setMetrics);
   const { metrics, timestamp, isLive } = useMetricsStore();
-  const entries = useHistoryStore((state) => state.entries);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-
-  // Request count display
-  const requestCount = entries.length;
-  const requestWord = requestCount === 1 ? 'request' : 'requests';
 
   // Determine pulsing glow state
   // init: metrics.memory === undefined (strong pulse)
@@ -200,14 +194,11 @@ export const StatusBar = (): React.JSX.Element => {
       style={{ zIndex: STATUS_BAR_Z_INDEX }}
       data-test-id="status-bar"
     >
-      {/* Left side - environment and request count */}
+      {/* Left side - environment */}
       <div className="flex items-center gap-4 opacity-70">
         <span className="flex items-center gap-1.5">
           <span className="text-text-muted">Environment:</span>
           <span className="font-mono text-text-secondary">default</span>
-        </span>
-        <span className="text-text-secondary" data-test-id="status-bar-request-count">
-          {requestCount} {requestWord}
         </span>
       </div>
       {/* Right side - metrics and version */}
@@ -299,9 +290,8 @@ export const StatusBar = (): React.JSX.Element => {
             <AppMetricsContainer compact={true} />
           </div>
         )}
-        <span className="flex items-center gap-1.5 text-text-muted">
-          <span className="text-text-muted">Version:</span>
-          <span className="font-mono text-text-secondary">{__APP_VERSION__}</span>
+        <span className="font-mono text-text-muted" data-test-id="status-bar-version">
+          v{__APP_VERSION__}
         </span>
       </div>
     </div>

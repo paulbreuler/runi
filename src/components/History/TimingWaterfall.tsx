@@ -4,6 +4,7 @@
  */
 
 import { motion, useReducedMotion } from 'motion/react';
+import { Circle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { TimingWaterfallSegments } from '@/types/history';
 
@@ -122,11 +123,10 @@ export const TimingWaterfall = ({
             }
             return (
               <div key={key} className="flex items-center gap-1.5">
-                <span
-                  className={cn(
-                    'w-1.5 h-1.5 rounded-full ring-1 ring-white/10',
-                    colorClass as string
-                  )}
+                <Circle
+                  size={8}
+                  className={cn('shrink-0', colorClass as string)}
+                  fill="currentColor"
                 />
                 <span className="text-text-muted">{label}</span>
                 <span className="font-mono text-text-secondary">{ms}ms</span>

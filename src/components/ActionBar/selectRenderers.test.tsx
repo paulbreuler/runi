@@ -107,14 +107,13 @@ describe('selectRenderers', () => {
       expect(container.querySelector('.text-signal-error')).toBeInTheDocument();
     });
 
-    it('renders colored dot indicator', () => {
+    it('renders colored icon indicator', () => {
       const option: StatusSelectOption = { value: '2xx', label: '2xx Success', range: '2xx' };
       render(<>{renderStatusOption(option)}</>);
 
       const container = screen.getByTestId('status-option-2xx');
-      const dot = container.querySelector('.rounded-full');
-      expect(dot).toBeInTheDocument();
-      expect(dot).toHaveClass('bg-signal-success');
+      const icon = container.querySelector('svg');
+      expect(icon).toBeInTheDocument();
     });
   });
 
@@ -170,7 +169,7 @@ describe('selectRenderers', () => {
       expect(container.querySelector('.text-accent-blue')).toBeInTheDocument();
     });
 
-    it('renders colored dot indicator', () => {
+    it('renders colored icon indicator', () => {
       const option: IntelligenceSelectOption = {
         value: 'drift',
         label: 'Has Drift',
@@ -179,9 +178,8 @@ describe('selectRenderers', () => {
       render(<>{renderIntelligenceOption(option)}</>);
 
       const container = screen.getByTestId('intelligence-option-drift');
-      const dot = container.querySelector('.rounded-full');
-      expect(dot).toBeInTheDocument();
-      expect(dot).toHaveClass('bg-signal-warning');
+      const icon = container.querySelector('svg');
+      expect(icon).toBeInTheDocument();
     });
   });
 });

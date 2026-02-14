@@ -19,12 +19,12 @@ describe('IntelligenceSignals', () => {
 
   it('renders nothing when no signals are present', () => {
     const { container } = render(<IntelligenceSignals intelligence={emptyIntelligence} />);
-    expect(container.querySelector('[data-test-id^="signal-dot"]')).toBeNull();
+    expect(container.querySelector('[data-test-id^="signal-icon"]')).toBeNull();
   });
 
   it('renders verified signal when verified is true', () => {
     render(<IntelligenceSignals intelligence={{ ...emptyIntelligence, verified: true }} />);
-    expect(screen.getByTestId('signal-dot-verified')).toBeInTheDocument();
+    expect(screen.getByTestId('signal-icon-verified')).toBeInTheDocument();
   });
 
   it('renders bound signal when boundToSpec is true', () => {
@@ -33,7 +33,7 @@ describe('IntelligenceSignals', () => {
         intelligence={{ ...emptyIntelligence, boundToSpec: true, specOperation: 'getUsers' }}
       />
     );
-    expect(screen.getByTestId('signal-dot-bound')).toBeInTheDocument();
+    expect(screen.getByTestId('signal-icon-bound')).toBeInTheDocument();
   });
 
   it('renders drift signal when drift is present', () => {
@@ -45,12 +45,12 @@ describe('IntelligenceSignals', () => {
         }}
       />
     );
-    expect(screen.getByTestId('signal-dot-drift')).toBeInTheDocument();
+    expect(screen.getByTestId('signal-icon-drift')).toBeInTheDocument();
   });
 
   it('renders ai signal when aiGenerated is true', () => {
     render(<IntelligenceSignals intelligence={{ ...emptyIntelligence, aiGenerated: true }} />);
-    expect(screen.getByTestId('signal-dot-ai')).toBeInTheDocument();
+    expect(screen.getByTestId('signal-icon-ai')).toBeInTheDocument();
   });
 
   it('renders multiple signals when multiple flags are set', () => {
@@ -66,10 +66,10 @@ describe('IntelligenceSignals', () => {
       />
     );
 
-    expect(screen.getByTestId('signal-dot-bound')).toBeInTheDocument();
-    expect(screen.getByTestId('signal-dot-drift')).toBeInTheDocument();
-    expect(screen.getByTestId('signal-dot-ai')).toBeInTheDocument();
-    expect(screen.queryByTestId('signal-dot-verified')).toBeNull();
+    expect(screen.getByTestId('signal-icon-bound')).toBeInTheDocument();
+    expect(screen.getByTestId('signal-icon-drift')).toBeInTheDocument();
+    expect(screen.getByTestId('signal-icon-ai')).toBeInTheDocument();
+    expect(screen.queryByTestId('signal-icon-verified')).toBeNull();
   });
 
   it('renders signals in correct order: verified, drift, ai, bound', () => {
@@ -85,12 +85,12 @@ describe('IntelligenceSignals', () => {
       />
     );
 
-    const dots = screen.getAllByTestId(/^signal-dot-/);
+    const dots = screen.getAllByTestId(/^signal-icon-/);
     expect(dots).toHaveLength(4);
-    expect(dots[0]).toHaveAttribute('data-test-id', 'signal-dot-verified');
-    expect(dots[1]).toHaveAttribute('data-test-id', 'signal-dot-drift');
-    expect(dots[2]).toHaveAttribute('data-test-id', 'signal-dot-ai');
-    expect(dots[3]).toHaveAttribute('data-test-id', 'signal-dot-bound');
+    expect(dots[0]).toHaveAttribute('data-test-id', 'signal-icon-verified');
+    expect(dots[1]).toHaveAttribute('data-test-id', 'signal-icon-drift');
+    expect(dots[2]).toHaveAttribute('data-test-id', 'signal-icon-ai');
+    expect(dots[3]).toHaveAttribute('data-test-id', 'signal-icon-bound');
   });
 
   it('includes spec operation in bound tooltip when available', () => {
@@ -99,7 +99,7 @@ describe('IntelligenceSignals', () => {
         intelligence={{ ...emptyIntelligence, boundToSpec: true, specOperation: 'getUserById' }}
       />
     );
-    const dot = screen.getByTestId('signal-dot-bound');
+    const dot = screen.getByTestId('signal-icon-bound');
     expect(dot).toHaveAttribute('title', 'Bound to spec: getUserById');
   });
 
@@ -112,12 +112,12 @@ describe('IntelligenceSignals', () => {
         }}
       />
     );
-    const dot = screen.getByTestId('signal-dot-drift');
+    const dot = screen.getByTestId('signal-icon-drift');
     expect(dot).toHaveAttribute('title', 'Drift: Expected 200, got 404');
   });
 
   it('renders undefined intelligence as no signals', () => {
     const { container } = render(<IntelligenceSignals />);
-    expect(container.querySelector('[data-test-id^="signal-dot"]')).toBeNull();
+    expect(container.querySelector('[data-test-id^="signal-icon"]')).toBeNull();
   });
 });
