@@ -109,12 +109,7 @@ export const TimingTab = ({
               data-test-id="streaming-indicator"
               className="flex items-center gap-1.5 text-xs text-signal-success"
             >
-              <Radio
-                size={10}
-                className={cn(
-                  shouldReduceMotion !== true && 'animate-pulse'
-                )}
-              />
+              <Radio size={10} className={cn(shouldReduceMotion !== true && 'animate-pulse')} />
               STREAMING
             </span>
           )}

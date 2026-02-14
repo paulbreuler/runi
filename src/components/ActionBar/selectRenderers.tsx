@@ -3,7 +3,15 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { CheckCircle, ArrowRightLeft, AlertTriangle, XCircle, ShieldCheck, Sparkles, Link } from 'lucide-react';
+import {
+  CheckCircle,
+  ArrowRightLeft,
+  AlertTriangle,
+  XCircle,
+  ShieldCheck,
+  Sparkles,
+  Link,
+} from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
   methodTextColors,
@@ -69,7 +77,10 @@ export const renderMethodOption = (option: MethodSelectOption): React.ReactNode 
   );
 };
 
-const statusRangeIcons: Record<StatusRange, React.ComponentType<{ size?: number; className?: string }>> = {
+const statusRangeIcons: Record<
+  StatusRange,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
   '2xx': CheckCircle,
   '3xx': ArrowRightLeft,
   '4xx': AlertTriangle,
@@ -99,7 +110,10 @@ export const renderStatusOption = (option: StatusSelectOption): React.ReactNode 
   );
 };
 
-const intelligenceIcons: Record<IntelligenceSignal, React.ComponentType<{ size?: number; className?: string }>> = {
+const intelligenceIcons: Record<
+  IntelligenceSignal,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
   verified: ShieldCheck,
   drift: AlertTriangle,
   ai: Sparkles,

@@ -189,12 +189,7 @@ export const RequestItemComposite = ({
               />
             )}
 
-            {isBound(request) && (
-              <Link
-                size={10}
-                className="shrink-0 text-accent-blue"
-              />
-            )}
+            {isBound(request) && <Link size={10} className="shrink-0 text-accent-blue" />}
 
             <span
               className={cn(

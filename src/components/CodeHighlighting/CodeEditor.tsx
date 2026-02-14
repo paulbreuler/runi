@@ -9,7 +9,15 @@
  */
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { CaseSensitive, CheckCircle, ChevronDown, ChevronUp, Search, X, XCircle } from 'lucide-react';
+import {
+  CaseSensitive,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  X,
+  XCircle,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { CodeBox } from '@/components/History/CodeBox';
