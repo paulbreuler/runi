@@ -30,6 +30,7 @@ export type ActivityAction =
   | 'created_collection'
   | 'deleted_collection'
   | 'added_request'
+  | 'deleted_request'
   | 'updated_request'
   | 'executed_request'
   | 'saved_collection'

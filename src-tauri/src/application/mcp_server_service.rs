@@ -177,6 +177,48 @@ impl McpServerService {
         Ok((params, collection_id.to_string(), request_id.to_string()))
     }
 
+    /// Prepare data for opening a collection request in a canvas tab.
+    ///
+    /// Returns a JSON value with the full request data for the frontend to
+    /// open a tab.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the collection or request is not found,
+    /// or if the arguments are invalid.
+    pub fn prepare_open_collection_request(
+        &self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<serde_json::Value, String> {
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        let request_id = args
+            .get("request_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: request_id".to_string())?;
+
+        Self::validate_collection_id(collection_id)?;
+        let collection = load_collection_in_dir(collection_id, self.dir())?;
+        let request = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+        Ok(json!({
+            "collection_id": collection_id,
+            "request_id": request_id,
+            "name": request.name,
+            "method": request.method,
+            "url": request.url,
+            "headers": request.headers,
+            "body": request.body.as_ref().and_then(|b| b.content.as_deref()),
+            "body_type": request.body.as_ref().map(|b| &b.body_type),
+        }))
+    }
+
     /// List all tool definitions.
     #[must_use]
     pub fn list_tools(&self) -> Vec<McpToolDefinition> {
@@ -202,6 +244,7 @@ impl McpServerService {
             "list_collections" => self.handle_list_collections(),
             "add_request" => self.handle_add_request(&args),
             "update_request" => self.handle_update_request(&args),
+            "delete_request" => self.handle_delete_request(&args),
             "delete_collection" => self.handle_delete_collection(&args),
             // Canvas tools are handled in dispatcher with external state
             "canvas_list_tabs"
@@ -248,7 +291,10 @@ impl McpServerService {
                         "collection_id": { "type": "string", "description": "ID of the collection to add the request to" },
                         "name": { "type": "string", "description": "Name for the request" },
                         "method": { "type": "string", "description": "HTTP method (GET, POST, PUT, PATCH, DELETE)", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
-                        "url": { "type": "string", "description": "Request URL" }
+                        "url": { "type": "string", "description": "Request URL" },
+                        "headers": { "type": "object", "description": "Request headers as key-value pairs", "additionalProperties": { "type": "string" } },
+                        "body": { "type": "string", "description": "Request body content" },
+                        "body_type": { "type": "string", "description": "Body content type", "enum": ["json", "form", "raw", "graphql", "xml"] }
                     },
                     "required": ["collection_id", "name", "method", "url"]
                 }),
@@ -263,7 +309,34 @@ impl McpServerService {
                         "request_id": { "type": "string", "description": "ID of the request to update" },
                         "name": { "type": "string", "description": "New name for the request" },
                         "method": { "type": "string", "description": "New HTTP method" },
-                        "url": { "type": "string", "description": "New URL" }
+                        "url": { "type": "string", "description": "New URL" },
+                        "headers": { "type": "object", "description": "Request headers (replaces existing headers)", "additionalProperties": { "type": "string" } },
+                        "body": { "type": "string", "description": "Request body content" },
+                        "body_type": { "type": "string", "description": "Body content type", "enum": ["json", "form", "raw", "graphql", "xml"] }
+                    },
+                    "required": ["collection_id", "request_id"]
+                }),
+            ),
+            tool_def(
+                "open_collection_request",
+                "Open a collection request in a canvas tab for viewing and editing",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection containing the request" },
+                        "request_id": { "type": "string", "description": "ID of the request to open" }
+                    },
+                    "required": ["collection_id", "request_id"]
+                }),
+            ),
+            tool_def(
+                "delete_request",
+                "Delete a request from a collection",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection containing the request" },
+                        "request_id": { "type": "string", "description": "ID of the request to delete" }
                     },
                     "required": ["collection_id", "request_id"]
                 }),
@@ -466,12 +539,45 @@ impl McpServerService {
         Self::validate_collection_id(collection_id)?;
         let mut collection = load_collection_in_dir(collection_id, self.dir())?;
         let seq = collection.next_seq();
+
+        // Parse optional headers from object
+        let headers = args
+            .get("headers")
+            .and_then(serde_json::Value::as_object)
+            .map(|obj| {
+                obj.iter()
+                    .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                    .collect::<std::collections::BTreeMap<String, String>>()
+            })
+            .unwrap_or_default();
+
+        // Parse optional body and body_type
+        let body_content = args.get("body").and_then(serde_json::Value::as_str);
+        let body_type_str = args.get("body_type").and_then(serde_json::Value::as_str);
+        let body = body_content.map(|content| {
+            use crate::domain::collection::{BodyType, RequestBody};
+            let body_type = match body_type_str {
+                Some("json") => BodyType::Json,
+                Some("form") => BodyType::Form,
+                Some("graphql") => BodyType::Graphql,
+                Some("xml") => BodyType::Xml,
+                _ => BodyType::Raw,
+            };
+            RequestBody {
+                body_type,
+                content: Some(content.to_string()),
+                file: None,
+            }
+        });
+
         let request = CollectionRequest {
             id: CollectionRequest::generate_id(name),
             name: name.to_string(),
             seq,
             method: method.to_uppercase(),
             url: url.to_string(),
+            headers,
+            body,
             intelligence: IntelligenceMetadata::ai_generated("mcp"),
             ..Default::default()
         };
@@ -528,6 +634,31 @@ impl McpServerService {
             request.url = url.to_string();
         }
 
+        // Replace headers if provided (full replacement, not merge)
+        if let Some(headers_obj) = args.get("headers").and_then(serde_json::Value::as_object) {
+            request.headers = headers_obj
+                .iter()
+                .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                .collect();
+        }
+
+        // Update body if provided
+        if let Some(body_content) = args.get("body").and_then(serde_json::Value::as_str) {
+            use crate::domain::collection::{BodyType, RequestBody};
+            let body_type = match args.get("body_type").and_then(serde_json::Value::as_str) {
+                Some("json") => BodyType::Json,
+                Some("form") => BodyType::Form,
+                Some("graphql") => BodyType::Graphql,
+                Some("xml") => BodyType::Xml,
+                _ => BodyType::Raw,
+            };
+            request.body = Some(RequestBody {
+                body_type,
+                content: Some(body_content.to_string()),
+                file: None,
+            });
+        }
+
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
@@ -540,6 +671,49 @@ impl McpServerService {
                 text: json!({
                     "request_id": request_id,
                     "message": "Request updated successfully"
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
+
+    fn handle_delete_request(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        let request_id = args
+            .get("request_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: request_id".to_string())?;
+
+        Self::validate_collection_id(collection_id)?;
+        let mut collection = load_collection_in_dir(collection_id, self.dir())?;
+
+        let original_len = collection.requests.len();
+        collection.requests.retain(|r| r.id != request_id);
+
+        if collection.requests.len() == original_len {
+            return Err(format!("Request not found: {request_id}"));
+        }
+
+        save_collection_in_dir(&collection, self.dir())?;
+
+        self.emit(
+            "request:deleted",
+            json!({"collection_id": collection_id, "request_id": request_id}),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "collection_id": collection_id,
+                    "request_id": request_id,
+                    "message": "Request deleted successfully"
                 })
                 .to_string(),
             }],
@@ -618,17 +792,19 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_thirteen_tools() {
+    fn test_registers_fifteen_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
-        // 6 collection tools + 6 canvas tools + 1 streaming tool = 13 total
-        assert_eq!(tools.len(), 13);
+        // 8 collection tools + 6 canvas tools + 1 streaming tool = 15 total
+        assert_eq!(tools.len(), 15);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
         assert!(names.contains(&"list_collections"));
         assert!(names.contains(&"add_request"));
         assert!(names.contains(&"update_request"));
+        assert!(names.contains(&"delete_request"));
+        assert!(names.contains(&"open_collection_request"));
         assert!(names.contains(&"delete_collection"));
         assert!(names.contains(&"execute_request"));
         // Canvas tools
@@ -742,6 +918,115 @@ mod tests {
     }
 
     #[test]
+    fn test_add_request_with_headers() {
+        let (mut service, _dir) = make_service();
+
+        // Create collection
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Headers Test")])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        // Add request with headers
+        let mut add_args = args(&[
+            ("collection_id", collection_id),
+            ("name", "With Headers"),
+            ("method", "POST"),
+            ("url", "https://api.example.com/data"),
+        ]);
+        add_args.insert(
+            "headers".to_string(),
+            json!({
+                "Content-Type": "application/json",
+                "Authorization": "Bearer token123"
+            }),
+        );
+
+        let result = service.call_tool("add_request", Some(add_args)).unwrap();
+        assert!(!result.is_error);
+
+        // Verify headers were saved
+        let added: serde_json::Value = serde_json::from_str(match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let request_id = added["request_id"].as_str().unwrap();
+
+        let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
+        let req = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .unwrap();
+        assert_eq!(req.headers.len(), 2);
+        assert_eq!(
+            req.headers.get("Content-Type"),
+            Some(&"application/json".to_string())
+        );
+        assert_eq!(
+            req.headers.get("Authorization"),
+            Some(&"Bearer token123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_add_request_with_body() {
+        let (mut service, _dir) = make_service();
+
+        // Create collection
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Body Test")])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        // Add request with body
+        let mut add_args = args(&[
+            ("collection_id", collection_id),
+            ("name", "With Body"),
+            ("method", "POST"),
+            ("url", "https://api.example.com/users"),
+            ("body", r#"{"name": "John"}"#),
+            ("body_type", "json"),
+        ]);
+        // Also add headers to test combined scenario
+        add_args.insert(
+            "headers".to_string(),
+            json!({"Content-Type": "application/json"}),
+        );
+
+        let result = service.call_tool("add_request", Some(add_args)).unwrap();
+        assert!(!result.is_error);
+
+        // Verify body was saved
+        let added: serde_json::Value = serde_json::from_str(match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let request_id = added["request_id"].as_str().unwrap();
+
+        let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
+        let req = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .unwrap();
+        assert!(req.body.is_some());
+        let body = req.body.as_ref().unwrap();
+        assert_eq!(body.body_type, crate::domain::collection::BodyType::Json);
+        assert_eq!(body.content, Some(r#"{"name": "John"}"#.to_string()));
+        // Headers also present
+        assert_eq!(req.headers.len(), 1);
+    }
+
+    #[test]
     fn test_add_request_missing_params() {
         let (mut service, _dir) = make_service();
         let result = service.call_tool("add_request", Some(args(&[("collection_id", "foo")])));
@@ -846,6 +1131,177 @@ mod tests {
         assert!(result.unwrap_err().contains("not found"));
     }
 
+    /// Helper: create a collection + request, return (`collection_id`, `request_id`).
+    fn create_collection_with_request(
+        service: &mut McpServerService,
+        col_name: &str,
+        req_name: &str,
+        method: &str,
+        url: &str,
+    ) -> (String, String) {
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", col_name)])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap().to_string();
+
+        let add_result = service
+            .call_tool(
+                "add_request",
+                Some(args(&[
+                    ("collection_id", &collection_id),
+                    ("name", req_name),
+                    ("method", method),
+                    ("url", url),
+                ])),
+            )
+            .unwrap();
+        let added: serde_json::Value = serde_json::from_str(match &add_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let request_id = added["request_id"].as_str().unwrap().to_string();
+
+        (collection_id, request_id)
+    }
+
+    #[test]
+    fn test_update_request_headers() {
+        let (mut service, _dir) = make_service();
+        let (collection_id, request_id) = create_collection_with_request(
+            &mut service,
+            "Hdr Update",
+            "Req",
+            "GET",
+            "http://a.com",
+        );
+
+        // Update with headers
+        let mut update_args = args(&[
+            ("collection_id", &collection_id),
+            ("request_id", &request_id),
+        ]);
+        update_args.insert(
+            "headers".to_string(),
+            json!({"X-Custom": "value", "Accept": "application/json"}),
+        );
+
+        let result = service
+            .call_tool("update_request", Some(update_args))
+            .unwrap();
+        assert!(!result.is_error);
+
+        let collection = load_collection_in_dir(&collection_id, service.dir()).unwrap();
+        let req = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .unwrap();
+        assert_eq!(req.headers.len(), 2);
+        assert_eq!(req.headers.get("X-Custom"), Some(&"value".to_string()));
+    }
+
+    #[test]
+    fn test_update_request_body() {
+        let (mut service, _dir) = make_service();
+        let (collection_id, request_id) = create_collection_with_request(
+            &mut service,
+            "Body Update",
+            "Req",
+            "POST",
+            "http://b.com",
+        );
+
+        // Update with body
+        let update_args = args(&[
+            ("collection_id", &collection_id),
+            ("request_id", &request_id),
+            ("body", r#"{"updated": true}"#),
+            ("body_type", "json"),
+        ]);
+
+        let result = service
+            .call_tool("update_request", Some(update_args))
+            .unwrap();
+        assert!(!result.is_error);
+
+        let collection = load_collection_in_dir(&collection_id, service.dir()).unwrap();
+        let req = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .unwrap();
+        assert!(req.body.is_some());
+        let body = req.body.as_ref().unwrap();
+        assert_eq!(body.body_type, crate::domain::collection::BodyType::Json);
+        assert_eq!(body.content, Some(r#"{"updated": true}"#.to_string()));
+    }
+
+    #[test]
+    fn test_update_request_partial_preserves_existing() {
+        let (mut service, _dir) = make_service();
+
+        // Create collection
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Partial")])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        // Add request WITH headers and body
+        let mut add_args = args(&[
+            ("collection_id", collection_id),
+            ("name", "Full Req"),
+            ("method", "POST"),
+            ("url", "http://orig.com"),
+            ("body", r#"{"orig": true}"#),
+            ("body_type", "json"),
+        ]);
+        add_args.insert("headers".to_string(), json!({"X-Orig": "yes"}));
+        let add_result = service.call_tool("add_request", Some(add_args)).unwrap();
+        let added: serde_json::Value = serde_json::from_str(match &add_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let request_id = added["request_id"].as_str().unwrap();
+
+        // Update ONLY name — headers and body should be preserved
+        let result = service
+            .call_tool(
+                "update_request",
+                Some(args(&[
+                    ("collection_id", collection_id),
+                    ("request_id", request_id),
+                    ("name", "Renamed"),
+                ])),
+            )
+            .unwrap();
+        assert!(!result.is_error);
+
+        let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
+        let req = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .unwrap();
+        assert_eq!(req.name, "Renamed");
+        // Headers preserved
+        assert_eq!(req.headers.len(), 1);
+        assert_eq!(req.headers.get("X-Orig"), Some(&"yes".to_string()));
+        // Body preserved
+        assert!(req.body.is_some());
+        assert_eq!(
+            req.body.as_ref().unwrap().content,
+            Some(r#"{"orig": true}"#.to_string())
+        );
+    }
+
     #[test]
     fn test_delete_collection_success() {
         let (mut service, _dir) = make_service();
@@ -885,6 +1341,164 @@ mod tests {
         );
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_delete_request_success() {
+        let (mut service, _dir) = make_service();
+        let (collection_id, request_id) = create_collection_with_request(
+            &mut service,
+            "Del Req Test",
+            "To Delete",
+            "GET",
+            "http://example.com",
+        );
+
+        let result = service
+            .call_tool(
+                "delete_request",
+                Some(args(&[
+                    ("collection_id", &collection_id),
+                    ("request_id", &request_id),
+                ])),
+            )
+            .unwrap();
+        assert!(!result.is_error);
+
+        // Verify request is removed
+        let collection = load_collection_in_dir(&collection_id, service.dir()).unwrap();
+        assert!(collection.requests.is_empty());
+    }
+
+    #[test]
+    fn test_delete_request_not_found() {
+        let (mut service, _dir) = make_service();
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Del Req NF")])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        let result = service.call_tool(
+            "delete_request",
+            Some(args(&[
+                ("collection_id", collection_id),
+                ("request_id", "nonexistent"),
+            ])),
+        );
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_open_collection_request_returns_data() {
+        let (mut service, _dir) = make_service();
+
+        // Create collection with a request that has headers + body
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Open Test")])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        let mut add_args = args(&[
+            ("collection_id", collection_id),
+            ("name", "My Request"),
+            ("method", "POST"),
+            ("url", "https://api.example.com/data"),
+            ("body", r#"{"key": "val"}"#),
+            ("body_type", "json"),
+        ]);
+        add_args.insert(
+            "headers".to_string(),
+            json!({"Content-Type": "application/json"}),
+        );
+        let add_result = service.call_tool("add_request", Some(add_args)).unwrap();
+        let added: serde_json::Value = serde_json::from_str(match &add_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let request_id = added["request_id"].as_str().unwrap();
+
+        // Prepare open collection request
+        let open_args = args(&[("collection_id", collection_id), ("request_id", request_id)]);
+        let data = service.prepare_open_collection_request(&open_args).unwrap();
+        assert_eq!(data["collection_id"].as_str().unwrap(), collection_id);
+        assert_eq!(data["request_id"].as_str().unwrap(), request_id);
+        assert_eq!(data["name"].as_str().unwrap(), "My Request");
+        assert_eq!(data["method"].as_str().unwrap(), "POST");
+        assert_eq!(
+            data["url"].as_str().unwrap(),
+            "https://api.example.com/data"
+        );
+        assert!(data["headers"].is_object());
+        assert_eq!(data["headers"]["Content-Type"], "application/json");
+        assert_eq!(data["body"], r#"{"key": "val"}"#);
+    }
+
+    #[test]
+    fn test_open_collection_request_not_found() {
+        let (mut service, _dir) = make_service();
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Open NF")])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        let open_args = args(&[
+            ("collection_id", collection_id),
+            ("request_id", "nonexistent"),
+        ]);
+        let result = service.prepare_open_collection_request(&open_args);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_delete_request_emits_event() {
+        let dir = TempDir::new().unwrap();
+        let emitter = crate::domain::mcp::events::TestEventEmitter::new();
+        let events = emitter.events_handle();
+        let mut service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+
+        let (collection_id, request_id) = create_collection_with_request(
+            &mut service,
+            "Event Test",
+            "Req",
+            "GET",
+            "http://e.com",
+        );
+
+        service
+            .call_tool(
+                "delete_request",
+                Some(args(&[
+                    ("collection_id", &collection_id),
+                    ("request_id", &request_id),
+                ])),
+            )
+            .unwrap();
+
+        let captured = events.lock().expect("lock events");
+        // create_collection + add_request + delete_request = 3
+        assert_eq!(captured.len(), 3);
+        assert_eq!(captured[2].0, "request:deleted");
+        assert!(matches!(
+            captured[2].1,
+            crate::domain::mcp::events::Actor::Ai { .. }
+        ));
+        assert_eq!(captured[2].2["request_id"].as_str().unwrap(), request_id);
+        drop(captured);
     }
 
     #[test]

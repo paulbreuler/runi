@@ -21,7 +21,10 @@ import { useCollectionEvents } from '@/hooks/useCollectionEvents';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import type { Actor, EventEnvelope } from '@/hooks/useCollectionEvents';
+import type { RequestTabSource } from '@/types/canvas';
 
 /**
  * Push an event into the activity feed.
@@ -69,6 +72,41 @@ function followAiIfEnabled(collectionId: string, actor: Actor): void {
  */
 function extractSeq(envelope: EventEnvelope<unknown>): number | undefined {
   return envelope.lamport?.seq;
+}
+
+/**
+ * Refresh an open tab's request store if the tab sources from the given collection request.
+ *
+ * After `loadCollection` resolves, reads the updated request from the collection store
+ * and pushes the new values into the tab's request store context.
+ */
+function refreshOpenTabIfNeeded(collectionId: string, requestId: string): void {
+  const source: RequestTabSource = {
+    type: 'collection',
+    collectionId,
+    requestId,
+  };
+  const contextId = useCanvasStore.getState().findContextBySource(source);
+  if (contextId === null) {
+    return;
+  }
+
+  // Find the updated request in the collection store
+  const collection = useCollectionStore.getState().collections.find((c) => c.id === collectionId);
+  if (collection === undefined) {
+    return;
+  }
+  const request = collection.requests.find((r) => r.id === requestId);
+  if (request === undefined) {
+    return;
+  }
+
+  // Push updated data into the tab's request store
+  const reqStore = useRequestStoreRaw.getState();
+  reqStore.setMethod(contextId, request.method);
+  reqStore.setUrl(contextId, request.url);
+  reqStore.setHeaders(contextId, request.headers);
+  reqStore.setBody(contextId, request.body?.content ?? '');
 }
 
 /**
@@ -141,7 +179,9 @@ export const CollectionEventProvider = ({
       followAiIfEnabled(envelope.payload.collection_id, envelope.actor);
     },
     onRequestUpdated: (envelope): void => {
-      void loadCollection(envelope.payload.collection_id);
+      void loadCollection(envelope.payload.collection_id).then((): void => {
+        refreshOpenTabIfNeeded(envelope.payload.collection_id, envelope.payload.request_id);
+      });
       recordActivity(
         envelope.actor,
         'updated_request',
@@ -150,6 +190,25 @@ export const CollectionEventProvider = ({
         envelope.timestamp,
         extractSeq(envelope)
       );
+    },
+    onRequestDeleted: (envelope): void => {
+      void loadCollection(envelope.payload.collection_id);
+      recordActivity(
+        envelope.actor,
+        'deleted_request',
+        envelope.payload.name ?? envelope.payload.request_id,
+        envelope.payload.request_id,
+        envelope.timestamp,
+        extractSeq(envelope)
+      );
+      // Clear selection if the deleted request was selected
+      const store = useCollectionStore.getState();
+      if (
+        store.selectedCollectionId === envelope.payload.collection_id &&
+        store.selectedRequestId === envelope.payload.request_id
+      ) {
+        store.selectCollection(envelope.payload.collection_id);
+      }
     },
     onRequestExecuted: (envelope): void => {
       recordActivity(

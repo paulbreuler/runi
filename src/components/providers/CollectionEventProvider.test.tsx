@@ -8,6 +8,8 @@ import { render, act } from '@testing-library/react';
 import { CollectionEventProvider } from './CollectionEventProvider';
 import { useActivityStore, __resetActivityIdCounter } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import type { EventEnvelope } from '@/hooks/useCollectionEvents';
 
 // --- Mock Tauri event listener ---
@@ -100,12 +102,15 @@ describe('CollectionEventProvider', () => {
     __resetActivityIdCounter();
     useActivityStore.getState().clear();
     useSettingsStore.setState({ followAiMode: false });
+    useCanvasStore.getState().reset();
     // Reset mutable state
     mockCollectionState.selectedCollectionId = null;
+    mockCollectionState.selectedRequestId = null;
     mockCollectionState.expandedCollectionIds = new Set<string>();
+    mockCollectionState.collections = [];
   });
 
-  it('subscribes to all 6 Tauri event channels on mount', async () => {
+  it('subscribes to all 7 Tauri event channels on mount', async () => {
     await act(async () => {
       render(
         <CollectionEventProvider>
@@ -120,6 +125,7 @@ describe('CollectionEventProvider', () => {
       'collection:deleted',
       'collection:saved',
       'request:added',
+      'request:deleted',
       'request:executed',
       'request:updated',
     ]);
@@ -366,6 +372,96 @@ describe('CollectionEventProvider', () => {
       expect(mockLoadCollection).toHaveBeenCalledWith('col-1');
     });
 
+    it('refreshes open tab request store when updated request is in a tab', async () => {
+      // Open a tab that sources from col-1/req-1
+      const contextId = useCanvasStore.getState().openRequestTab({
+        label: 'Get Users',
+        name: 'Get Users',
+        method: 'GET',
+        url: 'https://api.example.com/users',
+        headers: { Authorization: 'Bearer old-token' },
+        body: '',
+        source: { type: 'collection', collectionId: 'col-1', requestId: 'req-1' },
+      });
+
+      // Mock loadCollection to populate updated request data in the collections store
+      mockLoadCollection.mockImplementationOnce(async (): Promise<void> => {
+        mockCollectionState.collections = [
+          {
+            id: 'col-1',
+            requests: [
+              {
+                id: 'req-1',
+                name: 'Get Users',
+                method: 'PUT',
+                url: 'https://api.example.com/users/updated',
+                headers: { Authorization: 'Bearer new-token' },
+                body: { body_type: 'json', content: '{"updated": true}' },
+              },
+            ],
+          },
+        ];
+      });
+
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      await act(async () => {
+        emitTauriEvent(
+          'request:updated',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1' })
+        );
+        // Allow loadCollection promise to resolve
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 10);
+        });
+      });
+
+      // Verify the tab's request store was updated
+      const requestState = useRequestStoreRaw.getState().contexts[contextId];
+      expect(requestState?.method).toBe('PUT');
+      expect(requestState?.url).toBe('https://api.example.com/users/updated');
+      expect(requestState?.headers).toEqual({ Authorization: 'Bearer new-token' });
+      expect(requestState?.body).toBe('{"updated": true}');
+    });
+
+    it('does NOT refresh tabs that are not sourced from the updated request', async () => {
+      // Open a tab sourced from a different request
+      const contextId = useCanvasStore.getState().openRequestTab({
+        label: 'Other Request',
+        name: 'Other Request',
+        method: 'GET',
+        url: 'https://api.example.com/other',
+        headers: {},
+        body: '',
+        source: { type: 'collection', collectionId: 'col-1', requestId: 'req-2' },
+      });
+
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'request:updated',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1' })
+        );
+      });
+
+      // Tab should be unchanged since it's sourced from req-2, not req-1
+      const requestState = useRequestStoreRaw.getState().contexts[contextId];
+      expect(requestState?.url).toBe('https://api.example.com/other');
+    });
+
     it('records activity for updated request', async () => {
       await act(async () => {
         render(
@@ -414,6 +510,94 @@ describe('CollectionEventProvider', () => {
       expect(entries.length).toBe(1);
       expect(entries[0]?.action).toBe('executed_request');
       expect(entries[0]?.target).toContain('200');
+    });
+  });
+
+  describe('request:deleted', () => {
+    it('refreshes the specific collection', async () => {
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'request:deleted',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1', name: 'Old Request' })
+        );
+      });
+
+      expect(mockLoadCollection).toHaveBeenCalledWith('col-1');
+    });
+
+    it('records activity for deleted request', async () => {
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'request:deleted',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1', name: 'Old Request' })
+        );
+      });
+
+      const entries = useActivityStore.getState().entries;
+      expect(entries.length).toBe(1);
+      expect(entries[0]?.action).toBe('deleted_request');
+      expect(entries[0]?.target).toBe('Old Request');
+      expect(entries[0]?.targetId).toBe('req-1');
+    });
+
+    it('clears selection when deleted request was selected', async () => {
+      mockCollectionState.selectedCollectionId = 'col-1';
+      mockCollectionState.selectedRequestId = 'req-1';
+
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'request:deleted',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1', name: 'Old Request' })
+        );
+      });
+
+      expect(mockSelectCollection).toHaveBeenCalledWith('col-1');
+    });
+
+    it('does not clear selection when a different request was deleted', async () => {
+      mockCollectionState.selectedCollectionId = 'col-1';
+      mockCollectionState.selectedRequestId = 'req-2';
+
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'request:deleted',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1', name: 'Old Request' })
+        );
+      });
+
+      expect(mockSelectCollection).not.toHaveBeenCalled();
     });
   });
 

@@ -14,97 +14,71 @@ vi.mock('@/stores/useRequestStore', () => ({
   useRequestStore: vi.fn(),
 }));
 
+const createMockStore = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+  url: 'https://example.com/test',
+  method: 'GET',
+  headers: {},
+  setHeaders: vi.fn(),
+  body: '',
+  response: null,
+  isLoading: false,
+  error: null,
+  setMethod: vi.fn(),
+  setUrl: vi.fn(),
+  setBody: vi.fn(),
+  setResponse: vi.fn(),
+  setLoading: vi.fn(),
+  setError: vi.fn(),
+  reset: vi.fn(),
+  ...overrides,
+});
+
 describe('ParamsEditor', () => {
   const mockSetUrl = vi.fn();
-  const mockUrl = 'https://example.com/test';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      url: mockUrl,
-      setUrl: mockSetUrl,
-      method: 'GET',
-      headers: {},
-      body: '',
-      response: null,
-      isLoading: false,
-      error: null,
-      setMethod: vi.fn(),
-      setHeaders: vi.fn(),
-      setBody: vi.fn(),
-      setResponse: vi.fn(),
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      reset: vi.fn(),
-    });
+    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createMockStore({ setUrl: mockSetUrl })
+    );
   });
 
-  it('renders empty state when no parameters', () => {
+  it('renders empty row when no parameters exist', () => {
     render(<ParamsEditor />);
-    expect(screen.getByText('No query parameters')).toBeInTheDocument();
-    expect(screen.getByText('Add parameters to append to the URL')).toBeInTheDocument();
-    // Verify EmptyState component is used (check for variant="muted" styling)
-    const { container } = render(<ParamsEditor />);
-    const emptyState = container.querySelector('.text-text-muted\\/50');
-    expect(emptyState).toBeInTheDocument();
+    expect(screen.getByTestId('param-empty-row')).toBeInTheDocument();
+    expect(screen.getByTestId('param-empty-row-key')).toBeInTheDocument();
+    expect(screen.getByTestId('param-empty-row-value')).toBeInTheDocument();
+  });
+
+  it('does not render an add param button', () => {
+    render(<ParamsEditor />);
+    expect(screen.queryByTestId('add-param-button')).not.toBeInTheDocument();
   });
 
   it('renders existing parameters from URL', async () => {
-    const urlWithParams = 'https://example.com/test?key1=value1&key2=value2';
-    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      url: urlWithParams,
-      setUrl: mockSetUrl,
-      method: 'GET',
-      headers: {},
-      body: '',
-      response: null,
-      isLoading: false,
-      error: null,
-      setMethod: vi.fn(),
-      setHeaders: vi.fn(),
-      setBody: vi.fn(),
-      setResponse: vi.fn(),
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      reset: vi.fn(),
-    });
+    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createMockStore({
+        url: 'https://example.com/test?key1=value1&key2=value2',
+        setUrl: mockSetUrl,
+      })
+    );
 
     render(<ParamsEditor />);
     await waitFor(() => {
-      expect(screen.getByText('key1')).toBeInTheDocument();
-      expect(screen.getByText('value1')).toBeInTheDocument();
-      expect(screen.getByText('key2')).toBeInTheDocument();
-      expect(screen.getByText('value2')).toBeInTheDocument();
+      expect(screen.getByTestId('param-row-0')).toBeInTheDocument();
+      expect(screen.getByTestId('param-row-1')).toBeInTheDocument();
     });
   });
 
-  it('shows add parameter button', () => {
-    render(<ParamsEditor />);
-    expect(screen.getByText('Add Parameter')).toBeInTheDocument();
-  });
-
-  it('opens add parameter form when button is clicked', async () => {
+  it('creates new parameter when typing in empty row and pressing Enter', async () => {
     const user = userEvent.setup();
     render(<ParamsEditor />);
 
-    const addButton = screen.getByText('Add Parameter');
-    await user.click(addButton);
-
-    expect(screen.getByPlaceholderText('Parameter name')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Parameter value')).toBeInTheDocument();
-  });
-
-  it('saves new parameter when Enter is pressed', async () => {
-    const user = userEvent.setup();
-    render(<ParamsEditor />);
-
-    const addButton = screen.getByText('Add Parameter');
-    await user.click(addButton);
-
-    const keyInput = screen.getByPlaceholderText('Parameter name');
-    const valueInput = screen.getByPlaceholderText('Parameter value');
+    const keyInput = screen.getByTestId('param-empty-row-key');
+    const valueInput = screen.getByTestId('param-empty-row-value');
 
     await user.type(keyInput, 'newKey');
+    await user.click(valueInput);
     await user.type(valueInput, 'newValue');
     await user.keyboard('{Enter}');
 
@@ -115,101 +89,60 @@ describe('ParamsEditor', () => {
     });
   });
 
-  it('cancels editing when Escape is pressed', async () => {
+  it('cancels empty row on Escape', async () => {
     const user = userEvent.setup();
     render(<ParamsEditor />);
 
-    const addButton = screen.getByText('Add Parameter');
-    await user.click(addButton);
-
+    const keyInput = screen.getByTestId('param-empty-row-key');
+    await user.type(keyInput, 'tempKey');
     await user.keyboard('{Escape}');
 
     await waitFor(() => {
-      expect(screen.queryByPlaceholderText('Parameter name')).not.toBeInTheDocument();
+      expect(screen.getByTestId('param-empty-row-key')).toHaveValue('');
     });
   });
 
   it('allows editing existing parameter', async () => {
     const user = userEvent.setup();
-    const urlWithParams = 'https://example.com/test?key1=value1';
-    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      url: urlWithParams,
-      setUrl: mockSetUrl,
-      method: 'GET',
-      headers: {},
-      body: '',
-      response: null,
-      isLoading: false,
-      error: null,
-      setMethod: vi.fn(),
-      setHeaders: vi.fn(),
-      setBody: vi.fn(),
-      setResponse: vi.fn(),
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      reset: vi.fn(),
-    });
+    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createMockStore({
+        url: 'https://example.com/test?key1=value1',
+        setUrl: mockSetUrl,
+      })
+    );
 
     render(<ParamsEditor />);
 
     await waitFor(() => {
-      expect(screen.getByText('key1')).toBeInTheDocument();
+      expect(screen.getByTestId('param-row-0')).toBeInTheDocument();
     });
 
-    const paramRow = screen.getByText('key1').closest('div');
-    if (paramRow !== null) {
-      await user.click(paramRow);
-    }
+    const paramRow = screen.getByTestId('param-row-0');
+    await user.click(paramRow);
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue('key1')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('value1')).toBeInTheDocument();
+      expect(screen.getByTestId('param-key-input-0')).toBeInTheDocument();
+      expect(screen.getByTestId('param-value-input-0')).toBeInTheDocument();
     });
   });
 
   it('removes parameter when remove button is clicked', async () => {
     const user = userEvent.setup();
-    const urlWithParams = 'https://example.com/test?key1=value1';
-    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      url: urlWithParams,
-      setUrl: mockSetUrl,
-      method: 'GET',
-      headers: {},
-      body: '',
-      response: null,
-      isLoading: false,
-      error: null,
-      setMethod: vi.fn(),
-      setHeaders: vi.fn(),
-      setBody: vi.fn(),
-      setResponse: vi.fn(),
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      reset: vi.fn(),
-    });
+    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createMockStore({
+        url: 'https://example.com/test?key1=value1',
+        setUrl: mockSetUrl,
+      })
+    );
 
     render(<ParamsEditor />);
 
     await waitFor(() => {
-      expect(screen.getByText('key1')).toBeInTheDocument();
+      expect(screen.getByTestId('param-row-0')).toBeInTheDocument();
     });
 
-    // Hover to reveal remove button
-    const paramRow = screen.getByText('key1').closest('div');
-    if (paramRow !== null) {
-      await user.hover(paramRow);
-    }
-
-    // Find and click remove button (X icon)
-    const removeButtons = screen.getAllByRole('button');
-    const removeButton = removeButtons.find((btn) => {
-      const svg = btn.querySelector('svg');
-      return svg !== null && !svg.classList.contains('rotate-45');
-    });
-
-    if (removeButton !== undefined) {
-      await user.click(removeButton);
-    }
+    const removeButton = screen.getByTestId('param-remove-0');
+    await user.click(removeButton);
 
     await waitFor(() => {
       expect(mockSetUrl).toHaveBeenCalled();
@@ -217,26 +150,28 @@ describe('ParamsEditor', () => {
   });
 
   it('handles invalid URL gracefully', () => {
-    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      url: 'not-a-valid-url',
-      setUrl: mockSetUrl,
-      method: 'GET',
-      headers: {},
-      body: '',
-      response: null,
-      isLoading: false,
-      error: null,
-      setMethod: vi.fn(),
-      setHeaders: vi.fn(),
-      setBody: vi.fn(),
-      setResponse: vi.fn(),
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      reset: vi.fn(),
-    });
+    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createMockStore({
+        url: 'not-a-valid-url',
+        setUrl: mockSetUrl,
+      })
+    );
 
     render(<ParamsEditor />);
-    // Should render empty state without crashing
-    expect(screen.getByText('No query parameters')).toBeInTheDocument();
+    // Should render empty row without crashing
+    expect(screen.getByTestId('param-empty-row')).toBeInTheDocument();
+  });
+
+  it('always shows empty row even with params present', () => {
+    (useRequestStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createMockStore({
+        url: 'https://example.com/test?page=1',
+        setUrl: mockSetUrl,
+      })
+    );
+
+    render(<ParamsEditor />);
+    expect(screen.getByTestId('param-empty-row')).toBeInTheDocument();
+    expect(screen.getByTestId('param-row-0')).toBeInTheDocument();
   });
 });

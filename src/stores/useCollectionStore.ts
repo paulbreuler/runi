@@ -22,6 +22,9 @@ interface CollectionState {
   loadCollection: (id: string) => Promise<void>;
   addHttpbinCollection: () => Promise<Collection | null>;
   deleteCollection: (id: string) => Promise<void>;
+  deleteRequest: (collectionId: string, requestId: string) => Promise<void>;
+  renameCollection: (collectionId: string, newName: string) => Promise<void>;
+  renameRequest: (collectionId: string, requestId: string, newName: string) => Promise<void>;
   selectCollection: (id: string | null) => void;
   selectRequest: (collectionId: string, requestId: string) => void;
   toggleExpanded: (id: string) => void;
@@ -153,6 +156,76 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }
       return { expandedCollectionIds: expanded };
     });
+  },
+
+  deleteRequest: async (collectionId: string, requestId: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      await invoke('cmd_delete_request', { collectionId, requestId });
+
+      set((state) => ({
+        collections: state.collections.map((collection) =>
+          collection.id === collectionId
+            ? { ...collection, requests: collection.requests.filter((r) => r.id !== requestId) }
+            : collection
+        ),
+        selectedRequestId:
+          state.selectedCollectionId === collectionId && state.selectedRequestId === requestId
+            ? null
+            : state.selectedRequestId,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  renameCollection: async (collectionId: string, newName: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      await invoke('cmd_rename_collection', { collectionId, newName });
+
+      set((state) => ({
+        collections: state.collections.map((collection) =>
+          collection.id === collectionId
+            ? { ...collection, metadata: { ...collection.metadata, name: newName } }
+            : collection
+        ),
+        summaries: state.summaries.map((summary) =>
+          summary.id === collectionId ? { ...summary, name: newName } : summary
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  renameRequest: async (
+    collectionId: string,
+    requestId: string,
+    newName: string
+  ): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      await invoke('cmd_rename_request', { collectionId, requestId, newName });
+
+      set((state) => ({
+        collections: state.collections.map((collection) =>
+          collection.id === collectionId
+            ? {
+                ...collection,
+                requests: collection.requests.map((r) =>
+                  r.id === requestId ? { ...r, name: newName } : r
+                ),
+              }
+            : collection
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
   },
 
   clearError: (): void => {

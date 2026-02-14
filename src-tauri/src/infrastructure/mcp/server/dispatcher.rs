@@ -126,6 +126,11 @@ async fn handle_tools_call(
         return handle_execute_request(id, params.arguments, service).await;
     }
 
+    // open_collection_request needs app_handle to emit Tauri event
+    if params.name == "open_collection_request" {
+        return handle_open_collection_request(id, params.arguments, service, app_handle).await;
+    }
+
     // Canvas tools read from/write to external state
     if params.name.starts_with("canvas_") {
         return handle_canvas_tool(id, &params.name, params.arguments, canvas_state, app_handle)
@@ -229,6 +234,60 @@ async fn handle_execute_request(
             )
         }
     }
+}
+
+/// Handle `open_collection_request` tool — emit Tauri event with request data.
+async fn handle_open_collection_request(
+    id: Option<JsonRpcId>,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    service: &Arc<RwLock<McpServerService>>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> JsonRpcResponse {
+    let args = arguments.unwrap_or_default();
+
+    // Read lock to prepare request data
+    let data = {
+        let svc = service.read().await;
+        svc.prepare_open_collection_request(&args)
+    };
+
+    let request_data = match data {
+        Ok(d) => d,
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            return JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            );
+        }
+    };
+
+    // Emit Tauri event if app handle is available
+    if let Some(app) = app_handle {
+        let envelope = canvas_event_envelope(request_data.clone());
+        if let Err(e) = app.emit("canvas:open_collection_request", envelope) {
+            tracing::warn!("Failed to emit canvas:open_collection_request event: {e}");
+        }
+    }
+
+    let result = ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json!({
+                "collection_id": request_data["collection_id"],
+                "request_id": request_data["request_id"],
+                "message": format!("Opened request '{}' in canvas", request_data["name"].as_str().unwrap_or("unknown")),
+            })
+            .to_string(),
+        }],
+        is_error: false,
+    };
+    JsonRpcResponse::success(
+        id,
+        serde_json::to_value(result).unwrap_or_else(|_| json!({})),
+    )
 }
 
 fn handle_ping(id: Option<JsonRpcId>) -> JsonRpcResponse {
@@ -517,8 +576,8 @@ mod tests {
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        // 6 collection tools + 6 canvas tools + 1 streaming tool = 13 total
-        assert_eq!(tools.len(), 13);
+        // 8 collection tools + 6 canvas tools + 1 streaming tool = 15 total
+        assert_eq!(tools.len(), 15);
     }
 
     #[tokio::test]
@@ -864,6 +923,124 @@ mod tests {
         let url_result: serde_json::Value = serde_json::from_str(text).unwrap();
         let url = url_result["url"].as_str().unwrap();
         assert!(url.contains("stream=collections"));
+    }
+
+    #[tokio::test]
+    async fn test_dispatch_open_collection_request_not_found() {
+        let (service, canvas_state, _dir) = make_service();
+
+        // Create collection first
+        let create_req = json!({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": { "name": "create_collection", "arguments": { "name": "Test" } }
+        })
+        .to_string();
+        let resp = dispatch(&create_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        let create_result = parsed.result.unwrap();
+        let content_text: serde_json::Value =
+            serde_json::from_str(create_result["content"][0]["text"].as_str().unwrap()).unwrap();
+        let collection_id = content_text["id"].as_str().unwrap();
+
+        // Try to open nonexistent request
+        let open_req = json!({
+            "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+            "params": {
+                "name": "open_collection_request",
+                "arguments": {
+                    "collection_id": collection_id,
+                    "request_id": "nonexistent"
+                }
+            }
+        })
+        .to_string();
+        let resp = dispatch(&open_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(
+            parsed.error.is_none(),
+            "JSON-RPC should succeed (tool error in result)"
+        );
+        let result = parsed.result.unwrap();
+        assert!(
+            result["isError"].as_bool().unwrap_or(false),
+            "Tool should return error"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_dispatch_open_collection_request_success() {
+        let (service, canvas_state, _dir) = make_service();
+
+        // Create collection + request
+        let create_req = json!({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": { "name": "create_collection", "arguments": { "name": "Test" } }
+        })
+        .to_string();
+        let resp = dispatch(&create_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        let content_text: serde_json::Value = serde_json::from_str(
+            parsed.result.unwrap()["content"][0]["text"]
+                .as_str()
+                .unwrap(),
+        )
+        .unwrap();
+        let collection_id = content_text["id"].as_str().unwrap();
+
+        let add_req = json!({
+            "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+            "params": {
+                "name": "add_request",
+                "arguments": {
+                    "collection_id": collection_id,
+                    "name": "Test Req",
+                    "method": "GET",
+                    "url": "https://example.com"
+                }
+            }
+        })
+        .to_string();
+        let resp = dispatch(&add_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        let add_text: serde_json::Value = serde_json::from_str(
+            parsed.result.unwrap()["content"][0]["text"]
+                .as_str()
+                .unwrap(),
+        )
+        .unwrap();
+        let request_id = add_text["request_id"].as_str().unwrap();
+
+        // Open request (no app_handle, so no event emitted, but should still succeed)
+        let open_req = json!({
+            "jsonrpc": "2.0", "id": 3, "method": "tools/call",
+            "params": {
+                "name": "open_collection_request",
+                "arguments": {
+                    "collection_id": collection_id,
+                    "request_id": request_id
+                }
+            }
+        })
+        .to_string();
+        let resp = dispatch(&open_req, &service, &canvas_state, None)
+            .await
+            .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(parsed.error.is_none());
+        let result = parsed.result.unwrap();
+        assert!(!result["isError"].as_bool().unwrap_or(false));
+
+        let text: serde_json::Value =
+            serde_json::from_str(result["content"][0]["text"].as_str().unwrap()).unwrap();
+        assert!(text["message"].as_str().unwrap().contains("Opened request"));
     }
 
     #[test]

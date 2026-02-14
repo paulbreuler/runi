@@ -47,7 +47,7 @@ describe('RequestBuilder', () => {
     render(<RequestBuilder />);
 
     // Should show headers editor
-    expect(screen.getByTestId('headers-editor')).toBeInTheDocument();
+    expect(screen.getByTestId('header-editor')).toBeInTheDocument();
   });
 
   it('switches to Body tab when clicked', async () => {
@@ -84,7 +84,7 @@ describe('RequestBuilder', () => {
     expect(headersTab).toHaveFocus();
 
     await user.tab();
-    expect(screen.getByTestId('add-header-button')).toHaveFocus();
+    expect(screen.getByTestId('header-empty-row-key')).toHaveFocus();
   });
 
   it('switches to Params tab when clicked', async () => {
@@ -94,7 +94,7 @@ describe('RequestBuilder', () => {
     const paramsTab = screen.getByTestId('request-tab-params');
     await user.click(paramsTab);
 
-    expect(await screen.findByTestId('params-editor')).toBeInTheDocument();
+    expect(await screen.findByTestId('param-editor')).toBeInTheDocument();
   });
 
   it('switches to Auth tab when clicked', async () => {
@@ -107,10 +107,10 @@ describe('RequestBuilder', () => {
     expect(await screen.findByTestId('auth-editor')).toBeInTheDocument();
   });
 
-  it('displays empty state when no headers are configured', () => {
+  it('displays empty row when no headers are configured', () => {
     render(<RequestBuilder />);
 
-    expect(screen.getByTestId('headers-empty-state')).toBeInTheDocument();
+    expect(screen.getByTestId('header-empty-row')).toBeInTheDocument();
   });
 
   it('displays configured headers in Headers tab', () => {
@@ -120,22 +120,23 @@ describe('RequestBuilder', () => {
 
     render(<RequestBuilder />);
 
-    expect(screen.getByTestId('remove-header-Content-Type')).toBeInTheDocument();
+    expect(screen.getByTestId('header-remove-0')).toBeInTheDocument();
   });
 
-  it('allows adding a new header', async () => {
+  it('allows adding a new header via empty row', async () => {
     const user = userEvent.setup();
     render(<RequestBuilder />);
 
-    const addButton = screen.getByTestId('add-header-button');
-    await user.click(addButton);
-
-    // Should show header input fields
-    const keyInput = screen.getByTestId('new-header-key-input');
-    const valueInput = screen.getByTestId('new-header-value-input');
+    // Empty row is always visible for adding new headers
+    const keyInput = screen.getByTestId('header-empty-row-key');
+    const valueInput = screen.getByTestId('header-empty-row-value');
 
     expect(keyInput).toBeInTheDocument();
     expect(valueInput).toBeInTheDocument();
+
+    await user.type(keyInput, 'X-New');
+    await user.type(valueInput, 'new-value');
+    await user.keyboard('{Enter}');
   });
 
   it('allows removing a header', async () => {
@@ -146,7 +147,7 @@ describe('RequestBuilder', () => {
 
     render(<RequestBuilder />);
 
-    const removeButton = screen.getByTestId('remove-header-X-Custom');
+    const removeButton = screen.getByTestId('header-remove-0');
     await user.click(removeButton);
 
     expect(mockSetHeaders).toHaveBeenCalledWith({});
@@ -269,7 +270,7 @@ describe('RequestBuilder', () => {
 
       render(<RequestBuilder />);
 
-      const removeButton = screen.getByTestId('remove-header-X-Custom');
+      const removeButton = screen.getByTestId('header-remove-1');
       await user.click(removeButton);
 
       expect(mockSetHeaders).toHaveBeenCalledWith({ 'Content-Type': 'application/json' });

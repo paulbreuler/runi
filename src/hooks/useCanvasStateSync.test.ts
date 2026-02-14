@@ -14,6 +14,7 @@ import { buildCanvasSnapshot, deriveEventHint, useCanvasStateSync } from './useC
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useActivityStore, __resetActivityIdCounter } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import type { CanvasEventHint, CanvasStateSnapshot } from '@/types/generated';
 
 // Mock event listener
@@ -1002,6 +1003,305 @@ describe('useCanvasStateSync', () => {
       const lastCall = invokeCalls[invokeCalls.length - 1];
       expect(lastCall?.command).toBe('sync_canvas_state');
       expect(lastCall?.args.actor).toBe('user');
+
+      unmount();
+    });
+  });
+
+  describe('canvas:open_collection_request event', () => {
+    it('subscribes to canvas:open_collection_request event on mount', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      await waitFor(() => {
+        expect(listeners.has('canvas:open_collection_request')).toBe(true);
+      });
+
+      unmount();
+    });
+
+    it('opens a request tab with method, url, headers, body from event payload', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_collection_request')?.length).toBe(1);
+      });
+
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: 'claude', session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Get Users',
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: { Authorization: 'Bearer token123' },
+            body: null,
+          },
+        });
+      });
+
+      // Verify tab was opened
+      const { contextOrder } = useCanvasStore.getState();
+      expect(contextOrder.length).toBe(1);
+
+      // Verify request store was populated with correct data
+      const contextId = contextOrder[0]!;
+      const requestState = useRequestStoreRaw.getState().contexts[contextId];
+      expect(requestState).toBeDefined();
+      expect(requestState?.method).toBe('GET');
+      expect(requestState?.url).toBe('https://api.example.com/users');
+      expect(requestState?.headers).toEqual({ Authorization: 'Bearer token123' });
+
+      unmount();
+    });
+
+    it('tracks collection source (collectionId, requestId) in context state', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_collection_request')?.length).toBe(1);
+      });
+
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Get Users',
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: {},
+            body: null,
+          },
+        });
+      });
+
+      const { contextOrder, getContextState } = useCanvasStore.getState();
+      const contextId = contextOrder[0]!;
+      const state = getContextState(contextId);
+      const source = state.source as { type: string; collectionId: string; requestId: string };
+      expect(source).toEqual({
+        type: 'collection',
+        collectionId: 'col-1',
+        requestId: 'req-1',
+      });
+
+      unmount();
+    });
+
+    it('records activity for opened collection request', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_collection_request')?.length).toBe(1);
+      });
+
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: 'claude', session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Get Users',
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: {},
+            body: null,
+          },
+        });
+      });
+
+      const activities = useActivityStore.getState().entries;
+      expect(activities.length).toBe(1);
+      expect(activities[0]?.action).toBe('opened_tab');
+      expect(activities[0]?.target).toBe('Get Users');
+      expect(activities[0]?.actor.type).toBe('ai');
+
+      unmount();
+    });
+
+    it('activates tab when AI opens with Follow AI ON', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      useSettingsStore.getState().setFollowAiMode(true);
+
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_collection_request')?.length).toBe(1);
+      });
+
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Get Users',
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: {},
+            body: null,
+          },
+        });
+      });
+
+      const { contextOrder, activeContextId } = useCanvasStore.getState();
+      expect(contextOrder.length).toBe(1);
+      expect(activeContextId).toBe(contextOrder[0]);
+
+      unmount();
+    });
+
+    it('does NOT activate tab when AI opens with Follow AI OFF', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      useSettingsStore.getState().setFollowAiMode(false);
+
+      // Open an initial tab first
+      const initialTab = useCanvasStore.getState().openRequestTab({ label: 'Initial Tab' });
+      expect(useCanvasStore.getState().activeContextId).toBe(initialTab);
+
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_collection_request')?.length).toBe(1);
+      });
+
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Get Users',
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: {},
+            body: null,
+          },
+        });
+      });
+
+      // Should open tab but NOT activate it
+      const { contextOrder, activeContextId } = useCanvasStore.getState();
+      expect(contextOrder.length).toBe(2);
+      expect(activeContextId).toBe(initialTab); // Still on initial tab
+
+      unmount();
+    });
+
+    it('reuses existing tab if same collection source already open', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_collection_request')?.length).toBe(1);
+      });
+
+      // Emit event twice for the same collection request
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Get Users',
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: {},
+            body: null,
+          },
+        });
+      });
+
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Get Users',
+            method: 'GET',
+            url: 'https://api.example.com/users',
+            headers: {},
+            body: null,
+          },
+        });
+      });
+
+      // Should not create a duplicate tab
+      const { contextOrder } = useCanvasStore.getState();
+      expect(contextOrder.length).toBe(1);
+
+      unmount();
+    });
+
+    it('populates body from event payload when present', async () => {
+      const { unmount } = renderHook(() => {
+        useCanvasStateSync();
+      });
+
+      await waitFor(() => {
+        expect(listeners.get('canvas:open_collection_request')?.length).toBe(1);
+      });
+
+      act(() => {
+        emitEvent('canvas:open_collection_request', {
+          actor: { type: 'ai', model: null, session_id: null },
+          timestamp: new Date().toISOString(),
+          correlation_id: null,
+          lamport: null,
+          payload: {
+            collection_id: 'col-1',
+            request_id: 'req-1',
+            name: 'Create User',
+            method: 'POST',
+            url: 'https://api.example.com/users',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{"name": "John"}',
+          },
+        });
+      });
+
+      const { contextOrder } = useCanvasStore.getState();
+      const contextId = contextOrder[0]!;
+      const requestState = useRequestStoreRaw.getState().contexts[contextId];
+      expect(requestState?.method).toBe('POST');
+      expect(requestState?.body).toBe('{"name": "John"}');
+      expect(requestState?.headers).toEqual({ 'Content-Type': 'application/json' });
 
       unmount();
     });

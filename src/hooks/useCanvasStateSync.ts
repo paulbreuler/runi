@@ -33,6 +33,7 @@ import type {
   TabSummary,
   TemplateSummary,
 } from '@/types/generated';
+import type { RequestTabSource } from '@/types/canvas';
 
 /**
  * Build a serializable canvas snapshot from store state.
@@ -168,6 +169,23 @@ function recordCanvasActivity(
 }
 
 /**
+ * Payload for the `canvas:open_collection_request` Tauri event.
+ *
+ * Emitted by the backend `open_collection_request` MCP tool with the full
+ * request data so the frontend can open a pre-populated tab.
+ */
+interface OpenCollectionRequestPayload {
+  collection_id: string;
+  request_id: string;
+  name: string;
+  method: string;
+  url: string;
+  headers: Record<string, string> | null;
+  body: string | null;
+  body_type?: string;
+}
+
+/**
  * Hook for synchronizing canvas state to backend and listening for MCP mutations.
  *
  * **Usage:**
@@ -183,6 +201,7 @@ function recordCanvasActivity(
  * **MCP event listeners:**
  * - `canvas:switch_tab` → `setActiveContext(id)`
  * - `canvas:open_request_tab` → `openRequestTab(overrides)`
+ * - `canvas:open_collection_request` → `openRequestTab(overrides)` with collection source
  * - `canvas:close_tab` → `closeContext(id)`
  */
 export function useCanvasStateSync(): void {
@@ -393,6 +412,53 @@ export function useCanvasStateSync(): void {
           useCanvasStore
             .getState()
             .closeContext(envelope.payload.contextId, { activate: shouldActivate });
+        }),
+
+        // Open collection request event — opens a pre-populated request tab
+        addListener('canvas:open_collection_request', (payload): void => {
+          const envelope = payload as EventEnvelope<OpenCollectionRequestPayload>;
+          const { collection_id, request_id, name, method, url, headers, body } = envelope.payload;
+          const isAi = envelope.actor.type === 'ai';
+          const shouldActivate = !isAi || useSettingsStore.getState().followAiMode;
+
+          // Always log activity
+          recordCanvasActivity(envelope, 'opened_tab', name, request_id);
+
+          // Mark as AI mutation before store action so triggerSync picks it up
+          if (isAi) {
+            aiMutationRef.current = true;
+          }
+
+          // Check if a tab with this collection source already exists
+          const store = useCanvasStore.getState();
+          const source: RequestTabSource = {
+            type: 'collection',
+            collectionId: collection_id,
+            requestId: request_id,
+          };
+          const existingContextId = store.findContextBySource(source);
+
+          if (existingContextId !== null) {
+            // Tab already open — just activate it if appropriate
+            if (shouldActivate) {
+              store.setActiveContext(existingContextId);
+            }
+            return;
+          }
+
+          // Open new request tab with full request data
+          store.openRequestTab(
+            {
+              label: name,
+              name,
+              method,
+              url,
+              headers: headers ?? {},
+              body: body ?? '',
+              source,
+            },
+            { activate: shouldActivate }
+          );
         }),
       ]);
     };

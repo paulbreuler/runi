@@ -88,6 +88,15 @@ export interface RequestUpdatedEvent {
 }
 
 /**
+ * Request deleted event payload
+ */
+export interface RequestDeletedEvent {
+  collection_id: string;
+  request_id: string;
+  name?: string;
+}
+
+/**
  * Request executed event payload
  */
 export interface RequestExecutedEvent {
@@ -115,6 +124,9 @@ export interface UseCollectionEventsOptions {
 
   /** Callback when a request is updated */
   onRequestUpdated?: (envelope: EventEnvelope<RequestUpdatedEvent>) => void;
+
+  /** Callback when a request is deleted */
+  onRequestDeleted?: (envelope: EventEnvelope<RequestDeletedEvent>) => void;
 
   /** Callback when a request is executed */
   onRequestExecuted?: (envelope: EventEnvelope<RequestExecutedEvent>) => void;
@@ -155,6 +167,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onCollectionSaved,
     onRequestAdded,
     onRequestUpdated,
+    onRequestDeleted,
     onRequestExecuted,
     onError,
   } = options;
@@ -165,6 +178,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   const onCollectionSavedRef = useRef(onCollectionSaved);
   const onRequestAddedRef = useRef(onRequestAdded);
   const onRequestUpdatedRef = useRef(onRequestUpdated);
+  const onRequestDeletedRef = useRef(onRequestDeleted);
   const onRequestExecutedRef = useRef(onRequestExecuted);
   const onErrorRef = useRef(onError);
 
@@ -175,6 +189,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onCollectionSavedRef.current = onCollectionSaved;
     onRequestAddedRef.current = onRequestAdded;
     onRequestUpdatedRef.current = onRequestUpdated;
+    onRequestDeletedRef.current = onRequestDeleted;
     onRequestExecutedRef.current = onRequestExecuted;
     onErrorRef.current = onError;
   }, [
@@ -183,6 +198,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onCollectionSaved,
     onRequestAdded,
     onRequestUpdated,
+    onRequestDeleted,
     onRequestExecuted,
     onError,
   ]);
@@ -231,6 +247,13 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     }
   }, []);
 
+  // Handle request deleted event
+  const handleRequestDeleted = useCallback((envelope: EventEnvelope<RequestDeletedEvent>): void => {
+    if (onRequestDeletedRef.current !== undefined) {
+      onRequestDeletedRef.current(envelope);
+    }
+  }, []);
+
   // Handle request executed event
   const handleRequestExecuted = useCallback(
     (envelope: EventEnvelope<RequestExecutedEvent>): void => {
@@ -271,6 +294,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
           addListener('collection:saved', handleCollectionSaved),
           addListener('request:added', handleRequestAdded),
           addListener('request:updated', handleRequestUpdated),
+          addListener('request:deleted', handleRequestDeleted),
           addListener('request:executed', handleRequestExecuted),
         ]);
       } catch (error) {
@@ -296,6 +320,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     handleCollectionSaved,
     handleRequestAdded,
     handleRequestUpdated,
+    handleRequestDeleted,
     handleRequestExecuted,
   ]);
 }

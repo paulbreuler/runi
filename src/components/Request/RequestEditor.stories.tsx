@@ -143,20 +143,18 @@ export const ParamsEditorFormInteractionsTest: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    await step('Add new parameter', async () => {
-      const addButton = canvas.getByTestId('add-param-button');
-      await userEvent.click(addButton);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const keyInput = await canvas.findByTestId('new-param-key-input', {}, { timeout: 2000 });
-      const valueInput = await canvas.findByTestId('new-param-value-input', {}, { timeout: 2000 });
+    await step('Empty row is visible for adding new parameters', async () => {
+      const keyInput = canvas.getByTestId('param-empty-row-key');
+      const valueInput = canvas.getByTestId('param-empty-row-value');
       await expect(keyInput).toBeVisible();
       await expect(valueInput).toBeVisible();
     });
 
-    await step('Enter parameter key and value', async () => {
-      const keyInput = canvas.getByTestId('new-param-key-input');
-      const valueInput = canvas.getByTestId('new-param-value-input');
+    await step('Enter parameter key and value in empty row', async () => {
+      const keyInput = canvas.getByTestId('param-empty-row-key');
+      const valueInput = canvas.getByTestId('param-empty-row-value');
       await userEvent.type(keyInput, 'status');
+      await userEvent.click(valueInput);
       await userEvent.type(valueInput, 'active');
       await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(keyInput).toHaveValue('status');
@@ -164,9 +162,7 @@ export const ParamsEditorFormInteractionsTest: Story = {
     });
 
     await step('Save parameter with Enter key', async () => {
-      const keyInput = canvas.getByTestId('new-param-key-input');
       await userEvent.keyboard('{Enter}');
-      await expect(keyInput).not.toBeInTheDocument();
     });
   },
 };
@@ -188,21 +184,16 @@ export const ParamsEditorKeyboardNavigationTest: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    await step('Tab to add parameter button', async () => {
-      const addButton = canvas.getByTestId('add-param-button');
-      addButton.focus();
-      await waitForFocus(addButton, 1000);
-      await expect(addButton).toHaveFocus();
-    });
-
-    await step('Add parameter and tab through inputs', async () => {
-      await userEvent.keyboard('{Enter}');
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const keyInput = await canvas.findByTestId('new-param-key-input', {}, { timeout: 2000 });
+    await step('Tab to empty row key input', async () => {
+      const keyInput = canvas.getByTestId('param-empty-row-key');
+      keyInput.focus();
       await waitForFocus(keyInput, 1000);
       await expect(keyInput).toHaveFocus();
+    });
+
+    await step('Tab from key to value input', async () => {
       await userEvent.tab();
-      const valueInput = await canvas.findByTestId('new-param-value-input', {}, { timeout: 2000 });
+      const valueInput = canvas.getByTestId('param-empty-row-value');
       await waitForFocus(valueInput, 1000);
       await expect(valueInput).toHaveFocus();
     });
@@ -262,20 +253,18 @@ export const HeaderEditorFormInteractionsTest: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    await step('Add new header', async () => {
-      const addButton = canvas.getByTestId('add-header-button');
-      await userEvent.click(addButton);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const keyInput = await canvas.findByTestId('new-header-key-input', {}, { timeout: 2000 });
-      const valueInput = await canvas.findByTestId('new-header-value-input', {}, { timeout: 2000 });
+    await step('Empty row is visible for adding new headers', async () => {
+      const keyInput = canvas.getByTestId('header-empty-row-key');
+      const valueInput = canvas.getByTestId('header-empty-row-value');
       await expect(keyInput).toBeVisible();
       await expect(valueInput).toBeVisible();
     });
 
-    await step('Enter header key and value', async () => {
-      const keyInput = canvas.getByTestId('new-header-key-input');
-      const valueInput = canvas.getByTestId('new-header-value-input');
+    await step('Enter header key and value in empty row', async () => {
+      const keyInput = canvas.getByTestId('header-empty-row-key');
+      const valueInput = canvas.getByTestId('header-empty-row-value');
       await userEvent.type(keyInput, 'X-Custom-Header');
+      await userEvent.click(valueInput);
       await userEvent.type(valueInput, 'custom-value');
       await new Promise((resolve) => setTimeout(resolve, 100));
       await expect(keyInput).toHaveValue('X-Custom-Header');
@@ -301,11 +290,11 @@ export const HeaderEditorKeyboardNavigationTest: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
 
-    await step('Tab to add header button', async () => {
-      const addButton = canvas.getByTestId('add-header-button');
-      addButton.focus();
-      await waitForFocus(addButton, 1000);
-      await expect(addButton).toHaveFocus();
+    await step('Tab to empty row key input', async () => {
+      const keyInput = canvas.getByTestId('header-empty-row-key');
+      keyInput.focus();
+      await waitForFocus(keyInput, 1000);
+      await expect(keyInput).toHaveFocus();
     });
   },
 };
