@@ -209,9 +209,7 @@ export const CollectionEventProvider = ({
       recordActivity(
         envelope.actor,
         'updated_request',
-        typeof envelope.payload.name === 'string'
-          ? envelope.payload.name
-          : envelope.payload.request_id,
+        envelope.payload.name ?? envelope.payload.request_id,
         envelope.payload.request_id,
         envelope.timestamp,
         extractSeq(envelope)
