@@ -54,6 +54,7 @@ export const SignalDot = ({ type, size = 'sm', tooltip }: SignalDotProps): React
   const shouldReduceMotion = useReducedMotion();
   const config = signalConfig[type];
   const { Icon } = config;
+  const ariaLabel = tooltip ?? type;
 
   return (
     <motion.span
@@ -66,7 +67,8 @@ export const SignalDot = ({ type, size = 'sm', tooltip }: SignalDotProps): React
       whileHover={shouldReduceMotion === true ? undefined : { scale: 1.3 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       title={tooltip}
-      aria-label={tooltip}
+      role="img"
+      aria-label={ariaLabel}
     >
       <Icon size={iconSizes[size]} />
     </motion.span>

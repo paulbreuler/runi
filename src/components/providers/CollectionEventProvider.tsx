@@ -107,6 +107,17 @@ function refreshOpenTabIfNeeded(collectionId: string, requestId: string): void {
   reqStore.setUrl(contextId, request.url);
   reqStore.setHeaders(contextId, request.headers);
   reqStore.setBody(contextId, request.body?.content ?? '');
+
+  // Update tab label if the request was renamed
+  const canvasStore = useCanvasStore.getState();
+  const context = canvasStore.contexts.get(contextId);
+  if (context !== undefined && context.label !== request.name) {
+    useCanvasStore.setState((state) => {
+      const newContexts = new Map(state.contexts);
+      newContexts.set(contextId, { ...context, label: request.name });
+      return { contexts: newContexts };
+    });
+  }
 }
 
 /**

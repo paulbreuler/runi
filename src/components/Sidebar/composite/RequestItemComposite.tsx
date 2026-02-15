@@ -11,6 +11,7 @@ import { isAiGenerated, isBound } from '@/types/collection';
 import { methodTextColors, type HttpMethod } from '@/utils/http-colors';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { globalEventBus, logEventFlow } from '@/events/bus';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -83,7 +84,10 @@ export const RequestItemComposite = ({
     setRenameValue(request.name);
     setIsRenaming(true);
     requestAnimationFrame(() => {
-      renameInputRef.current?.select();
+      if (renameInputRef.current !== null) {
+        focusWithVisibility(renameInputRef.current);
+        renameInputRef.current.select();
+      }
     });
   }, [request.name]);
 

@@ -262,7 +262,7 @@ export const KeyValueEditor = ({
                       onClick={() => {
                         removeEntry(index);
                       }}
-                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
+                      className="invisible pointer-events-none group-hover:visible group-hover:pointer-events-auto focus-visible:visible focus-visible:pointer-events-auto group-focus-within:visible group-focus-within:pointer-events-auto motion-safe:transition-opacity text-signal-error hover:text-signal-error hover:bg-signal-error/10"
                       data-test-id={`${testIdPrefix}-remove-${String(index)}`}
                       aria-label={`Remove ${entry.key} ${labelPrefix}`}
                     >

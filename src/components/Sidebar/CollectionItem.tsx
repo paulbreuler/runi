@@ -15,6 +15,7 @@ import {
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,7 +69,10 @@ export const CollectionItem = ({
     setRenameValue(summary.name);
     setIsRenaming(true);
     requestAnimationFrame(() => {
-      renameInputRef.current?.select();
+      if (renameInputRef.current !== null) {
+        focusWithVisibility(renameInputRef.current);
+        renameInputRef.current.select();
+      }
     });
   }, [summary.name]);
 
