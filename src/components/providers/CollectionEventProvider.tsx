@@ -110,6 +110,29 @@ function refreshOpenTabIfNeeded(collectionId: string, requestId: string): void {
 }
 
 /**
+ * Close all open tabs sourced from a given collection.
+ * Called when a collection is deleted to prevent orphaned tabs.
+ */
+function closeContextsByCollectionId(collectionId: string): void {
+  const store = useCanvasStore.getState();
+  const contextsToClose: string[] = [];
+
+  for (const [contextId, state] of store.contextState.entries()) {
+    if (!contextId.startsWith('request-')) {
+      continue;
+    }
+    const source = state.source as RequestTabSource | undefined;
+    if (source?.type === 'collection' && source.collectionId === collectionId) {
+      contextsToClose.push(contextId);
+    }
+  }
+
+  for (const contextId of contextsToClose) {
+    store.closeContext(contextId, { activate: false });
+  }
+}
+
+/**
  * Provider that subscribes to collection events and updates the Zustand store.
  *
  * When Claude Code (or any MCP client) creates/deletes collections via the
@@ -139,6 +162,7 @@ export const CollectionEventProvider = ({
       followAiIfEnabled(envelope.payload.id, envelope.actor);
     },
     onCollectionDeleted: (envelope): void => {
+      closeContextsByCollectionId(envelope.payload.id);
       void loadCollections();
       // If the deleted collection was selected, clear selection immediately
       // so the UI doesn't reference a stale collection while loadCollections() refreshes
@@ -185,13 +209,23 @@ export const CollectionEventProvider = ({
       recordActivity(
         envelope.actor,
         'updated_request',
-        envelope.payload.request_id,
+        envelope.payload.name ?? envelope.payload.request_id,
         envelope.payload.request_id,
         envelope.timestamp,
         extractSeq(envelope)
       );
     },
     onRequestDeleted: (envelope): void => {
+      // Close the tab for the deleted request if open
+      const deletedSource: RequestTabSource = {
+        type: 'collection',
+        collectionId: envelope.payload.collection_id,
+        requestId: envelope.payload.request_id,
+      };
+      const deletedContextId = useCanvasStore.getState().findContextBySource(deletedSource);
+      if (deletedContextId !== null) {
+        useCanvasStore.getState().closeContext(deletedContextId, { activate: false });
+      }
       void loadCollection(envelope.payload.collection_id);
       recordActivity(
         envelope.actor,

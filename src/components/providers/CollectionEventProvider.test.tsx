@@ -268,6 +268,76 @@ describe('CollectionEventProvider', () => {
       expect(entries[0]?.action).toBe('deleted_collection');
     });
 
+    it('closes all tabs sourced from the deleted collection', async () => {
+      // Open 2 tabs from col-1, 1 tab from col-2
+      useCanvasStore.getState().openRequestTab({
+        label: 'Get Users',
+        name: 'Get Users',
+        method: 'GET',
+        url: 'https://api.example.com/users',
+        headers: {},
+        body: '',
+        source: { type: 'collection', collectionId: 'col-1', requestId: 'req-1' },
+      });
+      useCanvasStore.getState().openRequestTab({
+        label: 'Get Posts',
+        name: 'Get Posts',
+        method: 'GET',
+        url: 'https://api.example.com/posts',
+        headers: {},
+        body: '',
+        source: { type: 'collection', collectionId: 'col-1', requestId: 'req-2' },
+      });
+      useCanvasStore.getState().openRequestTab({
+        label: 'Get Comments',
+        name: 'Get Comments',
+        method: 'GET',
+        url: 'https://api.example.com/comments',
+        headers: {},
+        body: '',
+        source: { type: 'collection', collectionId: 'col-2', requestId: 'req-3' },
+      });
+
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent('collection:deleted', makeEnvelope({ id: 'col-1', name: 'Old API' }));
+      });
+
+      // col-1 tabs should be closed
+      const source1 = { type: 'collection' as const, collectionId: 'col-1', requestId: 'req-1' };
+      const source2 = { type: 'collection' as const, collectionId: 'col-1', requestId: 'req-2' };
+      expect(useCanvasStore.getState().findContextBySource(source1)).toBeNull();
+      expect(useCanvasStore.getState().findContextBySource(source2)).toBeNull();
+
+      // col-2 tab should remain
+      const source3 = { type: 'collection' as const, collectionId: 'col-2', requestId: 'req-3' };
+      expect(useCanvasStore.getState().findContextBySource(source3)).not.toBeNull();
+    });
+
+    it('does not error when no tabs match the deleted collection', async () => {
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      // Should not throw — no tabs open
+      act(() => {
+        emitTauriEvent('collection:deleted', makeEnvelope({ id: 'col-1', name: 'Old API' }));
+      });
+
+      expect(mockLoadCollections).toHaveBeenCalled();
+    });
+
     it('clears selection when deleted collection was selected', async () => {
       mockCollectionState.selectedCollectionId = 'col-1';
 
@@ -576,6 +646,81 @@ describe('CollectionEventProvider', () => {
       });
 
       expect(mockSelectCollection).toHaveBeenCalledWith('col-1');
+    });
+
+    it('closes the tab for the deleted request', async () => {
+      // Open a tab sourced from col-1/req-1
+      useCanvasStore.getState().openRequestTab({
+        label: 'Get Users',
+        name: 'Get Users',
+        method: 'GET',
+        url: 'https://api.example.com/users',
+        headers: {},
+        body: '',
+        source: { type: 'collection', collectionId: 'col-1', requestId: 'req-1' },
+      });
+
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'request:deleted',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1', name: 'Get Users' })
+        );
+      });
+
+      // Tab should be closed
+      const source = { type: 'collection' as const, collectionId: 'col-1', requestId: 'req-1' };
+      expect(useCanvasStore.getState().findContextBySource(source)).toBeNull();
+    });
+
+    it('does not close tabs for other requests in same collection', async () => {
+      // Open two tabs from the same collection
+      useCanvasStore.getState().openRequestTab({
+        label: 'Get Users',
+        name: 'Get Users',
+        method: 'GET',
+        url: 'https://api.example.com/users',
+        headers: {},
+        body: '',
+        source: { type: 'collection', collectionId: 'col-1', requestId: 'req-1' },
+      });
+      useCanvasStore.getState().openRequestTab({
+        label: 'Get Posts',
+        name: 'Get Posts',
+        method: 'GET',
+        url: 'https://api.example.com/posts',
+        headers: {},
+        body: '',
+        source: { type: 'collection', collectionId: 'col-1', requestId: 'req-2' },
+      });
+
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'request:deleted',
+          makeEnvelope({ collection_id: 'col-1', request_id: 'req-1', name: 'Get Users' })
+        );
+      });
+
+      // req-1 tab closed, req-2 tab remains
+      const source1 = { type: 'collection' as const, collectionId: 'col-1', requestId: 'req-1' };
+      const source2 = { type: 'collection' as const, collectionId: 'col-1', requestId: 'req-2' };
+      expect(useCanvasStore.getState().findContextBySource(source1)).toBeNull();
+      expect(useCanvasStore.getState().findContextBySource(source2)).not.toBeNull();
     });
 
     it('does not clear selection when a different request was deleted', async () => {
