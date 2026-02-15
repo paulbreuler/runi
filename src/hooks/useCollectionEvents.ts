@@ -85,6 +85,7 @@ export interface RequestAddedEvent {
 export interface RequestUpdatedEvent {
   collection_id: string;
   request_id: string;
+  name?: string;
 }
 
 /**
