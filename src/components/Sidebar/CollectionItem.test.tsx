@@ -84,9 +84,9 @@ describe('CollectionItem', (): void => {
       render(<CollectionItem summary={simpleSummary} />);
 
       expect(screen.getByTestId('collection-item-col_1')).toBeInTheDocument();
-      expect(screen.getByText('My Collection')).toBeInTheDocument();
-      expect(screen.getByText('5')).toBeInTheDocument();
-      expect(screen.getByText('manual')).toBeInTheDocument();
+      expect(screen.getByTestId('collection-name-col_1')).toHaveTextContent('My Collection');
+      expect(screen.getByTestId('collection-count-col_1')).toHaveTextContent('5');
+      expect(screen.getByTestId('collection-source-col_1')).toHaveTextContent('manual');
     });
 
     it('renders rename and delete action buttons', (): void => {
@@ -94,6 +94,15 @@ describe('CollectionItem', (): void => {
 
       expect(screen.getByTestId('collection-rename-col_1')).toBeInTheDocument();
       expect(screen.getByTestId('collection-delete-col_1')).toBeInTheDocument();
+    });
+
+    it('hides action buttons from tab order when not hovered/focused', (): void => {
+      render(<CollectionItem summary={simpleSummary} />);
+
+      const actionsContainer = screen.getByTestId('collection-actions-col_1');
+      // Should use invisible + pointer-events-none for proper a11y hiding
+      expect(actionsContainer.className).toMatch(/invisible/);
+      expect(actionsContainer.className).toMatch(/pointer-events-none/);
     });
 
     it('has accessible labels on action buttons', (): void => {
@@ -185,6 +194,28 @@ describe('CollectionItem', (): void => {
       fireEvent.keyDown(row, { key: 'F2' });
 
       expect(screen.getByTestId('collection-rename-input-col_1')).toBeInTheDocument();
+    });
+
+    it('does not commit rename when Escape triggers blur from unmount', (): void => {
+      const mockRename = vi.fn();
+      render(<CollectionItem summary={simpleSummary} onRename={mockRename} />);
+
+      const renameBtn = screen.getByTestId('collection-rename-col_1');
+      act(() => {
+        fireEvent.click(renameBtn);
+      });
+
+      const input = screen.getByTestId('collection-rename-input-col_1');
+      fireEvent.change(input, { target: { value: 'Changed Name' } });
+
+      // Simulate the race: Escape fires, then blur fires before React unmounts
+      // Both handlers run in the same React batch
+      act(() => {
+        fireEvent.keyDown(input, { key: 'Escape' });
+        fireEvent.blur(input);
+      });
+
+      expect(mockRename).not.toHaveBeenCalled();
     });
 
     it('has accessible label on rename input', (): void => {

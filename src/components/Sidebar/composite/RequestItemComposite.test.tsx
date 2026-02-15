@@ -186,6 +186,17 @@ describe('RequestItemComposite', (): void => {
   });
 
   describe('rename action', (): void => {
+    it('hides action buttons from tab order when not hovered/focused', (): void => {
+      renderWithScrollContainer(
+        <RequestItemComposite request={simpleRequest} collectionId="col_1" />
+      );
+
+      const actionsContainer = screen.getByTestId('request-actions-req_1');
+      // Should use invisible + pointer-events-none for proper a11y hiding
+      expect(actionsContainer.className).toMatch(/invisible/);
+      expect(actionsContainer.className).toMatch(/pointer-events-none/);
+    });
+
     it('renders rename button on hover', (): void => {
       renderWithScrollContainer(
         <RequestItemComposite request={simpleRequest} collectionId="col_1" />
@@ -243,6 +254,29 @@ describe('RequestItemComposite', (): void => {
 
       expect(mockRename).not.toHaveBeenCalled();
       expect(screen.queryByTestId('request-rename-input-req_1')).not.toBeInTheDocument();
+    });
+
+    it('does not commit rename when Escape triggers blur from unmount', (): void => {
+      const mockRename = vi.fn();
+      renderWithScrollContainer(
+        <RequestItemComposite request={simpleRequest} collectionId="col_1" onRename={mockRename} />
+      );
+
+      const renameBtn = screen.getByTestId('request-rename-req_1');
+      act(() => {
+        fireEvent.click(renameBtn);
+      });
+
+      const input = screen.getByTestId('request-rename-input-req_1');
+      fireEvent.change(input, { target: { value: 'Changed Name' } });
+
+      // Simulate the race: Escape fires, then blur fires before React unmounts
+      act(() => {
+        fireEvent.keyDown(input, { key: 'Escape' });
+        fireEvent.blur(input);
+      });
+
+      expect(mockRename).not.toHaveBeenCalled();
     });
 
     it('starts rename mode on F2 keydown', (): void => {

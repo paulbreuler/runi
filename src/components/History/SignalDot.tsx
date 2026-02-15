@@ -61,7 +61,7 @@ export const SignalDot = ({ type, size = 'sm', tooltip }: SignalDotProps): React
       className={cn(
         'inline-flex items-center justify-center shrink-0',
         config.color,
-        config.pulse && 'animate-pulse'
+        config.pulse && shouldReduceMotion !== true && 'animate-pulse'
       )}
       whileHover={shouldReduceMotion === true ? undefined : { scale: 1.3 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}

@@ -87,7 +87,7 @@ export const AllMethods: Story = {
 export const AiEditing: Story = {
   args: { method: 'GET' },
   render: () => <UrlBarWithState aiState="editing" />,
-  play: async ({ canvasElement, step }) => {
+  play: async ({ canvasElement, step }): Promise<void> => {
     const canvas = within(canvasElement);
     await step('Vigilance line shows editing state', async () => {
       const line = canvas.getByTestId('url-bar-vigilance-line');
@@ -99,7 +99,7 @@ export const AiEditing: Story = {
 export const AiExecuting: Story = {
   args: { method: 'POST' },
   render: () => <UrlBarWithState initialMethod="POST" aiState="executing" />,
-  play: async ({ canvasElement, step }) => {
+  play: async ({ canvasElement, step }): Promise<void> => {
     const canvas = within(canvasElement);
     await step('Vigilance line shows executing state', async () => {
       const line = canvas.getByTestId('url-bar-vigilance-line');
@@ -111,7 +111,7 @@ export const AiExecuting: Story = {
 export const AiComplete: Story = {
   args: { method: 'GET' },
   render: () => <UrlBarWithState aiState="complete" />,
-  play: async ({ canvasElement, step }) => {
+  play: async ({ canvasElement, step }): Promise<void> => {
     const canvas = within(canvasElement);
     await step('Vigilance line shows complete state', async () => {
       const line = canvas.getByTestId('url-bar-vigilance-line');

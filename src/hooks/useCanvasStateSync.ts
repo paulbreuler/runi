@@ -351,11 +351,15 @@ export function useCanvasStateSync(): void {
           const envelope = payload as EventEnvelope<{ contextId: string }>;
           const isAi = envelope.actor.type === 'ai';
 
+          // Resolve tab label for friendly activity log
+          const switchCtx = useCanvasStore.getState().contexts.get(envelope.payload.contextId);
+          const switchTabLabel = switchCtx?.label ?? envelope.payload.contextId;
+
           // Always log activity
           recordCanvasActivity(
             envelope,
             'switched_tab',
-            envelope.payload.contextId,
+            switchTabLabel,
             envelope.payload.contextId
           );
 
@@ -395,13 +399,12 @@ export function useCanvasStateSync(): void {
           const isAi = envelope.actor.type === 'ai';
           const shouldActivate = !isAi || useSettingsStore.getState().followAiMode;
 
+          // Resolve tab label BEFORE closing (context will be gone after close)
+          const closeCtx = useCanvasStore.getState().contexts.get(envelope.payload.contextId);
+          const closeTabLabel = closeCtx?.label ?? envelope.payload.contextId;
+
           // Always log activity
-          recordCanvasActivity(
-            envelope,
-            'closed_tab',
-            envelope.payload.contextId,
-            envelope.payload.contextId
-          );
+          recordCanvasActivity(envelope, 'closed_tab', closeTabLabel, envelope.payload.contextId);
 
           // Mark as AI mutation before store action so triggerSync picks it up
           if (isAi) {
@@ -424,11 +427,6 @@ export function useCanvasStateSync(): void {
           // Always log activity
           recordCanvasActivity(envelope, 'opened_tab', name, request_id);
 
-          // Mark as AI mutation before store action so triggerSync picks it up
-          if (isAi) {
-            aiMutationRef.current = true;
-          }
-
           // Check if a tab with this collection source already exists
           const store = useCanvasStore.getState();
           const source: RequestTabSource = {
@@ -441,9 +439,18 @@ export function useCanvasStateSync(): void {
           if (existingContextId !== null) {
             // Tab already open — just activate it if appropriate
             if (shouldActivate) {
+              // Mark as AI mutation only when a store mutation will actually occur
+              if (isAi) {
+                aiMutationRef.current = true;
+              }
               store.setActiveContext(existingContextId);
             }
             return;
+          }
+
+          // Mark as AI mutation before store action so triggerSync picks it up
+          if (isAi) {
+            aiMutationRef.current = true;
           }
 
           // Open new request tab with full request data

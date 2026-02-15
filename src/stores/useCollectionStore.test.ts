@@ -269,6 +269,63 @@ describe('useCollectionStore', () => {
       expect(result.current.selectedRequestId).toBeNull();
     });
 
+    it('decrements summary request_count when deleting a request', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'First',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 0,
+          },
+          {
+            id: 'req-2',
+            name: 'Second',
+            method: 'POST',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      useCollectionStore.setState({
+        collections: [collection as unknown as Collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 2,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteRequest('col-1', 'req-1');
+      });
+
+      const summary = result.current.summaries.find((s) => s.id === 'col-1');
+      expect(summary?.request_count).toBe(1);
+    });
+
     it('sets error when delete fails', async () => {
       (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('delete failed');
 

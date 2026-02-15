@@ -479,6 +479,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_broadcast_backpressure_drops_event_when_buffer_full() {
+        let broadcaster = SseBroadcaster::new();
+        // Subscribe but hold the receiver without consuming — events accumulate
+        let (_id, _rx) = broadcaster.subscribe("canvas").await;
+
+        // Fill the 256-event buffer
+        for i in 0..SUBSCRIBER_CHANNEL_CAPACITY {
+            let count = broadcaster
+                .broadcast("canvas", make_event("fill", json!({"i": i})))
+                .await;
+            assert_eq!(count, 1, "event {i} should be delivered");
+        }
+
+        // The 257th event should be dropped (buffer full / backpressure)
+        let count = broadcaster
+            .broadcast("canvas", make_event("overflow", json!({"i": 256})))
+            .await;
+        assert_eq!(count, 0, "event should be dropped when buffer is full");
+
+        // Subscriber must NOT be removed — backpressure is not disconnection
+        assert_eq!(
+            broadcaster.subscriber_count("canvas").await,
+            1,
+            "subscriber should remain active after backpressure"
+        );
+    }
+
+    #[tokio::test]
     async fn test_total_subscriptions_across_streams() {
         let broadcaster = SseBroadcaster::new();
         let (_id1, _rx1) = broadcaster.subscribe("canvas").await;

@@ -226,6 +226,7 @@ export const CollectionEventProvider = ({
       if (deletedContextId !== null) {
         useCanvasStore.getState().closeContext(deletedContextId, { activate: false });
       }
+      void loadCollections();
       void loadCollection(envelope.payload.collection_id);
       recordActivity(
         envelope.actor,

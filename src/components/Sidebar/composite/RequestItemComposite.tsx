@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Pencil, Radio, Sparkles, Trash2 } from 'lucide-react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
@@ -44,6 +44,14 @@ export const RequestItemComposite = ({
   const [renameValue, setRenameValue] = useState('');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const didCancelRef = useRef(false);
+
+  // Reset cancel flag when entering rename mode
+  useEffect(() => {
+    if (isRenaming) {
+      didCancelRef.current = false;
+    }
+  }, [isRenaming]);
 
   const methodKey = request.method as HttpMethod;
   const methodClass =
@@ -80,6 +88,9 @@ export const RequestItemComposite = ({
   }, [request.name]);
 
   const commitRename = useCallback((): void => {
+    if (didCancelRef.current) {
+      return;
+    }
     const trimmed = renameValue.trim();
     if (trimmed.length > 0 && trimmed !== request.name) {
       onRename?.(collectionId, request.id, trimmed);
@@ -88,6 +99,7 @@ export const RequestItemComposite = ({
   }, [renameValue, request.name, request.id, collectionId, onRename]);
 
   const cancelRename = useCallback((): void => {
+    didCancelRef.current = true;
     setIsRenaming(false);
   }, []);
 
@@ -218,7 +230,7 @@ export const RequestItemComposite = ({
 
             {/* Hover-revealed action buttons — far right, siblings of the select button */}
             <div
-              className="flex items-center gap-0.5 opacity-0 group-hover/request:opacity-100 transition-opacity duration-150"
+              className="flex items-center gap-0.5 invisible pointer-events-none group-hover/request:visible group-hover/request:pointer-events-auto group-focus-within/request:visible group-focus-within/request:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
               data-test-id={`request-actions-${request.id}`}
             >
               <Button

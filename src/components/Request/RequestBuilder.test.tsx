@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RequestBuilder } from './RequestBuilder';
@@ -137,6 +137,10 @@ describe('RequestBuilder', () => {
     await user.type(keyInput, 'X-New');
     await user.type(valueInput, 'new-value');
     await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(mockSetHeaders).toHaveBeenCalledWith({ 'X-New': 'new-value' });
+    });
   });
 
   it('allows removing a header', async () => {

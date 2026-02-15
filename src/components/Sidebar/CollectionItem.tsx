@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Folder, Pencil, Trash2 } from 'lucide-react';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
@@ -45,6 +45,14 @@ export const CollectionItem = ({
   const [renameValue, setRenameValue] = useState('');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const didCancelRef = useRef(false);
+
+  // Reset cancel flag when entering rename mode
+  useEffect(() => {
+    if (isRenaming) {
+      didCancelRef.current = false;
+    }
+  }, [isRenaming]);
 
   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>): void => {
     e.currentTarget.focus({ preventScroll: true });
@@ -65,6 +73,9 @@ export const CollectionItem = ({
   }, [summary.name]);
 
   const commitRename = useCallback((): void => {
+    if (didCancelRef.current) {
+      return;
+    }
     const trimmed = renameValue.trim();
     if (trimmed.length > 0 && trimmed !== summary.name) {
       onRename?.(summary.id, trimmed);
@@ -73,6 +84,7 @@ export const CollectionItem = ({
   }, [renameValue, summary.name, summary.id, onRename]);
 
   const cancelRename = useCallback((): void => {
+    didCancelRef.current = true;
     setIsRenaming(false);
   }, []);
 
@@ -155,21 +167,30 @@ export const CollectionItem = ({
                 {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </span>
               <Folder size={14} className="shrink-0 text-text-muted" />
-              <span className="text-sm text-text-primary truncate" title={summary.name}>
+              <span
+                className="text-sm text-text-primary truncate"
+                title={summary.name}
+                data-test-id={`collection-name-${summary.id}`}
+              >
                 {displayName}
               </span>
             </button>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <div className="flex items-center gap-2 text-xs text-text-muted">
-                <span>{summary.request_count}</span>
+                <span data-test-id={`collection-count-${summary.id}`}>{summary.request_count}</span>
                 <span className="text-text-muted/70">•</span>
-                <span className="uppercase tracking-wider">{summary.source_type}</span>
+                <span
+                  className="uppercase tracking-wider"
+                  data-test-id={`collection-source-${summary.id}`}
+                >
+                  {summary.source_type}
+                </span>
               </div>
 
               {/* Hover-revealed action buttons — far right, siblings of the toggle button */}
               <div
-                className="flex items-center gap-0.5 opacity-0 group-hover/collection:opacity-100 transition-opacity duration-150"
+                className="flex items-center gap-0.5 invisible pointer-events-none group-hover/collection:visible group-hover/collection:pointer-events-auto group-focus-within/collection:visible group-focus-within/collection:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
                 data-test-id={`collection-actions-${summary.id}`}
               >
                 <Button

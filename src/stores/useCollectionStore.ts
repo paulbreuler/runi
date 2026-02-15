@@ -169,6 +169,11 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             ? { ...collection, requests: collection.requests.filter((r) => r.id !== requestId) }
             : collection
         ),
+        summaries: state.summaries.map((summary) =>
+          summary.id === collectionId
+            ? { ...summary, request_count: Math.max(0, summary.request_count - 1) }
+            : summary
+        ),
         selectedRequestId:
           state.selectedCollectionId === collectionId && state.selectedRequestId === requestId
             ? null
