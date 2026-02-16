@@ -986,9 +986,9 @@ describe('useCollectionStore', () => {
       });
 
       expect(invoke).toHaveBeenCalledWith('cmd_move_request', {
-        sourceCollectionId: 'col-source',
-        requestId: 'req-1',
-        targetCollectionId: 'col-target',
+        source_collection_id: 'col-source',
+        request_id: 'req-1',
+        target_collection_id: 'col-target',
       });
       expect(returned).toBe(true);
 
@@ -1105,9 +1105,9 @@ describe('useCollectionStore', () => {
       });
 
       expect(invoke).toHaveBeenCalledWith('cmd_copy_request_to_collection', {
-        sourceCollectionId: 'col-source',
-        requestId: 'req-1',
-        targetCollectionId: 'col-target',
+        source_collection_id: 'col-source',
+        request_id: 'req-1',
+        target_collection_id: 'col-target',
       });
       expect(returned).toBe(true);
 

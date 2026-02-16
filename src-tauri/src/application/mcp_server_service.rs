@@ -1083,6 +1083,7 @@ impl McpServerService {
         self.emit(
             "request:copied",
             json!({
+                "request_id": &copy_id,
                 "source_collection_id": source_collection_id,
                 "target_collection_id": target_collection_id,
                 "source_request_id": request_id,

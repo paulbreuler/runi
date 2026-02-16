@@ -1032,20 +1032,21 @@ fn move_request_inner(
     request_id: &str,
     target_collection_id: &str,
 ) -> Result<MoveRequestResult, String> {
-    if source_collection_id == target_collection_id {
-        let collection = load_collection(source_collection_id)?;
-        return Ok(MoveRequestResult {
-            from: collection.clone(),
-            to: collection,
-        });
-    }
-
+    // Load source collection and verify request exists first
     let mut source = load_collection(source_collection_id)?;
     let pos = source
         .requests
         .iter()
         .position(|r| r.id == request_id)
         .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+    // After verifying request exists, check if source == target
+    if source_collection_id == target_collection_id {
+        return Ok(MoveRequestResult {
+            from: source.clone(),
+            to: source,
+        });
+    }
     let mut request = source
         .requests
         .get(pos)
