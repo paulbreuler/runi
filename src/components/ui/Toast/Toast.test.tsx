@@ -13,6 +13,13 @@ import { ToastBell } from './ToastBell';
 import { toast, setupToastEventBridge, __resetEventBridgeForTesting } from './useToast';
 import { globalEventBus } from '@/events/bus';
 
+/** Shape of custom data stored on toast instances in our system */
+interface ToastData {
+  count?: number;
+  correlationId?: string;
+  testId?: string;
+}
+
 // Mock Motion to avoid animation timing issues in tests
 vi.mock('motion/react', async (importOriginal) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
@@ -229,7 +236,7 @@ describe('Toast Store', () => {
       await waitFor(() => {
         expect(result.current.toasts).toHaveLength(1);
       });
-      expect(result.current.toasts[0]?.data?.count).toBe(3);
+      expect((result.current.toasts[0]?.data as ToastData | undefined)?.count).toBe(3);
     });
 
     it('different messages create separate toasts', async () => {
@@ -282,7 +289,7 @@ describe('Toast Store', () => {
       await waitFor(() => {
         expect(result.current.toasts).toHaveLength(1);
       });
-      expect(result.current.toasts[0]?.data?.count).toBe(2);
+      expect((result.current.toasts[0]?.data as ToastData | undefined)?.count).toBe(2);
     });
   });
 
@@ -297,7 +304,9 @@ describe('Toast Store', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.toasts[0]?.data?.correlationId).toBe('test-correlation-123');
+        expect((result.current.toasts[0]?.data as ToastData | undefined)?.correlationId).toBe(
+          'test-correlation-123'
+        );
       });
     });
   });
@@ -313,7 +322,9 @@ describe('Toast Store', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.toasts[0]?.data?.testId).toBe('custom-test-id');
+        expect((result.current.toasts[0]?.data as ToastData | undefined)?.testId).toBe(
+          'custom-test-id'
+        );
       });
     });
   });
