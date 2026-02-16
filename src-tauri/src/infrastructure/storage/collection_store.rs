@@ -93,7 +93,7 @@ pub fn save_collection_in_dir(collection: &Collection, dir: &Path) -> Result<Pat
     let filename = format!("{}.yaml", collection.id);
     let path = dir.join(&filename);
 
-    let yaml = serde_yml::to_string(collection)
+    let yaml = serde_yaml_ng::to_string(collection)
         .map_err(|e| format!("Failed to serialize collection: {e}"))?;
     let yaml_with_schema = format!("{SCHEMA_COMMENT}{yaml}");
 
@@ -129,7 +129,8 @@ pub fn load_collection_in_dir(collection_id: &str, dir: &Path) -> Result<Collect
         fs::read_to_string(&path).map_err(|e| format!("Failed to read collection file: {e}"))?;
     let yaml_content = strip_yaml_comments(&content);
 
-    serde_yml::from_str(&yaml_content).map_err(|e| format!("Failed to parse collection YAML: {e}"))
+    serde_yaml_ng::from_str(&yaml_content)
+        .map_err(|e| format!("Failed to parse collection YAML: {e}"))
 }
 
 /// List all saved collections (metadata only for performance).
@@ -194,7 +195,8 @@ fn load_collection_summary(path: &PathBuf) -> Result<CollectionSummary, String> 
     let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let yaml_content = strip_yaml_comments(&content);
 
-    let collection: Collection = serde_yml::from_str(&yaml_content).map_err(|e| e.to_string())?;
+    let collection: Collection =
+        serde_yaml_ng::from_str(&yaml_content).map_err(|e| e.to_string())?;
     let Collection {
         id,
         metadata,

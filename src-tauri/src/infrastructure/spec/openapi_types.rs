@@ -73,7 +73,7 @@ mod tests {
 
     #[test]
     fn test_parameter_location_serializes_snake_case() {
-        let yaml = serde_yml::to_string(&ParameterLocation::Query).unwrap();
+        let yaml = serde_yaml_ng::to_string(&ParameterLocation::Query).unwrap();
         assert!(yaml.contains("query"));
     }
 }

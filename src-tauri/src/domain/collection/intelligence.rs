@@ -83,14 +83,14 @@ mod tests {
     fn test_drift_status_enum_variants() {
         let statuses = vec![DriftStatus::Clean, DriftStatus::Warning, DriftStatus::Error];
         for status in statuses {
-            let yaml = serde_yml::to_string(&status).unwrap();
+            let yaml = serde_yaml_ng::to_string(&status).unwrap();
             assert!(!yaml.contains("::"));
         }
     }
 
     #[test]
     fn test_drift_status_serializes_snake_case() {
-        let yaml = serde_yml::to_string(&DriftStatus::Warning).unwrap();
+        let yaml = serde_yaml_ng::to_string(&DriftStatus::Warning).unwrap();
         assert!(yaml.contains("warning"));
     }
 
@@ -107,7 +107,7 @@ mod tests {
     #[test]
     fn test_intelligence_serializes_cleanly() {
         let meta = IntelligenceMetadata::default();
-        let yaml = serde_yml::to_string(&meta).unwrap();
+        let yaml = serde_yaml_ng::to_string(&meta).unwrap();
         // Default should be minimal
         assert!(yaml.contains("ai_generated: false"));
         assert!(!yaml.contains("generator_model"));

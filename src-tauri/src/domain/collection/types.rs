@@ -2,7 +2,7 @@
 
 use rand::RngExt;
 use serde::{Deserialize, Serialize};
-use serde_yml::Value;
+use serde_yaml_ng::Value;
 use std::collections::BTreeMap;
 
 use super::binding::SpecBinding;
@@ -330,7 +330,7 @@ mod tests {
     #[test]
     fn test_collection_uses_integer_version() {
         let collection = Collection::new("Test");
-        let yaml = serde_yml::to_string(&collection).unwrap();
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
         assert!(yaml.contains("version: 1"));
         // NOT "version: '1.0.0'" or "version: 1.0.0"
         assert!(!yaml.contains("version: '"));
@@ -362,7 +362,7 @@ mod tests {
         req.headers.insert("A-Header".to_string(), "a".to_string());
         req.headers.insert("M-Header".to_string(), "m".to_string());
 
-        let yaml = serde_yml::to_string(&req).unwrap();
+        let yaml = serde_yaml_ng::to_string(&req).unwrap();
 
         // BTreeMap ensures alphabetical order
         let a_pos = yaml.find("A-Header").unwrap();
@@ -375,8 +375,8 @@ mod tests {
     #[test]
     fn test_deterministic_serialization() {
         let collection = Collection::new("Determinism Test");
-        let yaml1 = serde_yml::to_string(&collection).unwrap();
-        let yaml2 = serde_yml::to_string(&collection).unwrap();
+        let yaml1 = serde_yaml_ng::to_string(&collection).unwrap();
+        let yaml2 = serde_yaml_ng::to_string(&collection).unwrap();
         assert_eq!(yaml1, yaml2);
     }
 
@@ -399,7 +399,7 @@ mod tests {
             tags: vec![],
             extensions: BTreeMap::new(),
         };
-        let yaml = serde_yml::to_string(&req).unwrap();
+        let yaml = serde_yaml_ng::to_string(&req).unwrap();
         assert!(yaml.contains("seq: 42"));
     }
 
@@ -419,7 +419,7 @@ mod tests {
             .extensions
             .insert("x-team".to_string(), Value::String("platform".to_string()));
 
-        let yaml = serde_yml::to_string(&collection).unwrap();
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
         assert!(yaml.contains("x-team: platform"));
     }
 
@@ -430,7 +430,7 @@ mod tests {
             content: Some("query { }".to_string()),
             file: None,
         };
-        let yaml = serde_yml::to_string(&body).unwrap();
+        let yaml = serde_yaml_ng::to_string(&body).unwrap();
         assert!(yaml.contains("type: graphql"));
     }
 
