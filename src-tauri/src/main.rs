@@ -11,7 +11,8 @@ mod domain;
 mod infrastructure;
 
 use infrastructure::commands::{
-    clear_request_history, cmd_add_httpbin_collection, cmd_delete_collection, cmd_delete_request,
+    clear_request_history, cmd_add_httpbin_collection, cmd_add_request, cmd_create_collection,
+    cmd_delete_collection, cmd_delete_request, cmd_duplicate_collection, cmd_duplicate_request,
     cmd_import_collection, cmd_list_collections, cmd_load_collection, cmd_log_frontend_error,
     cmd_refresh_collection_spec, cmd_rename_collection, cmd_rename_request, cmd_run_hurl_suite,
     cmd_save_collection, cmd_write_frontend_error_report, create_proxy_service,
@@ -127,6 +128,7 @@ pub fn run() {
             get_history_count,
             get_history_ids,
             get_history_batch,
+            cmd_create_collection,
             cmd_save_collection,
             cmd_load_collection,
             cmd_list_collections,
@@ -134,6 +136,9 @@ pub fn run() {
             cmd_delete_request,
             cmd_rename_collection,
             cmd_rename_request,
+            cmd_duplicate_collection,
+            cmd_duplicate_request,
+            cmd_add_request,
             cmd_add_httpbin_collection,
             cmd_import_collection,
             cmd_refresh_collection_spec,

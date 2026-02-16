@@ -4,7 +4,17 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, Folder, Pencil, Trash2 } from 'lucide-react';
+import { Menu } from '@base-ui/react/menu';
+import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Folder,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
@@ -14,23 +24,34 @@ import {
 } from '@/stores/useCollectionStore';
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
+import { focusRingClasses, useFocusVisible } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
+import { Popover, PopoverContent } from '@/components/ui/Popover';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 interface CollectionItemProps {
   summary: CollectionSummary;
   onDelete?: (collectionId: string) => void;
   onRename?: (collectionId: string, newName: string) => void;
+  onDuplicate?: (collectionId: string) => void;
+  onAddRequest?: (collectionId: string) => void;
+  /** When true, the item mounts in inline-rename mode immediately. */
+  startInRenameMode?: boolean;
+  /** Called after the component has consumed the startInRenameMode flag. */
+  onRenameStarted?: () => void;
 }
 
 export const CollectionItem = ({
   summary,
   onDelete,
   onRename,
+  onDuplicate,
+  onAddRequest,
+  startInRenameMode = false,
+  onRenameStarted,
 }: CollectionItemProps): React.JSX.Element => {
   const isExpanded = useIsExpanded(summary.id);
   const selectedCollectionId = useCollectionStore((state) => state.selectedCollectionId);
@@ -42,11 +63,18 @@ export const CollectionItem = ({
   const sortedRequests = useSortedRequests(summary.id);
   const displayName = truncateNavLabel(summary.name);
 
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
+  const [isRenaming, setIsRenaming] = useState(startInRenameMode);
+  const [renameValue, setRenameValue] = useState(startInRenameMode ? summary.name : '');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [contextMenuAnchor, setContextMenuAnchor] = useState<{
+    getBoundingClientRect: () => DOMRect;
+  } | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const didCancelRef = useRef(false);
+  const actionsKeyboardFocused = useFocusVisible(actionsRef);
 
   // Reset cancel flag when entering rename mode
   useEffect(() => {
@@ -54,6 +82,19 @@ export const CollectionItem = ({
       didCancelRef.current = false;
     }
   }, [isRenaming]);
+
+  // Auto-focus and select when mounting in rename mode
+  useEffect(() => {
+    if (startInRenameMode) {
+      if (renameInputRef.current !== null) {
+        focusWithVisibility(renameInputRef.current);
+        renameInputRef.current.select();
+      }
+      onRenameStarted?.();
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>): void => {
     e.currentTarget.focus({ preventScroll: true });
@@ -123,6 +164,50 @@ export const CollectionItem = ({
     [startRename]
   );
 
+  const handleContextMenu = useCallback((e: React.MouseEvent): void => {
+    e.preventDefault();
+    e.stopPropagation();
+    const x = e.clientX;
+    const y = e.clientY;
+    setContextMenuAnchor({
+      getBoundingClientRect: () => new DOMRect(x, y, 0, 0),
+    });
+    setMenuOpen(true);
+  }, []);
+
+  const handleMenuRename = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    requestAnimationFrame(() => {
+      startRename();
+    });
+  }, [startRename]);
+
+  const handleMenuDuplicate = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    onDuplicate?.(summary.id);
+  }, [summary.id, onDuplicate]);
+
+  const handleMenuAddRequest = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    onAddRequest?.(summary.id);
+  }, [summary.id, onAddRequest]);
+
+  const handleMenuDelete = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    setDeletePopoverOpen(true);
+  }, []);
+
+  const handleMenuOpenChange = useCallback((open: boolean): void => {
+    setMenuOpen(open);
+    if (!open) {
+      setContextMenuAnchor(null);
+    }
+  }, []);
+
   return (
     <div className="border-b border-border-subtle last:border-b-0">
       {isRenaming ? (
@@ -147,7 +232,12 @@ export const CollectionItem = ({
           />
         </div>
       ) : (
-        <div className="group/collection">
+        <div
+          ref={rowRef}
+          className="group/collection"
+          onContextMenu={handleContextMenu}
+          data-test-id={`collection-row-${summary.id}`}
+        >
           <div
             className={cn(
               'w-full flex items-center justify-between gap-3 px-2 py-1 transition-colors',
@@ -192,74 +282,162 @@ export const CollectionItem = ({
                 </span>
               </div>
 
-              {/* Hover-revealed action buttons — far right, siblings of the toggle button */}
+              {/* Three-dot menu button — hover-revealed */}
               <div
-                className="flex items-center gap-0.5 invisible pointer-events-none group-hover/collection:visible group-hover/collection:pointer-events-auto group-focus-within/collection:visible group-focus-within/collection:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
+                ref={actionsRef}
+                className={cn(
+                  'flex items-center',
+                  menuOpen || actionsKeyboardFocused
+                    ? 'visible pointer-events-auto'
+                    : 'invisible pointer-events-none group-hover/collection:visible group-hover/collection:pointer-events-auto group-focus-within/collection:visible group-focus-within/collection:pointer-events-auto',
+                  'motion-safe:transition-[visibility,opacity] motion-safe:duration-150'
+                )}
                 data-test-id={`collection-actions-${summary.id}`}
               >
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  noScale
-                  className="size-5 text-text-muted hover:text-text-primary"
-                  onClick={startRename}
-                  data-test-id={`collection-rename-${summary.id}`}
-                  aria-label={`Rename ${summary.name}`}
-                >
-                  <Pencil size={10} />
-                </Button>
-
-                <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-                  <PopoverTrigger
-                    render={
+                <Menu.Root open={menuOpen} onOpenChange={handleMenuOpenChange}>
+                  <Menu.Trigger
+                    nativeButton={false}
+                    render={(props) => (
                       <Button
+                        {...props}
                         variant="ghost"
                         size="icon-xs"
                         noScale
-                        className="size-5 text-text-muted hover:text-signal-error"
-                        data-test-id={`collection-delete-${summary.id}`}
-                        aria-label={`Delete ${summary.name}`}
-                      />
-                    }
-                  >
-                    <Trash2 size={10} />
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="right"
-                    align="start"
-                    className="w-56 p-3"
-                    data-test-id={`collection-delete-confirm-${summary.id}`}
-                  >
-                    <p className="text-sm text-text-primary mb-3">
-                      Delete <span className="font-medium">{summary.name}</span>?
-                    </p>
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        size="xs"
-                        noScale
-                        onClick={() => {
-                          setDeletePopoverOpen(false);
-                        }}
-                        data-test-id={`collection-delete-cancel-${summary.id}`}
+                        className="size-5 text-text-muted hover:text-text-primary"
+                        data-test-id={`collection-menu-trigger-${summary.id}`}
+                        aria-label={`Actions for ${summary.name}`}
                       >
-                        Cancel
+                        <MoreHorizontal size={12} />
                       </Button>
-                      <Button
-                        variant="destructive"
-                        size="xs"
-                        noScale
-                        onClick={handleDelete}
-                        data-test-id={`collection-delete-confirm-btn-${summary.id}`}
-                      >
-                        Delete
-                      </Button>
+                    )}
+                  />
+                  <Menu.Portal>
+                    <div
+                      style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: OVERLAY_Z_INDEX,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div style={{ pointerEvents: 'auto' }}>
+                        <Menu.Positioner
+                          side={contextMenuAnchor !== null ? 'bottom' : undefined}
+                          sideOffset={4}
+                          align="start"
+                          anchor={contextMenuAnchor ?? undefined}
+                        >
+                          <Menu.Popup
+                            style={{ zIndex: OVERLAY_Z_INDEX }}
+                            className="min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-lg overflow-hidden py-1 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none"
+                            data-test-id={`collection-context-menu-${summary.id}`}
+                          >
+                            <Menu.Item
+                              label="Add Request"
+                              className={cn(
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
+                                'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                              )}
+                              onClick={handleMenuAddRequest}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-add-request-${summary.id}`}
+                            >
+                              <Plus size={12} className="shrink-0" />
+                              <span>Add Request</span>
+                            </Menu.Item>
+                            <div className="my-1 h-px bg-border-subtle" role="separator" />
+                            <Menu.Item
+                              label="Rename"
+                              className={cn(
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
+                                'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                              )}
+                              onClick={handleMenuRename}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-rename-${summary.id}`}
+                            >
+                              <Pencil size={12} className="shrink-0" />
+                              <span>Rename</span>
+                              <span className="ml-auto text-text-muted text-[10px]">F2</span>
+                            </Menu.Item>
+                            <Menu.Item
+                              label="Duplicate"
+                              className={cn(
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
+                                'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                              )}
+                              onClick={handleMenuDuplicate}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-duplicate-${summary.id}`}
+                            >
+                              <Copy size={12} className="shrink-0" />
+                              <span>Duplicate</span>
+                            </Menu.Item>
+                            <div className="my-1 h-px bg-border-subtle" role="separator" />
+                            <Menu.Item
+                              label="Delete"
+                              className={cn(
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
+                                'text-signal-error hover:bg-signal-error/10 focus-visible:bg-signal-error/10'
+                              )}
+                              onClick={handleMenuDelete}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-delete-${summary.id}`}
+                            >
+                              <Trash2 size={12} className="shrink-0" />
+                              <span>Delete</span>
+                              <span className="ml-auto text-text-muted text-[10px]">Del</span>
+                            </Menu.Item>
+                          </Menu.Popup>
+                        </Menu.Positioner>
+                      </div>
                     </div>
-                  </PopoverContent>
-                </Popover>
+                  </Menu.Portal>
+                </Menu.Root>
               </div>
             </div>
           </div>
+
+          {/* Delete confirmation popover — rendered outside the menu */}
+          <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
+            <PopoverContent
+              side="right"
+              align="start"
+              anchor={rowRef}
+              className="w-56 p-3"
+              data-test-id={`collection-delete-confirm-${summary.id}`}
+            >
+              <p className="text-sm text-text-primary mb-3">
+                Delete <span className="font-medium">{summary.name}</span>?
+              </p>
+              <div className="flex items-center gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="xs"
+                  noScale
+                  onClick={() => {
+                    setDeletePopoverOpen(false);
+                  }}
+                  data-test-id={`collection-delete-cancel-${summary.id}`}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="xs"
+                  noScale
+                  onClick={handleDelete}
+                  data-test-id={`collection-delete-confirm-btn-${summary.id}`}
+                >
+                  Delete
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       )}
       {isExpanded && (

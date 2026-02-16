@@ -461,6 +461,313 @@ describe('useCollectionStore', () => {
     });
   });
 
+  describe('createCollection', () => {
+    it('calls cmd_create_collection and adds to store', async () => {
+      const collection = buildCollection('col_new');
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: Collection | null = null;
+      await act(async () => {
+        returned = await result.current.createCollection('New Collection');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_create_collection', { name: 'New Collection' });
+      expect(returned).not.toBeNull();
+      expect(result.current.collections).toHaveLength(1);
+      expect(result.current.selectedCollectionId).toBe('col_new');
+      expect(result.current.expandedCollectionIds.has('col_new')).toBe(true);
+      expect(result.current.pendingRenameId).toBe('col_new');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('returns null and sets error when create fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('create failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: Collection | null = null;
+      await act(async () => {
+        returned = await result.current.createCollection('Bad Name');
+      });
+
+      expect(returned).toBeNull();
+      expect(result.current.error).toContain('create failed');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('sorts summaries alphabetically after creating', async () => {
+      useCollectionStore.setState({
+        summaries: [
+          {
+            id: 'col-z',
+            name: 'Zebra Collection',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const collection = {
+        ...buildCollection('col-a'),
+        metadata: { ...buildCollection('col-a').metadata, name: 'Alpha Collection' },
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.createCollection('Alpha Collection');
+      });
+
+      expect(result.current.summaries[0]?.name).toBe('Alpha Collection');
+      expect(result.current.summaries[1]?.name).toBe('Zebra Collection');
+    });
+
+    it('clears pendingRenameId with clearPendingRename', async () => {
+      const collection = buildCollection('col_pending');
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.createCollection('Pending');
+      });
+      expect(result.current.pendingRenameId).toBe('col_pending');
+
+      act(() => {
+        result.current.clearPendingRename();
+      });
+      expect(result.current.pendingRenameId).toBeNull();
+    });
+  });
+
+  describe('duplicateCollection', () => {
+    it('calls cmd_duplicate_collection and adds copy to store', async () => {
+      const original = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [original],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const copy = {
+        ...buildCollection('col-copy'),
+        metadata: { ...buildCollection('col-copy').metadata, name: 'Collection col-1 (Copy)' },
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(copy);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateCollection('col-1');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_duplicate_collection', { collectionId: 'col-1' });
+      expect(result.current.collections).toHaveLength(2);
+      expect(result.current.selectedCollectionId).toBe('col-copy');
+      expect(result.current.pendingRenameId).toBe('col-copy');
+    });
+
+    it('sets error when duplicate fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('dup failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateCollection('col-1');
+      });
+
+      expect(result.current.error).toContain('dup failed');
+    });
+  });
+
+  describe('addRequest', () => {
+    it('calls cmd_add_request and updates collection in store', async () => {
+      const collection = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const updated = {
+        ...collection,
+        requests: [
+          {
+            id: 'req-new',
+            name: 'New Request',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updated);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.addRequest('col-1', 'New Request');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_add_request', {
+        collectionId: 'col-1',
+        name: 'New Request',
+      });
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.requests).toHaveLength(1);
+      expect(result.current.pendingRequestRenameId).toBe('req-new');
+    });
+
+    it('sets error when add request fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('add failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.addRequest('col-1', 'New Request');
+      });
+
+      expect(result.current.error).toContain('add failed');
+    });
+
+    it('handles empty requests array without crashing', async () => {
+      const collection = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      // Return a collection with empty requests (edge case)
+      const updated = { ...collection, requests: [] };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updated);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.addRequest('col-1', 'New Request');
+      });
+
+      // Should not crash and pendingRequestRenameId should be null
+      expect(result.current.pendingRequestRenameId).toBeNull();
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('duplicateRequest', () => {
+    it('calls cmd_duplicate_request and updates collection', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'Original',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      useCollectionStore.setState({
+        collections: [collection as unknown as Collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 1,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const updated = {
+        ...collection,
+        requests: [
+          collection.requests[0],
+          {
+            id: 'req-copy',
+            name: 'Original (Copy)',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 2,
+          },
+        ],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updated);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateRequest('col-1', 'req-1');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_duplicate_request', {
+        collectionId: 'col-1',
+        requestId: 'req-1',
+      });
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.requests).toHaveLength(2);
+      const summary = result.current.summaries.find((s) => s.id === 'col-1');
+      expect(summary?.request_count).toBe(2);
+    });
+
+    it('sets error when duplicate request fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('dup req failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateRequest('col-1', 'req-1');
+      });
+
+      expect(result.current.error).toContain('dup req failed');
+    });
+  });
+
   describe('renameRequest', () => {
     it('calls cmd_rename_request with correct params', async () => {
       (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);

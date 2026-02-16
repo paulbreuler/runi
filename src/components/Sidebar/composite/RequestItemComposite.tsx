@@ -4,7 +4,8 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, Pencil, Radio, Sparkles, Trash2 } from 'lucide-react';
+import { Menu } from '@base-ui/react/menu';
+import { Copy, Link, MoreHorizontal, Pencil, Radio, Sparkles, Trash2 } from 'lucide-react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
@@ -17,25 +18,40 @@ import { globalEventBus, logEventFlow } from '@/events/bus';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
+import { Popover, PopoverContent } from '@/components/ui/Popover';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 export interface RequestItemCompositeProps {
   request: CollectionRequest;
   collectionId: string;
   className?: string;
+  /** When true, the item mounts directly in rename mode. */
+  startInRenameMode?: boolean;
+  /** Called once the rename-mode triggered by startInRenameMode has been consumed. */
+  onRenameStarted?: () => void;
   onDelete?: (collectionId: string, requestId: string) => void;
   onRename?: (collectionId: string, requestId: string, newName: string) => void;
+  onDuplicate?: (collectionId: string, requestId: string) => void;
 }
 
+const menuItemClasses =
+  'flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm cursor-pointer outline-none data-[highlighted]:bg-bg-raised/60 text-text-primary';
+
+const menuPopupClasses =
+  'min-w-[160px] rounded-md border border-border-default bg-bg-elevated p-1 shadow-lg outline-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none';
+
 /**
- * A sidebar item for API requests with hover-revealed rename and delete actions.
+ * A sidebar item for API requests with a three-dot context menu for actions.
  */
 export const RequestItemComposite = ({
   request,
   collectionId,
   className,
+  startInRenameMode,
+  onRenameStarted,
   onDelete,
   onRename,
+  onDuplicate,
 }: RequestItemCompositeProps): React.JSX.Element => {
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
   const isSelected = selectedRequestId === request.id;
@@ -44,8 +60,29 @@ export const RequestItemComposite = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [contextMenuAnchor, setContextMenuAnchor] = useState<{
+    getBoundingClientRect: () => DOMRect;
+  } | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const didCancelRef = useRef(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-enter rename mode when startInRenameMode is set
+  useEffect(() => {
+    if (startInRenameMode === true && !isRenaming) {
+      setRenameValue(request.name);
+      setIsRenaming(true);
+      onRenameStarted?.();
+      requestAnimationFrame(() => {
+        if (renameInputRef.current !== null) {
+          focusWithVisibility(renameInputRef.current);
+          renameInputRef.current.select();
+        }
+      });
+    }
+  }, [startInRenameMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset cancel flag when entering rename mode
   useEffect(() => {
@@ -138,6 +175,45 @@ export const RequestItemComposite = ({
     [startRename]
   );
 
+  const handleContextMenu = useCallback((e: React.MouseEvent): void => {
+    e.preventDefault();
+    e.stopPropagation();
+    const x = e.clientX;
+    const y = e.clientY;
+    setContextMenuAnchor({
+      getBoundingClientRect: () => new DOMRect(x, y, 0, 0),
+    });
+    setMenuOpen(true);
+  }, []);
+
+  const handleMenuRename = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    // Defer startRename so the menu fully unmounts before rename mode activates
+    requestAnimationFrame(() => {
+      startRename();
+    });
+  }, [startRename]);
+
+  const handleMenuDuplicate = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    onDuplicate?.(collectionId, request.id);
+  }, [collectionId, request.id, onDuplicate]);
+
+  const handleMenuDelete = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    setDeletePopoverOpen(true);
+  }, []);
+
+  const handleMenuOpenChange = useCallback((open: boolean): void => {
+    setMenuOpen(open);
+    if (!open) {
+      setContextMenuAnchor(null);
+    }
+  }, []);
+
   if (isRenaming) {
     return (
       <div className={cn('relative w-full px-1', className)}>
@@ -175,7 +251,12 @@ export const RequestItemComposite = ({
       delayDuration={100}
       data-test-id={`request-tooltip-${request.id}`}
     >
-      <div className={cn('relative w-full px-1 group/request', className)}>
+      <div
+        ref={rowRef}
+        className={cn('relative w-full px-1 group/request', className)}
+        onContextMenu={handleContextMenu}
+        data-test-id={`request-row-${request.id}`}
+      >
         <div
           className={cn(
             'w-full flex items-center justify-between gap-2 px-2 py-1 transition-colors min-h-[28px] rounded-md',
@@ -227,74 +308,119 @@ export const RequestItemComposite = ({
           </button>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Hover-revealed action buttons — far right, siblings of the select button */}
+            {/* Three-dot menu trigger — visible on hover/focus */}
             <div
-              className="flex items-center gap-0.5 invisible pointer-events-none group-hover/request:visible group-hover/request:pointer-events-auto group-focus-within/request:visible group-focus-within/request:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
+              className={cn(
+                'flex items-center',
+                menuOpen
+                  ? 'visible pointer-events-auto'
+                  : 'invisible pointer-events-none group-hover/request:visible group-hover/request:pointer-events-auto group-focus-within/request:visible group-focus-within/request:pointer-events-auto',
+                'motion-safe:transition-[visibility,opacity] motion-safe:duration-150'
+              )}
               data-test-id={`request-actions-${request.id}`}
             >
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                noScale
-                className="size-5 text-text-muted hover:text-text-primary"
-                onClick={startRename}
-                data-test-id={`request-rename-${request.id}`}
-                aria-label={`Rename ${request.name}`}
-              >
-                <Pencil size={10} />
-              </Button>
-
-              <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-                <PopoverTrigger
-                  render={
+              <Menu.Root open={menuOpen} onOpenChange={handleMenuOpenChange}>
+                <Menu.Trigger
+                  ref={triggerRef}
+                  nativeButton={false}
+                  render={(props) => (
                     <Button
+                      {...props}
                       variant="ghost"
                       size="icon-xs"
                       noScale
-                      className="size-5 text-text-muted hover:text-signal-error"
-                      data-test-id={`request-delete-${request.id}`}
-                      aria-label={`Delete ${request.name}`}
-                    />
-                  }
-                >
-                  <Trash2 size={10} />
-                </PopoverTrigger>
-                <PopoverContent
-                  side="right"
-                  align="start"
-                  className="w-56 p-3"
-                  data-test-id={`request-delete-confirm-${request.id}`}
-                >
-                  <p className="text-sm text-text-primary mb-3">
-                    Delete <span className="font-medium">{request.name}</span>?
-                  </p>
-                  <div className="flex items-center gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      noScale
-                      onClick={() => {
-                        setDeletePopoverOpen(false);
-                      }}
-                      data-test-id={`request-delete-cancel-${request.id}`}
+                      className="size-5 text-text-muted hover:text-text-primary"
+                      data-test-id={`request-menu-trigger-${request.id}`}
+                      aria-label={`Actions for ${request.name}`}
                     >
-                      Cancel
+                      <MoreHorizontal size={12} />
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="xs"
-                      noScale
-                      onClick={handleDelete}
-                      data-test-id={`request-delete-confirm-btn-${request.id}`}
+                  )}
+                />
+                <Menu.Portal>
+                  <Menu.Positioner
+                    side={contextMenuAnchor !== null ? 'bottom' : 'right'}
+                    align="start"
+                    sideOffset={4}
+                    anchor={contextMenuAnchor ?? undefined}
+                  >
+                    <Menu.Popup
+                      className={menuPopupClasses}
+                      style={{ zIndex: OVERLAY_Z_INDEX }}
+                      data-test-id={
+                        contextMenuAnchor !== null
+                          ? `request-context-menu-${request.id}`
+                          : `request-menu-${request.id}`
+                      }
                     >
-                      Delete
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                      <Menu.Item
+                        className={cn(focusRingClasses, menuItemClasses)}
+                        onClick={handleMenuRename}
+                        data-test-id={`request-menu-rename-${request.id}`}
+                      >
+                        <Pencil size={14} className="text-text-muted" />
+                        Rename
+                      </Menu.Item>
+                      <Menu.Item
+                        className={cn(focusRingClasses, menuItemClasses)}
+                        onClick={handleMenuDuplicate}
+                        data-test-id={`request-menu-duplicate-${request.id}`}
+                      >
+                        <Copy size={14} className="text-text-muted" />
+                        Duplicate
+                      </Menu.Item>
+                      <Menu.Item
+                        className={cn(focusRingClasses, menuItemClasses, 'text-signal-error')}
+                        onClick={handleMenuDelete}
+                        data-test-id={`request-menu-delete-${request.id}`}
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </Menu.Item>
+                    </Menu.Popup>
+                  </Menu.Positioner>
+                </Menu.Portal>
+              </Menu.Root>
             </div>
           </div>
         </div>
+
+        {/* Delete confirmation popover — shared between menu and keyboard shortcut */}
+        <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
+          <PopoverContent
+            side="right"
+            align="start"
+            anchor={rowRef}
+            className="w-56 p-3"
+            data-test-id={`request-delete-confirm-${request.id}`}
+          >
+            <p className="text-sm text-text-primary mb-3">
+              Delete <span className="font-medium">{request.name}</span>?
+            </p>
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="xs"
+                noScale
+                onClick={() => {
+                  setDeletePopoverOpen(false);
+                }}
+                data-test-id={`request-delete-cancel-${request.id}`}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="xs"
+                noScale
+                onClick={handleDelete}
+                data-test-id={`request-delete-confirm-btn-${request.id}`}
+              >
+                Delete
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </Tooltip>
   );

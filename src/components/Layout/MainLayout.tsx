@@ -75,8 +75,8 @@ const getSashClasses = (position: 'left' | 'right', isDragging: boolean): string
     'cursor-col-resize select-none',
     position === 'right' ? 'right-0' : 'left-0',
     'w-[2px] bg-transparent',
-    'hover:bg-border-subtle/50',
-    isDragging && 'bg-border-default'
+    'hover:bg-accent-blue',
+    isDragging && 'bg-accent-blue'
   );
 
 export const MainLayout = ({

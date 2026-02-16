@@ -419,6 +419,7 @@ body {
   height: 100%;
   min-width: 44px;
   min-height: 44px;
+  pointer-events: none;
 }
 
 /* Prevent scrollbar flashing during drag/resize operations */
@@ -436,11 +437,6 @@ body {
 /* Ensure scrollable content areas maintain stable scrollbars */
 [data-test-id='request-pane'] > *,
 [data-test-id='response-pane'] > * {
-  scrollbar-gutter: stable;
-}
-
-/* Prevent scrollbar flashing during sidebar resize */
-aside[data-test-id='sidebar'] {
   scrollbar-gutter: stable;
 }
 

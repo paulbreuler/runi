@@ -17,8 +17,8 @@ use ts_rs::TS;
 use crate::application::import_service::{ImportOverrides, ImportService};
 use crate::application::proxy_service::ProxyService;
 use crate::domain::canvas_state::CanvasStateSnapshot;
-use crate::domain::collection::Collection;
 use crate::domain::collection::spec_port::SpecSource;
+use crate::domain::collection::{Collection, CollectionRequest};
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::mcp::events::{Actor, EventEmitter};
@@ -564,6 +564,34 @@ pub fn get_config_dir() -> Result<String, String> {
     Ok(dir.to_string_lossy().to_string())
 }
 
+/// Create a new empty collection with the given name.
+///
+/// Builds a `Collection` via `Collection::new(name)`, persists it to disk,
+/// and returns the saved collection.
+pub fn create_collection_inner(name: &str) -> Result<Collection, String> {
+    let collection = Collection::new(name);
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Create a new empty collection.
+///
+/// Emits `collection:created` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_create_collection(
+    app: tauri::AppHandle,
+    name: String,
+) -> Result<Collection, String> {
+    let collection = create_collection_inner(&name)?;
+    emit_collection_event(
+        &app,
+        "collection:created",
+        &Actor::User,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
+    Ok(collection)
+}
+
 /// Save a collection to disk.
 ///
 /// Emits `collection:saved` with `Actor::User` for real-time UI updates.
@@ -722,6 +750,161 @@ pub async fn cmd_rename_request(
         json!({"collection_id": &collection_id, "request_id": &request_id, "name": &new_name}),
     );
     Ok(())
+}
+
+/// Duplicate a collection (core logic, no `AppHandle`).
+///
+/// Clones the collection with a new ID and "(Copy)" suffix on the name.
+/// All requests are also cloned with new IDs.
+fn duplicate_collection_inner(collection_id: &str) -> Result<Collection, String> {
+    let original = load_collection(collection_id)?;
+    let new_name = format!("{} (Copy)", original.metadata.name);
+    let mut copy = Collection::new(&new_name);
+    // Preserve source, auth, variables, extensions from original
+    copy.source.clone_from(&original.source);
+    copy.auth.clone_from(&original.auth);
+    copy.variables.clone_from(&original.variables);
+    copy.extensions.clone_from(&original.extensions);
+    // Clone requests with new IDs
+    copy.requests = original
+        .requests
+        .iter()
+        .enumerate()
+        .map(|(i, r)| {
+            let mut cloned = r.clone();
+            cloned.id = CollectionRequest::generate_id(&r.name);
+            // Precision loss acceptable: seq values are small integers
+            #[allow(clippy::cast_possible_truncation)]
+            {
+                cloned.seq = (i as u32) + 1;
+            }
+            cloned
+        })
+        .collect();
+    save_collection(&copy)?;
+    Ok(copy)
+}
+
+/// Duplicate a collection.
+///
+/// Emits `collection:created` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_duplicate_collection(
+    app: tauri::AppHandle,
+    collection_id: String,
+) -> Result<Collection, String> {
+    let collection = duplicate_collection_inner(&collection_id)?;
+    emit_collection_event(
+        &app,
+        "collection:created",
+        &Actor::User,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
+    Ok(collection)
+}
+
+/// Add a new empty request to a collection (core logic, no `AppHandle`).
+///
+/// Creates a GET request with the given name and appends it to the collection.
+fn add_request_inner(collection_id: &str, name: &str) -> Result<Collection, String> {
+    let mut collection = load_collection(collection_id)?;
+    let seq = collection.next_seq();
+    let request = CollectionRequest {
+        id: CollectionRequest::generate_id(name),
+        name: name.to_string(),
+        seq,
+        method: "GET".to_string(),
+        url: String::new(),
+        ..Default::default()
+    };
+    collection.requests.push(request);
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Add a new empty request to a collection.
+///
+/// Emits `request:added` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_add_request(
+    app: tauri::AppHandle,
+    collection_id: String,
+    name: String,
+) -> Result<Collection, String> {
+    let collection = add_request_inner(&collection_id, &name)?;
+    let request_id = collection
+        .requests
+        .last()
+        .map(|r| r.id.clone())
+        .unwrap_or_default();
+    emit_collection_event(
+        &app,
+        "request:added",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "request_id": &request_id, "name": &name}),
+    );
+    Ok(collection)
+}
+
+/// Duplicate a request within a collection (core logic, no `AppHandle`).
+///
+/// Clones the request with a new ID and "(Copy)" suffix, inserting after the original.
+fn duplicate_request_inner(
+    collection_id: &str,
+    request_id: &str,
+) -> Result<(Collection, String), String> {
+    let mut collection = load_collection(collection_id)?;
+    let pos = collection
+        .requests
+        .iter()
+        .position(|r| r.id == request_id)
+        .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+    let original = collection.requests[pos].clone();
+    let new_name = format!("{} (Copy)", original.name);
+    let new_seq = original.seq + 1;
+
+    // Bump seq for all requests after the original so the copy slots in right after
+    for r in &mut collection.requests {
+        if r.seq >= new_seq {
+            r.seq += 1;
+        }
+    }
+
+    let mut copy = original;
+    copy.id = CollectionRequest::generate_id(&new_name);
+    copy.name = new_name;
+    copy.seq = new_seq;
+
+    let copy_id = copy.id.clone();
+    collection.requests.insert(pos + 1, copy);
+    save_collection(&collection)?;
+    Ok((collection, copy_id))
+}
+
+/// Duplicate a request within a collection.
+///
+/// Emits `request:added` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_duplicate_request(
+    app: tauri::AppHandle,
+    collection_id: String,
+    request_id: String,
+) -> Result<Collection, String> {
+    let (collection, copy_id) = duplicate_request_inner(&collection_id, &request_id)?;
+    let copy_name = collection
+        .requests
+        .iter()
+        .find(|r| r.id == copy_id)
+        .map(|r| r.name.clone())
+        .unwrap_or_default();
+    emit_collection_event(
+        &app,
+        "request:added",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "request_id": &copy_id, "name": &copy_name}),
+    );
+    Ok(collection)
 }
 
 /// Fetch, parse, and save the httpbin.org collection.
@@ -2807,5 +2990,216 @@ mod tests {
         assert_eq!(extract_path_from_url("https://api.example.com"), "/");
         // Fallback for malformed input
         assert_eq!(extract_path_from_url("malformed"), "/malformed");
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_create_collection_inner_creates_and_persists() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = create_collection_inner("My New API").unwrap();
+            assert_eq!(collection.metadata.name, "My New API");
+            assert!(collection.id.starts_with("col_my_new_api_"));
+            assert!(collection.requests.is_empty());
+
+            // Verify it was persisted
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.metadata.name, "My New API");
+            assert_eq!(loaded.id, collection.id);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_create_collection_inner_appears_in_list() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            create_collection_inner("Listed API").unwrap();
+            let summaries = list_collections().unwrap();
+            assert_eq!(summaries.len(), 1);
+            assert_eq!(summaries[0].name, "Listed API");
+            assert_eq!(summaries[0].request_count, 0);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_duplicate_collection_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut original = Collection::new("My API");
+            let req = crate::domain::collection::CollectionRequest {
+                id: "req_1".to_string(),
+                name: "Get Users".to_string(),
+                seq: 1,
+                method: "GET".to_string(),
+                url: "http://example.com/users".to_string(),
+                ..Default::default()
+            };
+            original.requests.push(req);
+            save_collection(&original).unwrap();
+
+            let copy = duplicate_collection_inner(&original.id).unwrap();
+            assert_eq!(copy.metadata.name, "My API (Copy)");
+            assert_ne!(copy.id, original.id);
+            assert_eq!(copy.requests.len(), 1);
+            assert_ne!(copy.requests[0].id, "req_1");
+
+            // Verify persisted
+            let loaded = load_collection(&copy.id).unwrap();
+            assert_eq!(loaded.metadata.name, "My API (Copy)");
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_duplicate_collection_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let result = duplicate_collection_inner("nonexistent");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_duplicate_collection_copies_requests() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut original = Collection::new("Multi Req");
+            for i in 1..=3 {
+                original
+                    .requests
+                    .push(crate::domain::collection::CollectionRequest {
+                        id: format!("req_{i}"),
+                        name: format!("Request {i}"),
+                        seq: i,
+                        method: "POST".to_string(),
+                        url: format!("http://example.com/{i}"),
+                        ..Default::default()
+                    });
+            }
+            save_collection(&original).unwrap();
+
+            let copy = duplicate_collection_inner(&original.id).unwrap();
+            assert_eq!(copy.requests.len(), 3);
+            // All IDs should be new
+            for (orig, copied) in original.requests.iter().zip(copy.requests.iter()) {
+                assert_ne!(orig.id, copied.id);
+                assert_eq!(orig.name, copied.name);
+                assert_eq!(orig.url, copied.url);
+            }
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_add_request_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Add Req Test");
+            save_collection(&collection).unwrap();
+
+            let updated = add_request_inner(&collection.id, "New Request").unwrap();
+            assert_eq!(updated.requests.len(), 1);
+            assert_eq!(updated.requests[0].name, "New Request");
+            assert_eq!(updated.requests[0].method, "GET");
+            assert!(updated.requests[0].url.is_empty());
+
+            // Verify persisted
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.requests.len(), 1);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_add_request_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let result = add_request_inner("nonexistent", "New Request");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_add_request_inner_increments_seq() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Seq Test");
+            collection
+                .requests
+                .push(crate::domain::collection::CollectionRequest {
+                    id: "req_existing".to_string(),
+                    name: "Existing".to_string(),
+                    seq: 5,
+                    method: "GET".to_string(),
+                    url: String::new(),
+                    ..Default::default()
+                });
+            save_collection(&collection).unwrap();
+
+            let updated = add_request_inner(&collection.id, "New").unwrap();
+            assert_eq!(updated.requests.len(), 2);
+            assert_eq!(updated.requests[1].seq, 6);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_duplicate_request_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Dup Req Test");
+            let req = crate::domain::collection::CollectionRequest {
+                id: "req_orig".to_string(),
+                name: "Original".to_string(),
+                seq: 1,
+                method: "POST".to_string(),
+                url: "http://example.com".to_string(),
+                ..Default::default()
+            };
+            collection.requests.push(req);
+            save_collection(&collection).unwrap();
+
+            let (updated, copy_id) = duplicate_request_inner(&collection.id, "req_orig").unwrap();
+            assert_eq!(updated.requests.len(), 2);
+            assert_eq!(updated.requests[1].name, "Original (Copy)");
+            assert_ne!(updated.requests[1].id, "req_orig");
+            assert_eq!(updated.requests[1].id, copy_id);
+            assert_eq!(updated.requests[1].method, "POST");
+            assert_eq!(updated.requests[1].url, "http://example.com");
+
+            // Verify persisted
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.requests.len(), 2);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_duplicate_request_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Dup NF");
+            save_collection(&collection).unwrap();
+
+            let result = duplicate_request_inner(&collection.id, "nonexistent");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
     }
 }

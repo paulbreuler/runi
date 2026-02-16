@@ -79,6 +79,16 @@ const renderWithScrollContainer = (ui: React.ReactElement): ReturnType<typeof re
     </TooltipProvider>
   );
 
+/**
+ * Helper: open the three-dot menu via fireEvent.click.
+ * Base UI Menu triggers on mousedown, so userEvent.click (mousedown+mouseup+click)
+ * can cause toggle-on then toggle-off. fireEvent.click works reliably.
+ */
+const openMenu = (requestId: string): void => {
+  const trigger = screen.getByTestId(`request-menu-trigger-${requestId}`);
+  fireEvent.click(trigger);
+};
+
 describe('RequestItemComposite', (): void => {
   beforeEach((): void => {
     vi.useFakeTimers();
@@ -185,49 +195,97 @@ describe('RequestItemComposite', (): void => {
     });
   });
 
-  describe('rename action', (): void => {
-    it('hides action buttons from tab order when not hovered/focused', (): void => {
+  describe('context menu', (): void => {
+    it('renders three-dot menu trigger on hover', (): void => {
+      renderWithScrollContainer(
+        <RequestItemComposite request={simpleRequest} collectionId="col_1" />
+      );
+
+      expect(screen.getByTestId('request-menu-trigger-req_1')).toBeInTheDocument();
+    });
+
+    it('hides action area from tab order when not hovered/focused', (): void => {
       renderWithScrollContainer(
         <RequestItemComposite request={simpleRequest} collectionId="col_1" />
       );
 
       const actionsContainer = screen.getByTestId('request-actions-req_1');
-      // Should use invisible + pointer-events-none for proper a11y hiding
       expect(actionsContainer.className).toMatch(/invisible/);
       expect(actionsContainer.className).toMatch(/pointer-events-none/);
     });
 
-    it('renders rename button on hover', (): void => {
+    it('opens menu when three-dot button is clicked', (): void => {
+      vi.useRealTimers();
+
       renderWithScrollContainer(
         <RequestItemComposite request={simpleRequest} collectionId="col_1" />
       );
 
-      expect(screen.getByTestId('request-rename-req_1')).toBeInTheDocument();
+      openMenu('req_1');
+
+      expect(screen.getByTestId('request-menu-req_1')).toBeInTheDocument();
+      expect(screen.getByTestId('request-menu-rename-req_1')).toBeInTheDocument();
+      expect(screen.getByTestId('request-menu-duplicate-req_1')).toBeInTheDocument();
+      expect(screen.getByTestId('request-menu-delete-req_1')).toBeInTheDocument();
     });
 
-    it('shows rename input when rename button is clicked', (): void => {
+    it('opens context menu on right-click', (): void => {
+      vi.useRealTimers();
+
       renderWithScrollContainer(
         <RequestItemComposite request={simpleRequest} collectionId="col_1" />
       );
 
-      const renameBtn = screen.getByTestId('request-rename-req_1');
-      act(() => {
-        fireEvent.click(renameBtn);
+      const row = screen.getByTestId('request-select-req_1');
+      fireEvent.contextMenu(row);
+
+      expect(screen.getByTestId('request-context-menu-req_1')).toBeInTheDocument();
+    });
+  });
+
+  describe('rename action', (): void => {
+    it('shows rename input when Rename menu item is clicked', async (): Promise<void> => {
+      vi.useRealTimers();
+
+      renderWithScrollContainer(
+        <RequestItemComposite request={simpleRequest} collectionId="col_1" />
+      );
+
+      openMenu('req_1');
+
+      const renameItem = screen.getByTestId('request-menu-rename-req_1');
+      fireEvent.click(renameItem);
+
+      // Wait for requestAnimationFrame in handleMenuRename
+      // Flush requestAnimationFrame from handleMenuRename
+      await act(async () => {
+        await new Promise((r) => {
+          requestAnimationFrame(r);
+        });
       });
 
       expect(screen.getByTestId('request-rename-input-req_1')).toBeInTheDocument();
       expect(screen.getByTestId('request-rename-input-req_1')).toHaveValue('Get Users');
     });
 
-    it('calls onRename when Enter is pressed with new name', (): void => {
+    it('calls onRename when Enter is pressed with new name', async (): Promise<void> => {
+      vi.useRealTimers();
       const mockRename = vi.fn();
+
       renderWithScrollContainer(
         <RequestItemComposite request={simpleRequest} collectionId="col_1" onRename={mockRename} />
       );
 
-      const renameBtn = screen.getByTestId('request-rename-req_1');
-      act(() => {
-        fireEvent.click(renameBtn);
+      openMenu('req_1');
+
+      const renameItem = screen.getByTestId('request-menu-rename-req_1');
+      fireEvent.click(renameItem);
+
+      // Flush requestAnimationFrame from handleMenuRename
+      await act(async () => {
+        await new Promise((r) => {
+          requestAnimationFrame(r);
+        });
       });
 
       const input = screen.getByTestId('request-rename-input-req_1');
@@ -237,15 +295,24 @@ describe('RequestItemComposite', (): void => {
       expect(mockRename).toHaveBeenCalledWith('col_1', 'req_1', 'List Users');
     });
 
-    it('cancels rename on Escape', (): void => {
+    it('cancels rename on Escape', async (): Promise<void> => {
+      vi.useRealTimers();
       const mockRename = vi.fn();
+
       renderWithScrollContainer(
         <RequestItemComposite request={simpleRequest} collectionId="col_1" onRename={mockRename} />
       );
 
-      const renameBtn = screen.getByTestId('request-rename-req_1');
-      act(() => {
-        fireEvent.click(renameBtn);
+      openMenu('req_1');
+
+      const renameItem = screen.getByTestId('request-menu-rename-req_1');
+      fireEvent.click(renameItem);
+
+      // Flush requestAnimationFrame from handleMenuRename
+      await act(async () => {
+        await new Promise((r) => {
+          requestAnimationFrame(r);
+        });
       });
 
       const input = screen.getByTestId('request-rename-input-req_1');
@@ -262,10 +329,9 @@ describe('RequestItemComposite', (): void => {
         <RequestItemComposite request={simpleRequest} collectionId="col_1" onRename={mockRename} />
       );
 
-      const renameBtn = screen.getByTestId('request-rename-req_1');
-      act(() => {
-        fireEvent.click(renameBtn);
-      });
+      // Use F2 to enter rename mode (direct, no menu needed)
+      const row = screen.getByTestId('request-select-req_1');
+      fireEvent.keyDown(row, { key: 'F2' });
 
       const input = screen.getByTestId('request-rename-input-req_1');
       fireEvent.change(input, { target: { value: 'Changed Name' } });
@@ -291,25 +357,40 @@ describe('RequestItemComposite', (): void => {
     });
   });
 
-  describe('delete action', (): void => {
-    it('renders delete button on hover', (): void => {
-      renderWithScrollContainer(
-        <RequestItemComposite request={simpleRequest} collectionId="col_1" />
-      );
-
-      expect(screen.getByTestId('request-delete-req_1')).toBeInTheDocument();
-    });
-
-    it('shows delete confirmation popover when delete button is clicked', async (): Promise<void> => {
+  describe('duplicate action', (): void => {
+    it('calls onDuplicate when Duplicate menu item is clicked', (): void => {
       vi.useRealTimers();
-      const user = userEvent.setup();
+      const mockDuplicate = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={simpleRequest}
+          collectionId="col_1"
+          onDuplicate={mockDuplicate}
+        />
+      );
+
+      openMenu('req_1');
+
+      const duplicateItem = screen.getByTestId('request-menu-duplicate-req_1');
+      fireEvent.click(duplicateItem);
+
+      expect(mockDuplicate).toHaveBeenCalledWith('col_1', 'req_1');
+    });
+  });
+
+  describe('delete action', (): void => {
+    it('shows delete confirmation when Delete menu item is clicked', (): void => {
+      vi.useRealTimers();
 
       renderWithScrollContainer(
         <RequestItemComposite request={simpleRequest} collectionId="col_1" />
       );
 
-      const deleteBtn = screen.getByTestId('request-delete-req_1');
-      await user.click(deleteBtn);
+      openMenu('req_1');
+
+      const deleteItem = screen.getByTestId('request-menu-delete-req_1');
+      fireEvent.click(deleteItem);
 
       expect(screen.getByTestId('request-delete-confirm-req_1')).toBeInTheDocument();
       expect(screen.getByTestId('request-delete-confirm-btn-req_1')).toBeInTheDocument();
@@ -325,8 +406,10 @@ describe('RequestItemComposite', (): void => {
         <RequestItemComposite request={simpleRequest} collectionId="col_1" onDelete={mockDelete} />
       );
 
-      const deleteBtn = screen.getByTestId('request-delete-req_1');
-      await user.click(deleteBtn);
+      openMenu('req_1');
+
+      const deleteItem = screen.getByTestId('request-menu-delete-req_1');
+      fireEvent.click(deleteItem);
 
       const confirmBtn = screen.getByTestId('request-delete-confirm-btn-req_1');
       await user.click(confirmBtn);
@@ -342,8 +425,10 @@ describe('RequestItemComposite', (): void => {
         <RequestItemComposite request={simpleRequest} collectionId="col_1" />
       );
 
-      const deleteBtn = screen.getByTestId('request-delete-req_1');
-      await user.click(deleteBtn);
+      openMenu('req_1');
+
+      const deleteItem = screen.getByTestId('request-menu-delete-req_1');
+      fireEvent.click(deleteItem);
 
       const cancelBtn = screen.getByTestId('request-delete-cancel-req_1');
       await user.click(cancelBtn);
@@ -351,7 +436,7 @@ describe('RequestItemComposite', (): void => {
       expect(screen.queryByTestId('request-delete-confirm-req_1')).not.toBeInTheDocument();
     });
 
-    it('opens delete popover on Delete keydown', async (): Promise<void> => {
+    it('opens delete popover on Delete keydown', (): void => {
       vi.useRealTimers();
 
       renderWithScrollContainer(

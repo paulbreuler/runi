@@ -4,6 +4,7 @@
  */
 
 import { Popover as BaseUIPopover } from '@base-ui/react/popover';
+import type { VirtualElement } from '@floating-ui/utils';
 import React from 'react';
 import { cn } from '@/utils/cn';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
@@ -37,6 +38,13 @@ export interface PopoverContentProps extends React.ComponentPropsWithoutRef<
   side?: 'top' | 'right' | 'bottom' | 'left' | 'inline-start' | 'inline-end';
   /** Distance between the trigger and the popover in pixels */
   sideOffset?: number;
+  /** Optional anchor element for positioning (use instead of PopoverTrigger) */
+  anchor?:
+    | Element
+    | VirtualElement
+    | React.RefObject<Element | null>
+    | (() => Element | VirtualElement | null)
+    | null;
 }
 
 /**
@@ -56,6 +64,7 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentPro
       align = 'start',
       side = 'bottom',
       sideOffset = 8,
+      anchor,
       style,
       'data-test-id': testId = 'popover-content',
       ...props
@@ -63,7 +72,12 @@ export const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentPro
     ref
   ) => (
     <BaseUIPopover.Portal>
-      <BaseUIPopover.Positioner align={align} side={side} sideOffset={sideOffset}>
+      <BaseUIPopover.Positioner
+        align={align}
+        side={side}
+        sideOffset={sideOffset}
+        anchor={anchor ?? undefined}
+      >
         <BaseUIPopover.Popup
           ref={ref}
           className={cn(
