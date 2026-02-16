@@ -39,7 +39,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
           'w-[34px] h-[34px] rounded',
           'text-text-muted hover:text-text-primary',
           'hover:bg-bg-raised/50',
-          'transition-colors',
+          'motion-safe:transition-colors motion-reduce:transition-none',
           focusRingClasses,
           className
         )}
@@ -72,7 +72,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
                       }}
                       className={cn(
                         'w-full flex items-center gap-3 px-2 py-2 rounded',
-                        'text-left text-sm hover:bg-bg-raised transition-colors',
+                        'text-left text-sm hover:bg-bg-raised motion-safe:transition-colors motion-reduce:transition-none',
                         focusRingClasses,
                         isActive && 'bg-bg-raised text-text-primary'
                       )}
@@ -116,7 +116,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
                       }}
                       className={cn(
                         'w-full flex items-center gap-3 px-2 py-2 rounded',
-                        'text-left text-sm hover:bg-bg-raised transition-colors',
+                        'text-left text-sm hover:bg-bg-raised motion-safe:transition-colors motion-reduce:transition-none',
                         focusRingClasses,
                         isActive && 'bg-bg-raised text-text-primary'
                       )}
