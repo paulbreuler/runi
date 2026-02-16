@@ -439,11 +439,6 @@ body {
   scrollbar-gutter: stable;
 }
 
-/* Prevent scrollbar flashing during sidebar resize */
-aside[data-test-id='sidebar'] {
-  scrollbar-gutter: stable;
-}
-
 /* Prevent scrollbar flashing during drag/resize operations */
 .scroll-container,
 [data-test-id='request-pane'],
