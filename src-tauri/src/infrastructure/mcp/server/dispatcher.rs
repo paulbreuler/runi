@@ -330,9 +330,18 @@ async fn handle_import_collection(
             .get("display_name")
             .and_then(serde_json::Value::as_str)
             .map(String::from),
-        repo_root: None,
-        spec_path: None,
-        ref_name: None,
+        repo_root: args
+            .get("repo_root")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        spec_path: args
+            .get("spec_path")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        ref_name: args
+            .get("ref_name")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
     };
 
     match crate::infrastructure::commands::import_collection_inner(request).await {

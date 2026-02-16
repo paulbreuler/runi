@@ -114,13 +114,69 @@ impl TestRunner for HurlRunner {
             cmd.envs(&config.env_vars);
         }
 
-        let output = cmd.output().map_err(|e| {
-            if e.kind() == std::io::ErrorKind::NotFound {
-                "hurl CLI not found — install from https://hurl.dev".to_string()
-            } else {
-                format!("Failed to execute hurl: {e}")
+        // Honor timeout_secs if provided
+        let output = if let Some(timeout_secs) = config.timeout_secs {
+            use std::io::Read;
+
+            cmd.stdout(std::process::Stdio::piped());
+            cmd.stderr(std::process::Stdio::piped());
+
+            let mut child = cmd.spawn().map_err(|e| {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    "hurl CLI not found — install from https://hurl.dev".to_string()
+                } else {
+                    format!("Failed to execute hurl: {e}")
+                }
+            })?;
+
+            let timeout = std::time::Duration::from_secs(timeout_secs);
+            let start_wait = Instant::now();
+
+            // Poll for completion with timeout
+            loop {
+                match child.try_wait() {
+                    Ok(Some(status)) => {
+                        // Process finished — read output
+                        let mut stdout_buf = Vec::new();
+                        let mut stderr_buf = Vec::new();
+
+                        if let Some(mut out) = child.stdout.take() {
+                            let _ = out.read_to_end(&mut stdout_buf);
+                        }
+                        if let Some(mut err) = child.stderr.take() {
+                            let _ = err.read_to_end(&mut stderr_buf);
+                        }
+
+                        break std::process::Output {
+                            status,
+                            stdout: stdout_buf,
+                            stderr: stderr_buf,
+                        };
+                    }
+                    Ok(None) => {
+                        // Still running
+                        if start_wait.elapsed() > timeout {
+                            // Timeout exceeded — kill the process
+                            let _ = child.kill();
+                            return Err(format!(
+                                "hurl execution timed out after {timeout_secs} seconds"
+                            ));
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(100));
+                    }
+                    Err(e) => return Err(format!("Failed to wait for hurl process: {e}")),
+                }
             }
-        })?;
+        } else {
+            // No timeout — blocking wait
+            cmd.output().map_err(|e| {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    "hurl CLI not found — install from https://hurl.dev".to_string()
+                } else {
+                    format!("Failed to execute hurl: {e}")
+                }
+            })?
+        };
 
         let duration_ms = start.elapsed().as_millis() as u64;
         let stdout = String::from_utf8_lossy(&output.stdout);

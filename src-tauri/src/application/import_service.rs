@@ -9,6 +9,8 @@
 //! This implements the Mediator pattern — parsers and fetcher don't know
 //! about each other, only the service coordinates them.
 
+use std::collections::BTreeMap;
+
 use crate::domain::collection::git_port::GitMetadataPort;
 use crate::domain::collection::spec_port::{
     ContentFetcher, FetchResult, ParsedSpec, SpecParseError, SpecParser, SpecSource,
@@ -18,7 +20,6 @@ use crate::domain::collection::{
     RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType, SpecBinding,
 };
 use crate::infrastructure::spec::hasher::compute_spec_hash;
-use std::collections::BTreeMap;
 
 /// Orchestrates spec import using injected ports.
 ///

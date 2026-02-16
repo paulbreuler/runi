@@ -6,13 +6,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useMemo } from 'react';
 import { create } from 'zustand';
-import type {
-  Collection,
-  CollectionRequest,
-  CollectionSummary,
-  ImportCollectionRequest,
-} from '@/types/collection';
+import type { Collection, CollectionRequest, CollectionSummary } from '@/types/collection';
 import { sortRequests } from '@/types/collection';
+import type { ImportCollectionRequest } from '@/types/generated/ImportCollectionRequest';
 
 interface CollectionState {
   collections: Collection[];

@@ -6,8 +6,9 @@
 //! IMPORTANT: This module must have ZERO infrastructure dependencies.
 //! Pure functions only — no I/O, no side effects.
 
-use serde::Serialize;
 use std::collections::BTreeMap;
+
+use serde::Serialize;
 use ts_rs::TS;
 
 use super::spec_port::ParsedSpec;

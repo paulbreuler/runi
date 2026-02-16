@@ -23,7 +23,7 @@ failureCount: number,
 /**
  * Total duration in milliseconds.
  */
-durationMs: bigint, 
+durationMs: number, 
 /**
  * Captured stdout from hurl.
  */

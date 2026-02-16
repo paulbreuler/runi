@@ -3,6 +3,17 @@
 
 // Tauri command handlers
 
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::{Arc, LazyLock};
+
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use tauri::{Emitter, Manager};
+use tokio::sync::{Mutex, RwLock};
+use tracing::error;
+use ts_rs::TS;
+
 use crate::application::import_service::{ImportOverrides, ImportService};
 use crate::application::proxy_service::ProxyService;
 use crate::domain::canvas_state::CanvasStateSnapshot;
@@ -22,16 +33,6 @@ use crate::infrastructure::storage::collection_store::{
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::sync::{Arc, LazyLock};
-use tauri::{Emitter, Manager};
-use tokio::sync::Mutex;
-use tokio::sync::RwLock;
-use tracing::error;
-use ts_rs::TS;
 
 /// Global history storage instance (in-memory by default).
 ///
@@ -88,13 +89,15 @@ pub struct ImportCollectionRequest {
 pub async fn import_collection_inner(
     request: ImportCollectionRequest,
 ) -> Result<Collection, String> {
-    // Validate: at least one source must be provided
+    // Validate: exactly one source must be provided
     let source = match (&request.url, &request.file_path, &request.inline_content) {
-        (Some(url), _, _) => SpecSource::Url(url.clone()),
-        (_, Some(path), _) => SpecSource::File(PathBuf::from(path)),
-        (_, _, Some(content)) => SpecSource::Inline(content.clone()),
-        (None, None, None) => {
-            return Err("Must provide url, file_path, or inline_content".to_string());
+        (Some(url), None, None) => SpecSource::Url(url.clone()),
+        (None, Some(path), None) => SpecSource::File(PathBuf::from(path)),
+        (None, None, Some(content)) => SpecSource::Inline(content.clone()),
+        _ => {
+            return Err(
+                "Must provide exactly one of url, file_path, or inline_content".to_string(),
+            );
         }
     };
 
@@ -177,6 +180,20 @@ pub async fn refresh_collection_spec_inner(
     // 4. Compute new hash — fast path if unchanged
     let new_hash = format!("sha256:{}", compute_spec_hash(&fetch_result.content));
     if collection.source.hash.as_deref() == Some(&new_hash) {
+        // Fast path: hash unchanged, but update metadata
+        let now = chrono::Utc::now();
+        collection.source.fetched_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
+        // Update source_commit if repo_root is tracked
+        if let Some(repo_root) = &collection.source.repo_root {
+            if let Some(sha) =
+                service.resolve_git_commit(repo_root, collection.source.ref_name.as_deref())
+            {
+                collection.source.source_commit = Some(sha);
+            }
+        }
+
+        save_collection(&collection)?;
         return Ok(crate::domain::collection::drift::SpecRefreshResult {
             changed: false,
             operations_added: vec![],
@@ -1366,6 +1383,7 @@ pub struct HurlSuiteResult {
     /// Number of failed entries.
     pub failure_count: u32,
     /// Total duration in milliseconds.
+    #[ts(type = "number")]
     pub duration_ms: u64,
     /// Captured stdout from hurl.
     pub stdout: String,
@@ -2129,7 +2147,7 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
-            "Must provide url, file_path, or inline_content"
+            "Must provide exactly one of url, file_path, or inline_content"
         );
     }
 

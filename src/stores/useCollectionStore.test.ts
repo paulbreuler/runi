@@ -397,8 +397,8 @@ describe('useCollectionStore', () => {
     });
   });
 
-  describe('importCollection', () => {
-    it('imports collection and adds to store', async () => {
+  describe('importCollection', (): void => {
+    it('imports collection and adds to store', async (): Promise<void> => {
       const collection = buildCollection('col_imported');
       (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
 
@@ -406,11 +406,27 @@ describe('useCollectionStore', () => {
 
       let returned: Collection | null = null;
       await act(async () => {
-        returned = await result.current.importCollection({ inlineContent: '{}' });
+        returned = await result.current.importCollection({
+          url: null,
+          filePath: null,
+          inlineContent: '{}',
+          displayName: null,
+          repoRoot: null,
+          specPath: null,
+          refName: null,
+        });
       });
 
       expect(invoke).toHaveBeenCalledWith('cmd_import_collection', {
-        request: { inlineContent: '{}' },
+        request: {
+          url: null,
+          filePath: null,
+          inlineContent: '{}',
+          displayName: null,
+          repoRoot: null,
+          specPath: null,
+          refName: null,
+        },
       });
       expect(returned).not.toBeNull();
       expect(result.current.collections).toHaveLength(1);
@@ -420,14 +436,22 @@ describe('useCollectionStore', () => {
       expect(result.current.error).toBeNull();
     });
 
-    it('sets error when import fails', async () => {
+    it('sets error when import fails', async (): Promise<void> => {
       (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('import failed');
 
       const { result } = renderHook(() => useCollectionStore());
 
       let returned: Collection | null = null;
       await act(async () => {
-        returned = await result.current.importCollection({ url: 'https://bad.example.com' });
+        returned = await result.current.importCollection({
+          url: 'https://bad.example.com',
+          filePath: null,
+          inlineContent: null,
+          displayName: null,
+          repoRoot: null,
+          specPath: null,
+          refName: null,
+        });
       });
 
       expect(returned).toBeNull();

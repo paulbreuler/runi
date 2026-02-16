@@ -30,14 +30,23 @@ impl SpecParser for OpenApiParser {
     }
 
     fn can_parse(&self, content: &str) -> bool {
-        // Parse as JSON value and check for top-level keys.
-        // This is cheaper than full OpenAPI validation but reliable
-        // regardless of key ordering in the JSON object.
-        let Ok(doc) = serde_json::from_str::<serde_json::Value>(content) else {
+        // Try JSON first
+        if let Ok(doc) = serde_json::from_str::<serde_json::Value>(content) {
+            return doc.get("openapi").is_some() || doc.get("swagger").is_some();
+        }
+
+        // Fall back to YAML
+        let Ok(doc) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(content) else {
             return false;
         };
 
-        doc.get("openapi").is_some() || doc.get("swagger").is_some()
+        match doc {
+            serde_yaml_ng::Value::Mapping(map) => {
+                map.contains_key(serde_yaml_ng::Value::String("openapi".to_string()))
+                    || map.contains_key(serde_yaml_ng::Value::String("swagger".to_string()))
+            }
+            _ => false,
+        }
     }
 
     fn parse(&self, content: &str) -> Result<ParsedSpec, SpecParseError> {
@@ -167,6 +176,25 @@ mod tests {
         assert!(!parser.can_parse("hello world"));
         assert!(!parser.can_parse(""));
         assert!(!parser.can_parse("[]"));
+    }
+
+    #[test]
+    fn test_can_parse_yaml_openapi() {
+        let parser = OpenApiParser;
+        let yaml_content = r"
+openapi: 3.0.0
+info:
+  title: Test API
+  version: 1.0.0
+paths:
+  /users:
+    get:
+      summary: List users
+      responses:
+        '200':
+          description: OK
+";
+        assert!(parser.can_parse(yaml_content));
     }
 
     #[test]

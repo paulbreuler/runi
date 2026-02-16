@@ -20,11 +20,12 @@
 //! IMPORTANT: This module must have ZERO infrastructure dependencies.
 //! No `reqwest`, no `openapiv3`, no `tokio::fs`.
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt;
 use std::path::PathBuf;
+
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
 use super::source::SourceType;
 

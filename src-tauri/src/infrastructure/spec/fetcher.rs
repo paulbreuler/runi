@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
-use crate::domain::collection::spec_port::FetchResult;
 use std::time::Duration;
+
+use crate::domain::collection::spec_port::FetchResult;
 
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
 const FETCH_TIMEOUT: Duration = Duration::from_secs(5);

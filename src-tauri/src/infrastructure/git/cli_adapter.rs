@@ -3,9 +3,10 @@
 //! Implements `GitMetadataPort` by shelling out to `git rev-parse`.
 //! Validates inputs to prevent command injection.
 
-use crate::domain::collection::git_port::GitMetadataPort;
 use std::path::Path;
 use std::process::Command;
+
+use crate::domain::collection::git_port::GitMetadataPort;
 
 /// Infrastructure adapter that resolves git metadata via the CLI.
 ///
