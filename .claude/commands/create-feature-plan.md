@@ -307,7 +307,16 @@ Gotchas:
 - [ ] Test IDs implemented
 - [ ] Stories work (if applicable, use `storybook-testing` skill)
 - [ ] Storybook stories follow templates and best practices (if applicable)
+- [ ] Integration wiring complete (see below)
 - [ ] Status → PASS
+
+## Integration Completeness
+
+- [ ] All handlers/endpoints are mounted in the router (no orphaned handler functions)
+- [ ] Feature is callable end-to-end (API route, CLI command, or UI action)
+- [ ] Response types are consistent across all layers (domain → usecase → DTO → API)
+- [ ] No dead code: every trait impl has a consumer, every handler has a route
+- [ ] E2E or integration test exercises the full call path (not just unit mocks)
 
 ## Distillation Rules
 
@@ -359,6 +368,8 @@ Before presenting plan:
 - [ ] File ownership clear (no conflicts)
 - [ ] Agent files use numeric prefixes (0*agent*, 1*agent*, etc.) - Number first for lexicographical ordering
 - [ ] gotchas.md template ready
+- [ ] Integration wiring is planned (handlers have routes, traits have impls, features are callable end-to-end)
+- [ ] No agent leaves orphaned code (e.g., handler without route, usecase without API surface)
 
 ## Usage After Creation
 
@@ -535,7 +546,8 @@ const planSummary = await call_mcp_tool({
   `plans/NNNN-name/{plan-name}-plan.md` (plan file uses {plan-name}-plan.md naming)
 - **Plan file naming** - Use `{plan-name}-plan.md` format
   (e.g., `0008-storybook-testing-overhaul-plan.md`) for consistency with limps standards
-- **Reading documents** - Use `process_doc({ path, code: 'doc.content' })` for full read; use `process_doc`/`process_docs` with extraction code when filtering or aggregating
+- **Reading documents** - Use `process_doc({ path, code: 'doc.content' })` for full read;
+  use `process_doc`/`process_docs` with extraction code when filtering or aggregating
 - **Storybook skill** - Automatically activated when features involve Storybook stories;
   reference templates and utilities in agent files. **Critical**: Follow controls-first approach
   (1-3 stories per component, use controls for variations) - see `storybook-testing` skill

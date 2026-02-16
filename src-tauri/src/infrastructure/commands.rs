@@ -302,8 +302,16 @@ pub async fn cmd_delete_collection(
 }
 
 /// Delete a request from a collection (core logic, no `AppHandle`).
-fn delete_request_inner(collection_id: &str, request_id: &str) -> Result<(), String> {
+///
+/// Returns the friendly name of the deleted request for event emission.
+fn delete_request_inner(collection_id: &str, request_id: &str) -> Result<String, String> {
     let mut collection = load_collection(collection_id)?;
+
+    let friendly_name = collection
+        .requests
+        .iter()
+        .find(|r| r.id == request_id)
+        .map_or_else(|| request_id.to_string(), |r| r.name.clone());
 
     let original_len = collection.requests.len();
     collection.requests.retain(|r| r.id != request_id);
@@ -313,7 +321,7 @@ fn delete_request_inner(collection_id: &str, request_id: &str) -> Result<(), Str
     }
 
     save_collection(&collection)?;
-    Ok(())
+    Ok(friendly_name)
 }
 
 /// Delete a request from a collection.
@@ -325,12 +333,12 @@ pub async fn cmd_delete_request(
     collection_id: String,
     request_id: String,
 ) -> Result<(), String> {
-    delete_request_inner(&collection_id, &request_id)?;
+    let friendly_name = delete_request_inner(&collection_id, &request_id)?;
     emit_collection_event(
         &app,
         "request:deleted",
         &Actor::User,
-        json!({"collection_id": &collection_id, "request_id": &request_id}),
+        json!({"collection_id": &collection_id, "request_id": &request_id, "name": &friendly_name}),
     );
     Ok(())
 }
@@ -1615,6 +1623,7 @@ mod tests {
             // Delete the request
             let result = delete_request_inner(&collection.id, "req_to_delete");
             assert!(result.is_ok(), "Should delete request successfully");
+            assert_eq!(result.unwrap(), "Delete Me");
 
             // Verify request is removed
             let loaded = load_collection(&collection.id).unwrap();

@@ -319,7 +319,7 @@ impl McpServerService {
             ),
             tool_def(
                 "open_collection_request",
-                "Open a collection request in a canvas tab for viewing and editing",
+                "Open a collection request in the canvas. Reuses existing tab if already open. This is the preferred way to view request tabs.",
                 json!({
                     "type": "object",
                     "properties": {
@@ -404,7 +404,7 @@ impl McpServerService {
             ),
             tool_def(
                 "canvas_open_request_tab",
-                "Open a new request tab in the canvas. Emits canvas:open_request_tab event.",
+                "Open a blank new request tab (not linked to any collection). To open an existing collection request, use open_collection_request instead. Emits canvas:open_request_tab event.",
                 json!({
                     "type": "object",
                     "properties": {
@@ -659,11 +659,12 @@ impl McpServerService {
             });
         }
 
+        let updated_name = request.name.clone();
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
             "request:updated",
-            json!({"collection_id": collection_id, "request_id": request_id}),
+            json!({"collection_id": collection_id, "request_id": request_id, "name": updated_name}),
         );
 
         Ok(ToolCallResult {
@@ -694,6 +695,13 @@ impl McpServerService {
         Self::validate_collection_id(collection_id)?;
         let mut collection = load_collection_in_dir(collection_id, self.dir())?;
 
+        // Capture the friendly name before removing the request
+        let friendly_name = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .map(|r| r.name.clone());
+
         let original_len = collection.requests.len();
         collection.requests.retain(|r| r.id != request_id);
 
@@ -705,7 +713,7 @@ impl McpServerService {
 
         self.emit(
             "request:deleted",
-            json!({"collection_id": collection_id, "request_id": request_id}),
+            json!({"collection_id": collection_id, "request_id": request_id, "name": friendly_name}),
         );
 
         Ok(ToolCallResult {
@@ -1908,5 +1916,96 @@ mod tests {
 
         let (params, _, _) = service.prepare_execute_request(&exec_args).unwrap();
         assert_eq!(params.timeout_ms, 60_000);
+    }
+
+    #[test]
+    fn test_update_request_emits_event_with_name() {
+        let dir = TempDir::new().unwrap();
+        let emitter = crate::domain::mcp::events::TestEventEmitter::new();
+        let events = emitter.events_handle();
+        let mut service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+
+        // Create collection and add request
+        let (collection_id, request_id) = create_collection_with_request(
+            &mut service,
+            "Update Event Test",
+            "Original Name",
+            "GET",
+            "http://example.com",
+        );
+
+        // Update the request (change name to "Updated Name")
+        service
+            .call_tool(
+                "update_request",
+                Some(args(&[
+                    ("collection_id", &collection_id),
+                    ("request_id", &request_id),
+                    ("name", "Updated Name"),
+                ])),
+            )
+            .unwrap();
+
+        let captured = events.lock().expect("lock events");
+        // create_collection + add_request + update_request = 3
+        assert_eq!(captured.len(), 3);
+        assert_eq!(captured[2].0, "request:updated");
+        assert!(matches!(
+            captured[2].1,
+            crate::domain::mcp::events::Actor::Ai { .. }
+        ));
+        assert_eq!(
+            captured[2].2["collection_id"].as_str().unwrap(),
+            collection_id
+        );
+        assert_eq!(captured[2].2["request_id"].as_str().unwrap(), request_id);
+        assert_eq!(captured[2].2["name"].as_str().unwrap(), "Updated Name");
+        drop(captured);
+    }
+
+    #[test]
+    fn test_delete_request_emits_event_with_name() {
+        let dir = TempDir::new().unwrap();
+        let emitter = crate::domain::mcp::events::TestEventEmitter::new();
+        let events = emitter.events_handle();
+        let mut service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+
+        // Create collection and add request named "To Remove"
+        let (collection_id, request_id) = create_collection_with_request(
+            &mut service,
+            "Delete Event Test",
+            "To Remove",
+            "GET",
+            "http://example.com",
+        );
+
+        // Delete the request
+        service
+            .call_tool(
+                "delete_request",
+                Some(args(&[
+                    ("collection_id", &collection_id),
+                    ("request_id", &request_id),
+                ])),
+            )
+            .unwrap();
+
+        let captured = events.lock().expect("lock events");
+        // create_collection + add_request + delete_request = 3
+        assert_eq!(captured.len(), 3);
+        assert_eq!(captured[2].0, "request:deleted");
+        assert!(matches!(
+            captured[2].1,
+            crate::domain::mcp::events::Actor::Ai { .. }
+        ));
+        assert_eq!(
+            captured[2].2["collection_id"].as_str().unwrap(),
+            collection_id
+        );
+        assert_eq!(captured[2].2["request_id"].as_str().unwrap(), request_id);
+        assert_eq!(captured[2].2["name"].as_str().unwrap(), "To Remove");
+        drop(captured);
     }
 }
