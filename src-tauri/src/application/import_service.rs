@@ -100,6 +100,24 @@ impl ImportService {
         ))
     }
 
+    /// Parse raw content into the canonical IR using the parser chain.
+    ///
+    /// Useful for re-parsing fetched content during refresh/drift detection
+    /// without creating a full collection.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no parser matches or parsing fails.
+    pub fn parse_content(&self, content: &str) -> Result<ParsedSpec, String> {
+        let parser = self.detect_parser(content).map_err(|e| e.to_string())?;
+        parser.parse(content).map_err(|e| e.to_string())
+    }
+
+    /// Access the content fetcher for re-fetching during refresh.
+    pub fn fetcher(&self) -> &dyn ContentFetcher {
+        self.fetcher.as_ref()
+    }
+
     /// The single shared IR → Collection converter.
     ///
     /// This is the compiler IR insight: one converter for all formats.

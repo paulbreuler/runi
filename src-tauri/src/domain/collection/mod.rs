@@ -9,6 +9,7 @@
 //! Never use `HashMap` — it has random ordering that breaks Git diffs.
 
 pub mod binding;
+pub mod drift;
 pub mod intelligence;
 pub mod source;
 pub mod spec_port;

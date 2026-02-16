@@ -41,7 +41,7 @@ source_commit: string | null,
  */
 repo_root?: string | null, 
 /**
- * Relative path to the OpenAPI spec within the repo.
+ * Relative path to the `OpenAPI` spec within the repo.
  */
 spec_path?: string | null, 
 /**

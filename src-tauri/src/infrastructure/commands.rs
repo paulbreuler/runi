@@ -125,6 +125,139 @@ pub async fn cmd_import_collection(
     Ok(collection)
 }
 
+/// Refresh a collection's spec from its tracked source (core logic, no `AppHandle`).
+///
+/// Re-fetches the spec, computes hash for fast-path skip, then structural drift
+/// if content changed. Updates the collection's `source.hash` and `source.fetched_at`.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - Collection not found
+/// - Collection has no tracked spec source (no URL)
+/// - Re-fetch fails
+/// - Re-parse fails
+async fn refresh_collection_spec_inner(
+    collection_id: &str,
+    service: &ImportService,
+) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
+    use crate::domain::collection::drift::compute_drift;
+    use crate::domain::collection::spec_port::SpecSource;
+    use crate::infrastructure::spec::hasher::compute_spec_hash;
+
+    // 1. Load collection
+    let mut collection = load_collection(collection_id)?;
+
+    // 2. Validate has tracked source
+    let source_url = collection
+        .source
+        .url
+        .as_ref()
+        .ok_or_else(|| "Collection has no tracked spec source".to_string())?
+        .clone();
+
+    // 3. Re-fetch content
+    let fetch_result = service
+        .fetcher()
+        .fetch(&SpecSource::Url(source_url))
+        .await?;
+
+    // 4. Compute new hash — fast path if unchanged
+    let new_hash = format!("sha256:{}", compute_spec_hash(&fetch_result.content));
+    if collection.source.hash.as_deref() == Some(&new_hash) {
+        return Ok(crate::domain::collection::drift::SpecRefreshResult {
+            changed: false,
+            operations_added: vec![],
+            operations_removed: vec![],
+            operations_changed: vec![],
+        });
+    }
+
+    // 5. Re-parse new content into ParsedSpec
+    let new_spec = service.parse_content(&fetch_result.content)?;
+
+    // 6. Reconstruct old spec endpoints from collection's requests
+    let old_endpoints: Vec<crate::domain::collection::spec_port::ParsedEndpoint> = collection
+        .requests
+        .iter()
+        .map(|req| {
+            // Use binding path/method if available, otherwise fall back to request fields
+            let path = req.binding.path.clone().unwrap_or_else(|| req.url.clone());
+            let method = req
+                .binding
+                .method
+                .clone()
+                .unwrap_or_else(|| req.method.clone());
+
+            crate::domain::collection::spec_port::ParsedEndpoint {
+                operation_id: req.binding.operation_id.clone(),
+                method,
+                path,
+                summary: Some(req.name.clone()),
+                description: req.docs.clone(),
+                tags: req.tags.clone(),
+                parameters: req
+                    .params
+                    .iter()
+                    .map(|p| crate::domain::collection::spec_port::ParsedParameter {
+                        name: p.key.clone(),
+                        location: crate::domain::collection::spec_port::ParameterLocation::Query,
+                        required: false,
+                        schema_type: None,
+                        default_value: Some(p.value.clone()),
+                        description: None,
+                    })
+                    .collect(),
+                request_body: None,
+                deprecated: false,
+                is_streaming: req.is_streaming,
+            }
+        })
+        .collect();
+
+    let old_spec = crate::domain::collection::spec_port::ParsedSpec {
+        title: collection.metadata.name.clone(),
+        version: collection.source.spec_version.clone(),
+        description: collection.metadata.description.clone(),
+        base_urls: vec![],
+        endpoints: old_endpoints,
+        auth_schemes: vec![],
+        variables: std::collections::BTreeMap::new(),
+    };
+
+    // 7. Compute drift
+    let drift = compute_drift(&old_spec, &new_spec);
+
+    // 8. Update source metadata
+    let now = chrono::Utc::now();
+    collection.source.hash = Some(new_hash);
+    collection.source.fetched_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
+    // 9. Persist
+    save_collection(&collection)?;
+
+    Ok(drift)
+}
+
+/// Refresh a collection's spec and compute drift delta.
+///
+/// Emits `collection:refreshed` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_refresh_collection_spec(
+    app: tauri::AppHandle,
+    collection_id: String,
+) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
+    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let result = refresh_collection_spec_inner(&collection_id, &service).await?;
+    emit_collection_event(
+        &app,
+        "collection:refreshed",
+        &Actor::User,
+        json!({"id": &collection_id, "changed": result.changed}),
+    );
+    Ok(result)
+}
+
 /// Emit a collection event wrapped in an [`EventEnvelope`].
 fn emit_collection_event(
     app: &tauri::AppHandle,
@@ -1175,6 +1308,7 @@ mod tests {
     use super::*;
     use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
     use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
+    use async_trait::async_trait;
     use serial_test::serial;
     use std::collections::HashMap;
     use tempfile::TempDir;
@@ -2032,5 +2166,240 @@ mod tests {
         .await;
 
         assert!(result.is_ok());
+    }
+
+    // ── cmd_refresh_collection_spec tests ─────────────────────────────
+
+    /// Mock fetcher that returns configurable content for refresh tests.
+    struct ConfigurableMockFetcher {
+        content: String,
+    }
+
+    #[async_trait]
+    impl crate::domain::collection::spec_port::ContentFetcher for ConfigurableMockFetcher {
+        async fn fetch(
+            &self,
+            _source: &crate::domain::collection::spec_port::SpecSource,
+        ) -> Result<crate::domain::collection::spec_port::FetchResult, String> {
+            Ok(crate::domain::collection::spec_port::FetchResult {
+                content: self.content.clone(),
+                source_url: "https://example.com/spec.json".to_string(),
+                is_fallback: false,
+                fetched_at: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            })
+        }
+    }
+
+    fn make_refresh_service(content: &str) -> ImportService {
+        ImportService::new(
+            vec![Box::new(OpenApiParser)],
+            Box::new(ConfigurableMockFetcher {
+                content: content.to_string(),
+            }),
+        )
+    }
+
+    /// Helper: create and save a collection from inline `OpenAPI` content.
+    async fn import_and_save(content: &str) -> Collection {
+        let service = make_refresh_service(content);
+        let collection = service
+            .import(
+                crate::domain::collection::spec_port::SpecSource::Inline(content.to_string()),
+                ImportOverrides::default(),
+            )
+            .await
+            .unwrap();
+        save_collection(&collection).unwrap();
+        collection
+    }
+
+    const SPEC_V1: &str = r#"{
+        "openapi": "3.0.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "paths": {
+            "/users": {
+                "get": {
+                    "operationId": "getUsers",
+                    "summary": "List users",
+                    "responses": { "200": { "description": "OK" } }
+                }
+            },
+            "/users/{id}": {
+                "post": {
+                    "operationId": "createUser",
+                    "summary": "Create user",
+                    "responses": { "201": { "description": "Created" } }
+                }
+            }
+        }
+    }"#;
+
+    /// V2: adds DELETE /users/{id}, removes POST /users/{id}.
+    const SPEC_V2: &str = r#"{
+        "openapi": "3.0.0",
+        "info": { "title": "Test API", "version": "2.0.0" },
+        "paths": {
+            "/users": {
+                "get": {
+                    "operationId": "getUsers",
+                    "summary": "List all users",
+                    "parameters": [
+                        { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+                    ],
+                    "responses": { "200": { "description": "OK" } }
+                }
+            },
+            "/users/{id}": {
+                "delete": {
+                    "operationId": "deleteUser",
+                    "summary": "Delete user",
+                    "responses": { "204": { "description": "Deleted" } }
+                }
+            }
+        }
+    }"#;
+
+    /// Test 2B.7: Collection ID not found.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_collection_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner("nonexistent_id", &service).await;
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    /// Test 2B.1: Reject non-tracked collection (no source URL).
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_rejects_non_tracked_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Create a manual collection with no source URL
+            let collection = Collection::new("Manual API");
+            save_collection(&collection).unwrap();
+
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service).await;
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("no tracked spec source"));
+        })
+        .await;
+    }
+
+    /// Test 2B.2: No drift when hash matches.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_no_drift_when_hash_matches() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import with V1, then refresh with same content
+            let collection = import_and_save(SPEC_V1).await;
+
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+            assert!(!result.changed);
+            assert!(result.operations_added.is_empty());
+            assert!(result.operations_removed.is_empty());
+            assert!(result.operations_changed.is_empty());
+        })
+        .await;
+    }
+
+    /// Test 2B.3 + 2B.4 + 2B.5: Detect added, removed, and changed operations.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_detects_drift() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import with V1
+            let collection = import_and_save(SPEC_V1).await;
+
+            // Refresh with V2 (different content)
+            let service = make_refresh_service(SPEC_V2);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+
+            assert!(result.changed);
+
+            // Added: DELETE /users/{id}
+            assert!(
+                result
+                    .operations_added
+                    .iter()
+                    .any(|op| op.method == "DELETE" && op.path == "/users/{id}"),
+                "Should detect added DELETE /users/{{id}}: {:?}",
+                result.operations_added
+            );
+
+            // Removed: POST /users/{id}
+            assert!(
+                result
+                    .operations_removed
+                    .iter()
+                    .any(|op| op.method == "POST" && op.path == "/users/{id}"),
+                "Should detect removed POST /users/{{id}}: {:?}",
+                result.operations_removed
+            );
+
+            // Changed: GET /users (summary changed, parameter added)
+            let get_users_change = result
+                .operations_changed
+                .iter()
+                .find(|op| op.method == "GET" && op.path == "/users");
+            assert!(
+                get_users_change.is_some(),
+                "Should detect changed GET /users: {:?}",
+                result.operations_changed
+            );
+            let changes = &get_users_change.unwrap().changes;
+            assert!(changes.contains(&"summary".to_string()));
+            assert!(changes.contains(&"parameters".to_string()));
+        })
+        .await;
+    }
+
+    /// Test 2B.6: Hash and timestamp updated after refresh.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_updates_hash_and_timestamp() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = import_and_save(SPEC_V1).await;
+            let old_hash = collection.source.hash.clone();
+
+            // Refresh with V2 (different content = different hash)
+            let service = make_refresh_service(SPEC_V2);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+            assert!(result.changed);
+
+            // Load the persisted collection and verify updates
+            let updated = load_collection(&collection.id).unwrap();
+            assert_ne!(updated.source.hash, old_hash, "Hash should be updated");
+            assert!(
+                updated.source.hash.as_ref().unwrap().starts_with("sha256:"),
+                "Hash should have sha256 prefix"
+            );
+            // Verify fetched_at is a valid RFC 3339 timestamp with Z suffix
+            assert!(
+                updated.source.fetched_at.ends_with('Z'),
+                "fetched_at should be UTC with Z suffix"
+            );
+            assert_eq!(
+                updated.source.fetched_at.len(),
+                20,
+                "fetched_at should be in YYYY-MM-DDTHH:MM:SSZ format"
+            );
+        })
+        .await;
     }
 }
