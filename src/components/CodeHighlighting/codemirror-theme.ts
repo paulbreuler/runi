@@ -29,8 +29,9 @@ const theme = EditorView.theme({
     lineHeight: '1.6',
   },
 
-  // Focus ring — mirrors focusRingClasses pattern (--color-ring, 2px, focus-visible)
-  '&.cm-focused': {
+  // Focus ring — keyboard-only, mirrors focusRingClasses pattern (--color-ring, 2px)
+  // Scoped to html[data-intent="keyboard"] so mouse clicks don't show focus ring
+  'html[data-intent="keyboard"] &.cm-focused': {
     outline: '2px solid var(--color-ring)',
     outlineOffset: '2px',
   },

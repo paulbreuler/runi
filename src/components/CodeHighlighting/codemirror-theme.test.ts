@@ -19,7 +19,9 @@ function createThemedView(extensions: Extension[] = []): EditorView {
     doc: 'hello world',
     extensions: [runiTheme, ...extensions],
   });
-  return new EditorView({ state, parent });
+  const view = new EditorView({ state, parent });
+  view.dom.setAttribute('data-test-id', 'cm-editor');
+  return view;
 }
 
 describe('runiTheme', () => {
@@ -35,7 +37,7 @@ describe('runiTheme', () => {
   it('mounts an EditorView without errors', () => {
     const view = createThemedView();
     expect(view.dom).toBeDefined();
-    expect(view.dom.querySelector('.cm-editor')).toBeDefined();
+    expect(view.dom.getAttribute('data-test-id')).toBe('cm-editor');
     view.destroy();
   });
 
@@ -112,8 +114,7 @@ describe('runiTheme', () => {
       // automatically updates the editor appearance
       const view = createThemedView();
       // Inspect that the theme class is applied
-      const editor = view.dom.querySelector('.cm-editor')!;
-      expect(editor).toBeDefined();
+      expect(view.dom.getAttribute('data-test-id')).toBe('cm-editor');
       view.destroy();
     });
   });

@@ -30,14 +30,14 @@ describe('codemirror-highlights', () => {
 
     it('produces no decorations for empty ranges', () => {
       const view = createEditorWithHighlights('hello world', []);
-      const highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      const highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(0);
       view.destroy();
     });
 
     it('produces a decoration for a single range', () => {
       const view = createEditorWithHighlights('hello world', [{ from: 0, to: 5 }]);
-      const highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      const highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(1);
       expect(highlighted[0]?.textContent).toBe('hello');
       view.destroy();
@@ -48,7 +48,7 @@ describe('codemirror-highlights', () => {
         { from: 0, to: 5 },
         { from: 6, to: 11 },
       ]);
-      const highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      const highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(2);
       view.destroy();
     });
@@ -65,7 +65,7 @@ describe('codemirror-highlights', () => {
     it('clamps ranges to document bounds', () => {
       // Range extends beyond doc length — should clamp
       const view = createEditorWithHighlights('hi', [{ from: 0, to: 100 }]);
-      const highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      const highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(1);
       expect(highlighted[0]?.textContent).toBe('hi');
       view.destroy();
@@ -73,14 +73,14 @@ describe('codemirror-highlights', () => {
 
     it('skips invalid ranges (from >= to)', () => {
       const view = createEditorWithHighlights('hello', [{ from: 3, to: 2 }]);
-      const highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      const highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(0);
       view.destroy();
     });
 
     it('skips ranges with negative positions', () => {
       const view = createEditorWithHighlights('hello', [{ from: -1, to: 3 }]);
-      const highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      const highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(0);
       view.destroy();
     });
@@ -96,7 +96,7 @@ describe('codemirror-highlights', () => {
       });
       const view = new EditorView({ state });
 
-      let highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      let highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(1);
       expect(highlighted[0]?.textContent).toBe('hello');
 
@@ -105,7 +105,7 @@ describe('codemirror-highlights', () => {
         effects: compartment.reconfigure(ext2),
       });
 
-      highlighted = view.dom.querySelectorAll('.cm-runi-highlight');
+      highlighted = view.dom.querySelectorAll('[data-test-id="runi-highlight"]');
       expect(highlighted.length).toBe(1);
       expect(highlighted[0]?.textContent).toBe('world');
 

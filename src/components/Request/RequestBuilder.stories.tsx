@@ -95,6 +95,7 @@ export const Playground: Story = {
     await step('Body editor supports horizontal scroll', async () => {
       const cmContainer = getByTestId('code-editor-cm-container');
       const cmScroller = cmContainer.querySelector('.cm-scroller');
+      await expect(cmScroller).not.toBeNull();
       if (cmScroller === null) {
         return;
       }

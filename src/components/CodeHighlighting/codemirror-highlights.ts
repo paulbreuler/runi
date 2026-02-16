@@ -46,7 +46,14 @@ const buildDecorations = (ranges: HighlightRange[], docLength: number): Decorati
     .sort((a, b) => (a.from !== b.from ? a.from - b.from : a.to - b.to));
 
   for (const range of valid) {
-    builder.add(range.from, range.to, Decoration.mark({ class: range.className }));
+    builder.add(
+      range.from,
+      range.to,
+      Decoration.mark({
+        class: range.className,
+        attributes: { 'data-test-id': 'runi-highlight' },
+      })
+    );
   }
 
   return builder.finish();

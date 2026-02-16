@@ -18,7 +18,9 @@ interface UseCodeMirrorOptions {
   containerRef: React.RefObject<HTMLElement | null>;
   code: string;
   onChange?: (value: string) => void;
+  /** Applied once on mount. Changes require remounting the component. */
   extensions?: Extension[];
+  /** Applied once on mount. Changes require remounting the component. */
   readOnly?: boolean;
 }
 

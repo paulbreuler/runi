@@ -133,15 +133,20 @@ export const CodeEditor = ({
       exts.push(keymap.of(searchKeymap));
     }
 
-    // Placeholder
-    if (placeholder !== undefined && placeholder !== '') {
+    // Placeholder (edit mode only)
+    if (mode === 'edit' && placeholder !== undefined && placeholder !== '') {
       exts.push(cmPlaceholder(placeholder));
     }
 
-    // Aria label via EditorView.contentAttributes
+    // Test selectors on CM6 internal elements
+    exts.push(EditorView.editorAttributes.of({ 'data-test-id': 'cm-editor' }));
+
+    // Aria label and test selector via EditorView.contentAttributes
+    const contentAttrs: Record<string, string> = { 'data-test-id': 'cm-content' };
     if (ariaLabel !== undefined) {
-      exts.push(EditorView.contentAttributes.of({ 'aria-label': ariaLabel }));
+      contentAttrs['aria-label'] = ariaLabel;
     }
+    exts.push(EditorView.contentAttributes.of(contentAttrs));
 
     // Line wrapping off (horizontal scroll)
     // EditorView default is no wrap, which is what we want

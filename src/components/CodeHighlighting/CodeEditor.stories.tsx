@@ -193,7 +193,7 @@ export const EditPlayground: Story = {
 
     await step('Verify CM6 editor is mounted', async () => {
       const cmContainer = canvas.getByTestId('code-editor-cm-container');
-      const cmEditor = cmContainer.querySelector('.cm-editor');
+      const cmEditor = cmContainer.querySelector('[data-test-id="cm-editor"]');
       await expect(cmEditor).not.toBeNull();
     });
 
@@ -273,7 +273,7 @@ export const EditInvalidJson: Story = {
       const invalidIndicator = canvas.queryByTestId('json-invalid-indicator');
       if (invalidIndicator !== null) {
         await expect(invalidIndicator).toBeVisible();
-        await expect(canvas.getByText('Invalid JSON')).toBeVisible();
+        await expect(invalidIndicator).toHaveTextContent('Invalid JSON');
       }
     });
 
@@ -323,7 +323,7 @@ export const EditInteractionTest: Story = {
 
     await step('Verify CM6 editor still mounted after format', async () => {
       const cmContainer = canvas.getByTestId('code-editor-cm-container');
-      const cmEditor = cmContainer.querySelector('.cm-editor');
+      const cmEditor = cmContainer.querySelector('[data-test-id="cm-editor"]');
       await expect(cmEditor).not.toBeNull();
     });
   },

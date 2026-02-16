@@ -395,7 +395,7 @@ export const BodyEditorFormInteractionsTest: Story = {
 
     await step('Verify CM6 editor is mounted', async () => {
       const cmContainer = canvas.getByTestId('code-editor-cm-container');
-      const cmEditor = cmContainer.querySelector('.cm-editor');
+      const cmEditor = cmContainer.querySelector('[data-test-id="cm-editor"]');
       await expect(cmEditor).not.toBeNull();
     });
     // Detailed typing/formatting tests covered in CodeEditor.test.tsx and CodeEditor.stories.tsx.
@@ -419,7 +419,7 @@ export const BodyEditorKeyboardNavigationTest: Story = {
 
     await step('Focus CM6 editor', async () => {
       const cmContainer = canvas.getByTestId('code-editor-cm-container');
-      const cmContent = cmContainer.querySelector<HTMLElement>('.cm-content');
+      const cmContent = cmContainer.querySelector<HTMLElement>('[data-test-id="cm-content"]');
       if (cmContent !== null) {
         cmContent.focus();
         await waitForFocus(cmContent, 1000);
@@ -429,7 +429,7 @@ export const BodyEditorKeyboardNavigationTest: Story = {
 
     await step('Verify CM6 editor accepts input', async () => {
       const cmContainer = canvas.getByTestId('code-editor-cm-container');
-      const cmEditor = cmContainer.querySelector('.cm-editor');
+      const cmEditor = cmContainer.querySelector('[data-test-id="cm-editor"]');
       await expect(cmEditor).not.toBeNull();
     });
   },
