@@ -13,6 +13,6 @@ method: string,
  */
 path: string, 
 /**
- * What changed (e.g., ["summary", "parameters", "deprecated"]).
+ * What changed (e.g., `summary`, `parameters`, `deprecated`).
  */
 changes: Array<string>, };

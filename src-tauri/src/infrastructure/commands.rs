@@ -151,36 +151,41 @@ pub async fn cmd_import_collection(
 /// This is used when building old endpoints from collection requests for drift detection,
 /// ensuring path-only comparisons match the new spec's path format.
 fn extract_path_from_url(url: &str) -> String {
-    // 1. If already starts with `/`, it's a path — return as-is
-    if url.starts_with('/') {
-        return url.to_string();
-    }
-
-    // 2. If starts with `{{`, extract from first `/` after `}}`
-    if url.starts_with("{{") {
-        if let Some(end_idx) = url.find("}}") {
-            let after_template = &url[end_idx + 2..];
-            if let Some(slash_idx) = after_template.find('/') {
-                return after_template[slash_idx..].to_string();
-            }
-            // No slash after template, fallback to prepending `/`
-            return format!("/{after_template}");
+    let raw = {
+        // 1. If already starts with `/`, it's a path — return as-is
+        if url.starts_with('/') {
+            url.to_string()
         }
-    }
-
-    // 3. If contains `://` (any scheme), extract path after authority
-    if let Some(scheme_end) = url.find("://") {
-        let after_scheme = &url[scheme_end + 3..];
-        // Find first `/` after authority (host:port)
-        if let Some(slash_idx) = after_scheme.find('/') {
-            return after_scheme[slash_idx..].to_string();
+        // 2. If starts with `{{`, extract from first `/` after `}}`
+        else if url.starts_with("{{") {
+            url.find("}}").map_or_else(
+                || format!("/{url}"),
+                |end_idx| {
+                    let after_template = &url[end_idx + 2..];
+                    after_template.find('/').map_or_else(
+                        || format!("/{after_template}"),
+                        |slash_idx| after_template[slash_idx..].to_string(),
+                    )
+                },
+            )
         }
-        // No path after authority, return root
-        return "/".to_string();
-    }
+        // 3. If contains `://` (any scheme), extract path after authority
+        else if let Some(scheme_end) = url.find("://") {
+            let after_scheme = &url[scheme_end + 3..];
+            // Find first `/` after authority (host:port)
+            after_scheme.find('/').map_or_else(
+                || "/".to_string(),
+                |slash_idx| after_scheme[slash_idx..].to_string(),
+            )
+        }
+        // 4. Fallback: prepend `/` to make it a path
+        else {
+            format!("/{url}")
+        }
+    };
 
-    // 4. Fallback: prepend `/` to make it a path
-    format!("/{url}")
+    // Strip query string and fragment (OpenAPI paths never include these)
+    raw.split(['?', '#']).next().unwrap_or(&raw).to_string()
 }
 
 /// Refresh a collection's spec from its tracked source (core logic, no `AppHandle`).
@@ -1441,19 +1446,24 @@ pub struct HurlSuiteResult {
     pub collection_id: Option<String>,
 }
 
-/// Run a Hurl test suite and return structured results.
+/// Runs a Hurl test suite for a collection.
 ///
-/// Validates the file exists and has `.hurl` extension, then delegates to
-/// `HurlRunner` (infrastructure adapter). Uses `std::process::Command` with
-/// explicit args — no shell interpolation.
+/// Builds a `TestRunConfig` from the request and delegates to `HurlRunner::run()`,
+/// which validates file existence and `.hurl` extension before execution.
 #[tauri::command]
 pub async fn cmd_run_hurl_suite(request: RunHurlSuiteRequest) -> Result<HurlSuiteResult, String> {
     use crate::domain::collection::test_port::{TestRunConfig, TestRunner};
     use crate::infrastructure::hurl::HurlRunner;
 
+    let RunHurlSuiteRequest {
+        hurl_file_path,
+        env_vars,
+        collection_id,
+    } = request;
+
     let config = TestRunConfig {
-        file_path: request.hurl_file_path,
-        env_vars: request.env_vars.unwrap_or_default(),
+        file_path: hurl_file_path,
+        env_vars: env_vars.unwrap_or_default(),
         timeout_secs: None,
     };
 
@@ -1473,7 +1483,7 @@ pub async fn cmd_run_hurl_suite(request: RunHurlSuiteRequest) -> Result<HurlSuit
         duration_ms: result.duration_ms,
         stdout: result.stdout,
         stderr: result.stderr,
-        collection_id: request.collection_id,
+        collection_id,
     })
 }
 
@@ -2769,12 +2779,21 @@ mod tests {
     fn test_extract_path_with_query_string() {
         assert_eq!(
             extract_path_from_url("https://api.example.com/users?limit=10"),
-            "/users?limit=10"
+            "/users"
         );
         assert_eq!(
             extract_path_from_url("{{baseUrl}}/users?limit=10"),
-            "/users?limit=10"
+            "/users"
         );
+    }
+
+    #[test]
+    fn test_extract_path_with_fragment() {
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users#section"),
+            "/users"
+        );
+        assert_eq!(extract_path_from_url("{{baseUrl}}/users#section"), "/users");
     }
 
     #[test]
