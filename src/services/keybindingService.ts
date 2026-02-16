@@ -104,7 +104,10 @@ export class KeybindingService {
 
     // Don't intercept shortcuts when user is typing in an editable element
     // EXCEPT for specific global commands like commandbar.toggle or settings.toggle.
-    const isGlobalExemption = commandId === 'commandbar.toggle' || commandId === 'settings.toggle';
+    const isGlobalExemption =
+      commandId === 'commandbar.toggle' ||
+      commandId === 'settings.toggle' ||
+      commandId === 'tab.save';
 
     if (!isGlobalExemption && e.target instanceof Element && isEditableElement(e.target)) {
       return;

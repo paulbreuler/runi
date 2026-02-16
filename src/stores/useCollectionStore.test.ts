@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useCollectionStore } from './useCollectionStore';
 import type { Collection } from '@/types/collection';
 import { invoke } from '@tauri-apps/api/core';
+import { globalEventBus } from '@/events/bus';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
@@ -829,6 +830,322 @@ describe('useCollectionStore', () => {
       });
 
       expect(result.current.error).toContain('rename failed');
+    });
+  });
+
+  describe('saveTabToCollection', () => {
+    it('calls cmd_save_tab_to_collection and updates local state', async () => {
+      const collection = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const updatedCollection = {
+        ...collection,
+        requests: [
+          {
+            id: 'req-saved',
+            name: 'Saved Request',
+            method: 'POST',
+            url: 'https://api.example.com',
+            headers: { 'Content-Type': 'application/json' },
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updatedCollection);
+
+      const emitSpy = vi.spyOn(globalEventBus, 'emit');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: { collectionId: string; requestId: string } | null = null;
+      await act(async () => {
+        returned = await result.current.saveTabToCollection('col-1', {
+          name: 'Saved Request',
+          method: 'POST',
+          url: 'https://api.example.com',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{"key": "value"}',
+        });
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_save_tab_to_collection', {
+        collectionId: 'col-1',
+        name: 'Saved Request',
+        method: 'POST',
+        url: 'https://api.example.com',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{"key": "value"}',
+      });
+      expect(returned).toEqual({ collectionId: 'col-1', requestId: 'req-saved' });
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.requests).toHaveLength(1);
+      expect(result.current.isLoading).toBe(false);
+      expect(emitSpy).toHaveBeenCalledWith(
+        'request.saved-to-collection',
+        expect.objectContaining({ collectionId: 'col-1', requestId: 'req-saved' })
+      );
+
+      emitSpy.mockRestore();
+    });
+
+    it('returns null and sets error when save fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('save failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: { collectionId: string; requestId: string } | null = null;
+      await act(async () => {
+        returned = await result.current.saveTabToCollection('col-1', {
+          name: 'Bad Request',
+          method: 'GET',
+          url: 'https://bad.example.com',
+          headers: {},
+        });
+      });
+
+      expect(returned).toBeNull();
+      expect(result.current.error).toContain('save failed');
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('moveRequest', () => {
+    it('calls cmd_move_request and updates both collections', async () => {
+      const sourceCollection = {
+        ...buildCollection('col-source'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'Moving Request',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      const targetCollection = buildCollection('col-target');
+      useCollectionStore.setState({
+        collections: [sourceCollection as unknown as Collection, targetCollection],
+        summaries: [
+          {
+            id: 'col-source',
+            name: 'Source',
+            request_count: 1,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+          {
+            id: 'col-target',
+            name: 'Target',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const updatedSource = { ...sourceCollection, requests: [] };
+      const updatedTarget = {
+        ...targetCollection,
+        requests: [sourceCollection.requests[0]],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        from: updatedSource,
+        to: updatedTarget,
+      });
+
+      const emitSpy = vi.spyOn(globalEventBus, 'emit');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.moveRequest('col-source', 'req-1', 'col-target');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_move_request', {
+        fromCollectionId: 'col-source',
+        requestId: 'req-1',
+        toCollectionId: 'col-target',
+      });
+      expect(returned).toBe(true);
+
+      const source = result.current.collections.find((c) => c.id === 'col-source');
+      expect(source?.requests).toHaveLength(0);
+      const target = result.current.collections.find((c) => c.id === 'col-target');
+      expect(target?.requests).toHaveLength(1);
+
+      const sourceSummary = result.current.summaries.find((s) => s.id === 'col-source');
+      expect(sourceSummary?.request_count).toBe(0);
+      const targetSummary = result.current.summaries.find((s) => s.id === 'col-target');
+      expect(targetSummary?.request_count).toBe(1);
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        'request.moved',
+        expect.objectContaining({
+          requestId: 'req-1',
+          fromCollectionId: 'col-source',
+          toCollectionId: 'col-target',
+        })
+      );
+
+      emitSpy.mockRestore();
+    });
+
+    it('returns false and sets error when move fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('move failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.moveRequest('col-source', 'req-1', 'col-target');
+      });
+
+      expect(returned).toBe(false);
+      expect(result.current.error).toContain('move failed');
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('copyRequestToCollection', () => {
+    it('calls cmd_copy_request_to_collection and updates target collection', async () => {
+      const sourceCollection = {
+        ...buildCollection('col-source'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'Original',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      const targetCollection = buildCollection('col-target');
+      useCollectionStore.setState({
+        collections: [sourceCollection as unknown as Collection, targetCollection],
+        summaries: [
+          {
+            id: 'col-source',
+            name: 'Source',
+            request_count: 1,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+          {
+            id: 'col-target',
+            name: 'Target',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const updatedTarget = {
+        ...targetCollection,
+        requests: [
+          {
+            id: 'req-copy',
+            name: 'Original (Copy)',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updatedTarget);
+
+      const emitSpy = vi.spyOn(globalEventBus, 'emit');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.copyRequestToCollection(
+          'col-source',
+          'req-1',
+          'col-target'
+        );
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_copy_request_to_collection', {
+        fromCollectionId: 'col-source',
+        requestId: 'req-1',
+        toCollectionId: 'col-target',
+      });
+      expect(returned).toBe(true);
+
+      const target = result.current.collections.find((c) => c.id === 'col-target');
+      expect(target?.requests).toHaveLength(1);
+
+      const targetSummary = result.current.summaries.find((s) => s.id === 'col-target');
+      expect(targetSummary?.request_count).toBe(1);
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        'request.copied',
+        expect.objectContaining({
+          requestId: 'req-1',
+          fromCollectionId: 'col-source',
+          toCollectionId: 'col-target',
+        })
+      );
+
+      emitSpy.mockRestore();
+    });
+
+    it('returns false and sets error when copy fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('copy failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.copyRequestToCollection(
+          'col-source',
+          'req-1',
+          'col-target'
+        );
+      });
+
+      expect(returned).toBe(false);
+      expect(result.current.error).toContain('copy failed');
+      expect(result.current.isLoading).toBe(false);
     });
   });
 });

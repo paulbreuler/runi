@@ -4,13 +4,18 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Plus, FolderOpen } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Tabs } from '@base-ui/react/tabs';
+import { Menu } from '@base-ui/react/menu';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 import type { RequestTabState } from '@/types/canvas';
+import { SaveToCollectionDialog } from '@/components/Canvas/SaveToCollectionDialog';
 import {
   globalEventBus,
   type ContextActivatePayload,
@@ -27,11 +32,28 @@ import {
  * - Keyboard navigation via BaseTabsList
  * - Trackpad scroll support
  */
+const menuItemClasses =
+  'flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm cursor-pointer outline-none data-[highlighted]:bg-bg-raised/60 text-text-primary';
+
+const menuPopupClasses =
+  'min-w-[160px] rounded-md border border-border-default bg-bg-elevated p-1 shadow-lg outline-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none';
+
 export const ContextTabs = (): React.JSX.Element | null => {
   const prefersReducedMotion = useReducedMotion() === true;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Context menu state
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuTabId, setMenuTabId] = useState<string | null>(null);
+  const [contextMenuAnchor, setContextMenuAnchor] = useState<{
+    getBoundingClientRect: () => DOMRect;
+  } | null>(null);
+
+  // Save to Collection dialog state
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveDialogTabId, setSaveDialogTabId] = useState<string | null>(null);
 
   const { contexts, templates, contextOrder, activeContextId, contextState } = useCanvasStore();
 
@@ -105,6 +127,97 @@ export const ContextTabs = (): React.JSX.Element | null => {
       actor: 'human',
     });
   };
+
+  const handleTabContextMenu = useCallback((e: React.MouseEvent, tabId: string): void => {
+    e.preventDefault();
+    e.stopPropagation();
+    const x = e.clientX;
+    const y = e.clientY;
+    setContextMenuAnchor({
+      getBoundingClientRect: () => new DOMRect(x, y, 0, 0),
+    });
+    setMenuTabId(tabId);
+    setMenuOpen(true);
+  }, []);
+
+  const handleMenuOpenChange = useCallback((open: boolean): void => {
+    setMenuOpen(open);
+    if (!open) {
+      setContextMenuAnchor(null);
+      setMenuTabId(null);
+    }
+  }, []);
+
+  const handleSaveToCollection = useCallback((): void => {
+    if (menuTabId !== null) {
+      setSaveDialogTabId(menuTabId);
+      setSaveDialogOpen(true);
+    }
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    setMenuTabId(null);
+  }, [menuTabId]);
+
+  const handleSaveDialogSave = useCallback(
+    async (collectionId: string, requestName: string): Promise<void> => {
+      if (saveDialogTabId === null) {
+        return;
+      }
+
+      const reqState = useRequestStoreRaw.getState().contexts[saveDialogTabId];
+      if (reqState === undefined) {
+        return;
+      }
+
+      const result = await useCollectionStore.getState().saveTabToCollection(collectionId, {
+        name: requestName,
+        method: reqState.method,
+        url: reqState.url,
+        headers: reqState.headers,
+        body: reqState.body,
+      });
+
+      if (result !== null) {
+        // Update tab source and reset dirty state
+        useCanvasStore.getState().updateContextState(saveDialogTabId, {
+          source: {
+            type: 'collection',
+            collectionId: result.collectionId,
+            requestId: result.requestId,
+          },
+          isDirty: false,
+          isSaved: true,
+        } as unknown as Record<string, unknown>);
+      }
+
+      setSaveDialogOpen(false);
+      setSaveDialogTabId(null);
+    },
+    [saveDialogTabId]
+  );
+
+  // Listen for tab.save command event (emitted by keybinding system)
+  useEffect((): (() => void) => {
+    const unsubscribe = globalEventBus.on('tab.save-requested', (): void => {
+      const state = useCanvasStore.getState();
+      const activeId = state.activeContextId;
+      if (activeId?.startsWith('request-') !== true) {
+        return;
+      }
+
+      const tabState = state.getContextState(activeId) as RequestTabState;
+      if (tabState.source?.type === 'collection') {
+        // Already saved to collection — no-op for now (future: update in place)
+        return;
+      }
+
+      // Ephemeral tab: open save dialog
+      setSaveDialogTabId(activeId);
+      setSaveDialogOpen(true);
+    });
+
+    return unsubscribe;
+  }, []);
 
   // Keep the active tab visible when selection changes (including when a
   // sidebar request maps to an already-open tab off-screen).
@@ -224,9 +337,18 @@ export const ContextTabs = (): React.JSX.Element | null => {
                 ? (contextState.get(tab.value) as unknown as RequestTabState | undefined)
                 : undefined;
               const isSaved = tabState?.isSaved ?? false;
+              const isCollectionSourced = tabState?.source?.type === 'collection';
 
               return (
-                <div key={tab.value} className="group relative flex h-full items-end">
+                <div
+                  key={tab.value}
+                  className="group relative flex h-full items-end"
+                  onContextMenu={(e) => {
+                    if (isRequestTab) {
+                      handleTabContextMenu(e, tab.value);
+                    }
+                  }}
+                >
                   <Tabs.Tab
                     value={tab.value}
                     onClick={() => {
@@ -246,7 +368,19 @@ export const ContextTabs = (): React.JSX.Element | null => {
                     data-test-id={tab.testId}
                     title={tab.label} // Tooltip shows full name on hover
                   >
-                    <span className={cn('relative z-10 truncate', !isSaved && 'italic opacity-75')}>
+                    {isCollectionSourced && (
+                      <FolderOpen
+                        size={10}
+                        className="relative z-10 shrink-0 text-text-muted"
+                        data-test-id={`tab-collection-indicator-${tab.value}`}
+                      />
+                    )}
+                    <span
+                      className={cn(
+                        'relative z-10 truncate',
+                        !isSaved && !isCollectionSourced && 'italic opacity-75'
+                      )}
+                    >
                       {tab.label}
                     </span>
                   </Tabs.Tab>
@@ -289,6 +423,47 @@ export const ContextTabs = (): React.JSX.Element | null => {
           <Plus size={16} />
         </button>
       </div>
+
+      {/* Tab context menu */}
+      <Menu.Root open={menuOpen} onOpenChange={handleMenuOpenChange}>
+        <Menu.Portal>
+          <Menu.Positioner
+            side="bottom"
+            align="start"
+            sideOffset={4}
+            anchor={contextMenuAnchor ?? undefined}
+          >
+            <Menu.Popup
+              className={menuPopupClasses}
+              style={{ zIndex: OVERLAY_Z_INDEX }}
+              data-test-id="tab-context-menu"
+            >
+              {menuTabId !== null &&
+                (contextState.get(menuTabId) as unknown as RequestTabState | undefined)?.source
+                  ?.type !== 'collection' && (
+                  <Menu.Item
+                    className={cn(focusRingClasses, menuItemClasses)}
+                    onClick={handleSaveToCollection}
+                    data-test-id="tab-menu-save-to-collection"
+                  >
+                    <FolderOpen size={14} className="text-text-muted" />
+                    Save to Collection...
+                  </Menu.Item>
+                )}
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
+
+      {/* Save to Collection dialog */}
+      <SaveToCollectionDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={(collectionId, name) => {
+          void handleSaveDialogSave(collectionId, name);
+        }}
+        defaultName={saveDialogTabId !== null ? (contexts.get(saveDialogTabId)?.label ?? '') : ''}
+      />
     </motion.div>
   );
 };

@@ -30,6 +30,8 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
   { commandId: 'tab.new', key: 't', modifier: 'ctrl', platform: 'other' },
   { commandId: 'tab.close', key: 'w', modifier: 'meta', platform: 'mac' },
   { commandId: 'tab.close', key: 'w', modifier: 'ctrl', platform: 'other' },
+  { commandId: 'tab.save', key: 's', modifier: 'meta', platform: 'mac' },
+  { commandId: 'tab.save', key: 's', modifier: 'ctrl', platform: 'other' },
   { commandId: 'tab.next', key: 'Tab', modifier: 'ctrl' },
   { commandId: 'tab.previous', key: 'Tab', modifier: ['ctrl', 'shift'] },
 
@@ -65,6 +67,7 @@ export const DEFAULT_KEYBINDINGS: Keybinding[] = [
 export const COMMAND_METADATA: CommandMeta[] = [
   { id: 'tab.new', title: 'New Tab', category: 'tabs' },
   { id: 'tab.close', title: 'Close Tab', category: 'tabs' },
+  { id: 'tab.save', title: 'Save to Collection', category: 'tabs' },
   { id: 'tab.next', title: 'Next Tab', category: 'tabs' },
   { id: 'tab.previous', title: 'Previous Tab', category: 'tabs' },
   { id: 'sidebar.toggle', title: 'Toggle Sidebar', category: 'view' },

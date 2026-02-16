@@ -5,7 +5,18 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Menu } from '@base-ui/react/menu';
-import { Copy, Link, MoreHorizontal, Pencil, Radio, Sparkles, Trash2 } from 'lucide-react';
+import {
+  ArrowRightFromLine,
+  ChevronRight,
+  Copy,
+  CopyPlus,
+  Link,
+  MoreHorizontal,
+  Pencil,
+  Radio,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import type { CollectionRequest } from '@/types/collection';
 import { isAiGenerated, isBound } from '@/types/collection';
@@ -32,6 +43,8 @@ export interface RequestItemCompositeProps {
   onDelete?: (collectionId: string, requestId: string) => void;
   onRename?: (collectionId: string, requestId: string, newName: string) => void;
   onDuplicate?: (collectionId: string, requestId: string) => void;
+  onMoveToCollection?: (requestId: string, targetCollectionId: string) => void;
+  onCopyToCollection?: (requestId: string, targetCollectionId: string) => void;
 }
 
 const menuItemClasses =
@@ -52,14 +65,20 @@ export const RequestItemComposite = ({
   onDelete,
   onRename,
   onDuplicate,
+  onMoveToCollection,
+  onCopyToCollection,
 }: RequestItemCompositeProps): React.JSX.Element => {
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
   const isSelected = selectedRequestId === request.id;
   const selectRequest = useCollectionStore((state) => state.selectRequest);
+  const collections = useCollectionStore((state) => state.collections);
+  const otherCollections = collections.filter((c) => c.id !== collectionId);
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
+  const [moveBoundWarningOpen, setMoveBoundWarningOpen] = useState(false);
+  const [pendingMoveTarget, setPendingMoveTarget] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [contextMenuAnchor, setContextMenuAnchor] = useState<{
     getBoundingClientRect: () => DOMRect;
@@ -206,6 +225,37 @@ export const RequestItemComposite = ({
     setContextMenuAnchor(null);
     setDeletePopoverOpen(true);
   }, []);
+
+  const handleMoveToCollection = useCallback(
+    (targetCollectionId: string): void => {
+      setMenuOpen(false);
+      setContextMenuAnchor(null);
+      if (isBound(request)) {
+        setPendingMoveTarget(targetCollectionId);
+        setMoveBoundWarningOpen(true);
+      } else {
+        onMoveToCollection?.(request.id, targetCollectionId);
+      }
+    },
+    [request, onMoveToCollection]
+  );
+
+  const handleConfirmBoundMove = useCallback((): void => {
+    if (pendingMoveTarget !== null) {
+      onMoveToCollection?.(request.id, pendingMoveTarget);
+    }
+    setMoveBoundWarningOpen(false);
+    setPendingMoveTarget(null);
+  }, [pendingMoveTarget, request.id, onMoveToCollection]);
+
+  const handleCopyToCollection = useCallback(
+    (targetCollectionId: string): void => {
+      setMenuOpen(false);
+      setContextMenuAnchor(null);
+      onCopyToCollection?.(request.id, targetCollectionId);
+    },
+    [request.id, onCopyToCollection]
+  );
 
   const handleMenuOpenChange = useCallback((open: boolean): void => {
     setMenuOpen(open);
@@ -369,6 +419,76 @@ export const RequestItemComposite = ({
                         <Copy size={14} className="text-text-muted" />
                         Duplicate
                       </Menu.Item>
+                      {otherCollections.length > 0 && (
+                        <>
+                          <Menu.SubmenuRoot>
+                            <Menu.SubmenuTrigger
+                              className={cn(focusRingClasses, menuItemClasses, 'justify-between')}
+                              data-test-id="menu-move-to-collection"
+                            >
+                              <span className="flex items-center gap-2">
+                                <ArrowRightFromLine size={14} className="text-text-muted" />
+                                Move to Collection...
+                              </span>
+                              <ChevronRight size={12} className="text-text-muted" />
+                            </Menu.SubmenuTrigger>
+                            <Menu.Portal>
+                              <Menu.Positioner side="right" align="start" sideOffset={4}>
+                                <Menu.Popup
+                                  className={menuPopupClasses}
+                                  style={{ zIndex: OVERLAY_Z_INDEX }}
+                                >
+                                  {otherCollections.map((col) => (
+                                    <Menu.Item
+                                      key={col.id}
+                                      className={cn(focusRingClasses, menuItemClasses)}
+                                      onClick={() => {
+                                        handleMoveToCollection(col.id);
+                                      }}
+                                      data-test-id={`move-target-${col.id}`}
+                                    >
+                                      {col.metadata.name}
+                                    </Menu.Item>
+                                  ))}
+                                </Menu.Popup>
+                              </Menu.Positioner>
+                            </Menu.Portal>
+                          </Menu.SubmenuRoot>
+                          <Menu.SubmenuRoot>
+                            <Menu.SubmenuTrigger
+                              className={cn(focusRingClasses, menuItemClasses, 'justify-between')}
+                              data-test-id="menu-copy-to-collection"
+                            >
+                              <span className="flex items-center gap-2">
+                                <CopyPlus size={14} className="text-text-muted" />
+                                Copy to Collection...
+                              </span>
+                              <ChevronRight size={12} className="text-text-muted" />
+                            </Menu.SubmenuTrigger>
+                            <Menu.Portal>
+                              <Menu.Positioner side="right" align="start" sideOffset={4}>
+                                <Menu.Popup
+                                  className={menuPopupClasses}
+                                  style={{ zIndex: OVERLAY_Z_INDEX }}
+                                >
+                                  {otherCollections.map((col) => (
+                                    <Menu.Item
+                                      key={col.id}
+                                      className={cn(focusRingClasses, menuItemClasses)}
+                                      onClick={() => {
+                                        handleCopyToCollection(col.id);
+                                      }}
+                                      data-test-id={`copy-target-${col.id}`}
+                                    >
+                                      {col.metadata.name}
+                                    </Menu.Item>
+                                  ))}
+                                </Menu.Popup>
+                              </Menu.Positioner>
+                            </Menu.Portal>
+                          </Menu.SubmenuRoot>
+                        </>
+                      )}
                       <Menu.Item
                         className={cn(focusRingClasses, menuItemClasses, 'text-signal-error')}
                         onClick={handleMenuDelete}
@@ -417,6 +537,48 @@ export const RequestItemComposite = ({
                 data-test-id={`request-delete-confirm-btn-${request.id}`}
               >
                 Delete
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Spec-bound move warning popover */}
+        <Popover open={moveBoundWarningOpen} onOpenChange={setMoveBoundWarningOpen}>
+          <PopoverContent
+            side="right"
+            align="start"
+            anchor={rowRef}
+            className="w-64 p-3"
+            data-test-id="move-bound-warning"
+          >
+            <p className="text-sm text-text-primary mb-3">
+              This request is bound to{' '}
+              <span className="font-medium">
+                {request.binding.operation_id ?? request.binding.path}
+              </span>
+              . Moving it will remove the spec binding. Continue?
+            </p>
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="xs"
+                noScale
+                onClick={() => {
+                  setMoveBoundWarningOpen(false);
+                  setPendingMoveTarget(null);
+                }}
+                data-test-id="move-bound-cancel-btn"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="xs"
+                noScale
+                onClick={handleConfirmBoundMove}
+                data-test-id="move-bound-confirm-btn"
+              >
+                Move
               </Button>
             </div>
           </PopoverContent>

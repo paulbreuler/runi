@@ -6,10 +6,11 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
-import type { CollectionRequest } from '@/types/collection';
+import type { Collection, CollectionRequest } from '@/types/collection';
 import { RequestItemComposite } from './RequestItemComposite';
 import { globalEventBus } from '@/events/bus';
 import { TooltipProvider } from '@/components/ui/Tooltip';
+import { useCollectionStore } from '@/stores/useCollectionStore';
 
 // Mock motion components to avoid animation delays in tests
 vi.mock('motion/react', () => ({
@@ -69,6 +70,30 @@ const simpleRequest: CollectionRequest = {
   binding: { is_manual: true },
   intelligence: { ai_generated: false },
 };
+
+const boundRequest: CollectionRequest = {
+  id: 'req_bound',
+  name: 'Get Pets',
+  seq: 2,
+  method: 'GET',
+  url: 'https://api.example.com/pets',
+  headers: {},
+  params: [],
+  is_streaming: false,
+  tags: [],
+  binding: { operation_id: 'getPets', path: '/pets', is_manual: false },
+  intelligence: { ai_generated: false },
+};
+
+const makeCollection = (id: string, name: string): Collection => ({
+  $schema: 'https://runi.dev/schema/collection/v1.json',
+  version: 1,
+  id,
+  metadata: { name, description: '', tags: [], created_at: '', modified_at: '' },
+  source: { source_type: 'manual', fetched_at: '' },
+  variables: {},
+  requests: [],
+});
 
 const renderWithScrollContainer = (ui: React.ReactElement): ReturnType<typeof render> =>
   render(
@@ -448,6 +473,208 @@ describe('RequestItemComposite', (): void => {
 
       // Popover should appear
       expect(screen.getByTestId('request-delete-confirm-req_1')).toBeInTheDocument();
+    });
+  });
+
+  describe('move to collection', (): void => {
+    beforeEach((): void => {
+      useCollectionStore.setState({
+        collections: [
+          makeCollection('col_1', 'My Collection'),
+          makeCollection('col_2', 'Other Collection'),
+          makeCollection('col_3', 'Third Collection'),
+        ],
+      });
+    });
+
+    it('renders "Move to Collection..." menu item', (): void => {
+      vi.useRealTimers();
+      const mockMove = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={simpleRequest}
+          collectionId="col_1"
+          onMoveToCollection={mockMove}
+        />
+      );
+
+      openMenu('req_1');
+
+      expect(screen.getByTestId('menu-move-to-collection')).toBeInTheDocument();
+    });
+
+    it('shows collection targets excluding current collection', (): void => {
+      vi.useRealTimers();
+      const mockMove = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={simpleRequest}
+          collectionId="col_1"
+          onMoveToCollection={mockMove}
+        />
+      );
+
+      openMenu('req_1');
+
+      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      fireEvent.click(moveTrigger);
+
+      // Should show other collections but not the current one
+      expect(screen.getByTestId('move-target-col_2')).toBeInTheDocument();
+      expect(screen.getByTestId('move-target-col_3')).toBeInTheDocument();
+      expect(screen.queryByTestId('move-target-col_1')).not.toBeInTheDocument();
+    });
+
+    it('calls onMoveToCollection when a target collection is clicked', (): void => {
+      vi.useRealTimers();
+      const mockMove = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={simpleRequest}
+          collectionId="col_1"
+          onMoveToCollection={mockMove}
+        />
+      );
+
+      openMenu('req_1');
+
+      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      fireEvent.click(moveTrigger);
+
+      const targetCol = screen.getByTestId('move-target-col_2');
+      fireEvent.click(targetCol);
+
+      expect(mockMove).toHaveBeenCalledWith('req_1', 'col_2');
+    });
+
+    it('shows spec-bound warning when moving a bound request', (): void => {
+      vi.useRealTimers();
+      const mockMove = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={boundRequest}
+          collectionId="col_1"
+          onMoveToCollection={mockMove}
+        />
+      );
+
+      openMenu('req_bound');
+
+      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      fireEvent.click(moveTrigger);
+
+      const targetCol = screen.getByTestId('move-target-col_2');
+      fireEvent.click(targetCol);
+
+      // Should show warning instead of immediately moving
+      expect(screen.getByTestId('move-bound-warning')).toBeInTheDocument();
+    });
+
+    it('completes move after confirming spec-bound warning', async (): Promise<void> => {
+      vi.useRealTimers();
+      const user = userEvent.setup();
+      const mockMove = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={boundRequest}
+          collectionId="col_1"
+          onMoveToCollection={mockMove}
+        />
+      );
+
+      openMenu('req_bound');
+
+      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      fireEvent.click(moveTrigger);
+
+      const targetCol = screen.getByTestId('move-target-col_2');
+      fireEvent.click(targetCol);
+
+      const confirmBtn = screen.getByTestId('move-bound-confirm-btn');
+      await user.click(confirmBtn);
+
+      expect(mockMove).toHaveBeenCalledWith('req_bound', 'col_2');
+    });
+  });
+
+  describe('copy to collection', (): void => {
+    beforeEach((): void => {
+      useCollectionStore.setState({
+        collections: [
+          makeCollection('col_1', 'My Collection'),
+          makeCollection('col_2', 'Other Collection'),
+        ],
+      });
+    });
+
+    it('renders "Copy to Collection..." menu item', (): void => {
+      vi.useRealTimers();
+      const mockCopy = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={simpleRequest}
+          collectionId="col_1"
+          onCopyToCollection={mockCopy}
+        />
+      );
+
+      openMenu('req_1');
+
+      expect(screen.getByTestId('menu-copy-to-collection')).toBeInTheDocument();
+    });
+
+    it('calls onCopyToCollection when a target collection is clicked', (): void => {
+      vi.useRealTimers();
+      const mockCopy = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={simpleRequest}
+          collectionId="col_1"
+          onCopyToCollection={mockCopy}
+        />
+      );
+
+      openMenu('req_1');
+
+      const copyTrigger = screen.getByTestId('menu-copy-to-collection');
+      fireEvent.click(copyTrigger);
+
+      const targetCol = screen.getByTestId('copy-target-col_2');
+      fireEvent.click(targetCol);
+
+      expect(mockCopy).toHaveBeenCalledWith('req_1', 'col_2');
+    });
+
+    it('does not show spec-bound warning for copy', (): void => {
+      vi.useRealTimers();
+      const mockCopy = vi.fn();
+
+      renderWithScrollContainer(
+        <RequestItemComposite
+          request={boundRequest}
+          collectionId="col_1"
+          onCopyToCollection={mockCopy}
+        />
+      );
+
+      openMenu('req_bound');
+
+      const copyTrigger = screen.getByTestId('menu-copy-to-collection');
+      fireEvent.click(copyTrigger);
+
+      const targetCol = screen.getByTestId('copy-target-col_2');
+      fireEvent.click(targetCol);
+
+      // Copy should happen immediately, no warning
+      expect(screen.queryByTestId('move-bound-warning')).not.toBeInTheDocument();
+      expect(mockCopy).toHaveBeenCalledWith('req_bound', 'col_2');
     });
   });
 });

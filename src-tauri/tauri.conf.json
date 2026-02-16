@@ -3,8 +3,8 @@
   "version": "0.7.0",
   "identifier": "com.runi",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
     "devUrl": "http://localhost:5175",
     "frontendDist": "../dist"
   },

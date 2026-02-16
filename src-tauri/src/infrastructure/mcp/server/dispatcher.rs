@@ -840,8 +840,8 @@ mod tests {
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        // 8 collection tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 18 total
-        assert_eq!(tools.len(), 18);
+        // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 21 total
+        assert_eq!(tools.len(), 21);
     }
 
     #[tokio::test]
