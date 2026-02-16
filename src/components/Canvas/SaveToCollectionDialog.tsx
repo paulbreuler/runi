@@ -25,6 +25,7 @@ interface SaveToCollectionDialogProps {
   onOpenChange: (open: boolean) => void;
   defaultName?: string;
   onSave: (collectionId: string, name: string) => void;
+  errorMessage?: string | null;
 }
 
 export const SaveToCollectionDialog = ({
@@ -32,6 +33,7 @@ export const SaveToCollectionDialog = ({
   onOpenChange,
   defaultName = '',
   onSave,
+  errorMessage = null,
 }: SaveToCollectionDialogProps): React.ReactElement | null => {
   const summaries = useCollectionStore((state) => state.summaries);
   const [selectedCollectionId, setSelectedCollectionId] = React.useState<string>('');
@@ -93,6 +95,15 @@ export const SaveToCollectionDialog = ({
           </Dialog.Title>
 
           <div className="space-y-4">
+            {errorMessage !== null && errorMessage.length > 0 && (
+              <div
+                className="rounded-md border border-signal-error/30 bg-signal-error/10 px-3 py-2 text-xs text-signal-error"
+                data-test-id="save-to-collection-error"
+                role="alert"
+              >
+                {errorMessage}
+              </div>
+            )}
             {summaries.length === 0 ? (
               <p data-test-id="no-collections-message" className="text-sm text-text-muted">
                 No collections available. Create a collection first.

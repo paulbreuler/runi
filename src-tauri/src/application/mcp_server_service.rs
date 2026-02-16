@@ -11,7 +11,9 @@ use std::sync::Arc;
 
 use serde_json::json;
 
-use crate::domain::collection::{Collection, CollectionRequest, IntelligenceMetadata};
+use crate::domain::collection::{
+    BodyType, Collection, CollectionRequest, IntelligenceMetadata, RequestBody, SpecBinding,
+};
 use crate::domain::http::RequestParams;
 use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::mcp::protocol::{McpToolDefinition, ToolCallResult, ToolResponseContent};
@@ -490,7 +492,8 @@ impl McpServerService {
                         "method": { "type": "string", "description": "HTTP method (GET, POST, PUT, PATCH, DELETE)", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
                         "url": { "type": "string", "description": "Request URL" },
                         "headers": { "type": "object", "description": "Request headers as key-value pairs", "additionalProperties": { "type": "string" } },
-                        "body": { "type": "string", "description": "Request body content" }
+                        "body": { "type": "string", "description": "Request body content" },
+                        "body_type": { "type": "string", "description": "Body content type", "enum": ["json", "form", "raw", "graphql", "xml"] }
                     },
                     "required": ["collection_id", "name", "method", "url"]
                 }),
@@ -897,13 +900,17 @@ impl McpServerService {
             .unwrap_or_default();
 
         let body_content = args.get("body").and_then(serde_json::Value::as_str);
-        let body = body_content.map(|content| {
-            use crate::domain::collection::{BodyType, RequestBody};
-            RequestBody {
-                body_type: BodyType::Json,
-                content: Some(content.to_string()),
-                file: None,
-            }
+        let body_type = match args.get("body_type").and_then(serde_json::Value::as_str) {
+            Some("form") => BodyType::Form,
+            Some("graphql") => BodyType::Graphql,
+            Some("xml") => BodyType::Xml,
+            Some("json") => BodyType::Json,
+            _ => BodyType::Raw,
+        };
+        let body = body_content.map(|content| RequestBody {
+            body_type: body_type.clone(),
+            content: Some(content.to_string()),
+            file: None,
         });
 
         let request = CollectionRequest {
@@ -959,6 +966,21 @@ impl McpServerService {
         Self::validate_collection_id(source_collection_id)?;
         Self::validate_collection_id(target_collection_id)?;
 
+        if source_collection_id == target_collection_id {
+            return Ok(ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: json!({
+                        "source_collection_id": source_collection_id,
+                        "target_collection_id": target_collection_id,
+                        "request_id": request_id,
+                        "message": "Source and target collections are the same; no move performed"
+                    })
+                    .to_string(),
+                }],
+                is_error: false,
+            });
+        }
+
         let mut source = load_collection_in_dir(source_collection_id, self.dir())?;
         let pos = source
             .requests
@@ -966,17 +988,35 @@ impl McpServerService {
             .position(|r| r.id == request_id)
             .ok_or_else(|| format!("Request not found: {request_id}"))?;
 
-        let mut request = source.requests.remove(pos);
+        let mut request = source
+            .requests
+            .get(pos)
+            .cloned()
+            .ok_or_else(|| format!("Request not found: {request_id}"))?;
         if request.binding.is_bound() {
-            request.binding = crate::domain::collection::SpecBinding::default();
+            request.binding = SpecBinding::default();
         }
 
         let mut target = load_collection_in_dir(target_collection_id, self.dir())?;
         request.seq = target.next_seq();
         target.requests.push(request);
 
-        save_collection_in_dir(&source, self.dir())?;
         save_collection_in_dir(&target, self.dir())?;
+        source.requests.remove(pos);
+        if let Err(save_source_error) = save_collection_in_dir(&source, self.dir()) {
+            if let Some(target_pos) = target.requests.iter().position(|r| r.id == request_id) {
+                target.requests.remove(target_pos);
+            }
+
+            return match save_collection_in_dir(&target, self.dir()) {
+                Ok(_) => Err(format!(
+                    "Failed to save source collection {source_collection_id} while moving request {request_id} to {target_collection_id}; target changes rolled back: {save_source_error}"
+                )),
+                Err(rollback_error) => Err(format!(
+                    "Failed to save source collection {source_collection_id} while moving request {request_id} to {target_collection_id}; rollback failed: {rollback_error}; original error: {save_source_error}"
+                )),
+            };
+        }
 
         self.emit(
             "request:moved",
@@ -1030,7 +1070,7 @@ impl McpServerService {
 
         let mut copy = original.clone();
         copy.id = CollectionRequest::generate_id(&copy.name);
-        copy.binding = crate::domain::collection::SpecBinding::default();
+        copy.binding = SpecBinding::default();
 
         let mut target = load_collection_in_dir(target_collection_id, self.dir())?;
         copy.seq = target.next_seq();
@@ -1045,8 +1085,8 @@ impl McpServerService {
             json!({
                 "source_collection_id": source_collection_id,
                 "target_collection_id": target_collection_id,
-                "request_id": request_id,
-                "copy_id": &copy_id,
+                "source_request_id": request_id,
+                "copied_request_id": &copy_id,
             }),
         );
 
@@ -1342,6 +1382,57 @@ mod tests {
         assert_eq!(body.content, Some(r#"{"name": "John"}"#.to_string()));
         // Headers also present
         assert_eq!(req.headers.len(), 1);
+    }
+
+    #[test]
+    fn test_save_tab_to_collection_preserves_body_type() {
+        let (mut service, _dir) = make_service();
+
+        let create_result = service
+            .call_tool(
+                "create_collection",
+                Some(args(&[("name", "Save Tab Body Type")])),
+            )
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap();
+
+        let mut save_args = args(&[
+            ("collection_id", collection_id),
+            ("name", "Save XML"),
+            ("method", "POST"),
+            ("url", "https://api.example.com/xml"),
+            ("body", "<root/>"),
+            ("body_type", "xml"),
+        ]);
+        save_args.insert(
+            "headers".to_string(),
+            json!({"Content-Type": "application/xml"}),
+        );
+
+        let result = service
+            .call_tool("save_tab_to_collection", Some(save_args))
+            .unwrap();
+        assert!(!result.is_error);
+
+        let saved: serde_json::Value = serde_json::from_str(match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let request_id = saved["request_id"].as_str().unwrap();
+
+        let collection = load_collection_in_dir(collection_id, service.dir()).unwrap();
+        let req = collection
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .unwrap();
+        let body = req.body.as_ref().unwrap();
+        assert_eq!(body.body_type, BodyType::Xml);
+        assert_eq!(body.content, Some("<root/>".to_string()));
     }
 
     #[test]
