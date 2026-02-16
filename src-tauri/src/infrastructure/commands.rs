@@ -21,12 +21,15 @@ use crate::infrastructure::storage::collection_store::{
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
+use serde::Deserialize;
 use serde_json::json;
+use std::path::PathBuf;
 use std::sync::{Arc, LazyLock};
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use tracing::error;
+use ts_rs::TS;
 
 /// Global history storage instance (in-memory by default).
 ///
@@ -46,6 +49,81 @@ static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
 pub type CanvasStateHandle = Arc<RwLock<CanvasStateSnapshot>>;
 
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
+
+/// Request payload for the generic import command.
+///
+/// Exactly one of `url`, `file_path`, or `inline_content` must be provided.
+/// Optional fields allow display-name overrides and git-tracking metadata.
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportCollectionRequest {
+    /// URL to fetch the spec from.
+    pub url: Option<String>,
+    /// Local filesystem path to the spec file.
+    pub file_path: Option<String>,
+    /// Raw spec content (for testing or piped input).
+    pub inline_content: Option<String>,
+    /// Override the collection display name.
+    pub display_name: Option<String>,
+    /// Git repo root for tracking.
+    pub repo_root: Option<String>,
+    /// Relative path to spec within repo.
+    pub spec_path: Option<String>,
+    /// Git ref (branch/tag/commit) being tracked.
+    pub ref_name: Option<String>,
+}
+
+/// Import a collection from any supported spec format.
+///
+/// Thin shell: validates input, constructs domain types, delegates to `ImportService`,
+/// persists via `CollectionStore`, and returns the result.
+///
+/// # Errors
+///
+/// Returns an error if no source is provided, the spec cannot be fetched/parsed,
+/// or the collection cannot be saved.
+async fn import_collection_inner(request: ImportCollectionRequest) -> Result<Collection, String> {
+    // Validate: at least one source must be provided
+    let source = match (&request.url, &request.file_path, &request.inline_content) {
+        (Some(url), _, _) => SpecSource::Url(url.clone()),
+        (_, Some(path), _) => SpecSource::File(PathBuf::from(path)),
+        (_, _, Some(content)) => SpecSource::Inline(content.clone()),
+        (None, None, None) => {
+            return Err("Must provide url, file_path, or inline_content".to_string());
+        }
+    };
+
+    let overrides = ImportOverrides {
+        display_name: request.display_name,
+        repo_root: request.repo_root,
+        spec_path: request.spec_path,
+        ref_name: request.ref_name,
+    };
+
+    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let collection = service.import(source, overrides).await?;
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Generic import command: import a collection from URL, file, or inline content.
+///
+/// Emits `collection:created` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_import_collection(
+    app: tauri::AppHandle,
+    request: ImportCollectionRequest,
+) -> Result<Collection, String> {
+    let collection = import_collection_inner(request).await?;
+    emit_collection_event(
+        &app,
+        "collection:created",
+        &Actor::User,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
+    Ok(collection)
+}
 
 /// Emit a collection event wrapped in an [`EventEnvelope`].
 fn emit_collection_event(
@@ -1771,5 +1849,188 @@ mod tests {
             assert_eq!(received.event_type, expected_type);
             assert_eq!(received.data["actor"], "ai");
         }
+    }
+
+    // ── cmd_import_collection tests ──────────────────────────────────
+
+    const MINIMAL_OPENAPI: &str = r#"{
+        "openapi": "3.0.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "paths": {
+            "/users": {
+                "get": {
+                    "operationId": "getUsers",
+                    "summary": "List users",
+                    "responses": {
+                        "200": {
+                            "description": "OK"
+                        }
+                    }
+                }
+            }
+        }
+    }"#;
+
+    /// Test 1.1: Reject empty request (no source provided).
+    #[tokio::test]
+    async fn test_import_collection_rejects_empty_request() {
+        let request = ImportCollectionRequest {
+            url: None,
+            file_path: None,
+            inline_content: None,
+            display_name: None,
+            repo_root: None,
+            spec_path: None,
+            ref_name: None,
+        };
+        let result = import_collection_inner(request).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "Must provide url, file_path, or inline_content"
+        );
+    }
+
+    /// Test 1.3: Inline import produces valid Collection.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_inline_produces_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            import_collection_inner(request).await
+        })
+        .await;
+
+        let collection = result.unwrap();
+        assert_eq!(
+            collection.source.source_type,
+            crate::domain::collection::SourceType::Openapi
+        );
+        assert!(collection.source.hash.is_some());
+        assert!(collection.source.spec_version.is_some());
+        assert!(!collection.source.fetched_at.is_empty());
+        assert!(!collection.requests.is_empty());
+    }
+
+    /// Test 1.3b: File import reads from filesystem.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_file_produces_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        let spec_file = temp_dir.path().join("test_spec.json");
+        std::fs::write(&spec_file, MINIMAL_OPENAPI).unwrap();
+
+        let collections_dir = TempDir::new().unwrap();
+        let result =
+            with_collections_dir_override_async(collections_dir.path().to_path_buf(), || async {
+                let request = ImportCollectionRequest {
+                    url: None,
+                    file_path: Some(spec_file.to_string_lossy().to_string()),
+                    inline_content: None,
+                    display_name: None,
+                    repo_root: None,
+                    spec_path: None,
+                    ref_name: None,
+                };
+                import_collection_inner(request).await
+            })
+            .await;
+
+        let collection = result.unwrap();
+        assert_eq!(
+            collection.source.source_type,
+            crate::domain::collection::SourceType::Openapi
+        );
+    }
+
+    /// Test 1.4: Display name override.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_display_name_override() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: Some("My Custom API".to_string()),
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            import_collection_inner(request).await
+        })
+        .await;
+
+        let collection = result.unwrap();
+        assert_eq!(collection.metadata.name, "My Custom API");
+    }
+
+    /// Test 1.5: Repo tracking fields persisted.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_repo_tracking_fields() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: Some("../my-project".to_string()),
+                spec_path: Some("api/openapi.json".to_string()),
+                ref_name: Some("main".to_string()),
+            };
+            import_collection_inner(request).await
+        })
+        .await;
+
+        let collection = result.unwrap();
+        assert_eq!(
+            collection.source.repo_root,
+            Some("../my-project".to_string())
+        );
+        assert_eq!(
+            collection.source.spec_path,
+            Some("api/openapi.json".to_string())
+        );
+        assert_eq!(collection.source.ref_name, Some("main".to_string()));
+    }
+
+    /// Test 1.6: Collection persisted to YAML file.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_persists_to_disk() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            let collection = import_collection_inner(request).await?;
+            // Verify it's persisted by loading it back
+            let loaded = load_collection(&collection.id)?;
+            assert_eq!(loaded.id, collection.id);
+            assert_eq!(loaded.metadata.name, collection.metadata.name);
+            assert_eq!(loaded.requests.len(), collection.requests.len());
+            Ok::<Collection, String>(collection)
+        })
+        .await;
+
+        assert!(result.is_ok());
     }
 }

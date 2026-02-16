@@ -6,7 +6,12 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useMemo } from 'react';
 import { create } from 'zustand';
-import type { Collection, CollectionRequest, CollectionSummary } from '@/types/collection';
+import type {
+  Collection,
+  CollectionRequest,
+  CollectionSummary,
+  ImportCollectionRequest,
+} from '@/types/collection';
 import { sortRequests } from '@/types/collection';
 
 interface CollectionState {
@@ -21,6 +26,7 @@ interface CollectionState {
   loadCollections: () => Promise<void>;
   loadCollection: (id: string) => Promise<void>;
   addHttpbinCollection: () => Promise<Collection | null>;
+  importCollection: (request: ImportCollectionRequest) => Promise<Collection | null>;
   deleteCollection: (id: string) => Promise<void>;
   deleteRequest: (collectionId: string, requestId: string) => Promise<void>;
   renameCollection: (collectionId: string, newName: string) => Promise<void>;
@@ -95,6 +101,37 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     try {
       const collection = normalizeCollection(
         await invoke<Collection>('cmd_add_httpbin_collection')
+      );
+
+      set((state) => ({
+        collections: [...state.collections, collection],
+        summaries: [
+          ...state.summaries,
+          {
+            id: collection.id,
+            name: collection.metadata.name,
+            request_count: collection.requests.length,
+            source_type: collection.source.source_type,
+            modified_at: collection.metadata.modified_at,
+          },
+        ],
+        selectedCollectionId: collection.id,
+        expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
+        isLoading: false,
+      }));
+
+      return collection;
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+      return null;
+    }
+  },
+
+  importCollection: async (request: ImportCollectionRequest): Promise<Collection | null> => {
+    set({ isLoading: true, error: null });
+    try {
+      const collection = normalizeCollection(
+        await invoke<Collection>('cmd_import_collection', { request })
       );
 
       set((state) => ({
