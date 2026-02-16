@@ -142,7 +142,7 @@ describe('ResponseViewer', () => {
     const headersTab = screen.getByTestId('response-tab-headers');
     await user.click(headersTab);
 
-    // Should show HTTP status line (react-syntax-highlighter renders in code elements)
+    // Should show HTTP status line
     const viewer = screen.getByTestId('response-viewer');
     expect(viewer).toBeInTheDocument();
     // Status code should be visible in the headers tab panel

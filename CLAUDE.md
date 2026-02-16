@@ -4,7 +4,9 @@ Essential guidance for Claude Code when working with the runi codebase.
 
 ## Agent Persona
 
-You are an expert in **UX design for developer tools**, with deep knowledge of Rust/Tauri/React stacks, AI-native features, and MCP (Model Context Protocol, Nov 2025 spec).
+You are an expert in **UX design for developer tools**, with deep knowledge of
+Rust/Tauri/React stacks, AI-native features, and MCP (Model Context Protocol,
+Nov 2025 spec).
 
 **Your approach:**
 
@@ -17,7 +19,8 @@ You are an expert in **UX design for developer tools**, with deep knowledge of R
 
 ## Product Context
 
-runi is an **API comprehension layer for the AI age**. It starts as a familiar HTTP client and progressively reveals intelligence features.
+runi is an **API comprehension layer for the AI age**. It starts as a familiar
+HTTP client and progressively reveals intelligence features.
 
 **The dual identity:**
 
@@ -28,19 +31,39 @@ runi is an **API comprehension layer for the AI age**. It starts as a familiar H
 
 **The brand philosophy:** _"Collapse uncertainty into truth"_
 
-**The visual tone:** Zen, calm, and book-like. Muted surfaces, soft contrast, and selective emphasis. Use color as a signal, not decoration.
+**The visual tone:** Zen, calm, and book-like. Muted surfaces, soft contrast,
+and selective emphasis. Use color as a signal, not decoration.
 
 > **Planning Documents:** Access design and planning documents via MCP tools (separate repository at `../runi-planning-docs/`):
 >
 > **Use the runi Planning MCP (server from `.mcp.json`, e.g. `runi-Planning`) with `process_doc` and `process_docs`:**
 >
 > - **Read a document:** `process_doc({ path: 'VISION.md', code: 'doc.content' })`
-> - **Single-doc query:** `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractFeatures(doc.content).filter(f => f.status === 'GAP')" })`
-> - **Multi-doc query:** `process_docs({ pattern: 'plans/*/*-plan.md', code: "docs.map(d => ({ name: extractFrontmatter(d.content).meta.name, featureCount: extractFeatures(d.content).length }))" })`
+> - **Single-doc query:** <!-- markdownlint-disable-line MD013 -->
+>   `process_doc({ path: 'plans/0018-component-design-principles-audit/plan.md', code: "extractFeatures(doc.content).filter(f => f.status === 'GAP')" })` <!-- markdownlint-disable-line MD013 -->
+> - **Multi-doc query:** <!-- markdownlint-disable-line MD013 -->
+>   `process_docs({ pattern: 'plans/*/*-plan.md', code: "docs.map(d => ({ name: extractFrontmatter(d.content).meta.name, featureCount: extractFeatures(d.content).length }))" })` <!-- markdownlint-disable-line MD013 -->
 >
-> **Key documents:** `VISION.md`, `runi-design-vision-v8.1.md`, `DESIGN_IDEOLOGY.md`, `addendums/001-ai-architecture.md`, `addendums/002-adoption-positioning.md`, `addendums/003-enterprise-mcp-strategy.md`, `next-frontier-in-api.md`, `research/competitor-analysis.md`, `MANIFEST.md`, `plans/0018-component-design-principles-audit/plan.md`
+> **Key documents:** `VISION.md`, `runi-design-vision-v8.1.md`, <!-- markdownlint-disable-line MD013 -->
+> `DESIGN_IDEOLOGY.md`, `addendums/001-ai-architecture.md`,
+> `addendums/002-adoption-positioning.md`,
+> `addendums/003-enterprise-mcp-strategy.md`,
+> `next-frontier-in-api.md`, `research/competitor-analysis.md`,
+> `MANIFEST.md`, `plans/0018-component-design-principles-audit/plan.md`
 >
-> **Example:** `process_doc({ path: 'VISION.md', code: 'doc.content' })` or `process_doc({ path: 'DESIGN_IDEOLOGY.md', code: 'doc.content' })`
+> **Example:** `process_doc({ path: 'VISION.md', code: 'doc.content' })` <!-- markdownlint-disable-line MD013 -->
+> or `process_doc({ path: 'DESIGN_IDEOLOGY.md', code: 'doc.content' })`
+
+---
+
+## Project Status: Alpha
+
+runi is in **alpha**. There are no production users and no backwards-compatibility obligations.
+
+- **Break anything**: APIs, schemas, component interfaces — all subject to change without migration paths.
+- **No deprecation dance**: Remove, rename, or restructure freely. No shims, no feature flags for old behavior.
+- **Speed over ceremony**: Ship fast, learn fast. Stabilize interfaces only when they've proven correct through use.
+- **Delete boldly**: If something isn't earning its keep, rip it out.
 
 ---
 
@@ -143,7 +166,9 @@ runi/
 
 ## Coding Standards
 
-> **Pre-implementation checklist:** Run `/impl-discipline` before every implementation task. It enforces TDD, component reuse, semantic tokens, accessibility, motion standards, and contravention fixes.
+> **Pre-implementation checklist:** Run `/impl-discipline` before every
+> implementation task. It enforces TDD, component reuse, semantic tokens,
+> accessibility, motion standards, and contravention fixes.
 
 ### Rust
 
@@ -166,7 +191,11 @@ runi/
 
 ### MCP Accessibility
 
-Every UI action must be MCP-accessible — AI is a native co-driver. If a user can do it via UI, AI must be able to do it via MCP tool. Run `/impl-discipline` for the full checklist (discipline #7). See `.claude/skills/runi-architecture/SKILL.md` → "MCP-First Implementation" for the pattern.
+Every UI action must be MCP-accessible — AI is a native co-driver. If a user
+can do it via UI, AI must be able to do it via MCP tool. Run `/impl-discipline`
+for the full checklist (discipline #7). See
+`.claude/skills/runi-architecture/SKILL.md` → "MCP-First Implementation"
+for the pattern.
 
 ### Component Pattern
 
@@ -240,8 +269,12 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 6. **Never surface errors silently** — Always display Rust errors in UI
 7. **Never use `any` type** — TypeScript strict mode, explicit types required
 8. **Never use class components** — Functional components only
-9. **Never create files unless explicitly requested** — Prefer editing existing files; do not create documentation, analysis, or planning files without explicit user direction
-10. **Never create ephemeral files in tracked directories** — For analysis, planning, or intermediary work that must be written to disk, use `.tmp/` (git-ignored); delete when no longer needed
+9. **Never create files unless explicitly requested** — Prefer editing existing
+   files; do not create documentation, analysis, or planning files without
+   explicit user direction
+10. **Never create ephemeral files in tracked directories** — For analysis,
+    planning, or intermediary work that must be written to disk, use `.tmp/`
+    (git-ignored); delete when no longer needed
 
 ---
 
@@ -276,6 +309,13 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 3. Refactor while tests stay green
 4. Commit only when `just ci` passes
 
+**Validation Requirements:**
+
+- Never claim work is "complete" without running tests and showing output
+- Never claim code "works" without test evidence
+- Challenge your own assertions — if you say "it works", prove it with tests
+- If tests don't exist, the feature doesn't exist — code without tests is incomplete
+
 **Test Types:**
 
 - **Unit tests**: Always required (≥85% coverage)
@@ -291,9 +331,20 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 - Feature requirements include test specifications with Gherkin scenarios
 - Tests are written as part of implementation, not generated afterward
 
+**Pre-completion Checklist:**
+
+Before completing any task, verify:
+
+- Have I written tests FIRST and shown they pass?
+- Have I run ALL existing tests to ensure nothing broke?
+- Can I prove this works with test output, not just assertions?
+- Does `just ci` pass?
+
 **Test Selectors (CRITICAL):**
 
-- **Always use `data-test-id` attributes** for test selectors - never use generic selectors like `getByText`, `getByRole`, or `getByLabel` for component identification
+- **Always use `data-test-id` attributes** for test selectors - never use
+  generic selectors like `getByText`, `getByRole`, or `getByLabel` for
+  component identification
 - `data-test-id` makes tests resilient to UI changes (text, styling, structure)
 - Components must include `data-test-id` attributes on all interactive elements and key test targets
 - Test files must use `getByTestId` or `screen.getByTestId` for finding elements
@@ -356,7 +407,10 @@ When creating or updating components:
 
 ### Focus Ring Standard
 
-All interactive elements must use consistent focus ring styling. Use `focusRingClasses` from `@/utils/accessibility` for all interactive focus indicators (2px ring using theme token `--color-ring`, 2px offset, ring-offset-bg-app); use `focusWithVisibility()` for programmatic focus.
+All interactive elements must use consistent focus ring styling. Use
+`focusRingClasses` from `@/utils/accessibility` for all interactive focus
+indicators (2px ring using theme token `--color-ring`, 2px offset,
+ring-offset-bg-app); use `focusWithVisibility()` for programmatic focus.
 
 - **Color**: theme token `--color-ring` (aligns with design system: "Blue—action, selection, focus")
 - **Width**: `2px` (`ring-2`)
@@ -366,7 +420,9 @@ All interactive elements must use consistent focus ring styling. Use `focusRingC
 
 **Reusable Utility**: Use `focusRingClasses` from `@/utils/accessibility` for consistency.
 
-**Hover-Only Elements**: Use `useFocusVisible` hook from `@/utils/accessibility` for elements that are hidden by default and shown on hover, but must be visible when focused.
+**Hover-Only Elements**: Use `useFocusVisible` hook from
+`@/utils/accessibility` for elements that are hidden by default and shown on
+hover, but must be visible when focused.
 
 ### Common Patterns
 
@@ -408,13 +464,16 @@ All interactive elements must use consistent focus ring styling. Use `focusRingC
 
 ## Storybook Best Practices
 
-Stories are **visual documentation** and **interactive test cases**. All 62+ story files include play functions that test component interactions, accessibility, and visual states.
+Stories are **visual documentation** and **interactive test cases**. All 62+
+story files include play functions that test component interactions,
+accessibility, and visual states.
 
 **Status**: ✅ **Complete** - All stories have play functions, testing utilities are in place, and templates are available.
 
 **Do:**
 
-- **Use controls for state variations** instead of separate stories - One Playground story per component with controls covers most cases
+- **Use controls for state variations** instead of separate stories - One
+  Playground story per component with controls covers most cases
 - Create stories that showcase component states and variations (via controls, not separate stories)
 - Use `play` functions for interaction testing (keyboard navigation, user flows, state changes)
 - Keep stories minimal and focused (1 concept per story)
@@ -426,7 +485,8 @@ Stories are **visual documentation** and **interactive test cases**. All 62+ sto
 
 **Don't:**
 
-- **Create separate stories for every prop combination** - Use controls instead (we consolidated from 500+ stories to 50-75 by using controls)
+- **Create separate stories for every prop combination** - Use controls
+  instead (we consolidated from 500+ stories to 50-75 by using controls)
 - Put performance tests in stories (use `*.test.tsx` files instead)
 - Create stories with complex automated test logic (loops, timing, etc.)
 - Duplicate unit test coverage in stories
@@ -547,7 +607,9 @@ test(auth): add bearer token validation tests
 
 ### Creating Pull Requests
 
-Use `/pr-create` command to create pull requests with comprehensive descriptions. See `.claude/commands/pr-create.md` for full details including PR description template, title format, and agent detection.
+Use `/pr-create` command to create pull requests with comprehensive
+descriptions. See `.claude/commands/pr-create.md` for full details including
+PR description template, title format, and agent detection.
 
 ### Fixing PR Check Failures
 
@@ -617,7 +679,9 @@ Use `/pr-check-fixes` to systematically fix failing CI checks. See `.claude/comm
 
 ### Managing PR Comments
 
-Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `.claude/commands/pr-comments.md` for full details including process, reply formats, and acceptance criteria.
+Use `/pr-comments` to fetch, review, address, and resolve PR comments. See
+`.claude/commands/pr-comments.md` for full details including process, reply
+formats, and acceptance criteria.
 
 ---
 
@@ -630,7 +694,11 @@ Use `/pr-comments` to fetch, review, address, and resolve PR comments. See `.cla
 5. **Progressive disclosure:** Features reveal based on user behavior, not menus
 6. **MCP-powered:** Support MCP 2025-11-25 spec (async ops, elicitation)
 
-**Core Architectural Patterns:** See `.claude/skills/runi-architecture/SKILL.md` for detailed patterns including event-driven architecture, loose coupling, MCP integration, color/elevation layering, and layer-specific patterns (React/TypeScript frontend, Rust/Tauri backend).
+**Core Architectural Patterns:** See
+`.claude/skills/runi-architecture/SKILL.md` for detailed patterns including
+event-driven architecture, loose coupling, MCP integration, color/elevation
+layering, and layer-specific patterns (React/TypeScript frontend,
+Rust/Tauri backend).
 
 ---
 
@@ -702,6 +770,17 @@ Intelligence communicates through consistent visual signals:
 - Can be upgraded to Motion+ Carousel for smoother scrolling if needed
 - Motion+ patterns available for future enhancements
 
+## Communication Style
+
+- No emojis unless explicitly requested
+- Be concise: lead with answer, use bullet points
+- Never make things up — ask if unsure
+- Challenge your own assertions — if you claim something works, prove it
+- Never claim completion without test evidence
+- Show test output, not just code — tests are proof, code is promise
+
+---
+
 ## References
 
 - [Tauri v2 Docs](https://v2.tauri.app/)
@@ -738,7 +817,7 @@ The `/implement-feature` skill intelligently analyzes task scope and decides bet
 
 **Composition decision tree:**
 
-```
+```text
 Agent spec files analysis:
 ├── All files in src/ only?
 │   ├── Has logic/state/events? → frontend-developer (single)

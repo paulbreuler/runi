@@ -6,6 +6,7 @@
 import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { EditorView } from '@codemirror/view';
 import { RequestBuilder } from './RequestBuilder';
 import { useRequestStore } from '@/stores/useRequestStore';
 
@@ -171,10 +172,9 @@ describe('RequestBuilder', () => {
 
     const bodyEditor = await screen.findByTestId('code-editor');
     expect(bodyEditor).toBeInTheDocument();
-    expect(await screen.findByTestId('code-editor-syntax-layer')).toBeInTheDocument();
-    expect(
-      screen.getByTestId('code-editor-syntax-layer').querySelector('[data-language="json"]')
-    ).toBeTruthy();
+    const cmContainer = await screen.findByTestId('code-editor-cm-container');
+    expect(cmContainer).toBeInTheDocument();
+    expect(cmContainer).toHaveAttribute('data-language', 'json');
   });
 
   it('updates body when typing in body editor', async () => {
@@ -185,9 +185,16 @@ describe('RequestBuilder', () => {
     const bodyTab = screen.getByTestId('request-tab-body');
     await user.click(bodyTab);
 
-    const bodyTextarea = await screen.findByTestId('code-editor-textarea');
+    const cmContainer = await screen.findByTestId('code-editor-cm-container');
+    const cmEditor = cmContainer.querySelector<HTMLElement>('.cm-editor');
+    expect(cmEditor).not.toBeNull();
+    const view = EditorView.findFromDOM(cmEditor!);
+    expect(view).not.toBeNull();
+
     act(() => {
-      fireEvent.change(bodyTextarea, { target: { value: '{"test": true}' } });
+      view!.dispatch({
+        changes: { from: 0, to: view!.state.doc.length, insert: '{"test": true}' },
+      });
     });
 
     expect(mockSetBody).toHaveBeenCalledWith('{"test": true}');
@@ -258,9 +265,16 @@ describe('RequestBuilder', () => {
       const bodyTab = screen.getByTestId('request-tab-body');
       await user.click(bodyTab);
 
-      const bodyTextarea = await screen.findByTestId('code-editor-textarea');
+      const cmContainer = await screen.findByTestId('code-editor-cm-container');
+      const cmEditor = cmContainer.querySelector<HTMLElement>('.cm-editor');
+      expect(cmEditor).not.toBeNull();
+      const view = EditorView.findFromDOM(cmEditor!);
+      expect(view).not.toBeNull();
+
       act(() => {
-        fireEvent.change(bodyTextarea, { target: { value: '{"newKey": "newValue"}' } });
+        view!.dispatch({
+          changes: { from: 0, to: view!.state.doc.length, insert: '{"newKey": "newValue"}' },
+        });
       });
 
       expect(mockSetBody).toHaveBeenCalledWith('{"newKey": "newValue"}');

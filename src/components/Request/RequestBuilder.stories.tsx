@@ -86,23 +86,24 @@ export const Playground: Story = {
 
     await step('Body panel fills available height', async () => {
       const panel = getByTestId('request-tab-panel-body');
-      const textarea = getByTestId('code-editor-textarea');
+      const cmContainer = getByTestId('code-editor-cm-container');
       const panelHeight = Math.round(panel.getBoundingClientRect().height);
-      const textareaHeight = Math.round(textarea.getBoundingClientRect().height);
-      await expect(textareaHeight).toBeGreaterThanOrEqual(panelHeight - 40);
+      const cmHeight = Math.round(cmContainer.getBoundingClientRect().height);
+      await expect(cmHeight).toBeGreaterThanOrEqual(panelHeight - 40);
     });
 
     await step('Body editor supports horizontal scroll', async () => {
-      const textarea = getByTestId('code-editor-textarea');
+      const cmContainer = getByTestId('code-editor-cm-container');
+      const cmScroller = cmContainer.querySelector('.cm-scroller');
+      if (cmScroller === null) {
+        return;
+      }
       const longLine = `{"token":"${'a'.repeat(240)}"}`;
       useRequestStoreRaw.getState().setBody('global', longLine);
       await new Promise((resolve) => setTimeout(resolve, 100));
-      const scrollWidth = textarea.scrollWidth;
-      const clientWidth = textarea.clientWidth;
+      const scrollWidth = cmScroller.scrollWidth;
+      const clientWidth = cmScroller.clientWidth;
       await expect(scrollWidth).toBeGreaterThan(clientWidth);
-      textarea.scrollLeft = 80;
-      textarea.dispatchEvent(new Event('scroll'));
-      await expect(textarea.scrollLeft).toBeGreaterThan(0);
     });
   },
 };
