@@ -3,17 +3,18 @@
 
 // Tauri command handlers
 
+use crate::application::import_service::{ImportOverrides, ImportService};
 use crate::application::proxy_service::ProxyService;
 use crate::domain::canvas_state::CanvasStateSnapshot;
 use crate::domain::collection::Collection;
+use crate::domain::collection::spec_port::SpecSource;
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::models::HelloWorldResponse;
 use crate::infrastructure::mcp::events::TauriEventEmitter;
-use crate::infrastructure::spec::converter::convert_to_collection;
-use crate::infrastructure::spec::fetcher::fetch_openapi_spec;
-use crate::infrastructure::spec::parser::parse_openapi_spec;
+use crate::infrastructure::spec::http_fetcher::HttpContentFetcher;
+use crate::infrastructure::spec::openapi_parser::OpenApiParser;
 use crate::infrastructure::storage::collection_store::{
     CollectionSummary, delete_collection, list_collections, load_collection, save_collection,
 };
@@ -410,12 +411,16 @@ pub async fn cmd_rename_request(
 
 /// Fetch, parse, and save the httpbin.org collection.
 ///
+/// Uses `ImportService` with pluggable parsers for format detection.
 /// Core logic extracted from the Tauri command for testability (no `AppHandle` needed).
 async fn add_httpbin_collection_inner() -> Result<Collection, String> {
-    let fetch_result = fetch_openapi_spec(HTTPBIN_SPEC_URL).await?;
-    let parsed = parse_openapi_spec(&fetch_result.content)?;
-    let collection =
-        convert_to_collection(&parsed, &fetch_result.content, &fetch_result.source_url);
+    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let collection = service
+        .import(
+            SpecSource::Url(HTTPBIN_SPEC_URL.to_string()),
+            ImportOverrides::default(),
+        )
+        .await?;
     save_collection(&collection)?;
     Ok(collection)
 }

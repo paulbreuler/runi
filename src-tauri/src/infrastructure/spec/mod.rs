@@ -1,6 +1,10 @@
-//! `OpenAPI` spec processing pipeline.
+//! Spec processing pipeline with pluggable format support.
 //!
-//! Flow: fetch → parse → convert → collection
+//! Architecture: Hexagonal ports (domain) + adapters (infrastructure).
+//!
+//! - `openapi_parser`: `SpecParser` adapter for `OpenAPI` 3.x / Swagger 2.0
+//! - `http_fetcher`: `ContentFetcher` adapter for HTTP, file, and inline sources
+//! - `parser`, `converter`, `fetcher`: Internal implementation details
 //!
 //! Key differentiators vs competitors:
 //! - Hash tracking for drift detection
@@ -12,6 +16,8 @@
 pub mod converter;
 pub mod fetcher;
 pub mod hasher;
+pub mod http_fetcher;
+pub mod openapi_parser;
 pub mod openapi_types;
 pub mod parser;
 pub mod streaming;

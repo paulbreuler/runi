@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::openapi_types::FetchResult;
+use crate::domain::collection::spec_port::FetchResult;
 use std::time::Duration;
 
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";

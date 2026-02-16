@@ -11,6 +11,7 @@
 pub mod binding;
 pub mod intelligence;
 pub mod source;
+pub mod spec_port;
 pub mod types;
 
 #[allow(unused_imports)]
@@ -19,6 +20,8 @@ pub use binding::*;
 pub use intelligence::*;
 #[allow(unused_imports)]
 pub use source::*;
+#[allow(unused_imports)]
+pub use spec_port::*;
 #[allow(unused_imports)]
 pub use types::*;
 

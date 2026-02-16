@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
 use super::openapi_types::{
-    ParameterLocation, ParsedOperation, ParsedParameter, ParsedSpec, Server,
+    OpenApiParameterLocation, OpenApiParsedOperation, OpenApiParsedParameter, OpenApiParsedSpec,
+    OpenApiServer,
 };
 use super::streaming::is_streaming_operation;
 use openapiv3::OpenAPI;
@@ -18,7 +19,7 @@ use serde_json::Value;
 /// - Generate operationId if missing (`method_path` format)
 /// - Extract all parameter locations
 /// - Detect streaming from produces/responses
-pub fn parse_openapi_spec(content: &str) -> Result<ParsedSpec, String> {
+pub fn parse_openapi_spec(content: &str) -> Result<OpenApiParsedSpec, String> {
     let doc: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
     validate_openapi_value(&doc)?;
 
@@ -45,7 +46,7 @@ pub fn parse_openapi_spec(content: &str) -> Result<ParsedSpec, String> {
     // Extract operations
     let operations = parse_operations(&doc)?;
 
-    Ok(ParsedSpec {
+    Ok(OpenApiParsedSpec {
         title,
         version,
         description,
@@ -74,14 +75,14 @@ fn validate_openapi_value(doc: &Value) -> Result<(), String> {
     Err("Missing OpenAPI or Swagger version field".to_string())
 }
 
-fn parse_servers(doc: &Value) -> Vec<Server> {
+fn parse_servers(doc: &Value) -> Vec<OpenApiServer> {
     let mut servers = Vec::new();
 
     // OpenAPI 3.x servers array
     if let Some(arr) = doc.get("servers").and_then(|v| v.as_array()) {
         for server in arr {
             if let Some(url) = server.get("url").and_then(|v| v.as_str()) {
-                servers.push(Server {
+                servers.push(OpenApiServer {
                     url: url.to_string(),
                     description: server
                         .get("description")
@@ -104,7 +105,7 @@ fn parse_servers(doc: &Value) -> Vec<Server> {
                 .and_then(|arr| arr.first())
                 .and_then(|v| v.as_str())
                 .unwrap_or("https");
-            servers.push(Server {
+            servers.push(OpenApiServer {
                 url: format!("{scheme}://{host}{base}"),
                 description: None,
             });
@@ -114,7 +115,7 @@ fn parse_servers(doc: &Value) -> Vec<Server> {
     servers
 }
 
-fn parse_operations(doc: &Value) -> Result<Vec<ParsedOperation>, String> {
+fn parse_operations(doc: &Value) -> Result<Vec<OpenApiParsedOperation>, String> {
     let paths = doc.get("paths").ok_or("Missing 'paths' object")?;
     let paths_obj = paths.as_object().ok_or("'paths' is not an object")?;
 
@@ -136,7 +137,7 @@ fn parse_operations(doc: &Value) -> Result<Vec<ParsedOperation>, String> {
     Ok(operations)
 }
 
-fn parse_operation(path: &str, method: &str, op: &Value) -> ParsedOperation {
+fn parse_operation(path: &str, method: &str, op: &Value) -> OpenApiParsedOperation {
     // Generate operationId if missing
     let operation_id = op
         .get("operationId")
@@ -166,7 +167,7 @@ fn parse_operation(path: &str, method: &str, op: &Value) -> ParsedOperation {
         .unwrap_or(false);
     let is_streaming = is_streaming_operation(op);
 
-    ParsedOperation {
+    OpenApiParsedOperation {
         operation_id,
         path: path.to_string(),
         method: method.to_uppercase(),
@@ -179,7 +180,7 @@ fn parse_operation(path: &str, method: &str, op: &Value) -> ParsedOperation {
     }
 }
 
-fn parse_parameters(op: &Value) -> Vec<ParsedParameter> {
+fn parse_parameters(op: &Value) -> Vec<OpenApiParsedParameter> {
     let Some(params) = op.get("parameters").and_then(|v| v.as_array()) else {
         return Vec::new();
     };
@@ -189,13 +190,13 @@ fn parse_parameters(op: &Value) -> Vec<ParsedParameter> {
         .filter_map(|p| {
             let name = p.get("name").and_then(|v| v.as_str())?;
             let location = match p.get("in").and_then(|v| v.as_str())? {
-                "path" => ParameterLocation::Path,
-                "query" => ParameterLocation::Query,
-                "header" => ParameterLocation::Header,
+                "path" => OpenApiParameterLocation::Path,
+                "query" => OpenApiParameterLocation::Query,
+                "header" => OpenApiParameterLocation::Header,
                 _ => return None,
             };
 
-            Some(ParsedParameter {
+            Some(OpenApiParsedParameter {
                 name: name.to_string(),
                 location,
                 required: p.get("required").and_then(Value::as_bool).unwrap_or(false),
@@ -326,7 +327,7 @@ mod tests {
         assert_eq!(result.operations[0].parameters[0].name, "limit");
         assert_eq!(
             result.operations[0].parameters[0].location,
-            ParameterLocation::Query
+            OpenApiParameterLocation::Query
         );
     }
 

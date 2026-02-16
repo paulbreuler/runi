@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use super::hasher::compute_spec_hash;
-use super::openapi_types::{ParameterLocation, ParsedParameter, ParsedSpec};
+use super::openapi_types::{OpenApiParameterLocation, OpenApiParsedParameter, OpenApiParsedSpec};
 use crate::domain::collection::{
     Collection, CollectionMetadata, CollectionRequest, CollectionSource, IntelligenceMetadata,
     RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType, SpecBinding,
@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 /// - Uses `BTreeMap` for headers (deterministic)
 /// - Adds `seq` field for ordering
 pub fn convert_to_collection(
-    parsed: &ParsedSpec,
+    parsed: &OpenApiParsedSpec,
     raw_content: &str,
     source_url: &str,
 ) -> Collection {
@@ -105,10 +105,10 @@ fn join_url(base_url: &str, path: &str) -> String {
     format!("{normalized_base}/{normalized_path}")
 }
 
-fn extract_query_params(parameters: &[ParsedParameter]) -> Vec<RequestParam> {
+fn extract_query_params(parameters: &[OpenApiParsedParameter]) -> Vec<RequestParam> {
     parameters
         .iter()
-        .filter(|p| p.location == ParameterLocation::Query)
+        .filter(|p| p.location == OpenApiParameterLocation::Query)
         .map(|p| RequestParam {
             key: p.name.clone(),
             value: p.default_value.clone().unwrap_or_default(),
@@ -121,17 +121,18 @@ fn extract_query_params(parameters: &[ParsedParameter]) -> Vec<RequestParam> {
 mod tests {
     use super::*;
     use crate::domain::collection::SourceType;
+    use crate::infrastructure::spec::openapi_types::{OpenApiParsedOperation, OpenApiServer};
 
-    fn minimal_parsed_spec() -> ParsedSpec {
-        ParsedSpec {
+    fn minimal_parsed_spec() -> OpenApiParsedSpec {
+        OpenApiParsedSpec {
             title: "Test API".to_string(),
             version: "1.0.0".to_string(),
             description: Some("Test description".to_string()),
-            servers: vec![super::super::openapi_types::Server {
+            servers: vec![OpenApiServer {
                 url: "https://api.test.com".to_string(),
                 description: None,
             }],
-            operations: vec![super::super::openapi_types::ParsedOperation {
+            operations: vec![OpenApiParsedOperation {
                 operation_id: "getUsers".to_string(),
                 path: "/users".to_string(),
                 method: "GET".to_string(),
@@ -180,19 +181,17 @@ mod tests {
     #[test]
     fn test_convert_adds_seq_for_ordering() {
         let mut parsed = minimal_parsed_spec();
-        parsed
-            .operations
-            .push(super::super::openapi_types::ParsedOperation {
-                operation_id: "createUser".to_string(),
-                path: "/users".to_string(),
-                method: "POST".to_string(),
-                summary: Some("Create user".to_string()),
-                description: None,
-                tags: vec![],
-                parameters: vec![],
-                deprecated: false,
-                is_streaming: false,
-            });
+        parsed.operations.push(OpenApiParsedOperation {
+            operation_id: "createUser".to_string(),
+            path: "/users".to_string(),
+            method: "POST".to_string(),
+            summary: Some("Create user".to_string()),
+            description: None,
+            tags: vec![],
+            parameters: vec![],
+            deprecated: false,
+            is_streaming: false,
+        });
 
         let collection = convert_to_collection(&parsed, "{}", "https://test.com/spec.json");
         assert_eq!(collection.requests[0].seq, 1);
