@@ -85,7 +85,7 @@ pub async fn load_mcp_servers_config(config_dir: &Path) -> Result<McpServersConf
         .map_err(|e| format!("Failed to read MCP servers config {}: {e}", path.display()))?;
 
     let config: McpServersConfig =
-        serde_yml::from_str(&content).map_err(|e| format!("Invalid MCP servers YAML: {e}"))?;
+        serde_yaml_ng::from_str(&content).map_err(|e| format!("Invalid MCP servers YAML: {e}"))?;
 
     validate_config(&config)?;
     Ok(config)
@@ -109,7 +109,7 @@ servers:
       FOO: bar
     enabled: true
 ";
-        let config: McpServersConfig = serde_yml::from_str(yaml).unwrap();
+        let config: McpServersConfig = serde_yaml_ng::from_str(yaml).unwrap();
         assert_eq!(config.servers.len(), 1);
         let server = &config.servers[0];
         assert_eq!(server.name, "test-server");
@@ -133,7 +133,7 @@ servers:
     command: python
     args: ['-m', 'mcp_server']
 ";
-        let config: McpServersConfig = serde_yml::from_str(yaml).unwrap();
+        let config: McpServersConfig = serde_yaml_ng::from_str(yaml).unwrap();
         assert_eq!(config.servers.len(), 2);
         assert_eq!(config.servers[0].name, "server-a");
         assert_eq!(config.servers[1].name, "server-b");
@@ -146,7 +146,7 @@ servers:
   - name: minimal
     command: echo
 ";
-        let config: McpServersConfig = serde_yml::from_str(yaml).unwrap();
+        let config: McpServersConfig = serde_yaml_ng::from_str(yaml).unwrap();
         let server = &config.servers[0];
         assert!(server.args.is_empty());
         assert!(server.env.is_empty());

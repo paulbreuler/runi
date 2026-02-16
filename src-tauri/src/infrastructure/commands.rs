@@ -3,29 +3,36 @@
 
 // Tauri command handlers
 
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::{Arc, LazyLock};
+
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use tauri::{Emitter, Manager};
+use tokio::sync::{Mutex, RwLock};
+use tracing::error;
+use ts_rs::TS;
+
+use crate::application::import_service::{ImportOverrides, ImportService};
 use crate::application::proxy_service::ProxyService;
 use crate::domain::canvas_state::CanvasStateSnapshot;
 use crate::domain::collection::Collection;
+use crate::domain::collection::spec_port::SpecSource;
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::models::HelloWorldResponse;
+use crate::infrastructure::git::GitCliAdapter;
 use crate::infrastructure::mcp::events::TauriEventEmitter;
-use crate::infrastructure::spec::converter::convert_to_collection;
-use crate::infrastructure::spec::fetcher::fetch_openapi_spec;
-use crate::infrastructure::spec::parser::parse_openapi_spec;
+use crate::infrastructure::spec::http_fetcher::HttpContentFetcher;
+use crate::infrastructure::spec::openapi_parser::OpenApiParser;
 use crate::infrastructure::storage::collection_store::{
     CollectionSummary, delete_collection, list_collections, load_collection, save_collection,
 };
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
-use serde_json::json;
-use std::sync::{Arc, LazyLock};
-use tauri::{Emitter, Manager};
-use tokio::sync::Mutex;
-use tokio::sync::RwLock;
-use tracing::error;
 
 /// Global history storage instance (in-memory by default).
 ///
@@ -45,6 +52,315 @@ static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
 pub type CanvasStateHandle = Arc<RwLock<CanvasStateSnapshot>>;
 
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
+
+/// Request payload for the generic import command.
+///
+/// Exactly one of `url`, `file_path`, or `inline_content` must be provided.
+/// Optional fields allow display-name overrides and git-tracking metadata.
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportCollectionRequest {
+    /// URL to fetch the spec from.
+    pub url: Option<String>,
+    /// Local filesystem path to the spec file.
+    pub file_path: Option<String>,
+    /// Raw spec content (for testing or piped input).
+    pub inline_content: Option<String>,
+    /// Override the collection display name.
+    pub display_name: Option<String>,
+    /// Git repo root for tracking.
+    pub repo_root: Option<String>,
+    /// Relative path to spec within repo.
+    pub spec_path: Option<String>,
+    /// Git ref (branch/tag/commit) being tracked.
+    pub ref_name: Option<String>,
+}
+
+/// Import a collection from any supported spec format.
+///
+/// Thin shell: validates input, constructs domain types, delegates to `ImportService`,
+/// persists via `CollectionStore`, and returns the result.
+///
+/// # Errors
+///
+/// Returns an error if no source is provided, the spec cannot be fetched/parsed,
+/// or the collection cannot be saved.
+pub async fn import_collection_inner(
+    request: ImportCollectionRequest,
+) -> Result<Collection, String> {
+    // Validate: exactly one source must be provided
+    let source = match (&request.url, &request.file_path, &request.inline_content) {
+        (Some(url), None, None) => SpecSource::Url(url.clone()),
+        (None, Some(path), None) => SpecSource::File(PathBuf::from(path)),
+        (None, None, Some(content)) => SpecSource::Inline(content.clone()),
+        _ => {
+            return Err(
+                "Must provide exactly one of url, file_path, or inline_content".to_string(),
+            );
+        }
+    };
+
+    let overrides = ImportOverrides {
+        display_name: request.display_name,
+        repo_root: request.repo_root,
+        spec_path: request.spec_path,
+        ref_name: request.ref_name,
+    };
+
+    let service = if overrides.repo_root.is_some() {
+        ImportService::with_git_metadata(
+            vec![Box::new(OpenApiParser)],
+            Box::new(HttpContentFetcher),
+            Box::new(GitCliAdapter),
+        )
+    } else {
+        ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher))
+    };
+    let collection = service.import(source, overrides).await?;
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Generic import command: import a collection from URL, file, or inline content.
+///
+/// Emits `collection:created` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_import_collection(
+    app: tauri::AppHandle,
+    request: ImportCollectionRequest,
+) -> Result<Collection, String> {
+    let collection = import_collection_inner(request).await?;
+    emit_collection_event(
+        &app,
+        "collection:created",
+        &Actor::User,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
+    Ok(collection)
+}
+
+/// Extract the path portion from a URL or template URL.
+///
+/// Handles various input formats:
+/// - Full URLs: `https://api.example.com/users` → `/users`
+/// - Template URLs: `{{baseUrl}}/users` → `/users`
+/// - Paths: `/users` → `/users` (passthrough)
+/// - Root URLs: `https://api.example.com` → `/`
+///
+/// This is used when building old endpoints from collection requests for drift detection,
+/// ensuring path-only comparisons match the new spec's path format.
+fn extract_path_from_url(url: &str) -> String {
+    let raw = {
+        // 1. If already starts with `/`, it's a path — return as-is
+        if url.starts_with('/') {
+            url.to_string()
+        }
+        // 2. If starts with `{{`, extract from first `/` after `}}`
+        else if url.starts_with("{{") {
+            url.find("}}").map_or_else(
+                || format!("/{url}"),
+                |end_idx| {
+                    let after_template = &url[end_idx + 2..];
+                    after_template.find('/').map_or_else(
+                        || format!("/{after_template}"),
+                        |slash_idx| after_template[slash_idx..].to_string(),
+                    )
+                },
+            )
+        }
+        // 3. If contains `://` (any scheme), extract path after authority
+        else if let Some(scheme_end) = url.find("://") {
+            let after_scheme = &url[scheme_end + 3..];
+            // Find first `/` after authority (host:port)
+            after_scheme.find('/').map_or_else(
+                || "/".to_string(),
+                |slash_idx| after_scheme[slash_idx..].to_string(),
+            )
+        }
+        // 4. Fallback: prepend `/` to make it a path
+        else {
+            format!("/{url}")
+        }
+    };
+
+    // Strip query string and fragment (OpenAPI paths never include these)
+    raw.split(['?', '#']).next().unwrap_or(&raw).to_string()
+}
+
+/// Refresh a collection's spec from its tracked source (core logic, no `AppHandle`).
+///
+/// Re-fetches the spec, computes hash for fast-path skip, then structural drift
+/// if content changed. Updates the collection's `source.hash` and `source.fetched_at`.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - Collection not found
+/// - Collection has no tracked spec source (no URL)
+/// - Re-fetch fails
+/// - Re-parse fails
+pub async fn refresh_collection_spec_inner(
+    collection_id: &str,
+    service: &ImportService,
+) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
+    use crate::domain::collection::drift::compute_drift;
+    use crate::domain::collection::spec_port::SpecSource;
+    use crate::infrastructure::spec::hasher::compute_spec_hash;
+
+    // 1. Load collection
+    let mut collection = load_collection(collection_id)?;
+
+    // 2. Validate has tracked source
+    let source_url = collection
+        .source
+        .url
+        .as_ref()
+        .ok_or_else(|| "Collection has no tracked spec source".to_string())?
+        .clone();
+
+    // 3. Re-fetch content
+    let fetch_result = service
+        .fetcher()
+        .fetch(&SpecSource::Url(source_url))
+        .await?;
+
+    // 4. Compute new hash — fast path if unchanged
+    let new_hash = format!("sha256:{}", compute_spec_hash(&fetch_result.content));
+    if collection.source.hash.as_deref() == Some(&new_hash) {
+        // Fast path: hash unchanged, but update metadata
+        let now = chrono::Utc::now();
+        collection.source.fetched_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
+        // Update source_commit if repo_root is tracked
+        if let Some(repo_root) = &collection.source.repo_root {
+            if let Some(sha) =
+                service.resolve_git_commit(repo_root, collection.source.ref_name.as_deref())
+            {
+                collection.source.source_commit = Some(sha);
+            }
+        }
+
+        save_collection(&collection)?;
+        return Ok(crate::domain::collection::drift::SpecRefreshResult {
+            changed: false,
+            operations_added: vec![],
+            operations_removed: vec![],
+            operations_changed: vec![],
+        });
+    }
+
+    // 5. Re-parse new content into ParsedSpec
+    let new_spec = service.parse_content(&fetch_result.content)?;
+
+    // 6. Reconstruct old spec endpoints from collection's requests
+    let old_endpoints: Vec<crate::domain::collection::spec_port::ParsedEndpoint> = collection
+        .requests
+        .iter()
+        .map(|req| {
+            // Use binding path/method if available, otherwise fall back to request fields
+            // Extract path portion from URL to ensure path-only comparison with new spec
+            let path = req
+                .binding
+                .path
+                .clone()
+                .unwrap_or_else(|| extract_path_from_url(&req.url));
+            let method = req
+                .binding
+                .method
+                .clone()
+                .unwrap_or_else(|| req.method.clone());
+
+            crate::domain::collection::spec_port::ParsedEndpoint {
+                operation_id: req.binding.operation_id.clone(),
+                method,
+                path,
+                summary: Some(req.name.clone()),
+                description: req.docs.clone(),
+                tags: req.tags.clone(),
+                parameters: req
+                    .params
+                    .iter()
+                    .map(|p| crate::domain::collection::spec_port::ParsedParameter {
+                        name: p.key.clone(),
+                        location: crate::domain::collection::spec_port::ParameterLocation::Query,
+                        required: false,
+                        schema_type: None,
+                        default_value: Some(p.value.clone()),
+                        description: None,
+                    })
+                    .collect(),
+                request_body: None,
+                deprecated: false,
+                is_streaming: req.is_streaming,
+            }
+        })
+        .collect();
+
+    let old_spec = crate::domain::collection::spec_port::ParsedSpec {
+        title: collection.metadata.name.clone(),
+        version: collection.source.spec_version.clone(),
+        description: collection.metadata.description.clone(),
+        base_urls: vec![],
+        endpoints: old_endpoints,
+        auth_schemes: vec![],
+        variables: std::collections::BTreeMap::new(),
+    };
+
+    // 7. Compute drift
+    let drift = compute_drift(&old_spec, &new_spec);
+
+    // 8. Update source metadata
+    let now = chrono::Utc::now();
+    collection.source.hash = Some(new_hash);
+    collection.source.fetched_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
+    // 8b. Update source_commit if repo_root is tracked
+    if let Some(repo_root) = &collection.source.repo_root {
+        if let Some(sha) =
+            service.resolve_git_commit(repo_root, collection.source.ref_name.as_deref())
+        {
+            collection.source.source_commit = Some(sha);
+        }
+    }
+
+    // 9. Persist
+    save_collection(&collection)?;
+
+    Ok(drift)
+}
+
+/// Refresh a collection's spec and compute drift delta.
+///
+/// Emits `collection:refreshed` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_refresh_collection_spec(
+    app: tauri::AppHandle,
+    collection_id: String,
+) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
+    // Check if collection has repo_root to decide if git adapter is needed
+    let needs_git = load_collection(&collection_id)
+        .map(|c| c.source.repo_root.is_some())
+        .unwrap_or(false);
+
+    let service = if needs_git {
+        ImportService::with_git_metadata(
+            vec![Box::new(OpenApiParser)],
+            Box::new(HttpContentFetcher),
+            Box::new(GitCliAdapter),
+        )
+    } else {
+        ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher))
+    };
+    let result = refresh_collection_spec_inner(&collection_id, &service).await?;
+    emit_collection_event(
+        &app,
+        "collection:refreshed",
+        &Actor::User,
+        json!({"id": &collection_id, "changed": result.changed}),
+    );
+    Ok(result)
+}
 
 /// Emit a collection event wrapped in an [`EventEnvelope`].
 fn emit_collection_event(
@@ -410,12 +726,16 @@ pub async fn cmd_rename_request(
 
 /// Fetch, parse, and save the httpbin.org collection.
 ///
+/// Uses `ImportService` with pluggable parsers for format detection.
 /// Core logic extracted from the Tauri command for testability (no `AppHandle` needed).
 async fn add_httpbin_collection_inner() -> Result<Collection, String> {
-    let fetch_result = fetch_openapi_spec(HTTPBIN_SPEC_URL).await?;
-    let parsed = parse_openapi_spec(&fetch_result.content)?;
-    let collection =
-        convert_to_collection(&parsed, &fetch_result.content, &fetch_result.source_url);
+    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let collection = service
+        .import(
+            SpecSource::Url(HTTPBIN_SPEC_URL.to_string()),
+            ImportOverrides::default(),
+        )
+        .await?;
     save_collection(&collection)?;
     Ok(collection)
 }
@@ -1087,11 +1407,92 @@ pub async fn sync_canvas_state(
     Ok(())
 }
 
+// ── Hurl test execution ──────────────────────────────────────────────
+
+/// Request payload for running a Hurl test suite.
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct RunHurlSuiteRequest {
+    /// Path to the `.hurl` file to execute.
+    pub hurl_file_path: String,
+    /// Optional collection ID for context.
+    pub collection_id: Option<String>,
+    /// Optional environment variables (e.g., `base_url`).
+    pub env_vars: Option<HashMap<String, String>>,
+}
+
+/// Result of running a Hurl test suite.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct HurlSuiteResult {
+    /// Process exit code (0 = success).
+    pub exit_code: i32,
+    /// Whether all tests passed.
+    pub passed: bool,
+    /// Total number of hurl entries executed.
+    pub test_count: u32,
+    /// Number of failed entries.
+    pub failure_count: u32,
+    /// Total duration in milliseconds.
+    #[ts(type = "number")]
+    pub duration_ms: u64,
+    /// Captured stdout from hurl.
+    pub stdout: String,
+    /// Captured stderr from hurl.
+    pub stderr: String,
+    /// The collection ID this suite was run against (if any).
+    pub collection_id: Option<String>,
+}
+
+/// Runs a Hurl test suite for a collection.
+///
+/// Builds a `TestRunConfig` from the request and delegates to `HurlRunner::run()`,
+/// which validates file existence and `.hurl` extension before execution.
+#[tauri::command]
+pub async fn cmd_run_hurl_suite(request: RunHurlSuiteRequest) -> Result<HurlSuiteResult, String> {
+    use crate::domain::collection::test_port::{TestRunConfig, TestRunner};
+    use crate::infrastructure::hurl::HurlRunner;
+
+    let RunHurlSuiteRequest {
+        hurl_file_path,
+        env_vars,
+        collection_id,
+    } = request;
+
+    let config = TestRunConfig {
+        file_path: hurl_file_path,
+        env_vars: env_vars.unwrap_or_default(),
+        timeout_secs: None,
+    };
+
+    // Run on a blocking thread since Command::output() blocks
+    let result = tokio::task::spawn_blocking(move || {
+        let runner = HurlRunner;
+        runner.run(&config)
+    })
+    .await
+    .map_err(|e| format!("Task join error: {e}"))??;
+
+    Ok(HurlSuiteResult {
+        exit_code: result.exit_code,
+        passed: result.passed,
+        test_count: result.test_count,
+        failure_count: result.failure_count,
+        duration_ms: result.duration_ms,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        collection_id,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::domain::http::{HttpResponse, RequestParams, RequestTiming};
     use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
+    use async_trait::async_trait;
     use serial_test::serial;
     use std::collections::HashMap;
     use tempfile::TempDir;
@@ -1766,5 +2167,645 @@ mod tests {
             assert_eq!(received.event_type, expected_type);
             assert_eq!(received.data["actor"], "ai");
         }
+    }
+
+    // ── cmd_import_collection tests ──────────────────────────────────
+
+    const MINIMAL_OPENAPI: &str = r#"{
+        "openapi": "3.0.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "paths": {
+            "/users": {
+                "get": {
+                    "operationId": "getUsers",
+                    "summary": "List users",
+                    "responses": {
+                        "200": {
+                            "description": "OK"
+                        }
+                    }
+                }
+            }
+        }
+    }"#;
+
+    /// Test 1.1: Reject empty request (no source provided).
+    #[tokio::test]
+    async fn test_import_collection_rejects_empty_request() {
+        let request = ImportCollectionRequest {
+            url: None,
+            file_path: None,
+            inline_content: None,
+            display_name: None,
+            repo_root: None,
+            spec_path: None,
+            ref_name: None,
+        };
+        let result = import_collection_inner(request).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            "Must provide exactly one of url, file_path, or inline_content"
+        );
+    }
+
+    /// Test 1.3: Inline import produces valid Collection.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_inline_produces_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            import_collection_inner(request).await
+        })
+        .await;
+
+        let collection = result.unwrap();
+        assert_eq!(
+            collection.source.source_type,
+            crate::domain::collection::SourceType::Openapi
+        );
+        assert!(collection.source.hash.is_some());
+        assert!(collection.source.spec_version.is_some());
+        assert!(!collection.source.fetched_at.is_empty());
+        assert!(!collection.requests.is_empty());
+    }
+
+    /// Test 1.3b: File import reads from filesystem.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_file_produces_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        let spec_file = temp_dir.path().join("test_spec.json");
+        std::fs::write(&spec_file, MINIMAL_OPENAPI).unwrap();
+
+        let collections_dir = TempDir::new().unwrap();
+        let result =
+            with_collections_dir_override_async(collections_dir.path().to_path_buf(), || async {
+                let request = ImportCollectionRequest {
+                    url: None,
+                    file_path: Some(spec_file.to_string_lossy().to_string()),
+                    inline_content: None,
+                    display_name: None,
+                    repo_root: None,
+                    spec_path: None,
+                    ref_name: None,
+                };
+                import_collection_inner(request).await
+            })
+            .await;
+
+        let collection = result.unwrap();
+        assert_eq!(
+            collection.source.source_type,
+            crate::domain::collection::SourceType::Openapi
+        );
+    }
+
+    /// Test 1.4: Display name override.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_display_name_override() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: Some("My Custom API".to_string()),
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            import_collection_inner(request).await
+        })
+        .await;
+
+        let collection = result.unwrap();
+        assert_eq!(collection.metadata.name, "My Custom API");
+    }
+
+    /// Test 1.5: Repo tracking fields persisted.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_repo_tracking_fields() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: Some("../my-project".to_string()),
+                spec_path: Some("api/openapi.json".to_string()),
+                ref_name: Some("main".to_string()),
+            };
+            import_collection_inner(request).await
+        })
+        .await;
+
+        let collection = result.unwrap();
+        assert_eq!(
+            collection.source.repo_root,
+            Some("../my-project".to_string())
+        );
+        assert_eq!(
+            collection.source.spec_path,
+            Some("api/openapi.json".to_string())
+        );
+        assert_eq!(collection.source.ref_name, Some("main".to_string()));
+    }
+
+    /// Test 1.6: Collection persisted to YAML file.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_persists_to_disk() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            let collection = import_collection_inner(request).await?;
+            // Verify it's persisted by loading it back
+            let loaded = load_collection(&collection.id)?;
+            assert_eq!(loaded.id, collection.id);
+            assert_eq!(loaded.metadata.name, collection.metadata.name);
+            assert_eq!(loaded.requests.len(), collection.requests.len());
+            Ok::<Collection, String>(collection)
+        })
+        .await;
+
+        assert!(result.is_ok());
+    }
+
+    // ── cmd_refresh_collection_spec tests ─────────────────────────────
+
+    /// Mock fetcher that returns configurable content for refresh tests.
+    struct ConfigurableMockFetcher {
+        content: String,
+    }
+
+    #[async_trait]
+    impl crate::domain::collection::spec_port::ContentFetcher for ConfigurableMockFetcher {
+        async fn fetch(
+            &self,
+            _source: &crate::domain::collection::spec_port::SpecSource,
+        ) -> Result<crate::domain::collection::spec_port::FetchResult, String> {
+            Ok(crate::domain::collection::spec_port::FetchResult {
+                content: self.content.clone(),
+                source_url: "https://example.com/spec.json".to_string(),
+                is_fallback: false,
+                fetched_at: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            })
+        }
+    }
+
+    fn make_refresh_service(content: &str) -> ImportService {
+        ImportService::new(
+            vec![Box::new(OpenApiParser)],
+            Box::new(ConfigurableMockFetcher {
+                content: content.to_string(),
+            }),
+        )
+    }
+
+    /// Helper: create and save a collection from inline `OpenAPI` content.
+    async fn import_and_save(content: &str) -> Collection {
+        let service = make_refresh_service(content);
+        let collection = service
+            .import(
+                crate::domain::collection::spec_port::SpecSource::Inline(content.to_string()),
+                ImportOverrides::default(),
+            )
+            .await
+            .unwrap();
+        save_collection(&collection).unwrap();
+        collection
+    }
+
+    const SPEC_V1: &str = r#"{
+        "openapi": "3.0.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "paths": {
+            "/users": {
+                "get": {
+                    "operationId": "getUsers",
+                    "summary": "List users",
+                    "responses": { "200": { "description": "OK" } }
+                }
+            },
+            "/users/{id}": {
+                "post": {
+                    "operationId": "createUser",
+                    "summary": "Create user",
+                    "responses": { "201": { "description": "Created" } }
+                }
+            }
+        }
+    }"#;
+
+    /// V2: adds DELETE /users/{id}, removes POST /users/{id}.
+    const SPEC_V2: &str = r#"{
+        "openapi": "3.0.0",
+        "info": { "title": "Test API", "version": "2.0.0" },
+        "paths": {
+            "/users": {
+                "get": {
+                    "operationId": "getUsers",
+                    "summary": "List all users",
+                    "parameters": [
+                        { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+                    ],
+                    "responses": { "200": { "description": "OK" } }
+                }
+            },
+            "/users/{id}": {
+                "delete": {
+                    "operationId": "deleteUser",
+                    "summary": "Delete user",
+                    "responses": { "204": { "description": "Deleted" } }
+                }
+            }
+        }
+    }"#;
+
+    /// Test 2B.7: Collection ID not found.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_collection_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner("nonexistent_id", &service).await;
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    /// Test 2B.1: Reject non-tracked collection (no source URL).
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_rejects_non_tracked_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Create a manual collection with no source URL
+            let collection = Collection::new("Manual API");
+            save_collection(&collection).unwrap();
+
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service).await;
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("no tracked spec source"));
+        })
+        .await;
+    }
+
+    /// Test 2B.2: No drift when hash matches.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_no_drift_when_hash_matches() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import with V1, then refresh with same content
+            let collection = import_and_save(SPEC_V1).await;
+
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+            assert!(!result.changed);
+            assert!(result.operations_added.is_empty());
+            assert!(result.operations_removed.is_empty());
+            assert!(result.operations_changed.is_empty());
+        })
+        .await;
+    }
+
+    /// Test 2B.3 + 2B.4 + 2B.5: Detect added, removed, and changed operations.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_detects_drift() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import with V1
+            let collection = import_and_save(SPEC_V1).await;
+
+            // Refresh with V2 (different content)
+            let service = make_refresh_service(SPEC_V2);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+
+            assert!(result.changed);
+
+            // Added: DELETE /users/{id}
+            assert!(
+                result
+                    .operations_added
+                    .iter()
+                    .any(|op| op.method == "DELETE" && op.path == "/users/{id}"),
+                "Should detect added DELETE /users/{{id}}: {:?}",
+                result.operations_added
+            );
+
+            // Removed: POST /users/{id}
+            assert!(
+                result
+                    .operations_removed
+                    .iter()
+                    .any(|op| op.method == "POST" && op.path == "/users/{id}"),
+                "Should detect removed POST /users/{{id}}: {:?}",
+                result.operations_removed
+            );
+
+            // Changed: GET /users (summary changed, parameter added)
+            let get_users_change = result
+                .operations_changed
+                .iter()
+                .find(|op| op.method == "GET" && op.path == "/users");
+            assert!(
+                get_users_change.is_some(),
+                "Should detect changed GET /users: {:?}",
+                result.operations_changed
+            );
+            let changes = &get_users_change.unwrap().changes;
+            assert!(changes.contains(&"summary".to_string()));
+            assert!(changes.contains(&"parameters".to_string()));
+        })
+        .await;
+    }
+
+    // ── Test 3A.7: Refresh updates source_commit ──
+
+    struct MockGitPort {
+        commit: String,
+    }
+
+    impl crate::domain::collection::git_port::GitMetadataPort for MockGitPort {
+        fn resolve_commit(
+            &self,
+            _repo_root: &str,
+            _ref_name: Option<&str>,
+        ) -> Result<String, String> {
+            Ok(self.commit.clone())
+        }
+    }
+
+    fn make_refresh_service_with_git(content: &str, commit: &str) -> ImportService {
+        ImportService::with_git_metadata(
+            vec![Box::new(OpenApiParser)],
+            Box::new(ConfigurableMockFetcher {
+                content: content.to_string(),
+            }),
+            Box::new(MockGitPort {
+                commit: commit.to_string(),
+            }),
+        )
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_updates_source_commit() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import with V1, setting repo_root so commit tracking is active
+            let old_sha = "a".repeat(40);
+            let service = make_refresh_service_with_git(SPEC_V1, &old_sha);
+            let collection = service
+                .import(
+                    crate::domain::collection::spec_port::SpecSource::Inline(SPEC_V1.to_string()),
+                    ImportOverrides {
+                        repo_root: Some("/some/repo".to_string()),
+                        ref_name: Some("main".to_string()),
+                        ..Default::default()
+                    },
+                )
+                .await
+                .unwrap();
+            save_collection(&collection).unwrap();
+
+            assert_eq!(collection.source.source_commit, Some(old_sha));
+
+            // Refresh with V2 content and a new commit SHA
+            let new_sha = "b".repeat(40);
+            let refresh_service = make_refresh_service_with_git(SPEC_V2, &new_sha);
+            let result = refresh_collection_spec_inner(&collection.id, &refresh_service)
+                .await
+                .unwrap();
+            assert!(result.changed);
+
+            // Verify persisted collection has updated source_commit
+            let updated = load_collection(&collection.id).unwrap();
+            assert_eq!(
+                updated.source.source_commit,
+                Some(new_sha),
+                "source_commit should be updated after refresh"
+            );
+        })
+        .await;
+    }
+
+    /// Test 2B.6: Hash and timestamp updated after refresh.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_updates_hash_and_timestamp() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = import_and_save(SPEC_V1).await;
+            let old_hash = collection.source.hash.clone();
+
+            // Refresh with V2 (different content = different hash)
+            let service = make_refresh_service(SPEC_V2);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+            assert!(result.changed);
+
+            // Load the persisted collection and verify updates
+            let updated = load_collection(&collection.id).unwrap();
+            assert_ne!(updated.source.hash, old_hash, "Hash should be updated");
+            assert!(
+                updated.source.hash.as_ref().unwrap().starts_with("sha256:"),
+                "Hash should have sha256 prefix"
+            );
+            // Verify fetched_at is a valid RFC 3339 timestamp with Z suffix
+            assert!(
+                updated.source.fetched_at.ends_with('Z'),
+                "fetched_at should be UTC with Z suffix"
+            );
+            assert_eq!(
+                updated.source.fetched_at.len(),
+                20,
+                "fetched_at should be in YYYY-MM-DDTHH:MM:SSZ format"
+            );
+        })
+        .await;
+    }
+
+    /// Test 2B.7: No false drift for unbound requests with full URLs.
+    ///
+    /// This test verifies the fix for the bug where unbound requests with full URLs
+    /// (e.g., `https://api.example.com/users`) were causing false positive drift
+    /// because the path comparison was comparing full URLs against path-only values
+    /// from the new spec (e.g., `/users`).
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_no_false_drift_for_unbound_full_urls() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import from spec
+            let mut collection = import_and_save(SPEC_V1).await;
+
+            // Simulate an unbound request by clearing binding.path and setting a full URL
+            if let Some(req) = collection.requests.first_mut() {
+                req.binding.path = None; // Clear binding
+                req.url = "https://api.example.com/users".to_string(); // Full URL
+            }
+            save_collection(&collection).unwrap();
+
+            // Refresh with same spec content
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+
+            // Should not detect false drift
+            assert!(
+                !result.changed,
+                "Should not detect drift when full URL path matches spec endpoint"
+            );
+            assert!(
+                result.operations_removed.is_empty(),
+                "Should not show GET /users as removed: {:?}",
+                result.operations_removed
+            );
+        })
+        .await;
+    }
+
+    /// Test 2B.8: No false drift for unbound requests with template URLs.
+    ///
+    /// Verifies that template URLs like `{{baseUrl}}/users` are handled correctly.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_no_false_drift_for_template_urls() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import from spec
+            let mut collection = import_and_save(SPEC_V1).await;
+
+            // Simulate an unbound request with a template URL
+            if let Some(req) = collection.requests.first_mut() {
+                req.binding.path = None; // Clear binding
+                req.url = "{{baseUrl}}/users".to_string(); // Template URL
+            }
+            save_collection(&collection).unwrap();
+
+            // Refresh with same spec content
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+
+            // Should not detect false drift
+            assert!(
+                !result.changed,
+                "Should not detect drift when template URL path matches spec endpoint"
+            );
+            assert!(
+                result.operations_removed.is_empty(),
+                "Should not show GET /users as removed: {:?}",
+                result.operations_removed
+            );
+        })
+        .await;
+    }
+
+    // ── Tests for extract_path_from_url ──
+
+    #[test]
+    fn test_extract_path_from_full_url() {
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users"),
+            "/users"
+        );
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users/123"),
+            "/users/123"
+        );
+        assert_eq!(
+            extract_path_from_url("http://localhost:8080/api/v1/items"),
+            "/api/v1/items"
+        );
+    }
+
+    #[test]
+    fn test_extract_path_from_template_url() {
+        assert_eq!(extract_path_from_url("{{baseUrl}}/users"), "/users");
+        assert_eq!(
+            extract_path_from_url("{{baseUrl}}/users/{{id}}"),
+            "/users/{{id}}"
+        );
+    }
+
+    #[test]
+    fn test_extract_path_already_a_path() {
+        assert_eq!(extract_path_from_url("/users"), "/users");
+        assert_eq!(extract_path_from_url("/users/123"), "/users/123");
+    }
+
+    #[test]
+    fn test_extract_path_root() {
+        assert_eq!(extract_path_from_url("https://api.example.com"), "/");
+        assert_eq!(extract_path_from_url("https://api.example.com/"), "/");
+    }
+
+    #[test]
+    fn test_extract_path_with_query_string() {
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users?limit=10"),
+            "/users"
+        );
+        assert_eq!(
+            extract_path_from_url("{{baseUrl}}/users?limit=10"),
+            "/users"
+        );
+    }
+
+    #[test]
+    fn test_extract_path_with_fragment() {
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users#section"),
+            "/users"
+        );
+        assert_eq!(extract_path_from_url("{{baseUrl}}/users#section"), "/users");
+    }
+
+    #[test]
+    fn test_extract_path_edge_cases() {
+        // Custom scheme
+        assert_eq!(
+            extract_path_from_url("custom://api.example.com/users"),
+            "/users"
+        );
+        // No path after authority
+        assert_eq!(extract_path_from_url("https://api.example.com"), "/");
+        // Fallback for malformed input
+        assert_eq!(extract_path_from_url("malformed"), "/malformed");
     }
 }

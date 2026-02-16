@@ -131,6 +131,17 @@ async fn handle_tools_call(
         return handle_open_collection_request(id, params.arguments, service, app_handle).await;
     }
 
+    // Import/refresh/hurl tools need async I/O
+    if params.name == "import_collection" {
+        return handle_import_collection(id, params.arguments, service).await;
+    }
+    if params.name == "refresh_collection_spec" {
+        return handle_refresh_collection_spec(id, params.arguments).await;
+    }
+    if params.name == "run_hurl_suite" {
+        return handle_run_hurl_suite(id, params.arguments).await;
+    }
+
     // Canvas tools read from/write to external state
     if params.name.starts_with("canvas_") {
         return handle_canvas_tool(id, &params.name, params.arguments, canvas_state, app_handle)
@@ -292,6 +303,259 @@ async fn handle_open_collection_request(
 
 fn handle_ping(id: Option<JsonRpcId>) -> JsonRpcResponse {
     JsonRpcResponse::success(id, json!({}))
+}
+
+/// Handle `import_collection` tool — async import from URL/file/inline content.
+async fn handle_import_collection(
+    id: Option<JsonRpcId>,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    service: &Arc<RwLock<McpServerService>>,
+) -> JsonRpcResponse {
+    let args = arguments.unwrap_or_default();
+
+    let request = crate::infrastructure::commands::ImportCollectionRequest {
+        url: args
+            .get("url")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        file_path: args
+            .get("file_path")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        inline_content: args
+            .get("inline_content")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        display_name: args
+            .get("display_name")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        repo_root: args
+            .get("repo_root")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        spec_path: args
+            .get("spec_path")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+        ref_name: args
+            .get("ref_name")
+            .and_then(serde_json::Value::as_str)
+            .map(String::from),
+    };
+
+    match crate::infrastructure::commands::import_collection_inner(request).await {
+        Ok(collection) => {
+            // Emit event for UI update
+            {
+                let mut svc = service.write().await;
+                svc.emit_import_event(&collection.id, &collection.metadata.name);
+            }
+
+            let result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: json!({
+                        "collection_id": collection.id,
+                        "name": collection.metadata.name,
+                        "request_count": collection.requests.len(),
+                        "message": format!("Collection '{}' imported successfully", collection.metadata.name),
+                    })
+                    .to_string(),
+                }],
+                is_error: false,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(result).unwrap_or_else(|_| json!({})),
+            )
+        }
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
+/// Handle `refresh_collection_spec` tool — async spec refresh with drift.
+async fn handle_refresh_collection_spec(
+    id: Option<JsonRpcId>,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+) -> JsonRpcResponse {
+    let args = arguments.unwrap_or_default();
+    let Some(collection_id) = args
+        .get("collection_id")
+        .and_then(serde_json::Value::as_str)
+    else {
+        let error_result = ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: "Missing required parameter: collection_id".to_string(),
+            }],
+            is_error: true,
+        };
+        return JsonRpcResponse::success(
+            id,
+            serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+        );
+    };
+    let collection_id = collection_id.to_string();
+
+    // Check if collection has repo_root to decide if git adapter is needed
+    let needs_git =
+        crate::infrastructure::storage::collection_store::load_collection(&collection_id)
+            .map(|c| c.source.repo_root.is_some())
+            .unwrap_or(false);
+
+    let service = if needs_git {
+        crate::application::import_service::ImportService::with_git_metadata(
+            vec![Box::new(
+                crate::infrastructure::spec::openapi_parser::OpenApiParser,
+            )],
+            Box::new(crate::infrastructure::spec::http_fetcher::HttpContentFetcher),
+            Box::new(crate::infrastructure::git::GitCliAdapter),
+        )
+    } else {
+        crate::application::import_service::ImportService::new(
+            vec![Box::new(
+                crate::infrastructure::spec::openapi_parser::OpenApiParser,
+            )],
+            Box::new(crate::infrastructure::spec::http_fetcher::HttpContentFetcher),
+        )
+    };
+
+    match crate::infrastructure::commands::refresh_collection_spec_inner(&collection_id, &service)
+        .await
+    {
+        Ok(result) => {
+            let result_json = serde_json::to_value(&result).unwrap_or_else(|_| json!({}));
+            let tool_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: result_json.to_string(),
+                }],
+                is_error: false,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(tool_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
+/// Handle `run_hurl_suite` tool — async hurl test execution.
+async fn handle_run_hurl_suite(
+    id: Option<JsonRpcId>,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+) -> JsonRpcResponse {
+    use crate::domain::collection::test_port::{TestRunConfig, TestRunner};
+    use crate::infrastructure::hurl::HurlRunner;
+
+    let args = arguments.unwrap_or_default();
+    let Some(hurl_file_path) = args
+        .get("hurl_file_path")
+        .and_then(serde_json::Value::as_str)
+    else {
+        let error_result = ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: "Missing required parameter: hurl_file_path".to_string(),
+            }],
+            is_error: true,
+        };
+        return JsonRpcResponse::success(
+            id,
+            serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+        );
+    };
+    let hurl_file_path = hurl_file_path.to_string();
+
+    let collection_id = args
+        .get("collection_id")
+        .and_then(serde_json::Value::as_str)
+        .map(String::from);
+
+    let env_vars: std::collections::HashMap<String, String> = args
+        .get("env_vars")
+        .and_then(serde_json::Value::as_object)
+        .map(|obj| {
+            obj.iter()
+                .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let config = TestRunConfig {
+        file_path: hurl_file_path,
+        env_vars,
+        timeout_secs: None,
+    };
+
+    let run_result = tokio::task::spawn_blocking(move || {
+        let runner = HurlRunner;
+        runner.run(&config)
+    })
+    .await;
+
+    match run_result {
+        Ok(Ok(result)) => {
+            let result_json = json!({
+                "exit_code": result.exit_code,
+                "passed": result.passed,
+                "test_count": result.test_count,
+                "failure_count": result.failure_count,
+                "duration_ms": result.duration_ms,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "collection_id": collection_id,
+            });
+            let tool_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: result_json.to_string(),
+                }],
+                is_error: false,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(tool_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+        Ok(Err(e)) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: format!("Task join error: {e}"),
+                }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
 }
 
 /// Handle canvas tools (observation and mutation).
@@ -576,8 +840,8 @@ mod tests {
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        // 8 collection tools + 6 canvas tools + 1 streaming tool = 15 total
-        assert_eq!(tools.len(), 15);
+        // 8 collection tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 18 total
+        assert_eq!(tools.len(), 18);
     }
 
     #[tokio::test]
@@ -1041,6 +1305,180 @@ mod tests {
         let text: serde_json::Value =
             serde_json::from_str(result["content"][0]["text"].as_str().unwrap()).unwrap();
         assert!(text["message"].as_str().unwrap().contains("Opened request"));
+    }
+
+    // ── Test 3B.2: import_collection tool delegates to ImportService ─
+
+    #[tokio::test]
+    #[serial_test::serial]
+    async fn test_dispatch_import_collection_with_inline_content() {
+        use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
+
+        let dir = TempDir::new().unwrap();
+        let (service, canvas_state, _server_dir) = make_service();
+
+        let inline_spec = r#"{
+            "openapi": "3.0.0",
+            "info": { "title": "MCP Import Test", "version": "1.0.0" },
+            "paths": {
+                "/health": {
+                    "get": {
+                        "operationId": "healthCheck",
+                        "summary": "Health check",
+                        "responses": { "200": { "description": "OK" } }
+                    }
+                }
+            }
+        }"#;
+
+        let result = with_collections_dir_override_async(dir.path().to_path_buf(), || async {
+            let req = json!({
+                "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {
+                    "name": "import_collection",
+                    "arguments": { "inline_content": inline_spec }
+                }
+            })
+            .to_string();
+            dispatch(&req, &service, &canvas_state, None).await.unwrap()
+        })
+        .await;
+
+        let parsed: JsonRpcResponse = serde_json::from_str(&result).unwrap();
+        assert!(parsed.error.is_none());
+        let tool_result = parsed.result.unwrap();
+        assert!(
+            !tool_result["isError"].as_bool().unwrap_or(false),
+            "import should succeed"
+        );
+        let text: serde_json::Value =
+            serde_json::from_str(tool_result["content"][0]["text"].as_str().unwrap()).unwrap();
+        assert!(text["collection_id"].as_str().is_some());
+        assert_eq!(text["name"].as_str().unwrap(), "MCP Import Test");
+        assert!(text["message"].as_str().unwrap().contains("imported"));
+    }
+
+    // ── Test 3B.3: import_collection error for invalid input ────────
+
+    #[tokio::test]
+    #[serial_test::serial]
+    async fn test_dispatch_import_collection_no_source_returns_error() {
+        use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
+
+        let dir = TempDir::new().unwrap();
+        let (service, canvas_state, _server_dir) = make_service();
+
+        let result = with_collections_dir_override_async(dir.path().to_path_buf(), || async {
+            let req = json!({
+                "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {
+                    "name": "import_collection",
+                    "arguments": {}
+                }
+            })
+            .to_string();
+            dispatch(&req, &service, &canvas_state, None).await.unwrap()
+        })
+        .await;
+
+        let parsed: JsonRpcResponse = serde_json::from_str(&result).unwrap();
+        assert!(parsed.error.is_none(), "JSON-RPC should succeed");
+        let tool_result = parsed.result.unwrap();
+        assert!(
+            tool_result["isError"].as_bool().unwrap_or(false),
+            "Tool should return error"
+        );
+        let text = tool_result["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("Must provide"));
+    }
+
+    // ── Test 3B.5: refresh_collection_spec missing collection ───────
+
+    #[tokio::test]
+    async fn test_dispatch_refresh_collection_spec_missing_id() {
+        let (service, canvas_state, _dir) = make_service();
+        let req = json!({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {
+                "name": "refresh_collection_spec",
+                "arguments": {}
+            }
+        })
+        .to_string();
+
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(parsed.error.is_none());
+        let result = parsed.result.unwrap();
+        assert!(result["isError"].as_bool().unwrap_or(false));
+        let text = result["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("collection_id"));
+    }
+
+    // ── Test 3B.6: run_hurl_suite missing path ──────────────────────
+
+    #[tokio::test]
+    async fn test_dispatch_run_hurl_suite_missing_path() {
+        let (service, canvas_state, _dir) = make_service();
+        let req = json!({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {
+                "name": "run_hurl_suite",
+                "arguments": {}
+            }
+        })
+        .to_string();
+
+        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(parsed.error.is_none());
+        let result = parsed.result.unwrap();
+        assert!(result["isError"].as_bool().unwrap_or(false));
+        let text = result["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("hurl_file_path"));
+    }
+
+    // ── Test 3B.7: MCP events emitted on import ─────────────────────
+
+    #[tokio::test]
+    #[serial_test::serial]
+    async fn test_dispatch_import_collection_emits_event() {
+        use crate::domain::mcp::events::TestEventEmitter;
+        use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
+
+        let dir = TempDir::new().unwrap();
+        let emitter = TestEventEmitter::new();
+        let events = emitter.events_handle();
+        let mcp_service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+        let service = Arc::new(RwLock::new(mcp_service));
+        let canvas_state = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
+
+        let inline_spec = r#"{
+            "openapi": "3.0.0",
+            "info": { "title": "Event Test", "version": "1.0.0" },
+            "paths": {}
+        }"#;
+
+        with_collections_dir_override_async(dir.path().to_path_buf(), || async {
+            let req = json!({
+                "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                "params": {
+                    "name": "import_collection",
+                    "arguments": { "inline_content": inline_spec }
+                }
+            })
+            .to_string();
+            dispatch(&req, &service, &canvas_state, None).await.unwrap()
+        })
+        .await;
+
+        let has_import_event = events
+            .lock()
+            .expect("lock events")
+            .iter()
+            .any(|(name, _, _)| name == "collection:imported");
+        assert!(has_import_event, "Should emit collection:imported event");
     }
 
     #[test]

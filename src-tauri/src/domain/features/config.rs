@@ -169,7 +169,7 @@ async fn read_config_if_exists(path: &Path) -> Result<Option<FeatureFlagsConfig>
         .map_err(|e| format!("Failed to read feature flags file {}: {e}", path.display()))?;
 
     let config: FeatureFlagsConfig =
-        serde_yml::from_str(&content).map_err(|e| format!("Invalid YAML: {e}"))?;
+        serde_yaml_ng::from_str(&content).map_err(|e| format!("Invalid YAML: {e}"))?;
 
     Ok(Some(config))
 }
@@ -285,7 +285,7 @@ http:
 canvas:
   connectionLines: true
 ";
-        let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
+        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
         assert_eq!(http.export_javascript, Some(false));
@@ -299,7 +299,7 @@ canvas:
 http:
   importBruno: true
 ";
-        let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
+        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
         assert_eq!(http.import_postman, None);
@@ -314,7 +314,7 @@ http:
 unknownLayer:
   foo: true
 ";
-        let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
+        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
     }
@@ -326,7 +326,7 @@ $schema: https://runi.dev/schema/flags/v1.json
 http:
   importBruno: true
 ";
-        let parsed: FeatureFlagsConfig = serde_yml::from_str(yaml).unwrap();
+        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
         assert_eq!(
             parsed.schema.as_deref(),
             Some("https://runi.dev/schema/flags/v1.json")

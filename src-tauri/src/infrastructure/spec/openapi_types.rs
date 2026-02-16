@@ -1,56 +1,61 @@
+//! `OpenAPI`-specific internal types.
+//!
+//! These are implementation details of the `OpenAPI` adapter.
+//! The domain-layer `ParsedSpec` in `domain::collection::spec_port` is the
+//! canonical IR — these types exist only to bridge the `openapiv3` crate
+//! output into the domain IR.
+
 use serde::{Deserialize, Serialize};
 
-/// Result of fetching an `OpenAPI` spec.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct FetchResult {
-    pub content: String,
-    pub source_url: String,
-    pub is_fallback: bool,
-    pub fetched_at: String,
-}
-
 /// Parsed `OpenAPI` spec in our internal format.
+///
+/// This is the `OpenAPI`-specific representation. The `OpenApiParser` adapter
+/// maps this into the domain `ParsedSpec` IR.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ParsedSpec {
+pub struct OpenApiParsedSpec {
     pub title: String,
     pub version: String,
     pub description: Option<String>,
-    pub servers: Vec<Server>,
-    pub operations: Vec<ParsedOperation>,
+    pub servers: Vec<OpenApiServer>,
+    pub operations: Vec<OpenApiParsedOperation>,
 }
 
+/// A server entry from an `OpenAPI` spec.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Server {
+pub struct OpenApiServer {
     pub url: String,
     pub description: Option<String>,
 }
 
+/// A parsed operation from an `OpenAPI` spec.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ParsedOperation {
+pub struct OpenApiParsedOperation {
     pub operation_id: String,
     pub path: String,
     pub method: String,
     pub summary: Option<String>,
     pub description: Option<String>,
     pub tags: Vec<String>,
-    pub parameters: Vec<ParsedParameter>,
+    pub parameters: Vec<OpenApiParsedParameter>,
     pub deprecated: bool,
     pub is_streaming: bool,
 }
 
+/// A parsed parameter from an `OpenAPI` spec.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ParsedParameter {
+pub struct OpenApiParsedParameter {
     pub name: String,
-    pub location: ParameterLocation,
+    pub location: OpenApiParameterLocation,
     pub required: bool,
     pub schema_type: Option<String>,
     pub default_value: Option<String>,
     pub description: Option<String>,
 }
 
+/// Parameter location in an `OpenAPI` spec.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum ParameterLocation {
+pub enum OpenApiParameterLocation {
     Path,
     Query,
     Header,
@@ -61,19 +66,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_fetch_result_tracks_fallback() {
-        let result = FetchResult {
-            content: "{}".to_string(),
-            source_url: "https://httpbin.org/spec.json".to_string(),
-            is_fallback: false,
-            fetched_at: "2026-01-31T10:30:00Z".to_string(),
-        };
-        assert!(!result.is_fallback);
-    }
-
-    #[test]
     fn test_parameter_location_serializes_snake_case() {
-        let yaml = serde_yml::to_string(&ParameterLocation::Query).unwrap();
+        let yaml = serde_yaml_ng::to_string(&OpenApiParameterLocation::Query).unwrap();
         assert!(yaml.contains("query"));
     }
 }

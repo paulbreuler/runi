@@ -117,6 +117,16 @@ impl McpServerService {
         }
     }
 
+    /// Emit a `collection:imported` event after MCP import completes.
+    ///
+    /// Called by the dispatcher after async import (outside the lock).
+    pub fn emit_import_event(&mut self, collection_id: &str, name: &str) {
+        self.emit(
+            "collection:imported",
+            json!({"id": collection_id, "name": name}),
+        );
+    }
+
     /// Emit a `request:executed` event after HTTP execution completes.
     ///
     /// Called by the dispatcher after async HTTP execution (outside the lock).
@@ -246,6 +256,10 @@ impl McpServerService {
             "update_request" => self.handle_update_request(&args),
             "delete_request" => self.handle_delete_request(&args),
             "delete_collection" => self.handle_delete_collection(&args),
+            // Async tools are handled in dispatcher (they need async I/O)
+            "import_collection" | "refresh_collection_spec" | "run_hurl_suite" => {
+                Err(format!("Async tool '{name}' must be handled by dispatcher"))
+            }
             // Canvas tools are handled in dispatcher with external state
             "canvas_list_tabs"
             | "canvas_get_active_tab"
@@ -421,6 +435,44 @@ impl McpServerService {
                         "tab_id": { "type": "string", "description": "ID of the tab to close" }
                     },
                     "required": ["tab_id"]
+                }),
+            ),
+            // Import / refresh / hurl tools
+            tool_def(
+                "import_collection",
+                "Import an API collection from a URL, file path, or inline spec content",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "url": { "type": "string", "description": "URL to fetch the spec from" },
+                        "file_path": { "type": "string", "description": "Local filesystem path to the spec file" },
+                        "inline_content": { "type": "string", "description": "Raw spec content (JSON or YAML)" },
+                        "display_name": { "type": "string", "description": "Override the collection display name" }
+                    }
+                }),
+            ),
+            tool_def(
+                "refresh_collection_spec",
+                "Refresh a collection's spec from its tracked source and compute drift delta",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection to refresh" }
+                    },
+                    "required": ["collection_id"]
+                }),
+            ),
+            tool_def(
+                "run_hurl_suite",
+                "Run a Hurl test suite and return structured results",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "hurl_file_path": { "type": "string", "description": "Path to the .hurl file to execute" },
+                        "collection_id": { "type": "string", "description": "Optional collection ID for context" },
+                        "env_vars": { "type": "object", "description": "Environment variables (e.g. base_url)", "additionalProperties": { "type": "string" } }
+                    },
+                    "required": ["hurl_file_path"]
                 }),
             ),
             // Canvas streaming tools
@@ -800,11 +852,11 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_fifteen_tools() {
+    fn test_registers_eighteen_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
-        // 8 collection tools + 6 canvas tools + 1 streaming tool = 15 total
-        assert_eq!(tools.len(), 15);
+        // 8 collection tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 18 total
+        assert_eq!(tools.len(), 18);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
@@ -815,6 +867,10 @@ mod tests {
         assert!(names.contains(&"open_collection_request"));
         assert!(names.contains(&"delete_collection"));
         assert!(names.contains(&"execute_request"));
+        // Import/refresh/hurl tools
+        assert!(names.contains(&"import_collection"));
+        assert!(names.contains(&"refresh_collection_spec"));
+        assert!(names.contains(&"run_hurl_suite"));
         // Canvas tools
         assert!(names.contains(&"canvas_list_tabs"));
         assert!(names.contains(&"canvas_get_active_tab"));
@@ -1740,6 +1796,76 @@ mod tests {
         assert_eq!(captured[1].2["id"].as_str().unwrap(), collection_id);
         assert_eq!(captured[1].2["name"].as_str().unwrap(), "To Delete");
         drop(captured);
+    }
+
+    // ── Test 3B.1: import_collection tool registered ──────────────────
+
+    #[test]
+    fn test_import_collection_tool_registered_with_schema() {
+        let (service, _dir) = make_service();
+        let tools = service.list_tools();
+        let tool = tools
+            .iter()
+            .find(|t| t.name == "import_collection")
+            .unwrap();
+        assert!(tool.description.is_some());
+        let props = tool.input_schema.get("properties").unwrap();
+        assert!(props.get("url").is_some());
+        assert!(props.get("file_path").is_some());
+        assert!(props.get("display_name").is_some());
+        // None are required (at least one of url/file_path/inline_content must be given)
+        assert!(tool.input_schema.get("required").is_none());
+    }
+
+    // ── Test 3B.3: import_collection routed to dispatcher ───────────
+
+    #[test]
+    fn test_import_collection_routed_to_dispatcher() {
+        let (mut service, _dir) = make_service();
+        let result = service.call_tool("import_collection", Some(serde_json::Map::new()));
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .contains("must be handled by dispatcher")
+        );
+    }
+
+    // ── Test 3B.4: refresh_collection_spec tool registered ──────────
+
+    #[test]
+    fn test_refresh_collection_spec_tool_registered_with_schema() {
+        let (service, _dir) = make_service();
+        let tools = service.list_tools();
+        let tool = tools
+            .iter()
+            .find(|t| t.name == "refresh_collection_spec")
+            .unwrap();
+        assert!(tool.description.is_some());
+        let required = tool
+            .input_schema
+            .get("required")
+            .unwrap()
+            .as_array()
+            .unwrap();
+        assert!(required.contains(&json!("collection_id")));
+    }
+
+    // ── Test 3B.6: run_hurl_suite tool registered ───────────────────
+
+    #[test]
+    fn test_run_hurl_suite_tool_registered_with_schema() {
+        let (service, _dir) = make_service();
+        let tools = service.list_tools();
+        let tool = tools.iter().find(|t| t.name == "run_hurl_suite").unwrap();
+        assert!(tool.description.is_some());
+        let required = tool
+            .input_schema
+            .get("required")
+            .unwrap()
+            .as_array()
+            .unwrap();
+        assert!(required.contains(&json!("hurl_file_path")));
     }
 
     #[test]

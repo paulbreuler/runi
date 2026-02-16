@@ -43,7 +43,13 @@ export interface CollectionSource {
   spec_version?: string;
   fetched_at: string;
   source_commit?: string;
+  repo_root?: string;
+  spec_path?: string;
+  ref_name?: string;
 }
+
+/** Request payload for the generic import command. */
+export type { ImportCollectionRequest } from '@/types/generated/ImportCollectionRequest';
 
 export type SourceType = 'openapi' | 'postman' | 'bruno' | 'insomnia' | 'curl' | 'manual' | 'mcp';
 

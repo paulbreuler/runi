@@ -12,8 +12,9 @@ mod infrastructure;
 
 use infrastructure::commands::{
     clear_request_history, cmd_add_httpbin_collection, cmd_delete_collection, cmd_delete_request,
-    cmd_list_collections, cmd_load_collection, cmd_log_frontend_error, cmd_rename_collection,
-    cmd_rename_request, cmd_save_collection, cmd_write_frontend_error_report, create_proxy_service,
+    cmd_import_collection, cmd_list_collections, cmd_load_collection, cmd_log_frontend_error,
+    cmd_refresh_collection_spec, cmd_rename_collection, cmd_rename_request, cmd_run_hurl_suite,
+    cmd_save_collection, cmd_write_frontend_error_report, create_proxy_service,
     delete_history_entry, get_config_dir, get_history_batch, get_history_count, get_history_ids,
     get_platform, get_process_startup_time, get_system_specs, hello_world, load_feature_flags,
     load_request_history, save_request_history, set_log_level, sync_canvas_state,
@@ -134,11 +135,14 @@ pub fn run() {
             cmd_rename_collection,
             cmd_rename_request,
             cmd_add_httpbin_collection,
+            cmd_import_collection,
+            cmd_refresh_collection_spec,
             cmd_log_frontend_error,
             cmd_write_frontend_error_report,
             set_log_level,
             write_startup_timing,
             sync_canvas_state,
+            cmd_run_hurl_suite,
             mcp_server_start,
             mcp_server_stop,
             mcp_server_status

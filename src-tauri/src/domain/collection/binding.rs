@@ -86,7 +86,7 @@ mod tests {
     #[test]
     fn test_spec_binding_serializes_cleanly() {
         let binding = SpecBinding::default();
-        let yaml = serde_yml::to_string(&binding).unwrap();
+        let yaml = serde_yaml_ng::to_string(&binding).unwrap();
         // Empty binding should be minimal
         assert!(!yaml.contains("operation_id"));
         assert!(yaml.contains("is_manual: false"));
