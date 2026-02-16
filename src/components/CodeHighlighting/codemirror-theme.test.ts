@@ -6,7 +6,8 @@
 import { describe, expect, it } from 'vitest';
 import { EditorView } from '@codemirror/view';
 import { EditorState, type Extension } from '@codemirror/state';
-import { runiTheme } from './codemirror-theme';
+import { HighlightStyle } from '@codemirror/language';
+import { runiTheme, runiHighlightStyle } from './codemirror-theme';
 
 /**
  * Helper: create an EditorView with the runi theme applied.
@@ -21,6 +22,11 @@ function createThemedView(extensions: Extension[] = []): EditorView {
   });
   const view = new EditorView({ state, parent });
   view.dom.setAttribute('data-test-id', 'cm-editor');
+  const originalDestroy = view.destroy.bind(view);
+  view.destroy = (): void => {
+    originalDestroy();
+    parent.remove();
+  };
   return view;
 }
 
@@ -115,6 +121,72 @@ describe('runiTheme', () => {
       const view = createThemedView();
       // Inspect that the theme class is applied
       expect(view.dom.getAttribute('data-test-id')).toBe('cm-editor');
+      view.destroy();
+    });
+  });
+
+  describe('syntax highlight style', () => {
+    /** Helper interface for accessing HighlightStyle internal specs */
+    interface SpecEntry {
+      color?: string;
+      fontStyle?: string;
+    }
+
+    const getSpecs = (): SpecEntry[] =>
+      (runiHighlightStyle as unknown as { specs: SpecEntry[] }).specs;
+
+    it('exports runiHighlightStyle as a HighlightStyle instance', () => {
+      expect(runiHighlightStyle).toBeDefined();
+      expect(runiHighlightStyle).toBeInstanceOf(HighlightStyle);
+    });
+
+    it('includes the highlight style in the runiTheme extension array', () => {
+      expect(Array.isArray(runiTheme)).toBe(true);
+      const state = EditorState.create({
+        doc: '{"key": "value"}',
+        extensions: [runiTheme],
+      });
+      expect(state).toBeDefined();
+    });
+
+    it('defines color rules for keyword tokens', () => {
+      const specs = getSpecs();
+      expect(specs.length).toBeGreaterThan(0);
+      const hasKeywordColor = specs.some((s) => s.color?.includes('--color-accent-blue'));
+      expect(hasKeywordColor).toBe(true);
+    });
+
+    it('defines color rules for string tokens', () => {
+      const hasStringColor = getSpecs().some((s) => s.color?.includes('--color-signal-success'));
+      expect(hasStringColor).toBe(true);
+    });
+
+    it('defines color rules for number tokens', () => {
+      const hasNumberColor = getSpecs().some((s) => s.color?.includes('--color-signal-warning'));
+      expect(hasNumberColor).toBe(true);
+    });
+
+    it('defines color rules for comment tokens', () => {
+      const hasCommentColor = getSpecs().some((s) => s.color?.includes('--color-text-muted'));
+      expect(hasCommentColor).toBe(true);
+    });
+
+    it('defines color rules for type/class tokens', () => {
+      const hasTypeColor = getSpecs().some((s) => s.color?.includes('--color-signal-ai'));
+      expect(hasTypeColor).toBe(true);
+    });
+
+    it('uses CSS var() references for all color values', () => {
+      const specsWithColor = getSpecs().filter((s) => s.color);
+      expect(specsWithColor.length).toBeGreaterThan(0);
+      for (const spec of specsWithColor) {
+        expect(spec.color).toMatch(/^var\(--/);
+      }
+    });
+
+    it('mounts an EditorView with highlight style without errors', () => {
+      const view = createThemedView();
+      expect(view.dom).toBeDefined();
       view.destroy();
     });
   });

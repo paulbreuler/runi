@@ -12,6 +12,8 @@
 
 import { EditorView } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { tags } from '@lezer/highlight';
 
 /**
  * runi editor theme — dark-first, CSS-custom-property-driven.
@@ -27,6 +29,7 @@ const theme = EditorView.theme({
     fontFamily: 'var(--font-mono)',
     fontSize: '0.875rem',
     lineHeight: '1.6',
+    height: '100%',
   },
 
   // Focus ring — keyboard-only, mirrors focusRingClasses pattern (--color-ring, 2px)
@@ -176,10 +179,72 @@ const baseTheme = EditorView.baseTheme({
 });
 
 /**
+ * Syntax highlighting colors — maps lezer tags to runi design tokens.
+ *
+ * Uses CSS `var()` references so token colors react to dark/light mode
+ * without remounting the editor.
+ */
+export const runiHighlightStyle = HighlightStyle.define([
+  // Keywords
+  { tag: [tags.keyword, tags.controlKeyword], color: 'var(--color-accent-blue)' },
+
+  // Strings
+  { tag: [tags.string, tags.special(tags.string)], color: 'var(--color-signal-success)' },
+
+  // Numbers
+  { tag: [tags.number, tags.integer, tags.float], color: 'var(--color-signal-warning)' },
+
+  // Booleans and null
+  { tag: [tags.bool, tags.null], color: 'var(--color-signal-warning)' },
+
+  // Comments
+  {
+    tag: [tags.comment, tags.lineComment, tags.blockComment],
+    color: 'var(--color-text-muted)',
+    fontStyle: 'italic',
+  },
+
+  // Functions
+  {
+    tag: [tags.function(tags.variableName), tags.function(tags.definition(tags.variableName))],
+    color: 'var(--color-accent-blue)',
+  },
+
+  // Property names
+  {
+    tag: [tags.propertyName, tags.definition(tags.propertyName)],
+    color: 'var(--color-text-primary)',
+  },
+
+  // Types and classes
+  { tag: [tags.typeName, tags.className, tags.namespace], color: 'var(--color-signal-ai)' },
+
+  // Operators and punctuation
+  { tag: [tags.operator, tags.punctuation], color: 'var(--color-text-muted)' },
+
+  // Variables (default text)
+  { tag: tags.variableName, color: 'var(--color-text-secondary)' },
+
+  // Meta / processing instructions
+  { tag: [tags.meta, tags.processingInstruction], color: 'var(--color-text-muted)' },
+
+  // Regexp
+  { tag: tags.regexp, color: 'var(--color-signal-error)' },
+
+  // HTML/XML tags
+  { tag: tags.tagName, color: 'var(--color-accent-blue)' },
+
+  // HTML/XML attributes
+  { tag: tags.attributeName, color: 'var(--color-signal-warning)' },
+  { tag: tags.attributeValue, color: 'var(--color-signal-success)' },
+]);
+
+/**
  * Complete runi theme extension for CodeMirror 6.
  *
  * Combines:
  * - Dark/light reactive theme (CSS custom properties)
+ * - Syntax highlighting (token colors via CSS custom properties)
  * - Focus ring styling (--color-ring, 2px, focus-visible)
  * - Reduced motion support (disables cursor blink)
  *
@@ -189,4 +254,4 @@ const baseTheme = EditorView.baseTheme({
  * const state = EditorState.create({ extensions: [runiTheme] });
  * ```
  */
-export const runiTheme: Extension = [theme, baseTheme];
+export const runiTheme: Extension = [theme, baseTheme, syntaxHighlighting(runiHighlightStyle)];
