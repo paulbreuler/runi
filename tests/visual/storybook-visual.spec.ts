@@ -87,10 +87,11 @@ test.describe('Storybook Visual Regression', () => {
       state: 'visible',
       timeout: 15000,
     });
-    // CM6 search is opened via Cmd+F on the editor content
+    // CM6 search is opened via Mod+F (Meta on macOS, Control on Linux/Windows)
     const cmContent = iframe.locator('.cm-content');
     await cmContent.click();
-    await cmContent.press('Control+f');
+    const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
+    await cmContent.press(`${modifier}+f`);
     // CM6 renders its own search panel with .cm-search class
     const searchInput = iframe.locator('.cm-search input').first();
     await searchInput.waitFor({ state: 'visible', timeout: 10000 });
