@@ -241,7 +241,7 @@ export const CodeEditor = ({
       <div className="flex-1 overflow-hidden relative bg-bg-app">
         <div
           ref={containerRef}
-          className={cn('h-full w-full', focusRingClasses)}
+          className="h-full w-full"
           data-test-id="code-editor-cm-container"
           data-language={detectedLanguage}
         />
