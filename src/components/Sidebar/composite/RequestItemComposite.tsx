@@ -18,7 +18,7 @@ import { globalEventBus, logEventFlow } from '@/events/bus';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
+import { Popover, PopoverContent } from '@/components/ui/Popover';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 export interface RequestItemCompositeProps {
@@ -59,6 +59,7 @@ export const RequestItemComposite = ({
     getBoundingClientRect: () => DOMRect;
   } | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const didCancelRef = useRef(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -230,6 +231,7 @@ export const RequestItemComposite = ({
       data-test-id={`request-tooltip-${request.id}`}
     >
       <div
+        ref={rowRef}
         className={cn('relative w-full px-1 group/request', className)}
         onContextMenu={handleContextMenu}
       >
@@ -298,6 +300,7 @@ export const RequestItemComposite = ({
               <Menu.Root open={menuOpen} onOpenChange={handleMenuOpenChange}>
                 <Menu.Trigger
                   ref={triggerRef}
+                  nativeButton={false}
                   render={
                     <Button
                       variant="ghost"
@@ -361,10 +364,10 @@ export const RequestItemComposite = ({
 
         {/* Delete confirmation popover — shared between menu and keyboard shortcut */}
         <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-          <PopoverTrigger render={<span className="hidden" />} />
           <PopoverContent
             side="right"
             align="start"
+            anchor={rowRef}
             className="w-56 p-3"
             data-test-id={`request-delete-confirm-${request.id}`}
           >

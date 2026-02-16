@@ -20,7 +20,7 @@ import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
+import { Popover, PopoverContent } from '@/components/ui/Popover';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 interface CollectionItemProps {
@@ -55,6 +55,7 @@ export const CollectionItem = ({
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const didCancelRef = useRef(false);
 
   // Reset cancel flag when entering rename mode
@@ -184,7 +185,7 @@ export const CollectionItem = ({
           />
         </div>
       ) : (
-        <div className="group/collection" onContextMenu={handleContextMenu}>
+        <div ref={rowRef} className="group/collection" onContextMenu={handleContextMenu}>
           <div
             className={cn(
               'w-full flex items-center justify-between gap-3 px-2 py-1 transition-colors',
@@ -236,6 +237,7 @@ export const CollectionItem = ({
               >
                 <Menu.Root open={menuOpen} onOpenChange={setMenuOpen}>
                   <Menu.Trigger
+                    nativeButton={false}
                     render={(props) => (
                       <Button
                         {...props}
@@ -306,10 +308,10 @@ export const CollectionItem = ({
 
           {/* Delete confirmation popover — rendered outside the menu */}
           <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-            <PopoverTrigger render={<span className="hidden" />} />
             <PopoverContent
               side="right"
               align="start"
+              anchor={rowRef}
               className="w-56 p-3"
               data-test-id={`collection-delete-confirm-${summary.id}`}
             >
