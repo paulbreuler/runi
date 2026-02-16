@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { SendHorizonal } from 'lucide-react';
+import { SendHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
@@ -104,7 +104,7 @@ export const UrlBar = ({
   return (
     <div
       className={cn(
-        'relative flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300 bg-bg-surface border border-border-subtle rounded-lg',
+        'relative flex flex-1 min-w-0 items-center gap-0 overflow-hidden motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none bg-bg-surface border border-border-subtle rounded-lg',
         compositeFocusContainerClasses
       )}
       data-test-id="url-bar"
@@ -115,7 +115,7 @@ export const UrlBar = ({
           role="button"
           aria-haspopup="listbox"
           className={cn(
-            'relative min-w-16 w-auto h-9 font-mono text-xs font-semibold bg-transparent border-0 transition-all duration-300 whitespace-nowrap',
+            'relative min-w-16 w-auto h-9 font-mono text-xs font-semibold bg-transparent border-0 motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none whitespace-nowrap',
             compositeFocusItemClasses,
             methodColor,
             'hover:brightness-125 focus-visible:brightness-125'
@@ -171,11 +171,15 @@ export const UrlBar = ({
           data-test-id="send-button"
           aria-label="Send Request"
           className={cn(
-            'relative h-9 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue transition-colors',
+            'relative h-9 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue motion-safe:transition-colors motion-reduce:transition-none',
             compositeFocusItemClasses
           )}
         >
-          {loading ? renderLoadingState() : <SendHorizonal size={15} className={isValidUrl ? 'text-accent-blue' : undefined} />}
+          {loading ? (
+            renderLoadingState()
+          ) : (
+            <SendHorizontal size={15} className={isValidUrl ? 'text-accent-blue' : undefined} />
+          )}
         </Button>
       </div>
 

@@ -45,7 +45,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
         title={activeLayout?.label ?? 'Layout'}
         aria-label={`Layout: ${activeLayout?.label ?? 'Layout'}`}
       >
-        {activeLayout ? <activeLayout.icon className="w-4 h-4" /> : null}
+        {activeLayout !== undefined ? <activeLayout.icon className="w-4 h-4" /> : null}
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-64 p-2" data-test-id="layout-picker-content">
