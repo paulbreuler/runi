@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
+import { SendHorizonal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as Select from '@/components/ui/select';
@@ -103,7 +104,7 @@ export const UrlBar = ({
   return (
     <div
       className={cn(
-        'relative flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300',
+        'relative flex flex-1 min-w-0 items-center gap-0 overflow-hidden transition-all duration-300 bg-bg-surface border border-border-subtle rounded-lg',
         compositeFocusContainerClasses
       )}
       data-test-id="url-bar"
@@ -114,7 +115,7 @@ export const UrlBar = ({
           role="button"
           aria-haspopup="listbox"
           className={cn(
-            'relative min-w-24 w-auto h-7 font-mono text-xs font-semibold bg-transparent border-0 transition-all duration-300 whitespace-nowrap',
+            'relative min-w-16 w-auto h-9 font-mono text-xs font-semibold bg-transparent border-0 transition-all duration-300 whitespace-nowrap',
             compositeFocusItemClasses,
             methodColor,
             'hover:brightness-125 focus-visible:brightness-125'
@@ -154,7 +155,7 @@ export const UrlBar = ({
         aria-label="Request URL"
         noScale
         className={cn(
-          'relative h-7 flex-1 border-0 rounded-none bg-transparent text-text-primary font-mono text-sm placeholder:text-text-muted/40 py-0',
+          'relative h-9 flex-1 border-0 rounded-none bg-transparent text-text-primary font-mono text-sm placeholder:text-text-muted/60 py-0',
           compositeFocusItemClasses
         )}
       />
@@ -170,11 +171,11 @@ export const UrlBar = ({
           data-test-id="send-button"
           aria-label="Send Request"
           className={cn(
-            'relative h-7 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue transition-colors',
+            'relative h-9 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue transition-colors',
             compositeFocusItemClasses
           )}
         >
-          {loading ? renderLoadingState() : 'Send'}
+          {loading ? renderLoadingState() : <SendHorizonal size={15} className={isValidUrl ? 'text-accent-blue' : undefined} />}
         </Button>
       </div>
 
