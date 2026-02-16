@@ -219,7 +219,7 @@ export const CodeEditor = ({
         >
           <div
             ref={containerRef}
-            className="code-editor-wrapper"
+            className="code-editor-wrapper h-full w-full"
             data-test-id="code-editor-cm-container"
             data-language={detectedLanguage}
           />

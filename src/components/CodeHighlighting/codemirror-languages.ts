@@ -53,7 +53,7 @@ export const getLanguageExtension = (language: string): Extension[] | null => {
     case 'shell':
     case 'curl':
       // No dedicated CM6 language package; falls through to plain-text.
-      // Syntax highlighting still applies to generic tokens via runiHighlightStyle.
+      // Syntax highlighting still applies to generic tokens via the One Dark theme.
       return null;
     case 'html':
     case 'http':
