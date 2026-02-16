@@ -89,7 +89,11 @@ export type EventType =
   | 'canvas.layout-changed'
   | 'canvas.popout-requested'
   | 'canvas.popout-opened'
-  | 'canvas.popout-closed';
+  | 'canvas.popout-closed'
+  | 'tab.save-requested'
+  | 'request.saved-to-collection'
+  | 'request.moved'
+  | 'request.copied';
 
 /**
  * Payload for collection.request-selected event.
@@ -159,6 +163,32 @@ export interface CanvasPopoutOpenedPayload {
 export interface CanvasPopoutClosedPayload {
   contextId: string;
   windowId: string;
+}
+
+/**
+ * Payload for request.saved-to-collection event.
+ */
+export interface RequestSavedToCollectionPayload {
+  collectionId: string;
+  requestId: string;
+}
+
+/**
+ * Payload for request.moved event.
+ */
+export interface RequestMovedPayload {
+  requestId: string;
+  fromCollectionId: string;
+  toCollectionId: string;
+}
+
+/**
+ * Payload for request.copied event.
+ */
+export interface RequestCopiedPayload {
+  requestId: string;
+  fromCollectionId: string;
+  toCollectionId: string;
 }
 
 /**

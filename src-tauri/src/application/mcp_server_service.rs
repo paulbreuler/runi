@@ -256,6 +256,9 @@ impl McpServerService {
             "update_request" => self.handle_update_request(&args),
             "delete_request" => self.handle_delete_request(&args),
             "delete_collection" => self.handle_delete_collection(&args),
+            "save_tab_to_collection" => self.handle_save_tab_to_collection(&args),
+            "move_request" => self.handle_move_request(&args),
+            "copy_request_to_collection" => self.handle_copy_request_to_collection(&args),
             // Async tools are handled in dispatcher (they need async I/O)
             "import_collection" | "refresh_collection_spec" | "run_hurl_suite" => {
                 Err(format!("Async tool '{name}' must be handled by dispatcher"))
@@ -473,6 +476,49 @@ impl McpServerService {
                         "env_vars": { "type": "object", "description": "Environment variables (e.g. base_url)", "additionalProperties": { "type": "string" } }
                     },
                     "required": ["hurl_file_path"]
+                }),
+            ),
+            // Collection save/move/copy tools
+            tool_def(
+                "save_tab_to_collection",
+                "Save an ephemeral request tab to a collection",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the target collection" },
+                        "name": { "type": "string", "description": "Name for the saved request" },
+                        "method": { "type": "string", "description": "HTTP method (GET, POST, PUT, PATCH, DELETE)", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
+                        "url": { "type": "string", "description": "Request URL" },
+                        "headers": { "type": "object", "description": "Request headers as key-value pairs", "additionalProperties": { "type": "string" } },
+                        "body": { "type": "string", "description": "Request body content" }
+                    },
+                    "required": ["collection_id", "name", "method", "url"]
+                }),
+            ),
+            tool_def(
+                "move_request",
+                "Move a request from one collection to another",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "source_collection_id": { "type": "string", "description": "ID of the source collection" },
+                        "request_id": { "type": "string", "description": "ID of the request to move" },
+                        "target_collection_id": { "type": "string", "description": "ID of the target collection" }
+                    },
+                    "required": ["source_collection_id", "request_id", "target_collection_id"]
+                }),
+            ),
+            tool_def(
+                "copy_request_to_collection",
+                "Copy a request to another collection",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "source_collection_id": { "type": "string", "description": "ID of the source collection" },
+                        "request_id": { "type": "string", "description": "ID of the request to copy" },
+                        "target_collection_id": { "type": "string", "description": "ID of the target collection" }
+                    },
+                    "required": ["source_collection_id", "request_id", "target_collection_id"]
                 }),
             ),
             // Canvas streaming tools
@@ -814,6 +860,210 @@ impl McpServerService {
             is_error: false,
         })
     }
+
+    fn handle_save_tab_to_collection(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        let name = args
+            .get("name")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: name".to_string())?;
+        let method = args
+            .get("method")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: method".to_string())?;
+        let url = args
+            .get("url")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: url".to_string())?;
+
+        Self::validate_collection_id(collection_id)?;
+        let mut collection = load_collection_in_dir(collection_id, self.dir())?;
+        let seq = collection.next_seq();
+
+        let headers = args
+            .get("headers")
+            .and_then(serde_json::Value::as_object)
+            .map(|obj| {
+                obj.iter()
+                    .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                    .collect::<std::collections::BTreeMap<String, String>>()
+            })
+            .unwrap_or_default();
+
+        let body_content = args.get("body").and_then(serde_json::Value::as_str);
+        let body = body_content.map(|content| {
+            use crate::domain::collection::{BodyType, RequestBody};
+            RequestBody {
+                body_type: BodyType::Json,
+                content: Some(content.to_string()),
+                file: None,
+            }
+        });
+
+        let request = CollectionRequest {
+            id: CollectionRequest::generate_id(name),
+            name: name.to_string(),
+            seq,
+            method: method.to_uppercase(),
+            url: url.to_string(),
+            headers,
+            body,
+            intelligence: IntelligenceMetadata::ai_generated("mcp"),
+            ..Default::default()
+        };
+        let request_id = request.id.clone();
+        collection.requests.push(request);
+        save_collection_in_dir(&collection, self.dir())?;
+
+        self.emit(
+            "request:saved-to-collection",
+            json!({"collection_id": collection_id, "request_id": &request_id, "name": name}),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "request_id": request_id,
+                    "collection_id": collection_id,
+                    "message": format!("Request '{name}' saved to collection")
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
+
+    fn handle_move_request(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        let source_collection_id = args
+            .get("source_collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: source_collection_id".to_string())?;
+        let request_id = args
+            .get("request_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: request_id".to_string())?;
+        let target_collection_id = args
+            .get("target_collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: target_collection_id".to_string())?;
+
+        Self::validate_collection_id(source_collection_id)?;
+        Self::validate_collection_id(target_collection_id)?;
+
+        let mut source = load_collection_in_dir(source_collection_id, self.dir())?;
+        let pos = source
+            .requests
+            .iter()
+            .position(|r| r.id == request_id)
+            .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+        let mut request = source.requests.remove(pos);
+        if request.binding.is_bound() {
+            request.binding = crate::domain::collection::SpecBinding::default();
+        }
+
+        let mut target = load_collection_in_dir(target_collection_id, self.dir())?;
+        request.seq = target.next_seq();
+        target.requests.push(request);
+
+        save_collection_in_dir(&source, self.dir())?;
+        save_collection_in_dir(&target, self.dir())?;
+
+        self.emit(
+            "request:moved",
+            json!({
+                "source_collection_id": source_collection_id,
+                "target_collection_id": target_collection_id,
+                "request_id": request_id,
+            }),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "source_collection_id": source_collection_id,
+                    "target_collection_id": target_collection_id,
+                    "request_id": request_id,
+                    "message": "Request moved successfully"
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
+
+    fn handle_copy_request_to_collection(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        let source_collection_id = args
+            .get("source_collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: source_collection_id".to_string())?;
+        let request_id = args
+            .get("request_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: request_id".to_string())?;
+        let target_collection_id = args
+            .get("target_collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: target_collection_id".to_string())?;
+
+        Self::validate_collection_id(source_collection_id)?;
+        Self::validate_collection_id(target_collection_id)?;
+
+        let source = load_collection_in_dir(source_collection_id, self.dir())?;
+        let original = source
+            .requests
+            .iter()
+            .find(|r| r.id == request_id)
+            .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+        let mut copy = original.clone();
+        copy.id = CollectionRequest::generate_id(&copy.name);
+        copy.binding = crate::domain::collection::SpecBinding::default();
+
+        let mut target = load_collection_in_dir(target_collection_id, self.dir())?;
+        copy.seq = target.next_seq();
+        let copy_id = copy.id.clone();
+        let copy_name = copy.name.clone();
+        target.requests.push(copy);
+
+        save_collection_in_dir(&target, self.dir())?;
+
+        self.emit(
+            "request:copied",
+            json!({
+                "source_collection_id": source_collection_id,
+                "target_collection_id": target_collection_id,
+                "request_id": request_id,
+                "copy_id": &copy_id,
+            }),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "source_collection_id": source_collection_id,
+                    "target_collection_id": target_collection_id,
+                    "copy_id": copy_id,
+                    "name": copy_name,
+                    "message": "Request copied successfully"
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
 }
 
 /// Convert a `CollectionRequest` to `RequestParams` for HTTP execution.
@@ -852,11 +1102,11 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_eighteen_tools() {
+    fn test_registers_twenty_one_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
-        // 8 collection tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 18 total
-        assert_eq!(tools.len(), 18);
+        // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 21 total
+        assert_eq!(tools.len(), 21);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
@@ -867,6 +1117,10 @@ mod tests {
         assert!(names.contains(&"open_collection_request"));
         assert!(names.contains(&"delete_collection"));
         assert!(names.contains(&"execute_request"));
+        // Save/move/copy tools
+        assert!(names.contains(&"save_tab_to_collection"));
+        assert!(names.contains(&"move_request"));
+        assert!(names.contains(&"copy_request_to_collection"));
         // Import/refresh/hurl tools
         assert!(names.contains(&"import_collection"));
         assert!(names.contains(&"refresh_collection_spec"));

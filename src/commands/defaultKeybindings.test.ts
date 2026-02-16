@@ -11,6 +11,7 @@ import type { CommandId } from '@/types/keybinding';
 const ALL_COMMAND_IDS: CommandId[] = [
   'tab.new',
   'tab.close',
+  'tab.save',
   'tab.next',
   'tab.previous',
   'sidebar.toggle',

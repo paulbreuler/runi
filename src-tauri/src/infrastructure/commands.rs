@@ -3,7 +3,7 @@
 
 // Tauri command handlers
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::sync::{Arc, LazyLock};
 
@@ -18,7 +18,9 @@ use crate::application::import_service::{ImportOverrides, ImportService};
 use crate::application::proxy_service::ProxyService;
 use crate::domain::canvas_state::CanvasStateSnapshot;
 use crate::domain::collection::spec_port::SpecSource;
-use crate::domain::collection::{Collection, CollectionRequest};
+use crate::domain::collection::{
+    BodyType, Collection, CollectionRequest, RequestBody, SpecBinding,
+};
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::mcp::events::{Actor, EventEmitter};
@@ -905,6 +907,200 @@ pub async fn cmd_duplicate_request(
         json!({"collection_id": &collection_id, "request_id": &copy_id, "name": &copy_name}),
     );
     Ok(collection)
+}
+
+/// Save a tab (with full request data) to a collection (core logic, no `AppHandle`).
+///
+/// Creates a new `CollectionRequest` from the provided tab data and appends it
+/// to the target collection with the next sequence number.
+fn save_tab_to_collection_inner(
+    collection_id: &str,
+    name: &str,
+    method: &str,
+    url: &str,
+    headers: &BTreeMap<String, String>,
+    body: Option<&str>,
+) -> Result<Collection, String> {
+    let mut collection = load_collection(collection_id)?;
+    let seq = collection.next_seq();
+    let request_body = body.map(|content| RequestBody {
+        body_type: BodyType::Json,
+        content: Some(content.to_string()),
+        file: None,
+    });
+    let request = CollectionRequest {
+        id: CollectionRequest::generate_id(name),
+        name: name.to_string(),
+        seq,
+        method: method.to_string(),
+        url: url.to_string(),
+        headers: headers.clone(),
+        body: request_body,
+        ..Default::default()
+    };
+    collection.requests.push(request);
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Save a tab's request data to a collection.
+///
+/// Creates a new request from the provided tab fields (name, method, URL,
+/// headers, body) and appends it to the collection.
+/// Emits `request:saved-to-collection` with `Actor::User` on success.
+#[tauri::command]
+#[allow(clippy::too_many_arguments)] // Tab data requires multiple fields
+pub async fn cmd_save_tab_to_collection(
+    app: tauri::AppHandle,
+    collection_id: String,
+    name: String,
+    method: String,
+    url: String,
+    headers: BTreeMap<String, String>,
+    body: Option<String>,
+) -> Result<Collection, String> {
+    let collection = save_tab_to_collection_inner(
+        &collection_id,
+        &name,
+        &method,
+        &url,
+        &headers,
+        body.as_deref(),
+    )?;
+    let request_id = collection
+        .requests
+        .last()
+        .map(|r| r.id.clone())
+        .unwrap_or_default();
+    emit_collection_event(
+        &app,
+        "request:saved-to-collection",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "request_id": &request_id, "name": &name}),
+    );
+    Ok(collection)
+}
+
+/// Move a request between collections (core logic, no `AppHandle`).
+///
+/// Removes the request from the source collection and appends it to the target.
+/// Strips any `SpecBinding` since the request is leaving its original context.
+/// Saves both collections.
+fn move_request_inner(
+    source_collection_id: &str,
+    request_id: &str,
+    target_collection_id: &str,
+) -> Result<(), String> {
+    let mut source = load_collection(source_collection_id)?;
+    let pos = source
+        .requests
+        .iter()
+        .position(|r| r.id == request_id)
+        .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+    let mut request = source.requests.remove(pos);
+
+    // Strip spec binding — moving breaks the binding context
+    if request.binding.is_bound() {
+        request.binding = SpecBinding::default();
+    }
+
+    let mut target = load_collection(target_collection_id)?;
+    request.seq = target.next_seq();
+    target.requests.push(request);
+
+    save_collection(&source)?;
+    save_collection(&target)?;
+    Ok(())
+}
+
+/// Move a request from one collection to another.
+///
+/// Removes the request from the source and appends to the target.
+/// Strips spec binding since the request leaves its original spec context.
+/// Emits `request:moved` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_move_request(
+    app: tauri::AppHandle,
+    source_collection_id: String,
+    request_id: String,
+    target_collection_id: String,
+) -> Result<(), String> {
+    move_request_inner(&source_collection_id, &request_id, &target_collection_id)?;
+    emit_collection_event(
+        &app,
+        "request:moved",
+        &Actor::User,
+        json!({
+            "source_collection_id": &source_collection_id,
+            "target_collection_id": &target_collection_id,
+            "request_id": &request_id,
+        }),
+    );
+    Ok(())
+}
+
+/// Copy a request to another collection (core logic, no `AppHandle`).
+///
+/// Clones the request with a new ID, strips any `SpecBinding`, and appends
+/// the copy to the target collection. The source collection is not modified.
+fn copy_request_to_collection_inner(
+    source_collection_id: &str,
+    request_id: &str,
+    target_collection_id: &str,
+) -> Result<Collection, String> {
+    let source = load_collection(source_collection_id)?;
+    let original = source
+        .requests
+        .iter()
+        .find(|r| r.id == request_id)
+        .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+    let mut copy = original.clone();
+    copy.id = CollectionRequest::generate_id(&copy.name);
+    copy.binding = SpecBinding::default();
+
+    let mut target = load_collection(target_collection_id)?;
+    copy.seq = target.next_seq();
+    target.requests.push(copy);
+
+    save_collection(&target)?;
+    Ok(target)
+}
+
+/// Copy a request from one collection to another.
+///
+/// Clones the request with a new ID and strips spec binding.
+/// Only the target collection is modified; the source remains unchanged.
+/// Emits `request:copied` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_copy_request_to_collection(
+    app: tauri::AppHandle,
+    source_collection_id: String,
+    request_id: String,
+    target_collection_id: String,
+) -> Result<Collection, String> {
+    let target = copy_request_to_collection_inner(
+        &source_collection_id,
+        &request_id,
+        &target_collection_id,
+    )?;
+    let copy_id = target
+        .requests
+        .last()
+        .map(|r| r.id.clone())
+        .unwrap_or_default();
+    emit_collection_event(
+        &app,
+        "request:copied",
+        &Actor::User,
+        json!({
+            "source_collection_id": &source_collection_id,
+            "target_collection_id": &target_collection_id,
+            "request_id": &copy_id,
+        }),
+    );
+    Ok(target)
 }
 
 /// Fetch, parse, and save the httpbin.org collection.
@@ -3197,6 +3393,236 @@ mod tests {
             save_collection(&collection).unwrap();
 
             let result = duplicate_request_inner(&collection.id, "nonexistent");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_save_tab_to_collection_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Save Tab Test");
+            save_collection(&collection).unwrap();
+
+            let mut headers = BTreeMap::new();
+            headers.insert("Content-Type".to_string(), "application/json".to_string());
+            let updated = save_tab_to_collection_inner(
+                &collection.id,
+                "My Request",
+                "POST",
+                "https://api.example.com/users",
+                &headers,
+                Some(r#"{"name":"test"}"#),
+            )
+            .unwrap();
+
+            assert_eq!(updated.requests.len(), 1);
+            let req = &updated.requests[0];
+            assert_eq!(req.name, "My Request");
+            assert_eq!(req.method, "POST");
+            assert_eq!(req.url, "https://api.example.com/users");
+            assert_eq!(req.headers.get("Content-Type").unwrap(), "application/json");
+            assert!(req.body.is_some());
+            assert_eq!(
+                req.body.as_ref().unwrap().content.as_deref(),
+                Some(r#"{"name":"test"}"#)
+            );
+            assert!(req.id.starts_with("req_"));
+            assert_eq!(req.seq, 1);
+
+            // Verify persisted
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.requests.len(), 1);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_save_tab_to_collection_inner_no_body() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("No Body Test");
+            save_collection(&collection).unwrap();
+
+            let updated = save_tab_to_collection_inner(
+                &collection.id,
+                "GET Req",
+                "GET",
+                "https://api.example.com",
+                &BTreeMap::new(),
+                None,
+            )
+            .unwrap();
+
+            assert_eq!(updated.requests.len(), 1);
+            assert!(updated.requests[0].body.is_none());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_move_request_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut source = Collection::new("Move Source");
+            source.requests.push(CollectionRequest {
+                id: "req_moveme".to_string(),
+                name: "Move Me".to_string(),
+                seq: 1,
+                method: "PUT".to_string(),
+                url: "https://example.com/move".to_string(),
+                ..Default::default()
+            });
+            save_collection(&source).unwrap();
+
+            let target = Collection::new("Move Target");
+            save_collection(&target).unwrap();
+
+            move_request_inner(&source.id, "req_moveme", &target.id).unwrap();
+
+            let loaded_source = load_collection(&source.id).unwrap();
+            assert_eq!(loaded_source.requests.len(), 0);
+
+            let loaded_target = load_collection(&target.id).unwrap();
+            assert_eq!(loaded_target.requests.len(), 1);
+            assert_eq!(loaded_target.requests[0].id, "req_moveme");
+            assert_eq!(loaded_target.requests[0].method, "PUT");
+            assert_eq!(loaded_target.requests[0].seq, 1);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_move_request_inner_strips_binding() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut source = Collection::new("Bind Source");
+            source.requests.push(CollectionRequest {
+                id: "req_bound".to_string(),
+                name: "Bound Request".to_string(),
+                seq: 1,
+                method: "GET".to_string(),
+                url: "https://example.com".to_string(),
+                binding: SpecBinding::from_operation("getUsers", "/users", "GET"),
+                ..Default::default()
+            });
+            save_collection(&source).unwrap();
+
+            let target = Collection::new("Bind Target");
+            save_collection(&target).unwrap();
+
+            move_request_inner(&source.id, "req_bound", &target.id).unwrap();
+
+            let loaded_target = load_collection(&target.id).unwrap();
+            assert!(!loaded_target.requests[0].binding.is_bound());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_move_request_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let source = Collection::new("Move NF Source");
+            save_collection(&source).unwrap();
+
+            let target = Collection::new("Move NF Target");
+            save_collection(&target).unwrap();
+
+            let result = move_request_inner(&source.id, "nonexistent", &target.id);
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_copy_request_to_collection_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut source = Collection::new("Copy Source");
+            source.requests.push(CollectionRequest {
+                id: "req_copyme".to_string(),
+                name: "Copy Me".to_string(),
+                seq: 1,
+                method: "DELETE".to_string(),
+                url: "https://example.com/copy".to_string(),
+                ..Default::default()
+            });
+            save_collection(&source).unwrap();
+
+            let target = Collection::new("Copy Target");
+            save_collection(&target).unwrap();
+
+            let updated_target =
+                copy_request_to_collection_inner(&source.id, "req_copyme", &target.id).unwrap();
+
+            // Target has the copy
+            assert_eq!(updated_target.requests.len(), 1);
+            assert_ne!(updated_target.requests[0].id, "req_copyme"); // new ID
+            assert_eq!(updated_target.requests[0].name, "Copy Me");
+            assert_eq!(updated_target.requests[0].method, "DELETE");
+
+            // Source is unchanged
+            let loaded_source = load_collection(&source.id).unwrap();
+            assert_eq!(loaded_source.requests.len(), 1);
+            assert_eq!(loaded_source.requests[0].id, "req_copyme");
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_copy_request_to_collection_inner_strips_binding() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut source = Collection::new("Copy Bind Src");
+            source.requests.push(CollectionRequest {
+                id: "req_copybound".to_string(),
+                name: "Bound Copy".to_string(),
+                seq: 1,
+                method: "GET".to_string(),
+                url: "https://example.com".to_string(),
+                binding: SpecBinding::from_operation("listPets", "/pets", "GET"),
+                ..Default::default()
+            });
+            save_collection(&source).unwrap();
+
+            let target = Collection::new("Copy Bind Tgt");
+            save_collection(&target).unwrap();
+
+            let updated_target =
+                copy_request_to_collection_inner(&source.id, "req_copybound", &target.id).unwrap();
+
+            assert!(!updated_target.requests[0].binding.is_bound());
+
+            // Source binding is preserved
+            let loaded_source = load_collection(&source.id).unwrap();
+            assert!(loaded_source.requests[0].binding.is_bound());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_copy_request_to_collection_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let source = Collection::new("Copy NF Src");
+            save_collection(&source).unwrap();
+
+            let target = Collection::new("Copy NF Tgt");
+            save_collection(&target).unwrap();
+
+            let result = copy_request_to_collection_inner(&source.id, "nonexistent", &target.id);
             assert!(result.is_err());
             assert!(result.unwrap_err().contains("not found"));
         })

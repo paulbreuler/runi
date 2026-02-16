@@ -19,6 +19,8 @@ export const RequestListComposite = ({
   const deleteRequest = useCollectionStore((state) => state.deleteRequest);
   const renameRequest = useCollectionStore((state) => state.renameRequest);
   const duplicateRequest = useCollectionStore((state) => state.duplicateRequest);
+  const moveRequest = useCollectionStore((state) => state.moveRequest);
+  const copyRequestToCollection = useCollectionStore((state) => state.copyRequestToCollection);
   const pendingRequestRenameId = useCollectionStore((state) => state.pendingRequestRenameId);
   const clearPendingRequestRename = useCollectionStore((state) => state.clearPendingRequestRename);
 
@@ -44,6 +46,12 @@ export const RequestListComposite = ({
           onDelete={(colId, reqId) => void deleteRequest(colId, reqId)}
           onRename={(colId, reqId, newName) => void renameRequest(colId, reqId, newName)}
           onDuplicate={(colId, reqId) => void duplicateRequest(colId, reqId)}
+          onMoveToCollection={(reqId, targetColId) =>
+            void moveRequest(collectionId, reqId, targetColId)
+          }
+          onCopyToCollection={(reqId, targetColId) =>
+            void copyRequestToCollection(collectionId, reqId, targetColId)
+          }
         />
       ))}
     </div>

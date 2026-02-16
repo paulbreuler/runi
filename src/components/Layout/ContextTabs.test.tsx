@@ -536,3 +536,122 @@ describe('ContextTabs - Close Button (Feature #2)', () => {
     expect(closeButton).toHaveAttribute('aria-label');
   });
 });
+
+describe('ContextTabs - Context Menu', () => {
+  beforeEach(() => {
+    useCanvasStore.getState().reset();
+  });
+
+  it('shows context menu on right-click of ephemeral tab', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-eph-1',
+      label: 'GET /api/test',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-eph-1');
+
+    render(<ContextTabs />);
+
+    const tab = screen.getByTestId('context-tab-request-eph-1');
+    await user.pointer({ keys: '[MouseRight]', target: tab });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-menu-save-to-collection')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show "Save to Collection" for collection-sourced tabs', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext, updateContextState } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-col-1',
+      label: 'GET /api/users',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-col-1');
+    updateContextState('request-col-1', {
+      source: { type: 'collection', collectionId: 'col-1', requestId: 'req-1' },
+    });
+
+    render(<ContextTabs />);
+
+    const tab = screen.getByTestId('context-tab-request-col-1');
+    await user.pointer({ keys: '[MouseRight]', target: tab });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('tab-menu-save-to-collection')).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('ContextTabs - Visual Indicator', () => {
+  beforeEach(() => {
+    useCanvasStore.getState().reset();
+  });
+
+  it('shows italic text for ephemeral (unsaved) tabs', () => {
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-eph-2',
+      label: 'New Request',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-eph-2');
+
+    render(<ContextTabs />);
+
+    const tab = screen.getByTestId('context-tab-request-eph-2');
+    const label = tab.querySelector('span');
+    expect(label).toHaveClass('italic');
+  });
+
+  it('shows collection indicator for collection-sourced tabs', () => {
+    const { registerContext, setActiveContext, updateContextState } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-col-2',
+      label: 'GET /api/users',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-col-2');
+    updateContextState('request-col-2', {
+      source: { type: 'collection', collectionId: 'col-1', requestId: 'req-1' },
+      isSaved: true,
+    });
+
+    render(<ContextTabs />);
+
+    const indicator = screen.getByTestId('tab-collection-indicator-request-col-2');
+    expect(indicator).toBeInTheDocument();
+  });
+
+  it('does not show collection indicator for ephemeral tabs', () => {
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-eph-3',
+      label: 'New Request',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-eph-3');
+
+    render(<ContextTabs />);
+
+    expect(screen.queryByTestId('tab-collection-indicator-request-eph-3')).not.toBeInTheDocument();
+  });
+});
