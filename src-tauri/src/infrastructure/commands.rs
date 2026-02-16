@@ -140,6 +140,49 @@ pub async fn cmd_import_collection(
     Ok(collection)
 }
 
+/// Extract the path portion from a URL or template URL.
+///
+/// Handles various input formats:
+/// - Full URLs: `https://api.example.com/users` → `/users`
+/// - Template URLs: `{{baseUrl}}/users` → `/users`
+/// - Paths: `/users` → `/users` (passthrough)
+/// - Root URLs: `https://api.example.com` → `/`
+///
+/// This is used when building old endpoints from collection requests for drift detection,
+/// ensuring path-only comparisons match the new spec's path format.
+fn extract_path_from_url(url: &str) -> String {
+    // 1. If already starts with `/`, it's a path — return as-is
+    if url.starts_with('/') {
+        return url.to_string();
+    }
+
+    // 2. If starts with `{{`, extract from first `/` after `}}`
+    if url.starts_with("{{") {
+        if let Some(end_idx) = url.find("}}") {
+            let after_template = &url[end_idx + 2..];
+            if let Some(slash_idx) = after_template.find('/') {
+                return after_template[slash_idx..].to_string();
+            }
+            // No slash after template, fallback to prepending `/`
+            return format!("/{after_template}");
+        }
+    }
+
+    // 3. If contains `://` (any scheme), extract path after authority
+    if let Some(scheme_end) = url.find("://") {
+        let after_scheme = &url[scheme_end + 3..];
+        // Find first `/` after authority (host:port)
+        if let Some(slash_idx) = after_scheme.find('/') {
+            return after_scheme[slash_idx..].to_string();
+        }
+        // No path after authority, return root
+        return "/".to_string();
+    }
+
+    // 4. Fallback: prepend `/` to make it a path
+    format!("/{url}")
+}
+
 /// Refresh a collection's spec from its tracked source (core logic, no `AppHandle`).
 ///
 /// Re-fetches the spec, computes hash for fast-path skip, then structural drift
@@ -211,7 +254,12 @@ pub async fn refresh_collection_spec_inner(
         .iter()
         .map(|req| {
             // Use binding path/method if available, otherwise fall back to request fields
-            let path = req.binding.path.clone().unwrap_or_else(|| req.url.clone());
+            // Extract path portion from URL to ensure path-only comparison with new spec
+            let path = req
+                .binding
+                .path
+                .clone()
+                .unwrap_or_else(|| extract_path_from_url(&req.url));
             let method = req
                 .binding
                 .method
@@ -2597,5 +2645,148 @@ mod tests {
             );
         })
         .await;
+    }
+
+    /// Test 2B.7: No false drift for unbound requests with full URLs.
+    ///
+    /// This test verifies the fix for the bug where unbound requests with full URLs
+    /// (e.g., `https://api.example.com/users`) were causing false positive drift
+    /// because the path comparison was comparing full URLs against path-only values
+    /// from the new spec (e.g., `/users`).
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_no_false_drift_for_unbound_full_urls() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import from spec
+            let mut collection = import_and_save(SPEC_V1).await;
+
+            // Simulate an unbound request by clearing binding.path and setting a full URL
+            if let Some(req) = collection.requests.first_mut() {
+                req.binding.path = None; // Clear binding
+                req.url = "https://api.example.com/users".to_string(); // Full URL
+            }
+            save_collection(&collection).unwrap();
+
+            // Refresh with same spec content
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+
+            // Should not detect false drift
+            assert!(
+                !result.changed,
+                "Should not detect drift when full URL path matches spec endpoint"
+            );
+            assert!(
+                result.operations_removed.is_empty(),
+                "Should not show GET /users as removed: {:?}",
+                result.operations_removed
+            );
+        })
+        .await;
+    }
+
+    /// Test 2B.8: No false drift for unbound requests with template URLs.
+    ///
+    /// Verifies that template URLs like `{{baseUrl}}/users` are handled correctly.
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_no_false_drift_for_template_urls() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import from spec
+            let mut collection = import_and_save(SPEC_V1).await;
+
+            // Simulate an unbound request with a template URL
+            if let Some(req) = collection.requests.first_mut() {
+                req.binding.path = None; // Clear binding
+                req.url = "{{baseUrl}}/users".to_string(); // Template URL
+            }
+            save_collection(&collection).unwrap();
+
+            // Refresh with same spec content
+            let service = make_refresh_service(SPEC_V1);
+            let result = refresh_collection_spec_inner(&collection.id, &service)
+                .await
+                .unwrap();
+
+            // Should not detect false drift
+            assert!(
+                !result.changed,
+                "Should not detect drift when template URL path matches spec endpoint"
+            );
+            assert!(
+                result.operations_removed.is_empty(),
+                "Should not show GET /users as removed: {:?}",
+                result.operations_removed
+            );
+        })
+        .await;
+    }
+
+    // ── Tests for extract_path_from_url ──
+
+    #[test]
+    fn test_extract_path_from_full_url() {
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users"),
+            "/users"
+        );
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users/123"),
+            "/users/123"
+        );
+        assert_eq!(
+            extract_path_from_url("http://localhost:8080/api/v1/items"),
+            "/api/v1/items"
+        );
+    }
+
+    #[test]
+    fn test_extract_path_from_template_url() {
+        assert_eq!(extract_path_from_url("{{baseUrl}}/users"), "/users");
+        assert_eq!(
+            extract_path_from_url("{{baseUrl}}/users/{{id}}"),
+            "/users/{{id}}"
+        );
+    }
+
+    #[test]
+    fn test_extract_path_already_a_path() {
+        assert_eq!(extract_path_from_url("/users"), "/users");
+        assert_eq!(extract_path_from_url("/users/123"), "/users/123");
+    }
+
+    #[test]
+    fn test_extract_path_root() {
+        assert_eq!(extract_path_from_url("https://api.example.com"), "/");
+        assert_eq!(extract_path_from_url("https://api.example.com/"), "/");
+    }
+
+    #[test]
+    fn test_extract_path_with_query_string() {
+        assert_eq!(
+            extract_path_from_url("https://api.example.com/users?limit=10"),
+            "/users?limit=10"
+        );
+        assert_eq!(
+            extract_path_from_url("{{baseUrl}}/users?limit=10"),
+            "/users?limit=10"
+        );
+    }
+
+    #[test]
+    fn test_extract_path_edge_cases() {
+        // Custom scheme
+        assert_eq!(
+            extract_path_from_url("custom://api.example.com/users"),
+            "/users"
+        );
+        // No path after authority
+        assert_eq!(extract_path_from_url("https://api.example.com"), "/");
+        // Fallback for malformed input
+        assert_eq!(extract_path_from_url("malformed"), "/malformed");
     }
 }
