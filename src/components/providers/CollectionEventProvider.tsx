@@ -108,14 +108,18 @@ function refreshOpenTabIfNeeded(collectionId: string, requestId: string): void {
   reqStore.setHeaders(contextId, request.headers);
   reqStore.setBody(contextId, request.body?.content ?? '');
 
-  // Update tab label if the request was renamed
+  // Update tab label and contextState name if the request was renamed
   const canvasStore = useCanvasStore.getState();
   const context = canvasStore.contexts.get(contextId);
   if (context !== undefined && context.label !== request.name) {
     useCanvasStore.setState((state) => {
       const newContexts = new Map(state.contexts);
       newContexts.set(contextId, { ...context, label: request.name });
-      return { contexts: newContexts };
+      // Keep contextState metadata in sync with the label
+      const newContextState = new Map(state.contextState);
+      const existingMeta = newContextState.get(contextId) ?? {};
+      newContextState.set(contextId, { ...existingMeta, name: request.name });
+      return { contexts: newContexts, contextState: newContextState };
     });
   }
 }

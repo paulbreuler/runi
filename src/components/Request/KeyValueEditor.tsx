@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
@@ -51,6 +51,7 @@ export const KeyValueEditor = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editKey, setEditKey] = useState('');
   const [editValue, setEditValue] = useState('');
+  const didCancelEditRef = useRef(false);
   const [emptyRowKey, setEmptyRowKey] = useState('');
   const [emptyRowValue, setEmptyRowValue] = useState('');
   const shouldReduceMotion = useReducedMotion();
@@ -114,6 +115,13 @@ export const KeyValueEditor = ({
 
   // --- Edit existing entry ---
 
+  // Reset cancel flag when entering edit mode
+  useEffect(() => {
+    if (editingIndex !== null) {
+      didCancelEditRef.current = false;
+    }
+  }, [editingIndex]);
+
   const startEdit = (index: number): void => {
     const entry = entries[index];
     if (entry === undefined) {
@@ -124,7 +132,10 @@ export const KeyValueEditor = ({
     setEditValue(entry.value);
   };
 
-  const saveEdit = (): void => {
+  const saveEdit = useCallback((): void => {
+    if (didCancelEditRef.current) {
+      return;
+    }
     if (editingIndex === null) {
       return;
     }
@@ -141,22 +152,27 @@ export const KeyValueEditor = ({
     setEditingIndex(null);
     setEditKey('');
     setEditValue('');
-  };
+  }, [editingIndex, editKey, editValue, entries, onEntriesChange]);
 
-  const cancelEdit = (): void => {
+  const cancelEdit = useCallback((): void => {
+    didCancelEditRef.current = true;
     setEditingIndex(null);
     setEditKey('');
     setEditValue('');
-  };
+  }, []);
 
-  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      saveEdit();
-    } else if (e.key === 'Escape') {
-      cancelEdit();
-    }
-  };
+  const handleEditKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>): void => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveEdit();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelEdit();
+      }
+    },
+    [saveEdit, cancelEdit]
+  );
 
   // --- Remove entry ---
 
@@ -186,6 +202,7 @@ export const KeyValueEditor = ({
                         setEditKey(e.target.value);
                       }}
                       onKeyDown={handleEditKeyDown}
+                      onBlur={saveEdit}
                       placeholder={keyPlaceholder}
                       className="flex-1 font-mono text-sm"
                       noScale
@@ -200,12 +217,23 @@ export const KeyValueEditor = ({
                         setEditValue(e.target.value);
                       }}
                       onKeyDown={handleEditKeyDown}
+                      onBlur={saveEdit}
                       placeholder={valuePlaceholder}
                       className="flex-1 font-mono text-sm"
                       noScale
                       data-test-id={`${testIdPrefix}-value-input-${String(index)}`}
                       aria-label={`${labelPrefix} value`}
                     />
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={saveEdit}
+                      className="text-signal-success hover:text-signal-success"
+                      data-test-id={`${testIdPrefix}-save-edit-${String(index)}`}
+                      aria-label={`Save ${labelPrefix}`}
+                    >
+                      <Check />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon-sm"
