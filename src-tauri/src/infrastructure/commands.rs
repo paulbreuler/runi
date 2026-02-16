@@ -920,11 +920,13 @@ fn save_tab_to_collection_inner(
     url: &str,
     headers: &BTreeMap<String, String>,
     body: Option<&str>,
+    body_type: Option<BodyType>,
 ) -> Result<Collection, String> {
     let mut collection = load_collection(collection_id)?;
     let seq = collection.next_seq();
+    let effective_body_type = body_type.unwrap_or_else(|| infer_body_type_from_headers(headers));
     let request_body = body.map(|content| RequestBody {
-        body_type: BodyType::Json,
+        body_type: effective_body_type,
         content: Some(content.to_string()),
         file: None,
     });
@@ -943,6 +945,33 @@ fn save_tab_to_collection_inner(
     Ok(collection)
 }
 
+fn infer_body_type_from_headers(headers: &BTreeMap<String, String>) -> BodyType {
+    let content_type = headers
+        .iter()
+        .find_map(|(name, value)| name.eq_ignore_ascii_case("content-type").then_some(value));
+
+    let Some(content_type) = content_type else {
+        return BodyType::Raw;
+    };
+
+    let normalized = content_type.to_ascii_lowercase();
+    if normalized.contains("application/json") {
+        BodyType::Json
+    } else if normalized.contains("application/x-www-form-urlencoded")
+        || normalized.contains("multipart/form-data")
+    {
+        BodyType::Form
+    } else if normalized.contains("application/graphql")
+        || normalized.contains("application/graphql+json")
+    {
+        BodyType::Graphql
+    } else if normalized.contains("application/xml") || normalized.contains("text/xml") {
+        BodyType::Xml
+    } else {
+        BodyType::Raw
+    }
+}
+
 /// Save a tab's request data to a collection.
 ///
 /// Creates a new request from the provided tab fields (name, method, URL,
@@ -958,6 +987,7 @@ pub async fn cmd_save_tab_to_collection(
     url: String,
     headers: BTreeMap<String, String>,
     body: Option<String>,
+    body_type: Option<BodyType>,
 ) -> Result<Collection, String> {
     let collection = save_tab_to_collection_inner(
         &collection_id,
@@ -966,6 +996,7 @@ pub async fn cmd_save_tab_to_collection(
         &url,
         &headers,
         body.as_deref(),
+        body_type,
     )?;
     let request_id = collection
         .requests
@@ -981,24 +1012,45 @@ pub async fn cmd_save_tab_to_collection(
     Ok(collection)
 }
 
+/// Result of moving a request between collections.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoveRequestResult {
+    /// The source collection after the request was removed.
+    pub from: Collection,
+    /// The target collection after the request was added.
+    pub to: Collection,
+}
+
 /// Move a request between collections (core logic, no `AppHandle`).
 ///
 /// Removes the request from the source collection and appends it to the target.
 /// Strips any `SpecBinding` since the request is leaving its original context.
-/// Saves both collections.
+/// Saves both collections. Returns both updated collections.
 fn move_request_inner(
     source_collection_id: &str,
     request_id: &str,
     target_collection_id: &str,
-) -> Result<(), String> {
+) -> Result<MoveRequestResult, String> {
+    if source_collection_id == target_collection_id {
+        let collection = load_collection(source_collection_id)?;
+        return Ok(MoveRequestResult {
+            from: collection.clone(),
+            to: collection,
+        });
+    }
+
     let mut source = load_collection(source_collection_id)?;
     let pos = source
         .requests
         .iter()
         .position(|r| r.id == request_id)
         .ok_or_else(|| format!("Request not found: {request_id}"))?;
-
-    let mut request = source.requests.remove(pos);
+    let mut request = source
+        .requests
+        .get(pos)
+        .cloned()
+        .ok_or_else(|| format!("Request not found: {request_id}"))?;
 
     // Strip spec binding — moving breaks the binding context
     if request.binding.is_bound() {
@@ -1009,9 +1061,27 @@ fn move_request_inner(
     request.seq = target.next_seq();
     target.requests.push(request);
 
-    save_collection(&source)?;
     save_collection(&target)?;
-    Ok(())
+    source.requests.remove(pos);
+    if let Err(save_source_error) = save_collection(&source) {
+        if let Some(target_pos) = target.requests.iter().position(|r| r.id == request_id) {
+            target.requests.remove(target_pos);
+        }
+
+        return match save_collection(&target) {
+            Ok(_) => Err(format!(
+                "Failed to save source collection {source_collection_id} while moving request {request_id} to {target_collection_id}; target changes rolled back: {save_source_error}"
+            )),
+            Err(rollback_error) => Err(format!(
+                "Failed to save source collection {source_collection_id} while moving request {request_id} to {target_collection_id}; rollback failed: {rollback_error}; original error: {save_source_error}"
+            )),
+        };
+    }
+
+    Ok(MoveRequestResult {
+        from: source,
+        to: target,
+    })
 }
 
 /// Move a request from one collection to another.
@@ -1025,8 +1095,8 @@ pub async fn cmd_move_request(
     source_collection_id: String,
     request_id: String,
     target_collection_id: String,
-) -> Result<(), String> {
-    move_request_inner(&source_collection_id, &request_id, &target_collection_id)?;
+) -> Result<MoveRequestResult, String> {
+    let result = move_request_inner(&source_collection_id, &request_id, &target_collection_id)?;
     emit_collection_event(
         &app,
         "request:moved",
@@ -1037,7 +1107,7 @@ pub async fn cmd_move_request(
             "request_id": &request_id,
         }),
     );
-    Ok(())
+    Ok(result)
 }
 
 /// Copy a request to another collection (core logic, no `AppHandle`).
@@ -3416,6 +3486,7 @@ mod tests {
                 "https://api.example.com/users",
                 &headers,
                 Some(r#"{"name":"test"}"#),
+                None,
             )
             .unwrap();
 
@@ -3455,6 +3526,7 @@ mod tests {
                 "https://api.example.com",
                 &BTreeMap::new(),
                 None,
+                None,
             )
             .unwrap();
 
@@ -3493,6 +3565,39 @@ mod tests {
             assert_eq!(loaded_target.requests[0].id, "req_moveme");
             assert_eq!(loaded_target.requests[0].method, "PUT");
             assert_eq!(loaded_target.requests[0].seq, 1);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_save_tab_to_collection_inner_preserves_body_type() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Save Tab Body Type Test");
+            save_collection(&collection).unwrap();
+
+            let updated = save_tab_to_collection_inner(
+                &collection.id,
+                "XML Request",
+                "POST",
+                "https://api.example.com/xml",
+                &BTreeMap::new(),
+                Some("<root/>"),
+                Some(BodyType::Xml),
+            )
+            .unwrap();
+
+            let req = &updated.requests[0];
+            assert!(req.body.is_some());
+            assert_eq!(
+                req.body.as_ref().map(|b| b.body_type.clone()),
+                Some(BodyType::Xml)
+            );
+            assert_eq!(
+                req.body.as_ref().and_then(|b| b.content.clone()),
+                Some("<root/>".to_string())
+            );
         })
         .await;
     }

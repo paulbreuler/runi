@@ -121,6 +121,17 @@ describe('RequestItemComposite', (): void => {
 
   afterEach((): void => {
     vi.useRealTimers();
+    useCollectionStore.setState({
+      collections: [],
+      summaries: [],
+      selectedCollectionId: null,
+      selectedRequestId: null,
+      expandedCollectionIds: new Set(),
+      pendingRenameId: null,
+      pendingRequestRenameId: null,
+      isLoading: false,
+      error: null,
+    });
   });
 
   describe('tooltip behavior', (): void => {
@@ -484,6 +495,29 @@ describe('RequestItemComposite', (): void => {
           makeCollection('col_2', 'Other Collection'),
           makeCollection('col_3', 'Third Collection'),
         ],
+        summaries: [
+          {
+            id: 'col_1',
+            name: 'My Collection',
+            request_count: 0,
+            source_type: 'manual',
+            modified_at: '',
+          },
+          {
+            id: 'col_2',
+            name: 'Other Collection',
+            request_count: 0,
+            source_type: 'manual',
+            modified_at: '',
+          },
+          {
+            id: 'col_3',
+            name: 'Third Collection',
+            request_count: 0,
+            source_type: 'manual',
+            modified_at: '',
+          },
+        ],
       });
     });
 
@@ -501,7 +535,7 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_1');
 
-      expect(screen.getByTestId('menu-move-to-collection')).toBeInTheDocument();
+      expect(screen.getByTestId('menu-move-to-collection-req_1')).toBeInTheDocument();
     });
 
     it('shows collection targets excluding current collection', (): void => {
@@ -518,13 +552,13 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_1');
 
-      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      const moveTrigger = screen.getByTestId('menu-move-to-collection-req_1');
       fireEvent.click(moveTrigger);
 
       // Should show other collections but not the current one
-      expect(screen.getByTestId('move-target-col_2')).toBeInTheDocument();
-      expect(screen.getByTestId('move-target-col_3')).toBeInTheDocument();
-      expect(screen.queryByTestId('move-target-col_1')).not.toBeInTheDocument();
+      expect(screen.getByTestId('move-target-req_1-col_2')).toBeInTheDocument();
+      expect(screen.getByTestId('move-target-req_1-col_3')).toBeInTheDocument();
+      expect(screen.queryByTestId('move-target-req_1-col_1')).not.toBeInTheDocument();
     });
 
     it('calls onMoveToCollection when a target collection is clicked', (): void => {
@@ -541,10 +575,10 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_1');
 
-      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      const moveTrigger = screen.getByTestId('menu-move-to-collection-req_1');
       fireEvent.click(moveTrigger);
 
-      const targetCol = screen.getByTestId('move-target-col_2');
+      const targetCol = screen.getByTestId('move-target-req_1-col_2');
       fireEvent.click(targetCol);
 
       expect(mockMove).toHaveBeenCalledWith('req_1', 'col_2');
@@ -564,14 +598,14 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_bound');
 
-      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      const moveTrigger = screen.getByTestId('menu-move-to-collection-req_bound');
       fireEvent.click(moveTrigger);
 
-      const targetCol = screen.getByTestId('move-target-col_2');
+      const targetCol = screen.getByTestId('move-target-req_bound-col_2');
       fireEvent.click(targetCol);
 
       // Should show warning instead of immediately moving
-      expect(screen.getByTestId('move-bound-warning')).toBeInTheDocument();
+      expect(screen.getByTestId('move-bound-warning-req_bound')).toBeInTheDocument();
     });
 
     it('completes move after confirming spec-bound warning', async (): Promise<void> => {
@@ -589,13 +623,13 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_bound');
 
-      const moveTrigger = screen.getByTestId('menu-move-to-collection');
+      const moveTrigger = screen.getByTestId('menu-move-to-collection-req_bound');
       fireEvent.click(moveTrigger);
 
-      const targetCol = screen.getByTestId('move-target-col_2');
+      const targetCol = screen.getByTestId('move-target-req_bound-col_2');
       fireEvent.click(targetCol);
 
-      const confirmBtn = screen.getByTestId('move-bound-confirm-btn');
+      const confirmBtn = screen.getByTestId('move-bound-confirm-btn-req_bound');
       await user.click(confirmBtn);
 
       expect(mockMove).toHaveBeenCalledWith('req_bound', 'col_2');
@@ -608,6 +642,22 @@ describe('RequestItemComposite', (): void => {
         collections: [
           makeCollection('col_1', 'My Collection'),
           makeCollection('col_2', 'Other Collection'),
+        ],
+        summaries: [
+          {
+            id: 'col_1',
+            name: 'My Collection',
+            request_count: 0,
+            source_type: 'manual',
+            modified_at: '',
+          },
+          {
+            id: 'col_2',
+            name: 'Other Collection',
+            request_count: 0,
+            source_type: 'manual',
+            modified_at: '',
+          },
         ],
       });
     });
@@ -626,7 +676,7 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_1');
 
-      expect(screen.getByTestId('menu-copy-to-collection')).toBeInTheDocument();
+      expect(screen.getByTestId('menu-copy-to-collection-req_1')).toBeInTheDocument();
     });
 
     it('calls onCopyToCollection when a target collection is clicked', (): void => {
@@ -643,10 +693,10 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_1');
 
-      const copyTrigger = screen.getByTestId('menu-copy-to-collection');
+      const copyTrigger = screen.getByTestId('menu-copy-to-collection-req_1');
       fireEvent.click(copyTrigger);
 
-      const targetCol = screen.getByTestId('copy-target-col_2');
+      const targetCol = screen.getByTestId('copy-target-req_1-col_2');
       fireEvent.click(targetCol);
 
       expect(mockCopy).toHaveBeenCalledWith('req_1', 'col_2');
@@ -666,14 +716,14 @@ describe('RequestItemComposite', (): void => {
 
       openMenu('req_bound');
 
-      const copyTrigger = screen.getByTestId('menu-copy-to-collection');
+      const copyTrigger = screen.getByTestId('menu-copy-to-collection-req_bound');
       fireEvent.click(copyTrigger);
 
-      const targetCol = screen.getByTestId('copy-target-col_2');
+      const targetCol = screen.getByTestId('copy-target-req_bound-col_2');
       fireEvent.click(targetCol);
 
       // Copy should happen immediately, no warning
-      expect(screen.queryByTestId('move-bound-warning')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('move-bound-warning-req_bound')).not.toBeInTheDocument();
       expect(mockCopy).toHaveBeenCalledWith('req_bound', 'col_2');
     });
   });

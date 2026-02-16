@@ -10,6 +10,9 @@ mod application;
 mod domain;
 mod infrastructure;
 
+use sysinfo::System;
+use tauri::Manager;
+
 use infrastructure::commands::{
     clear_request_history, cmd_add_httpbin_collection, cmd_add_request,
     cmd_copy_request_to_collection, cmd_create_collection, cmd_delete_collection,
@@ -34,8 +37,6 @@ use infrastructure::mcp::server::sse_broadcaster::SseBroadcaster;
 use infrastructure::memory_monitor::{
     collect_ram_sample, get_ram_stats, set_memory_monitoring_enabled, start_memory_monitor,
 };
-use sysinfo::System;
-use tauri::Manager;
 
 /// Initialize and run the Tauri application.
 ///

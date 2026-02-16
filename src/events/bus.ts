@@ -186,7 +186,8 @@ export interface RequestMovedPayload {
  * Payload for request.copied event.
  */
 export interface RequestCopiedPayload {
-  requestId: string;
+  sourceRequestId: string;
+  copiedRequestId: string;
   fromCollectionId: string;
   toCollectionId: string;
 }

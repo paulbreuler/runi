@@ -54,6 +54,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
   // Save to Collection dialog state
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveDialogTabId, setSaveDialogTabId] = useState<string | null>(null);
+  const [saveDialogError, setSaveDialogError] = useState<string | null>(null);
 
   const { contexts, templates, contextOrder, activeContextId, contextState } = useCanvasStore();
 
@@ -151,6 +152,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
   const handleSaveToCollection = useCallback((): void => {
     if (menuTabId !== null) {
       setSaveDialogTabId(menuTabId);
+      setSaveDialogError(null);
       setSaveDialogOpen(true);
     }
     setMenuOpen(false);
@@ -177,19 +179,26 @@ export const ContextTabs = (): React.JSX.Element | null => {
         body: reqState.body,
       });
 
-      if (result !== null) {
-        // Update tab source and reset dirty state
-        useCanvasStore.getState().updateContextState(saveDialogTabId, {
-          source: {
-            type: 'collection',
-            collectionId: result.collectionId,
-            requestId: result.requestId,
-          },
-          isDirty: false,
-          isSaved: true,
-        } as unknown as Record<string, unknown>);
+      if (result === null) {
+        const { error } = useCollectionStore.getState();
+        setSaveDialogError(error ?? 'Failed to save request to collection');
+        return;
       }
 
+      // Update tab source and reset dirty state
+      useCanvasStore.getState().updateContextState(saveDialogTabId, {
+        source: {
+          type: 'collection',
+          collectionId: result.collectionId,
+          requestId: result.requestId,
+        },
+        isDirty: false,
+        isSaved: true,
+      });
+
+      // Update tab label to match the saved request name
+      useCanvasStore.getState().updateTabName(saveDialogTabId, requestName);
+      setSaveDialogError(null);
       setSaveDialogOpen(false);
       setSaveDialogTabId(null);
     },
@@ -213,6 +222,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
 
       // Ephemeral tab: open save dialog
       setSaveDialogTabId(activeId);
+      setSaveDialogError(null);
       setSaveDialogOpen(true);
     });
 
@@ -380,6 +390,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
                         'relative z-10 truncate',
                         !isSaved && !isCollectionSourced && 'italic opacity-75'
                       )}
+                      data-test-id={`context-tab-label-${tab.value}`}
                     >
                       {tab.label}
                     </span>
@@ -458,11 +469,17 @@ export const ContextTabs = (): React.JSX.Element | null => {
       {/* Save to Collection dialog */}
       <SaveToCollectionDialog
         open={saveDialogOpen}
-        onOpenChange={setSaveDialogOpen}
+        onOpenChange={(open) => {
+          setSaveDialogOpen(open);
+          if (!open) {
+            setSaveDialogError(null);
+          }
+        }}
         onSave={(collectionId, name) => {
           void handleSaveDialogSave(collectionId, name);
         }}
         defaultName={saveDialogTabId !== null ? (contexts.get(saveDialogTabId)?.label ?? '') : ''}
+        errorMessage={saveDialogError}
       />
     </motion.div>
   );

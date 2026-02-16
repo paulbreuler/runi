@@ -4,10 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ContextTabs } from './ContextTabs';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
+import { globalEventBus } from '@/events/bus';
 import type { CanvasContextDescriptor } from '@/types/canvas';
 
 describe('ContextTabs', () => {
@@ -653,5 +656,104 @@ describe('ContextTabs - Visual Indicator', () => {
     render(<ContextTabs />);
 
     expect(screen.queryByTestId('tab-collection-indicator-request-eph-3')).not.toBeInTheDocument();
+  });
+
+  it('renders request tab label with data-test-id', () => {
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-label-1',
+      label: 'Label Check',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-label-1');
+
+    render(<ContextTabs />);
+
+    expect(screen.getByTestId('context-tab-label-request-label-1')).toHaveTextContent(
+      'Label Check'
+    );
+  });
+});
+
+describe('ContextTabs - Save Errors', () => {
+  beforeEach(() => {
+    useCanvasStore.getState().reset();
+    useCollectionStore.setState({
+      collections: [],
+      summaries: [],
+      selectedCollectionId: null,
+      selectedRequestId: null,
+      expandedCollectionIds: new Set(),
+      pendingRenameId: null,
+      pendingRequestRenameId: null,
+      isLoading: false,
+      error: null,
+    });
+    useRequestStoreRaw.setState({ contexts: {} });
+  });
+
+  it('keeps save dialog open and shows error when save fails', async () => {
+    const user = userEvent.setup();
+    const saveTabToCollection = vi.fn().mockResolvedValue(null);
+
+    useCollectionStore.setState({
+      summaries: [
+        {
+          id: 'col-1',
+          name: 'Collection One',
+          request_count: 0,
+          source_type: 'manual',
+          modified_at: '',
+        },
+      ],
+      error: 'Save failed from store',
+      saveTabToCollection,
+    });
+    useRequestStoreRaw.getState().initContext('request-eph-fail', {
+      method: 'POST',
+      url: 'https://example.com/fail',
+      headers: {},
+      body: 'hello',
+    });
+
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+    registerContext({
+      id: 'request-eph-fail',
+      label: 'Will Fail',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-eph-fail');
+
+    render(<ContextTabs />);
+
+    globalEventBus.emit('tab.save-requested', {});
+
+    await waitFor(() => {
+      expect(screen.getByTestId('save-to-collection-dialog')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('collection-picker'));
+    await waitFor(() => {
+      expect(screen.getByTestId('collection-option-col-1')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('collection-option-col-1'));
+
+    const nameInput = screen.getByTestId('request-name-input');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Failed Save');
+    await user.click(screen.getByTestId('save-button'));
+
+    await waitFor(() => {
+      expect(saveTabToCollection).toHaveBeenCalled();
+      expect(screen.getByTestId('save-to-collection-dialog')).toBeInTheDocument();
+      expect(screen.getByTestId('save-to-collection-error')).toHaveTextContent(
+        'Save failed from store'
+      );
+    });
   });
 });

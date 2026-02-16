@@ -477,9 +477,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const result = await invoke<{ from: Collection; to: Collection }>('cmd_move_request', {
-        fromCollectionId: sourceCollectionId,
+        sourceCollectionId,
         requestId,
-        toCollectionId: targetCollectionId,
+        targetCollectionId,
       });
 
       const from = normalizeCollection(result.from);
@@ -529,9 +529,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     try {
       const targetCollection = normalizeCollection(
         await invoke<Collection>('cmd_copy_request_to_collection', {
-          fromCollectionId: sourceCollectionId,
+          sourceCollectionId,
           requestId,
-          toCollectionId: targetCollectionId,
+          targetCollectionId,
         })
       );
 

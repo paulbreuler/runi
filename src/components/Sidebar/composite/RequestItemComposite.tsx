@@ -71,8 +71,8 @@ export const RequestItemComposite = ({
   const selectedRequestId = useCollectionStore((state) => state.selectedRequestId);
   const isSelected = selectedRequestId === request.id;
   const selectRequest = useCollectionStore((state) => state.selectRequest);
-  const collections = useCollectionStore((state) => state.collections);
-  const otherCollections = collections.filter((c) => c.id !== collectionId);
+  const summaries = useCollectionStore((state) => state.summaries);
+  const otherCollections = summaries.filter((s) => s.id !== collectionId);
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -424,7 +424,7 @@ export const RequestItemComposite = ({
                           <Menu.SubmenuRoot>
                             <Menu.SubmenuTrigger
                               className={cn(focusRingClasses, menuItemClasses, 'justify-between')}
-                              data-test-id="menu-move-to-collection"
+                              data-test-id={`menu-move-to-collection-${request.id}`}
                             >
                               <span className="flex items-center gap-2">
                                 <ArrowRightFromLine size={14} className="text-text-muted" />
@@ -445,9 +445,9 @@ export const RequestItemComposite = ({
                                       onClick={() => {
                                         handleMoveToCollection(col.id);
                                       }}
-                                      data-test-id={`move-target-${col.id}`}
+                                      data-test-id={`move-target-${request.id}-${col.id}`}
                                     >
-                                      {col.metadata.name}
+                                      {col.name}
                                     </Menu.Item>
                                   ))}
                                 </Menu.Popup>
@@ -457,7 +457,7 @@ export const RequestItemComposite = ({
                           <Menu.SubmenuRoot>
                             <Menu.SubmenuTrigger
                               className={cn(focusRingClasses, menuItemClasses, 'justify-between')}
-                              data-test-id="menu-copy-to-collection"
+                              data-test-id={`menu-copy-to-collection-${request.id}`}
                             >
                               <span className="flex items-center gap-2">
                                 <CopyPlus size={14} className="text-text-muted" />
@@ -478,9 +478,9 @@ export const RequestItemComposite = ({
                                       onClick={() => {
                                         handleCopyToCollection(col.id);
                                       }}
-                                      data-test-id={`copy-target-${col.id}`}
+                                      data-test-id={`copy-target-${request.id}-${col.id}`}
                                     >
-                                      {col.metadata.name}
+                                      {col.name}
                                     </Menu.Item>
                                   ))}
                                 </Menu.Popup>
@@ -549,7 +549,7 @@ export const RequestItemComposite = ({
             align="start"
             anchor={rowRef}
             className="w-64 p-3"
-            data-test-id="move-bound-warning"
+            data-test-id={`move-bound-warning-${request.id}`}
           >
             <p className="text-sm text-text-primary mb-3">
               This request is bound to{' '}
@@ -567,7 +567,7 @@ export const RequestItemComposite = ({
                   setMoveBoundWarningOpen(false);
                   setPendingMoveTarget(null);
                 }}
-                data-test-id="move-bound-cancel-btn"
+                data-test-id={`move-bound-cancel-btn-${request.id}`}
               >
                 Cancel
               </Button>
@@ -576,7 +576,7 @@ export const RequestItemComposite = ({
                 size="xs"
                 noScale
                 onClick={handleConfirmBoundMove}
-                data-test-id="move-bound-confirm-btn"
+                data-test-id={`move-bound-confirm-btn-${request.id}`}
               >
                 Move
               </Button>
