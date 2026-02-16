@@ -81,6 +81,9 @@ export interface UiSettings {
 
   /** Sidebar width in pixels. Range: 280-600. Default: 384 */
   sidebarWidth: number;
+
+  /** Syntax highlighting theme for code editors. Default: 'one-dark' */
+  editorTheme: string;
 }
 
 export interface McpSettings {

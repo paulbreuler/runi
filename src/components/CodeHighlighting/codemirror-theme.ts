@@ -15,6 +15,8 @@
 import { EditorView } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { solarizedDark } from '@uiw/codemirror-theme-solarized/dark';
+import { githubDark } from '@uiw/codemirror-theme-github';
 
 /**
  * runi structural chrome — dark-first, CSS-custom-property-driven.
@@ -182,16 +184,29 @@ const baseTheme = EditorView.baseTheme({
   },
 });
 
+/** Map of available syntax themes keyed by setting value. */
+const SYNTAX_THEMES: Record<string, Extension> = {
+  'one-dark': oneDark,
+  'solarized-dark': solarizedDark,
+  'github-dark': githubDark,
+};
+
 /**
- * Complete runi theme extension for CodeMirror 6.
+ * Build a complete runi theme extension for a given syntax theme name.
  *
- * Combines:
- * - One Dark syntax highlighting (handles all token colors)
- * - Structural chrome overrides (CSS custom properties for bg, gutters, etc.)
- * - Focus ring styling (--color-ring, 2px, focus-visible)
- * - Reduced motion support (disables cursor blink)
+ * Combines the selected syntax theme with runi's structural chrome and base theme.
+ * Falls back to One Dark if the theme name is unknown.
  *
- * Order matters: oneDark first (base syntax), then theme (structural overrides on top).
+ * @param themeName - A key from the editorTheme setting (e.g. 'one-dark', 'solarized-dark', 'github-dark')
+ * @returns A CodeMirror Extension array: [syntaxTheme, structuralChrome, baseTheme]
+ */
+export const getRuniTheme = (themeName: string): Extension => {
+  const syntaxTheme = SYNTAX_THEMES[themeName] ?? oneDark;
+  return [syntaxTheme, theme, baseTheme];
+};
+
+/**
+ * Default runi theme (One Dark). Backwards-compatible export for existing consumers.
  *
  * @example
  * ```ts
@@ -199,4 +214,4 @@ const baseTheme = EditorView.baseTheme({
  * const state = EditorState.create({ extensions: [runiTheme] });
  * ```
  */
-export const runiTheme: Extension = [oneDark, theme, baseTheme];
+export const runiTheme: Extension = getRuniTheme('one-dark');

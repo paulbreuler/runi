@@ -226,6 +226,18 @@ export const SETTINGS_SCHEMA: SettingsSchemaWithMeta = {
       description: 'Width of the collections sidebar',
       keywords: ['sidebar', 'width', 'size', 'panel'],
     },
+    editorTheme: {
+      type: 'select',
+      default: 'one-dark',
+      label: 'Editor Theme',
+      description: 'Syntax highlighting theme for code editors',
+      keywords: ['theme', 'editor', 'syntax', 'highlighting', 'codemirror'],
+      options: [
+        { value: 'one-dark', label: 'One Dark' },
+        { value: 'solarized-dark', label: 'Solarized Dark' },
+        { value: 'github-dark', label: 'GitHub Dark' },
+      ],
+    },
   },
 
   mcp: {
