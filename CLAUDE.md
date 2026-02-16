@@ -730,6 +730,7 @@ Intelligence communicates through consistent visual signals:
 | `/code-review`         | `code-reviewer`                                                    | Single agent, read-only           |
 | `/pr-check-fixes`      | `test-runner` (diagnose) → fix in main context                     | Sequential                        |
 | `/create-feature-plan` | `plan-researcher` (gather context) → plan in main context          | Sequential                        |
+| `/whats-next`          | `plan-researcher` (LIMPS + GitHub synthesis)                       | Single agent, read-only           |
 | `/pr-create`           | `code-reviewer` + `test-runner`                                    | Parallel: review + CI preview     |
 
 **Agent routing (for `/implement-feature` skill):**
