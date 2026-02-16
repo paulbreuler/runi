@@ -120,7 +120,7 @@ export const EmptyHeaders: Story = {
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     await step('Shows empty headers state', async () => {
-      await expect(canvas.getByText(/no headers configured/i)).toBeInTheDocument();
+      await expect(canvas.getByTestId('header-empty-row')).toBeInTheDocument();
     });
   },
 };
