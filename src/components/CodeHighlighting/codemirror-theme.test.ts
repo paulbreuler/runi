@@ -22,6 +22,11 @@ function createThemedView(extensions: Extension[] = []): EditorView {
   });
   const view = new EditorView({ state, parent });
   view.dom.setAttribute('data-test-id', 'cm-editor');
+  const originalDestroy = view.destroy.bind(view);
+  view.destroy = (): void => {
+    originalDestroy();
+    parent.remove();
+  };
   return view;
 }
 
