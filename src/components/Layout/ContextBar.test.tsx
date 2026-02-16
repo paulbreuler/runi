@@ -218,9 +218,10 @@ describe('ContextBar', () => {
 
     render(<ContextBar />);
 
-    // LayoutPicker renders the trigger with layout name
-    expect(screen.getByText('Single Panel')).toBeInTheDocument();
-    expect(screen.getByTestId('layout-picker-trigger')).toBeInTheDocument();
+    const layoutPickerTrigger = screen.getByTestId('layout-picker-trigger');
+    expect(layoutPickerTrigger).toBeInTheDocument();
+    expect(layoutPickerTrigger).toHaveAttribute('title', 'Single Panel');
+    expect(layoutPickerTrigger).toHaveAttribute('aria-label', 'Layout: Single Panel');
   });
 
   it('renders popout button', () => {
