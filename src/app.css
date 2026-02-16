@@ -419,6 +419,7 @@ body {
   height: 100%;
   min-width: 44px;
   min-height: 44px;
+  pointer-events: none;
 }
 
 /* Prevent scrollbar flashing during drag/resize operations */
