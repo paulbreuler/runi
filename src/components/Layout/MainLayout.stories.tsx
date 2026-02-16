@@ -9,12 +9,13 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import { useEffect } from 'react';
 import { MainLayout, type MainLayoutProps } from './MainLayout';
 import { usePanelStore } from '@/stores/usePanelStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useKeybindingStore } from '@/stores/useKeybindingStore';
 import { requestContextDescriptor } from '@/contexts/RequestContext';
 
 // Custom args for story controls (not part of component props - controls store state)
@@ -128,8 +129,22 @@ export const Playground: Story = {
 
     await step('Toggle sidebar with keyboard shortcut', async () => {
       const initialVisibility = useSettingsStore.getState().sidebarVisible;
-      await userEvent.keyboard('{Control>}b{/Control}');
-      await expect(useSettingsStore.getState().sidebarVisible).toBe(!initialVisibility);
+      const usesMetaShortcut =
+        useKeybindingStore.getState().getCommandForKey('b', ['meta']) === 'sidebar.toggle';
+
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'b',
+          metaKey: usesMetaShortcut,
+          ctrlKey: !usesMetaShortcut,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+
+      await waitFor(() => {
+        void expect(useSettingsStore.getState().sidebarVisible).toBe(!initialVisibility);
+      });
     });
   },
 };

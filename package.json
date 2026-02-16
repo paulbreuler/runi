@@ -79,6 +79,7 @@
     "@emotion/is-prop-valid": "^1.4.0",
     "@eslint/js": "^9.39.2",
     "@internationalized/date": "^3.10.1",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@playwright/test": "^1.57.0",
     "@storybook/addon-a11y": "^10.2.3",
     "@storybook/addon-docs": "^10.2.3",

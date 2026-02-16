@@ -4,7 +4,7 @@
  */
 
 import { useReducedMotion } from 'motion/react';
-import { Ban, Timer, Check, Link, Sparkles } from 'lucide-react';
+import { Ban, Timer, Check, Link, Radio, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { TimingWaterfall } from './TimingWaterfall';
 import type { TimingWaterfallSegments, IntelligenceInfo } from '@/types/history';
@@ -109,12 +109,7 @@ export const TimingTab = ({
               data-test-id="streaming-indicator"
               className="flex items-center gap-1.5 text-xs text-signal-success"
             >
-              <span
-                className={cn(
-                  'w-1.5 h-1.5 rounded-full bg-signal-success',
-                  shouldReduceMotion !== true && 'animate-pulse'
-                )}
-              />
+              <Radio size={10} className={cn(shouldReduceMotion !== true && 'animate-pulse')} />
               STREAMING
             </span>
           )}

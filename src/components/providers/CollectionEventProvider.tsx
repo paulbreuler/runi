@@ -21,7 +21,10 @@ import { useCollectionEvents } from '@/hooks/useCollectionEvents';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import type { Actor, EventEnvelope } from '@/hooks/useCollectionEvents';
+import type { RequestTabSource } from '@/types/canvas';
 
 /**
  * Push an event into the activity feed.
@@ -72,6 +75,79 @@ function extractSeq(envelope: EventEnvelope<unknown>): number | undefined {
 }
 
 /**
+ * Refresh an open tab's request store if the tab sources from the given collection request.
+ *
+ * After `loadCollection` resolves, reads the updated request from the collection store
+ * and pushes the new values into the tab's request store context.
+ */
+function refreshOpenTabIfNeeded(collectionId: string, requestId: string): void {
+  const source: RequestTabSource = {
+    type: 'collection',
+    collectionId,
+    requestId,
+  };
+  const contextId = useCanvasStore.getState().findContextBySource(source);
+  if (contextId === null) {
+    return;
+  }
+
+  // Find the updated request in the collection store
+  const collection = useCollectionStore.getState().collections.find((c) => c.id === collectionId);
+  if (collection === undefined) {
+    return;
+  }
+  const request = collection.requests.find((r) => r.id === requestId);
+  if (request === undefined) {
+    return;
+  }
+
+  // Push updated data into the tab's request store
+  const reqStore = useRequestStoreRaw.getState();
+  reqStore.setMethod(contextId, request.method);
+  reqStore.setUrl(contextId, request.url);
+  reqStore.setHeaders(contextId, request.headers);
+  reqStore.setBody(contextId, request.body?.content ?? '');
+
+  // Update tab label and contextState name if the request was renamed
+  const canvasStore = useCanvasStore.getState();
+  const context = canvasStore.contexts.get(contextId);
+  if (context !== undefined && context.label !== request.name) {
+    useCanvasStore.setState((state) => {
+      const newContexts = new Map(state.contexts);
+      newContexts.set(contextId, { ...context, label: request.name });
+      // Keep contextState metadata in sync with the label
+      const newContextState = new Map(state.contextState);
+      const existingMeta = newContextState.get(contextId) ?? {};
+      newContextState.set(contextId, { ...existingMeta, name: request.name });
+      return { contexts: newContexts, contextState: newContextState };
+    });
+  }
+}
+
+/**
+ * Close all open tabs sourced from a given collection.
+ * Called when a collection is deleted to prevent orphaned tabs.
+ */
+function closeContextsByCollectionId(collectionId: string): void {
+  const store = useCanvasStore.getState();
+  const contextsToClose: string[] = [];
+
+  for (const [contextId, state] of store.contextState.entries()) {
+    if (!contextId.startsWith('request-')) {
+      continue;
+    }
+    const source = state.source as RequestTabSource | undefined;
+    if (source?.type === 'collection' && source.collectionId === collectionId) {
+      contextsToClose.push(contextId);
+    }
+  }
+
+  for (const contextId of contextsToClose) {
+    store.closeContext(contextId, { activate: false });
+  }
+}
+
+/**
  * Provider that subscribes to collection events and updates the Zustand store.
  *
  * When Claude Code (or any MCP client) creates/deletes collections via the
@@ -101,6 +177,7 @@ export const CollectionEventProvider = ({
       followAiIfEnabled(envelope.payload.id, envelope.actor);
     },
     onCollectionDeleted: (envelope): void => {
+      closeContextsByCollectionId(envelope.payload.id);
       void loadCollections();
       // If the deleted collection was selected, clear selection immediately
       // so the UI doesn't reference a stale collection while loadCollections() refreshes
@@ -141,15 +218,47 @@ export const CollectionEventProvider = ({
       followAiIfEnabled(envelope.payload.collection_id, envelope.actor);
     },
     onRequestUpdated: (envelope): void => {
-      void loadCollection(envelope.payload.collection_id);
+      void loadCollection(envelope.payload.collection_id).then((): void => {
+        refreshOpenTabIfNeeded(envelope.payload.collection_id, envelope.payload.request_id);
+      });
       recordActivity(
         envelope.actor,
         'updated_request',
-        envelope.payload.request_id,
+        envelope.payload.name ?? envelope.payload.request_id,
         envelope.payload.request_id,
         envelope.timestamp,
         extractSeq(envelope)
       );
+    },
+    onRequestDeleted: (envelope): void => {
+      // Close the tab for the deleted request if open
+      const deletedSource: RequestTabSource = {
+        type: 'collection',
+        collectionId: envelope.payload.collection_id,
+        requestId: envelope.payload.request_id,
+      };
+      const deletedContextId = useCanvasStore.getState().findContextBySource(deletedSource);
+      if (deletedContextId !== null) {
+        useCanvasStore.getState().closeContext(deletedContextId, { activate: false });
+      }
+      void loadCollections();
+      void loadCollection(envelope.payload.collection_id);
+      recordActivity(
+        envelope.actor,
+        'deleted_request',
+        envelope.payload.name ?? envelope.payload.request_id,
+        envelope.payload.request_id,
+        envelope.timestamp,
+        extractSeq(envelope)
+      );
+      // Clear selection if the deleted request was selected
+      const store = useCollectionStore.getState();
+      if (
+        store.selectedCollectionId === envelope.payload.collection_id &&
+        store.selectedRequestId === envelope.payload.request_id
+      ) {
+        store.selectCollection(envelope.payload.collection_id);
+      }
     },
     onRequestExecuted: (envelope): void => {
       recordActivity(

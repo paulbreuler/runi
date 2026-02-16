@@ -3,6 +3,15 @@
  * SPDX-License-Identifier: MIT
  */
 
+import {
+  CheckCircle,
+  ArrowRightLeft,
+  AlertTriangle,
+  XCircle,
+  ShieldCheck,
+  Sparkles,
+  Link,
+} from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
   methodTextColors,
@@ -68,8 +77,18 @@ export const renderMethodOption = (option: MethodSelectOption): React.ReactNode 
   );
 };
 
+const statusRangeIcons: Record<
+  StatusRange,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  '2xx': CheckCircle,
+  '3xx': ArrowRightLeft,
+  '4xx': AlertTriangle,
+  '5xx': XCircle,
+};
+
 /**
- * Renders a status option with colored dot and text.
+ * Renders a status option with colored icon and text.
  * Options without a range are rendered as plain text.
  */
 export const renderStatusOption = (option: StatusSelectOption): React.ReactNode => {
@@ -82,16 +101,27 @@ export const renderStatusOption = (option: StatusSelectOption): React.ReactNode 
   }
 
   const colors = statusRangeColors[option.range];
+  const Icon = statusRangeIcons[option.range];
   return (
     <span className="flex items-center gap-2" data-test-id={`status-option-${option.range}`}>
-      <span className={cn('w-2 h-2 rounded-full shrink-0', colors.dot)} />
+      <Icon size={12} className={cn('shrink-0', colors.icon)} />
       <span className={colors.text}>{option.label}</span>
     </span>
   );
 };
 
+const intelligenceIcons: Record<
+  IntelligenceSignal,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  verified: ShieldCheck,
+  drift: AlertTriangle,
+  ai: Sparkles,
+  bound: Link,
+};
+
 /**
- * Renders an intelligence option with colored dot and text.
+ * Renders an intelligence option with colored icon and text.
  * Options without a signal are rendered as plain text.
  */
 export const renderIntelligenceOption = (option: IntelligenceSelectOption): React.ReactNode => {
@@ -104,9 +134,10 @@ export const renderIntelligenceOption = (option: IntelligenceSelectOption): Reac
   }
 
   const colors = intelligenceColors[option.signal];
+  const Icon = intelligenceIcons[option.signal];
   return (
     <span className="flex items-center gap-2" data-test-id={`intelligence-option-${option.signal}`}>
-      <span className={cn('w-2 h-2 rounded-full shrink-0', colors.dot)} />
+      <Icon size={12} className={cn('shrink-0', colors.icon)} />
       <span className={colors.text}>{option.label}</span>
     </span>
   );

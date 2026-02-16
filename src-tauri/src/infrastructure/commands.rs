@@ -301,6 +301,113 @@ pub async fn cmd_delete_collection(
     Ok(())
 }
 
+/// Delete a request from a collection (core logic, no `AppHandle`).
+///
+/// Returns the friendly name of the deleted request for event emission.
+fn delete_request_inner(collection_id: &str, request_id: &str) -> Result<String, String> {
+    let mut collection = load_collection(collection_id)?;
+
+    let friendly_name = collection
+        .requests
+        .iter()
+        .find(|r| r.id == request_id)
+        .map_or_else(|| request_id.to_string(), |r| r.name.clone());
+
+    let original_len = collection.requests.len();
+    collection.requests.retain(|r| r.id != request_id);
+
+    if collection.requests.len() == original_len {
+        return Err(format!("Request not found: {request_id}"));
+    }
+
+    save_collection(&collection)?;
+    Ok(friendly_name)
+}
+
+/// Delete a request from a collection.
+///
+/// Emits `request:deleted` with `Actor::User` for real-time UI updates.
+#[tauri::command]
+pub async fn cmd_delete_request(
+    app: tauri::AppHandle,
+    collection_id: String,
+    request_id: String,
+) -> Result<(), String> {
+    let friendly_name = delete_request_inner(&collection_id, &request_id)?;
+    emit_collection_event(
+        &app,
+        "request:deleted",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "request_id": &request_id, "name": &friendly_name}),
+    );
+    Ok(())
+}
+
+/// Rename a collection (core logic, no `AppHandle`).
+fn rename_collection_inner(collection_id: &str, new_name: &str) -> Result<(), String> {
+    let mut collection = load_collection(collection_id)?;
+    collection.metadata.name = new_name.to_string();
+    save_collection(&collection)?;
+    Ok(())
+}
+
+/// Rename a collection.
+///
+/// Emits `collection:saved` with `Actor::User` for real-time UI updates.
+#[tauri::command]
+pub async fn cmd_rename_collection(
+    app: tauri::AppHandle,
+    collection_id: String,
+    new_name: String,
+) -> Result<(), String> {
+    rename_collection_inner(&collection_id, &new_name)?;
+    emit_collection_event(
+        &app,
+        "collection:saved",
+        &Actor::User,
+        json!({"id": &collection_id, "name": &new_name}),
+    );
+    Ok(())
+}
+
+/// Rename a request in a collection (core logic, no `AppHandle`).
+fn rename_request_inner(
+    collection_id: &str,
+    request_id: &str,
+    new_name: &str,
+) -> Result<(), String> {
+    let mut collection = load_collection(collection_id)?;
+    let request = collection
+        .requests
+        .iter_mut()
+        .find(|r| r.id == request_id)
+        .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+    request.name = new_name.to_string();
+    save_collection(&collection)?;
+    Ok(())
+}
+
+/// Rename a request in a collection.
+///
+/// Emits `request:updated` with `Actor::User` for real-time UI updates.
+#[tauri::command]
+pub async fn cmd_rename_request(
+    app: tauri::AppHandle,
+    collection_id: String,
+    request_id: String,
+    new_name: String,
+) -> Result<(), String> {
+    rename_request_inner(&collection_id, &request_id, &new_name)?;
+    emit_collection_event(
+        &app,
+        "request:updated",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "request_id": &request_id, "name": &new_name}),
+    );
+    Ok(())
+}
+
 /// Fetch, parse, and save the httpbin.org collection.
 ///
 /// Core logic extracted from the Tauri command for testability (no `AppHandle` needed).
@@ -1493,6 +1600,126 @@ mod tests {
         assert_eq!(received.data["detail"]["kind"], "tab_switched");
         assert_eq!(received.data["detail"]["tab_id"], "tab-1");
         assert!(received.data["snapshot"]["tabs"].is_array());
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_delete_request_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Create a collection with a request
+            let mut collection = Collection::new("Del Req Test");
+            let req = crate::domain::collection::CollectionRequest {
+                id: "req_to_delete".to_string(),
+                name: "Delete Me".to_string(),
+                seq: 1,
+                method: "GET".to_string(),
+                url: "http://example.com".to_string(),
+                ..Default::default()
+            };
+            collection.requests.push(req);
+            save_collection(&collection).unwrap();
+
+            // Delete the request
+            let result = delete_request_inner(&collection.id, "req_to_delete");
+            assert!(result.is_ok(), "Should delete request successfully");
+            assert_eq!(result.unwrap(), "Delete Me");
+
+            // Verify request is removed
+            let loaded = load_collection(&collection.id).unwrap();
+            assert!(loaded.requests.is_empty());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_delete_request_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Del Req NF");
+            save_collection(&collection).unwrap();
+
+            let result = delete_request_inner(&collection.id, "nonexistent");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_rename_collection_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Old Name");
+            save_collection(&collection).unwrap();
+
+            let result = rename_collection_inner(&collection.id, "New Name");
+            assert!(result.is_ok());
+
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.metadata.name, "New Name");
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_rename_collection_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let result = rename_collection_inner("nonexistent", "New Name");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_rename_request_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Rename Req Test");
+            let req = crate::domain::collection::CollectionRequest {
+                id: "req_to_rename".to_string(),
+                name: "Old Name".to_string(),
+                seq: 1,
+                method: "POST".to_string(),
+                url: "http://example.com".to_string(),
+                ..Default::default()
+            };
+            collection.requests.push(req);
+            save_collection(&collection).unwrap();
+
+            let result = rename_request_inner(&collection.id, "req_to_rename", "New Name");
+            assert!(result.is_ok());
+
+            let loaded = load_collection(&collection.id).unwrap();
+            let renamed = loaded
+                .requests
+                .iter()
+                .find(|r| r.id == "req_to_rename")
+                .unwrap();
+            assert_eq!(renamed.name, "New Name");
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_rename_request_inner_not_found() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Rename NF");
+            save_collection(&collection).unwrap();
+
+            let result = rename_request_inner(&collection.id, "nonexistent", "New Name");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
     }
 
     #[tokio::test]

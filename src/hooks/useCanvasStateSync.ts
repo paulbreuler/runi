@@ -33,6 +33,7 @@ import type {
   TabSummary,
   TemplateSummary,
 } from '@/types/generated';
+import type { RequestTabSource } from '@/types/canvas';
 
 /**
  * Build a serializable canvas snapshot from store state.
@@ -168,6 +169,23 @@ function recordCanvasActivity(
 }
 
 /**
+ * Payload for the `canvas:open_collection_request` Tauri event.
+ *
+ * Emitted by the backend `open_collection_request` MCP tool with the full
+ * request data so the frontend can open a pre-populated tab.
+ */
+interface OpenCollectionRequestPayload {
+  collection_id: string;
+  request_id: string;
+  name: string;
+  method: string;
+  url: string;
+  headers: Record<string, string> | null;
+  body: string | null;
+  body_type?: string;
+}
+
+/**
  * Hook for synchronizing canvas state to backend and listening for MCP mutations.
  *
  * **Usage:**
@@ -183,6 +201,7 @@ function recordCanvasActivity(
  * **MCP event listeners:**
  * - `canvas:switch_tab` → `setActiveContext(id)`
  * - `canvas:open_request_tab` → `openRequestTab(overrides)`
+ * - `canvas:open_collection_request` → `openRequestTab(overrides)` with collection source
  * - `canvas:close_tab` → `closeContext(id)`
  */
 export function useCanvasStateSync(): void {
@@ -332,11 +351,15 @@ export function useCanvasStateSync(): void {
           const envelope = payload as EventEnvelope<{ contextId: string }>;
           const isAi = envelope.actor.type === 'ai';
 
+          // Resolve tab label for friendly activity log
+          const switchCtx = useCanvasStore.getState().contexts.get(envelope.payload.contextId);
+          const switchTabLabel = switchCtx?.label ?? envelope.payload.contextId;
+
           // Always log activity
           recordCanvasActivity(
             envelope,
             'switched_tab',
-            envelope.payload.contextId,
+            switchTabLabel,
             envelope.payload.contextId
           );
 
@@ -376,13 +399,12 @@ export function useCanvasStateSync(): void {
           const isAi = envelope.actor.type === 'ai';
           const shouldActivate = !isAi || useSettingsStore.getState().followAiMode;
 
+          // Resolve tab label BEFORE closing (context will be gone after close)
+          const closeCtx = useCanvasStore.getState().contexts.get(envelope.payload.contextId);
+          const closeTabLabel = closeCtx?.label ?? envelope.payload.contextId;
+
           // Always log activity
-          recordCanvasActivity(
-            envelope,
-            'closed_tab',
-            envelope.payload.contextId,
-            envelope.payload.contextId
-          );
+          recordCanvasActivity(envelope, 'closed_tab', closeTabLabel, envelope.payload.contextId);
 
           // Mark as AI mutation before store action so triggerSync picks it up
           if (isAi) {
@@ -393,6 +415,57 @@ export function useCanvasStateSync(): void {
           useCanvasStore
             .getState()
             .closeContext(envelope.payload.contextId, { activate: shouldActivate });
+        }),
+
+        // Open collection request event — opens a pre-populated request tab
+        addListener('canvas:open_collection_request', (payload): void => {
+          const envelope = payload as EventEnvelope<OpenCollectionRequestPayload>;
+          const { collection_id, request_id, name, method, url, headers, body } = envelope.payload;
+          const isAi = envelope.actor.type === 'ai';
+          const shouldActivate = !isAi || useSettingsStore.getState().followAiMode;
+
+          // Always log activity
+          recordCanvasActivity(envelope, 'opened_tab', name, request_id);
+
+          // Check if a tab with this collection source already exists
+          const store = useCanvasStore.getState();
+          const source: RequestTabSource = {
+            type: 'collection',
+            collectionId: collection_id,
+            requestId: request_id,
+          };
+          const existingContextId = store.findContextBySource(source);
+
+          if (existingContextId !== null) {
+            // Tab already open — just activate it if appropriate
+            if (shouldActivate) {
+              // Mark as AI mutation only when a store mutation will actually occur
+              if (isAi) {
+                aiMutationRef.current = true;
+              }
+              store.setActiveContext(existingContextId);
+            }
+            return;
+          }
+
+          // Mark as AI mutation before store action so triggerSync picks it up
+          if (isAi) {
+            aiMutationRef.current = true;
+          }
+
+          // Open new request tab with full request data
+          store.openRequestTab(
+            {
+              label: name,
+              name,
+              method,
+              url,
+              headers: headers ?? {},
+              body: body ?? '',
+              source,
+            },
+            { activate: shouldActivate }
+          );
         }),
       ]);
     };

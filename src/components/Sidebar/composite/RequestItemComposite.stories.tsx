@@ -195,13 +195,14 @@ export const TruncatedWithStreamBadge: Story = {
     const canvas = within(canvasElement);
     const button = canvas.getByTestId('request-select-req_long_stream');
 
-    await step('Render row and keep stream badge visible', async () => {
+    await step('Render row with stream icon on the left', async () => {
       await expect(button).toBeInTheDocument();
-      await expect(button).toHaveTextContent('Stream');
+      // Stream indicator is now a Radio icon inside the button (no text badge)
+      const streamIcon = button.querySelector('.text-accent-purple');
+      await expect(streamIcon).toBeInTheDocument();
     });
 
     await step('Verify request name is truncated', async () => {
-      // Verify button shows truncated name (Tooltip provides full name on hover)
       const nameElement = button.querySelector('[data-test-id="request-name"]');
       await expect(nameElement).toBeInTheDocument();
       await expect(nameElement).toHaveClass('truncate');

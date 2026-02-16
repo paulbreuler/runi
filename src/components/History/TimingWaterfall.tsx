@@ -4,6 +4,7 @@
  */
 
 import { motion, useReducedMotion } from 'motion/react';
+import { Circle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { TimingWaterfallSegments } from '@/types/history';
 
@@ -25,11 +26,26 @@ interface TimingWaterfallProps {
 }
 
 const segmentConfig = [
-  { key: 'dns', label: 'DNS', colorClass: 'bg-signal-ai' },
-  { key: 'connect', label: 'Connect', colorClass: 'bg-signal-warning' },
-  { key: 'tls', label: 'TLS', colorClass: 'bg-accent-blue' },
-  { key: 'wait', label: 'Wait', colorClass: 'bg-signal-success' },
-  { key: 'download', label: 'Download', colorClass: 'bg-bg-raised' },
+  { key: 'dns', label: 'DNS', colorClass: 'bg-signal-ai', legendColorClass: 'text-signal-ai' },
+  {
+    key: 'connect',
+    label: 'Connect',
+    colorClass: 'bg-signal-warning',
+    legendColorClass: 'text-signal-warning',
+  },
+  { key: 'tls', label: 'TLS', colorClass: 'bg-accent-blue', legendColorClass: 'text-accent-blue' },
+  {
+    key: 'wait',
+    label: 'Wait',
+    colorClass: 'bg-signal-success',
+    legendColorClass: 'text-signal-success',
+  },
+  {
+    key: 'download',
+    label: 'Download',
+    colorClass: 'bg-bg-raised',
+    legendColorClass: 'text-bg-raised',
+  },
 ] as const;
 
 /**
@@ -115,18 +131,18 @@ export const TimingWaterfall = ({
       {/* Full legend */}
       {showLegend && (
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] mt-1">
-          {segmentConfig.map(({ key, label, colorClass }) => {
+          {segmentConfig.map(({ key, label, legendColorClass }) => {
             const ms = segments[key as keyof TimingWaterfallSegments];
             if (ms <= 0) {
               return null;
             }
             return (
               <div key={key} className="flex items-center gap-1.5">
-                <span
-                  className={cn(
-                    'w-1.5 h-1.5 rounded-full ring-1 ring-white/10',
-                    colorClass as string
-                  )}
+                <Circle
+                  size={8}
+                  className={cn('shrink-0', legendColorClass as string)}
+                  fill="currentColor"
+                  aria-hidden="true"
                 />
                 <span className="text-text-muted">{label}</span>
                 <span className="font-mono text-text-secondary">{ms}ms</span>

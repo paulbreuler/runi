@@ -169,4 +169,295 @@ describe('useCollectionStore', () => {
     });
     expect(result.current.expandedCollectionIds.has('col_1')).toBe(false);
   });
+
+  describe('deleteRequest', () => {
+    it('calls cmd_delete_request with correct params', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteRequest('col-1', 'req-1');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_delete_request', {
+        collectionId: 'col-1',
+        requestId: 'req-1',
+      });
+    });
+
+    it('removes request from local state optimistically', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'First',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 0,
+          },
+          {
+            id: 'req-2',
+            name: 'Second',
+            method: 'POST',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      useCollectionStore.setState({ collections: [collection as unknown as Collection] });
+
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteRequest('col-1', 'req-1');
+      });
+
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.requests).toHaveLength(1);
+      expect(col?.requests[0]?.id).toBe('req-2');
+    });
+
+    it('clears selectedRequestId if deleted request was selected', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'First',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 0,
+          },
+        ],
+      };
+      useCollectionStore.setState({
+        collections: [collection as unknown as Collection],
+        selectedCollectionId: 'col-1',
+        selectedRequestId: 'req-1',
+      });
+
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteRequest('col-1', 'req-1');
+      });
+
+      expect(result.current.selectedRequestId).toBeNull();
+    });
+
+    it('decrements summary request_count when deleting a request', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'First',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 0,
+          },
+          {
+            id: 'req-2',
+            name: 'Second',
+            method: 'POST',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      useCollectionStore.setState({
+        collections: [collection as unknown as Collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 2,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteRequest('col-1', 'req-1');
+      });
+
+      const summary = result.current.summaries.find((s) => s.id === 'col-1');
+      expect(summary?.request_count).toBe(1);
+    });
+
+    it('sets error when delete fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('delete failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteRequest('col-1', 'req-1');
+      });
+
+      expect(result.current.error).toContain('delete failed');
+    });
+  });
+
+  describe('renameCollection', () => {
+    it('calls cmd_rename_collection with correct params', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.renameCollection('col-1', 'New Name');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_rename_collection', {
+        collectionId: 'col-1',
+        newName: 'New Name',
+      });
+    });
+
+    it('updates collection name in local state', async () => {
+      const collection = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.renameCollection('col-1', 'Renamed');
+      });
+
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.metadata.name).toBe('Renamed');
+      const summary = result.current.summaries.find((s) => s.id === 'col-1');
+      expect(summary?.name).toBe('Renamed');
+    });
+
+    it('sets error when rename fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('rename failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.renameCollection('col-1', 'New Name');
+      });
+
+      expect(result.current.error).toContain('rename failed');
+    });
+  });
+
+  describe('renameRequest', () => {
+    it('calls cmd_rename_request with correct params', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.renameRequest('col-1', 'req-1', 'New Request Name');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_rename_request', {
+        collectionId: 'col-1',
+        requestId: 'req-1',
+        newName: 'New Request Name',
+      });
+    });
+
+    it('updates request name in local state', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'Old Name',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 0,
+          },
+        ],
+      };
+      useCollectionStore.setState({ collections: [collection as unknown as Collection] });
+
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.renameRequest('col-1', 'req-1', 'New Name');
+      });
+
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      const req = col?.requests.find((r) => r.id === 'req-1');
+      expect(req?.name).toBe('New Name');
+    });
+
+    it('sets error when rename fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('rename failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.renameRequest('col-1', 'req-1', 'New Name');
+      });
+
+      expect(result.current.error).toContain('rename failed');
+    });
+  });
 });

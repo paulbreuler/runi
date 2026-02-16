@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { Play, Code, BookOpen, Save, Clock, Globe } from 'lucide-react';
+import { Play, Code, BookOpen, Save, Clock, Globe, CircleDot } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
@@ -124,8 +124,9 @@ export const ActionButtons = ({
       >
         <Save size={iconSize} />
         {isDirty && (
-          <span
-            className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-signal-warning"
+          <CircleDot
+            size={8}
+            className="absolute top-1 right-1 text-signal-warning"
             data-test-id="save-dirty-indicator"
             aria-label="Unsaved changes"
           />

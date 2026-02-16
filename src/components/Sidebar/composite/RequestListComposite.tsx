@@ -4,6 +4,7 @@
  */
 
 import type { CollectionRequest } from '@/types/collection';
+import { useCollectionStore } from '@/stores/useCollectionStore';
 import { RequestItemComposite } from './RequestItemComposite';
 
 interface RequestListCompositeProps {
@@ -15,6 +16,8 @@ export const RequestListComposite = ({
   requests,
   collectionId,
 }: RequestListCompositeProps): React.JSX.Element => {
+  const deleteRequest = useCollectionStore((state) => state.deleteRequest);
+  const renameRequest = useCollectionStore((state) => state.renameRequest);
   if (requests.length === 0) {
     return (
       <div className="px-3 py-2 text-xs text-text-muted" data-test-id="collection-empty-requests">
@@ -26,7 +29,13 @@ export const RequestListComposite = ({
   return (
     <div className="flex flex-col">
       {requests.map((request) => (
-        <RequestItemComposite key={request.id} request={request} collectionId={collectionId} />
+        <RequestItemComposite
+          key={request.id}
+          request={request}
+          collectionId={collectionId}
+          onDelete={(colId, reqId) => void deleteRequest(colId, reqId)}
+          onRename={(colId, reqId, newName) => void renameRequest(colId, reqId, newName)}
+        />
       ))}
     </div>
   );

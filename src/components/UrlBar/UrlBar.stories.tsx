@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import { waitForFocus } from '@/utils/storybook-test-helpers';
-import { UrlBar } from './UrlBar';
+import { UrlBar, type AiActivityState } from './UrlBar';
 import type { HttpMethod } from '@/utils/http-colors';
 
 const meta = {
@@ -26,10 +26,12 @@ const UrlBarWithState = ({
   initialMethod = 'GET',
   initialUrl = 'https://api.example.com/users',
   loading = false,
+  aiState,
 }: {
   initialMethod?: HttpMethod;
   initialUrl?: string;
   loading?: boolean;
+  aiState?: AiActivityState;
 }): React.JSX.Element => {
   const [method, setMethod] = useState<HttpMethod>(initialMethod);
   const [url, setUrl] = useState(initialUrl);
@@ -45,6 +47,7 @@ const UrlBarWithState = ({
           alert(`Sending ${method} request to ${url}`);
         }}
         loading={loading}
+        aiState={aiState}
       />
     </div>
   );
@@ -76,6 +79,45 @@ export const AllMethods: Story = {
     method: 'GET',
   },
   render: () => <UrlBarWithState initialUrl="https://api.example.com/resource" />,
+};
+
+/**
+ * Demonstrates the AI activity vigilance line at the bottom edge of the UrlBar.
+ */
+export const AiEditing: Story = {
+  args: { method: 'GET' },
+  render: () => <UrlBarWithState aiState="editing" />,
+  play: async ({ canvasElement, step }): Promise<void> => {
+    const canvas = within(canvasElement);
+    await step('Vigilance line shows editing state', async () => {
+      const line = canvas.getByTestId('url-bar-vigilance-line');
+      await expect(line).toHaveClass('vigilance-progress');
+    });
+  },
+};
+
+export const AiExecuting: Story = {
+  args: { method: 'POST' },
+  render: () => <UrlBarWithState initialMethod="POST" aiState="executing" />,
+  play: async ({ canvasElement, step }): Promise<void> => {
+    const canvas = within(canvasElement);
+    await step('Vigilance line shows executing state', async () => {
+      const line = canvas.getByTestId('url-bar-vigilance-line');
+      await expect(line).toHaveClass('vigilance-progress-fast');
+    });
+  },
+};
+
+export const AiComplete: Story = {
+  args: { method: 'GET' },
+  render: () => <UrlBarWithState aiState="complete" />,
+  play: async ({ canvasElement, step }): Promise<void> => {
+    const canvas = within(canvasElement);
+    await step('Vigilance line shows complete state', async () => {
+      const line = canvas.getByTestId('url-bar-vigilance-line');
+      await expect(line).toHaveClass('vigilance-progress-complete');
+    });
+  },
 };
 
 /**

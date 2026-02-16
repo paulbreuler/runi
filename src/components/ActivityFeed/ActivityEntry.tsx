@@ -26,8 +26,12 @@ const ACTION_LABELS: Record<string, string> = {
   deleted_collection: 'deleted collection',
   added_request: 'added request',
   updated_request: 'updated request',
+  deleted_request: 'deleted request',
   executed_request: 'executed request',
   saved_collection: 'saved collection',
+  switched_tab: 'switched to',
+  opened_tab: 'opened',
+  closed_tab: 'closed',
 };
 
 function formatRelativeTime(timestamp: string): string {

@@ -17,6 +17,8 @@ export const CollectionList = (): React.JSX.Element => {
   const error = useCollectionStore((state) => state.error);
   const loadCollections = useCollectionStore((state) => state.loadCollections);
   const addHttpbinCollection = useCollectionStore((state) => state.addHttpbinCollection);
+  const deleteCollection = useCollectionStore((state) => state.deleteCollection);
+  const renameCollection = useCollectionStore((state) => state.renameCollection);
   const showError = error !== null && error.length > 0;
   const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
 
@@ -73,7 +75,12 @@ export const CollectionList = (): React.JSX.Element => {
       )}
       <div className="flex flex-col">
         {summaries.map((summary) => (
-          <CollectionItem key={summary.id} summary={summary} />
+          <CollectionItem
+            key={summary.id}
+            summary={summary}
+            onDelete={(id) => void deleteCollection(id)}
+            onRename={(id, newName) => void renameCollection(id, newName)}
+          />
         ))}
       </div>
     </div>

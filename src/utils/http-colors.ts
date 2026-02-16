@@ -71,11 +71,11 @@ export type StatusRange = '2xx' | '3xx' | '4xx' | '5xx';
  * Status range colors with text and background variants.
  * Used for dropdown items and badges.
  */
-export const statusRangeColors: Record<StatusRange, { text: string; bg: string; dot: string }> = {
-  '2xx': { text: 'text-signal-success', bg: 'bg-signal-success/10', dot: 'bg-signal-success' },
-  '3xx': { text: 'text-accent-blue', bg: 'bg-accent-blue/10', dot: 'bg-accent-blue' },
-  '4xx': { text: 'text-signal-warning', bg: 'bg-signal-warning/10', dot: 'bg-signal-warning' },
-  '5xx': { text: 'text-signal-error', bg: 'bg-signal-error/10', dot: 'bg-signal-error' },
+export const statusRangeColors: Record<StatusRange, { text: string; bg: string; icon: string }> = {
+  '2xx': { text: 'text-signal-success', bg: 'bg-signal-success/10', icon: 'text-signal-success' },
+  '3xx': { text: 'text-accent-blue', bg: 'bg-accent-blue/10', icon: 'text-accent-blue' },
+  '4xx': { text: 'text-signal-warning', bg: 'bg-signal-warning/10', icon: 'text-signal-warning' },
+  '5xx': { text: 'text-signal-error', bg: 'bg-signal-error/10', icon: 'text-signal-error' },
 };
 
 /**
@@ -87,11 +87,11 @@ export type IntelligenceSignal = 'verified' | 'drift' | 'ai' | 'bound';
  * Intelligence signal colors.
  * Used for dropdown items and status indicators.
  */
-export const intelligenceColors: Record<IntelligenceSignal, { text: string; dot: string }> = {
-  verified: { text: 'text-signal-success', dot: 'bg-signal-success' },
-  drift: { text: 'text-signal-warning', dot: 'bg-signal-warning' },
-  ai: { text: 'text-signal-ai', dot: 'bg-signal-ai' },
-  bound: { text: 'text-accent-blue', dot: 'bg-accent-blue' },
+export const intelligenceColors: Record<IntelligenceSignal, { text: string; icon: string }> = {
+  verified: { text: 'text-signal-success', icon: 'text-signal-success' },
+  drift: { text: 'text-signal-warning', icon: 'text-signal-warning' },
+  ai: { text: 'text-signal-ai', icon: 'text-signal-ai' },
+  bound: { text: 'text-accent-blue', icon: 'text-accent-blue' },
 };
 
 /**
