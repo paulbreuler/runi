@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { CollectionSummary } from '@/types/collection';
@@ -67,6 +67,18 @@ const simpleSummary: CollectionSummary = {
   modified_at: '2026-01-01T00:00:00Z',
 };
 
+/** Helper to open the three-dot menu and wait for items to appear */
+const openMenu = async (user: ReturnType<typeof userEvent.setup>): Promise<void> => {
+  const menuTrigger = screen.getByTestId('collection-menu-trigger-col_1');
+  await user.click(menuTrigger);
+  await waitFor(
+    () => {
+      expect(screen.getByTestId('collection-context-menu-col_1')).toBeInTheDocument();
+    },
+    { timeout: 3000 }
+  );
+};
+
 describe('CollectionItem', (): void => {
   beforeEach((): void => {
     mockCollectionState = {
@@ -89,33 +101,27 @@ describe('CollectionItem', (): void => {
       expect(screen.getByTestId('collection-source-col_1')).toHaveTextContent('manual');
     });
 
-    it('renders rename and delete action buttons', (): void => {
+    it('renders three-dot menu trigger button', (): void => {
       render(<CollectionItem summary={simpleSummary} />);
 
-      expect(screen.getByTestId('collection-rename-col_1')).toBeInTheDocument();
-      expect(screen.getByTestId('collection-delete-col_1')).toBeInTheDocument();
+      expect(screen.getByTestId('collection-menu-trigger-col_1')).toBeInTheDocument();
     });
 
-    it('hides action buttons from tab order when not hovered/focused', (): void => {
+    it('has accessible label on menu trigger', (): void => {
+      render(<CollectionItem summary={simpleSummary} />);
+
+      expect(screen.getByTestId('collection-menu-trigger-col_1')).toHaveAttribute(
+        'aria-label',
+        'Actions for My Collection'
+      );
+    });
+
+    it('hides menu trigger when not hovered/focused', (): void => {
       render(<CollectionItem summary={simpleSummary} />);
 
       const actionsContainer = screen.getByTestId('collection-actions-col_1');
-      // Should use invisible + pointer-events-none for proper a11y hiding
       expect(actionsContainer.className).toMatch(/invisible/);
       expect(actionsContainer.className).toMatch(/pointer-events-none/);
-    });
-
-    it('has accessible labels on action buttons', (): void => {
-      render(<CollectionItem summary={simpleSummary} />);
-
-      expect(screen.getByTestId('collection-rename-col_1')).toHaveAttribute(
-        'aria-label',
-        'Rename My Collection'
-      );
-      expect(screen.getByTestId('collection-delete-col_1')).toHaveAttribute(
-        'aria-label',
-        'Delete My Collection'
-      );
     });
 
     it('renders aria-expanded on toggle button', (): void => {
@@ -126,60 +132,109 @@ describe('CollectionItem', (): void => {
     });
   });
 
-  describe('rename action', (): void => {
-    it('shows rename input when rename button is clicked', (): void => {
+  describe('context menu', (): void => {
+    it('opens context menu when three-dot button is clicked', async (): Promise<void> => {
+      const user = userEvent.setup();
       render(<CollectionItem summary={simpleSummary} />);
 
-      const renameBtn = screen.getByTestId('collection-rename-col_1');
-      act(() => {
-        fireEvent.click(renameBtn);
-      });
+      await openMenu(user);
 
-      expect(screen.getByTestId('collection-rename-input-col_1')).toBeInTheDocument();
+      expect(screen.getByTestId('collection-menu-rename-col_1')).toBeInTheDocument();
+      expect(screen.getByTestId('collection-menu-delete-col_1')).toBeInTheDocument();
+    });
+
+    it('opens context menu on right-click', async (): Promise<void> => {
+      render(<CollectionItem summary={simpleSummary} />);
+
+      const row = screen.getByTestId('collection-item-col_1');
+      const groupDiv = row.closest('.group\\/collection');
+      expect(groupDiv).not.toBeNull();
+      fireEvent.contextMenu(groupDiv!);
+
+      await waitFor(
+        () => {
+          expect(screen.getByTestId('collection-context-menu-col_1')).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+    });
+
+    it('shows Rename and Delete menu items with keyboard hints', async (): Promise<void> => {
+      const user = userEvent.setup();
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await openMenu(user);
+
+      const renameItem = screen.getByTestId('collection-menu-rename-col_1');
+      const deleteItem = screen.getByTestId('collection-menu-delete-col_1');
+
+      expect(renameItem).toHaveTextContent('Rename');
+      expect(renameItem).toHaveTextContent('F2');
+      expect(deleteItem).toHaveTextContent('Delete');
+      expect(deleteItem).toHaveTextContent('Del');
+    });
+  });
+
+  describe('rename action', (): void => {
+    it('shows rename input when Rename is selected from menu', async (): Promise<void> => {
+      const user = userEvent.setup();
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await openMenu(user);
+
+      const renameItem = screen.getByTestId('collection-menu-rename-col_1');
+      await user.click(renameItem);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('collection-rename-input-col_1')).toBeInTheDocument();
+      });
       expect(screen.getByTestId('collection-rename-input-col_1')).toHaveValue('My Collection');
     });
 
-    it('calls onRename when Enter is pressed with new name', (): void => {
+    it('calls onRename when Enter is pressed with new name', async (): Promise<void> => {
       const mockRename = vi.fn();
+      const user = userEvent.setup();
       render(<CollectionItem summary={simpleSummary} onRename={mockRename} />);
 
-      const renameBtn = screen.getByTestId('collection-rename-col_1');
-      act(() => {
-        fireEvent.click(renameBtn);
-      });
+      await openMenu(user);
 
-      const input = screen.getByTestId('collection-rename-input-col_1');
+      const renameItem = screen.getByTestId('collection-menu-rename-col_1');
+      await user.click(renameItem);
+
+      const input = await screen.findByTestId('collection-rename-input-col_1');
       fireEvent.change(input, { target: { value: 'Renamed Collection' } });
       fireEvent.keyDown(input, { key: 'Enter' });
 
       expect(mockRename).toHaveBeenCalledWith('col_1', 'Renamed Collection');
     });
 
-    it('does not call onRename when name is unchanged', (): void => {
+    it('does not call onRename when name is unchanged', async (): Promise<void> => {
       const mockRename = vi.fn();
+      const user = userEvent.setup();
       render(<CollectionItem summary={simpleSummary} onRename={mockRename} />);
 
-      const renameBtn = screen.getByTestId('collection-rename-col_1');
-      act(() => {
-        fireEvent.click(renameBtn);
-      });
+      await openMenu(user);
 
-      const input = screen.getByTestId('collection-rename-input-col_1');
+      const renameItem = screen.getByTestId('collection-menu-rename-col_1');
+      await user.click(renameItem);
+
+      const input = await screen.findByTestId('collection-rename-input-col_1');
       fireEvent.keyDown(input, { key: 'Enter' });
 
       expect(mockRename).not.toHaveBeenCalled();
     });
 
-    it('cancels rename on Escape', (): void => {
+    it('cancels rename on Escape', async (): Promise<void> => {
       const mockRename = vi.fn();
+      const user = userEvent.setup();
       render(<CollectionItem summary={simpleSummary} onRename={mockRename} />);
 
-      const renameBtn = screen.getByTestId('collection-rename-col_1');
-      act(() => {
-        fireEvent.click(renameBtn);
-      });
+      await openMenu(user);
 
-      const input = screen.getByTestId('collection-rename-input-col_1');
+      const renameItem = screen.getByTestId('collection-menu-rename-col_1');
+      await user.click(renameItem);
+
+      const input = await screen.findByTestId('collection-rename-input-col_1');
       fireEvent.change(input, { target: { value: 'Changed Name' } });
       fireEvent.keyDown(input, { key: 'Escape' });
 
@@ -196,20 +251,19 @@ describe('CollectionItem', (): void => {
       expect(screen.getByTestId('collection-rename-input-col_1')).toBeInTheDocument();
     });
 
-    it('does not commit rename when Escape triggers blur from unmount', (): void => {
+    it('does not commit rename when Escape triggers blur from unmount', async (): Promise<void> => {
       const mockRename = vi.fn();
+      const user = userEvent.setup();
       render(<CollectionItem summary={simpleSummary} onRename={mockRename} />);
 
-      const renameBtn = screen.getByTestId('collection-rename-col_1');
-      act(() => {
-        fireEvent.click(renameBtn);
-      });
+      await openMenu(user);
 
-      const input = screen.getByTestId('collection-rename-input-col_1');
+      const renameItem = screen.getByTestId('collection-menu-rename-col_1');
+      await user.click(renameItem);
+
+      const input = await screen.findByTestId('collection-rename-input-col_1');
       fireEvent.change(input, { target: { value: 'Changed Name' } });
 
-      // Simulate the race: Escape fires, then blur fires before React unmounts
-      // Both handlers run in the same React batch
       act(() => {
         fireEvent.keyDown(input, { key: 'Escape' });
         fireEvent.blur(input);
@@ -218,31 +272,33 @@ describe('CollectionItem', (): void => {
       expect(mockRename).not.toHaveBeenCalled();
     });
 
-    it('has accessible label on rename input', (): void => {
+    it('has accessible label on rename input', async (): Promise<void> => {
+      const user = userEvent.setup();
       render(<CollectionItem summary={simpleSummary} />);
 
-      const renameBtn = screen.getByTestId('collection-rename-col_1');
-      act(() => {
-        fireEvent.click(renameBtn);
-      });
+      await openMenu(user);
 
-      expect(screen.getByTestId('collection-rename-input-col_1')).toHaveAttribute(
-        'aria-label',
-        'Rename collection My Collection'
-      );
+      const renameItem = screen.getByTestId('collection-menu-rename-col_1');
+      await user.click(renameItem);
+
+      const input = await screen.findByTestId('collection-rename-input-col_1');
+      expect(input).toHaveAttribute('aria-label', 'Rename collection My Collection');
     });
   });
 
   describe('delete action', (): void => {
-    it('shows delete confirmation popover when delete button is clicked', async (): Promise<void> => {
+    it('shows delete confirmation when Delete is selected from menu', async (): Promise<void> => {
       const user = userEvent.setup();
-
       render(<CollectionItem summary={simpleSummary} />);
 
-      const deleteBtn = screen.getByTestId('collection-delete-col_1');
-      await user.click(deleteBtn);
+      await openMenu(user);
 
-      expect(screen.getByTestId('collection-delete-confirm-col_1')).toBeInTheDocument();
+      const deleteItem = screen.getByTestId('collection-menu-delete-col_1');
+      await user.click(deleteItem);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('collection-delete-confirm-col_1')).toBeInTheDocument();
+      });
       expect(screen.getByTestId('collection-delete-confirm-btn-col_1')).toBeInTheDocument();
       expect(screen.getByTestId('collection-delete-cancel-col_1')).toBeInTheDocument();
     });
@@ -253,10 +309,12 @@ describe('CollectionItem', (): void => {
 
       render(<CollectionItem summary={simpleSummary} onDelete={mockDelete} />);
 
-      const deleteBtn = screen.getByTestId('collection-delete-col_1');
-      await user.click(deleteBtn);
+      await openMenu(user);
 
-      const confirmBtn = screen.getByTestId('collection-delete-confirm-btn-col_1');
+      const deleteItem = screen.getByTestId('collection-menu-delete-col_1');
+      await user.click(deleteItem);
+
+      const confirmBtn = await screen.findByTestId('collection-delete-confirm-btn-col_1');
       await user.click(confirmBtn);
 
       expect(mockDelete).toHaveBeenCalledWith('col_1');
@@ -267,16 +325,20 @@ describe('CollectionItem', (): void => {
 
       render(<CollectionItem summary={simpleSummary} />);
 
-      const deleteBtn = screen.getByTestId('collection-delete-col_1');
-      await user.click(deleteBtn);
+      await openMenu(user);
 
-      const cancelBtn = screen.getByTestId('collection-delete-cancel-col_1');
+      const deleteItem = screen.getByTestId('collection-menu-delete-col_1');
+      await user.click(deleteItem);
+
+      const cancelBtn = await screen.findByTestId('collection-delete-cancel-col_1');
       await user.click(cancelBtn);
 
-      expect(screen.queryByTestId('collection-delete-confirm-col_1')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId('collection-delete-confirm-col_1')).not.toBeInTheDocument();
+      });
     });
 
-    it('opens delete popover on Delete keydown', (): void => {
+    it('opens delete confirmation on Delete keydown', (): void => {
       render(<CollectionItem summary={simpleSummary} />);
 
       const row = screen.getByTestId('collection-item-col_1');
@@ -290,10 +352,12 @@ describe('CollectionItem', (): void => {
 
       render(<CollectionItem summary={simpleSummary} />);
 
-      const deleteBtn = screen.getByTestId('collection-delete-col_1');
-      await user.click(deleteBtn);
+      await openMenu(user);
 
-      const popover = screen.getByTestId('collection-delete-confirm-col_1');
+      const deleteItem = screen.getByTestId('collection-menu-delete-col_1');
+      await user.click(deleteItem);
+
+      const popover = await screen.findByTestId('collection-delete-confirm-col_1');
       expect(popover).toHaveTextContent('My Collection');
     });
   });

@@ -4,7 +4,8 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, Folder, Pencil, Trash2 } from 'lucide-react';
+import { Menu } from '@base-ui/react/menu';
+import { ChevronDown, ChevronRight, Folder, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
@@ -20,6 +21,7 @@ import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 interface CollectionItemProps {
   summary: CollectionSummary;
@@ -45,6 +47,7 @@ export const CollectionItem = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const didCancelRef = useRef(false);
 
@@ -123,6 +126,21 @@ export const CollectionItem = ({
     [startRename]
   );
 
+  const handleContextMenu = useCallback((e: React.MouseEvent): void => {
+    e.preventDefault();
+    setMenuOpen(true);
+  }, []);
+
+  const handleMenuRename = useCallback((): void => {
+    setMenuOpen(false);
+    startRename();
+  }, [startRename]);
+
+  const handleMenuDelete = useCallback((): void => {
+    setMenuOpen(false);
+    setDeletePopoverOpen(true);
+  }, []);
+
   return (
     <div className="border-b border-border-subtle last:border-b-0">
       {isRenaming ? (
@@ -147,7 +165,7 @@ export const CollectionItem = ({
           />
         </div>
       ) : (
-        <div className="group/collection">
+        <div className="group/collection" onContextMenu={handleContextMenu}>
           <div
             className={cn(
               'w-full flex items-center justify-between gap-3 px-2 py-1 transition-colors',
@@ -192,74 +210,117 @@ export const CollectionItem = ({
                 </span>
               </div>
 
-              {/* Hover-revealed action buttons — far right, siblings of the toggle button */}
+              {/* Three-dot menu button — hover-revealed */}
               <div
-                className="flex items-center gap-0.5 invisible pointer-events-none group-hover/collection:visible group-hover/collection:pointer-events-auto group-focus-within/collection:visible group-focus-within/collection:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
+                className="flex items-center invisible pointer-events-none group-hover/collection:visible group-hover/collection:pointer-events-auto group-focus-within/collection:visible group-focus-within/collection:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
                 data-test-id={`collection-actions-${summary.id}`}
               >
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  noScale
-                  className="size-5 text-text-muted hover:text-text-primary"
-                  onClick={startRename}
-                  data-test-id={`collection-rename-${summary.id}`}
-                  aria-label={`Rename ${summary.name}`}
-                >
-                  <Pencil size={10} />
-                </Button>
-
-                <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-                  <PopoverTrigger
-                    render={
+                <Menu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+                  <Menu.Trigger
+                    render={(props) => (
                       <Button
+                        {...props}
                         variant="ghost"
                         size="icon-xs"
                         noScale
-                        className="size-5 text-text-muted hover:text-signal-error"
-                        data-test-id={`collection-delete-${summary.id}`}
-                        aria-label={`Delete ${summary.name}`}
-                      />
-                    }
-                  >
-                    <Trash2 size={10} />
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="right"
-                    align="start"
-                    className="w-56 p-3"
-                    data-test-id={`collection-delete-confirm-${summary.id}`}
-                  >
-                    <p className="text-sm text-text-primary mb-3">
-                      Delete <span className="font-medium">{summary.name}</span>?
-                    </p>
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        size="xs"
-                        noScale
-                        onClick={() => {
-                          setDeletePopoverOpen(false);
-                        }}
-                        data-test-id={`collection-delete-cancel-${summary.id}`}
+                        className="size-5 text-text-muted hover:text-text-primary"
+                        data-test-id={`collection-menu-trigger-${summary.id}`}
+                        aria-label={`Actions for ${summary.name}`}
                       >
-                        Cancel
+                        <MoreHorizontal size={12} />
                       </Button>
-                      <Button
-                        variant="destructive"
-                        size="xs"
-                        noScale
-                        onClick={handleDelete}
-                        data-test-id={`collection-delete-confirm-btn-${summary.id}`}
-                      >
-                        Delete
-                      </Button>
+                    )}
+                  />
+                  <Menu.Portal>
+                    <div
+                      style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: OVERLAY_Z_INDEX,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div style={{ pointerEvents: 'auto' }}>
+                        <Menu.Positioner sideOffset={4} align="start">
+                          <Menu.Popup
+                            style={{ zIndex: OVERLAY_Z_INDEX }}
+                            className="min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95"
+                            data-test-id={`collection-context-menu-${summary.id}`}
+                          >
+                            <Menu.Item
+                              label="Rename"
+                              className={cn(
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                              )}
+                              onClick={handleMenuRename}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-rename-${summary.id}`}
+                            >
+                              <Pencil size={12} className="shrink-0" />
+                              <span>Rename</span>
+                              <span className="ml-auto text-text-muted text-[10px]">F2</span>
+                            </Menu.Item>
+                            <Menu.Item
+                              label="Delete"
+                              className={cn(
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                'text-signal-error hover:bg-signal-error/10 focus-visible:bg-signal-error/10'
+                              )}
+                              onClick={handleMenuDelete}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-delete-${summary.id}`}
+                            >
+                              <Trash2 size={12} className="shrink-0" />
+                              <span>Delete</span>
+                              <span className="ml-auto text-text-muted text-[10px]">Del</span>
+                            </Menu.Item>
+                          </Menu.Popup>
+                        </Menu.Positioner>
+                      </div>
                     </div>
-                  </PopoverContent>
-                </Popover>
+                  </Menu.Portal>
+                </Menu.Root>
               </div>
             </div>
           </div>
+
+          {/* Delete confirmation popover — rendered outside the menu */}
+          <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
+            <PopoverTrigger render={<span className="hidden" />} />
+            <PopoverContent
+              side="right"
+              align="start"
+              className="w-56 p-3"
+              data-test-id={`collection-delete-confirm-${summary.id}`}
+            >
+              <p className="text-sm text-text-primary mb-3">
+                Delete <span className="font-medium">{summary.name}</span>?
+              </p>
+              <div className="flex items-center gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="xs"
+                  noScale
+                  onClick={() => {
+                    setDeletePopoverOpen(false);
+                  }}
+                  data-test-id={`collection-delete-cancel-${summary.id}`}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="xs"
+                  noScale
+                  onClick={handleDelete}
+                  data-test-id={`collection-delete-confirm-btn-${summary.id}`}
+                >
+                  Delete
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       )}
       {isExpanded && (

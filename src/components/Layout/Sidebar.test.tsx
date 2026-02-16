@@ -132,7 +132,7 @@ describe('Sidebar', (): void => {
 
     // Verify inset classes
     expect(scrollbar).toHaveClass('absolute');
-    expect(scrollbar).toHaveClass('right-0.5');
+    expect(scrollbar).toHaveClass('right-0');
     expect(scrollbar).toHaveClass('top-0');
     expect(scrollbar).toHaveClass('bottom-0');
     expect(scrollbar).toHaveClass('z-20');

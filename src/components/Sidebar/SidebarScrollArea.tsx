@@ -104,7 +104,7 @@ export const SidebarScrollArea = ({
         orientation="vertical"
         data-test-id={testId !== undefined ? `${testId}-scrollbar` : undefined}
         className={cn(
-          'scroll-area-scrollbar absolute right-0.5 top-0 bottom-0 z-20 flex touch-none select-none transition-opacity duration-300',
+          'scroll-area-scrollbar absolute right-0 top-0 bottom-0 z-20 flex touch-none select-none transition-opacity duration-300',
           showScrollbar ? 'opacity-100' : 'opacity-0 hover:opacity-100'
         )}
       >
