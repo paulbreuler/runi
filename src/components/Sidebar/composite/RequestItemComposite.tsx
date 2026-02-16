@@ -207,6 +207,8 @@ export const RequestItemComposite = ({
 
             {isBound(request) && <Link size={10} className="shrink-0 text-accent-blue" />}
 
+            {request.is_streaming && <Radio size={10} className="shrink-0 text-accent-purple" />}
+
             <span
               className={cn(
                 'text-[10px] font-bold uppercase tracking-widest shrink-0 min-w-[28px]',
@@ -225,13 +227,6 @@ export const RequestItemComposite = ({
           </button>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {request.is_streaming && (
-              <div className="flex items-center gap-1 rounded-full bg-accent-purple/10 px-1.5 py-0.5 text-[10px] text-accent-purple shrink-0 font-semibold">
-                <Radio size={10} />
-                Stream
-              </div>
-            )}
-
             {/* Hover-revealed action buttons — far right, siblings of the select button */}
             <div
               className="flex items-center gap-0.5 invisible pointer-events-none group-hover/request:visible group-hover/request:pointer-events-auto group-focus-within/request:visible group-focus-within/request:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
