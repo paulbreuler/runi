@@ -85,7 +85,9 @@ pub struct ImportCollectionRequest {
 ///
 /// Returns an error if no source is provided, the spec cannot be fetched/parsed,
 /// or the collection cannot be saved.
-async fn import_collection_inner(request: ImportCollectionRequest) -> Result<Collection, String> {
+pub async fn import_collection_inner(
+    request: ImportCollectionRequest,
+) -> Result<Collection, String> {
     // Validate: at least one source must be provided
     let source = match (&request.url, &request.file_path, &request.inline_content) {
         (Some(url), _, _) => SpecSource::Url(url.clone()),
@@ -147,7 +149,7 @@ pub async fn cmd_import_collection(
 /// - Collection has no tracked spec source (no URL)
 /// - Re-fetch fails
 /// - Re-parse fails
-async fn refresh_collection_spec_inner(
+pub async fn refresh_collection_spec_inner(
     collection_id: &str,
     service: &ImportService,
 ) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
