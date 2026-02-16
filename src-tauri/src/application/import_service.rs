@@ -9,6 +9,7 @@
 //! This implements the Mediator pattern — parsers and fetcher don't know
 //! about each other, only the service coordinates them.
 
+use crate::domain::collection::git_port::GitMetadataPort;
 use crate::domain::collection::spec_port::{
     ContentFetcher, FetchResult, ParsedSpec, SpecParseError, SpecParser, SpecSource,
 };
@@ -27,6 +28,7 @@ use std::collections::BTreeMap;
 pub struct ImportService {
     parsers: Vec<Box<dyn SpecParser>>,
     fetcher: Box<dyn ContentFetcher>,
+    git_metadata: Option<Box<dyn GitMetadataPort>>,
 }
 
 /// Overrides for import behavior (display name, git tracking, etc.).
@@ -45,7 +47,24 @@ pub struct ImportOverrides {
 impl ImportService {
     /// Create a new import service with the given parsers and fetcher.
     pub fn new(parsers: Vec<Box<dyn SpecParser>>, fetcher: Box<dyn ContentFetcher>) -> Self {
-        Self { parsers, fetcher }
+        Self {
+            parsers,
+            fetcher,
+            git_metadata: None,
+        }
+    }
+
+    /// Create an import service with git metadata resolution.
+    pub fn with_git_metadata(
+        parsers: Vec<Box<dyn SpecParser>>,
+        fetcher: Box<dyn ContentFetcher>,
+        git_metadata: Box<dyn GitMetadataPort>,
+    ) -> Self {
+        Self {
+            parsers,
+            fetcher,
+            git_metadata: Some(git_metadata),
+        }
     }
 
     /// Import from any supported format.
@@ -78,8 +97,18 @@ impl ImportService {
             .map_err(|e| e.to_string())?;
 
         // 4. Convert IR → Collection (shared logic, not per-adapter)
-        let collection =
+        let mut collection =
             Self::ir_to_collection(&parsed, &fetch_result, parser.source_type(), &overrides);
+
+        // 5. Resolve git commit if repo_root is provided and git port is available
+        if let (Some(repo_root), Some(git)) = (&overrides.repo_root, &self.git_metadata) {
+            match git.resolve_commit(repo_root, overrides.ref_name.as_deref()) {
+                Ok(sha) => collection.source.source_commit = Some(sha),
+                Err(e) => {
+                    tracing::warn!("Failed to resolve git commit for {repo_root}: {e}");
+                }
+            }
+        }
 
         Ok(collection)
     }
@@ -116,6 +145,15 @@ impl ImportService {
     /// Access the content fetcher for re-fetching during refresh.
     pub fn fetcher(&self) -> &dyn ContentFetcher {
         self.fetcher.as_ref()
+    }
+
+    /// Resolve a git commit SHA if the git metadata port is available.
+    ///
+    /// Returns `None` if no git port is configured or resolution fails.
+    pub fn resolve_git_commit(&self, repo_root: &str, ref_name: Option<&str>) -> Option<String> {
+        self.git_metadata
+            .as_ref()
+            .and_then(|git| git.resolve_commit(repo_root, ref_name).ok())
     }
 
     /// The single shared IR → Collection converter.
@@ -377,6 +415,69 @@ mod tests {
             Some("api/spec.json".to_string())
         );
         assert_eq!(collection.source.ref_name, Some("main".to_string()));
+    }
+
+    // ── Test 3A.5: Import populates source_commit when repo_root provided ──
+
+    struct MockGitPort {
+        commit: Result<String, String>,
+    }
+
+    impl GitMetadataPort for MockGitPort {
+        fn resolve_commit(
+            &self,
+            _repo_root: &str,
+            _ref_name: Option<&str>,
+        ) -> Result<String, String> {
+            self.commit.clone()
+        }
+    }
+
+    #[tokio::test]
+    async fn test_import_populates_source_commit_when_repo_root_provided() {
+        let fake_sha = "a".repeat(40);
+        let service = ImportService::with_git_metadata(
+            vec![openapi_parser()],
+            Box::new(MockFetcher),
+            Box::new(MockGitPort {
+                commit: Ok(fake_sha.clone()),
+            }),
+        );
+
+        let result = service
+            .import(
+                SpecSource::Inline(MINIMAL_SPEC.to_string()),
+                ImportOverrides {
+                    repo_root: Some("/some/repo".to_string()),
+                    ..Default::default()
+                },
+            )
+            .await;
+
+        assert!(result.is_ok());
+        let collection = result.unwrap();
+        assert_eq!(collection.source.source_commit, Some(fake_sha));
+    }
+
+    // ── Test 3A.6: Import without repo_root leaves source_commit as None ──
+
+    #[tokio::test]
+    async fn test_import_without_repo_root_leaves_source_commit_none() {
+        let service = ImportService::new(vec![openapi_parser()], Box::new(MockFetcher));
+
+        let result = service
+            .import(
+                SpecSource::Inline(MINIMAL_SPEC.to_string()),
+                ImportOverrides::default(),
+            )
+            .await;
+
+        assert!(result.is_ok());
+        let collection = result.unwrap();
+        assert!(
+            collection.source.source_commit.is_none(),
+            "source_commit should be None without repo_root"
+        );
     }
 
     #[test]

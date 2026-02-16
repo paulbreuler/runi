@@ -4,7 +4,11 @@
 // Infrastructure layer - External interfaces (Tauri commands, networking)
 
 pub mod commands;
+/// Git metadata infrastructure adapters.
+pub mod git;
 pub mod http;
+/// Hurl CLI adapter for test execution.
+pub mod hurl;
 pub mod logging;
 /// MCP infrastructure adapters and transports.
 pub mod mcp;

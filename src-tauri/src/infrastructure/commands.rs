@@ -12,6 +12,7 @@ use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
 use crate::domain::mcp::events::{Actor, EventEmitter};
 use crate::domain::models::HelloWorldResponse;
+use crate::infrastructure::git::GitCliAdapter;
 use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::spec::http_fetcher::HttpContentFetcher;
 use crate::infrastructure::spec::openapi_parser::OpenApiParser;
@@ -21,8 +22,9 @@ use crate::infrastructure::storage::collection_store::{
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
 use crate::infrastructure::storage::traits::HistoryStorage;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, LazyLock};
 use tauri::{Emitter, Manager};
@@ -101,7 +103,15 @@ async fn import_collection_inner(request: ImportCollectionRequest) -> Result<Col
         ref_name: request.ref_name,
     };
 
-    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let service = if overrides.repo_root.is_some() {
+        ImportService::with_git_metadata(
+            vec![Box::new(OpenApiParser)],
+            Box::new(HttpContentFetcher),
+            Box::new(GitCliAdapter),
+        )
+    } else {
+        ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher))
+    };
     let collection = service.import(source, overrides).await?;
     save_collection(&collection)?;
     Ok(collection)
@@ -233,6 +243,15 @@ async fn refresh_collection_spec_inner(
     collection.source.hash = Some(new_hash);
     collection.source.fetched_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
+    // 8b. Update source_commit if repo_root is tracked
+    if let Some(repo_root) = &collection.source.repo_root {
+        if let Some(sha) =
+            service.resolve_git_commit(repo_root, collection.source.ref_name.as_deref())
+        {
+            collection.source.source_commit = Some(sha);
+        }
+    }
+
     // 9. Persist
     save_collection(&collection)?;
 
@@ -247,7 +266,20 @@ pub async fn cmd_refresh_collection_spec(
     app: tauri::AppHandle,
     collection_id: String,
 ) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
-    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    // Check if collection has repo_root to decide if git adapter is needed
+    let needs_git = load_collection(&collection_id)
+        .map(|c| c.source.repo_root.is_some())
+        .unwrap_or(false);
+
+    let service = if needs_git {
+        ImportService::with_git_metadata(
+            vec![Box::new(OpenApiParser)],
+            Box::new(HttpContentFetcher),
+            Box::new(GitCliAdapter),
+        )
+    } else {
+        ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher))
+    };
     let result = refresh_collection_spec_inner(&collection_id, &service).await?;
     emit_collection_event(
         &app,
@@ -1301,6 +1333,80 @@ pub async fn sync_canvas_state(
         .await;
 
     Ok(())
+}
+
+// ── Hurl test execution ──────────────────────────────────────────────
+
+/// Request payload for running a Hurl test suite.
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct RunHurlSuiteRequest {
+    /// Path to the `.hurl` file to execute.
+    pub hurl_file_path: String,
+    /// Optional collection ID for context.
+    pub collection_id: Option<String>,
+    /// Optional environment variables (e.g., `base_url`).
+    pub env_vars: Option<HashMap<String, String>>,
+}
+
+/// Result of running a Hurl test suite.
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct HurlSuiteResult {
+    /// Process exit code (0 = success).
+    pub exit_code: i32,
+    /// Whether all tests passed.
+    pub passed: bool,
+    /// Total number of hurl entries executed.
+    pub test_count: u32,
+    /// Number of failed entries.
+    pub failure_count: u32,
+    /// Total duration in milliseconds.
+    pub duration_ms: u64,
+    /// Captured stdout from hurl.
+    pub stdout: String,
+    /// Captured stderr from hurl.
+    pub stderr: String,
+    /// The collection ID this suite was run against (if any).
+    pub collection_id: Option<String>,
+}
+
+/// Run a Hurl test suite and return structured results.
+///
+/// Validates the file exists and has `.hurl` extension, then delegates to
+/// `HurlRunner` (infrastructure adapter). Uses `std::process::Command` with
+/// explicit args — no shell interpolation.
+#[tauri::command]
+pub async fn cmd_run_hurl_suite(request: RunHurlSuiteRequest) -> Result<HurlSuiteResult, String> {
+    use crate::domain::collection::test_port::{TestRunConfig, TestRunner};
+    use crate::infrastructure::hurl::HurlRunner;
+
+    let config = TestRunConfig {
+        file_path: request.hurl_file_path,
+        env_vars: request.env_vars.unwrap_or_default(),
+        timeout_secs: None,
+    };
+
+    // Run on a blocking thread since Command::output() blocks
+    let result = tokio::task::spawn_blocking(move || {
+        let runner = HurlRunner;
+        runner.run(&config)
+    })
+    .await
+    .map_err(|e| format!("Task join error: {e}"))??;
+
+    Ok(HurlSuiteResult {
+        exit_code: result.exit_code,
+        passed: result.passed,
+        test_count: result.test_count,
+        failure_count: result.failure_count,
+        duration_ms: result.duration_ms,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        collection_id: request.collection_id,
+    })
 }
 
 #[cfg(test)]
@@ -2362,6 +2468,76 @@ mod tests {
             let changes = &get_users_change.unwrap().changes;
             assert!(changes.contains(&"summary".to_string()));
             assert!(changes.contains(&"parameters".to_string()));
+        })
+        .await;
+    }
+
+    // ── Test 3A.7: Refresh updates source_commit ──
+
+    struct MockGitPort {
+        commit: String,
+    }
+
+    impl crate::domain::collection::git_port::GitMetadataPort for MockGitPort {
+        fn resolve_commit(
+            &self,
+            _repo_root: &str,
+            _ref_name: Option<&str>,
+        ) -> Result<String, String> {
+            Ok(self.commit.clone())
+        }
+    }
+
+    fn make_refresh_service_with_git(content: &str, commit: &str) -> ImportService {
+        ImportService::with_git_metadata(
+            vec![Box::new(OpenApiParser)],
+            Box::new(ConfigurableMockFetcher {
+                content: content.to_string(),
+            }),
+            Box::new(MockGitPort {
+                commit: commit.to_string(),
+            }),
+        )
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_refresh_updates_source_commit() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Import with V1, setting repo_root so commit tracking is active
+            let old_sha = "a".repeat(40);
+            let service = make_refresh_service_with_git(SPEC_V1, &old_sha);
+            let collection = service
+                .import(
+                    crate::domain::collection::spec_port::SpecSource::Inline(SPEC_V1.to_string()),
+                    ImportOverrides {
+                        repo_root: Some("/some/repo".to_string()),
+                        ref_name: Some("main".to_string()),
+                        ..Default::default()
+                    },
+                )
+                .await
+                .unwrap();
+            save_collection(&collection).unwrap();
+
+            assert_eq!(collection.source.source_commit, Some(old_sha));
+
+            // Refresh with V2 content and a new commit SHA
+            let new_sha = "b".repeat(40);
+            let refresh_service = make_refresh_service_with_git(SPEC_V2, &new_sha);
+            let result = refresh_collection_spec_inner(&collection.id, &refresh_service)
+                .await
+                .unwrap();
+            assert!(result.changed);
+
+            // Verify persisted collection has updated source_commit
+            let updated = load_collection(&collection.id).unwrap();
+            assert_eq!(
+                updated.source.source_commit,
+                Some(new_sha),
+                "source_commit should be updated after refresh"
+            );
         })
         .await;
     }

@@ -10,9 +10,11 @@
 
 pub mod binding;
 pub mod drift;
+pub mod git_port;
 pub mod intelligence;
 pub mod source;
 pub mod spec_port;
+pub mod test_port;
 pub mod types;
 
 #[allow(unused_imports)]
@@ -23,6 +25,8 @@ pub use intelligence::*;
 pub use source::*;
 #[allow(unused_imports)]
 pub use spec_port::*;
+#[allow(unused_imports)]
+pub use test_port::*;
 #[allow(unused_imports)]
 pub use types::*;
 
