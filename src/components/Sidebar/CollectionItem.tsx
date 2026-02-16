@@ -67,6 +67,9 @@ export const CollectionItem = ({
   const [renameValue, setRenameValue] = useState(startInRenameMode ? summary.name : '');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contextMenuAnchor, setContextMenuAnchor] = useState<{
+    getBoundingClientRect: () => DOMRect;
+  } | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -163,27 +166,46 @@ export const CollectionItem = ({
 
   const handleContextMenu = useCallback((e: React.MouseEvent): void => {
     e.preventDefault();
+    e.stopPropagation();
+    const x = e.clientX;
+    const y = e.clientY;
+    setContextMenuAnchor({
+      getBoundingClientRect: () => new DOMRect(x, y, 0, 0),
+    });
     setMenuOpen(true);
   }, []);
 
   const handleMenuRename = useCallback((): void => {
     setMenuOpen(false);
-    startRename();
+    setContextMenuAnchor(null);
+    requestAnimationFrame(() => {
+      startRename();
+    });
   }, [startRename]);
 
   const handleMenuDuplicate = useCallback((): void => {
     setMenuOpen(false);
+    setContextMenuAnchor(null);
     onDuplicate?.(summary.id);
   }, [summary.id, onDuplicate]);
 
   const handleMenuAddRequest = useCallback((): void => {
     setMenuOpen(false);
+    setContextMenuAnchor(null);
     onAddRequest?.(summary.id);
   }, [summary.id, onAddRequest]);
 
   const handleMenuDelete = useCallback((): void => {
     setMenuOpen(false);
+    setContextMenuAnchor(null);
     setDeletePopoverOpen(true);
+  }, []);
+
+  const handleMenuOpenChange = useCallback((open: boolean): void => {
+    setMenuOpen(open);
+    if (!open) {
+      setContextMenuAnchor(null);
+    }
   }, []);
 
   return (
@@ -272,7 +294,7 @@ export const CollectionItem = ({
                 )}
                 data-test-id={`collection-actions-${summary.id}`}
               >
-                <Menu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+                <Menu.Root open={menuOpen} onOpenChange={handleMenuOpenChange}>
                   <Menu.Trigger
                     nativeButton={false}
                     render={(props) => (
@@ -299,7 +321,12 @@ export const CollectionItem = ({
                       }}
                     >
                       <div style={{ pointerEvents: 'auto' }}>
-                        <Menu.Positioner sideOffset={4} align="start">
+                        <Menu.Positioner
+                          side={contextMenuAnchor !== null ? 'bottom' : undefined}
+                          sideOffset={4}
+                          align="start"
+                          anchor={contextMenuAnchor ?? undefined}
+                        >
                           <Menu.Popup
                             style={{ zIndex: OVERLAY_Z_INDEX }}
                             className="min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-lg overflow-hidden py-1 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none"

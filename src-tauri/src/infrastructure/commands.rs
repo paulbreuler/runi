@@ -849,7 +849,10 @@ pub async fn cmd_add_request(
 /// Duplicate a request within a collection (core logic, no `AppHandle`).
 ///
 /// Clones the request with a new ID and "(Copy)" suffix, inserting after the original.
-fn duplicate_request_inner(collection_id: &str, request_id: &str) -> Result<Collection, String> {
+fn duplicate_request_inner(
+    collection_id: &str,
+    request_id: &str,
+) -> Result<(Collection, String), String> {
     let mut collection = load_collection(collection_id)?;
     let pos = collection
         .requests
@@ -873,9 +876,10 @@ fn duplicate_request_inner(collection_id: &str, request_id: &str) -> Result<Coll
     copy.name = new_name;
     copy.seq = new_seq;
 
+    let copy_id = copy.id.clone();
     collection.requests.insert(pos + 1, copy);
     save_collection(&collection)?;
-    Ok(collection)
+    Ok((collection, copy_id))
 }
 
 /// Duplicate a request within a collection.
@@ -887,19 +891,18 @@ pub async fn cmd_duplicate_request(
     collection_id: String,
     request_id: String,
 ) -> Result<Collection, String> {
-    let collection = duplicate_request_inner(&collection_id, &request_id)?;
-    // The copy is inserted right after the original
-    let orig_pos = collection
+    let (collection, copy_id) = duplicate_request_inner(&collection_id, &request_id)?;
+    let copy_name = collection
         .requests
         .iter()
-        .position(|r| r.id == request_id)
-        .unwrap_or(0);
-    let copy = &collection.requests[orig_pos + 1];
+        .find(|r| r.id == copy_id)
+        .map(|r| r.name.clone())
+        .unwrap_or_default();
     emit_collection_event(
         &app,
         "request:added",
         &Actor::User,
-        json!({"collection_id": &collection_id, "request_id": &copy.id, "name": &copy.name}),
+        json!({"collection_id": &collection_id, "request_id": &copy_id, "name": &copy_name}),
     );
     Ok(collection)
 }
@@ -3170,10 +3173,11 @@ mod tests {
             collection.requests.push(req);
             save_collection(&collection).unwrap();
 
-            let updated = duplicate_request_inner(&collection.id, "req_orig").unwrap();
+            let (updated, copy_id) = duplicate_request_inner(&collection.id, "req_orig").unwrap();
             assert_eq!(updated.requests.len(), 2);
             assert_eq!(updated.requests[1].name, "Original (Copy)");
             assert_ne!(updated.requests[1].id, "req_orig");
+            assert_eq!(updated.requests[1].id, copy_id);
             assert_eq!(updated.requests[1].method, "POST");
             assert_eq!(updated.requests[1].url, "http://example.com");
 
