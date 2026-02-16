@@ -51,15 +51,15 @@ export const ContextToolbar = ({ className }: ContextToolbarProps): React.JSX.El
               openPopout(activeContextId);
             }}
             className={cn(
-              'flex items-center justify-center w-7 h-7 rounded',
-              'text-text-secondary hover:text-text-primary hover:bg-bg-raised',
+              'flex items-center justify-center w-[34px] h-[34px] rounded',
+              'text-text-muted hover:text-text-primary hover:bg-bg-raised/50',
               'transition-colors',
               focusRingClasses
             )}
             data-test-id="popout-button"
             aria-label="Open in new window"
           >
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink size={15} />
           </button>
         )}
       </div>
