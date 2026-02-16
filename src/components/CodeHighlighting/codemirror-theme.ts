@@ -5,10 +5,11 @@
 
 /**
  * @file CodeMirror 6 theme extension for runi
- * @description Layers One Dark syntax highlighting with runi's structural chrome.
- * One Dark handles all syntax colors (JSON keys, strings, numbers, booleans, punctuation).
- * runi's theme handles structural chrome: editor bg, gutters, selection, cursor, focus ring,
- * search panel, scrollbar — all via CSS custom properties for reactive dark/light mode.
+ * @description Layers syntax highlighting themes with runi's structural chrome.
+ * The selected syntax theme (One Dark, Solarized Dark, or GitHub Dark) handles all syntax
+ * colors (JSON keys, strings, numbers, booleans, punctuation). runi's theme handles
+ * structural chrome: editor bg, gutters, selection, cursor, focus ring, search panel,
+ * scrollbar — all via CSS custom properties for reactive dark/light mode.
  * Reduced motion: disables cursor blink when prefers-reduced-motion is active.
  */
 

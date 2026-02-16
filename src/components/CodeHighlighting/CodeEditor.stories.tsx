@@ -13,6 +13,7 @@ import { expect, fn, userEvent, within } from 'storybook/test';
 import { useEffect, useState } from 'react';
 import { CodeEditor, type CodeEditorProps } from './CodeEditor';
 import { useSettings } from '@/stores/settings-store';
+import type { EditorTheme } from '@/types/settings';
 
 const meta = {
   title: 'CodeHighlighting/CodeEditor',
@@ -338,8 +339,17 @@ export const EditInteractionTest: Story = {
 const ThemeCodeEditor = ({
   editorTheme,
   ...rest
-}: CodeEditorProps & { editorTheme: string }): React.JSX.Element => {
+}: CodeEditorProps & { editorTheme: EditorTheme }): React.JSX.Element => {
   const updateSetting = useSettings((s) => s.updateSetting);
+
+  // Capture the existing theme when this story mounts and restore it on unmount
+  useEffect(() => {
+    const previousTheme = useSettings.getState().settings.ui.editorTheme;
+
+    return () => {
+      updateSetting('ui', 'editorTheme', previousTheme);
+    };
+  }, [updateSetting]);
 
   // Sync arg → store on each render (controls drive the store)
   useEffect(() => {
@@ -350,7 +360,7 @@ const ThemeCodeEditor = ({
 };
 
 /** Theme switching — select a syntax theme via controls and see it live. */
-export const ThemeSwitching: StoryObj<CodeEditorProps & { editorTheme: string }> = {
+export const ThemeSwitching: StoryObj<CodeEditorProps & { editorTheme: EditorTheme }> = {
   args: {
     mode: 'edit',
     code: `{

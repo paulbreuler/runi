@@ -10,15 +10,16 @@ import userEvent from '@testing-library/user-event';
 import { Toast as BaseUIToast } from '@base-ui/react/toast';
 import { ToastProvider } from './ToastProvider';
 import { ToastBell } from './ToastBell';
-import { toast, setupToastEventBridge, __resetEventBridgeForTesting } from './useToast';
+import {
+  toast,
+  setupToastEventBridge,
+  __resetEventBridgeForTesting,
+  type ToastManagerData,
+} from './useToast';
 import { globalEventBus } from '@/events/bus';
 
 /** Shape of custom data stored on toast instances in our system */
-interface ToastData {
-  count?: number;
-  correlationId?: string;
-  testId?: string;
-}
+type ToastData = Partial<ToastManagerData>;
 
 // Mock Motion to avoid animation timing issues in tests
 vi.mock('motion/react', async (importOriginal) => {
