@@ -27,12 +27,18 @@ interface CollectionItemProps {
   summary: CollectionSummary;
   onDelete?: (collectionId: string) => void;
   onRename?: (collectionId: string, newName: string) => void;
+  /** When true, the item mounts in inline-rename mode immediately. */
+  startInRenameMode?: boolean;
+  /** Called after the component has consumed the startInRenameMode flag. */
+  onRenameStarted?: () => void;
 }
 
 export const CollectionItem = ({
   summary,
   onDelete,
   onRename,
+  startInRenameMode = false,
+  onRenameStarted,
 }: CollectionItemProps): React.JSX.Element => {
   const isExpanded = useIsExpanded(summary.id);
   const selectedCollectionId = useCollectionStore((state) => state.selectedCollectionId);
@@ -44,8 +50,8 @@ export const CollectionItem = ({
   const sortedRequests = useSortedRequests(summary.id);
   const displayName = truncateNavLabel(summary.name);
 
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
+  const [isRenaming, setIsRenaming] = useState(startInRenameMode);
+  const [renameValue, setRenameValue] = useState(startInRenameMode ? summary.name : '');
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -57,6 +63,19 @@ export const CollectionItem = ({
       didCancelRef.current = false;
     }
   }, [isRenaming]);
+
+  // Auto-focus and select when mounting in rename mode
+  useEffect(() => {
+    if (startInRenameMode) {
+      if (renameInputRef.current !== null) {
+        focusWithVisibility(renameInputRef.current);
+        renameInputRef.current.select();
+      }
+      onRenameStarted?.();
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>): void => {
     e.currentTarget.focus({ preventScroll: true });

@@ -564,6 +564,34 @@ pub fn get_config_dir() -> Result<String, String> {
     Ok(dir.to_string_lossy().to_string())
 }
 
+/// Create a new empty collection with the given name.
+///
+/// Builds a `Collection` via `Collection::new(name)`, persists it to disk,
+/// and returns the saved collection.
+pub fn create_collection_inner(name: &str) -> Result<Collection, String> {
+    let collection = Collection::new(name);
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Create a new empty collection.
+///
+/// Emits `collection:created` with `Actor::User` on success.
+#[tauri::command]
+pub async fn cmd_create_collection(
+    app: tauri::AppHandle,
+    name: String,
+) -> Result<Collection, String> {
+    let collection = create_collection_inner(&name)?;
+    emit_collection_event(
+        &app,
+        "collection:created",
+        &Actor::User,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
+    Ok(collection)
+}
+
 /// Save a collection to disk.
 ///
 /// Emits `collection:saved` with `Actor::User` for real-time UI updates.
@@ -2807,5 +2835,37 @@ mod tests {
         assert_eq!(extract_path_from_url("https://api.example.com"), "/");
         // Fallback for malformed input
         assert_eq!(extract_path_from_url("malformed"), "/malformed");
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_create_collection_inner_creates_and_persists() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = create_collection_inner("My New API").unwrap();
+            assert_eq!(collection.metadata.name, "My New API");
+            assert!(collection.id.starts_with("col_my_new_api_"));
+            assert!(collection.requests.is_empty());
+
+            // Verify it was persisted
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.metadata.name, "My New API");
+            assert_eq!(loaded.id, collection.id);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_create_collection_inner_appears_in_list() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            create_collection_inner("Listed API").unwrap();
+            let summaries = list_collections().unwrap();
+            assert_eq!(summaries.len(), 1);
+            assert_eq!(summaries[0].name, "Listed API");
+            assert_eq!(summaries[0].request_count, 0);
+        })
+        .await;
     }
 }

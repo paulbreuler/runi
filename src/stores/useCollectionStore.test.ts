@@ -461,6 +461,60 @@ describe('useCollectionStore', () => {
     });
   });
 
+  describe('createCollection', () => {
+    it('calls cmd_create_collection and adds to store', async () => {
+      const collection = buildCollection('col_new');
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: Collection | null = null;
+      await act(async () => {
+        returned = await result.current.createCollection('New Collection');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_create_collection', { name: 'New Collection' });
+      expect(returned).not.toBeNull();
+      expect(result.current.collections).toHaveLength(1);
+      expect(result.current.selectedCollectionId).toBe('col_new');
+      expect(result.current.expandedCollectionIds.has('col_new')).toBe(true);
+      expect(result.current.pendingRenameId).toBe('col_new');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('returns null and sets error when create fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('create failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: Collection | null = null;
+      await act(async () => {
+        returned = await result.current.createCollection('Bad Name');
+      });
+
+      expect(returned).toBeNull();
+      expect(result.current.error).toContain('create failed');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('clears pendingRenameId with clearPendingRename', async () => {
+      const collection = buildCollection('col_pending');
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.createCollection('Pending');
+      });
+      expect(result.current.pendingRenameId).toBe('col_pending');
+
+      act(() => {
+        result.current.clearPendingRename();
+      });
+      expect(result.current.pendingRenameId).toBeNull();
+    });
+  });
+
   describe('renameRequest', () => {
     it('calls cmd_rename_request with correct params', async () => {
       (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);

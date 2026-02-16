@@ -4,6 +4,7 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { Collection, CollectionSummary } from '@/types/collection';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
@@ -14,8 +15,11 @@ interface MockCollectionStoreState {
   summaries: CollectionSummary[];
   isLoading: boolean;
   error: string | null;
+  pendingRenameId: string | null;
   loadCollections: () => Promise<void>;
   addHttpbinCollection: () => Promise<Collection | null>;
+  createCollection: (name: string) => Promise<Collection | null>;
+  clearPendingRename: () => void;
 }
 
 let mockCollectionState: MockCollectionStoreState;
@@ -24,8 +28,11 @@ const createCollectionState = (): MockCollectionStoreState => ({
   summaries: [],
   isLoading: false,
   error: null,
+  pendingRenameId: null,
   loadCollections: vi.fn(async (): Promise<void> => undefined),
   addHttpbinCollection: vi.fn(async (): Promise<Collection | null> => null),
+  createCollection: vi.fn(async (): Promise<Collection | null> => null),
+  clearPendingRename: vi.fn(),
 });
 
 vi.mock('@/stores/useCollectionStore', () => ({
@@ -143,6 +150,26 @@ describe('Sidebar', (): void => {
     const scrollbar = screen.getByTestId('sidebar-scroll-scrollbar');
     expect(scrollbar).toBeInTheDocument();
     expect(scrollbar).toHaveAttribute('orientation', 'vertical');
+  });
+
+  it('shows create collection button when collectionsEnabled is true', (): void => {
+    render(<Sidebar />);
+    const button = screen.getByTestId('create-collection-button');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('aria-label', 'Create collection');
+  });
+
+  it('hides create collection button when collectionsEnabled is false', (): void => {
+    useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', false);
+    render(<Sidebar />);
+    expect(screen.queryByTestId('create-collection-button')).not.toBeInTheDocument();
+  });
+
+  it('calls createCollection when button is clicked', async (): Promise<void> => {
+    render(<Sidebar />);
+    const button = screen.getByTestId('create-collection-button');
+    await userEvent.click(button);
+    expect(mockCollectionState.createCollection).toHaveBeenCalledWith('Untitled Collection');
   });
 });
 

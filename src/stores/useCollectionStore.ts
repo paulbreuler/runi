@@ -16,9 +16,12 @@ interface CollectionState {
   selectedCollectionId: string | null;
   selectedRequestId: string | null;
   expandedCollectionIds: Set<string>;
+  /** ID of a collection that should immediately enter rename mode (cleared after consumption). */
+  pendingRenameId: string | null;
   isLoading: boolean;
   error: string | null;
 
+  createCollection: (name: string) => Promise<Collection | null>;
   loadCollections: () => Promise<void>;
   loadCollection: (id: string) => Promise<void>;
   addHttpbinCollection: () => Promise<Collection | null>;
@@ -30,6 +33,7 @@ interface CollectionState {
   selectCollection: (id: string | null) => void;
   selectRequest: (collectionId: string, requestId: string) => void;
   toggleExpanded: (id: string) => void;
+  clearPendingRename: () => void;
   clearError: () => void;
 }
 
@@ -55,8 +59,41 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   selectedCollectionId: null,
   selectedRequestId: null,
   expandedCollectionIds: new Set(),
+  pendingRenameId: null,
   isLoading: false,
   error: null,
+
+  createCollection: async (name: string): Promise<Collection | null> => {
+    set({ isLoading: true, error: null });
+    try {
+      const collection = normalizeCollection(
+        await invoke<Collection>('cmd_create_collection', { name })
+      );
+
+      set((state) => ({
+        collections: [...state.collections, collection],
+        summaries: [
+          ...state.summaries,
+          {
+            id: collection.id,
+            name: collection.metadata.name,
+            request_count: collection.requests.length,
+            source_type: collection.source.source_type,
+            modified_at: collection.metadata.modified_at,
+          },
+        ],
+        selectedCollectionId: collection.id,
+        expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
+        pendingRenameId: collection.id,
+        isLoading: false,
+      }));
+
+      return collection;
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+      return null;
+    }
+  },
 
   loadCollections: async (): Promise<void> => {
     set({ isLoading: true, error: null });
@@ -264,6 +301,10 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     } catch (error) {
       set({ error: String(error), isLoading: false });
     }
+  },
+
+  clearPendingRename: (): void => {
+    set({ pendingRenameId: null });
   },
 
   clearError: (): void => {
