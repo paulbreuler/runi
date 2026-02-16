@@ -18,6 +18,8 @@ interface CollectionState {
   expandedCollectionIds: Set<string>;
   /** ID of a collection that should immediately enter rename mode (cleared after consumption). */
   pendingRenameId: string | null;
+  /** ID of a request that should immediately enter rename mode (cleared after consumption). */
+  pendingRequestRenameId: string | null;
   isLoading: boolean;
   error: string | null;
 
@@ -30,10 +32,14 @@ interface CollectionState {
   deleteRequest: (collectionId: string, requestId: string) => Promise<void>;
   renameCollection: (collectionId: string, newName: string) => Promise<void>;
   renameRequest: (collectionId: string, requestId: string, newName: string) => Promise<void>;
+  duplicateCollection: (id: string) => Promise<void>;
+  addRequest: (collectionId: string, name: string) => Promise<void>;
+  duplicateRequest: (collectionId: string, requestId: string) => Promise<void>;
   selectCollection: (id: string | null) => void;
   selectRequest: (collectionId: string, requestId: string) => void;
   toggleExpanded: (id: string) => void;
   clearPendingRename: () => void;
+  clearPendingRequestRename: () => void;
   clearError: () => void;
 }
 
@@ -60,6 +66,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   selectedRequestId: null,
   expandedCollectionIds: new Set(),
   pendingRenameId: null,
+  pendingRequestRenameId: null,
   isLoading: false,
   error: null,
 
@@ -303,8 +310,84 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     }
   },
 
+  duplicateCollection: async (id: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const collection = normalizeCollection(
+        await invoke<Collection>('cmd_duplicate_collection', { collectionId: id })
+      );
+
+      set((state) => ({
+        collections: [...state.collections, collection],
+        summaries: [
+          ...state.summaries,
+          {
+            id: collection.id,
+            name: collection.metadata.name,
+            request_count: collection.requests.length,
+            source_type: collection.source.source_type,
+            modified_at: collection.metadata.modified_at,
+          },
+        ],
+        selectedCollectionId: collection.id,
+        expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
+        pendingRenameId: collection.id,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  addRequest: async (collectionId: string, name: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const updated = normalizeCollection(
+        await invoke<Collection>('cmd_add_request', { collectionId, name })
+      );
+
+      // Find the newly added request (last one by seq)
+      const newRequest = updated.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest));
+
+      set((state) => ({
+        collections: state.collections.map((c) => (c.id === collectionId ? updated : c)),
+        summaries: state.summaries.map((s) =>
+          s.id === collectionId ? { ...s, request_count: updated.requests.length } : s
+        ),
+        expandedCollectionIds: new Set([...state.expandedCollectionIds, collectionId]),
+        pendingRequestRenameId: newRequest.id,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  duplicateRequest: async (collectionId: string, requestId: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const updated = normalizeCollection(
+        await invoke<Collection>('cmd_duplicate_request', { collectionId, requestId })
+      );
+
+      set((state) => ({
+        collections: state.collections.map((c) => (c.id === collectionId ? updated : c)),
+        summaries: state.summaries.map((s) =>
+          s.id === collectionId ? { ...s, request_count: updated.requests.length } : s
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
   clearPendingRename: (): void => {
     set({ pendingRenameId: null });
+  },
+
+  clearPendingRequestRename: (): void => {
+    set({ pendingRequestRenameId: null });
   },
 
   clearError: (): void => {

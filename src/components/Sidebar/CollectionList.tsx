@@ -19,6 +19,8 @@ export const CollectionList = (): React.JSX.Element => {
   const addHttpbinCollection = useCollectionStore((state) => state.addHttpbinCollection);
   const deleteCollection = useCollectionStore((state) => state.deleteCollection);
   const renameCollection = useCollectionStore((state) => state.renameCollection);
+  const duplicateCollection = useCollectionStore((state) => state.duplicateCollection);
+  const addRequest = useCollectionStore((state) => state.addRequest);
   const pendingRenameId = useCollectionStore((state) => state.pendingRenameId);
   const clearPendingRename = useCollectionStore((state) => state.clearPendingRename);
   const showError = error !== null && error.length > 0;
@@ -82,6 +84,8 @@ export const CollectionList = (): React.JSX.Element => {
             summary={summary}
             onDelete={(id) => void deleteCollection(id)}
             onRename={(id, newName) => void renameCollection(id, newName)}
+            onDuplicate={(id) => void duplicateCollection(id)}
+            onAddRequest={(id) => void addRequest(id, 'New Request')}
             startInRenameMode={pendingRenameId === summary.id}
             onRenameStarted={pendingRenameId === summary.id ? clearPendingRename : undefined}
           />

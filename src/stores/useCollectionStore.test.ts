@@ -515,6 +515,200 @@ describe('useCollectionStore', () => {
     });
   });
 
+  describe('duplicateCollection', () => {
+    it('calls cmd_duplicate_collection and adds copy to store', async () => {
+      const original = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [original],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const copy = {
+        ...buildCollection('col-copy'),
+        metadata: { ...buildCollection('col-copy').metadata, name: 'Collection col-1 (Copy)' },
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(copy);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateCollection('col-1');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_duplicate_collection', { collectionId: 'col-1' });
+      expect(result.current.collections).toHaveLength(2);
+      expect(result.current.selectedCollectionId).toBe('col-copy');
+      expect(result.current.pendingRenameId).toBe('col-copy');
+    });
+
+    it('sets error when duplicate fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('dup failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateCollection('col-1');
+      });
+
+      expect(result.current.error).toContain('dup failed');
+    });
+  });
+
+  describe('addRequest', () => {
+    it('calls cmd_add_request and updates collection in store', async () => {
+      const collection = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const updated = {
+        ...collection,
+        requests: [
+          {
+            id: 'req-new',
+            name: 'New Request',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updated);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.addRequest('col-1', 'New Request');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_add_request', {
+        collectionId: 'col-1',
+        name: 'New Request',
+      });
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.requests).toHaveLength(1);
+      expect(result.current.pendingRequestRenameId).toBe('req-new');
+    });
+
+    it('sets error when add request fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('add failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.addRequest('col-1', 'New Request');
+      });
+
+      expect(result.current.error).toContain('add failed');
+    });
+  });
+
+  describe('duplicateRequest', () => {
+    it('calls cmd_duplicate_request and updates collection', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        requests: [
+          {
+            id: 'req-1',
+            name: 'Original',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 1,
+          },
+        ],
+      };
+      useCollectionStore.setState({
+        collections: [collection as unknown as Collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 1,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const updated = {
+        ...collection,
+        requests: [
+          collection.requests[0],
+          {
+            id: 'req-copy',
+            name: 'Original (Copy)',
+            method: 'GET',
+            url: '',
+            headers: {},
+            params: [],
+            is_streaming: false,
+            binding: {},
+            intelligence: { ai_generated: false },
+            tags: [],
+            seq: 2,
+          },
+        ],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updated);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateRequest('col-1', 'req-1');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_duplicate_request', {
+        collectionId: 'col-1',
+        requestId: 'req-1',
+      });
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.requests).toHaveLength(2);
+      const summary = result.current.summaries.find((s) => s.id === 'col-1');
+      expect(summary?.request_count).toBe(2);
+    });
+
+    it('sets error when duplicate request fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('dup req failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.duplicateRequest('col-1', 'req-1');
+      });
+
+      expect(result.current.error).toContain('dup req failed');
+    });
+  });
+
   describe('renameRequest', () => {
     it('calls cmd_rename_request with correct params', async () => {
       (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);

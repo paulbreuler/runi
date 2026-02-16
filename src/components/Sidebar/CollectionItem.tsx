@@ -5,7 +5,16 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Menu } from '@base-ui/react/menu';
-import { ChevronDown, ChevronRight, Folder, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Folder,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
@@ -27,6 +36,8 @@ interface CollectionItemProps {
   summary: CollectionSummary;
   onDelete?: (collectionId: string) => void;
   onRename?: (collectionId: string, newName: string) => void;
+  onDuplicate?: (collectionId: string) => void;
+  onAddRequest?: (collectionId: string) => void;
   /** When true, the item mounts in inline-rename mode immediately. */
   startInRenameMode?: boolean;
   /** Called after the component has consumed the startInRenameMode flag. */
@@ -37,6 +48,8 @@ export const CollectionItem = ({
   summary,
   onDelete,
   onRename,
+  onDuplicate,
+  onAddRequest,
   startInRenameMode = false,
   onRenameStarted,
 }: CollectionItemProps): React.JSX.Element => {
@@ -156,6 +169,16 @@ export const CollectionItem = ({
     startRename();
   }, [startRename]);
 
+  const handleMenuDuplicate = useCallback((): void => {
+    setMenuOpen(false);
+    onDuplicate?.(summary.id);
+  }, [summary.id, onDuplicate]);
+
+  const handleMenuAddRequest = useCallback((): void => {
+    setMenuOpen(false);
+    onAddRequest?.(summary.id);
+  }, [summary.id, onAddRequest]);
+
   const handleMenuDelete = useCallback((): void => {
     setMenuOpen(false);
     setDeletePopoverOpen(true);
@@ -269,6 +292,20 @@ export const CollectionItem = ({
                             data-test-id={`collection-context-menu-${summary.id}`}
                           >
                             <Menu.Item
+                              label="Add Request"
+                              className={cn(
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                              )}
+                              onClick={handleMenuAddRequest}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-add-request-${summary.id}`}
+                            >
+                              <Plus size={12} className="shrink-0" />
+                              <span>Add Request</span>
+                            </Menu.Item>
+                            <div className="my-1 h-px bg-border-subtle" role="separator" />
+                            <Menu.Item
                               label="Rename"
                               className={cn(
                                 'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
@@ -282,6 +319,20 @@ export const CollectionItem = ({
                               <span>Rename</span>
                               <span className="ml-auto text-text-muted text-[10px]">F2</span>
                             </Menu.Item>
+                            <Menu.Item
+                              label="Duplicate"
+                              className={cn(
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                              )}
+                              onClick={handleMenuDuplicate}
+                              closeOnClick={true}
+                              data-test-id={`collection-menu-duplicate-${summary.id}`}
+                            >
+                              <Copy size={12} className="shrink-0" />
+                              <span>Duplicate</span>
+                            </Menu.Item>
+                            <div className="my-1 h-px bg-border-subtle" role="separator" />
                             <Menu.Item
                               label="Delete"
                               className={cn(

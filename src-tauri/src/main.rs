@@ -11,14 +11,15 @@ mod domain;
 mod infrastructure;
 
 use infrastructure::commands::{
-    clear_request_history, cmd_add_httpbin_collection, cmd_create_collection,
-    cmd_delete_collection, cmd_delete_request, cmd_import_collection, cmd_list_collections,
-    cmd_load_collection, cmd_log_frontend_error, cmd_refresh_collection_spec,
-    cmd_rename_collection, cmd_rename_request, cmd_run_hurl_suite, cmd_save_collection,
-    cmd_write_frontend_error_report, create_proxy_service, delete_history_entry, get_config_dir,
-    get_history_batch, get_history_count, get_history_ids, get_platform, get_process_startup_time,
-    get_system_specs, hello_world, load_feature_flags, load_request_history, save_request_history,
-    set_log_level, sync_canvas_state, write_startup_timing,
+    clear_request_history, cmd_add_httpbin_collection, cmd_add_request, cmd_create_collection,
+    cmd_delete_collection, cmd_delete_request, cmd_duplicate_collection, cmd_duplicate_request,
+    cmd_import_collection, cmd_list_collections, cmd_load_collection, cmd_log_frontend_error,
+    cmd_refresh_collection_spec, cmd_rename_collection, cmd_rename_request, cmd_run_hurl_suite,
+    cmd_save_collection, cmd_write_frontend_error_report, create_proxy_service,
+    delete_history_entry, get_config_dir, get_history_batch, get_history_count, get_history_ids,
+    get_platform, get_process_startup_time, get_system_specs, hello_world, load_feature_flags,
+    load_request_history, save_request_history, set_log_level, sync_canvas_state,
+    write_startup_timing,
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
@@ -135,6 +136,9 @@ pub fn run() {
             cmd_delete_request,
             cmd_rename_collection,
             cmd_rename_request,
+            cmd_duplicate_collection,
+            cmd_duplicate_request,
+            cmd_add_request,
             cmd_add_httpbin_collection,
             cmd_import_collection,
             cmd_refresh_collection_spec,
