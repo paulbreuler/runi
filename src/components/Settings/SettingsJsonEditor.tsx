@@ -5,6 +5,7 @@
 
 import type { ReactElement } from 'react';
 import { useEffect, useState, useRef } from 'react';
+import type { EditorView } from '@codemirror/view';
 import { CodeEditor } from '@/components/CodeHighlighting/CodeEditor';
 import type { SettingsSchema, DeepPartialSettings } from '@/types/settings';
 import { mergeWithDefaults } from '@/types/settings-defaults';
@@ -50,25 +51,11 @@ export function SettingsJsonEditor({
 }: SettingsJsonEditorProps): ReactElement {
   const [jsonText, setJsonText] = useState(() => JSON.stringify(settings, null, 2));
   const [error, setError] = useState<string | null>(null);
-  const editorTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorViewRef = useRef<EditorView | null>(null);
   const jsonTextRef = useRef(jsonText);
   jsonTextRef.current = jsonText;
 
   const query = searchQuery.trim();
-  const indices = query === '' ? [] : getMatchIndices(jsonText, query, caseSensitive);
-  const idx = Math.max(0, Math.min(currentMatchIndex, indices.length - 1));
-  const matchStart = indices[idx];
-  const highlightRange =
-    query !== '' && matchStart !== undefined
-      ? { start: matchStart, end: matchStart + query.length }
-      : null;
-  const highlightRanges =
-    query !== ''
-      ? indices.map((start) => ({
-          start,
-          end: start + query.length,
-        }))
-      : [];
 
   useEffect(() => {
     setJsonText(JSON.stringify(settings, null, 2));
@@ -80,26 +67,25 @@ export function SettingsJsonEditor({
     onMatchCountChange?.(indices.length);
   }, [query, jsonText, onMatchCountChange, caseSensitive]);
 
-  // Scroll to current match and set selection; highlight is shown via overlay (focus stays in search box, VS Code–style).
+  // Scroll to current match and set selection via EditorView API.
   useEffect(() => {
     const query = searchQuery.trim();
-    if (query === '' || editorTextareaRef.current === null) {
+    if (query === '' || editorViewRef.current === null) {
       return;
     }
     const text = jsonTextRef.current;
-    const indices = getMatchIndices(text, query, caseSensitive);
-    const idx = Math.max(0, Math.min(currentMatchIndex, indices.length - 1));
-    const start = indices[idx];
+    const matchIndices = getMatchIndices(text, query, caseSensitive);
+    const matchIdx = Math.max(0, Math.min(currentMatchIndex, matchIndices.length - 1));
+    const start = matchIndices[matchIdx];
     if (start === undefined) {
       return;
     }
     const end = start + query.length;
-    const ta = editorTextareaRef.current;
-    ta.setSelectionRange(start, end);
-    const parsedLineHeight = Number.parseInt(getComputedStyle(ta).lineHeight, 10);
-    const lineHeight = Number.isNaN(parsedLineHeight) ? 20 : parsedLineHeight;
-    const lines = text.slice(0, start).split('\n').length;
-    ta.scrollTop = Math.max(0, (lines - 2) * lineHeight);
+    const view = editorViewRef.current;
+    view.dispatch({
+      selection: { anchor: start, head: end },
+      scrollIntoView: true,
+    });
   }, [searchQuery, currentMatchIndex, caseSensitive]);
 
   const handleChange = (value: string): void => {
@@ -129,9 +115,7 @@ export function SettingsJsonEditor({
         enableJsonValidation
         enableJsonFormatting
         enableSearch={false}
-        textareaRef={editorTextareaRef}
-        highlightRange={highlightRange}
-        highlightRanges={highlightRanges}
+        editorRef={editorViewRef}
         className="flex-1 min-h-0"
       />
       {error !== null && error !== '' ? (

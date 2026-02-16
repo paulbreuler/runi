@@ -4,8 +4,9 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { EditorView } from '@codemirror/view';
 import { SettingsPanel } from './SettingsPanel';
 import { DEFAULT_SETTINGS } from '@/types/settings-defaults';
 import { useSettings } from '@/stores/settings-store';
@@ -78,9 +79,17 @@ describe('SettingsPanel', () => {
 
     await user.click(screen.getByTestId('settings-json-toggle'));
     const wrapper = screen.getByTestId('settings-json-editor');
-    const textarea = within(wrapper).getByTestId('code-editor-textarea');
+    const cmContainer = within(wrapper).getByTestId('code-editor-cm-container');
+    const cmEditor = cmContainer.querySelector<HTMLElement>('.cm-editor');
+    expect(cmEditor).not.toBeNull();
+    const view = EditorView.findFromDOM(cmEditor!);
+    expect(view).not.toBeNull();
 
-    fireEvent.change(textarea, { target: { value: '{"http":{"timeout":1000}}' } });
+    act(() => {
+      view!.dispatch({
+        changes: { from: 0, to: view!.state.doc.length, insert: '{"http":{"timeout":1000}}' },
+      });
+    });
 
     expect(onSettingsChange).toHaveBeenCalled();
     const calls = onSettingsChange.mock.calls;
@@ -96,9 +105,17 @@ describe('SettingsPanel', () => {
 
     await user.click(screen.getByTestId('settings-json-toggle'));
     const wrapper = screen.getByTestId('settings-json-editor');
-    const textarea = within(wrapper).getByTestId('code-editor-textarea');
+    const cmContainer = within(wrapper).getByTestId('code-editor-cm-container');
+    const cmEditor = cmContainer.querySelector<HTMLElement>('.cm-editor');
+    expect(cmEditor).not.toBeNull();
+    const view = EditorView.findFromDOM(cmEditor!);
+    expect(view).not.toBeNull();
 
-    fireEvent.change(textarea, { target: { value: '{' } });
+    act(() => {
+      view!.dispatch({
+        changes: { from: 0, to: view!.state.doc.length, insert: '{' },
+      });
+    });
 
     expect(screen.getByTestId('settings-json-error')).toBeInTheDocument();
   });

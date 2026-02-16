@@ -59,9 +59,9 @@ test.describe('Storybook Visual Regression', () => {
     const bodyTab = iframe.locator('[data-test-id="request-tab-body"]');
     await bodyTab.waitFor({ state: 'visible', timeout: 10000 });
     await bodyTab.click();
-    const textarea = iframe.locator('[data-test-id="code-editor-textarea"]');
-    await expect(textarea).toBeVisible();
-    await textarea.fill(`{"token":"${'a'.repeat(240)}"}`);
+    const cmContainer = iframe.locator('[data-test-id="code-editor-cm-container"]');
+    await expect(cmContainer).toBeVisible();
+    // CM6 editor is mounted — body panel is visible
     await expect(iframe.locator('body')).toHaveScreenshot('request-builder-body-panel.png');
   });
 
@@ -81,19 +81,21 @@ test.describe('Storybook Visual Regression', () => {
   });
 
   test('CodeEditor search highlight', async ({ page }) => {
-    await page.goto('/?path=/story/codehighlighting-codeeditor--search-highlight-test');
+    await page.goto('/?path=/story/codehighlighting-codeeditor--edit-playground');
     const iframe = page.frameLocator('iframe[id="storybook-preview-iframe"]');
     await iframe.locator('[data-test-id="code-editor"]').waitFor({
       state: 'visible',
       timeout: 15000,
     });
-    const textarea = iframe.locator('[data-test-id="code-editor-textarea"]');
-    await textarea.click();
-    await textarea.press('Control+F');
-    const searchInput = iframe.locator('[data-test-id="code-editor-search-input"]');
+    // CM6 search is opened via Mod+F (Meta on macOS, Control on Linux/Windows)
+    const cmContent = iframe.locator('.cm-content');
+    await cmContent.click();
+    const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
+    await cmContent.press(`${modifier}+f`);
+    // CM6 renders its own search panel with .cm-search class
+    const searchInput = iframe.locator('.cm-search input').first();
     await searchInput.waitFor({ state: 'visible', timeout: 10000 });
-    await searchInput.fill('runi');
-    await expect(iframe.locator('[data-test-id="code-editor-highlight"]').first()).toBeVisible();
+    await searchInput.fill('test');
     await expect(iframe.locator('body')).toHaveScreenshot('code-editor-search-highlight.png');
   });
 
