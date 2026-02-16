@@ -824,7 +824,7 @@ fn add_request_inner(collection_id: &str, name: &str) -> Result<Collection, Stri
 
 /// Add a new empty request to a collection.
 ///
-/// Emits `request:created` with `Actor::User` on success.
+/// Emits `request:added` with `Actor::User` on success.
 #[tauri::command]
 pub async fn cmd_add_request(
     app: tauri::AppHandle,
@@ -832,11 +832,16 @@ pub async fn cmd_add_request(
     name: String,
 ) -> Result<Collection, String> {
     let collection = add_request_inner(&collection_id, &name)?;
+    let request_id = collection
+        .requests
+        .last()
+        .map(|r| r.id.clone())
+        .unwrap_or_default();
     emit_collection_event(
         &app,
-        "request:created",
+        "request:added",
         &Actor::User,
-        json!({"collection_id": &collection_id, "name": &name}),
+        json!({"collection_id": &collection_id, "request_id": &request_id, "name": &name}),
     );
     Ok(collection)
 }
@@ -854,11 +859,19 @@ fn duplicate_request_inner(collection_id: &str, request_id: &str) -> Result<Coll
 
     let original = collection.requests[pos].clone();
     let new_name = format!("{} (Copy)", original.name);
-    let seq = collection.next_seq();
+    let new_seq = original.seq + 1;
+
+    // Bump seq for all requests after the original so the copy slots in right after
+    for r in &mut collection.requests {
+        if r.seq >= new_seq {
+            r.seq += 1;
+        }
+    }
+
     let mut copy = original;
     copy.id = CollectionRequest::generate_id(&new_name);
     copy.name = new_name;
-    copy.seq = seq;
+    copy.seq = new_seq;
 
     collection.requests.insert(pos + 1, copy);
     save_collection(&collection)?;
@@ -867,7 +880,7 @@ fn duplicate_request_inner(collection_id: &str, request_id: &str) -> Result<Coll
 
 /// Duplicate a request within a collection.
 ///
-/// Emits `request:created` with `Actor::User` on success.
+/// Emits `request:added` with `Actor::User` on success.
 #[tauri::command]
 pub async fn cmd_duplicate_request(
     app: tauri::AppHandle,
@@ -875,11 +888,18 @@ pub async fn cmd_duplicate_request(
     request_id: String,
 ) -> Result<Collection, String> {
     let collection = duplicate_request_inner(&collection_id, &request_id)?;
+    // The copy is inserted right after the original
+    let orig_pos = collection
+        .requests
+        .iter()
+        .position(|r| r.id == request_id)
+        .unwrap_or(0);
+    let copy = &collection.requests[orig_pos + 1];
     emit_collection_event(
         &app,
-        "request:created",
+        "request:added",
         &Actor::User,
-        json!({"collection_id": &collection_id, "request_id": &request_id}),
+        json!({"collection_id": &collection_id, "request_id": &copy.id, "name": &copy.name}),
     );
     Ok(collection)
 }

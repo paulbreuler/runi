@@ -11,6 +11,14 @@ import { CollectionList } from '@/components/Sidebar/CollectionList';
 import { useFeatureFlagStore } from '@/stores/features/useFeatureFlagStore';
 import { Sidebar } from './Sidebar';
 
+const mockToast = vi.hoisted(() => ({
+  error: vi.fn(),
+  success: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+}));
+vi.mock('@/components/ui/Toast', () => ({ toast: mockToast }));
+
 interface MockCollectionStoreState {
   summaries: CollectionSummary[];
   isLoading: boolean;
@@ -170,6 +178,53 @@ describe('Sidebar', (): void => {
     const button = screen.getByTestId('create-collection-button');
     await userEvent.click(button);
     expect(mockCollectionState.createCollection).toHaveBeenCalledWith('Untitled Collection');
+  });
+
+  it('generates unique name when "Untitled Collection" already exists', async (): Promise<void> => {
+    mockCollectionState.summaries = [
+      {
+        id: 'col-existing',
+        name: 'Untitled Collection',
+        request_count: 0,
+        source_type: 'manual',
+        modified_at: new Date().toISOString(),
+      },
+    ];
+    render(<Sidebar />);
+    const button = screen.getByTestId('create-collection-button');
+    await userEvent.click(button);
+    expect(mockCollectionState.createCollection).toHaveBeenCalledWith('Untitled Collection (2)');
+  });
+
+  it('generates unique name skipping existing numbered names', async (): Promise<void> => {
+    mockCollectionState.summaries = [
+      {
+        id: 'col-1',
+        name: 'Untitled Collection',
+        request_count: 0,
+        source_type: 'manual',
+        modified_at: new Date().toISOString(),
+      },
+      {
+        id: 'col-2',
+        name: 'Untitled Collection (2)',
+        request_count: 0,
+        source_type: 'manual',
+        modified_at: new Date().toISOString(),
+      },
+    ];
+    render(<Sidebar />);
+    const button = screen.getByTestId('create-collection-button');
+    await userEvent.click(button);
+    expect(mockCollectionState.createCollection).toHaveBeenCalledWith('Untitled Collection (3)');
+  });
+
+  it('shows error toast when createCollection fails', async (): Promise<void> => {
+    mockCollectionState.createCollection = vi.fn(async (): Promise<Collection | null> => null);
+    render(<Sidebar />);
+    const button = screen.getByTestId('create-collection-button');
+    await userEvent.click(button);
+    expect(mockToast.error).toHaveBeenCalledWith({ message: 'Failed to create collection' });
   });
 });
 

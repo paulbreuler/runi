@@ -88,7 +88,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             source_type: collection.source.source_type,
             modified_at: collection.metadata.modified_at,
           },
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         selectedCollectionId: collection.id,
         expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
         pendingRenameId: collection.id,
@@ -328,7 +328,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             source_type: collection.source.source_type,
             modified_at: collection.metadata.modified_at,
           },
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         selectedCollectionId: collection.id,
         expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
         pendingRenameId: collection.id,
@@ -347,7 +347,10 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       );
 
       // Find the newly added request (last one by seq)
-      const newRequest = updated.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest));
+      const newRequest =
+        updated.requests.length > 0
+          ? updated.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest))
+          : undefined;
 
       set((state) => ({
         collections: state.collections.map((c) => (c.id === collectionId ? updated : c)),
@@ -355,7 +358,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
           s.id === collectionId ? { ...s, request_count: updated.requests.length } : s
         ),
         expandedCollectionIds: new Set([...state.expandedCollectionIds, collectionId]),
-        pendingRequestRenameId: newRequest.id,
+        pendingRequestRenameId: newRequest?.id ?? null,
         isLoading: false,
       }));
     } catch (error) {
@@ -370,11 +373,18 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         await invoke<Collection>('cmd_duplicate_request', { collectionId, requestId })
       );
 
+      // Find the newly duplicated request (last one by seq)
+      const newRequest =
+        updated.requests.length > 0
+          ? updated.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest))
+          : undefined;
+
       set((state) => ({
         collections: state.collections.map((c) => (c.id === collectionId ? updated : c)),
         summaries: state.summaries.map((s) =>
           s.id === collectionId ? { ...s, request_count: updated.requests.length } : s
         ),
+        pendingRequestRenameId: newRequest?.id ?? null,
         isLoading: false,
       }));
     } catch (error) {

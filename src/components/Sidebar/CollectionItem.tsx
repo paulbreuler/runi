@@ -24,7 +24,7 @@ import {
 } from '@/stores/useCollectionStore';
 import type { CollectionSummary } from '@/types/collection';
 import { cn } from '@/utils/cn';
-import { focusRingClasses } from '@/utils/accessibility';
+import { focusRingClasses, useFocusVisible } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { Button } from '@/components/ui/button';
@@ -69,7 +69,9 @@ export const CollectionItem = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const didCancelRef = useRef(false);
+  const actionsKeyboardFocused = useFocusVisible(actionsRef);
 
   // Reset cancel flag when entering rename mode
   useEffect(() => {
@@ -208,7 +210,12 @@ export const CollectionItem = ({
           />
         </div>
       ) : (
-        <div ref={rowRef} className="group/collection" onContextMenu={handleContextMenu}>
+        <div
+          ref={rowRef}
+          className="group/collection"
+          onContextMenu={handleContextMenu}
+          data-test-id={`collection-row-${summary.id}`}
+        >
           <div
             className={cn(
               'w-full flex items-center justify-between gap-3 px-2 py-1 transition-colors',
@@ -255,7 +262,14 @@ export const CollectionItem = ({
 
               {/* Three-dot menu button — hover-revealed */}
               <div
-                className="flex items-center invisible pointer-events-none group-hover/collection:visible group-hover/collection:pointer-events-auto group-focus-within/collection:visible group-focus-within/collection:pointer-events-auto motion-safe:transition-[visibility,opacity] motion-safe:duration-150"
+                ref={actionsRef}
+                className={cn(
+                  'flex items-center',
+                  menuOpen || actionsKeyboardFocused
+                    ? 'visible pointer-events-auto'
+                    : 'invisible pointer-events-none group-hover/collection:visible group-hover/collection:pointer-events-auto group-focus-within/collection:visible group-focus-within/collection:pointer-events-auto',
+                  'motion-safe:transition-[visibility,opacity] motion-safe:duration-150'
+                )}
                 data-test-id={`collection-actions-${summary.id}`}
               >
                 <Menu.Root open={menuOpen} onOpenChange={setMenuOpen}>
@@ -288,13 +302,14 @@ export const CollectionItem = ({
                         <Menu.Positioner sideOffset={4} align="start">
                           <Menu.Popup
                             style={{ zIndex: OVERLAY_Z_INDEX }}
-                            className="min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-lg overflow-hidden py-1 animate-in fade-in-0 zoom-in-95"
+                            className="min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-lg overflow-hidden py-1 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none"
                             data-test-id={`collection-context-menu-${summary.id}`}
                           >
                             <Menu.Item
                               label="Add Request"
                               className={cn(
-                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
                                 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
                               )}
                               onClick={handleMenuAddRequest}
@@ -308,7 +323,8 @@ export const CollectionItem = ({
                             <Menu.Item
                               label="Rename"
                               className={cn(
-                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
                                 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
                               )}
                               onClick={handleMenuRename}
@@ -322,7 +338,8 @@ export const CollectionItem = ({
                             <Menu.Item
                               label="Duplicate"
                               className={cn(
-                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
                                 'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
                               )}
                               onClick={handleMenuDuplicate}
@@ -336,7 +353,8 @@ export const CollectionItem = ({
                             <Menu.Item
                               label="Delete"
                               className={cn(
-                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer outline-none transition-colors',
+                                focusRingClasses,
+                                'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
                                 'text-signal-error hover:bg-signal-error/10 focus-visible:bg-signal-error/10'
                               )}
                               onClick={handleMenuDelete}

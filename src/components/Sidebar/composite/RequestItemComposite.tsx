@@ -25,6 +25,10 @@ export interface RequestItemCompositeProps {
   request: CollectionRequest;
   collectionId: string;
   className?: string;
+  /** When true, the item mounts directly in rename mode. */
+  startInRenameMode?: boolean;
+  /** Called once the rename-mode triggered by startInRenameMode has been consumed. */
+  onRenameStarted?: () => void;
   onDelete?: (collectionId: string, requestId: string) => void;
   onRename?: (collectionId: string, requestId: string, newName: string) => void;
   onDuplicate?: (collectionId: string, requestId: string) => void;
@@ -34,7 +38,7 @@ const menuItemClasses =
   'flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm cursor-pointer outline-none data-[highlighted]:bg-bg-raised/60 text-text-primary';
 
 const menuPopupClasses =
-  'min-w-[160px] rounded-md border border-border-default bg-bg-elevated p-1 shadow-lg outline-none';
+  'min-w-[160px] rounded-md border border-border-default bg-bg-elevated p-1 shadow-lg outline-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none';
 
 /**
  * A sidebar item for API requests with a three-dot context menu for actions.
@@ -43,6 +47,8 @@ export const RequestItemComposite = ({
   request,
   collectionId,
   className,
+  startInRenameMode,
+  onRenameStarted,
   onDelete,
   onRename,
   onDuplicate,
@@ -62,6 +68,21 @@ export const RequestItemComposite = ({
   const rowRef = useRef<HTMLDivElement>(null);
   const didCancelRef = useRef(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-enter rename mode when startInRenameMode is set
+  useEffect(() => {
+    if (startInRenameMode === true && !isRenaming) {
+      setRenameValue(request.name);
+      setIsRenaming(true);
+      onRenameStarted?.();
+      requestAnimationFrame(() => {
+        if (renameInputRef.current !== null) {
+          focusWithVisibility(renameInputRef.current);
+          renameInputRef.current.select();
+        }
+      });
+    }
+  }, [startInRenameMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset cancel flag when entering rename mode
   useEffect(() => {
@@ -234,6 +255,7 @@ export const RequestItemComposite = ({
         ref={rowRef}
         className={cn('relative w-full px-1 group/request', className)}
         onContextMenu={handleContextMenu}
+        data-test-id={`request-row-${request.id}`}
       >
         <div
           className={cn(
@@ -301,19 +323,20 @@ export const RequestItemComposite = ({
                 <Menu.Trigger
                   ref={triggerRef}
                   nativeButton={false}
-                  render={
+                  render={(props) => (
                     <Button
+                      {...props}
                       variant="ghost"
                       size="icon-xs"
                       noScale
                       className="size-5 text-text-muted hover:text-text-primary"
                       data-test-id={`request-menu-trigger-${request.id}`}
                       aria-label={`Actions for ${request.name}`}
-                    />
-                  }
-                >
-                  <MoreHorizontal size={12} />
-                </Menu.Trigger>
+                    >
+                      <MoreHorizontal size={12} />
+                    </Button>
+                  )}
+                />
                 <Menu.Portal>
                   <Menu.Positioner
                     side={contextMenuAnchor !== null ? 'bottom' : 'right'}
@@ -331,7 +354,7 @@ export const RequestItemComposite = ({
                       }
                     >
                       <Menu.Item
-                        className={menuItemClasses}
+                        className={cn(focusRingClasses, menuItemClasses)}
                         onClick={handleMenuRename}
                         data-test-id={`request-menu-rename-${request.id}`}
                       >
@@ -339,7 +362,7 @@ export const RequestItemComposite = ({
                         Rename
                       </Menu.Item>
                       <Menu.Item
-                        className={menuItemClasses}
+                        className={cn(focusRingClasses, menuItemClasses)}
                         onClick={handleMenuDuplicate}
                         data-test-id={`request-menu-duplicate-${request.id}`}
                       >
@@ -347,7 +370,7 @@ export const RequestItemComposite = ({
                         Duplicate
                       </Menu.Item>
                       <Menu.Item
-                        className={cn(menuItemClasses, 'text-signal-error')}
+                        className={cn(focusRingClasses, menuItemClasses, 'text-signal-error')}
                         onClick={handleMenuDelete}
                         data-test-id={`request-menu-delete-${request.id}`}
                       >

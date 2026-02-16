@@ -497,6 +497,35 @@ describe('useCollectionStore', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    it('sorts summaries alphabetically after creating', async () => {
+      useCollectionStore.setState({
+        summaries: [
+          {
+            id: 'col-z',
+            name: 'Zebra Collection',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const collection = {
+        ...buildCollection('col-a'),
+        metadata: { ...buildCollection('col-a').metadata, name: 'Alpha Collection' },
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.createCollection('Alpha Collection');
+      });
+
+      expect(result.current.summaries[0]?.name).toBe('Alpha Collection');
+      expect(result.current.summaries[1]?.name).toBe('Zebra Collection');
+    });
+
     it('clears pendingRenameId with clearPendingRename', async () => {
       const collection = buildCollection('col_pending');
       (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
@@ -623,6 +652,36 @@ describe('useCollectionStore', () => {
       });
 
       expect(result.current.error).toContain('add failed');
+    });
+
+    it('handles empty requests array without crashing', async () => {
+      const collection = buildCollection('col-1');
+      useCollectionStore.setState({
+        collections: [collection],
+        summaries: [
+          {
+            id: 'col-1',
+            name: 'Collection col-1',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      // Return a collection with empty requests (edge case)
+      const updated = { ...collection, requests: [] };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(updated);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.addRequest('col-1', 'New Request');
+      });
+
+      // Should not crash and pendingRequestRenameId should be null
+      expect(result.current.pendingRequestRenameId).toBeNull();
+      expect(result.current.isLoading).toBe(false);
     });
   });
 

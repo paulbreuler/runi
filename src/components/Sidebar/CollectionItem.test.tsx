@@ -146,10 +146,8 @@ describe('CollectionItem', (): void => {
     it('opens context menu on right-click', async (): Promise<void> => {
       render(<CollectionItem summary={simpleSummary} />);
 
-      const row = screen.getByTestId('collection-item-col_1');
-      const groupDiv = row.closest('.group\\/collection');
-      expect(groupDiv).not.toBeNull();
-      fireEvent.contextMenu(groupDiv!);
+      const groupDiv = screen.getByTestId('collection-row-col_1');
+      fireEvent.contextMenu(groupDiv);
 
       await waitFor(
         () => {

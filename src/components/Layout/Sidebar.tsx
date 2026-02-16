@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Folder, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
 import { SidebarScrollArea } from '@/components/Sidebar/SidebarScrollArea';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/Toast';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { containedFocusRingClasses } from '@/utils/accessibility';
@@ -85,13 +86,33 @@ const DrawerSection = ({
   );
 };
 
+/** Generate a unique collection name based on existing summaries. */
+const generateUniqueName = (baseName: string, existingNames: string[]): string => {
+  if (!existingNames.includes(baseName)) {
+    return baseName;
+  }
+  let counter = 2;
+  while (existingNames.includes(`${baseName} (${String(counter)})`)) {
+    counter++;
+  }
+  return `${baseName} (${String(counter)})`;
+};
+
 export const Sidebar = (): React.JSX.Element => {
   const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
   const createCollection = useCollectionStore((state) => state.createCollection);
+  const summaries = useCollectionStore((state) => state.summaries);
 
-  const handleCreate = (): void => {
-    void createCollection('Untitled Collection');
-  };
+  const handleCreate = useCallback(async (): Promise<void> => {
+    const name = generateUniqueName(
+      'Untitled Collection',
+      summaries.map((s) => s.name)
+    );
+    const result = await createCollection(name);
+    if (result === null) {
+      toast.error({ message: 'Failed to create collection' });
+    }
+  }, [createCollection, summaries]);
 
   const createButton = collectionsEnabled ? (
     <Button
