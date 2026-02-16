@@ -8,6 +8,8 @@ import { json } from '@codemirror/lang-json';
 import { yaml } from '@codemirror/lang-yaml';
 import { xml } from '@codemirror/lang-xml';
 import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { go } from '@codemirror/lang-go';
 import { bracketMatching } from '@codemirror/language';
 import { closeBrackets } from '@codemirror/autocomplete';
 
@@ -16,6 +18,9 @@ const aliasMap: Record<string, string> = {
   js: 'javascript',
   ts: 'typescript',
   yml: 'yaml',
+  py: 'python',
+  golang: 'go',
+  sh: 'bash',
 };
 
 /**
@@ -39,6 +44,17 @@ export const getLanguageExtension = (language: string): Extension[] | null => {
       return [javascript()];
     case 'typescript':
       return [javascript({ typescript: true })];
+    case 'python':
+      return [python()];
+    case 'go':
+      return [go()];
+    case 'ruby':
+    case 'bash':
+    case 'shell':
+    case 'curl':
+      // No dedicated CM6 language package; falls through to plain-text.
+      // Syntax highlighting still applies to generic tokens via runiHighlightStyle.
+      return null;
     case 'html':
     case 'http':
     case 'text':

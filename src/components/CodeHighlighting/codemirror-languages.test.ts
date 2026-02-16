@@ -34,6 +34,30 @@ describe('getLanguageExtension', () => {
     expect(result).not.toBeNull();
   });
 
+  it('returns an extension array for python', () => {
+    const result = getLanguageExtension('python');
+    expect(result).not.toBeNull();
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it('returns an extension array for go', () => {
+    const result = getLanguageExtension('go');
+    expect(result).not.toBeNull();
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it('returns null for ruby (no dedicated CM6 package)', () => {
+    expect(getLanguageExtension('ruby')).toBeNull();
+  });
+
+  it('returns null for bash (no dedicated CM6 package)', () => {
+    expect(getLanguageExtension('bash')).toBeNull();
+  });
+
+  it('returns null for curl (no dedicated CM6 package)', () => {
+    expect(getLanguageExtension('curl')).toBeNull();
+  });
+
   it('returns null for html (no lang-html package)', () => {
     expect(getLanguageExtension('html')).toBeNull();
   });
@@ -72,6 +96,25 @@ describe('getLanguageExtension', () => {
       const yaml = getLanguageExtension('yaml');
       expect(yml).not.toBeNull();
       expect(yaml).not.toBeNull();
+    });
+
+    it('maps py to python', () => {
+      const py = getLanguageExtension('py');
+      const python = getLanguageExtension('python');
+      expect(py).not.toBeNull();
+      expect(python).not.toBeNull();
+    });
+
+    it('maps golang to go', () => {
+      const golang = getLanguageExtension('golang');
+      const go = getLanguageExtension('go');
+      expect(golang).not.toBeNull();
+      expect(go).not.toBeNull();
+    });
+
+    it('maps sh to bash', () => {
+      expect(getLanguageExtension('sh')).toBeNull();
+      expect(getLanguageExtension('bash')).toBeNull();
     });
   });
 
