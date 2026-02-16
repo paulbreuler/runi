@@ -460,7 +460,7 @@ describe('MainLayout', () => {
       const resizer = screen.getByTestId('sidebar-resizer');
 
       // Should have hover class for background hint
-      expect(resizer).toHaveClass('hover:bg-border-subtle/50');
+      expect(resizer).toHaveClass('hover:bg-accent-blue');
     });
 
     // Pane resizer tests removed - functionality moved to CanvasHost
