@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { Play, Code, BookOpen, Save, Clock, Globe, CircleDot } from 'lucide-react';
+import { Code, BookOpen, Save, Clock, CircleDot } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
 interface ActionButtonsProps {
-  /** Handler for Test button click */
-  onTest: () => void;
   /** Handler for Code button click */
   onCode: () => void;
   /** Handler for Docs button click */
@@ -18,18 +16,12 @@ interface ActionButtonsProps {
   onSave: () => void;
   /** Handler for History button click */
   onHistory: () => void;
-  /** Handler for Environment button click */
-  onEnv: () => void;
-  /** Whether a response is available (enables Test button) */
-  hasResponse?: boolean;
   /** Whether a URL is provided (enables Code button) */
   hasUrl?: boolean;
   /** Whether the current tab has unsaved changes */
   isDirty?: boolean;
   /** Number of history entries to show as badge */
   historyCount?: number;
-  /** Current environment name */
-  envName?: string;
 }
 
 /**
@@ -50,17 +42,13 @@ interface ActionButtonsProps {
  * - Keyboard accessible with focus rings
  */
 export const ActionButtons = ({
-  onTest,
   onCode,
   onDocs,
   onSave,
   onHistory,
-  onEnv,
-  hasResponse = false,
   hasUrl = false,
   isDirty = false,
   historyCount = 0,
-  envName,
 }: ActionButtonsProps): React.JSX.Element => {
   const iconSize = 15;
   const buttonClasses = cn(
@@ -75,20 +63,8 @@ export const ActionButtons = ({
 
   return (
     <div className="flex items-center gap-3" data-test-id="action-buttons">
-      {/* Request actions: Play, Code, Docs */}
+      {/* Request actions: Code, Docs */}
       <div className="flex items-center gap-1" role="group" aria-label="Request actions">
-        <button
-          type="button"
-          onClick={onTest}
-          disabled={!hasResponse}
-          className={buttonClasses}
-          aria-label="Run tests for this request"
-          data-test-id="action-test"
-          title="Run tests"
-        >
-          <Play size={iconSize} />
-        </button>
-
         <button
           type="button"
           onClick={onCode}
@@ -113,7 +89,7 @@ export const ActionButtons = ({
         </button>
       </div>
 
-      {/* State actions: Save, History, Env */}
+      {/* State actions: Save, History */}
       <div className="flex items-center gap-1" role="group" aria-label="State actions">
         <button
           type="button"
@@ -151,24 +127,6 @@ export const ActionButtons = ({
             >
               {historyCount}
             </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={onEnv}
-          className={cn(
-            buttonClasses,
-            'gap-1.5',
-            envName !== undefined && envName.length > 0 && 'w-auto px-2'
-          )}
-          aria-label="Select environment"
-          data-test-id="action-env"
-          title="Environment"
-        >
-          <Globe size={iconSize} />
-          {envName !== undefined && envName.length > 0 && (
-            <span className="text-xs font-medium whitespace-nowrap">{envName}</span>
           )}
         </button>
       </div>
