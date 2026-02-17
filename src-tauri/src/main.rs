@@ -10,16 +10,20 @@ mod application;
 mod domain;
 mod infrastructure;
 
+use sysinfo::System;
+use tauri::Manager;
+
 use infrastructure::commands::{
-    clear_request_history, cmd_add_httpbin_collection, cmd_add_request, cmd_create_collection,
-    cmd_delete_collection, cmd_delete_request, cmd_duplicate_collection, cmd_duplicate_request,
-    cmd_import_collection, cmd_list_collections, cmd_load_collection, cmd_log_frontend_error,
+    clear_request_history, cmd_add_httpbin_collection, cmd_add_request,
+    cmd_copy_request_to_collection, cmd_create_collection, cmd_delete_collection,
+    cmd_delete_request, cmd_duplicate_collection, cmd_duplicate_request, cmd_import_collection,
+    cmd_list_collections, cmd_load_collection, cmd_log_frontend_error, cmd_move_request,
     cmd_refresh_collection_spec, cmd_rename_collection, cmd_rename_request, cmd_run_hurl_suite,
-    cmd_save_collection, cmd_write_frontend_error_report, create_proxy_service,
-    delete_history_entry, get_config_dir, get_history_batch, get_history_count, get_history_ids,
-    get_platform, get_process_startup_time, get_system_specs, hello_world, load_feature_flags,
-    load_request_history, save_request_history, set_log_level, sync_canvas_state,
-    write_startup_timing,
+    cmd_save_collection, cmd_save_tab_to_collection, cmd_update_request,
+    cmd_write_frontend_error_report, create_proxy_service, delete_history_entry, get_config_dir,
+    get_history_batch, get_history_count, get_history_ids, get_platform, get_process_startup_time,
+    get_system_specs, hello_world, load_feature_flags, load_request_history, save_request_history,
+    set_log_level, sync_canvas_state, write_startup_timing,
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
@@ -33,8 +37,6 @@ use infrastructure::mcp::server::sse_broadcaster::SseBroadcaster;
 use infrastructure::memory_monitor::{
     collect_ram_sample, get_ram_stats, set_memory_monitoring_enabled, start_memory_monitor,
 };
-use sysinfo::System;
-use tauri::Manager;
 
 /// Initialize and run the Tauri application.
 ///
@@ -136,9 +138,13 @@ pub fn run() {
             cmd_delete_request,
             cmd_rename_collection,
             cmd_rename_request,
+            cmd_update_request,
             cmd_duplicate_collection,
             cmd_duplicate_request,
             cmd_add_request,
+            cmd_save_tab_to_collection,
+            cmd_move_request,
+            cmd_copy_request_to_collection,
             cmd_add_httpbin_collection,
             cmd_import_collection,
             cmd_refresh_collection_spec,

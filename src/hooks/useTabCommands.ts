@@ -14,6 +14,7 @@
 import { useEffect } from 'react';
 import { globalCommandRegistry } from '@/commands/registry';
 import { useTabStore } from '@/stores/useTabStore';
+import { globalEventBus } from '@/events/bus';
 
 /**
  * Registers tab commands into the global command registry.
@@ -27,6 +28,15 @@ export function useTabCommands(): void {
       category: 'tabs',
       handler: () => {
         useTabStore.getState().openTab();
+      },
+    });
+
+    globalCommandRegistry.register({
+      id: 'tab.save',
+      title: 'Save to Collection',
+      category: 'tabs',
+      handler: () => {
+        globalEventBus.emit('tab.save-requested', {});
       },
     });
 
@@ -80,6 +90,7 @@ export function useTabCommands(): void {
 
     return (): void => {
       globalCommandRegistry.unregister('tab.new');
+      globalCommandRegistry.unregister('tab.save');
       globalCommandRegistry.unregister('tab.close');
       globalCommandRegistry.unregister('tab.next');
       globalCommandRegistry.unregister('tab.previous');

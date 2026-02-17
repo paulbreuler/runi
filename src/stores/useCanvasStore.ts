@@ -16,7 +16,7 @@ import type {
 } from '@/types/canvas';
 import { GENERIC_LAYOUTS } from '@/components/Layout/layouts';
 import { Send } from 'lucide-react';
-import { globalEventBus, logEventFlow } from '@/events/bus';
+import { globalEventBus, logEventFlow, type RequestSavedToCollectionPayload } from '@/events/bus';
 import {
   useRequestStoreRaw,
   DEFAULT_REQUEST_STATE,
@@ -702,5 +702,28 @@ if (typeof globalEventBus.on === 'function') {
 
   globalEventBus.on('request.open', () => {
     useCanvasStore.getState().openRequestTab();
+  });
+
+  globalEventBus.on<RequestSavedToCollectionPayload>('request.saved-to-collection', (event) => {
+    const { collection_id, request_id, name } = event.payload;
+    const store = useCanvasStore.getState();
+    const activeId = store.activeContextId;
+
+    if (activeId !== null) {
+      const tabState = store.getContextState(activeId) as RequestTabState;
+      // If the active tab was just saved (it's the only one that could be ephemeral and just saved)
+      if (tabState.source?.type !== 'collection') {
+        store.updateContextState(activeId, {
+          source: {
+            type: 'collection',
+            collectionId: collection_id,
+            requestId: request_id,
+          },
+          isDirty: false,
+          isSaved: true,
+        });
+        store.updateTabName(activeId, name);
+      }
+    }
   });
 }

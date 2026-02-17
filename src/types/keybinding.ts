@@ -27,6 +27,7 @@ import type { ModifierKey } from '@/utils/keyboard';
 export type CommandId =
   | 'tab.new'
   | 'tab.close'
+  | 'tab.save'
   | 'tab.next'
   | 'tab.previous'
   | 'sidebar.toggle'

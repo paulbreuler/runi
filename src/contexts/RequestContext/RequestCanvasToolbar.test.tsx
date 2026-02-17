@@ -133,7 +133,7 @@ describe('RequestCanvasToolbar', () => {
   });
 
   describe('Action Handlers - handleSave', () => {
-    it('shows toast when Save is clicked', async (): Promise<void> => {
+    it('emits tab.save-requested when Save is clicked', async (): Promise<void> => {
       const user = userEvent.setup();
 
       render(<RequestCanvasToolbar contextId="request" />);
@@ -142,13 +142,7 @@ describe('RequestCanvasToolbar', () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(emitSpy).toHaveBeenCalledWith(
-          'toast.show',
-          expect.objectContaining({
-            type: 'info',
-            message: 'Save to collection coming soon',
-          })
-        );
+        expect(emitSpy).toHaveBeenCalledWith('tab.save-requested', {});
       });
     });
   });

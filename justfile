@@ -26,7 +26,7 @@ install:
 
 # Start development server
 dev:
-    TAURI_CLI_WATCHER_IGNORE_FILENAME=.gitignore npm run tauri dev
+    TAURI_CLI_WATCHER_IGNORE_FILENAME=.gitignore pnpm tauri dev
 
 # ============================================================================
 # 🛠️ Development

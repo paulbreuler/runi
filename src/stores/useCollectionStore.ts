@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import type { Collection, CollectionRequest, CollectionSummary } from '@/types/collection';
 import { sortRequests } from '@/types/collection';
 import type { ImportCollectionRequest } from '@/types/generated/ImportCollectionRequest';
+import { globalEventBus } from '@/events/bus';
 
 interface CollectionState {
   collections: Collection[];
@@ -34,7 +35,38 @@ interface CollectionState {
   renameRequest: (collectionId: string, requestId: string, newName: string) => Promise<void>;
   duplicateCollection: (id: string) => Promise<void>;
   addRequest: (collectionId: string, name: string) => Promise<void>;
+  updateRequest: (
+    collectionId: string,
+    requestId: string,
+    patch: {
+      name?: string;
+      method?: string;
+      url?: string;
+      headers?: Record<string, string>;
+      body?: string;
+    }
+  ) => Promise<void>;
   duplicateRequest: (collectionId: string, requestId: string) => Promise<void>;
+  saveTabToCollection: (
+    collectionId: string,
+    request: {
+      name: string;
+      method: string;
+      url: string;
+      headers: Record<string, string>;
+      body?: string;
+    }
+  ) => Promise<{ collectionId: string; requestId: string } | null>;
+  moveRequest: (
+    sourceCollectionId: string,
+    requestId: string,
+    targetCollectionId: string
+  ) => Promise<boolean>;
+  copyRequestToCollection: (
+    sourceCollectionId: string,
+    requestId: string,
+    targetCollectionId: string
+  ) => Promise<boolean>;
   selectCollection: (id: string | null) => void;
   selectRequest: (collectionId: string, requestId: string) => void;
   toggleExpanded: (id: string) => void;
@@ -366,6 +398,31 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     }
   },
 
+  updateRequest: async (collectionId, requestId, patch): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const updated = normalizeCollection(
+        await invoke<Collection>('cmd_update_request', {
+          collection_id: collectionId,
+          request_id: requestId,
+          name: patch.name ?? null,
+          method: patch.method ?? null,
+          url: patch.url ?? null,
+          headers: patch.headers ?? null,
+          body: patch.body ?? null,
+          body_type: null, // Let backend infer or keep existing
+        })
+      );
+
+      set((state) => ({
+        collections: state.collections.map((c) => (c.id === collectionId ? updated : c)),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
   duplicateRequest: async (collectionId: string, requestId: string): Promise<void> => {
     set({ isLoading: true, error: null });
     try {
@@ -389,6 +446,163 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }));
     } catch (error) {
       set({ error: String(error), isLoading: false });
+    }
+  },
+
+  saveTabToCollection: async (
+    collectionId: string,
+    request: {
+      name: string;
+      method: string;
+      url: string;
+      headers: Record<string, string>;
+      body?: string;
+    }
+  ): Promise<{ collectionId: string; requestId: string } | null> => {
+    set({ isLoading: true, error: null });
+    try {
+      const collection = normalizeCollection(
+        await invoke<Collection>('cmd_save_tab_to_collection', {
+          collectionId,
+          name: request.name,
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          body: request.body ?? null,
+        })
+      );
+
+      // Find the newly added request (last one by seq)
+      const newRequest =
+        collection.requests.length > 0
+          ? collection.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest))
+          : undefined;
+
+      set((state) => ({
+        collections: state.collections.map((c) => (c.id === collectionId ? collection : c)),
+        summaries: state.summaries.map((s) =>
+          s.id === collectionId ? { ...s, request_count: collection.requests.length } : s
+        ),
+        expandedCollectionIds: new Set([...state.expandedCollectionIds, collectionId]),
+        isLoading: false,
+      }));
+
+      if (newRequest !== undefined) {
+        const result = { collectionId, requestId: newRequest.id };
+        globalEventBus.emit('request.saved-to-collection', {
+          collection_id: result.collectionId,
+          request_id: result.requestId,
+          name: request.name,
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          body: request.body ?? '',
+        });
+        return result;
+      }
+
+      return null;
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+      return null;
+    }
+  },
+
+  moveRequest: async (
+    sourceCollectionId: string,
+    requestId: string,
+    targetCollectionId: string
+  ): Promise<boolean> => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await invoke<{ from: Collection; to: Collection }>('cmd_move_request', {
+        source_collection_id: sourceCollectionId,
+        request_id: requestId,
+        target_collection_id: targetCollectionId,
+      });
+
+      const from = normalizeCollection(result.from);
+      const to = normalizeCollection(result.to);
+
+      set((state) => ({
+        collections: state.collections.map((c) => {
+          if (c.id === sourceCollectionId) {
+            return from;
+          }
+          if (c.id === targetCollectionId) {
+            return to;
+          }
+          return c;
+        }),
+        summaries: state.summaries.map((s) => {
+          if (s.id === sourceCollectionId) {
+            return { ...s, request_count: from.requests.length };
+          }
+          if (s.id === targetCollectionId) {
+            return { ...s, request_count: to.requests.length };
+          }
+          return s;
+        }),
+        isLoading: false,
+      }));
+
+      globalEventBus.emit('request.moved', {
+        request_id: requestId,
+        source_collection_id: sourceCollectionId,
+        target_collection_id: targetCollectionId,
+      });
+
+      return true;
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+      return false;
+    }
+  },
+
+  copyRequestToCollection: async (
+    sourceCollectionId: string,
+    requestId: string,
+    targetCollectionId: string
+  ): Promise<boolean> => {
+    set({ isLoading: true, error: null });
+    try {
+      const targetCollection = normalizeCollection(
+        await invoke<Collection>('cmd_copy_request_to_collection', {
+          source_collection_id: sourceCollectionId,
+          request_id: requestId,
+          target_collection_id: targetCollectionId,
+        })
+      );
+
+      // Find the newly copied request (last one by seq)
+      const copiedRequest =
+        targetCollection.requests.length > 0
+          ? targetCollection.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest))
+          : undefined;
+
+      set((state) => ({
+        collections: state.collections.map((c) =>
+          c.id === targetCollectionId ? targetCollection : c
+        ),
+        summaries: state.summaries.map((s) =>
+          s.id === targetCollectionId
+            ? { ...s, request_count: targetCollection.requests.length }
+            : s
+        ),
+        isLoading: false,
+      }));
+
+      globalEventBus.emit('request.copied', {
+        source_request_id: requestId,
+        copied_request_id: copiedRequest?.id ?? '',
+        request_id: copiedRequest?.id ?? '',
+        target_collection_id: targetCollectionId,
+      });
+
+      return true;
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+      return false;
     }
   },
 
