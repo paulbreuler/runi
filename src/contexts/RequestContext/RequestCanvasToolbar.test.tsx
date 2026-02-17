@@ -79,17 +79,10 @@ describe('RequestCanvasToolbar', () => {
     it('renders ActionButtons component', () => {
       render(<RequestCanvasToolbar contextId="request" />);
       // ActionButtons should render its buttons
-      expect(screen.getByTestId('action-test')).toBeInTheDocument();
       expect(screen.getByTestId('action-code')).toBeInTheDocument();
+      expect(screen.getByTestId('action-docs')).toBeInTheDocument();
       expect(screen.getByTestId('action-save')).toBeInTheDocument();
-    });
-
-    it('disables Test action when response is null', () => {
-      useRequestStoreRaw.getState().initContext('request', { response: null });
-      render(<RequestCanvasToolbar contextId="request" />);
-
-      const testButton = screen.getByTestId('action-test');
-      expect(testButton).toBeDisabled();
+      expect(screen.getByTestId('action-history')).toBeInTheDocument();
     });
 
     it('enables Code action when URL is provided', () => {
@@ -106,37 +99,6 @@ describe('RequestCanvasToolbar', () => {
 
       const codeButton = screen.getByTestId('action-code');
       expect(codeButton).not.toBeDisabled();
-    });
-  });
-
-  describe('Action Handlers - handleTest', () => {
-    it('calls handleSend when Test is clicked', async () => {
-      const user = userEvent.setup();
-
-      vi.mocked(useRequestActions).mockReturnValue({
-        handleSend: mockHandleSend,
-        handleMethodChange: vi.fn(),
-        handleUrlChange: vi.fn(),
-        localUrl: 'https://api.example.com',
-        localMethod: 'GET',
-        isLoading: false,
-      } as any as ReturnType<typeof useRequestActions>);
-
-      // We also need to mock useRequestStore to return a non-null response
-      // because ActionButtons uses hasResponse={response !== null}
-      vi.mocked(useRequestStore).mockReturnValue({
-        response: { status: 200 } as any,
-      } as any as ReturnType<typeof useRequestStore>);
-
-      render(<RequestCanvasToolbar contextId="request" />);
-
-      const testButton = screen.getByTestId('action-test');
-      // Verify button is enabled
-      expect(testButton).not.toBeDisabled();
-
-      await user.click(testButton);
-
-      expect(mockHandleSend).toHaveBeenCalled();
     });
   });
 
@@ -220,17 +182,6 @@ describe('RequestCanvasToolbar', () => {
       // Verify toolbar renders with store state
       expect(screen.getByTestId('request-canvas-toolbar')).toBeInTheDocument();
     });
-
-    it('handles missing response gracefully', () => {
-      useRequestStoreRaw.getState().initContext('request', {
-        response: null,
-      });
-
-      render(<RequestCanvasToolbar contextId="request" />);
-
-      const testButton = screen.getByTestId('action-test');
-      expect(testButton).toBeDisabled();
-    });
   });
 
   describe('URL Bar Integration', () => {
@@ -248,7 +199,7 @@ describe('RequestCanvasToolbar', () => {
       const children = Array.from(toolbar.children);
 
       const urlBar = screen.getByTestId('url-bar');
-      const actionButtons = screen.getByTestId('action-test').closest('[class*="flex"]');
+      const actionButtons = screen.getByTestId('action-code').closest('[class*="flex"]');
 
       const urlBarIndex = children.findIndex((child) => child.contains(urlBar));
       const actionButtonsIndex = children.findIndex((child) =>

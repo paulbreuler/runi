@@ -97,7 +97,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
     if (!isLabelVisible) {
       urlInput = page.getByPlaceholder(/url/i).first();
     }
-    const sendButton = page.getByRole('button', { name: /send/i }).first();
+    const sendButton = page.locator('[data-test-id="send-button"]').first();
 
     // Enter invalid URL
     await urlInput.fill('not-a-valid-url');
@@ -167,7 +167,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
     if (!isLabelVisible) {
       urlInput = page.getByPlaceholder(/url/i).first();
     }
-    const sendButton = page.getByRole('button', { name: /send/i }).first();
+    const sendButton = page.locator('[data-test-id="send-button"]').first();
 
     // Make an error request to generate a log entry
     await urlInput.fill('not-a-valid-url');

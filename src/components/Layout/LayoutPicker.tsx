@@ -1,5 +1,5 @@
 import { type FC, useState } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
 import { GENERIC_LAYOUTS } from './layouts';
@@ -28,23 +28,25 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
 
   const presetLayouts = context.layouts;
   const genericLayouts = GENERIC_LAYOUTS;
+  const activeLayoutLabel = activeLayout?.label ?? 'Layout';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className={cn(
-          'flex items-center gap-2 px-3 h-7',
-          'text-sm text-text-secondary hover:text-text-primary',
-          'bg-bg-surface hover:bg-bg-raised',
-          'border border-border-default rounded',
+          'flex items-center justify-center',
+          'w-[34px] h-[34px] rounded',
+          'text-text-muted hover:text-text-primary',
+          'hover:bg-bg-raised/50',
           'motion-safe:transition-colors motion-reduce:transition-none',
           focusRingClasses,
           className
         )}
         data-test-id="layout-picker-trigger"
+        title={activeLayoutLabel}
+        aria-label={`Layout: ${activeLayoutLabel}`}
       >
-        <span className="text-xs">{activeLayout?.label ?? 'Layout'}</span>
-        <ChevronDown className="w-3 h-3" />
+        {activeLayout !== null && <activeLayout.icon className="w-4 h-4" />}
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-64 p-2" data-test-id="layout-picker-content">
@@ -69,7 +71,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
                       }}
                       className={cn(
                         'w-full flex items-center gap-3 px-2 py-2 rounded',
-                        'text-left text-sm hover:bg-bg-raised transition-colors',
+                        'text-left text-sm hover:bg-bg-raised motion-safe:transition-colors motion-reduce:transition-none',
                         focusRingClasses,
                         isActive && 'bg-bg-raised text-text-primary'
                       )}
@@ -113,7 +115,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
                       }}
                       className={cn(
                         'w-full flex items-center gap-3 px-2 py-2 rounded',
-                        'text-left text-sm hover:bg-bg-raised transition-colors',
+                        'text-left text-sm hover:bg-bg-raised motion-safe:transition-colors motion-reduce:transition-none',
                         focusRingClasses,
                         isActive && 'bg-bg-raised text-text-primary'
                       )}

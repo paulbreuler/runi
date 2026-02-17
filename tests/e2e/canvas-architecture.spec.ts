@@ -44,14 +44,14 @@ test.describe('Canvas Architecture', () => {
     await expect(urlBar).toBeVisible();
 
     // Verify ActionButtons visible
-    const testButton = page.locator('[data-test-id="action-test"]');
-    await expect(testButton).toBeVisible();
-
     const codeButton = page.locator('[data-test-id="action-code"]');
     await expect(codeButton).toBeVisible();
 
     const saveButton = page.locator('[data-test-id="action-save"]');
     await expect(saveButton).toBeVisible();
+
+    const historyButton = page.locator('[data-test-id="action-history"]');
+    await expect(historyButton).toBeVisible();
   });
 
   test.skip('Settings toggle', async ({ page }) => {
@@ -115,10 +115,15 @@ test.describe('Canvas Architecture', () => {
     const layoutPicker = page.locator('[data-test-id="layout-picker-trigger"]');
     await expect(layoutPicker).toBeVisible();
 
-    // Verify it shows some text (the current layout name)
-    const text = await layoutPicker.textContent();
-    expect(text).toBeTruthy();
-    expect(text?.length ?? 0).toBeGreaterThan(0);
+    // Verify it has aria-label (the current layout name in "Layout: {name}" format)
+    const ariaLabel = await layoutPicker.getAttribute('aria-label');
+    expect(ariaLabel).toBeTruthy();
+    expect(ariaLabel).toMatch(/^Layout: /);
+
+    // Verify it has title attribute
+    const title = await layoutPicker.getAttribute('title');
+    expect(title).toBeTruthy();
+    expect(title?.length ?? 0).toBeGreaterThan(0);
   });
 
   test.skip('TitleBar retains draggable areas around tabs', async ({ page }) => {

@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test-storybook": "vitest --config vitest.config.storybook.ts",
+    "test-storybook": "vitest --config vitest.config.storybook.ts --run",
     "test-storybook:visual": "playwright test --config playwright.visual.config.ts",
     "test-storybook:visual:update": "playwright test --config playwright.visual.config.ts --update-snapshots",
     "test:e2e": "playwright test",

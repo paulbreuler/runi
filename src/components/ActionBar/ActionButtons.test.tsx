@@ -10,37 +10,19 @@ import { ActionButtons } from './ActionButtons';
 
 describe('ActionButtons', () => {
   const defaultProps = {
-    onTest: vi.fn(),
     onCode: vi.fn(),
     onDocs: vi.fn(),
     onSave: vi.fn(),
     onHistory: vi.fn(),
-    onEnv: vi.fn(),
   };
 
   it('renders all action buttons with correct icons', () => {
     render(<ActionButtons {...defaultProps} />);
 
-    expect(screen.getByTestId('action-test')).toBeInTheDocument();
     expect(screen.getByTestId('action-code')).toBeInTheDocument();
     expect(screen.getByTestId('action-docs')).toBeInTheDocument();
     expect(screen.getByTestId('action-save')).toBeInTheDocument();
     expect(screen.getByTestId('action-history')).toBeInTheDocument();
-    expect(screen.getByTestId('action-env')).toBeInTheDocument();
-  });
-
-  it('disables Test button when no response is available', () => {
-    render(<ActionButtons {...defaultProps} hasResponse={false} />);
-
-    const testButton = screen.getByTestId('action-test');
-    expect(testButton).toBeDisabled();
-  });
-
-  it('enables Test button when response is available', () => {
-    render(<ActionButtons {...defaultProps} hasResponse={true} />);
-
-    const testButton = screen.getByTestId('action-test');
-    expect(testButton).toBeEnabled();
   });
 
   it('disables Code button when no URL is provided', () => {
@@ -85,23 +67,6 @@ describe('ActionButtons', () => {
     expect(badge).not.toBeInTheDocument();
   });
 
-  it('shows environment name on Env button when provided', () => {
-    render(<ActionButtons {...defaultProps} envName="Production" />);
-
-    const envButton = screen.getByTestId('action-env');
-    expect(envButton).toHaveTextContent('Production');
-  });
-
-  it('calls onTest when Test button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<ActionButtons {...defaultProps} hasResponse={true} />);
-
-    const testButton = screen.getByTestId('action-test');
-    await user.click(testButton);
-
-    expect(defaultProps.onTest).toHaveBeenCalledOnce();
-  });
-
   it('calls onCode when Code button is clicked', async () => {
     const user = userEvent.setup();
     render(<ActionButtons {...defaultProps} hasUrl={true} />);
@@ -142,39 +107,27 @@ describe('ActionButtons', () => {
     expect(defaultProps.onHistory).toHaveBeenCalledOnce();
   });
 
-  it('calls onEnv when Env button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<ActionButtons {...defaultProps} />);
-
-    const envButton = screen.getByTestId('action-env');
-    await user.click(envButton);
-
-    expect(defaultProps.onEnv).toHaveBeenCalledOnce();
-  });
-
   it('all buttons have aria-label attributes', () => {
     render(<ActionButtons {...defaultProps} />);
 
-    expect(screen.getByTestId('action-test')).toHaveAttribute('aria-label');
     expect(screen.getByTestId('action-code')).toHaveAttribute('aria-label');
     expect(screen.getByTestId('action-docs')).toHaveAttribute('aria-label');
     expect(screen.getByTestId('action-save')).toHaveAttribute('aria-label');
     expect(screen.getByTestId('action-history')).toHaveAttribute('aria-label');
-    expect(screen.getByTestId('action-env')).toHaveAttribute('aria-label');
   });
 
   it('applies muted color by default', () => {
     render(<ActionButtons {...defaultProps} />);
 
-    const testButton = screen.getByTestId('action-test');
-    expect(testButton).toHaveClass('text-text-muted');
+    const codeButton = screen.getByTestId('action-code');
+    expect(codeButton).toHaveClass('text-text-muted');
   });
 
   it('applies focus ring classes for keyboard accessibility', () => {
     render(<ActionButtons {...defaultProps} />);
 
-    const testButton = screen.getByTestId('action-test');
+    const codeButton = screen.getByTestId('action-code');
     // Check for focus-visible class (part of focusRingClasses)
-    expect(testButton.className).toContain('focus-visible');
+    expect(codeButton.className).toContain('focus-visible');
   });
 });
