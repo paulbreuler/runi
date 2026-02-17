@@ -4,7 +4,7 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import * as Select from './select';
 
@@ -56,7 +56,7 @@ describe('Select', () => {
 
   it('selects item when clicked', async () => {
     // Base UI Positioner uses pointer-events:none in jsdom; skip that check
-    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     const onValueChange = vi.fn();
     render(
       <Select.Select onValueChange={onValueChange}>

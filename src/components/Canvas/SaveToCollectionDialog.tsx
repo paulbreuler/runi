@@ -20,6 +20,8 @@ import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
+const COLLECTION_PLACEHOLDER = 'Select a collection';
+
 interface SaveToCollectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -124,10 +126,10 @@ export const SaveToCollectionDialog = ({
                     role="button"
                     aria-haspopup="listbox"
                   >
-                    <SelectValue placeholder="Select a collection">
+                    <SelectValue placeholder={COLLECTION_PLACEHOLDER}>
                       {(value: string | null) => {
                         if (value === null || value === '') {
-                          return 'Select a collection';
+                          return COLLECTION_PLACEHOLDER;
                         }
                         const match = summaries.find((s) => s.id === value);
                         return match !== undefined
