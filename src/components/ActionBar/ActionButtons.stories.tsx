@@ -24,17 +24,13 @@ const meta = {
   },
   tags: ['autodocs'],
   argTypes: {
-    onTest: { action: 'test clicked' },
     onCode: { action: 'code clicked' },
     onDocs: { action: 'docs clicked' },
     onSave: { action: 'save clicked' },
     onHistory: { action: 'history clicked' },
-    onEnv: { action: 'env clicked' },
-    hasResponse: { control: 'boolean' },
     hasUrl: { control: 'boolean' },
     isDirty: { control: 'boolean' },
     historyCount: { control: 'number' },
-    envName: { control: 'text' },
   },
 } satisfies Meta<typeof ActionButtons>;
 
@@ -46,32 +42,25 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {
   args: {
-    onTest: noop,
     onCode: noop,
     onDocs: noop,
     onSave: noop,
     onHistory: noop,
-    onEnv: noop,
-    hasResponse: true,
     hasUrl: true,
     isDirty: false,
     historyCount: 0,
-    envName: undefined,
   },
 };
 
 /**
- * Disabled state when no response or URL is available.
+ * Disabled state when no URL is available.
  */
 export const Disabled: Story = {
   args: {
-    onTest: noop,
     onCode: noop,
     onDocs: noop,
     onSave: noop,
     onHistory: noop,
-    onEnv: noop,
-    hasResponse: false,
     hasUrl: false,
     isDirty: false,
     historyCount: 0,
@@ -83,13 +72,10 @@ export const Disabled: Story = {
  */
 export const WithDirtyIndicator: Story = {
   args: {
-    onTest: noop,
     onCode: noop,
     onDocs: noop,
     onSave: noop,
     onHistory: noop,
-    onEnv: noop,
-    hasResponse: true,
     hasUrl: true,
     isDirty: true,
     historyCount: 0,
@@ -101,35 +87,13 @@ export const WithDirtyIndicator: Story = {
  */
 export const WithHistoryCount: Story = {
   args: {
-    onTest: noop,
     onCode: noop,
     onDocs: noop,
     onSave: noop,
     onHistory: noop,
-    onEnv: noop,
-    hasResponse: true,
     hasUrl: true,
     isDirty: false,
     historyCount: 5,
-  },
-};
-
-/**
- * With environment name displayed.
- */
-export const WithEnvironment: Story = {
-  args: {
-    onTest: noop,
-    onCode: noop,
-    onDocs: noop,
-    onSave: noop,
-    onHistory: noop,
-    onEnv: noop,
-    hasResponse: true,
-    hasUrl: true,
-    isDirty: false,
-    historyCount: 0,
-    envName: 'Production',
   },
 };
 
@@ -138,17 +102,13 @@ export const WithEnvironment: Story = {
  */
 export const AllIndicators: Story = {
   args: {
-    onTest: noop,
     onCode: noop,
     onDocs: noop,
     onSave: noop,
     onHistory: noop,
-    onEnv: noop,
-    hasResponse: true,
     hasUrl: true,
     isDirty: true,
     historyCount: 12,
-    envName: 'Staging',
   },
 };
 
@@ -157,43 +117,33 @@ export const AllIndicators: Story = {
  */
 export const Playground: Story = {
   args: {
-    onTest: noop,
     onCode: noop,
     onDocs: noop,
     onSave: noop,
     onHistory: noop,
-    onEnv: noop,
-    hasResponse: true,
     hasUrl: true,
     isDirty: false,
     historyCount: 0,
-    envName: 'Development',
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     // Verify all buttons are present
-    const testButton = canvas.getByTestId('action-test');
     const codeButton = canvas.getByTestId('action-code');
     const docsButton = canvas.getByTestId('action-docs');
     const saveButton = canvas.getByTestId('action-save');
     const historyButton = canvas.getByTestId('action-history');
-    const envButton = canvas.getByTestId('action-env');
 
-    await expect(testButton).toBeInTheDocument();
     await expect(codeButton).toBeInTheDocument();
     await expect(docsButton).toBeInTheDocument();
     await expect(saveButton).toBeInTheDocument();
     await expect(historyButton).toBeInTheDocument();
-    await expect(envButton).toBeInTheDocument();
 
     // Verify all buttons have aria-labels
-    await expect(testButton).toHaveAttribute('aria-label');
     await expect(codeButton).toHaveAttribute('aria-label');
     await expect(docsButton).toHaveAttribute('aria-label');
     await expect(saveButton).toHaveAttribute('aria-label');
     await expect(historyButton).toHaveAttribute('aria-label');
-    await expect(envButton).toHaveAttribute('aria-label');
   },
 };
 
@@ -202,24 +152,16 @@ export const Playground: Story = {
  */
 export const KeyboardNavigation: Story = {
   args: {
-    onTest: noop,
     onCode: noop,
     onDocs: noop,
     onSave: noop,
     onHistory: noop,
-    onEnv: noop,
-    hasResponse: true,
     hasUrl: true,
     isDirty: false,
     historyCount: 0,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const testButton = canvas.getByTestId('action-test');
-
-    // Tab to first button and verify focus
-    await userEvent.tab();
-    await expect(testButton).toHaveFocus();
 
     // Tab through all buttons
     await userEvent.tab();
@@ -237,9 +179,5 @@ export const KeyboardNavigation: Story = {
     await userEvent.tab();
     const historyButton = canvas.getByTestId('action-history');
     await expect(historyButton).toHaveFocus();
-
-    await userEvent.tab();
-    const envButton = canvas.getByTestId('action-env');
-    await expect(envButton).toHaveFocus();
   },
 };
