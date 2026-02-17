@@ -1,5 +1,5 @@
 import { type FC, useState } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
 import { GENERIC_LAYOUTS } from './layouts';
@@ -33,18 +33,19 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className={cn(
-          'flex items-center gap-2 px-3 h-7',
-          'text-sm text-text-secondary hover:text-text-primary',
-          'bg-bg-surface hover:bg-bg-raised',
-          'border border-border-default rounded',
+          'flex items-center justify-center',
+          'w-[34px] h-[34px] rounded',
+          'text-text-muted hover:text-text-primary',
+          'hover:bg-bg-raised/50',
           'motion-safe:transition-colors motion-reduce:transition-none',
           focusRingClasses,
           className
         )}
         data-test-id="layout-picker-trigger"
+        title={activeLayout?.label ?? 'Layout'}
+        aria-label={`Layout: ${activeLayout?.label ?? 'Layout'}`}
       >
-        <span className="text-xs">{activeLayout?.label ?? 'Layout'}</span>
-        <ChevronDown className="w-3 h-3" />
+        {activeLayout !== null ? <activeLayout.icon className="w-4 h-4" /> : null}
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-64 p-2" data-test-id="layout-picker-content">

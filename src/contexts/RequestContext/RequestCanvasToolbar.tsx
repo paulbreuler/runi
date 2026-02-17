@@ -91,6 +91,7 @@ export const RequestCanvasToolbar: FC<CanvasToolbarProps> = ({
         onUrlChange={handleUrlChange}
         onSend={handleSend}
       />
+      <div className="w-px h-5 bg-border-default mx-2 shrink-0" aria-hidden="true" />
       <ActionButtons
         onTest={handleTest}
         onCode={handleCode}

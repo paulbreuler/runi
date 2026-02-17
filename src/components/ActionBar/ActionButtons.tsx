@@ -74,104 +74,104 @@ export const ActionButtons = ({
   );
 
   return (
-    <div className="flex items-center gap-1" role="group" aria-label="Action buttons">
-      {/* Test button */}
-      <button
-        type="button"
-        onClick={onTest}
-        disabled={!hasResponse}
-        className={buttonClasses}
-        aria-label="Run tests for this request"
-        data-test-id="action-test"
-        title="Run tests"
-      >
-        <Play size={iconSize} />
-      </button>
+    <div className="flex items-center gap-3" data-test-id="action-buttons">
+      {/* Request actions: Play, Code, Docs */}
+      <div className="flex items-center gap-1" role="group" aria-label="Request actions">
+        <button
+          type="button"
+          onClick={onTest}
+          disabled={!hasResponse}
+          className={buttonClasses}
+          aria-label="Run tests for this request"
+          data-test-id="action-test"
+          title="Run tests"
+        >
+          <Play size={iconSize} />
+        </button>
 
-      {/* Code button */}
-      <button
-        type="button"
-        onClick={onCode}
-        disabled={!hasUrl}
-        className={buttonClasses}
-        aria-label="Generate code snippet"
-        data-test-id="action-code"
-        title="Generate code"
-      >
-        <Code size={iconSize} />
-      </button>
+        <button
+          type="button"
+          onClick={onCode}
+          disabled={!hasUrl}
+          className={buttonClasses}
+          aria-label="Generate code snippet"
+          data-test-id="action-code"
+          title="Generate code"
+        >
+          <Code size={iconSize} />
+        </button>
 
-      {/* Docs button */}
-      <button
-        type="button"
-        onClick={onDocs}
-        className={buttonClasses}
-        aria-label="Open API documentation"
-        data-test-id="action-docs"
-        title="Open docs"
-      >
-        <BookOpen size={iconSize} />
-      </button>
+        <button
+          type="button"
+          onClick={onDocs}
+          className={buttonClasses}
+          aria-label="Open API documentation"
+          data-test-id="action-docs"
+          title="Open docs"
+        >
+          <BookOpen size={iconSize} />
+        </button>
+      </div>
 
-      {/* Save button with dirty indicator */}
-      <button
-        type="button"
-        onClick={onSave}
-        className={cn(buttonClasses, 'relative')}
-        aria-label="Save to collection"
-        data-test-id="action-save"
-        title="Save to collection"
-      >
-        <Save size={iconSize} />
-        {isDirty && (
-          <CircleDot
-            size={8}
-            className="absolute top-1 right-1 text-signal-warning"
-            data-test-id="save-dirty-indicator"
-            aria-label="Unsaved changes"
-          />
-        )}
-      </button>
+      {/* State actions: Save, History, Env */}
+      <div className="flex items-center gap-1" role="group" aria-label="State actions">
+        <button
+          type="button"
+          onClick={onSave}
+          className={cn(buttonClasses, 'relative')}
+          aria-label="Save to collection"
+          data-test-id="action-save"
+          title="Save to collection"
+        >
+          <Save size={iconSize} />
+          {isDirty && (
+            <CircleDot
+              size={8}
+              className="absolute top-1 right-1 text-signal-warning"
+              data-test-id="save-dirty-indicator"
+              aria-label="Unsaved changes"
+            />
+          )}
+        </button>
 
-      {/* History button with count badge */}
-      <button
-        type="button"
-        onClick={onHistory}
-        className={cn(buttonClasses, 'relative')}
-        aria-label="Toggle history panel"
-        data-test-id="action-history"
-        title="History"
-      >
-        <Clock size={iconSize} />
-        {historyCount > 0 && (
-          <span
-            className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-medium text-text-primary bg-bg-elevated border border-border-subtle rounded-full"
-            data-test-id="history-count-badge"
-            aria-label={`${String(historyCount)} history entries`}
-          >
-            {historyCount}
-          </span>
-        )}
-      </button>
+        <button
+          type="button"
+          onClick={onHistory}
+          className={cn(buttonClasses, 'relative')}
+          aria-label="Toggle history panel"
+          data-test-id="action-history"
+          title="History"
+        >
+          <Clock size={iconSize} />
+          {historyCount > 0 && (
+            <span
+              className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-medium text-text-primary bg-bg-elevated border border-border-subtle rounded-full"
+              data-test-id="history-count-badge"
+              aria-label={`${String(historyCount)} history entries`}
+            >
+              {historyCount}
+            </span>
+          )}
+        </button>
 
-      {/* Environment button */}
-      <button
-        type="button"
-        onClick={onEnv}
-        className={cn(
-          buttonClasses,
-          'gap-1.5',
-          envName !== undefined && envName.length > 0 && 'w-auto px-2'
-        )}
-        aria-label="Select environment"
-        data-test-id="action-env"
-        title="Environment"
-      >
-        <Globe size={iconSize} />
-        {envName !== undefined && envName.length > 0 && (
-          <span className="text-xs font-medium whitespace-nowrap">{envName}</span>
-        )}
-      </button>
+        <button
+          type="button"
+          onClick={onEnv}
+          className={cn(
+            buttonClasses,
+            'gap-1.5',
+            envName !== undefined && envName.length > 0 && 'w-auto px-2'
+          )}
+          aria-label="Select environment"
+          data-test-id="action-env"
+          title="Environment"
+        >
+          <Globe size={iconSize} />
+          {envName !== undefined && envName.length > 0 && (
+            <span className="text-xs font-medium whitespace-nowrap">{envName}</span>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

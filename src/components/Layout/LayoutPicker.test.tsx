@@ -26,7 +26,7 @@ describe('LayoutPicker', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('shows active layout name in trigger', () => {
+  it('shows active layout icon in trigger with title', () => {
     useCanvasStore.getState().registerContext({
       id: 'test-context',
       label: 'Test',
@@ -45,7 +45,9 @@ describe('LayoutPicker', () => {
     });
 
     render(<LayoutPicker />);
-    expect(screen.getByText('Single Panel')).toBeInTheDocument();
+    const trigger = screen.getByTestId('layout-picker-trigger');
+    expect(trigger).toHaveAttribute('title', 'Single Panel');
+    expect(trigger).toHaveAttribute('aria-label', 'Layout: Single Panel');
   });
 
   it('opens popover on click', async () => {
