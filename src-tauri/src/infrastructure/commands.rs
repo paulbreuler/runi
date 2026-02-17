@@ -734,6 +734,95 @@ fn rename_request_inner(
     Ok(())
 }
 
+/// Update a request in a collection (core logic, no `AppHandle`).
+#[allow(clippy::too_many_arguments)]
+fn update_request_inner(
+    collection_id: &str,
+    request_id: &str,
+    name: Option<String>,
+    method: Option<String>,
+    url: Option<String>,
+    headers: Option<BTreeMap<String, String>>,
+    body: Option<String>,
+    body_type: Option<BodyType>,
+) -> Result<Collection, String> {
+    let mut collection = load_collection(collection_id)?;
+    let request = collection
+        .requests
+        .iter_mut()
+        .find(|r| r.id == request_id)
+        .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
+    if let Some(n) = name {
+        request.name = n;
+    }
+    if let Some(m) = method {
+        request.method = m.to_uppercase();
+    }
+    if let Some(u) = url {
+        request.url = u;
+    }
+    if let Some(h) = headers {
+        request.headers = h;
+    }
+    if let Some(b) = body {
+        let bt = body_type.unwrap_or_else(|| infer_body_type_from_headers(&request.headers));
+        request.body = Some(RequestBody {
+            body_type: bt,
+            content: Some(b),
+            file: None,
+        });
+    } else if let Some(bt) = body_type {
+        if let Some(ref mut b) = request.body {
+            b.body_type = bt;
+        }
+    }
+
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Update a request in a collection.
+///
+/// Emits `request:updated` with `Actor::User` on success.
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub async fn cmd_update_request(
+    app: tauri::AppHandle,
+    collection_id: String,
+    request_id: String,
+    name: Option<String>,
+    method: Option<String>,
+    url: Option<String>,
+    headers: Option<BTreeMap<String, String>>,
+    body: Option<String>,
+    body_type: Option<BodyType>,
+) -> Result<Collection, String> {
+    let collection = update_request_inner(
+        &collection_id,
+        &request_id,
+        name.clone(),
+        method,
+        url,
+        headers,
+        body,
+        body_type,
+    )?;
+
+    emit_collection_event(
+        &app,
+        "request:updated",
+        &Actor::User,
+        json!({
+            "collection_id": &collection_id,
+            "request_id": &request_id,
+            "name": name
+        }),
+    );
+
+    Ok(collection)
+}
+
 /// Rename a request in a collection.
 ///
 /// Emits `request:updated` with `Actor::User` for real-time UI updates.
@@ -1034,6 +1123,9 @@ fn move_request_inner(
 ) -> Result<MoveRequestResult, String> {
     if source_collection_id == target_collection_id {
         let collection = load_collection(source_collection_id)?;
+        if !collection.requests.iter().any(|r| r.id == request_id) {
+            return Err(format!("Request not found: {request_id}"));
+        }
         return Ok(MoveRequestResult {
             from: collection.clone(),
             to: collection,
@@ -1168,6 +1260,7 @@ pub async fn cmd_copy_request_to_collection(
             "source_collection_id": &source_collection_id,
             "target_collection_id": &target_collection_id,
             "source_request_id": &request_id,
+            "copied_request_id": &copy_id,
             "request_id": &copy_id,
         }),
     );
@@ -3533,6 +3626,56 @@ mod tests {
 
             assert_eq!(updated.requests.len(), 1);
             assert!(updated.requests[0].body.is_none());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_update_request_inner_success() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Update Request Test");
+            let req_id = "req_123".to_string();
+            collection.requests.push(CollectionRequest {
+                id: req_id.clone(),
+                name: "Old Name".to_string(),
+                method: "GET".to_string(),
+                url: "https://example.com/old".to_string(),
+                seq: 1,
+                ..Default::default()
+            });
+            save_collection(&collection).unwrap();
+
+            let mut new_headers = BTreeMap::new();
+            new_headers.insert("X-Test".to_string(), "Value".to_string());
+
+            let updated = update_request_inner(
+                &collection.id,
+                &req_id,
+                Some("New Name".to_string()),
+                Some("POST".to_string()),
+                Some("https://example.com/new".to_string()),
+                Some(new_headers),
+                Some("New Body".to_string()),
+                None,
+            )
+            .unwrap();
+
+            assert_eq!(updated.requests.len(), 1);
+            let req = &updated.requests[0];
+            assert_eq!(req.name, "New Name");
+            assert_eq!(req.method, "POST");
+            assert_eq!(req.url, "https://example.com/new");
+            assert_eq!(req.headers.get("X-Test").unwrap(), "Value");
+            assert_eq!(
+                req.body.as_ref().unwrap().content.as_deref(),
+                Some("New Body")
+            );
+
+            // Verify persisted
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.requests[0].name, "New Name");
         })
         .await;
     }

@@ -53,10 +53,7 @@ export const RequestCanvasToolbar: FC<CanvasToolbarProps> = ({
   };
 
   const handleSave = (): void => {
-    globalEventBus.emit<ToastEventPayload>('toast.show', {
-      type: 'info',
-      message: 'Save to collection coming soon',
-    });
+    globalEventBus.emit('tab.save-requested', {});
   };
 
   const handleHistory = (): void => {

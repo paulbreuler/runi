@@ -902,6 +902,10 @@ describe('useCollectionStore', () => {
           collection_id: 'col-1',
           request_id: 'req-saved',
           name: 'Saved Request',
+          method: 'POST',
+          url: 'https://api.example.com',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{"key": "value"}',
         })
       );
 

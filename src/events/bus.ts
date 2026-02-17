@@ -172,6 +172,10 @@ export interface RequestSavedToCollectionPayload {
   collection_id: string;
   request_id: string;
   name: string;
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  body?: string;
 }
 
 /**
@@ -188,6 +192,7 @@ export interface RequestMovedPayload {
  */
 export interface RequestCopiedPayload {
   source_request_id: string;
+  copied_request_id: string;
   request_id: string;
   target_collection_id: string;
 }

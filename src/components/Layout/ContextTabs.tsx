@@ -21,6 +21,7 @@ import {
   type ContextActivatePayload,
   type ContextClosePayload,
   type RequestOpenPayload,
+  type ToastEventPayload,
 } from '@/events/bus';
 
 /**
@@ -168,6 +169,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
 
       const reqState = useRequestStoreRaw.getState().contexts[saveDialogTabId];
       if (reqState === undefined) {
+        setSaveDialogError('Request state not found for this tab');
         return;
       }
 
@@ -205,7 +207,49 @@ export const ContextTabs = (): React.JSX.Element | null => {
     [saveDialogTabId]
   );
 
-  // Listen for tab.save command event (emitted by keybinding system)
+  const handleSave = useCallback(async (tabId: string): Promise<void> => {
+    const state = useCanvasStore.getState();
+    const tabState = state.getContextState(tabId) as RequestTabState;
+
+    if (
+      tabState.source?.type === 'collection' &&
+      tabState.source.collectionId !== undefined &&
+      tabState.source.requestId !== undefined
+    ) {
+      // Existing collection request: Update in place
+      const reqStore = useRequestStoreRaw.getState();
+      const reqState = reqStore.contexts[tabId];
+      if (reqState === undefined) {
+        return;
+      }
+
+      await useCollectionStore
+        .getState()
+        .updateRequest(tabState.source.collectionId, tabState.source.requestId, {
+          method: reqState.method,
+          url: reqState.url,
+          headers: reqState.headers,
+          body: reqState.body,
+        });
+
+      // Reset dirty state
+      state.updateContextState(tabId, {
+        isDirty: false,
+      });
+
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'success',
+        message: 'Request saved',
+      });
+    } else {
+      // Ephemeral tab: open save dialog
+      setSaveDialogTabId(tabId);
+      setSaveDialogError(null);
+      setSaveDialogOpen(true);
+    }
+  }, []);
+
+  // Listen for tab.save command event (emitted by keybinding system or Toolbar)
   useEffect((): (() => void) => {
     const unsubscribe = globalEventBus.on('tab.save-requested', (): void => {
       const state = useCanvasStore.getState();
@@ -214,20 +258,11 @@ export const ContextTabs = (): React.JSX.Element | null => {
         return;
       }
 
-      const tabState = state.getContextState(activeId) as RequestTabState;
-      if (tabState.source?.type === 'collection') {
-        // Already saved to collection — no-op for now (future: update in place)
-        return;
-      }
-
-      // Ephemeral tab: open save dialog
-      setSaveDialogTabId(activeId);
-      setSaveDialogError(null);
-      setSaveDialogOpen(true);
+      void handleSave(activeId);
     });
 
     return unsubscribe;
-  }, []);
+  }, [handleSave]);
 
   // Keep the active tab visible when selection changes (including when a
   // sidebar request maps to an already-open tab off-screen).

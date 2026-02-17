@@ -1086,6 +1086,7 @@ impl McpServerService {
                 "source_collection_id": source_collection_id,
                 "target_collection_id": target_collection_id,
                 "source_request_id": request_id,
+                "copied_request_id": &copy_id,
                 "request_id": &copy_id,
             }),
         );

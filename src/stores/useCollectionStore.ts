@@ -35,6 +35,17 @@ interface CollectionState {
   renameRequest: (collectionId: string, requestId: string, newName: string) => Promise<void>;
   duplicateCollection: (id: string) => Promise<void>;
   addRequest: (collectionId: string, name: string) => Promise<void>;
+  updateRequest: (
+    collectionId: string,
+    requestId: string,
+    patch: {
+      name?: string;
+      method?: string;
+      url?: string;
+      headers?: Record<string, string>;
+      body?: string;
+    }
+  ) => Promise<void>;
   duplicateRequest: (collectionId: string, requestId: string) => Promise<void>;
   saveTabToCollection: (
     collectionId: string,
@@ -387,6 +398,31 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     }
   },
 
+  updateRequest: async (collectionId, requestId, patch): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const updated = normalizeCollection(
+        await invoke<Collection>('cmd_update_request', {
+          collection_id: collectionId,
+          request_id: requestId,
+          name: patch.name ?? null,
+          method: patch.method ?? null,
+          url: patch.url ?? null,
+          headers: patch.headers ?? null,
+          body: patch.body ?? null,
+          body_type: null, // Let backend infer or keep existing
+        })
+      );
+
+      set((state) => ({
+        collections: state.collections.map((c) => (c.id === collectionId ? updated : c)),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
   duplicateRequest: async (collectionId: string, requestId: string): Promise<void> => {
     set({ isLoading: true, error: null });
     try {
@@ -457,6 +493,10 @@ export const useCollectionStore = create<CollectionState>((set) => ({
           collection_id: result.collectionId,
           request_id: result.requestId,
           name: request.name,
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          body: request.body ?? '',
         });
         return result;
       }
@@ -554,6 +594,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
 
       globalEventBus.emit('request.copied', {
         source_request_id: requestId,
+        copied_request_id: copiedRequest?.id ?? '',
         request_id: copiedRequest?.id ?? '',
         target_collection_id: targetCollectionId,
       });
