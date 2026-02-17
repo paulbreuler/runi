@@ -478,14 +478,19 @@ export const useCollectionStore = create<CollectionState>((set) => ({
           ? collection.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest))
           : undefined;
 
-      set((state) => ({
-        collections: state.collections.map((c) => (c.id === collectionId ? collection : c)),
-        summaries: state.summaries.map((s) =>
-          s.id === collectionId ? { ...s, request_count: collection.requests.length } : s
-        ),
-        expandedCollectionIds: new Set([...state.expandedCollectionIds, collectionId]),
-        isLoading: false,
-      }));
+      set((state) => {
+        const exists = state.collections.some((c) => c.id === collectionId);
+        return {
+          collections: exists
+            ? state.collections.map((c) => (c.id === collectionId ? collection : c))
+            : [...state.collections, collection],
+          summaries: state.summaries.map((s) =>
+            s.id === collectionId ? { ...s, request_count: collection.requests.length } : s
+          ),
+          expandedCollectionIds: new Set([...state.expandedCollectionIds, collectionId]),
+          isLoading: false,
+        };
+      });
 
       if (newRequest !== undefined) {
         const result = { collectionId, requestId: newRequest.id };

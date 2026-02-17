@@ -124,7 +124,17 @@ export const SaveToCollectionDialog = ({
                     role="button"
                     aria-haspopup="listbox"
                   >
-                    <SelectValue placeholder="Select a collection" />
+                    <SelectValue placeholder="Select a collection">
+                      {(value: string | null) => {
+                        if (value === null || value === '') {
+                          return 'Select a collection';
+                        }
+                        const match = summaries.find((s) => s.id === value);
+                        return match !== undefined
+                          ? `${match.name} (${String(match.request_count)})`
+                          : value;
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {summaries.map((summary) => (

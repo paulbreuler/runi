@@ -55,6 +55,8 @@ describe('Select', () => {
   });
 
   it('selects item when clicked', async () => {
+    // Base UI Positioner uses pointer-events:none in jsdom; skip that check
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onValueChange = vi.fn();
     render(
       <Select.Select onValueChange={onValueChange}>
@@ -73,10 +75,10 @@ describe('Select', () => {
     );
 
     const trigger = screen.getByTestId('select-trigger');
-    await userEvent.click(trigger);
+    await user.click(trigger);
 
     const bananaOption = await screen.findByTestId('select-item-banana');
-    await userEvent.click(bananaOption);
+    await user.click(bananaOption);
 
     await waitFor(() => {
       // Base UI onValueChange passes (value, eventDetails)
