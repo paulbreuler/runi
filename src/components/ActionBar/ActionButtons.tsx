@@ -119,7 +119,7 @@ export const ActionButtons = ({
           type="button"
           onClick={onSave}
           className={cn(buttonClasses, 'relative')}
-          aria-label="Save to collection"
+          aria-label={isDirty ? 'Save to collection (unsaved changes)' : 'Save to collection'}
           data-test-id="action-save"
           title="Save to collection"
         >
@@ -129,7 +129,7 @@ export const ActionButtons = ({
               size={8}
               className="absolute top-1 right-1 text-signal-warning"
               data-test-id="save-dirty-indicator"
-              aria-label="Unsaved changes"
+              aria-hidden="true"
             />
           )}
         </button>

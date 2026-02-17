@@ -19,9 +19,9 @@ describe('UrlBar', () => {
   };
 
   it('renders with visible resting container', () => {
-    const { container } = render(<UrlBar {...defaultProps} />);
+    render(<UrlBar {...defaultProps} />);
 
-    const wrapper = container.firstChild as HTMLElement;
+    const wrapper = screen.getByTestId('url-bar');
     expect(wrapper).toHaveClass('min-w-0');
     expect(wrapper).toHaveClass('bg-bg-surface');
     expect(wrapper).toHaveClass('border');
