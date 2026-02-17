@@ -109,16 +109,26 @@ pub async fn start_server(
 
     // Get project context handle from app if available
     let project_context = app_handle.as_ref().and_then(|handle| {
-        handle
+        let state = handle
             .try_state::<crate::infrastructure::commands::ProjectContextHandle>()
-            .map(|s| s.inner().clone())
+            .map(|s| s.inner().clone());
+        if state.is_none() {
+            tracing::warn!("ProjectContextService not registered; project-context MCP tools will be unavailable");
+        }
+        state
     });
 
     // Get suggestion service handle from app if available
     let suggestion_service = app_handle.as_ref().and_then(|handle| {
-        handle
+        let state = handle
             .try_state::<crate::infrastructure::commands::SuggestionServiceHandle>()
-            .map(|s| s.inner().clone())
+            .map(|s| s.inner().clone());
+        if state.is_none() {
+            tracing::warn!(
+                "SuggestionService not registered; suggestion MCP tools will be unavailable"
+            );
+        }
+        state
     });
 
     let mcp_state = McpServerState {

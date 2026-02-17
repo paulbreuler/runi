@@ -75,6 +75,7 @@ export const DriftActionCard = ({
         focusRingClasses,
         className
       )}
+      tabIndex={0}
       role="article"
       aria-label={`Drift detected: ${method} ${path}`}
     >

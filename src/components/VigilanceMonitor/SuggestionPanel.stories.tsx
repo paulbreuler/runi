@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, within } from 'storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { SuggestionPanel } from './SuggestionPanel';
 import type { Suggestion } from '@/types/generated/Suggestion';
 
@@ -96,14 +96,10 @@ type Story = StoryObj<typeof SuggestionPanel>;
 export const Default: Story = {
   args: {
     suggestions: MOCK_SUGGESTIONS,
-    onAccept: (id: string): void => {
-      console.log('Accept:', id);
-    },
-    onDismiss: (id: string): void => {
-      console.log('Dismiss:', id);
-    },
+    onAccept: fn(),
+    onDismiss: fn(),
   },
-  play: async ({ canvasElement, step }): Promise<void> => {
+  play: async ({ canvasElement, step, args }): Promise<void> => {
     const canvas = within(canvasElement);
 
     await step('Panel renders with header and badge', async () => {
@@ -122,6 +118,7 @@ export const Default: Story = {
       acceptBtn.focus();
       await expect(acceptBtn).toHaveFocus();
       await userEvent.keyboard('{Enter}');
+      await expect(args.onAccept).toHaveBeenCalledWith('sug-1');
     });
   },
 };
@@ -130,8 +127,8 @@ export const Default: Story = {
 export const Empty: Story = {
   args: {
     suggestions: [],
-    onAccept: (): void => {},
-    onDismiss: (): void => {},
+    onAccept: fn(),
+    onDismiss: fn(),
   },
   play: async ({ canvasElement, step }): Promise<void> => {
     const canvas = within(canvasElement);

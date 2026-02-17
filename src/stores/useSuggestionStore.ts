@@ -126,6 +126,16 @@ let resolvedUnlisten: UnlistenFn | null = null;
  * Call once at app startup. Returns a cleanup function.
  */
 export async function initSuggestionStore(): Promise<() => void> {
+  // Clean up any previous listeners to prevent leaks on re-init
+  if (createdUnlisten !== null) {
+    createdUnlisten();
+    createdUnlisten = null;
+  }
+  if (resolvedUnlisten !== null) {
+    resolvedUnlisten();
+    resolvedUnlisten = null;
+  }
+
   // Fetch initial state
   await useSuggestionStore.getState().fetchSuggestions();
 

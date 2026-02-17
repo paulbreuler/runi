@@ -6,8 +6,9 @@
 //! Manages AI-generated suggestions for the Vigilance Monitor panel.
 //! Suggestions are persisted in the same SQLite database as other app state.
 
-use rusqlite::{Connection, params};
 use std::sync::Mutex;
+
+use rusqlite::{Connection, params};
 
 use crate::domain::suggestion::{
     CreateSuggestionRequest, Suggestion, SuggestionStatus, SuggestionType,

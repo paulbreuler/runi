@@ -584,7 +584,7 @@ impl McpServerService {
                 json!({
                     "type": "object",
                     "properties": {
-                        "suggestion_type": {
+                        "suggestionType": {
                             "type": "string",
                             "enum": ["drift_fix", "schema_update", "test_gap", "optimization"],
                             "description": "Category of the suggestion"
@@ -601,11 +601,11 @@ impl McpServerService {
                             "type": "string",
                             "description": "Actor attribution (e.g. model name)"
                         },
-                        "collection_id": {
+                        "collectionId": {
                             "type": ["string", "null"],
                             "description": "Linked collection ID"
                         },
-                        "request_id": {
+                        "requestId": {
                             "type": ["string", "null"],
                             "description": "Linked request ID"
                         },
@@ -618,7 +618,7 @@ impl McpServerService {
                             "description": "What action to take"
                         }
                     },
-                    "required": ["suggestion_type", "title", "description", "source", "action"]
+                    "required": ["suggestionType", "title", "description", "source", "action"]
                 }),
             ),
             tool_def(
@@ -655,19 +655,19 @@ impl McpServerService {
                 json!({
                     "type": "object",
                     "properties": {
-                        "active_collection_id": {
+                        "activeCollectionId": {
                             "type": ["string", "null"],
                             "description": "Set the active collection ID (null to clear)"
                         },
-                        "active_request_id": {
+                        "activeRequestId": {
                             "type": ["string", "null"],
                             "description": "Set the active request ID (null to clear)"
                         },
-                        "investigation_notes": {
+                        "investigationNotes": {
                             "type": ["string", "null"],
                             "description": "Set investigation notes (null to clear)"
                         },
-                        "push_recent_request_id": {
+                        "pushRecentRequestId": {
                             "type": "string",
                             "description": "Add a request ID to the recent list (max 10, deduplicates)"
                         },

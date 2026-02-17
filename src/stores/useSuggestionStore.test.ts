@@ -118,7 +118,7 @@ describe('useSuggestionStore', () => {
       });
       const state = useSuggestionStore.getState();
       expect(state.suggestions).toHaveLength(1);
-      expect(state.suggestions[0].id).toBe('sug-1');
+      expect(state.suggestions[0]?.id).toBe('sug-1');
     });
 
     it('sets error on create failure', async () => {
@@ -159,8 +159,8 @@ describe('useSuggestionStore', () => {
         status: 'accepted',
       });
       const state = useSuggestionStore.getState();
-      expect(state.suggestions[0].status).toBe('accepted');
-      expect(state.suggestions[0].resolvedAt).toBe('2026-01-03T00:00:00Z');
+      expect(state.suggestions[0]?.status).toBe('accepted');
+      expect(state.suggestions[0]?.resolvedAt).toBe('2026-01-03T00:00:00Z');
     });
 
     it('sets error on resolve failure', async () => {
@@ -180,7 +180,7 @@ describe('useSuggestionStore', () => {
 
       const state = useSuggestionStore.getState();
       expect(state.suggestions).toHaveLength(1);
-      expect(state.suggestions[0].id).toBe('sug-1');
+      expect(state.suggestions[0]?.id).toBe('sug-1');
     });
 
     it('does not duplicate existing suggestion', () => {
@@ -204,7 +204,7 @@ describe('useSuggestionStore', () => {
       useSuggestionStore.getState().updateSuggestion(resolved);
 
       const state = useSuggestionStore.getState();
-      expect(state.suggestions[0].status).toBe('dismissed');
+      expect(state.suggestions[0]?.status).toBe('dismissed');
     });
   });
 

@@ -95,6 +95,12 @@ let contextEventUnlisten: UnlistenFn | null = null;
  * Returns a cleanup function that removes the event listener.
  */
 export async function initProjectContext(): Promise<() => void> {
+  // Clean up any previous listener to prevent leaks on re-init
+  if (contextEventUnlisten !== null) {
+    contextEventUnlisten();
+    contextEventUnlisten = null;
+  }
+
   // Fetch initial state
   await useProjectContextStore.getState().fetchContext();
 

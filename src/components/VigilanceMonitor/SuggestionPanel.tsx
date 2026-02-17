@@ -125,7 +125,9 @@ const SuggestionCard = ({
           {suggestion.endpoint !== null && onNavigate !== undefined && (
             <button
               type="button"
-              onClick={(): void => onNavigate(suggestion)}
+              onClick={(): void => {
+                onNavigate(suggestion);
+              }}
               className={cn(
                 'text-[10px] font-mono text-accent-blue hover:text-accent-blue/80 mt-1.5 cursor-pointer outline-none rounded-sm',
                 focusRingClasses
@@ -156,7 +158,9 @@ const SuggestionCard = ({
         >
           <button
             type="button"
-            onClick={(): void => onAccept(suggestion.id)}
+            onClick={(): void => {
+              onAccept(suggestion.id);
+            }}
             className={cn(
               'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
               'bg-signal-success/10 text-signal-success hover:bg-signal-success/20',
@@ -171,7 +175,9 @@ const SuggestionCard = ({
           </button>
           <button
             type="button"
-            onClick={(): void => onDismiss(suggestion.id)}
+            onClick={(): void => {
+              onDismiss(suggestion.id);
+            }}
             className={cn(
               'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
               'bg-text-muted/5 text-text-muted hover:bg-text-muted/10',
@@ -236,7 +242,7 @@ export const SuggestionPanel = ({
             <span
               className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] font-bold rounded-full bg-signal-warning/20 text-signal-warning"
               data-test-id="suggestion-count-badge"
-              aria-label={`${pendingCount} pending suggestions`}
+              aria-label={`${String(pendingCount)} pending suggestions`}
             >
               {pendingCount}
             </span>

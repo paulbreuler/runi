@@ -54,7 +54,6 @@ impl SubscriptionId {
 
     /// Get the inner string value.
     #[must_use]
-    #[allow(dead_code)]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -66,7 +65,6 @@ const SUBSCRIBER_CHANNEL_CAPACITY: usize = 256;
 
 /// A subscription to a specific stream.
 #[derive(Debug)]
-#[allow(dead_code)]
 struct Subscription {
     /// Unique identifier for this subscription.
     id: SubscriptionId,
@@ -234,7 +232,6 @@ impl SseBroadcaster {
     /// Use [`broadcast_to_topic`] to deliver events to topic subscribers.
     ///
     /// [`broadcast_to_topic`]: SseBroadcaster::broadcast_to_topic
-    #[allow(dead_code)]
     pub async fn subscribe_with_topics(
         &self,
         filter: TopicFilter,
@@ -260,7 +257,6 @@ impl SseBroadcaster {
     ///
     /// For slow subscribers whose buffers are full, the event is dropped
     /// (backpressure policy). This prevents unbounded memory growth.
-    #[allow(dead_code)]
     #[allow(clippy::significant_drop_tightening)]
     pub async fn broadcast(&self, stream_name: &str, event: SseEvent) -> usize {
         let mut closed_ids = Vec::new();
@@ -358,7 +354,6 @@ impl SseBroadcaster {
     ///
     /// Returns `true` if the subscription was found and removed, `false` otherwise.
     /// Works for both named-stream and topic-filtered subscriptions.
-    #[allow(dead_code)]
     pub async fn unsubscribe(&self, subscription_id: &SubscriptionId) -> bool {
         // Try named-stream subscriptions first
         let stream_name = {

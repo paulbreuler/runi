@@ -7,8 +7,9 @@
 //! working state. The context is persisted in the same SQLite database as
 //! history, using the migrations framework.
 
-use rusqlite::{Connection, params};
 use std::sync::Mutex;
+
+use rusqlite::{Connection, params};
 
 use crate::domain::project_context::{ProjectContext, ProjectContextUpdate};
 use crate::infrastructure::storage::migrations;

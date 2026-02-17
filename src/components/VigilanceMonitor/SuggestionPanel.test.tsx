@@ -11,7 +11,7 @@ import type { Suggestion } from '@/types/generated/Suggestion';
 // Mock motion/react to avoid animation issues in tests
 vi.mock('motion/react', () => ({
   motion: {
-    div: ({ children, ...props }: Record<string, unknown>) => {
+    div: ({ children, ...props }: Record<string, unknown>): React.JSX.Element => {
       const {
         layout: _layout,
         initial: _initial,
@@ -23,8 +23,10 @@ vi.mock('motion/react', () => ({
       return <div {...rest}>{children as React.ReactNode}</div>;
     },
   },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useReducedMotion: () => false,
+  AnimatePresence: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
+    <>{children}</>
+  ),
+  useReducedMotion: (): boolean => false,
 }));
 
 const PENDING_SUGGESTION: Suggestion = {
@@ -67,14 +69,18 @@ describe('SuggestionPanel', () => {
   it('renders empty state when no suggestions', () => {
     render(<SuggestionPanel {...defaultProps} />);
     expect(screen.getByTestId('suggestion-empty-state')).toBeDefined();
-    expect(screen.getByText('No suggestions yet')).toBeDefined();
+    expect(screen.getByTestId('suggestion-empty-state').textContent).toContain(
+      'No suggestions yet'
+    );
   });
 
   it('renders suggestion panel with header', () => {
     render(<SuggestionPanel {...defaultProps} />);
     expect(screen.getByTestId('suggestion-panel')).toBeDefined();
     expect(screen.getByTestId('suggestion-panel-header')).toBeDefined();
-    expect(screen.getByText('Vigilance Monitor')).toBeDefined();
+    expect(screen.getByTestId('suggestion-panel-header').textContent).toContain(
+      'Vigilance Monitor'
+    );
   });
 
   it('renders pending count badge', () => {
@@ -95,7 +101,9 @@ describe('SuggestionPanel', () => {
     render(<SuggestionPanel {...defaultProps} suggestions={[PENDING_SUGGESTION]} />);
     expect(screen.getByTestId('suggestion-card-sug-1')).toBeDefined();
     expect(screen.getByTestId('suggestion-title-sug-1')).toBeDefined();
-    expect(screen.getByText('Schema drift on GET /users')).toBeDefined();
+    expect(screen.getByTestId('suggestion-title-sug-1').textContent).toBe(
+      'Schema drift on GET /users'
+    );
   });
 
   it('renders type label and icon', () => {

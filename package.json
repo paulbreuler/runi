@@ -4,6 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "preinstall": "node scripts/setup-motion-plus.js",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
