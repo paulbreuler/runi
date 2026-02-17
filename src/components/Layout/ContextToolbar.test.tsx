@@ -311,7 +311,7 @@ describe('ContextToolbar', () => {
 
     render(<ContextToolbar />);
 
-    const urlInput = screen.getByTestId('url-input');
+    const urlInput: HTMLInputElement = screen.getByTestId('url-input');
     await user.clear(urlInput);
     await user.type(urlInput, 'https://draft.local/unsent');
     expect(urlInput.value).toBe('https://draft.local/unsent');
@@ -321,7 +321,7 @@ describe('ContextToolbar', () => {
     });
 
     await waitFor(() => {
-      const activeUrlInput = screen.getByTestId('url-input');
+      const activeUrlInput: HTMLInputElement = screen.getByTestId('url-input');
       expect(activeUrlInput.value).toBe('https://api.example.com/b');
     });
   });
