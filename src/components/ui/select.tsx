@@ -148,7 +148,7 @@ const SelectItem = React.forwardRef<
     ref={ref}
     {...(dataTestId !== undefined && { 'data-test-id': dataTestId })}
     className={cn(
-      'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-6 pr-8 text-sm outline-none focus-visible:bg-bg-raised focus-visible:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-6 pr-8 text-sm outline-none data-[highlighted]:bg-bg-raised data-[highlighted]:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
     {...props}
