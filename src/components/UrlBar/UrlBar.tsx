@@ -170,7 +170,7 @@ export const UrlBar = ({
           data-test-id="send-button"
           aria-label="Send Request"
           className={cn(
-            'relative h-7 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue transition-colors',
+            'relative h-7 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue motion-safe:transition-colors motion-reduce:transition-none',
             compositeFocusItemClasses
           )}
         >
