@@ -104,7 +104,7 @@ export const UrlBar = ({
   return (
     <div
       className={cn(
-        'relative flex flex-1 min-w-0 items-center gap-0 overflow-hidden motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none border border-border-subtle hover:border-border-default rounded-lg',
+        'relative flex flex-1 min-w-0 items-center gap-0 overflow-hidden bg-bg-surface border border-border-subtle hover:border-border-default rounded-lg motion-safe:transition-[border-color,box-shadow,background-color] motion-safe:duration-300 motion-reduce:transition-none',
         compositeFocusContainerClasses
       )}
       data-test-id="url-bar"

@@ -56,7 +56,7 @@ export const ActionButtons = ({
     'h-[34px] w-[34px]',
     'text-text-muted hover:text-text-primary',
     'hover:bg-bg-raised/50',
-    'transition-colors',
+    'motion-safe:transition-colors motion-reduce:transition-none',
     'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-muted',
     focusRingClasses
   );

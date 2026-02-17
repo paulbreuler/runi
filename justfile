@@ -5,7 +5,7 @@
 
 # Show common commands
 default:
-    @just help
+    @just ci
 
 # Show all commands
 list:
