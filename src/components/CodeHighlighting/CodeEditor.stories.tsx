@@ -9,9 +9,11 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, within } from 'storybook/test';
-import { useState } from 'react';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import { useEffect, useState } from 'react';
 import { CodeEditor, type CodeEditorProps } from './CodeEditor';
+import { useSettings } from '@/stores/settings-store';
+import type { EditorTheme } from '@/types/settings';
 
 const meta = {
   title: 'CodeHighlighting/CodeEditor',
@@ -325,6 +327,95 @@ export const EditInteractionTest: Story = {
       const cmContainer = canvas.getByTestId('code-editor-cm-container');
       const cmEditor = cmContainer.querySelector('[data-test-id="cm-editor"]');
       await expect(cmEditor).not.toBeNull();
+    });
+  },
+};
+
+// ============================================================================
+// Theme Switching Story
+// ============================================================================
+
+/** Wrapper that syncs a theme arg to the settings store. */
+const ThemeCodeEditor = ({
+  editorTheme,
+  ...rest
+}: CodeEditorProps & { editorTheme: EditorTheme }): React.JSX.Element => {
+  const updateSetting = useSettings((s) => s.updateSetting);
+
+  // Capture the existing theme when this story mounts and restore it on unmount
+  useEffect(() => {
+    const previousTheme = useSettings.getState().settings.ui.editorTheme;
+
+    return () => {
+      updateSetting('ui', 'editorTheme', previousTheme);
+    };
+  }, [updateSetting]);
+
+  // Sync arg → store on each render (controls drive the store)
+  useEffect(() => {
+    updateSetting('ui', 'editorTheme', editorTheme);
+  }, [editorTheme, updateSetting]);
+
+  return <CodeEditor {...rest} />;
+};
+
+/** Theme switching — select a syntax theme via controls and see it live. */
+export const ThemeSwitching: StoryObj<CodeEditorProps & { editorTheme: EditorTheme }> = {
+  args: {
+    mode: 'edit',
+    code: `{
+  "name": "runi",
+  "version": "1.0.0",
+  "features": ["drift-detection", "ai-verification", "semantic-links"],
+  "isAwesome": true,
+  "stats": { "endpoints": 42, "coverage": 0.95 }
+}`,
+    editorTheme: 'one-dark',
+  },
+  argTypes: {
+    editorTheme: {
+      control: 'select',
+      options: ['one-dark', 'solarized-dark', 'github-dark'],
+      description: 'Syntax highlighting theme',
+    },
+  },
+  render: (args) => (
+    <div className="h-64 border border-border-default bg-bg-app">
+      <ThemeCodeEditor
+        mode="edit"
+        code={args.code}
+        editorTheme={args.editorTheme}
+        language="json"
+      />
+    </div>
+  ),
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step('Verify editor renders with theme', async () => {
+      const editor = canvas.getByTestId('code-editor');
+      await expect(editor).toBeVisible();
+      const cmContainer = canvas.getByTestId('code-editor-cm-container');
+      const cmEditor = cmContainer.querySelector('[data-test-id="cm-editor"]');
+      await expect(cmEditor).not.toBeNull();
+    });
+
+    await step('Verify editor content has syntax highlighting', async () => {
+      const cmContainer = canvas.getByTestId('code-editor-cm-container');
+      const cmContent = cmContainer.querySelector('.cm-content');
+      await expect(cmContent).not.toBeNull();
+      // Syntax themes add class names to tokens
+      const hasTokenSpans = cmContainer.querySelectorAll('.cm-content span').length > 0;
+      await expect(hasTokenSpans).toBe(true);
+    });
+
+    await step('Verify keyboard focus works', async () => {
+      const cmContainer = canvas.getByTestId('code-editor-cm-container');
+      const cmContent = cmContainer.querySelector<HTMLElement>('.cm-content');
+      if (cmContent !== null) {
+        await userEvent.click(cmContent);
+        await expect(cmContent.closest('.cm-editor')).not.toBeNull();
+      }
     });
   },
 };

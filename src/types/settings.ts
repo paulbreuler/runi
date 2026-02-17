@@ -81,6 +81,9 @@ export interface UiSettings {
 
   /** Sidebar width in pixels. Range: 280-600. Default: 384 */
   sidebarWidth: number;
+
+  /** Syntax highlighting theme for code editors. Default: 'one-dark' */
+  editorTheme: EditorTheme;
 }
 
 export interface McpSettings {
@@ -116,6 +119,9 @@ export type SettingValue<
 export type DeepPartialSettings<T> = T extends object
   ? { [K in keyof T]?: DeepPartialSettings<T[K]> }
   : T;
+
+/** Editor theme options for syntax highlighting */
+export type EditorTheme = 'one-dark' | 'solarized-dark' | 'github-dark';
 
 /** Re-export feature flag types from Plan 0013 for convenience */
 export type { FeatureFlags, FeatureState, FlagMetadata } from '@/stores/features/types';

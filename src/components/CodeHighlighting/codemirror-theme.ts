@@ -5,21 +5,28 @@
 
 /**
  * @file CodeMirror 6 theme extension for runi
- * @description Reads CSS custom properties from runi's design system for reactive dark/light mode.
- * Styles: editor bg, text, selection, cursor, gutter, active line, search panel, focus ring.
+ * @description Layers syntax highlighting themes with runi's structural chrome.
+ * The selected syntax theme (One Dark, Solarized Dark, or GitHub Dark) handles all syntax
+ * colors (JSON keys, strings, numbers, booleans, punctuation). runi's theme handles
+ * structural chrome: editor bg, gutters, selection, cursor, focus ring, search panel,
+ * scrollbar — all via CSS custom properties for reactive dark/light mode.
  * Reduced motion: disables cursor blink when prefers-reduced-motion is active.
  */
 
 import { EditorView } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { tags } from '@lezer/highlight';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { solarizedDark } from '@uiw/codemirror-theme-solarized/dark';
+import { githubDark } from '@uiw/codemirror-theme-github';
 
 /**
- * runi editor theme — dark-first, CSS-custom-property-driven.
+ * runi structural chrome — dark-first, CSS-custom-property-driven.
+ *
+ * Overrides ONLY structural/chrome elements on top of the One Dark syntax theme.
+ * Does NOT override any syntax highlighting colors.
  *
  * Uses `var()` references so the editor reactively follows runi's theme
- * class changes (dark ↔ light) without remounting.
+ * class changes (dark / light) without remounting.
  */
 const theme = EditorView.theme({
   // Editor root
@@ -178,75 +185,29 @@ const baseTheme = EditorView.baseTheme({
   },
 });
 
+/** Map of available syntax themes keyed by setting value. */
+const SYNTAX_THEMES: Record<string, Extension> = {
+  'one-dark': oneDark,
+  'solarized-dark': solarizedDark,
+  'github-dark': githubDark,
+};
+
 /**
- * Syntax highlighting colors — maps lezer tags to runi design tokens.
+ * Build a complete runi theme extension for a given syntax theme name.
  *
- * Uses CSS `var()` references so token colors react to dark/light mode
- * without remounting the editor.
+ * Combines the selected syntax theme with runi's structural chrome and base theme.
+ * Falls back to One Dark if the theme name is unknown.
+ *
+ * @param themeName - A key from the editorTheme setting (e.g. 'one-dark', 'solarized-dark', 'github-dark')
+ * @returns A CodeMirror Extension array: [syntaxTheme, structuralChrome, baseTheme]
  */
-export const runiHighlightStyle = HighlightStyle.define([
-  // Keywords
-  { tag: [tags.keyword, tags.controlKeyword], color: 'var(--color-accent-blue)' },
-
-  // Strings
-  { tag: [tags.string, tags.special(tags.string)], color: 'var(--color-signal-success)' },
-
-  // Numbers
-  { tag: [tags.number, tags.integer, tags.float], color: 'var(--color-signal-warning)' },
-
-  // Booleans and null
-  { tag: [tags.bool, tags.null], color: 'var(--color-signal-warning)' },
-
-  // Comments
-  {
-    tag: [tags.comment, tags.lineComment, tags.blockComment],
-    color: 'var(--color-text-muted)',
-    fontStyle: 'italic',
-  },
-
-  // Functions
-  {
-    tag: [tags.function(tags.variableName), tags.function(tags.definition(tags.variableName))],
-    color: 'var(--color-accent-blue)',
-  },
-
-  // Property names
-  {
-    tag: [tags.propertyName, tags.definition(tags.propertyName)],
-    color: 'var(--color-text-primary)',
-  },
-
-  // Types and classes
-  { tag: [tags.typeName, tags.className, tags.namespace], color: 'var(--color-signal-ai)' },
-
-  // Operators and punctuation
-  { tag: [tags.operator, tags.punctuation], color: 'var(--color-text-muted)' },
-
-  // Variables (default text)
-  { tag: tags.variableName, color: 'var(--color-text-secondary)' },
-
-  // Meta / processing instructions
-  { tag: [tags.meta, tags.processingInstruction], color: 'var(--color-text-muted)' },
-
-  // Regexp
-  { tag: tags.regexp, color: 'var(--color-signal-error)' },
-
-  // HTML/XML tags
-  { tag: tags.tagName, color: 'var(--color-accent-blue)' },
-
-  // HTML/XML attributes
-  { tag: tags.attributeName, color: 'var(--color-signal-warning)' },
-  { tag: tags.attributeValue, color: 'var(--color-signal-success)' },
-]);
+export const getRuniTheme = (themeName: string): Extension => {
+  const syntaxTheme = SYNTAX_THEMES[themeName] ?? oneDark;
+  return [syntaxTheme, theme, baseTheme];
+};
 
 /**
- * Complete runi theme extension for CodeMirror 6.
- *
- * Combines:
- * - Dark/light reactive theme (CSS custom properties)
- * - Syntax highlighting (token colors via CSS custom properties)
- * - Focus ring styling (--color-ring, 2px, focus-visible)
- * - Reduced motion support (disables cursor blink)
+ * Default runi theme (One Dark). Backwards-compatible export for existing consumers.
  *
  * @example
  * ```ts
@@ -254,4 +215,4 @@ export const runiHighlightStyle = HighlightStyle.define([
  * const state = EditorState.create({ extensions: [runiTheme] });
  * ```
  */
-export const runiTheme: Extension = [theme, baseTheme, syntaxHighlighting(runiHighlightStyle)];
+export const runiTheme: Extension = getRuniTheme('one-dark');

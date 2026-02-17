@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { EditorState, type Extension } from '@codemirror/state';
+import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { minimalSetup } from 'codemirror';
 
@@ -18,7 +18,7 @@ interface UseCodeMirrorOptions {
   containerRef: React.RefObject<HTMLElement | null>;
   code: string;
   onChange?: (value: string) => void;
-  /** Applied once on mount. Changes require remounting the component. */
+  /** Dynamically reconfigured when the reference changes. */
   extensions?: Extension[];
   /** Applied once on mount. Changes require remounting the component. */
   readOnly?: boolean;
@@ -47,6 +47,7 @@ export const useCodeMirror = ({
   const viewRef = useRef<EditorView | undefined>(undefined);
   const onChangeRef = useRef(onChange);
   const isSyncingRef = useRef(false);
+  const compartmentRef = useRef(new Compartment());
 
   // Keep onChange ref current without re-creating the view
   onChangeRef.current = onChange;
@@ -66,7 +67,12 @@ export const useCodeMirror = ({
 
     const state = EditorState.create({
       doc: code,
-      extensions: [minimalSetup, EditorState.readOnly.of(readOnly), updateListener, ...extensions],
+      extensions: [
+        minimalSetup,
+        EditorState.readOnly.of(readOnly),
+        updateListener,
+        compartmentRef.current.of(extensions),
+      ],
     });
 
     const editorView = new EditorView({ state, parent: container });
@@ -81,6 +87,17 @@ export const useCodeMirror = ({
     // Only re-create on mount/unmount and when container changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containerRef]);
+
+  // Reconfigure extensions when they change (e.g. theme switch)
+  useEffect(() => {
+    const v = viewRef.current;
+    if (v === undefined) {
+      return;
+    }
+    v.dispatch({
+      effects: compartmentRef.current.reconfigure(extensions),
+    });
+  }, [extensions]);
 
   // Sync external code changes
   useEffect(() => {

@@ -9,15 +9,21 @@
  */
 
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EditorView } from '@codemirror/view';
 import { CodeEditor } from './CodeEditor';
+import { useSettings } from '@/stores/settings-store';
+import { DEFAULT_SETTINGS } from '@/types/settings-defaults';
 
 /** Helper: get the CM6 EditorView from the container test-id */
 const getCmContent = (): HTMLElement | null =>
   screen.getByTestId('code-editor-cm-container').querySelector('.cm-content');
 
 describe('CodeEditor', () => {
+  beforeEach(() => {
+    useSettings.getState().setSettings(structuredClone(DEFAULT_SETTINGS));
+  });
+
   describe('display mode', () => {
     it('renders code with CM6', () => {
       render(<CodeEditor mode="display" code="const x = 1;" language="javascript" />);
@@ -325,6 +331,63 @@ describe('CodeEditor', () => {
         const editor = screen.getByTestId('code-editor');
         expect(editor).not.toHaveClass('bg-bg-raised');
       });
+    });
+  });
+
+  describe('editor theme integration', () => {
+    it('renders with default theme (one-dark)', () => {
+      render(<CodeEditor mode="edit" code='{"key":"value"}' />);
+
+      const cmContainer = screen.getByTestId('code-editor-cm-container');
+      const cmEditor = cmContainer.querySelector('.cm-editor');
+      expect(cmEditor).not.toBeNull();
+    });
+
+    it('renders with solarized-dark theme', () => {
+      useSettings.getState().updateSetting('ui', 'editorTheme', 'solarized-dark');
+      render(<CodeEditor mode="edit" code='{"key":"value"}' />);
+
+      const cmContainer = screen.getByTestId('code-editor-cm-container');
+      const cmEditor = cmContainer.querySelector('.cm-editor');
+      expect(cmEditor).not.toBeNull();
+    });
+
+    it('renders with github-dark theme', () => {
+      useSettings.getState().updateSetting('ui', 'editorTheme', 'github-dark');
+      render(<CodeEditor mode="edit" code='{"key":"value"}' />);
+
+      const cmContainer = screen.getByTestId('code-editor-cm-container');
+      const cmEditor = cmContainer.querySelector('.cm-editor');
+      expect(cmEditor).not.toBeNull();
+    });
+
+    it('reconfigures editor when theme changes in store', () => {
+      const { rerender } = render(<CodeEditor mode="edit" code='{"key":"value"}' />);
+
+      const cmContainer = screen.getByTestId('code-editor-cm-container');
+      const cmEditor = cmContainer.querySelector('.cm-editor');
+      expect(cmEditor).not.toBeNull();
+
+      // Change theme in store
+      act(() => {
+        useSettings.getState().updateSetting('ui', 'editorTheme', 'solarized-dark');
+      });
+
+      // Force re-render to pick up store change
+      rerender(<CodeEditor mode="edit" code='{"key":"value"}' />);
+
+      // Editor should still be mounted (reconfigured, not destroyed)
+      const cmEditorAfter = cmContainer.querySelector('.cm-editor');
+      expect(cmEditorAfter).not.toBeNull();
+    });
+
+    it('applies theme in display mode', () => {
+      useSettings.getState().updateSetting('ui', 'editorTheme', 'github-dark');
+      render(<CodeEditor mode="display" code='{"key":"value"}' />);
+
+      const cmContainer = screen.getByTestId('code-editor-cm-container');
+      const cmEditor = cmContainer.querySelector('.cm-editor');
+      expect(cmEditor).not.toBeNull();
     });
   });
 });

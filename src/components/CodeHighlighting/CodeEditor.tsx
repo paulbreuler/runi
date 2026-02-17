@@ -18,8 +18,9 @@ import { search, searchKeymap } from '@codemirror/search';
 import { CodeBox } from '@/components/History/CodeBox';
 import { detectSyntaxLanguage } from '@/components/CodeHighlighting/syntaxLanguage';
 import { useCodeMirror } from '@/components/CodeHighlighting/useCodeMirror';
-import { runiTheme } from '@/components/CodeHighlighting/codemirror-theme';
+import { getRuniTheme } from '@/components/CodeHighlighting/codemirror-theme';
 import { getLanguageExtension } from '@/components/CodeHighlighting/codemirror-languages';
+import { useSettings } from '@/stores/settings-store';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
@@ -101,6 +102,7 @@ export const CodeEditor = ({
 }: CodeEditorProps): React.JSX.Element => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [jsonValid, setJsonValid] = useState<boolean | null>(null);
+  const editorTheme = useSettings((s) => s.settings.ui.editorTheme);
 
   // Auto-detect language if not provided
   const detectedLanguage = useMemo(
@@ -110,7 +112,7 @@ export const CodeEditor = ({
 
   // Build CM6 extensions
   const extensions = useMemo((): Extension[] => {
-    const exts: Extension[] = [runiTheme];
+    const exts: Extension[] = [getRuniTheme(editorTheme)];
 
     // Language support
     const langExt = getLanguageExtension(detectedLanguage);
@@ -152,7 +154,7 @@ export const CodeEditor = ({
     // EditorView default is no wrap, which is what we want
 
     return exts;
-  }, [detectedLanguage, mode, enableSearch, placeholder, ariaLabel]);
+  }, [detectedLanguage, mode, enableSearch, placeholder, ariaLabel, editorTheme]);
 
   const { view } = useCodeMirror({
     containerRef,
@@ -219,7 +221,7 @@ export const CodeEditor = ({
         >
           <div
             ref={containerRef}
-            className="code-editor-wrapper"
+            className="code-editor-wrapper h-full w-full"
             data-test-id="code-editor-cm-container"
             data-language={detectedLanguage}
           />

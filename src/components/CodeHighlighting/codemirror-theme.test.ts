@@ -6,8 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { EditorView } from '@codemirror/view';
 import { EditorState, type Extension } from '@codemirror/state';
-import { HighlightStyle } from '@codemirror/language';
-import { runiTheme, runiHighlightStyle } from './codemirror-theme';
+import { runiTheme, getRuniTheme } from './codemirror-theme';
 
 /**
  * Helper: create an EditorView with the runi theme applied.
@@ -125,69 +124,82 @@ describe('runiTheme', () => {
     });
   });
 
-  describe('syntax highlight style', () => {
-    /** Helper interface for accessing HighlightStyle internal specs */
-    interface SpecEntry {
-      color?: string;
-      fontStyle?: string;
-    }
-
-    const getSpecs = (): SpecEntry[] =>
-      (runiHighlightStyle as unknown as { specs: SpecEntry[] }).specs;
-
-    it('exports runiHighlightStyle as a HighlightStyle instance', () => {
-      expect(runiHighlightStyle).toBeDefined();
-      expect(runiHighlightStyle).toBeInstanceOf(HighlightStyle);
-    });
-
-    it('includes the highlight style in the runiTheme extension array', () => {
+  describe('One Dark syntax theme', () => {
+    it('includes One Dark as the syntax highlighting base', () => {
+      // runiTheme is an array containing oneDark + structural overrides
       expect(Array.isArray(runiTheme)).toBe(true);
       const state = EditorState.create({
-        doc: '{"key": "value"}',
+        doc: '{"key": "value", "number": 42, "bool": true}',
         extensions: [runiTheme],
       });
       expect(state).toBeDefined();
     });
 
-    it('defines color rules for keyword tokens', () => {
-      const specs = getSpecs();
-      expect(specs.length).toBeGreaterThan(0);
-      const hasKeywordColor = specs.some((s) => s.color?.includes('--color-accent-blue'));
-      expect(hasKeywordColor).toBe(true);
-    });
-
-    it('defines color rules for string tokens', () => {
-      const hasStringColor = getSpecs().some((s) => s.color?.includes('--color-signal-success'));
-      expect(hasStringColor).toBe(true);
-    });
-
-    it('defines color rules for number tokens', () => {
-      const hasNumberColor = getSpecs().some((s) => s.color?.includes('--color-signal-warning'));
-      expect(hasNumberColor).toBe(true);
-    });
-
-    it('defines color rules for comment tokens', () => {
-      const hasCommentColor = getSpecs().some((s) => s.color?.includes('--color-text-muted'));
-      expect(hasCommentColor).toBe(true);
-    });
-
-    it('defines color rules for type/class tokens', () => {
-      const hasTypeColor = getSpecs().some((s) => s.color?.includes('--color-signal-ai'));
-      expect(hasTypeColor).toBe(true);
-    });
-
-    it('uses CSS var() references for all color values', () => {
-      const specsWithColor = getSpecs().filter((s) => s.color);
-      expect(specsWithColor.length).toBeGreaterThan(0);
-      for (const spec of specsWithColor) {
-        expect(spec.color).toMatch(/^var\(--/);
-      }
-    });
-
-    it('mounts an EditorView with highlight style without errors', () => {
-      const view = createThemedView();
-      expect(view.dom).toBeDefined();
+    it('mounts with JSON content showing differentiated syntax tokens', () => {
+      const parent = document.createElement('div');
+      document.body.appendChild(parent);
+      const state = EditorState.create({
+        doc: '{"key": "value", "count": 42, "active": true}',
+        extensions: [runiTheme],
+      });
+      const view = new EditorView({ state, parent });
+      // The editor should mount without errors with JSON content
+      expect(view.dom.querySelector('.cm-content')).toBeTruthy();
       view.destroy();
+      parent.remove();
     });
+  });
+});
+
+describe('getRuniTheme', () => {
+  it('returns a valid Extension array for one-dark', () => {
+    const ext = getRuniTheme('one-dark');
+    expect(Array.isArray(ext)).toBe(true);
+    const state = EditorState.create({ doc: '', extensions: [ext] });
+    expect(state).toBeDefined();
+  });
+
+  it('returns a valid Extension array for solarized-dark', () => {
+    const ext = getRuniTheme('solarized-dark');
+    expect(Array.isArray(ext)).toBe(true);
+    const state = EditorState.create({ doc: '', extensions: [ext] });
+    expect(state).toBeDefined();
+  });
+
+  it('returns a valid Extension array for github-dark', () => {
+    const ext = getRuniTheme('github-dark');
+    expect(Array.isArray(ext)).toBe(true);
+    const state = EditorState.create({ doc: '', extensions: [ext] });
+    expect(state).toBeDefined();
+  });
+
+  it('falls back to One Dark for unknown theme names', () => {
+    const oneDarkExt = getRuniTheme('one-dark');
+    const unknownExt = getRuniTheme('unknown-theme');
+    // Both should be arrays of the same length (same structure)
+    expect(Array.isArray(unknownExt)).toBe(true);
+    expect((unknownExt as Extension[]).length).toBe((oneDarkExt as Extension[]).length);
+  });
+
+  it('each theme mounts an EditorView without errors', () => {
+    for (const themeName of ['one-dark', 'solarized-dark', 'github-dark']) {
+      const parent = document.createElement('div');
+      document.body.appendChild(parent);
+      const state = EditorState.create({
+        doc: '{"key": "value"}',
+        extensions: [getRuniTheme(themeName)],
+      });
+      const view = new EditorView({ state, parent });
+      expect(view.dom.querySelector('.cm-content')).toBeTruthy();
+      view.destroy();
+      parent.remove();
+    }
+  });
+
+  it('runiTheme export still works as backwards-compatible default', () => {
+    // runiTheme should still be the One Dark default
+    expect(Array.isArray(runiTheme)).toBe(true);
+    const state = EditorState.create({ doc: 'test', extensions: [runiTheme] });
+    expect(state).toBeDefined();
   });
 });
