@@ -29,7 +29,6 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
   const presetLayouts = context.layouts;
   const genericLayouts = GENERIC_LAYOUTS;
   const activeLayoutLabel = activeLayout?.label ?? 'Layout';
-  const ActiveLayoutIcon = activeLayout?.icon;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -47,7 +46,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
         title={activeLayoutLabel}
         aria-label={`Layout: ${activeLayoutLabel}`}
       >
-        {ActiveLayoutIcon !== undefined ? <ActiveLayoutIcon className="w-4 h-4" /> : null}
+        {activeLayout !== null && <activeLayout.icon className="w-4 h-4" />}
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-64 p-2" data-test-id="layout-picker-content">

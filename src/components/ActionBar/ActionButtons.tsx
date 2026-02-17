@@ -28,12 +28,10 @@ interface ActionButtonsProps {
  * ActionButtons - Icon button group for common actions.
  *
  * Provides quick access to:
- * - Test: Run tests for the current request
  * - Code: Generate code snippet
  * - Docs: Open API documentation
  * - Save: Save to collection (with dirty indicator)
  * - History: Toggle history panel (with count badge)
- * - Env: Environment selector (shows current environment)
  *
  * Features:
  * - Muted by default, emphasis on hover (Zen aesthetic)

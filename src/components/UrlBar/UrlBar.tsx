@@ -169,7 +169,7 @@ export const UrlBar = ({
           onClick={onSend}
           disabled={!isValidUrl || loading}
           data-test-id="send-button"
-          aria-label="Test Request"
+          aria-label="Send Request"
           className={cn(
             'relative h-9 px-3 justify-center whitespace-nowrap text-text-muted hover:text-accent-blue motion-safe:transition-colors motion-reduce:transition-none',
             compositeFocusItemClasses
