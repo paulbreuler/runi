@@ -37,7 +37,7 @@ export const LayoutPicker: FC<{ className?: string }> = ({ className }) => {
           'text-sm text-text-secondary hover:text-text-primary',
           'bg-bg-surface hover:bg-bg-raised',
           'border border-border-default rounded',
-          'transition-colors',
+          'motion-safe:transition-colors motion-reduce:transition-none',
           focusRingClasses,
           className
         )}
