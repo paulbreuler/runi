@@ -26,7 +26,7 @@ use crate::domain::mcp::events::EventEnvelope;
 use crate::infrastructure::commands::CanvasStateHandle;
 use crate::infrastructure::mcp::server::dispatcher;
 use crate::infrastructure::mcp::server::session::SessionManager;
-use crate::infrastructure::mcp::server::sse_broadcaster::SseBroadcaster;
+use crate::infrastructure::mcp::server::sse_broadcaster::{SseBroadcaster, TopicFilter};
 
 /// Broadcasts `EventEnvelope`s to all connected SSE clients.
 ///
@@ -81,6 +81,10 @@ pub struct McpServerState {
     pub sse_broadcaster: Arc<SseBroadcaster>,
     /// Canvas state snapshot for MCP tools.
     pub canvas_state: CanvasStateHandle,
+    /// Project context service for MCP tools.
+    pub project_context: Option<crate::infrastructure::commands::ProjectContextHandle>,
+    /// Suggestion service for MCP tools (Vigilance Monitor).
+    pub suggestion_service: Option<crate::infrastructure::commands::SuggestionServiceHandle>,
     /// Tauri app handle for mutation tools (tab switching, opening, closing).
     pub app_handle: Option<tauri::AppHandle>,
 }
@@ -120,6 +124,8 @@ async fn handle_post(
         &body,
         &state.service,
         &state.canvas_state,
+        state.project_context.as_ref(),
+        state.suggestion_service.as_ref(),
         state.app_handle.as_ref(),
     )
     .await
@@ -230,10 +236,28 @@ async fn handle_delete(
 #[derive(Debug, Deserialize)]
 struct SubscribeQuery {
     /// Stream name to subscribe to (e.g., "canvas", "collections").
-    stream: String,
+    ///
+    /// When `topics` is also provided, `stream` is ignored in favour of
+    /// topic-based filtering. When neither is provided, `stream` is required.
+    stream: Option<String>,
+
+    /// Comma-separated glob patterns for topic-based subscriptions.
+    ///
+    /// Examples: `collection:*`, `*:created`, `collection:*,request:*`.
+    /// When omitted (and `stream` is provided), falls back to the legacy
+    /// named-stream subscription. When set to `*` or left empty, subscribes
+    /// to all events.
+    topics: Option<String>,
 }
 
-/// Handle GET /mcp/sse/subscribe — Subscribe to a named stream.
+/// Handle GET /mcp/sse/subscribe — Subscribe to a named stream or topic filter.
+///
+/// Supports two modes:
+/// - **Named stream** (legacy): `?stream=canvas` — subscribe to a single named stream.
+/// - **Topic filter**: `?topics=collection:*,request:*` — subscribe with glob patterns.
+///
+/// When `topics` is provided, it takes precedence over `stream`.
+/// When neither is provided, returns 400 Bad Request.
 ///
 /// Returns an SSE stream with keepalive pings every 30 seconds.
 /// Events are sent as `event: stream-event` with JSON data.
@@ -244,74 +268,128 @@ struct SubscribeQuery {
 /// the MCP server binds to `127.0.0.1` only (localhost), so only local
 /// processes can connect. If the server is ever exposed beyond localhost,
 /// authentication must be added.
+#[allow(clippy::too_many_lines)]
 async fn handle_sse_subscribe(
     State(state): State<McpServerState>,
     Query(params): Query<SubscribeQuery>,
 ) -> Result<Sse<ReceiverStream<Result<Event, Infallible>>>, (StatusCode, &'static str)> {
-    let stream_name = params.stream;
+    // Determine subscription mode: topics take precedence over stream.
+    enum SubMode {
+        Stream(String),
+        Topics(TopicFilter),
+    }
 
-    // Subscribe to the stream
-    let (sub_id, mut stream_rx) = state.sse_broadcaster.subscribe(&stream_name).await;
+    let mode = if let Some(ref topics) = params.topics {
+        SubMode::Topics(TopicFilter::parse(topics))
+    } else if let Some(ref stream) = params.stream {
+        SubMode::Stream(stream.clone())
+    } else {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Missing 'stream' or 'topics' query parameter",
+        ));
+    };
 
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Event, Infallible>>(32);
-
-    // Clone broadcaster for cleanup on disconnect
     let broadcaster = Arc::clone(&state.sse_broadcaster);
 
-    // Spawn task to relay events and send keepalive pings
-    tokio::spawn(async move {
-        // Send initial connection event
-        let connected_data = serde_json::json!({"stream": stream_name});
-        let init_event = Event::default()
-            .event("connected")
-            .data(connected_data.to_string());
-        if tx.send(Ok(init_event)).await.is_err() {
-            // Client already disconnected - clean up subscription
-            broadcaster.unsubscribe(&sub_id).await;
-            return;
-        }
+    match mode {
+        SubMode::Stream(stream_name) => {
+            let (sub_id, mut stream_rx) = state.sse_broadcaster.subscribe(&stream_name).await;
+            let broadcaster = Arc::clone(&state.sse_broadcaster);
 
-        let mut keepalive_interval = tokio::time::interval(std::time::Duration::from_secs(30));
+            tokio::spawn(async move {
+                // Send initial connection event
+                let connected_data = serde_json::json!({"stream": stream_name});
+                let init_event = Event::default()
+                    .event("connected")
+                    .data(connected_data.to_string());
+                if tx.send(Ok(init_event)).await.is_err() {
+                    broadcaster.unsubscribe(&sub_id).await;
+                    return;
+                }
 
-        // Relay events until client disconnects
-        loop {
-            tokio::select! {
-                maybe_event = stream_rx.recv() => {
-                    match maybe_event {
-                        Some(sse_event) => {
-                            let Ok(data) = serde_json::to_string(&sse_event) else {
-                                continue; // Skip malformed events.
-                            };
-                            let event = Event::default().event("stream-event").data(data);
-                            if tx.send(Ok(event)).await.is_err() {
-                                break; // Client disconnected.
+                let mut keepalive_interval =
+                    tokio::time::interval(std::time::Duration::from_secs(30));
+
+                loop {
+                    tokio::select! {
+                        maybe_event = stream_rx.recv() => {
+                            match maybe_event {
+                                Some(sse_event) => {
+                                    let Ok(data) = serde_json::to_string(&sse_event) else {
+                                        continue;
+                                    };
+                                    let event = Event::default().event("stream-event").data(data);
+                                    if tx.send(Ok(event)).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                None => break,
                             }
                         }
-                        None => {
-                            // Stream closed
-                            break;
+                        _ = keepalive_interval.tick() => {
+                            let keepalive = Event::default().event("keepalive").data("{}");
+                            if tx.send(Ok(keepalive)).await.is_err() {
+                                break;
+                            }
                         }
+                        () = tx.closed() => break,
                     }
                 }
-                _ = keepalive_interval.tick() => {
-                    let keepalive = Event::default().event("keepalive").data("{}");
-                    if tx.send(Ok(keepalive)).await.is_err() {
-                        break; // Client disconnected.
-                    }
-                }
-                () = tx.closed() => {
-                    break; // Client disconnected.
-                }
-            }
+
+                broadcaster.unsubscribe(&sub_id).await;
+            });
         }
+        SubMode::Topics(filter) => {
+            let patterns: Vec<String> = filter.patterns().to_vec();
+            let (sub_id, mut topic_rx) = state.sse_broadcaster.subscribe_with_topics(filter).await;
 
-        // Clean up subscription when relay loop exits
-        broadcaster.unsubscribe(&sub_id).await;
-    });
+            tokio::spawn(async move {
+                // Send initial connection event with topic info
+                let connected_data = serde_json::json!({"topics": patterns});
+                let init_event = Event::default()
+                    .event("connected")
+                    .data(connected_data.to_string());
+                if tx.send(Ok(init_event)).await.is_err() {
+                    broadcaster.unsubscribe(&sub_id).await;
+                    return;
+                }
 
-    // Keepalive is handled by the spawned task above (typed `event: keepalive`
-    // events every 30s). No need for Axum's SSE-level keep_alive which would
-    // send redundant `:keep-alive-text` comments on the same interval.
+                let mut keepalive_interval =
+                    tokio::time::interval(std::time::Duration::from_secs(30));
+
+                loop {
+                    tokio::select! {
+                        maybe_event = topic_rx.recv() => {
+                            match maybe_event {
+                                Some(sse_event) => {
+                                    let Ok(data) = serde_json::to_string(&sse_event) else {
+                                        continue;
+                                    };
+                                    let event = Event::default().event("stream-event").data(data);
+                                    if tx.send(Ok(event)).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                None => break,
+                            }
+                        }
+                        _ = keepalive_interval.tick() => {
+                            let keepalive = Event::default().event("keepalive").data("{}");
+                            if tx.send(Ok(keepalive)).await.is_err() {
+                                break;
+                            }
+                        }
+                        () = tx.closed() => break,
+                    }
+                }
+
+                broadcaster.unsubscribe(&sub_id).await;
+            });
+        }
+    }
+
     Ok(Sse::new(ReceiverStream::new(rx)))
 }
 
@@ -335,6 +413,8 @@ mod tests {
             broadcaster: Arc::new(EventBroadcaster::new()),
             sse_broadcaster: Arc::new(SseBroadcaster::new()),
             canvas_state: Arc::new(RwLock::new(CanvasStateSnapshot::new())),
+            project_context: None,
+            suggestion_service: None,
             app_handle: None,
         };
         (state, dir)
@@ -673,6 +753,80 @@ mod tests {
         broadcaster
             .broadcast("canvas", SseEvent::new("test".to_string(), json!({})))
             .await;
+        assert_eq!(broadcaster.subscriber_count("canvas").await, 0);
+    }
+
+    // ========================================================================
+    // Topic-based /mcp/sse/subscribe endpoint tests
+    // ========================================================================
+
+    #[tokio::test]
+    async fn test_sse_subscribe_with_topics_returns_sse_stream() {
+        let (state, _dir) = make_state();
+        let app = router(state);
+
+        let req = Request::builder()
+            .method("GET")
+            .uri("/mcp/sse/subscribe?topics=collection:*")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.headers().get("content-type").unwrap(),
+            "text/event-stream"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_sse_subscribe_with_topics_creates_topic_subscription() {
+        use tokio::time::{Duration, timeout};
+
+        let (state, _dir) = make_state();
+        let broadcaster = Arc::clone(&state.sse_broadcaster);
+        let app = router(state);
+
+        let req = Request::builder()
+            .method("GET")
+            .uri("/mcp/sse/subscribe?topics=collection:*,request:*")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        // Wait briefly for the spawned task to register the subscription
+        let body = resp.into_body();
+        let _ = timeout(Duration::from_millis(200), axum::body::to_bytes(body, 8192)).await;
+
+        // Should have a topic subscriber (not a stream subscriber)
+        assert_eq!(broadcaster.topic_subscriber_count().await, 1);
+    }
+
+    #[tokio::test]
+    async fn test_sse_subscribe_topics_takes_precedence_over_stream() {
+        use tokio::time::{Duration, timeout};
+
+        let (state, _dir) = make_state();
+        let broadcaster = Arc::clone(&state.sse_broadcaster);
+        let app = router(state);
+
+        // Both topics and stream provided — topics should win
+        let req = Request::builder()
+            .method("GET")
+            .uri("/mcp/sse/subscribe?stream=canvas&topics=collection:*")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body = resp.into_body();
+        let _ = timeout(Duration::from_millis(200), axum::body::to_bytes(body, 8192)).await;
+
+        // Topic subscriber (not stream subscriber)
+        assert_eq!(broadcaster.topic_subscriber_count().await, 1);
         assert_eq!(broadcaster.subscriber_count("canvas").await, 0);
     }
 }

@@ -8,10 +8,123 @@
 
 use std::collections::BTreeMap;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use super::spec_port::ParsedSpec;
+
+/// Severity of a detected drift.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+#[serde(rename_all = "lowercase")]
+#[allow(dead_code)] // Exported via ts-rs for frontend; not yet consumed in Rust
+pub enum DriftSeverity {
+    /// Informational — cosmetic or non-functional change.
+    Info,
+    /// Warning — structural change that may affect consumers.
+    Warning,
+    /// Breaking — removal or incompatible change.
+    Breaking,
+}
+
+/// Type of action that can resolve a drift.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+#[serde(rename_all = "snake_case")]
+pub enum DriftActionType {
+    /// Update the spec to match the current reality.
+    UpdateSpec,
+    /// Fix the request to match the spec.
+    FixRequest,
+    /// Suppress this drift — mark as acceptable.
+    Ignore,
+}
+
+/// A suggested action to resolve a detected drift.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+#[allow(dead_code)] // Exported via ts-rs for frontend; not yet consumed in Rust
+pub struct DriftSuggestedAction {
+    /// The type of resolution action.
+    pub action_type: DriftActionType,
+    /// Human-readable label for the action button.
+    pub label: String,
+    /// Description of what this action will do.
+    pub description: String,
+}
+
+/// Result of executing a drift resolution action.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct DriftActionResult {
+    /// Whether the action was applied successfully.
+    pub success: bool,
+    /// The action that was executed.
+    pub action_type: DriftActionType,
+    /// Human-readable message describing the outcome.
+    pub message: String,
+}
+
+/// Suggest resolution actions for an added operation.
+#[must_use]
+#[allow(dead_code)] // Exported via ts-rs types; called from tests and future MCP tools
+pub fn suggest_actions_for_added() -> Vec<DriftSuggestedAction> {
+    vec![
+        DriftSuggestedAction {
+            action_type: DriftActionType::UpdateSpec,
+            label: "Update Spec".to_string(),
+            description: "Accept this new endpoint into the spec".to_string(),
+        },
+        DriftSuggestedAction {
+            action_type: DriftActionType::Ignore,
+            label: "Ignore".to_string(),
+            description: "Suppress this drift warning".to_string(),
+        },
+    ]
+}
+
+/// Suggest resolution actions for a removed operation.
+#[must_use]
+#[allow(dead_code)] // Exported via ts-rs types; called from tests and future MCP tools
+pub fn suggest_actions_for_removed() -> Vec<DriftSuggestedAction> {
+    vec![
+        DriftSuggestedAction {
+            action_type: DriftActionType::UpdateSpec,
+            label: "Update Spec".to_string(),
+            description: "Remove this endpoint from the spec".to_string(),
+        },
+        DriftSuggestedAction {
+            action_type: DriftActionType::Ignore,
+            label: "Ignore".to_string(),
+            description: "Suppress this drift warning".to_string(),
+        },
+    ]
+}
+
+/// Suggest resolution actions for a changed operation.
+#[must_use]
+#[allow(dead_code)] // Exported via ts-rs types; called from tests and future MCP tools
+pub fn suggest_actions_for_changed() -> Vec<DriftSuggestedAction> {
+    vec![
+        DriftSuggestedAction {
+            action_type: DriftActionType::UpdateSpec,
+            label: "Update Spec".to_string(),
+            description: "Update the spec to match the new version".to_string(),
+        },
+        DriftSuggestedAction {
+            action_type: DriftActionType::FixRequest,
+            label: "Fix Request".to_string(),
+            description: "Update the request to match the spec".to_string(),
+        },
+        DriftSuggestedAction {
+            action_type: DriftActionType::Ignore,
+            label: "Ignore".to_string(),
+            description: "Suppress this drift warning".to_string(),
+        },
+    ]
+}
 
 /// Result of refreshing a collection's spec against its upstream source.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, TS)]
@@ -301,5 +414,61 @@ mod tests {
 
         let result = compute_drift(&old, &new);
         assert!(!result.changed);
+    }
+
+    #[test]
+    fn test_suggest_actions_for_added() {
+        let actions = suggest_actions_for_added();
+        assert_eq!(actions.len(), 2);
+        assert_eq!(actions[0].action_type, DriftActionType::UpdateSpec);
+        assert_eq!(actions[1].action_type, DriftActionType::Ignore);
+    }
+
+    #[test]
+    fn test_suggest_actions_for_removed() {
+        let actions = suggest_actions_for_removed();
+        assert_eq!(actions.len(), 2);
+        assert_eq!(actions[0].action_type, DriftActionType::UpdateSpec);
+        assert_eq!(actions[1].action_type, DriftActionType::Ignore);
+    }
+
+    #[test]
+    fn test_suggest_actions_for_changed() {
+        let actions = suggest_actions_for_changed();
+        assert_eq!(actions.len(), 3);
+        assert_eq!(actions[0].action_type, DriftActionType::UpdateSpec);
+        assert_eq!(actions[1].action_type, DriftActionType::FixRequest);
+        assert_eq!(actions[2].action_type, DriftActionType::Ignore);
+    }
+
+    #[test]
+    fn test_drift_action_result_success() {
+        let result = DriftActionResult {
+            success: true,
+            action_type: DriftActionType::UpdateSpec,
+            message: "Spec updated".to_string(),
+        };
+        assert!(result.success);
+        assert_eq!(result.action_type, DriftActionType::UpdateSpec);
+    }
+
+    #[test]
+    fn test_drift_severity_serialization() {
+        let severity = DriftSeverity::Breaking;
+        let json = serde_json::to_string(&severity).unwrap();
+        assert_eq!(json, "\"breaking\"");
+
+        let parsed: DriftSeverity = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, DriftSeverity::Breaking);
+    }
+
+    #[test]
+    fn test_drift_action_type_serialization() {
+        let action = DriftActionType::FixRequest;
+        let json = serde_json::to_string(&action).unwrap();
+        assert_eq!(json, "\"fix_request\"");
+
+        let parsed: DriftActionType = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, DriftActionType::FixRequest);
     }
 }

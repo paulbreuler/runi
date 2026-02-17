@@ -80,7 +80,7 @@
     "codemirror": "6.0.2",
     "lucide-react": "^0.562.0",
     "motion": "^12.26.2",
-    "motion-plus": "https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_TOKEN_PLACEHOLDER",
+    "motion-plus": "https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=${MOTION_PLUS_TOKEN}",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.12.0",

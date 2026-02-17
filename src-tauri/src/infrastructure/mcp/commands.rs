@@ -107,12 +107,28 @@ pub async fn start_server(
     };
     let sessions = Arc::new(SessionManager::new());
 
+    // Get project context handle from app if available
+    let project_context = app_handle.as_ref().and_then(|handle| {
+        handle
+            .try_state::<crate::infrastructure::commands::ProjectContextHandle>()
+            .map(|s| s.inner().clone())
+    });
+
+    // Get suggestion service handle from app if available
+    let suggestion_service = app_handle.as_ref().and_then(|handle| {
+        handle
+            .try_state::<crate::infrastructure::commands::SuggestionServiceHandle>()
+            .map(|s| s.inner().clone())
+    });
+
     let mcp_state = McpServerState {
         service: Arc::new(RwLock::new(service)),
         sessions: Arc::clone(&sessions),
         broadcaster,
         sse_broadcaster,
         canvas_state,
+        project_context,
+        suggestion_service,
         app_handle: app_handle.clone(),
     };
 

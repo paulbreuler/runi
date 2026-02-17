@@ -2030,6 +2030,161 @@ pub async fn cmd_run_hurl_suite(request: RunHurlSuiteRequest) -> Result<HurlSuit
     })
 }
 
+// ── Project Context ─────────────────────────────────────────────────
+
+/// Managed state type for the project context service.
+pub type ProjectContextHandle =
+    Arc<crate::application::project_context_service::ProjectContextService>;
+
+/// Get the current project context.
+///
+/// Returns the persisted context representing the user's current working state.
+///
+/// # Errors
+///
+/// Returns an error if the context cannot be loaded from the database.
+#[tauri::command]
+pub async fn cmd_get_project_context(
+    ctx_svc: tauri::State<'_, ProjectContextHandle>,
+) -> Result<crate::domain::project_context::ProjectContext, String> {
+    ctx_svc.get_context()
+}
+
+/// Update the project context with partial values.
+///
+/// Only fields present in the update payload are modified. Emits a
+/// `context:updated` Tauri event on success.
+///
+/// # Errors
+///
+/// Returns an error if the update fails.
+#[tauri::command]
+pub async fn cmd_update_project_context(
+    ctx_svc: tauri::State<'_, ProjectContextHandle>,
+    app: tauri::AppHandle,
+    update: crate::domain::project_context::ProjectContextUpdate,
+) -> Result<crate::domain::project_context::ProjectContext, String> {
+    let ctx = ctx_svc.update_context(&update)?;
+
+    // Emit context:updated event for frontend sync
+    let payload =
+        serde_json::to_value(&ctx).map_err(|e| format!("Failed to serialize context: {e}"))?;
+    if let Err(e) = app.emit("context:updated", &payload) {
+        tracing::warn!("Failed to emit context:updated event: {e}");
+    }
+
+    Ok(ctx)
+}
+
+/// Create a `ProjectContextHandle` backed by the app's `SQLite` database.
+///
+/// # Errors
+///
+/// Returns an error if the database cannot be opened.
+pub fn create_project_context_service() -> Result<ProjectContextHandle, String> {
+    let data_dir = crate::infrastructure::storage::get_data_dir()?;
+    std::fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create data dir: {e}"))?;
+    let db_path = data_dir.join("project_context.db");
+    let svc = crate::application::project_context_service::ProjectContextService::new(&db_path)?;
+    Ok(Arc::new(svc))
+}
+
+// ── Suggestions (Vigilance Monitor) ────────────────────────────────
+
+/// Managed state type for the suggestion service.
+pub type SuggestionServiceHandle = Arc<crate::application::suggestion_service::SuggestionService>;
+
+/// List all suggestions, optionally filtered by status.
+///
+/// # Errors
+///
+/// Returns an error if the database query fails.
+#[tauri::command]
+pub async fn cmd_list_suggestions(
+    svc: tauri::State<'_, SuggestionServiceHandle>,
+    status: Option<String>,
+) -> Result<Vec<crate::domain::suggestion::Suggestion>, String> {
+    let status_filter = match status.as_deref() {
+        Some(s) => {
+            let v = serde_json::Value::String(s.to_string());
+            Some(
+                serde_json::from_value::<crate::domain::suggestion::SuggestionStatus>(v)
+                    .map_err(|e| format!("Invalid status filter: {e}"))?,
+            )
+        }
+        None => None,
+    };
+    svc.list_suggestions(status_filter)
+}
+
+/// Create a new AI suggestion.
+///
+/// Emits a `suggestion:created` Tauri event on success.
+///
+/// # Errors
+///
+/// Returns an error if the suggestion cannot be created.
+#[tauri::command]
+pub async fn cmd_create_suggestion(
+    svc: tauri::State<'_, SuggestionServiceHandle>,
+    app: tauri::AppHandle,
+    request: crate::domain::suggestion::CreateSuggestionRequest,
+) -> Result<crate::domain::suggestion::Suggestion, String> {
+    let suggestion = svc.create_suggestion(&request)?;
+
+    // Emit suggestion:created event for frontend sync
+    let payload = serde_json::to_value(&suggestion)
+        .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
+    if let Err(e) = app.emit("suggestion:created", &payload) {
+        tracing::warn!("Failed to emit suggestion:created event: {e}");
+    }
+
+    Ok(suggestion)
+}
+
+/// Resolve a suggestion (accept or dismiss).
+///
+/// Emits a `suggestion:resolved` Tauri event on success.
+///
+/// # Errors
+///
+/// Returns an error if the suggestion cannot be found or updated.
+#[tauri::command]
+pub async fn cmd_resolve_suggestion(
+    svc: tauri::State<'_, SuggestionServiceHandle>,
+    app: tauri::AppHandle,
+    id: String,
+    status: String,
+) -> Result<crate::domain::suggestion::Suggestion, String> {
+    let status_enum: crate::domain::suggestion::SuggestionStatus =
+        serde_json::from_value(serde_json::Value::String(status))
+            .map_err(|e| format!("Invalid status: {e}"))?;
+
+    let suggestion = svc.resolve_suggestion(&id, status_enum)?;
+
+    // Emit suggestion:resolved event for frontend sync
+    let payload = serde_json::to_value(&suggestion)
+        .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
+    if let Err(e) = app.emit("suggestion:resolved", &payload) {
+        tracing::warn!("Failed to emit suggestion:resolved event: {e}");
+    }
+
+    Ok(suggestion)
+}
+
+/// Create a `SuggestionServiceHandle` backed by the app's `SQLite` database.
+///
+/// # Errors
+///
+/// Returns an error if the database cannot be opened.
+pub fn create_suggestion_service() -> Result<SuggestionServiceHandle, String> {
+    let data_dir = crate::infrastructure::storage::get_data_dir()?;
+    std::fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create data dir: {e}"))?;
+    let db_path = data_dir.join("suggestions.db");
+    let svc = crate::application::suggestion_service::SuggestionService::new(&db_path)?;
+    Ok(Arc::new(svc))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
