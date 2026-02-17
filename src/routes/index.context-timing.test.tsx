@@ -3,11 +3,19 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { render } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { render, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomePage } from './index';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { requestContextDescriptor } from '@/contexts/RequestContext';
+
+vi.mock('@/components/Layout/MainLayout', () => ({
+  MainLayout: (): null => null,
+}));
+
+vi.mock('@/hooks/useCanvasStateSync', () => ({
+  useCanvasStateSync: (): void => undefined,
+}));
 
 describe('HomePage - Context Registration Timing (Feature #1)', () => {
   beforeEach(() => {
@@ -49,7 +57,9 @@ describe('HomePage - Context Registration Timing (Feature #1)', () => {
     expect(template?.layouts.length).toBeGreaterThan(0);
 
     // Open a new request tab
-    state.openRequestTab();
+    act(() => {
+      state.openRequestTab();
+    });
 
     // New request tab should inherit layouts from template
     const requestTabId = state.contextOrder.find((id) => id.startsWith('request-'));

@@ -701,7 +701,7 @@ if (typeof globalEventBus.on === 'function') {
   });
 
   globalEventBus.on('request.open', () => {
-    useCanvasStore.getState().openRequestTab();
+    useCanvasStore.getState().openRequestTab({ url: '' });
   });
 
   globalEventBus.on<RequestSavedToCollectionPayload>('request.saved-to-collection', (event) => {

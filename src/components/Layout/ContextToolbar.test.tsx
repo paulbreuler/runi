@@ -1,13 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { ContextToolbar } from './ContextToolbar';
 import { FileText, LayoutGrid } from 'lucide-react';
 import type { CanvasPanelProps, CanvasToolbarProps } from '@/types/canvas';
 import * as useCanvasPopoutModule from '@/hooks/useCanvasPopout';
 import { setFlag, resetFeatureFlags } from '@/test-utils/featureFlags';
+import { requestContextDescriptor } from '@/contexts/RequestContext';
 
 // Mock panel and toolbar components
 const TestPanel = ({ panelId }: CanvasPanelProps): ReactElement => <div>Panel: {panelId}</div>;
@@ -21,6 +23,7 @@ vi.mock('@/hooks/useCanvasPopout');
 describe('ContextToolbar', () => {
   beforeEach(() => {
     useCanvasStore.getState().reset();
+    useRequestStoreRaw.setState({ contexts: {} });
     resetFeatureFlags();
     setFlag('canvas', 'popout', true);
     vi.clearAllMocks();
@@ -262,6 +265,64 @@ describe('ContextToolbar', () => {
     render(<ContextToolbar className="custom-class" />);
 
     expect(screen.getByTestId('context-toolbar')).toHaveClass('custom-class');
+  });
+
+  it('updates URL bar when active request context changes', async () => {
+    const user = userEvent.setup();
+
+    useRequestStoreRaw.getState().initContext('request-a', {
+      method: 'GET',
+      url: 'https://api.example.com/a',
+      headers: {},
+      body: '',
+    });
+    useRequestStoreRaw.getState().initContext('request-b', {
+      method: 'GET',
+      url: 'https://api.example.com/b',
+      headers: {},
+      body: '',
+    });
+
+    const requestTabContext = {
+      icon: requestContextDescriptor.icon,
+      panels: requestContextDescriptor.panels,
+      toolbar: requestContextDescriptor.toolbar,
+      layouts: requestContextDescriptor.layouts,
+      popoutEnabled: true,
+      contextType: 'request' as const,
+      order: 10,
+    };
+
+    useCanvasStore.getState().registerContext({
+      id: 'request-a',
+      label: 'Request A',
+      ...requestTabContext,
+    });
+    useCanvasStore.getState().registerContext({
+      id: 'request-b',
+      label: 'Request B',
+      ...requestTabContext,
+      order: 11,
+    });
+
+    act(() => {
+      useCanvasStore.getState().setActiveContext('request-a');
+    });
+
+    render(<ContextToolbar />);
+
+    const urlInput = screen.getByTestId('url-input');
+    await user.clear(urlInput);
+    await user.type(urlInput, 'https://draft.local/unsent');
+    expect(urlInput.value).toBe('https://draft.local/unsent');
+
+    act(() => {
+      useCanvasStore.getState().setActiveContext('request-b');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('url-input').value).toBe('https://api.example.com/b');
+    });
   });
 
   it('renders context-toolbar test-id', () => {
