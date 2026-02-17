@@ -19,10 +19,10 @@ describe('UrlBar', () => {
   };
 
   it('renders inline titlebar layout without outer panel chrome', () => {
-    const { container } = render(<UrlBar {...defaultProps} />);
+    render(<UrlBar {...defaultProps} />);
 
     // Should not introduce its own panel framing when rendered in titlebar
-    const wrapper = container.firstChild as HTMLElement;
+    const wrapper = screen.getByTestId('url-bar');
     expect(wrapper).toHaveClass('min-w-0');
     expect(wrapper).not.toHaveClass('border-b');
     expect(wrapper).not.toHaveClass('bg-bg-surface');

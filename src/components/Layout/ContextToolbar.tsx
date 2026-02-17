@@ -53,7 +53,7 @@ export const ContextToolbar = ({ className }: ContextToolbarProps): React.JSX.El
             className={cn(
               'flex items-center justify-center w-7 h-7 rounded',
               'text-text-secondary hover:text-text-primary hover:bg-bg-raised',
-              'transition-colors',
+              'motion-safe:transition-colors motion-reduce:transition-none',
               focusRingClasses
             )}
             data-test-id="popout-button"
