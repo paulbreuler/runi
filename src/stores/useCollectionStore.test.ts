@@ -898,7 +898,11 @@ describe('useCollectionStore', () => {
       expect(result.current.isLoading).toBe(false);
       expect(emitSpy).toHaveBeenCalledWith(
         'request.saved-to-collection',
-        expect.objectContaining({ collectionId: 'col-1', requestId: 'req-saved' })
+        expect.objectContaining({
+          collection_id: 'col-1',
+          request_id: 'req-saved',
+          name: 'Saved Request',
+        })
       );
 
       emitSpy.mockRestore();
@@ -986,9 +990,9 @@ describe('useCollectionStore', () => {
       });
 
       expect(invoke).toHaveBeenCalledWith('cmd_move_request', {
-        sourceCollectionId: 'col-source',
-        requestId: 'req-1',
-        targetCollectionId: 'col-target',
+        source_collection_id: 'col-source',
+        request_id: 'req-1',
+        target_collection_id: 'col-target',
       });
       expect(returned).toBe(true);
 
@@ -1005,9 +1009,9 @@ describe('useCollectionStore', () => {
       expect(emitSpy).toHaveBeenCalledWith(
         'request.moved',
         expect.objectContaining({
-          requestId: 'req-1',
-          fromCollectionId: 'col-source',
-          toCollectionId: 'col-target',
+          request_id: 'req-1',
+          source_collection_id: 'col-source',
+          target_collection_id: 'col-target',
         })
       );
 
@@ -1105,9 +1109,9 @@ describe('useCollectionStore', () => {
       });
 
       expect(invoke).toHaveBeenCalledWith('cmd_copy_request_to_collection', {
-        sourceCollectionId: 'col-source',
-        requestId: 'req-1',
-        targetCollectionId: 'col-target',
+        source_collection_id: 'col-source',
+        request_id: 'req-1',
+        target_collection_id: 'col-target',
       });
       expect(returned).toBe(true);
 
@@ -1120,9 +1124,9 @@ describe('useCollectionStore', () => {
       expect(emitSpy).toHaveBeenCalledWith(
         'request.copied',
         expect.objectContaining({
-          requestId: 'req-1',
-          fromCollectionId: 'col-source',
-          toCollectionId: 'col-target',
+          source_request_id: 'req-1',
+          request_id: 'req-copy',
+          target_collection_id: 'col-target',
         })
       );
 

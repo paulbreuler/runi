@@ -443,9 +443,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
           : undefined;
 
       set((state) => ({
-        collections: state.collections
-          .map((c) => (c.id === collectionId ? collection : c))
-          .concat(state.collections.some((c) => c.id === collectionId) ? [] : [collection]),
+        collections: state.collections.map((c) => (c.id === collectionId ? collection : c)),
         summaries: state.summaries.map((s) =>
           s.id === collectionId ? { ...s, request_count: collection.requests.length } : s
         ),
@@ -456,8 +454,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       if (newRequest !== undefined) {
         const result = { collectionId, requestId: newRequest.id };
         globalEventBus.emit('request.saved-to-collection', {
-          collectionId: result.collectionId,
-          requestId: result.requestId,
+          collection_id: result.collectionId,
+          request_id: result.requestId,
+          name: request.name,
         });
         return result;
       }
@@ -477,9 +476,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const result = await invoke<{ from: Collection; to: Collection }>('cmd_move_request', {
-        sourceCollectionId,
-        requestId,
-        targetCollectionId,
+        source_collection_id: sourceCollectionId,
+        request_id: requestId,
+        target_collection_id: targetCollectionId,
       });
 
       const from = normalizeCollection(result.from);
@@ -508,9 +507,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }));
 
       globalEventBus.emit('request.moved', {
-        requestId,
-        fromCollectionId: sourceCollectionId,
-        toCollectionId: targetCollectionId,
+        request_id: requestId,
+        source_collection_id: sourceCollectionId,
+        target_collection_id: targetCollectionId,
       });
 
       return true;
@@ -529,11 +528,17 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     try {
       const targetCollection = normalizeCollection(
         await invoke<Collection>('cmd_copy_request_to_collection', {
-          sourceCollectionId,
-          requestId,
-          targetCollectionId,
+          source_collection_id: sourceCollectionId,
+          request_id: requestId,
+          target_collection_id: targetCollectionId,
         })
       );
+
+      // Find the newly copied request (last one by seq)
+      const copiedRequest =
+        targetCollection.requests.length > 0
+          ? targetCollection.requests.reduce((latest, r) => (r.seq > latest.seq ? r : latest))
+          : undefined;
 
       set((state) => ({
         collections: state.collections.map((c) =>
@@ -548,9 +553,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }));
 
       globalEventBus.emit('request.copied', {
-        requestId,
-        fromCollectionId: sourceCollectionId,
-        toCollectionId: targetCollectionId,
+        source_request_id: requestId,
+        request_id: copiedRequest?.id ?? '',
+        target_collection_id: targetCollectionId,
       });
 
       return true;

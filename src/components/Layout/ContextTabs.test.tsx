@@ -614,8 +614,7 @@ describe('ContextTabs - Visual Indicator', () => {
 
     render(<ContextTabs />);
 
-    const tab = screen.getByTestId('context-tab-request-eph-2');
-    const label = tab.querySelector('span');
+    const label = screen.getByTestId('context-tab-label-request-eph-2');
     expect(label).toHaveClass('italic');
   });
 

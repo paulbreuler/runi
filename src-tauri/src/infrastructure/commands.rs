@@ -1167,6 +1167,7 @@ pub async fn cmd_copy_request_to_collection(
         json!({
             "source_collection_id": &source_collection_id,
             "target_collection_id": &target_collection_id,
+            "source_request_id": &request_id,
             "request_id": &copy_id,
         }),
     );

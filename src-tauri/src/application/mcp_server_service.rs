@@ -966,6 +966,13 @@ impl McpServerService {
         Self::validate_collection_id(source_collection_id)?;
         Self::validate_collection_id(target_collection_id)?;
 
+        let mut source = load_collection_in_dir(source_collection_id, self.dir())?;
+        let pos = source
+            .requests
+            .iter()
+            .position(|r| r.id == request_id)
+            .ok_or_else(|| format!("Request not found: {request_id}"))?;
+
         if source_collection_id == target_collection_id {
             return Ok(ToolCallResult {
                 content: vec![ToolResponseContent::Text {
@@ -980,13 +987,6 @@ impl McpServerService {
                 is_error: false,
             });
         }
-
-        let mut source = load_collection_in_dir(source_collection_id, self.dir())?;
-        let pos = source
-            .requests
-            .iter()
-            .position(|r| r.id == request_id)
-            .ok_or_else(|| format!("Request not found: {request_id}"))?;
 
         let mut request = source
             .requests
@@ -1086,7 +1086,7 @@ impl McpServerService {
                 "source_collection_id": source_collection_id,
                 "target_collection_id": target_collection_id,
                 "source_request_id": request_id,
-                "copied_request_id": &copy_id,
+                "request_id": &copy_id,
             }),
         );
 

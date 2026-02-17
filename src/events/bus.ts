@@ -169,27 +169,27 @@ export interface CanvasPopoutClosedPayload {
  * Payload for request.saved-to-collection event.
  */
 export interface RequestSavedToCollectionPayload {
-  collectionId: string;
-  requestId: string;
+  collection_id: string;
+  request_id: string;
+  name: string;
 }
 
 /**
  * Payload for request.moved event.
  */
 export interface RequestMovedPayload {
-  requestId: string;
-  fromCollectionId: string;
-  toCollectionId: string;
+  request_id: string;
+  source_collection_id: string;
+  target_collection_id: string;
 }
 
 /**
  * Payload for request.copied event.
  */
 export interface RequestCopiedPayload {
-  sourceRequestId: string;
-  copiedRequestId: string;
-  fromCollectionId: string;
-  toCollectionId: string;
+  source_request_id: string;
+  request_id: string;
+  target_collection_id: string;
 }
 
 /**
