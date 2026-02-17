@@ -119,7 +119,7 @@ test.describe('Canvas Architecture', () => {
     const ariaLabel = await layoutPicker.getAttribute('aria-label');
     expect(ariaLabel).toBeTruthy();
     expect(ariaLabel).toMatch(/^Layout: /);
-    
+
     // Verify it has title attribute
     const title = await layoutPicker.getAttribute('title');
     expect(title).toBeTruthy();
