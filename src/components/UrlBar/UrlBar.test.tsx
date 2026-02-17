@@ -18,14 +18,15 @@ describe('UrlBar', () => {
     onSend: vi.fn(),
   };
 
-  it('renders inline titlebar layout without outer panel chrome', () => {
-    render(<UrlBar {...defaultProps} />);
+  it('renders with visible resting container', () => {
+    const { container } = render(<UrlBar {...defaultProps} />);
 
-    // Should not introduce its own panel framing when rendered in titlebar
-    const wrapper = screen.getByTestId('url-bar');
+    const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toHaveClass('min-w-0');
-    expect(wrapper).not.toHaveClass('border-b');
-    expect(wrapper).not.toHaveClass('bg-bg-surface');
+    expect(wrapper).toHaveClass('bg-bg-surface');
+    expect(wrapper).toHaveClass('border');
+    expect(wrapper).toHaveClass('border-border-subtle');
+    expect(wrapper).toHaveClass('rounded-lg');
   });
 
   it('renders method select with colored text only', () => {
@@ -93,12 +94,14 @@ describe('UrlBar', () => {
     // Send button uses composite focus item classes (no text-accent-blue on focus)
   });
 
-  it('renders send button with proper styling', () => {
+  it('renders send button with icon instead of text', () => {
     render(<UrlBar {...defaultProps} />);
 
     const sendButton = screen.getByTestId('send-button');
     expect(sendButton).toBeInTheDocument();
-    expect(sendButton).toHaveTextContent('Send');
+    // Send button uses an icon, not text
+    expect(sendButton).not.toHaveTextContent('Send');
+    expect(sendButton.querySelector('svg')).toBeInTheDocument();
     // Send button is a ghost button within the composite bar
     expect(sendButton).toHaveClass('text-text-muted');
   });
