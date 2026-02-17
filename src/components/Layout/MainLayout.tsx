@@ -158,7 +158,7 @@ export const MainLayout = ({
 
     const unsubNewRequest = globalEventBus.on('request.new', () => {
       const store = useCanvasStore.getState();
-      store.openRequestTab();
+      store.openRequestTab({ url: '' });
     });
 
     return (): void => {

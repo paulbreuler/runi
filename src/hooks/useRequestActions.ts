@@ -7,12 +7,12 @@
  * Extracted from HomePage to enable reuse across request contexts.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useLayoutEffect, useContext } from 'react';
 import { executeRequest } from '@/api/http';
 import { isAppError, type AppError } from '@/types/errors';
 import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
-import { useRequestStore } from '@/stores/useRequestStore';
+import { useRequestStore, RequestContextIdContext } from '@/stores/useRequestStore';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 export interface UseRequestActionsReturn {
@@ -36,6 +36,7 @@ export interface UseRequestActionsReturn {
  * Hook for request actions (send, method change, URL change)
  */
 export const useRequestActions = (): UseRequestActionsReturn => {
+  const contextId = useContext(RequestContextIdContext) ?? 'global';
   const { method, url, headers, body, isLoading, setMethod, setUrl, setResponse, setLoading } =
     useRequestStore();
 
@@ -44,11 +45,11 @@ export const useRequestActions = (): UseRequestActionsReturn => {
   const [localUrl, setLocalUrl] = useState(() => url);
   const [localMethod, setLocalMethod] = useState<HttpMethod>(() => method as HttpMethod);
 
-  // Sync local state with store on mount and when store changes
-  useEffect(() => {
+  // Keep local draft state aligned with active context before paint to avoid stale URL flashes.
+  useLayoutEffect(() => {
     setLocalUrl(url);
     setLocalMethod(method as HttpMethod);
-  }, [method, url]);
+  }, [contextId, method, url]);
 
   const isValidUrl = localUrl.length > 0;
 

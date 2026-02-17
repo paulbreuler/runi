@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ContextTabs } from './ContextTabs';
 import { useCanvasStore } from '@/stores/useCanvasStore';
@@ -12,6 +12,7 @@ import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useRequestStoreRaw } from '@/stores/useRequestStore';
 import { globalEventBus } from '@/events/bus';
 import type { CanvasContextDescriptor } from '@/types/canvas';
+import { requestContextDescriptor } from '@/contexts/RequestContext';
 
 describe('ContextTabs', () => {
   beforeEach(() => {
@@ -153,7 +154,6 @@ describe('ContextTabs', () => {
 
   it('keyboard navigation works with arrow keys', async () => {
     const { registerContext } = useCanvasStore.getState();
-    const user = userEvent.setup();
 
     registerContext({
       id: 'context-1',
@@ -176,11 +176,15 @@ describe('ContextTabs', () => {
     const tab2 = screen.getByTestId('context-tab-context-2');
 
     // Focus first tab
-    tab1.focus();
+    act(() => {
+      tab1.focus();
+    });
     expect(tab1).toHaveFocus();
 
     // Press right arrow
-    await user.keyboard('{ArrowRight}');
+    act(() => {
+      fireEvent.keyDown(tab1, { key: 'ArrowRight' });
+    });
 
     // Should focus second tab
     await waitFor(() => {
@@ -188,7 +192,9 @@ describe('ContextTabs', () => {
     });
 
     // Press left arrow
-    await user.keyboard('{ArrowLeft}');
+    act(() => {
+      fireEvent.keyDown(tab2, { key: 'ArrowLeft' });
+    });
 
     // Should focus first tab again
     await waitFor(() => {
@@ -226,6 +232,31 @@ describe('ContextTabs', () => {
     expect(useCanvasStore.getState().activeContextId).toBe('context-2');
   });
 
+  it('new request button opens and activates a fresh request context', async () => {
+    const user = userEvent.setup();
+    useRequestStoreRaw.setState({ contexts: {} });
+
+    const store = useCanvasStore.getState();
+    store.registerTemplate(requestContextDescriptor);
+    const firstId = store.openRequestTab({ url: 'https://api.example.com/first' });
+
+    render(<ContextTabs />);
+
+    await user.click(screen.getByTestId('context-tabs-new-request'));
+
+    const { contextOrder, activeContextId } = useCanvasStore.getState();
+    expect(contextOrder).toHaveLength(2);
+    expect(activeContextId).not.toBe(firstId);
+    expect(activeContextId?.startsWith('request-')).toBe(true);
+
+    if (activeContextId === null) {
+      throw new Error('Expected an active request context');
+    }
+
+    const newState = useRequestStoreRaw.getState().contexts[activeContextId];
+    expect(newState?.url).toBe('');
+  });
+
   it('scrolls active tab into view when active context changes', async () => {
     const { registerContext, setActiveContext } = useCanvasStore.getState();
     const scrollIntoViewSpy = vi
@@ -252,7 +283,9 @@ describe('ContextTabs', () => {
     // Clear mount-time calls before triggering the explicit context change.
     scrollIntoViewSpy.mockClear();
 
-    setActiveContext('context-2');
+    act(() => {
+      setActiveContext('context-2');
+    });
 
     await waitFor(() => {
       expect(scrollIntoViewSpy).toHaveBeenCalled();
@@ -730,7 +763,9 @@ describe('ContextTabs - Save Errors', () => {
 
     render(<ContextTabs />);
 
-    globalEventBus.emit('tab.save-requested', {});
+    act(() => {
+      globalEventBus.emit('tab.save-requested', {});
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('save-to-collection-dialog')).toBeInTheDocument();

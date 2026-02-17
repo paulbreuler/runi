@@ -1,7 +1,9 @@
+import React from 'react';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useRequestActions } from './useRequestActions';
 import {
+  RequestContextIdContext,
   useRequestStoreRaw,
   type RequestContextState,
   type RequestStore,
@@ -231,8 +233,9 @@ describe('useRequestActions', () => {
     const { result } = renderHook(() => useRequestActions());
 
     // Start first request (don't await)
-    const firstRequest = act(async () => {
-      await result.current.handleSend();
+    let firstRequest: Promise<void> | undefined;
+    act(() => {
+      firstRequest = result.current.handleSend();
     });
 
     // Wait for loading state to be set
@@ -250,7 +253,9 @@ describe('useRequestActions', () => {
 
     // Resolve the pending request
     resolveRequest!();
-    await firstRequest;
+    await act(async () => {
+      await firstRequest;
+    });
   });
 
   it('handleSend clears response before executing', async () => {
@@ -318,5 +323,43 @@ describe('useRequestActions', () => {
 
     expect(result.current.localUrl).toBe('https://test.com');
     expect(result.current.localMethod).toBe('PUT');
+  });
+
+  it('resets local URL when context changes even if store values are identical', () => {
+    // Two distinct contexts with identical persisted values.
+    getActions().initContext('request-a', {
+      url: 'https://httpbin.org/get',
+      method: 'GET',
+      headers: {},
+      body: '',
+      response: null,
+      isLoading: false,
+    });
+    getActions().initContext('request-b', {
+      url: 'https://httpbin.org/get',
+      method: 'GET',
+      headers: {},
+      body: '',
+      response: null,
+      isLoading: false,
+    });
+
+    let activeContextId = 'request-a';
+    const wrapper = ({ children }: { children: React.ReactNode }): React.JSX.Element =>
+      React.createElement(RequestContextIdContext.Provider, { value: activeContextId }, children);
+
+    const { result, rerender } = renderHook(() => useRequestActions(), { wrapper });
+
+    // Local draft diverges from store value in context A.
+    act(() => {
+      result.current.handleUrlChange('https://draft.local/unsent');
+    });
+    expect(result.current.localUrl).toBe('https://draft.local/unsent');
+
+    // Switch to context B (same method/url in store): local draft must reset.
+    activeContextId = 'request-b';
+    rerender();
+
+    expect(result.current.localUrl).toBe('https://httpbin.org/get');
   });
 });
