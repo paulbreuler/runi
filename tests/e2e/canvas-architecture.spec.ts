@@ -44,14 +44,14 @@ test.describe('Canvas Architecture', () => {
     await expect(urlBar).toBeVisible();
 
     // Verify ActionButtons visible
-    const testButton = page.locator('[data-test-id="action-test"]');
-    await expect(testButton).toBeVisible();
-
     const codeButton = page.locator('[data-test-id="action-code"]');
     await expect(codeButton).toBeVisible();
 
     const saveButton = page.locator('[data-test-id="action-save"]');
     await expect(saveButton).toBeVisible();
+
+    const historyButton = page.locator('[data-test-id="action-history"]');
+    await expect(historyButton).toBeVisible();
   });
 
   test.skip('Settings toggle', async ({ page }) => {
