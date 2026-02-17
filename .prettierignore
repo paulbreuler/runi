@@ -19,6 +19,9 @@ pnpm-lock.yaml
 .vscode/
 .idea/
 
+# Claude Code local settings (gitignored, not committable)
+.claude/settings.local.json
+
 # Cursor files (plans, reports, etc.)
 # Note: .cursor/**/*.md files are explicitly included in docs-review job
 # Only ignore non-markdown files and specific subdirectories
