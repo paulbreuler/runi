@@ -321,7 +321,8 @@ describe('ContextToolbar', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('url-input').value).toBe('https://api.example.com/b');
+      const activeUrlInput = screen.getByTestId('url-input');
+      expect(activeUrlInput.value).toBe('https://api.example.com/b');
     });
   });
 
