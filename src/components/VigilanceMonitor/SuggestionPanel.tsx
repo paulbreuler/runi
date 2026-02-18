@@ -28,6 +28,8 @@ interface SuggestionPanelProps {
   onDismiss: (id: string) => void;
   /** Callback when a suggestion's context link is clicked. */
   onNavigate?: (suggestion: Suggestion) => void;
+  /** Backend error message, if any. */
+  error?: string | null;
   /** Additional CSS classes. */
   className?: string;
 }
@@ -219,6 +221,7 @@ export const SuggestionPanel = ({
   onAccept,
   onDismiss,
   onNavigate,
+  error,
   className,
 }: SuggestionPanelProps): React.JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
@@ -250,6 +253,17 @@ export const SuggestionPanel = ({
           )}
         </div>
       </div>
+
+      {/* Error banner */}
+      {error !== null && error !== undefined && (
+        <div
+          className="mx-2 mt-2 px-2.5 py-1.5 text-[10px] font-mono text-signal-error bg-signal-error/10 border border-signal-error/20 rounded"
+          data-test-id="suggestion-error"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Suggestion list */}
       <div

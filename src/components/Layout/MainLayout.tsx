@@ -98,6 +98,7 @@ export const MainLayout = ({
   const { entries } = useHistoryStore();
   const activityEntries = useActivityStore((s) => s.entries);
   const suggestions = useSuggestionStore((s) => s.suggestions);
+  const suggestionError = useSuggestionStore((s) => s.error);
   const resolveSuggestion = useSuggestionStore((s) => s.resolveSuggestion);
   const pendingCount = useSuggestionStore(
     (s) => s.suggestions.filter((sg) => sg.status === 'pending').length
@@ -433,13 +434,20 @@ export const MainLayout = ({
     () => (
       <SuggestionPanel
         suggestions={suggestions}
+        error={suggestionError}
         onAccept={handleSuggestionAccept}
         onDismiss={handleSuggestionDismiss}
         onNavigate={handleSuggestionNavigate}
         className="h-full"
       />
     ),
-    [suggestions, handleSuggestionAccept, handleSuggestionDismiss, handleSuggestionNavigate]
+    [
+      suggestions,
+      suggestionError,
+      handleSuggestionAccept,
+      handleSuggestionDismiss,
+      handleSuggestionNavigate,
+    ]
   );
 
   const isSidebarOverlay = sidebarVisible && isCompact;

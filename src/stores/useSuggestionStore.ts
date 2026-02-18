@@ -52,9 +52,11 @@ export const useSuggestionStore = create<SuggestionState>((set, get) => ({
   fetchSuggestions: async (status?: SuggestionStatus): Promise<void> => {
     set({ loading: true, error: null });
     try {
+      console.warn('[Suggestions] Fetching suggestions…', { status: status ?? null });
       const suggestions = await invoke<Suggestion[]>('cmd_list_suggestions', {
         status: status ?? null,
       });
+      console.warn('[Suggestions] Loaded', suggestions.length, 'suggestions');
       set({ suggestions, loaded: true, loading: false });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -143,10 +145,12 @@ export async function initSuggestionStore(): Promise<() => void> {
   // Listen for backend-driven creates and resolves (MCP tools, other commands)
   try {
     createdUnlisten = await listen<EventEnvelope<Suggestion>>('suggestion:created', (event) => {
+      console.warn('[Suggestions] Event suggestion:created', event.payload);
       useSuggestionStore.getState().addSuggestion(event.payload.payload);
     });
 
     resolvedUnlisten = await listen<EventEnvelope<Suggestion>>('suggestion:resolved', (event) => {
+      console.warn('[Suggestions] Event suggestion:resolved', event.payload);
       useSuggestionStore.getState().updateSuggestion(event.payload.payload);
     });
   } catch (err: unknown) {

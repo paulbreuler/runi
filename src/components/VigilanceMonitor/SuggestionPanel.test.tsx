@@ -190,4 +190,17 @@ describe('SuggestionPanel', () => {
       'Accept suggestion: Schema drift on GET /users'
     );
   });
+
+  it('displays error banner when error is set', () => {
+    render(<SuggestionPanel {...defaultProps} error="Failed to fetch suggestions" />);
+    const errorBanner = screen.getByTestId('suggestion-error');
+    expect(errorBanner).toBeDefined();
+    expect(errorBanner.textContent).toBe('Failed to fetch suggestions');
+    expect(errorBanner.getAttribute('role')).toBe('alert');
+  });
+
+  it('does not display error banner when error is null', () => {
+    render(<SuggestionPanel {...defaultProps} error={null} />);
+    expect(screen.queryByTestId('suggestion-error')).toBeNull();
+  });
 });

@@ -23,7 +23,7 @@ use crate::domain::collection::{
 };
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
-use crate::domain::mcp::events::{Actor, EventEmitter};
+use crate::domain::mcp::events::{Actor, EventEmitter, EventEnvelope};
 use crate::domain::models::HelloWorldResponse;
 use crate::infrastructure::git::GitCliAdapter;
 use crate::infrastructure::mcp::events::TauriEventEmitter;
@@ -2066,10 +2066,18 @@ pub async fn cmd_update_project_context(
 ) -> Result<crate::domain::project_context::ProjectContext, String> {
     let ctx = ctx_svc.update_context(&update)?;
 
-    // Emit context:updated event for frontend sync
+    // Emit context:updated event for frontend sync (wrapped in EventEnvelope)
     let payload =
         serde_json::to_value(&ctx).map_err(|e| format!("Failed to serialize context: {e}"))?;
-    if let Err(e) = app.emit("context:updated", &payload) {
+    let envelope = EventEnvelope {
+        actor: Actor::User,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        correlation_id: None,
+        lamport: None,
+        payload,
+    };
+    let envelope_value = serde_json::to_value(&envelope).unwrap_or_else(|_| serde_json::json!({}));
+    if let Err(e) = app.emit("context:updated", &envelope_value) {
         tracing::warn!("Failed to emit context:updated event: {e}");
     }
 
@@ -2132,10 +2140,18 @@ pub async fn cmd_create_suggestion(
 ) -> Result<crate::domain::suggestion::Suggestion, String> {
     let suggestion = svc.create_suggestion(&request)?;
 
-    // Emit suggestion:created event for frontend sync
+    // Emit suggestion:created event for frontend sync (wrapped in EventEnvelope)
     let payload = serde_json::to_value(&suggestion)
         .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
-    if let Err(e) = app.emit("suggestion:created", &payload) {
+    let envelope = EventEnvelope {
+        actor: Actor::User,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        correlation_id: None,
+        lamport: None,
+        payload,
+    };
+    let envelope_value = serde_json::to_value(&envelope).unwrap_or_else(|_| serde_json::json!({}));
+    if let Err(e) = app.emit("suggestion:created", &envelope_value) {
         tracing::warn!("Failed to emit suggestion:created event: {e}");
     }
 
@@ -2162,10 +2178,18 @@ pub async fn cmd_resolve_suggestion(
 
     let suggestion = svc.resolve_suggestion(&id, status_enum)?;
 
-    // Emit suggestion:resolved event for frontend sync
+    // Emit suggestion:resolved event for frontend sync (wrapped in EventEnvelope)
     let payload = serde_json::to_value(&suggestion)
         .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
-    if let Err(e) = app.emit("suggestion:resolved", &payload) {
+    let envelope = EventEnvelope {
+        actor: Actor::User,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        correlation_id: None,
+        lamport: None,
+        payload,
+    };
+    let envelope_value = serde_json::to_value(&envelope).unwrap_or_else(|_| serde_json::json!({}));
+    if let Err(e) = app.emit("suggestion:resolved", &envelope_value) {
         tracing::warn!("Failed to emit suggestion:resolved event: {e}");
     }
 
