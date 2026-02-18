@@ -320,7 +320,7 @@ async fn handle_open_collection_request(
 
     // Emit Tauri event if app handle is available
     if let Some(app) = app_handle {
-        let envelope = canvas_event_envelope(request_data.clone());
+        let envelope = ai_event_envelope(request_data.clone());
         if let Err(e) = app.emit("canvas:open_collection_request", envelope) {
             tracing::warn!("Failed to emit canvas:open_collection_request event: {e}");
         }
@@ -643,12 +643,12 @@ async fn handle_canvas_tool(
     }
 }
 
-/// Construct an `EventEnvelope` with AI actor provenance for canvas events.
+/// Construct an `EventEnvelope` with AI actor provenance for MCP-driven events.
 ///
-/// Canvas mutation tools emit events attributed to AI (via MCP), enabling
-/// the frontend to distinguish AI actions from user actions and gate viewport
-/// navigation based on Follow AI mode.
-fn canvas_event_envelope(payload: serde_json::Value) -> serde_json::Value {
+/// MCP tool calls emit events attributed to AI, enabling the frontend to
+/// distinguish AI actions from user actions and gate viewport navigation
+/// based on Follow AI mode.
+fn ai_event_envelope(payload: serde_json::Value) -> serde_json::Value {
     let envelope = EventEnvelope {
         actor: Actor::Ai {
             model: None,
@@ -733,7 +733,7 @@ fn handle_canvas_switch_tab(
         .ok_or_else(|| "Missing required parameter: tab_id".to_string())?;
 
     // Emit event to frontend with AI actor provenance
-    let envelope = canvas_event_envelope(json!({"contextId": tab_id}));
+    let envelope = ai_event_envelope(json!({"contextId": tab_id}));
     app.emit("canvas:switch_tab", envelope)
         .map_err(|e| format!("Failed to emit canvas:switch_tab event: {e}"))?;
 
@@ -760,7 +760,7 @@ fn handle_canvas_open_request_tab(
         .unwrap_or("Request");
 
     // Emit event to frontend with AI actor provenance
-    let envelope = canvas_event_envelope(json!({"label": label}));
+    let envelope = ai_event_envelope(json!({"label": label}));
     app.emit("canvas:open_request_tab", envelope)
         .map_err(|e| format!("Failed to emit canvas:open_request_tab event: {e}"))?;
 
@@ -787,7 +787,7 @@ fn handle_canvas_close_tab(
         .ok_or_else(|| "Missing required parameter: tab_id".to_string())?;
 
     // Emit event to frontend with AI actor provenance
-    let envelope = canvas_event_envelope(json!({"contextId": tab_id}));
+    let envelope = ai_event_envelope(json!({"contextId": tab_id}));
     app.emit("canvas:close_tab", envelope)
         .map_err(|e| format!("Failed to emit canvas:close_tab event: {e}"))?;
 
@@ -910,11 +910,12 @@ fn handle_set_project_context(
 
     let ctx = ctx_svc.update_context(&update)?;
 
-    // Emit context:updated Tauri event for frontend sync
+    // Emit context:updated Tauri event for frontend sync (wrapped in EventEnvelope)
     if let Some(handle) = app_handle {
         let payload =
             serde_json::to_value(&ctx).map_err(|e| format!("Failed to serialize context: {e}"))?;
-        if let Err(e) = handle.emit("context:updated", &payload) {
+        let envelope = ai_event_envelope(payload);
+        if let Err(e) = handle.emit("context:updated", &envelope) {
             tracing::warn!("Failed to emit context:updated event: {e}");
         }
     }
@@ -1020,11 +1021,12 @@ fn handle_create_suggestion(
 
     let suggestion = svc.create_suggestion(&req)?;
 
-    // Emit suggestion:created Tauri event for frontend sync
+    // Emit suggestion:created Tauri event for frontend sync (wrapped in EventEnvelope)
     if let Some(handle) = app_handle {
         let payload = serde_json::to_value(&suggestion)
             .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
-        if let Err(e) = handle.emit("suggestion:created", &payload) {
+        let envelope = ai_event_envelope(payload);
+        if let Err(e) = handle.emit("suggestion:created", &envelope) {
             tracing::warn!("Failed to emit suggestion:created event: {e}");
         }
     }
@@ -1062,11 +1064,12 @@ fn handle_resolve_suggestion(
 
     let suggestion = svc.resolve_suggestion(id, status)?;
 
-    // Emit suggestion:resolved Tauri event for frontend sync
+    // Emit suggestion:resolved Tauri event for frontend sync (wrapped in EventEnvelope)
     if let Some(handle) = app_handle {
         let payload = serde_json::to_value(&suggestion)
             .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
-        if let Err(e) = handle.emit("suggestion:resolved", &payload) {
+        let envelope = ai_event_envelope(payload);
+        if let Err(e) = handle.emit("suggestion:resolved", &envelope) {
             tracing::warn!("Failed to emit suggestion:resolved event: {e}");
         }
     }
@@ -1801,11 +1804,11 @@ mod tests {
     }
 
     #[test]
-    fn test_canvas_event_envelope_produces_ai_actor() {
+    fn test_ai_event_envelope_produces_ai_actor() {
         use crate::domain::mcp::events::{Actor, EventEnvelope};
 
         let payload = json!({"contextId": "tab_1"});
-        let envelope_value = canvas_event_envelope(payload.clone());
+        let envelope_value = ai_event_envelope(payload.clone());
 
         let envelope: EventEnvelope = serde_json::from_value(envelope_value).unwrap();
 

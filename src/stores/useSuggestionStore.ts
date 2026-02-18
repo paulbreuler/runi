@@ -17,6 +17,7 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import type { Suggestion } from '@/types/generated/Suggestion';
 import type { SuggestionStatus } from '@/types/generated/SuggestionStatus';
 import type { CreateSuggestionRequest } from '@/types/generated/CreateSuggestionRequest';
+import type { EventEnvelope } from '@/hooks/useCollectionEvents';
 
 interface SuggestionState {
   /** All loaded suggestions. */
@@ -141,12 +142,12 @@ export async function initSuggestionStore(): Promise<() => void> {
 
   // Listen for backend-driven creates and resolves (MCP tools, other commands)
   try {
-    createdUnlisten = await listen<Suggestion>('suggestion:created', (event) => {
-      useSuggestionStore.getState().addSuggestion(event.payload);
+    createdUnlisten = await listen<EventEnvelope<Suggestion>>('suggestion:created', (event) => {
+      useSuggestionStore.getState().addSuggestion(event.payload.payload);
     });
 
-    resolvedUnlisten = await listen<Suggestion>('suggestion:resolved', (event) => {
-      useSuggestionStore.getState().updateSuggestion(event.payload);
+    resolvedUnlisten = await listen<EventEnvelope<Suggestion>>('suggestion:resolved', (event) => {
+      useSuggestionStore.getState().updateSuggestion(event.payload.payload);
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

@@ -17,6 +17,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import type { ProjectContext } from '@/types/generated/ProjectContext';
 import type { ProjectContextUpdate } from '@/types/generated/ProjectContextUpdate';
+import type { EventEnvelope } from '@/hooks/useCollectionEvents';
 
 interface ProjectContextState {
   /** The current project context from the backend. */
@@ -112,9 +113,12 @@ export async function initProjectContext(): Promise<() => void> {
 
   try {
     // Register listener BEFORE fetch so no events are missed during the async call
-    contextEventUnlisten = await listen<ProjectContext>('context:updated', (event) => {
-      useProjectContextStore.getState().setContext(event.payload);
-    });
+    contextEventUnlisten = await listen<EventEnvelope<ProjectContext>>(
+      'context:updated',
+      (event) => {
+        useProjectContextStore.getState().setContext(event.payload.payload);
+      }
+    );
 
     // Fetch initial state
     await useProjectContextStore.getState().fetchContext();
