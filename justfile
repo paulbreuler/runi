@@ -194,7 +194,7 @@ storybook-serve: storybook-build
 ci: fmt-check lint check test test-e2e docs-check
     @echo "✅ All CI checks passed!"
 
-# Run CI pipeline without E2E tests (E2E requires a running Tauri app)
+# Run CI pipeline without E2E tests (E2E starts its own Vite dev server via Playwright webServer config)
 ci-no-e2e: fmt-check lint check test docs-check
     @echo "✅ CI checks passed (E2E skipped)!"
 

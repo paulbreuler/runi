@@ -6,5 +6,5 @@ if [ "$DOCS_ONLY" = "true" ]; then
   just ci-no-test
 else
   echo "🔍 Code changes detected, running full CI pipeline..."
-  just ci-no-e2e
+  just ci
 fi
