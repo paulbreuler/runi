@@ -139,15 +139,19 @@ export async function initSuggestionStore(): Promise<() => void> {
   // Fetch initial state
   await useSuggestionStore.getState().fetchSuggestions();
 
-  // Listen for backend-driven creates (MCP tools, other commands)
-  createdUnlisten = await listen<Suggestion>('suggestion:created', (event) => {
-    useSuggestionStore.getState().addSuggestion(event.payload);
-  });
+  // Listen for backend-driven creates and resolves (MCP tools, other commands)
+  try {
+    createdUnlisten = await listen<Suggestion>('suggestion:created', (event) => {
+      useSuggestionStore.getState().addSuggestion(event.payload);
+    });
 
-  // Listen for backend-driven resolves
-  resolvedUnlisten = await listen<Suggestion>('suggestion:resolved', (event) => {
-    useSuggestionStore.getState().updateSuggestion(event.payload);
-  });
+    resolvedUnlisten = await listen<Suggestion>('suggestion:resolved', (event) => {
+      useSuggestionStore.getState().updateSuggestion(event.payload);
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    useSuggestionStore.setState({ error: message });
+  }
 
   return (): void => {
     if (createdUnlisten !== null) {

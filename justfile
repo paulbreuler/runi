@@ -158,6 +158,10 @@ test-frontend: ensure-deps
 test-e2e:
     npx playwright test
 
+# Run MCP integration tests (requires running app: just dev)
+test-integration:
+    npx vitest run --config vitest.config.integration.ts
+
 # Install Playwright browsers (needed for CI)
 test-e2e-install:
     npx playwright install --with-deps chromium
@@ -189,6 +193,10 @@ storybook-serve: storybook-build
 # Runs full CI suite: formatting, linting, unit tests, E2E tests, and docs checks
 ci: fmt-check lint check test test-e2e docs-check
     @echo "✅ All CI checks passed!"
+
+# Run CI pipeline without E2E tests (E2E requires a running Tauri app)
+ci-no-e2e: fmt-check lint check test docs-check
+    @echo "✅ CI checks passed (E2E skipped)!"
 
 # Run CI pipeline without tests (for documentation-only changes)
 ci-no-test: fmt-check lint check docs-check

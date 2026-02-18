@@ -78,12 +78,15 @@ export const useProjectContextStore = create<ProjectContextState>((set) => ({
   },
 
   setContext: (context: ProjectContext): void => {
-    set({ context, loaded: true });
+    set({ context, loaded: true, error: null });
   },
 }));
 
 /** Unlisten handle for cleanup. */
 let contextEventUnlisten: UnlistenFn | null = null;
+
+/** Guard against concurrent initialisation attempts. */
+let initInProgress = false;
 
 /**
  * Initialize the project context store.
@@ -95,19 +98,29 @@ let contextEventUnlisten: UnlistenFn | null = null;
  * Returns a cleanup function that removes the event listener.
  */
 export async function initProjectContext(): Promise<() => void> {
+  if (initInProgress) {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- no-op cleanup for concurrent calls
+    return (): void => {};
+  }
+  initInProgress = true;
+
   // Clean up any previous listener to prevent leaks on re-init
   if (contextEventUnlisten !== null) {
     contextEventUnlisten();
     contextEventUnlisten = null;
   }
 
-  // Fetch initial state
-  await useProjectContextStore.getState().fetchContext();
+  try {
+    // Register listener BEFORE fetch so no events are missed during the async call
+    contextEventUnlisten = await listen<ProjectContext>('context:updated', (event) => {
+      useProjectContextStore.getState().setContext(event.payload);
+    });
 
-  // Listen for backend-driven updates (MCP tools, other commands)
-  contextEventUnlisten = await listen<ProjectContext>('context:updated', (event) => {
-    useProjectContextStore.getState().setContext(event.payload);
-  });
+    // Fetch initial state
+    await useProjectContextStore.getState().fetchContext();
+  } finally {
+    initInProgress = false;
+  }
 
   return (): void => {
     if (contextEventUnlisten !== null) {

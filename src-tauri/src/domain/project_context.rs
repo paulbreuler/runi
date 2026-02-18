@@ -7,7 +7,7 @@
 //! investigation notes, and recent activity — so that MCP tools and AI agents
 //! can understand what the user is working on across sessions.
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use ts_rs::TS;
 
 /// Maximum number of recent request IDs to retain.
@@ -76,10 +76,14 @@ impl Default for ProjectContext {
 #[serde(rename_all = "camelCase")]
 pub struct ProjectContextUpdate {
     /// Update the active collection ID.
+    /// JSON `null` → `Some(None)` (clear), absent → `None` (skip).
+    #[serde(default, deserialize_with = "double_option")]
     pub active_collection_id: Option<Option<String>>,
     /// Update the active request ID.
+    #[serde(default, deserialize_with = "double_option")]
     pub active_request_id: Option<Option<String>>,
     /// Update the investigation notes.
+    #[serde(default, deserialize_with = "double_option")]
     pub investigation_notes: Option<Option<String>>,
     /// Append a request ID to the recent list.
     pub push_recent_request_id: Option<String>,
@@ -106,6 +110,23 @@ impl ProjectContextUpdate {
             ctx.tags.clone_from(tags);
         }
     }
+}
+
+/// Deserialize `Option<Option<T>>` so that JSON `null` becomes `Some(None)`.
+///
+/// By default serde maps both absent fields and `null` to `None`.
+/// This helper (from <https://github.com/serde-rs/serde/issues/1042>)
+/// wraps the deserialized value in `Some`, giving three states:
+/// - absent → `None` (skip / no change)
+/// - `null`  → `Some(None)` (clear the field)
+/// - value   → `Some(Some(value))` (set the field)
+#[allow(clippy::option_option)]
+fn double_option<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    Deserialize::deserialize(deserializer).map(Some)
 }
 
 #[cfg(test)]
@@ -242,5 +263,23 @@ mod tests {
         assert_eq!(ctx.investigation_notes, Some("testing".to_string()));
         assert_eq!(ctx.recent_request_ids, vec!["req-1"]);
         assert_eq!(ctx.tags, vec!["auth"]);
+    }
+
+    #[test]
+    fn test_update_deserialization_null_becomes_some_none() {
+        // JSON null should become Some(None) = "clear the field"
+        let json = r#"{"activeCollectionId": null}"#;
+        let update: ProjectContextUpdate = serde_json::from_str(json).unwrap();
+        assert_eq!(update.active_collection_id, Some(None));
+        // Absent fields should be None = "skip / no change"
+        assert_eq!(update.active_request_id, None);
+        assert_eq!(update.investigation_notes, None);
+    }
+
+    #[test]
+    fn test_update_deserialization_value_becomes_some_some() {
+        let json = r#"{"activeCollectionId": "col-1"}"#;
+        let update: ProjectContextUpdate = serde_json::from_str(json).unwrap();
+        assert_eq!(update.active_collection_id, Some(Some("col-1".to_string())));
     }
 }

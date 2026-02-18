@@ -312,7 +312,7 @@ impl SseBroadcaster {
     ///
     /// Returns the number of subscribers that received the event.
     /// Automatically removes closed subscriptions.
-    #[allow(dead_code)]
+    #[allow(dead_code)] // TODO: not yet called — will be wired from suggestion/context event handlers
     #[allow(clippy::significant_drop_tightening)]
     pub async fn broadcast_to_topic(&self, event: SseEvent) -> usize {
         let mut closed_ids = Vec::new();

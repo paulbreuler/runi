@@ -221,6 +221,7 @@ export const SuggestionPanel = ({
   onNavigate,
   className,
 }: SuggestionPanelProps): React.JSX.Element => {
+  const prefersReducedMotion = useReducedMotion();
   const pendingCount = suggestions.filter((s) => s.status === 'pending').length;
 
   return (
@@ -261,8 +262,9 @@ export const SuggestionPanel = ({
           {suggestions.length === 0 ? (
             <motion.div
               key="empty"
-              initial={{ opacity: 0 }}
+              initial={prefersReducedMotion === true ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
+              transition={prefersReducedMotion === true ? { duration: 0 } : { duration: 0.2 }}
               className="flex flex-col items-center justify-center py-8 text-center"
               data-test-id="suggestion-empty-state"
               role="listitem"

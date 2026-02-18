@@ -6,6 +6,5 @@ if [ "$DOCS_ONLY" = "true" ]; then
   just ci-no-test
 else
   echo "🔍 Code changes detected, running full CI pipeline..."
-  # E2E tests require a running Tauri app; they run in CI via a separate job.
-  just fmt-check lint check test docs-check
+  just ci-no-e2e
 fi
