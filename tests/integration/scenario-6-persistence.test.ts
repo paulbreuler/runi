@@ -31,19 +31,21 @@ describe('Scenario 6: Persistence Across Sessions', () => {
     const clientA = new McpClient();
     await clientA.initialize();
 
-    const result = await clientA.callTool<Suggestion>('create_suggestion', {
-      suggestionType: 'schema_update',
-      title: 'Persistence test suggestion',
-      description: 'Created in session A, should survive to session B',
-      source: 'persistence-test-s6',
-      action: 'Verify persistence',
-    });
+    try {
+      const result = await clientA.callTool<Suggestion>('create_suggestion', {
+        suggestionType: 'schema_update',
+        title: 'Persistence test suggestion',
+        description: 'Created in session A, should survive to session B',
+        source: 'persistence-test-s6',
+        action: 'Verify persistence',
+      });
 
-    expect(result.isError).toBeFalsy();
-    sessionASuggestionId = result.parsed.id;
-    expect(sessionASuggestionId).toBeTruthy();
-
-    await clientA.deleteSession();
+      expect(result.isError).toBeFalsy();
+      sessionASuggestionId = result.parsed!.id;
+      expect(sessionASuggestionId).toBeTruthy();
+    } finally {
+      await clientA.deleteSession();
+    }
   });
 
   it('Session B: verify suggestion persists from Session A', async () => {
@@ -52,7 +54,7 @@ describe('Scenario 6: Persistence Across Sessions', () => {
 
     try {
       const suggestions = await clientB.callTool<Suggestion[]>('list_suggestions');
-      const found = suggestions.parsed.find((s) => s.id === sessionASuggestionId);
+      const found = suggestions.parsed!.find((s) => s.id === sessionASuggestionId);
 
       expect(found).toBeTruthy();
       expect(found!.title).toBe('Persistence test suggestion');

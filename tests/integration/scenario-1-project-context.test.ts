@@ -40,10 +40,10 @@ describe('Scenario 1: Project Context Lifecycle', () => {
     const result = await client.callTool<ProjectContext>('get_project_context');
 
     expect(result.isError).toBeFalsy();
-    expect(result.parsed.activeCollectionId).toBeNull();
-    expect(result.parsed.activeRequestId).toBeNull();
-    expect(result.parsed.investigationNotes).toBeNull();
-    expect(result.parsed.tags).toEqual([]);
+    expect(result.parsed!.activeCollectionId).toBeNull();
+    expect(result.parsed!.activeRequestId).toBeNull();
+    expect(result.parsed!.investigationNotes).toBeNull();
+    expect(result.parsed!.tags).toEqual([]);
   });
 
   it('set_project_context with activeCollectionId and tags', async () => {
@@ -53,10 +53,10 @@ describe('Scenario 1: Project Context Lifecycle', () => {
     });
 
     expect(setResult.isError).toBeFalsy();
-    expect(setResult.parsed.activeCollectionId).toBe('col-s1-test');
-    expect(setResult.parsed.tags).toEqual(['auth', 'beta']);
-    expect(setResult.parsed.activeRequestId).toBeNull();
-    expect(setResult.parsed.investigationNotes).toBeNull();
+    expect(setResult.parsed!.activeCollectionId).toBe('col-s1-test');
+    expect(setResult.parsed!.tags).toEqual(['auth', 'beta']);
+    expect(setResult.parsed!.activeRequestId).toBeNull();
+    expect(setResult.parsed!.investigationNotes).toBeNull();
   });
 
   it('set_project_context preserves prior fields on partial update', async () => {
@@ -67,10 +67,10 @@ describe('Scenario 1: Project Context Lifecycle', () => {
 
     const result = await client.callTool<ProjectContext>('get_project_context');
 
-    expect(result.parsed.activeCollectionId).toBe('col-s1-test');
-    expect(result.parsed.tags).toEqual(['auth', 'beta']);
-    expect(result.parsed.investigationNotes).toBe('Investigating auth flow');
-    expect(result.parsed.recentRequestIds).toContain('req-s1-abc');
+    expect(result.parsed!.activeCollectionId).toBe('col-s1-test');
+    expect(result.parsed!.tags).toEqual(['auth', 'beta']);
+    expect(result.parsed!.investigationNotes).toBe('Investigating auth flow');
+    expect(result.parsed!.recentRequestIds).toContain('req-s1-abc');
   });
 
   it('set_project_context with null clears field, rest preserved', async () => {
@@ -80,9 +80,9 @@ describe('Scenario 1: Project Context Lifecycle', () => {
 
     const result = await client.callTool<ProjectContext>('get_project_context');
 
-    expect(result.parsed.activeCollectionId).toBeNull();
-    expect(result.parsed.investigationNotes).toBe('Investigating auth flow');
-    expect(result.parsed.tags).toEqual(['auth', 'beta']);
-    expect(result.parsed.recentRequestIds).toContain('req-s1-abc');
+    expect(result.parsed!.activeCollectionId).toBeNull();
+    expect(result.parsed!.investigationNotes).toBe('Investigating auth flow');
+    expect(result.parsed!.tags).toEqual(['auth', 'beta']);
+    expect(result.parsed!.recentRequestIds).toContain('req-s1-abc');
   });
 });

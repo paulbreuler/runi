@@ -16,6 +16,7 @@ const LAYER_LABELS: Record<keyof FeatureFlags, string> = {
   canvas: 'Spatial Canvas',
   comprehension: 'Comprehension',
   ai: 'AI-Native',
+  intent: 'Intent',
   debug: 'Debug',
 };
 

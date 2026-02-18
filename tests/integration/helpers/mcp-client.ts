@@ -24,8 +24,8 @@ interface JsonRpcResponse {
 interface ToolResult<T = unknown> {
   content: Array<{ type: string; text: string }>;
   isError?: boolean;
-  /** Parsed JSON from content[0].text */
-  parsed: T;
+  /** Parsed JSON from content[0].text, or null if content is empty. */
+  parsed: T | null;
 }
 
 interface SseEvent {
@@ -100,6 +100,7 @@ export class McpClient {
     }
 
     const result = rpc.result as ToolResult<T>;
+    result.parsed = null; // explicit default; set below if content is present
     // Parse the double-encoded JSON in content[0].text
     if (result.content?.[0]?.text) {
       try {

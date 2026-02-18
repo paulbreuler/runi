@@ -3,7 +3,7 @@
  * @description Storybook stories for the standalone drift action card component.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { DriftActionCard, type DriftActionCardProps } from './DriftActionCard';
@@ -112,6 +112,11 @@ export const Playground: Story = {
   render: function PlaygroundStory(args) {
     const [resolved, setResolved] = useState(args.resolved ?? false);
 
+    // Sync resolved state when the Storybook control changes
+    useEffect(() => {
+      setResolved(args.resolved ?? false);
+    }, [args.resolved]);
+
     return (
       <div className="max-w-lg">
         <DriftActionCard
@@ -142,8 +147,11 @@ export const Playground: Story = {
     });
 
     await step('Tab to first action button', async () => {
-      await userEvent.tab(); // focuses the card container (tabIndex=0)
-      await userEvent.tab(); // focuses the first action button
+      // Anchor focus explicitly on the card rather than relying on tab order
+      // from an indeterminate document position
+      canvas.getByTestId('drift-action-card').focus();
+      await expect(canvas.getByTestId('drift-action-card')).toHaveFocus();
+      await userEvent.tab(); // tab from card container to first action button
       const updateBtn = canvas.getByTestId('drift-action-update_spec');
       await expect(updateBtn).toHaveFocus();
     });

@@ -52,7 +52,7 @@ describe('Scenario 5: Cross-System Integration', () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(result.parsed.activeCollectionId).toBe(CROSS_COLLECTION_ID);
+    expect(result.parsed!.activeCollectionId).toBe(CROSS_COLLECTION_ID);
   });
 
   it('create suggestion linked to the same collectionId', async () => {
@@ -66,16 +66,16 @@ describe('Scenario 5: Cross-System Integration', () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(result.parsed.collectionId).toBe(CROSS_COLLECTION_ID);
-    expect(result.parsed.status).toBe('pending');
+    expect(result.parsed!.collectionId).toBe(CROSS_COLLECTION_ID);
+    expect(result.parsed!.status).toBe('pending');
   });
 
   it('context unchanged, suggestion linked to collection', async () => {
     const context = await client.callTool<ProjectContext>('get_project_context');
-    expect(context.parsed.activeCollectionId).toBe(CROSS_COLLECTION_ID);
+    expect(context.parsed!.activeCollectionId).toBe(CROSS_COLLECTION_ID);
 
     const suggestions = await client.callTool<Suggestion[]>('list_suggestions');
-    const linked = suggestions.parsed.find((s) => s.collectionId === CROSS_COLLECTION_ID);
+    const linked = suggestions.parsed!.find((s) => s.collectionId === CROSS_COLLECTION_ID);
     expect(linked).toBeTruthy();
     expect(linked!.title).toBe('Optimize cross-system endpoint');
   });

@@ -55,7 +55,7 @@ describe('Scenario 2: Suggestion CRUD', () => {
 
     expect(result.isError).toBeFalsy();
 
-    const suggestion = result.parsed;
+    const suggestion = result.parsed!;
     expect(suggestion.id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     );
@@ -74,7 +74,7 @@ describe('Scenario 2: Suggestion CRUD', () => {
     const result = await client.callTool<Suggestion[]>('list_suggestions');
 
     expect(result.isError).toBeFalsy();
-    const found = result.parsed.find((s) => s.id === createdSuggestionId);
+    const found = result.parsed!.find((s) => s.id === createdSuggestionId);
     expect(found).toBeTruthy();
     expect(found!.title).toBe('Fix GET /users drift');
   });
@@ -83,12 +83,12 @@ describe('Scenario 2: Suggestion CRUD', () => {
     const pending = await client.callTool<Suggestion[]>('list_suggestions', {
       status: 'pending',
     });
-    expect(pending.parsed.some((s) => s.id === createdSuggestionId)).toBe(true);
+    expect(pending.parsed!.some((s) => s.id === createdSuggestionId)).toBe(true);
 
     const accepted = await client.callTool<Suggestion[]>('list_suggestions', {
       status: 'accepted',
     });
-    expect(accepted.parsed.some((s) => s.id === createdSuggestionId)).toBe(false);
+    expect(accepted.parsed!.some((s) => s.id === createdSuggestionId)).toBe(false);
   });
 
   it('resolve_suggestion sets status=accepted and resolvedAt', async () => {
@@ -98,20 +98,20 @@ describe('Scenario 2: Suggestion CRUD', () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(result.parsed.status).toBe('accepted');
-    expect(result.parsed.resolvedAt).toBeTruthy();
-    expect(new Date(result.parsed.resolvedAt!).getTime()).not.toBeNaN();
+    expect(result.parsed!.status).toBe('accepted');
+    expect(result.parsed!.resolvedAt).toBeTruthy();
+    expect(new Date(result.parsed!.resolvedAt!).getTime()).not.toBeNaN();
   });
 
   it('list_suggestions after resolve shows updated status', async () => {
     const accepted = await client.callTool<Suggestion[]>('list_suggestions', {
       status: 'accepted',
     });
-    expect(accepted.parsed.some((s) => s.id === createdSuggestionId)).toBe(true);
+    expect(accepted.parsed!.some((s) => s.id === createdSuggestionId)).toBe(true);
 
     const pending = await client.callTool<Suggestion[]>('list_suggestions', {
       status: 'pending',
     });
-    expect(pending.parsed.some((s) => s.id === createdSuggestionId)).toBe(false);
+    expect(pending.parsed!.some((s) => s.id === createdSuggestionId)).toBe(false);
   });
 });

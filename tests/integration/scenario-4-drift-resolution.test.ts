@@ -32,7 +32,7 @@ describe('Scenario 4: Drift Resolution', () => {
     const result = await client.callTool<Collection>('create_collection', {
       name: 'drift-test-collection',
     });
-    collectionId = result.parsed.id;
+    collectionId = result.parsed!.id;
   });
 
   afterAll(async () => {
@@ -51,9 +51,9 @@ describe('Scenario 4: Drift Resolution', () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(result.parsed.success).toBe(true);
-    expect(result.parsed.actionType).toBe('ignore');
-    expect(result.parsed.message).toContain('ignore');
+    expect(result.parsed!.success).toBe(true);
+    expect(result.parsed!.actionType).toBe('ignore');
+    expect(result.parsed!.message).toContain('ignore');
   });
 
   it('resolve_drift with action=update_spec returns success', async () => {
@@ -65,8 +65,8 @@ describe('Scenario 4: Drift Resolution', () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(result.parsed.success).toBe(true);
-    expect(result.parsed.actionType).toBe('update_spec');
+    expect(result.parsed!.success).toBe(true);
+    expect(result.parsed!.actionType).toBe('update_spec');
   });
 
   it('resolve_drift with action=fix_request returns success', async () => {
@@ -78,8 +78,8 @@ describe('Scenario 4: Drift Resolution', () => {
     });
 
     expect(result.isError).toBeFalsy();
-    expect(result.parsed.success).toBe(true);
-    expect(result.parsed.actionType).toBe('fix_request');
+    expect(result.parsed!.success).toBe(true);
+    expect(result.parsed!.actionType).toBe('fix_request');
   });
 
   it('resolve_drift with invalid collectionId returns error', async () => {

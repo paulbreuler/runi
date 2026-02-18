@@ -18,7 +18,24 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 const MCP_URL = 'http://127.0.0.1:3002';
-const DB_PATH = join(homedir(), 'Library/Application Support/runi/suggestions.db');
+
+function getDbPath(): string {
+  const home = homedir();
+  switch (process.platform) {
+    case 'darwin':
+      return join(home, 'Library/Application Support/runi/suggestions.db');
+    case 'win32':
+      return join(process.env['APPDATA'] ?? join(home, 'AppData/Roaming'), 'runi/suggestions.db');
+    default:
+      // Linux and other POSIX platforms
+      return join(
+        process.env['XDG_DATA_HOME'] ?? join(home, '.local/share'),
+        'runi/suggestions.db'
+      );
+  }
+}
+
+const DB_PATH = getDbPath();
 
 // ---- MCP helpers ----
 
@@ -120,7 +137,10 @@ async function cmdSuggestions(sessionId: string): Promise<void> {
 
   if (suggestions.length > 0) {
     console.log('\nMost recent 5:');
-    for (const s of suggestions.slice(0, 5)) {
+    const recent = [...suggestions]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+    for (const s of recent) {
       console.log(
         `  [${s.status}] ${s.title} (${s.suggestionType}) — ${s.source} @ ${s.createdAt}`
       );

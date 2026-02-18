@@ -198,6 +198,10 @@ ci: fmt-check lint check test test-e2e docs-check
 ci-no-e2e: fmt-check lint check test docs-check
     @echo "✅ CI checks passed (E2E skipped)!"
 
+# Run CI pipeline with integration tests (requires running app: just dev)
+ci-with-integration: ci test-integration
+    @echo "✅ CI + integration checks passed!"
+
 # Run CI pipeline without tests (for documentation-only changes)
 ci-no-test: fmt-check lint check docs-check
     @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"

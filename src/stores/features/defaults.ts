@@ -37,6 +37,9 @@ export const DEFAULT_FLAGS: FeatureFlags = {
     agenticTesting: false,
     aiSuggestedIntegrations: false,
   },
+  intent: {
+    inputTracking: false,
+  },
   debug: {
     verboseLogging: false,
     performanceOverlay: false,

@@ -119,16 +119,27 @@ export const useSuggestionStore = create<SuggestionState>((set, get) => ({
 /** Unlisten handles for cleanup. */
 let createdUnlisten: UnlistenFn | null = null;
 let resolvedUnlisten: UnlistenFn | null = null;
+/** Guard against concurrent calls (TOCTOU protection). */
+let initInProgress = false;
 
 /**
  * Initialize the suggestion store.
  *
- * Fetches initial suggestions from the backend and subscribes to
- * Tauri events for live sync from MCP tools.
+ * Subscribes to Tauri events BEFORE fetching initial state to ensure
+ * no events are missed in the window between fetch and subscription.
+ * Guards against concurrent re-entrant calls.
  *
  * Call once at app startup. Returns a cleanup function.
  */
 export async function initSuggestionStore(): Promise<() => void> {
+  // TOCTOU guard: prevent concurrent initialization
+  if (initInProgress) {
+    return (): void => {
+      /* no-op: initialization already in progress */
+    };
+  }
+  initInProgress = true;
+
   // Clean up any previous listeners to prevent leaks on re-init
   if (createdUnlisten !== null) {
     createdUnlisten();
@@ -139,11 +150,9 @@ export async function initSuggestionStore(): Promise<() => void> {
     resolvedUnlisten = null;
   }
 
-  // Fetch initial state
-  await useSuggestionStore.getState().fetchSuggestions();
-
-  // Listen for backend-driven creates and resolves (MCP tools, other commands)
   try {
+    // Listen BEFORE fetch so no events are missed between fetch completion
+    // and subscription registration (matches useProjectContextStore pattern)
     createdUnlisten = await listen<EventEnvelope<Suggestion>>('suggestion:created', (event) => {
       console.warn('[Suggestions] Event suggestion:created', event.payload);
       useSuggestionStore.getState().addSuggestion(event.payload.payload);
@@ -153,9 +162,14 @@ export async function initSuggestionStore(): Promise<() => void> {
       console.warn('[Suggestions] Event suggestion:resolved', event.payload);
       useSuggestionStore.getState().updateSuggestion(event.payload.payload);
     });
+
+    // Fetch initial state after listeners are registered
+    await useSuggestionStore.getState().fetchSuggestions();
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     useSuggestionStore.setState({ error: message });
+  } finally {
+    initInProgress = false;
   }
 
   return (): void => {

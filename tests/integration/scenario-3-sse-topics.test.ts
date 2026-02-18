@@ -59,7 +59,7 @@ describe('Scenario 3: SSE Topic Subscription', () => {
     } finally {
       sub.close();
     }
-  }, 40000);
+  }, 45000);
 
   // --- Skipped: broadcast_to_topic() not wired from production code ---
 

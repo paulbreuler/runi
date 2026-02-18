@@ -10,6 +10,7 @@ export interface FeatureFlags {
   canvas: CanvasFlags;
   comprehension: ComprehensionFlags;
   ai: AiFlags;
+  intent: IntentFlags;
   debug: DebugFlags;
 }
 
@@ -46,6 +47,11 @@ export interface AiFlags {
   mcpGeneration: boolean;
   agenticTesting: boolean;
   aiSuggestedIntegrations: boolean;
+}
+
+export interface IntentFlags {
+  /** Track mouse vs. keyboard input to suppress focus rings for mouse users. */
+  inputTracking: boolean;
 }
 
 export interface DebugFlags {
