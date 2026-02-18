@@ -669,6 +669,7 @@ export const MainLayout = ({
               onTabChange={setActiveTab}
               networkCount={entries.length}
               activityCount={activityEntries.length}
+              intelligenceCount={pendingCount}
             />
           }
         >
@@ -684,6 +685,7 @@ export const MainLayout = ({
               />
             }
             activityContent={<ActivityFeed className="h-full" />}
+            intelligenceContent={intelligenceContent}
           />
         </DockablePanel>
       )}

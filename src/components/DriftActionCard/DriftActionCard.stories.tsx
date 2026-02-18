@@ -142,7 +142,8 @@ export const Playground: Story = {
     });
 
     await step('Tab to first action button', async () => {
-      await userEvent.tab();
+      await userEvent.tab(); // focuses the card container (tabIndex=0)
+      await userEvent.tab(); // focuses the first action button
       const updateBtn = canvas.getByTestId('drift-action-update_spec');
       await expect(updateBtn).toHaveFocus();
     });
