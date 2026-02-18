@@ -16,6 +16,8 @@ interface PanelContentProps {
   consoleContent: React.ReactNode;
   /** Activity feed content */
   activityContent?: React.ReactNode;
+  /** Intelligence / suggestion panel content */
+  intelligenceContent?: React.ReactNode;
 }
 
 /**
@@ -38,6 +40,7 @@ export const PanelContent = ({
   networkContent,
   consoleContent,
   activityContent,
+  intelligenceContent,
 }: PanelContentProps): React.JSX.Element => {
   const renderContent = (): React.JSX.Element => {
     switch (activeTab) {
@@ -65,6 +68,19 @@ export const PanelContent = ({
             className="h-full overflow-hidden"
           >
             {activityContent}
+          </motion.div>
+        );
+      case 'intelligence':
+        return (
+          <motion.div
+            key="intelligence"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="h-full overflow-hidden"
+          >
+            {intelligenceContent}
           </motion.div>
         );
       case 'console':

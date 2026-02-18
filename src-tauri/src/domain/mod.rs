@@ -5,6 +5,7 @@
 
 /// Canvas state domain models and snapshots.
 pub mod canvas_state;
+/// Collection domain models.
 pub mod collection;
 pub mod errors;
 pub mod features;
@@ -14,3 +15,7 @@ pub mod mcp;
 pub mod models;
 /// Participant identity and Lamport timestamps for multiplayer-like provenance.
 pub mod participant;
+/// Project context — persistent user working state for MCP and AI agents.
+pub mod project_context;
+/// AI suggestion domain models for the Vigilance Monitor.
+pub mod suggestion;

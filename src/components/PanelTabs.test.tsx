@@ -152,7 +152,7 @@ describe('PanelTabs', () => {
       const list = container.querySelector('[data-test-id="tabs-list"]');
       expect(list).toBeInTheDocument();
       const triggers = container.querySelectorAll('[data-test-id^="panel-tab-"][role="tab"]');
-      expect(triggers).toHaveLength(3);
+      expect(triggers).toHaveLength(4);
     });
 
     it('renders Network tab with icon', () => {
@@ -201,6 +201,39 @@ describe('PanelTabs', () => {
       render(<PanelTabs activeTab="activity" onTabChange={mockOnTabChange} activityCount={7} />);
 
       expect(screen.getByTestId('panel-tab-activity-count')).toHaveTextContent('7');
+    });
+
+    it('renders Intelligence tab', () => {
+      render(<PanelTabs activeTab="intelligence" onTabChange={mockOnTabChange} />);
+
+      expect(screen.getByTestId('panel-tab-intelligence')).toBeInTheDocument();
+      expect(screen.getByTestId('panel-tab-intelligence')).toHaveTextContent('Intelligence');
+    });
+
+    it('displays intelligence count badge when provided', () => {
+      render(
+        <PanelTabs activeTab="intelligence" onTabChange={mockOnTabChange} intelligenceCount={3} />
+      );
+
+      expect(screen.getByTestId('panel-tab-intelligence-count')).toHaveTextContent('3');
+    });
+
+    it('does not display intelligence count badge when count is 0', () => {
+      render(
+        <PanelTabs activeTab="intelligence" onTabChange={mockOnTabChange} intelligenceCount={0} />
+      );
+
+      expect(screen.queryByTestId('panel-tab-intelligence-count')).not.toBeInTheDocument();
+    });
+
+    it('uses signal-ai styling for intelligence count badge', () => {
+      render(
+        <PanelTabs activeTab="intelligence" onTabChange={mockOnTabChange} intelligenceCount={5} />
+      );
+
+      const badge = screen.getByTestId('panel-tab-intelligence-count');
+      expect(badge.className).toContain('bg-signal-ai/20');
+      expect(badge.className).toContain('text-signal-ai');
     });
 
     it('shows Follow AI toggle when activity tab is active', () => {
@@ -365,6 +398,7 @@ describe('PanelTabs', () => {
       expect(values).toContain('network');
       expect(values).toContain('console');
       expect(values).toContain('activity');
+      expect(values).toContain('intelligence');
     });
 
     it('uses contained focus ring styles to avoid clipping in panel headers', () => {

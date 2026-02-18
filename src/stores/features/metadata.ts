@@ -187,6 +187,14 @@ export const FLAG_METADATA: FlagMetadataRegistry = {
       state: 'hidden',
     },
   },
+  intent: {
+    inputTracking: {
+      addedVersion: '0.5.0',
+      expectedGraduation: '0.7.0',
+      description: 'Track mouse vs. keyboard input to suppress focus rings for mouse users.',
+      state: 'hidden',
+    },
+  },
   debug: {
     verboseLogging: {
       addedVersion: '0.4.5',

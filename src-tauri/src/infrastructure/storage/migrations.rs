@@ -35,11 +35,23 @@ pub struct Migration {
 ///
 /// **IMPORTANT:** Add new migrations at the end of this array.
 /// Never modify existing migrations - create a new one instead.
-pub static MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "initial_schema",
-    sql: include_str!("../../../migrations/V001_initial_schema.sql"),
-}];
+pub static MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "initial_schema",
+        sql: include_str!("../../../migrations/V001_initial_schema.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "project_context",
+        sql: include_str!("../../../migrations/V002_project_context.sql"),
+    },
+    Migration {
+        version: 3,
+        name: "suggestions",
+        sql: include_str!("../../../migrations/V003_suggestions.sql"),
+    },
+];
 
 /// Apply all pending migrations to the database.
 ///

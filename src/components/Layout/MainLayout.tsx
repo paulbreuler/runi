@@ -33,6 +33,9 @@ import { SettingsPanel } from '@/components/Settings/SettingsPanel';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { useActivityStore } from '@/stores/useActivityStore';
 import { useCanvasStore } from '@/stores/useCanvasStore';
+import { SuggestionPanel } from '@/components/VigilanceMonitor/SuggestionPanel';
+import { useSuggestionStore } from '@/stores/useSuggestionStore';
+import type { Suggestion } from '@/types/generated/Suggestion';
 
 export interface MainLayoutProps {
   headerContent?: React.ReactNode;
@@ -94,6 +97,12 @@ export const MainLayout = ({
   const [activeTab, setActiveTab] = useState<PanelTabType>('network');
   const { entries } = useHistoryStore();
   const activityEntries = useActivityStore((s) => s.entries);
+  const suggestions = useSuggestionStore((s) => s.suggestions);
+  const suggestionError = useSuggestionStore((s) => s.error);
+  const resolveSuggestion = useSuggestionStore((s) => s.resolveSuggestion);
+  const pendingCount = useSuggestionStore(
+    (s) => s.suggestions.filter((sg) => sg.status === 'pending').length
+  );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Sidebar state
@@ -378,6 +387,29 @@ export const MainLayout = ({
     } satisfies ToastEventPayload);
   }, []);
 
+  // Suggestion panel callbacks
+  const handleSuggestionAccept = useCallback(
+    (id: string): void => {
+      void resolveSuggestion(id, 'accepted');
+    },
+    [resolveSuggestion]
+  );
+
+  const handleSuggestionDismiss = useCallback(
+    (id: string): void => {
+      void resolveSuggestion(id, 'dismissed');
+    },
+    [resolveSuggestion]
+  );
+
+  const handleSuggestionNavigate = useCallback((suggestion: Suggestion): void => {
+    globalEventBus.emit('toast.show', {
+      type: 'info',
+      message: 'Navigate to context',
+      details: `Navigating to ${suggestion.endpoint ?? 'suggestion context'} — Feature coming soon`,
+    } satisfies ToastEventPayload);
+  }, []);
+
   // Memoize the history panel callbacks to avoid unnecessary re-renders
   const historyPanelProps = useMemo(
     () => ({
@@ -395,6 +427,26 @@ export const MainLayout = ({
       handleGenerateTests,
       handleAddToCollection,
       handleBlockToggle,
+    ]
+  );
+
+  const intelligenceContent = useMemo(
+    () => (
+      <SuggestionPanel
+        suggestions={suggestions}
+        error={suggestionError}
+        onAccept={handleSuggestionAccept}
+        onDismiss={handleSuggestionDismiss}
+        onNavigate={handleSuggestionNavigate}
+        className="h-full"
+      />
+    ),
+    [
+      suggestions,
+      suggestionError,
+      handleSuggestionAccept,
+      handleSuggestionDismiss,
+      handleSuggestionNavigate,
     ]
   );
 
@@ -550,6 +602,7 @@ export const MainLayout = ({
                     onTabChange={setActiveTab}
                     networkCount={entries.length}
                     activityCount={activityEntries.length}
+                    intelligenceCount={pendingCount}
                   />
                 }
               >
@@ -565,6 +618,7 @@ export const MainLayout = ({
                     />
                   }
                   activityContent={<ActivityFeed className="h-full" />}
+                  intelligenceContent={intelligenceContent}
                 />
               </DockablePanel>
             )}
@@ -581,6 +635,7 @@ export const MainLayout = ({
                     onTabChange={setActiveTab}
                     networkCount={entries.length}
                     activityCount={activityEntries.length}
+                    intelligenceCount={pendingCount}
                   />
                 }
               >
@@ -596,6 +651,7 @@ export const MainLayout = ({
                     />
                   }
                   activityContent={<ActivityFeed className="h-full" />}
+                  intelligenceContent={intelligenceContent}
                 />
               </DockablePanel>
             )}
@@ -613,6 +669,7 @@ export const MainLayout = ({
               onTabChange={setActiveTab}
               networkCount={entries.length}
               activityCount={activityEntries.length}
+              intelligenceCount={pendingCount}
             />
           }
         >
@@ -628,6 +685,7 @@ export const MainLayout = ({
               />
             }
             activityContent={<ActivityFeed className="h-full" />}
+            intelligenceContent={intelligenceContent}
           />
         </DockablePanel>
       )}

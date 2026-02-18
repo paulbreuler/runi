@@ -21,6 +21,27 @@ initializeConsoleService();
 const isDev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ?? false;
 if (isDev) {
   getConsoleService().setMinLogLevel('debug');
+
+  // Expose store state on window for dev-time inspection (e.g. devtools console, agent checks)
+  void Promise.all([
+    import('@/stores/useSuggestionStore'),
+    import('@/stores/useProjectContextStore'),
+    import('@/stores/useHistoryStore'),
+  ]).then(([suggestionMod, contextMod, historyMod]) => {
+    (
+      window as unknown as {
+        __runi_debug: {
+          suggestions: () => unknown;
+          context: () => unknown;
+          history: () => unknown;
+        };
+      }
+    ).__runi_debug = {
+      suggestions: (): unknown => suggestionMod.useSuggestionStore.getState(),
+      context: (): unknown => contextMod.useProjectContextStore.getState(),
+      history: (): unknown => historyMod.useHistoryStore.getState(),
+    };
+  });
 }
 
 // Note: Dark mode class is managed by ThemeProvider wrapper component

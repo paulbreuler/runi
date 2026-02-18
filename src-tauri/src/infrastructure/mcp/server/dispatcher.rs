@@ -19,7 +19,9 @@ use crate::domain::mcp::jsonrpc::{JsonRpcError, JsonRpcId, JsonRpcRequest, JsonR
 use crate::domain::mcp::protocol::{
     InitializeResult, ToolCallParams, ToolCallResult, ToolResponseContent, ToolsListResult,
 };
-use crate::infrastructure::commands::CanvasStateHandle;
+use crate::infrastructure::commands::{
+    CanvasStateHandle, ProjectContextHandle, SuggestionServiceHandle,
+};
 use crate::infrastructure::http::execute_http_request;
 
 /// Dispatch a JSON-RPC request string to the appropriate handler.
@@ -33,6 +35,8 @@ pub async fn dispatch(
     raw: &str,
     service: &Arc<RwLock<McpServerService>>,
     canvas_state: &CanvasStateHandle,
+    project_context: Option<&ProjectContextHandle>,
+    suggestion_service: Option<&SuggestionServiceHandle>,
     app_handle: Option<&tauri::AppHandle>,
 ) -> Option<String> {
     let request: JsonRpcRequest = match serde_json::from_str(raw) {
@@ -56,7 +60,18 @@ pub async fn dispatch(
     let response = match request.method.as_str() {
         "initialize" => handle_initialize(id),
         "tools/list" => handle_tools_list(id, service).await,
-        "tools/call" => handle_tools_call(id, &request, service, canvas_state, app_handle).await,
+        "tools/call" => {
+            handle_tools_call(
+                id,
+                &request,
+                service,
+                canvas_state,
+                project_context,
+                suggestion_service,
+                app_handle,
+            )
+            .await
+        }
         "ping" => handle_ping(id),
         _ => JsonRpcResponse::error(id, JsonRpcError::method_not_found(&request.method)),
     };
@@ -106,6 +121,8 @@ async fn handle_tools_call(
     request: &JsonRpcRequest,
     service: &Arc<RwLock<McpServerService>>,
     canvas_state: &CanvasStateHandle,
+    project_context: Option<&ProjectContextHandle>,
+    suggestion_service: Option<&SuggestionServiceHandle>,
     app_handle: Option<&tauri::AppHandle>,
 ) -> JsonRpcResponse {
     let params: ToolCallParams = match request.params.as_ref() {
@@ -146,6 +163,31 @@ async fn handle_tools_call(
     if params.name.starts_with("canvas_") {
         return handle_canvas_tool(id, &params.name, params.arguments, canvas_state, app_handle)
             .await;
+    }
+
+    // Project context tools read from/write to external state
+    if params.name == "get_project_context" || params.name == "set_project_context" {
+        return handle_project_context_tool(
+            id,
+            &params.name,
+            params.arguments,
+            project_context,
+            app_handle,
+        );
+    }
+
+    // Suggestion tools read from/write to external state
+    if params.name == "list_suggestions"
+        || params.name == "create_suggestion"
+        || params.name == "resolve_suggestion"
+    {
+        return handle_suggestion_tool(
+            id,
+            &params.name,
+            params.arguments,
+            suggestion_service,
+            app_handle,
+        );
     }
 
     let mut svc = service.write().await;
@@ -278,7 +320,7 @@ async fn handle_open_collection_request(
 
     // Emit Tauri event if app handle is available
     if let Some(app) = app_handle {
-        let envelope = canvas_event_envelope(request_data.clone());
+        let envelope = ai_event_envelope(request_data.clone());
         if let Err(e) = app.emit("canvas:open_collection_request", envelope) {
             tracing::warn!("Failed to emit canvas:open_collection_request event: {e}");
         }
@@ -601,12 +643,12 @@ async fn handle_canvas_tool(
     }
 }
 
-/// Construct an `EventEnvelope` with AI actor provenance for canvas events.
+/// Construct an `EventEnvelope` with AI actor provenance for MCP-driven events.
 ///
-/// Canvas mutation tools emit events attributed to AI (via MCP), enabling
-/// the frontend to distinguish AI actions from user actions and gate viewport
-/// navigation based on Follow AI mode.
-fn canvas_event_envelope(payload: serde_json::Value) -> serde_json::Value {
+/// MCP tool calls emit events attributed to AI, enabling the frontend to
+/// distinguish AI actions from user actions and gate viewport navigation
+/// based on Follow AI mode.
+fn ai_event_envelope(payload: serde_json::Value) -> serde_json::Value {
     let envelope = EventEnvelope {
         actor: Actor::Ai {
             model: None,
@@ -691,7 +733,7 @@ fn handle_canvas_switch_tab(
         .ok_or_else(|| "Missing required parameter: tab_id".to_string())?;
 
     // Emit event to frontend with AI actor provenance
-    let envelope = canvas_event_envelope(json!({"contextId": tab_id}));
+    let envelope = ai_event_envelope(json!({"contextId": tab_id}));
     app.emit("canvas:switch_tab", envelope)
         .map_err(|e| format!("Failed to emit canvas:switch_tab event: {e}"))?;
 
@@ -718,7 +760,7 @@ fn handle_canvas_open_request_tab(
         .unwrap_or("Request");
 
     // Emit event to frontend with AI actor provenance
-    let envelope = canvas_event_envelope(json!({"label": label}));
+    let envelope = ai_event_envelope(json!({"label": label}));
     app.emit("canvas:open_request_tab", envelope)
         .map_err(|e| format!("Failed to emit canvas:open_request_tab event: {e}"))?;
 
@@ -745,7 +787,7 @@ fn handle_canvas_close_tab(
         .ok_or_else(|| "Missing required parameter: tab_id".to_string())?;
 
     // Emit event to frontend with AI actor provenance
-    let envelope = canvas_event_envelope(json!({"contextId": tab_id}));
+    let envelope = ai_event_envelope(json!({"contextId": tab_id}));
     app.emit("canvas:close_tab", envelope)
         .map_err(|e| format!("Failed to emit canvas:close_tab event: {e}"))?;
 
@@ -794,6 +836,255 @@ fn handle_canvas_subscribe_stream(
     }
 }
 
+// ── Project Context Tools ──────────────────────────────────────────
+
+/// Handle project context tools (`get_project_context`, `set_project_context`).
+fn handle_project_context_tool(
+    id: Option<JsonRpcId>,
+    tool_name: &str,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    project_context: Option<&ProjectContextHandle>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> JsonRpcResponse {
+    let Some(ctx_svc) = project_context else {
+        let error_result = ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: "Project context service not available".to_string(),
+            }],
+            is_error: true,
+        };
+        return JsonRpcResponse::success(
+            id,
+            serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+        );
+    };
+
+    let result = match tool_name {
+        "get_project_context" => handle_get_project_context(ctx_svc),
+        "set_project_context" => handle_set_project_context(arguments, ctx_svc, app_handle),
+        _ => Err(format!("Unknown project context tool: {tool_name}")),
+    };
+
+    match result {
+        Ok(tool_result) => JsonRpcResponse::success(
+            id,
+            serde_json::to_value(tool_result).unwrap_or_else(|_| json!({})),
+        ),
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
+/// Handle `get_project_context` — return the current project context.
+fn handle_get_project_context(ctx_svc: &ProjectContextHandle) -> Result<ToolCallResult, String> {
+    let ctx = ctx_svc.get_context()?;
+    let ctx_json =
+        serde_json::to_value(&ctx).map_err(|e| format!("Failed to serialize context: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: ctx_json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+/// Handle `set_project_context` — apply a partial update and emit event.
+fn handle_set_project_context(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    ctx_svc: &ProjectContextHandle,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let args = arguments.unwrap_or_default();
+    let update_value = serde_json::Value::Object(args);
+    let update: crate::domain::project_context::ProjectContextUpdate =
+        serde_json::from_value(update_value).map_err(|e| format!("Invalid update payload: {e}"))?;
+
+    let ctx = ctx_svc.update_context(&update)?;
+
+    // Emit context:updated Tauri event for frontend sync (wrapped in EventEnvelope)
+    if let Some(handle) = app_handle {
+        let payload =
+            serde_json::to_value(&ctx).map_err(|e| format!("Failed to serialize context: {e}"))?;
+        let envelope = ai_event_envelope(payload);
+        if let Err(e) = handle.emit("context:updated", &envelope) {
+            tracing::warn!("Failed to emit context:updated event: {e}");
+        }
+    }
+
+    let ctx_json =
+        serde_json::to_value(&ctx).map_err(|e| format!("Failed to serialize context: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: ctx_json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+// ── Suggestion Tools (Vigilance Monitor) ───────────────────────────
+
+/// Handle suggestion tools (`list_suggestions`, `create_suggestion`, `resolve_suggestion`).
+fn handle_suggestion_tool(
+    id: Option<JsonRpcId>,
+    tool_name: &str,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    suggestion_service: Option<&SuggestionServiceHandle>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> JsonRpcResponse {
+    let Some(svc) = suggestion_service else {
+        let error_result = ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: "Suggestion service not available".to_string(),
+            }],
+            is_error: true,
+        };
+        return JsonRpcResponse::success(
+            id,
+            serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+        );
+    };
+
+    let result = match tool_name {
+        "list_suggestions" => handle_list_suggestions(arguments, svc),
+        "create_suggestion" => handle_create_suggestion(arguments, svc, app_handle),
+        "resolve_suggestion" => handle_resolve_suggestion(arguments, svc, app_handle),
+        _ => Err(format!("Unknown suggestion tool: {tool_name}")),
+    };
+
+    match result {
+        Ok(tool_result) => JsonRpcResponse::success(
+            id,
+            serde_json::to_value(tool_result).unwrap_or_else(|_| json!({})),
+        ),
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
+/// Handle `list_suggestions` — list all or filtered suggestions.
+fn handle_list_suggestions(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    svc: &SuggestionServiceHandle,
+) -> Result<ToolCallResult, String> {
+    let args = arguments.unwrap_or_default();
+    let status_filter = args
+        .get("status")
+        .and_then(|v| v.as_str())
+        .map(|s| {
+            serde_json::from_value::<crate::domain::suggestion::SuggestionStatus>(
+                serde_json::Value::String(s.to_string()),
+            )
+        })
+        .transpose()
+        .map_err(|e| format!("Invalid status filter: {e}"))?;
+
+    let suggestions = svc.list_suggestions(status_filter)?;
+    let json = serde_json::to_value(&suggestions)
+        .map_err(|e| format!("Failed to serialize suggestions: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+/// Handle `create_suggestion` — create a new suggestion and emit event.
+fn handle_create_suggestion(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    svc: &SuggestionServiceHandle,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let args = arguments.unwrap_or_default();
+    let req_value = serde_json::Value::Object(args);
+    let req: crate::domain::suggestion::CreateSuggestionRequest = serde_json::from_value(req_value)
+        .map_err(|e| format!("Invalid create suggestion payload: {e}"))?;
+
+    let suggestion = svc.create_suggestion(&req)?;
+
+    // Emit suggestion:created Tauri event for frontend sync (wrapped in EventEnvelope)
+    if let Some(handle) = app_handle {
+        let payload = serde_json::to_value(&suggestion)
+            .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
+        let envelope = ai_event_envelope(payload);
+        if let Err(e) = handle.emit("suggestion:created", &envelope) {
+            tracing::warn!("Failed to emit suggestion:created event: {e}");
+        }
+    }
+
+    let json = serde_json::to_value(&suggestion)
+        .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+/// Handle `resolve_suggestion` — accept or dismiss a suggestion and emit event.
+fn handle_resolve_suggestion(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    svc: &SuggestionServiceHandle,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let args = arguments.unwrap_or_default();
+    let id = args
+        .get("id")
+        .and_then(|v| v.as_str())
+        .ok_or("Missing required field: id")?;
+    let status_str = args
+        .get("status")
+        .and_then(|v| v.as_str())
+        .ok_or("Missing required field: status")?;
+
+    let status: crate::domain::suggestion::SuggestionStatus =
+        serde_json::from_value(serde_json::Value::String(status_str.to_string()))
+            .map_err(|e| format!("Invalid status: {e}"))?;
+
+    let suggestion = svc.resolve_suggestion(id, status)?;
+
+    // Emit suggestion:resolved Tauri event for frontend sync (wrapped in EventEnvelope)
+    if let Some(handle) = app_handle {
+        let payload = serde_json::to_value(&suggestion)
+            .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
+        let envelope = ai_event_envelope(payload);
+        if let Err(e) = handle.emit("suggestion:resolved", &envelope) {
+            tracing::warn!("Failed to emit suggestion:resolved event: {e}");
+        }
+    }
+
+    let json = serde_json::to_value(&suggestion)
+        .map_err(|e| format!("Failed to serialize suggestion: {e}"))?;
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -817,7 +1108,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -835,13 +1128,16 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
-        // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 21 total
-        assert_eq!(tools.len(), 21);
+        // 8 collection + 3 save/move/copy + 3 import/refresh/hurl + 6 canvas + 1 streaming
+        // + 2 project context + 1 execute_request + 3 suggestion = 27 total
+        assert_eq!(tools.len(), 27);
     }
 
     #[tokio::test]
@@ -858,7 +1154,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -879,7 +1177,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         // Tool errors are returned as success with is_error=true
         assert!(parsed.error.is_none());
@@ -897,7 +1197,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         assert_eq!(parsed.error.unwrap().code, -32602);
@@ -913,7 +1215,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         let err = parsed.error.unwrap();
@@ -930,14 +1234,14 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await;
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None).await;
         assert!(resp.is_none());
     }
 
     #[tokio::test]
     async fn test_dispatch_parse_error() {
         let (service, canvas_state, _dir) = make_service();
-        let resp = dispatch("not valid json", &service, &canvas_state, None)
+        let resp = dispatch("not valid json", &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -955,7 +1259,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
     }
@@ -970,7 +1276,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert_eq!(parsed.id, Some(JsonRpcId::String("abc-123".to_string())));
     }
@@ -996,7 +1304,7 @@ mod tests {
         // Read from receiver, dispatch, send response
         let mut rx = transport.receiver().await;
         let msg = rx.recv().await.unwrap();
-        if let Some(response) = dispatch(&msg, &service, &canvas_state, None).await {
+        if let Some(response) = dispatch(&msg, &service, &canvas_state, None, None, None).await {
             transport.send(response).await.unwrap();
         }
 
@@ -1046,7 +1354,7 @@ mod tests {
             "params": { "name": "create_collection", "arguments": { "name": "Test" } }
         })
         .to_string();
-        let resp = dispatch(&create_req, &service, &canvas_state, None)
+        let resp = dispatch(&create_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1069,7 +1377,7 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&add_req, &service, &canvas_state, None)
+        let resp = dispatch(&add_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1091,7 +1399,7 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&exec_req, &service, &canvas_state, None)
+        let resp = dispatch(&exec_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1124,7 +1432,7 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&exec_req, &service, &canvas_state, None)
+        let resp = dispatch(&exec_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1153,7 +1461,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1180,7 +1490,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let result = parsed.result.unwrap();
         let text = result["content"][0]["text"].as_str().unwrap();
@@ -1199,7 +1511,7 @@ mod tests {
             "params": { "name": "create_collection", "arguments": { "name": "Test" } }
         })
         .to_string();
-        let resp = dispatch(&create_req, &service, &canvas_state, None)
+        let resp = dispatch(&create_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1220,7 +1532,7 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&open_req, &service, &canvas_state, None)
+        let resp = dispatch(&open_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1245,7 +1557,7 @@ mod tests {
             "params": { "name": "create_collection", "arguments": { "name": "Test" } }
         })
         .to_string();
-        let resp = dispatch(&create_req, &service, &canvas_state, None)
+        let resp = dispatch(&create_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1270,7 +1582,7 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&add_req, &service, &canvas_state, None)
+        let resp = dispatch(&add_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1294,7 +1606,7 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&open_req, &service, &canvas_state, None)
+        let resp = dispatch(&open_req, &service, &canvas_state, None, None, None)
             .await
             .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
@@ -1340,7 +1652,9 @@ mod tests {
                 }
             })
             .to_string();
-            dispatch(&req, &service, &canvas_state, None).await.unwrap()
+            dispatch(&req, &service, &canvas_state, None, None, None)
+                .await
+                .unwrap()
         })
         .await;
 
@@ -1377,7 +1691,9 @@ mod tests {
                 }
             })
             .to_string();
-            dispatch(&req, &service, &canvas_state, None).await.unwrap()
+            dispatch(&req, &service, &canvas_state, None, None, None)
+                .await
+                .unwrap()
         })
         .await;
 
@@ -1406,7 +1722,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1429,7 +1747,9 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None).await.unwrap();
+        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
+            .await
+            .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1469,7 +1789,9 @@ mod tests {
                 }
             })
             .to_string();
-            dispatch(&req, &service, &canvas_state, None).await.unwrap()
+            dispatch(&req, &service, &canvas_state, None, None, None)
+                .await
+                .unwrap()
         })
         .await;
 
@@ -1482,11 +1804,11 @@ mod tests {
     }
 
     #[test]
-    fn test_canvas_event_envelope_produces_ai_actor() {
+    fn test_ai_event_envelope_produces_ai_actor() {
         use crate::domain::mcp::events::{Actor, EventEnvelope};
 
         let payload = json!({"contextId": "tab_1"});
-        let envelope_value = canvas_event_envelope(payload.clone());
+        let envelope_value = ai_event_envelope(payload.clone());
 
         let envelope: EventEnvelope = serde_json::from_value(envelope_value).unwrap();
 

@@ -261,6 +261,7 @@ impl McpServerService {
             "save_tab_to_collection" => self.handle_save_tab_to_collection(&args),
             "move_request" => self.handle_move_request(&args),
             "copy_request_to_collection" => self.handle_copy_request_to_collection(&args),
+            "resolve_drift" => self.handle_resolve_drift(&args),
             // Async tools are handled in dispatcher (they need async I/O)
             "import_collection" | "refresh_collection_spec" | "run_hurl_suite" => {
                 Err(format!("Async tool '{name}' must be handled by dispatcher"))
@@ -274,6 +275,14 @@ impl McpServerService {
             | "canvas_close_tab"
             | "canvas_subscribe_stream" => Err(format!(
                 "Canvas tool '{name}' must be handled by dispatcher"
+            )),
+            // Project context tools are handled in dispatcher with external state
+            "get_project_context" | "set_project_context" => Err(format!(
+                "Project context tool '{name}' must be handled by dispatcher"
+            )),
+            // Suggestion tools are handled in dispatcher with external state
+            "list_suggestions" | "create_suggestion" | "resolve_suggestion" => Err(format!(
+                "Suggestion tool '{name}' must be handled by dispatcher"
             )),
             _ => Err(format!("Unknown tool: {name}")),
         }
@@ -535,6 +544,137 @@ impl McpServerService {
                             "type": "string",
                             "description": "Stream name (default: 'canvas')",
                             "default": "canvas"
+                        }
+                    }
+                }),
+            ),
+            // Drift resolution tools
+            tool_def(
+                "resolve_drift",
+                "Resolve a detected drift by executing an action (update_spec, fix_request, or ignore)",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection with the drift" },
+                        "method": { "type": "string", "description": "HTTP method of the drifted operation (e.g., GET, POST)" },
+                        "path": { "type": "string", "description": "URL path of the drifted operation (e.g., /users/{id})" },
+                        "action": { "type": "string", "description": "Resolution action to take", "enum": ["update_spec", "fix_request", "ignore"] }
+                    },
+                    "required": ["collection_id", "method", "path", "action"]
+                }),
+            ),
+            // Suggestion tools (Vigilance Monitor)
+            tool_def(
+                "list_suggestions",
+                "List AI suggestions from the Vigilance Monitor. Optionally filter by status (pending, accepted, dismissed).",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "enum": ["pending", "accepted", "dismissed"],
+                            "description": "Filter by status (omit for all)"
+                        }
+                    }
+                }),
+            ),
+            tool_def(
+                "create_suggestion",
+                "Create a new AI suggestion in the Vigilance Monitor. Used by AI agents to surface drift fixes, schema updates, test gaps, and optimization hints.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "suggestionType": {
+                            "type": "string",
+                            "enum": ["drift_fix", "schema_update", "test_gap", "optimization"],
+                            "description": "Category of the suggestion"
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "Short human-readable title"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Detailed description"
+                        },
+                        "source": {
+                            "type": "string",
+                            "description": "Actor attribution (e.g. model name)"
+                        },
+                        "collectionId": {
+                            "type": ["string", "null"],
+                            "description": "Linked collection ID"
+                        },
+                        "requestId": {
+                            "type": ["string", "null"],
+                            "description": "Linked request ID"
+                        },
+                        "endpoint": {
+                            "type": ["string", "null"],
+                            "description": "Linked endpoint path"
+                        },
+                        "action": {
+                            "type": "string",
+                            "description": "What action to take"
+                        }
+                    },
+                    "required": ["suggestionType", "title", "description", "source", "action"]
+                }),
+            ),
+            tool_def(
+                "resolve_suggestion",
+                "Resolve (accept or dismiss) a suggestion in the Vigilance Monitor.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "Suggestion ID"
+                        },
+                        "status": {
+                            "type": "string",
+                            "enum": ["accepted", "dismissed"],
+                            "description": "Resolution status"
+                        }
+                    },
+                    "required": ["id", "status"]
+                }),
+            ),
+            // Project context tools
+            tool_def(
+                "get_project_context",
+                "Get the current project context — the user's active collection, focused request, investigation notes, recent requests, and session tags. Use this to understand what the user is working on.",
+                json!({
+                    "type": "object",
+                    "properties": {}
+                }),
+            ),
+            tool_def(
+                "set_project_context",
+                "Update the project context with partial values. Only provided fields are changed. Use this to track what the user or AI is working on.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "activeCollectionId": {
+                            "type": ["string", "null"],
+                            "description": "Set the active collection ID (null to clear)"
+                        },
+                        "activeRequestId": {
+                            "type": ["string", "null"],
+                            "description": "Set the active request ID (null to clear)"
+                        },
+                        "investigationNotes": {
+                            "type": ["string", "null"],
+                            "description": "Set investigation notes (null to clear)"
+                        },
+                        "pushRecentRequestId": {
+                            "type": "string",
+                            "description": "Add a request ID to the recent list (max 10, deduplicates)"
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "Replace the session tags"
                         }
                     }
                 }),
@@ -1105,6 +1245,73 @@ impl McpServerService {
             is_error: false,
         })
     }
+
+    /// Handle the `resolve_drift` tool call.
+    ///
+    /// Accepts a drift action (`update_spec`, `fix_request`, or `ignore`) for a
+    /// specific operation identified by `(method, path)` within a collection.
+    /// Emits a `drift:resolved` event on success.
+    fn handle_resolve_drift(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        use crate::domain::collection::drift::{DriftActionResult, DriftActionType};
+
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        let method = args
+            .get("method")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: method".to_string())?;
+        let path = args
+            .get("path")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: path".to_string())?;
+        let action_str = args
+            .get("action")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: action".to_string())?;
+
+        Self::validate_collection_id(collection_id)?;
+
+        let action_type = match action_str {
+            "update_spec" => DriftActionType::UpdateSpec,
+            "fix_request" => DriftActionType::FixRequest,
+            "ignore" => DriftActionType::Ignore,
+            other => return Err(format!("Unknown action: {other}")),
+        };
+
+        // Verify collection exists
+        let _collection = load_collection_in_dir(collection_id, self.dir())?;
+
+        let result = DriftActionResult {
+            success: true,
+            action_type,
+            message: format!("Drift for {method} {path} resolved with action: {action_str}"),
+        };
+
+        self.emit(
+            "drift:resolved",
+            json!({
+                "collection_id": collection_id,
+                "method": method,
+                "path": path,
+                "action": action_str,
+            }),
+        );
+
+        let result_json =
+            serde_json::to_value(&result).map_err(|e| format!("Serialization error: {e}"))?;
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: result_json.to_string(),
+            }],
+            is_error: false,
+        })
+    }
 }
 
 /// Convert a `CollectionRequest` to `RequestParams` for HTTP execution.
@@ -1143,11 +1350,13 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_twenty_one_tools() {
+    fn test_registers_twenty_seven_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
-        // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools + 6 canvas tools + 1 streaming tool = 21 total
-        assert_eq!(tools.len(), 21);
+        // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools
+        // + 6 canvas tools + 1 streaming tool + 2 project context tools
+        // + 1 execute_request + 3 suggestion tools = 27 total
+        assert_eq!(tools.len(), 27);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
@@ -1175,6 +1384,13 @@ mod tests {
         assert!(names.contains(&"canvas_close_tab"));
         // Streaming tools
         assert!(names.contains(&"canvas_subscribe_stream"));
+        // Project context tools
+        assert!(names.contains(&"get_project_context"));
+        assert!(names.contains(&"set_project_context"));
+        // Suggestion tools (Vigilance Monitor)
+        assert!(names.contains(&"list_suggestions"));
+        assert!(names.contains(&"create_suggestion"));
+        assert!(names.contains(&"resolve_suggestion"));
     }
 
     #[test]

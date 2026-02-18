@@ -41,6 +41,8 @@ tokio-stream = "0.1"
 aes-gcm = "0.10.3"
 base64 = "0.22.1"
 keyring = "3.6"
+# Topic-based event filtering (glob patterns for SSE subscriptions)
+glob-match = "0.2"
 # Type generation
 ts-rs = "12"
 

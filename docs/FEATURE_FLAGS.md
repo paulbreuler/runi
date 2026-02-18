@@ -65,6 +65,12 @@ hydrated from YAML config files in `~/.runi`.
 | `ai.agenticTesting`          | `false` | `hidden` | Run agentic test flows across APIs.          |
 | `ai.aiSuggestedIntegrations` | `false` | `hidden` | Surface AI-suggested API integrations.       |
 
+### Intent
+
+| Flag                   | Default | State    | Description                                                             |
+| ---------------------- | ------- | -------- | ----------------------------------------------------------------------- |
+| `intent.inputTracking` | `false` | `hidden` | Track mouse vs. keyboard input to suppress focus rings for mouse users. |
+
 ### Debug
 
 | Flag                         | Default | State    | Description                                 |

@@ -12,7 +12,7 @@ describe('feature flag types', () => {
   it('has the top-level flag groups', () => {
     const flags: FeatureFlags = DEFAULT_FLAGS;
     const groups = Object.keys(flags).sort();
-    expect(groups).toEqual(['ai', 'canvas', 'comprehension', 'debug', 'http']);
+    expect(groups).toEqual(['ai', 'canvas', 'comprehension', 'debug', 'http', 'intent']);
   });
 
   it('has the expected http flags', () => {
@@ -60,6 +60,11 @@ describe('feature flag types', () => {
       'naturalLanguageCommands',
       'ollamaIntegration',
     ]);
+  });
+
+  it('has the expected intent flags', () => {
+    const flags: FeatureFlags = DEFAULT_FLAGS;
+    expect(Object.keys(flags.intent).sort()).toEqual(['inputTracking']);
   });
 
   it('has the expected debug flags', () => {

@@ -19,6 +19,9 @@ test.describe('Layout Resizing', () => {
           if (cmd === 'cmd_list_collections') {
             return Promise.resolve([]);
           }
+          if (cmd === 'cmd_list_suggestions') {
+            return Promise.resolve([]);
+          }
           return Promise.resolve({ status: 200, body: '{}', headers: {} });
         },
       };

@@ -18,6 +18,9 @@ test.describe('Error Propagation with Correlation IDs', () => {
           if (cmd === 'cmd_list_collections') {
             return Promise.resolve([]);
           }
+          if (cmd === 'cmd_list_suggestions') {
+            return Promise.resolve([]);
+          }
           if (cmd === 'get_process_startup_time') {
             return Promise.resolve(0);
           }

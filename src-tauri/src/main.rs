@@ -15,12 +15,14 @@ use tauri::Manager;
 
 use infrastructure::commands::{
     clear_request_history, cmd_add_httpbin_collection, cmd_add_request,
-    cmd_copy_request_to_collection, cmd_create_collection, cmd_delete_collection,
-    cmd_delete_request, cmd_duplicate_collection, cmd_duplicate_request, cmd_import_collection,
-    cmd_list_collections, cmd_load_collection, cmd_log_frontend_error, cmd_move_request,
-    cmd_refresh_collection_spec, cmd_rename_collection, cmd_rename_request, cmd_run_hurl_suite,
-    cmd_save_collection, cmd_save_tab_to_collection, cmd_update_request,
-    cmd_write_frontend_error_report, create_proxy_service, delete_history_entry, get_config_dir,
+    cmd_copy_request_to_collection, cmd_create_collection, cmd_create_suggestion,
+    cmd_delete_collection, cmd_delete_request, cmd_duplicate_collection, cmd_duplicate_request,
+    cmd_get_project_context, cmd_import_collection, cmd_list_collections, cmd_list_suggestions,
+    cmd_load_collection, cmd_log_frontend_error, cmd_move_request, cmd_refresh_collection_spec,
+    cmd_rename_collection, cmd_rename_request, cmd_resolve_suggestion, cmd_run_hurl_suite,
+    cmd_save_collection, cmd_save_tab_to_collection, cmd_update_project_context,
+    cmd_update_request, cmd_write_frontend_error_report, create_project_context_service,
+    create_proxy_service, create_suggestion_service, delete_history_entry, get_config_dir,
     get_history_batch, get_history_count, get_history_ids, get_platform, get_process_startup_time,
     get_system_specs, hello_world, load_feature_flags, load_request_history, save_request_history,
     set_log_level, sync_canvas_state, write_startup_timing,
@@ -44,6 +46,7 @@ use infrastructure::memory_monitor::{
 /// In debug mode, automatically opens developer tools.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 #[allow(clippy::large_stack_frames)] // Tauri's generate_context! macro creates large stack frames
+#[allow(clippy::too_many_lines)] // Tauri builder setup is inherently verbose
 pub fn run() {
     // Record process startup time (at the very start of main, before any initialization)
     // This measures from process launch until Tauri setup completes
@@ -112,6 +115,8 @@ pub fn run() {
             Ok(())
         })
         .manage(create_proxy_service())
+        .manage(create_project_context_service().expect("Failed to create project context service"))
+        .manage(create_suggestion_service().expect("Failed to create suggestion service"))
         .invoke_handler(tauri::generate_handler![
             hello_world,
             execute_request,
@@ -156,7 +161,12 @@ pub fn run() {
             cmd_run_hurl_suite,
             mcp_server_start,
             mcp_server_stop,
-            mcp_server_status
+            mcp_server_status,
+            cmd_get_project_context,
+            cmd_update_project_context,
+            cmd_list_suggestions,
+            cmd_create_suggestion,
+            cmd_resolve_suggestion
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
