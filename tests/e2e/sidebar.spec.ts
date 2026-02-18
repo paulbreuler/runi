@@ -17,6 +17,9 @@ test.describe('Sidebar', () => {
           if (cmd === 'cmd_list_collections') {
             return Promise.resolve([]);
           }
+          if (cmd === 'cmd_list_suggestions') {
+            return Promise.resolve([]);
+          }
           // Default mock for other commands (like execute_http_request)
           return Promise.resolve({ status: 200, body: '{}', headers: {} });
         },
