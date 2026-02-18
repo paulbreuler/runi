@@ -4,14 +4,14 @@
  */
 
 import React from 'react';
-import { Activity, Terminal, Network, Eye, EyeOff } from 'lucide-react';
+import { Activity, Terminal, Network, Eye, EyeOff, Lightbulb } from 'lucide-react';
 import { Tabs } from '@base-ui/react/tabs';
 import { BaseTabsList } from '@/components/ui/BaseTabsList';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 
-export type PanelTabType = 'network' | 'console' | 'activity';
+export type PanelTabType = 'network' | 'console' | 'activity' | 'intelligence';
 
 interface PanelTabsProps {
   activeTab: PanelTabType;
@@ -19,6 +19,7 @@ interface PanelTabsProps {
   networkCount?: number;
   consoleCount?: number;
   activityCount?: number;
+  intelligenceCount?: number;
 }
 
 /**
@@ -65,6 +66,7 @@ export const PanelTabs = ({
   networkCount = 0,
   consoleCount = 0,
   activityCount = 0,
+  intelligenceCount = 0,
 }: PanelTabsProps): React.JSX.Element => {
   const followAiMode = useSettingsStore((s) => s.followAiMode);
   const toggleFollowAi = useSettingsStore((s) => s.toggleFollowAiMode);
@@ -125,6 +127,24 @@ export const PanelTabs = ({
                       data-test-id="panel-tab-activity-count"
                     >
                       {activityCount}
+                    </span>
+                  )}
+                </span>
+              ),
+            },
+            {
+              value: 'intelligence',
+              testId: 'panel-tab-intelligence',
+              label: (
+                <span className="flex items-center gap-1.5">
+                  <Lightbulb size={12} />
+                  <span>Intelligence</span>
+                  {intelligenceCount > 0 && (
+                    <span
+                      className="px-1 py-0.5 text-xs bg-signal-ai/20 text-signal-ai rounded"
+                      data-test-id="panel-tab-intelligence-count"
+                    >
+                      {intelligenceCount}
                     </span>
                   )}
                 </span>

@@ -14,6 +14,7 @@ import { ToastProvider } from './components/ui/Toast';
 import { TooltipProvider } from './components/ui/Tooltip';
 import { CommandBar } from './components/CommandBar';
 import { globalEventBus } from './events/bus';
+import { initSuggestionStore } from './stores/useSuggestionStore';
 
 // Lazy load routes for code splitting
 const HomePage = lazy(() => import('./routes/index').then((m) => ({ default: m.HomePage })));
@@ -34,6 +35,17 @@ export const App = (): React.JSX.Element => {
 
     return (): void => {
       unsubCommandBar();
+    };
+  }, []);
+
+  // Initialize suggestion store — fetch from backend and listen for Tauri events
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    void initSuggestionStore().then((fn) => {
+      cleanup = fn;
+    });
+    return (): void => {
+      cleanup?.();
     };
   }, []);
 
