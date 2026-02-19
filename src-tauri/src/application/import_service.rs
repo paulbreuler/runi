@@ -288,10 +288,11 @@ fn extract_query_params(
         .collect()
 }
 
-/// Map a MIME content-type string to the appropriate `BodyType`.
+/// Map a MIME content-type string to the appropriate [`BodyType`].
 ///
-/// Falls back to `Json` when the content-type is absent or unrecognised,
-/// since most `OpenAPI` specs use JSON and omitting the field is common.
+/// Falls back to [`BodyType::Raw`] for unrecognised types.
+/// The [`BodyType::Json`] fallback for absent content-types is handled at the
+/// call site via `map_or`.
 fn body_type_from_content_type(content_type: &str) -> BodyType {
     if content_type.contains("json") {
         BodyType::Json
@@ -299,6 +300,8 @@ fn body_type_from_content_type(content_type: &str) -> BodyType {
         BodyType::Form
     } else if content_type.contains("xml") {
         BodyType::Xml
+    } else if content_type.contains("graphql") {
+        BodyType::Graphql
     } else {
         BodyType::Raw
     }
@@ -319,7 +322,7 @@ fn generate_operation_id(method: &str, path: &str) -> String {
 mod tests {
     use super::*;
     use crate::domain::collection::spec_port::{
-        ContentFetcher, ParsedEndpoint, ParsedServer, SpecSource,
+        ContentFetcher, ParsedEndpoint, ParsedRequestBody, ParsedServer, SpecSource,
     };
     use async_trait::async_trait;
 
@@ -564,6 +567,165 @@ mod tests {
         assert_eq!(
             collection.requests[0].binding.operation_id,
             Some("listItems".to_string())
+        );
+    }
+
+    // ── body_type_from_content_type unit tests ──────────────────────────
+
+    #[test]
+    fn test_body_type_from_content_type_mappings() {
+        assert_eq!(
+            body_type_from_content_type("application/json"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("application/vnd.api+json"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("application/x-www-form-urlencoded"),
+            BodyType::Form
+        );
+        assert_eq!(
+            body_type_from_content_type("multipart/form-data"),
+            BodyType::Form
+        );
+        assert_eq!(
+            body_type_from_content_type("application/xml"),
+            BodyType::Xml
+        );
+        assert_eq!(body_type_from_content_type("text/xml"), BodyType::Xml);
+        assert_eq!(
+            body_type_from_content_type("application/graphql"),
+            BodyType::Graphql
+        );
+        assert_eq!(body_type_from_content_type("text/plain"), BodyType::Raw);
+        assert_eq!(
+            body_type_from_content_type("application/octet-stream"),
+            BodyType::Raw
+        );
+    }
+
+    // ── Body pre-population tests ───────────────────────────────────────
+
+    /// Helper to build a `ParsedSpec` with a single endpoint that has the
+    /// given `request_body`, then convert to `Collection` via `ir_to_collection`.
+    fn collection_with_body(request_body: Option<ParsedRequestBody>) -> Collection {
+        let parsed = ParsedSpec {
+            title: "Body Test".to_string(),
+            version: Some("1.0.0".to_string()),
+            description: None,
+            base_urls: vec![ParsedServer {
+                url: "https://api.test.com".to_string(),
+                description: None,
+            }],
+            endpoints: vec![ParsedEndpoint {
+                operation_id: Some("createItem".to_string()),
+                method: "POST".to_string(),
+                path: "/items".to_string(),
+                summary: Some("Create item".to_string()),
+                description: None,
+                tags: vec![],
+                parameters: vec![],
+                request_body,
+                deprecated: false,
+                is_streaming: false,
+            }],
+            auth_schemes: vec![],
+            variables: BTreeMap::new(),
+        };
+
+        let fetch = FetchResult {
+            content: "{}".to_string(),
+            source_url: "https://example.com/spec.json".to_string(),
+            is_fallback: false,
+            fetched_at: "2026-01-31T10:30:00Z".to_string(),
+        };
+
+        ImportService::ir_to_collection(
+            &parsed,
+            &fetch,
+            SourceType::Openapi,
+            &ImportOverrides::default(),
+        )
+    }
+
+    #[test]
+    fn test_ir_to_collection_populates_body_from_request_body_example() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: Some("application/json".to_string()),
+            schema_hint: None,
+            example: Some(r#"{"name":"Fido"}"#.to_string()),
+            required: true,
+        }));
+
+        let body = collection.requests[0]
+            .body
+            .as_ref()
+            .expect("body should be Some when example is present");
+        assert_eq!(body.body_type, BodyType::Json);
+        assert_eq!(body.content, Some(r#"{"name":"Fido"}"#.to_string()));
+        assert!(body.file.is_none());
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_none_when_no_example() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: Some("application/json".to_string()),
+            schema_hint: None,
+            example: None,
+            required: true,
+        }));
+
+        assert!(
+            collection.requests[0].body.is_none(),
+            "body should be None when request_body has no example"
+        );
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_none_when_no_request_body() {
+        let collection = collection_with_body(None);
+
+        assert!(
+            collection.requests[0].body.is_none(),
+            "body should be None when request_body is None"
+        );
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_uses_content_type_for_body_type() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: Some("application/xml".to_string()),
+            schema_hint: None,
+            example: Some("<root/>".to_string()),
+            required: false,
+        }));
+
+        let body = collection.requests[0]
+            .body
+            .as_ref()
+            .expect("body should be Some");
+        assert_eq!(body.body_type, BodyType::Xml);
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_defaults_to_json_when_content_type_absent() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: None,
+            schema_hint: None,
+            example: Some(r#"{"key":"val"}"#.to_string()),
+            required: false,
+        }));
+
+        let body = collection.requests[0]
+            .body
+            .as_ref()
+            .expect("body should be Some");
+        assert_eq!(
+            body.body_type,
+            BodyType::Json,
+            "absent content_type should default to Json at the call site"
         );
     }
 }
