@@ -9,7 +9,9 @@ import { create } from 'zustand';
 import type { Collection, CollectionRequest, CollectionSummary } from '@/types/collection';
 import { sortRequests } from '@/types/collection';
 import type { ImportCollectionRequest } from '@/types/generated/ImportCollectionRequest';
-import { globalEventBus } from '@/events/bus';
+import type { SpecRefreshResult } from '@/types/generated/SpecRefreshResult';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
+import { useConsoleStore } from '@/stores/useConsoleStore';
 
 interface CollectionState {
   collections: Collection[];
@@ -21,9 +23,12 @@ interface CollectionState {
   pendingRenameId: string | null;
   /** ID of a request that should immediately enter rename mode (cleared after consumption). */
   pendingRequestRenameId: string | null;
+  driftResults: Record<string, SpecRefreshResult>;
   isLoading: boolean;
   error: string | null;
 
+  refreshCollectionSpec: (collectionId: string) => Promise<void>;
+  dismissDriftResult: (collectionId: string) => void;
   createCollection: (name: string) => Promise<Collection | null>;
   loadCollections: () => Promise<void>;
   loadCollection: (id: string) => Promise<void>;
@@ -99,8 +104,38 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   expandedCollectionIds: new Set(),
   pendingRenameId: null,
   pendingRequestRenameId: null,
+  driftResults: {},
   isLoading: false,
   error: null,
+
+  refreshCollectionSpec: async (collectionId: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await invoke<SpecRefreshResult>('cmd_refresh_collection_spec', {
+        collectionId,
+      });
+
+      set((state) => ({
+        driftResults: { ...state.driftResults, [collectionId]: result },
+        isLoading: false,
+      }));
+
+      globalEventBus.emit('collection.spec-refreshed', {
+        collection_id: collectionId,
+        changed: result.changed,
+        actor: 'human',
+      });
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  dismissDriftResult: (collectionId: string): void => {
+    set((state) => {
+      const { [collectionId]: _, ...rest } = state.driftResults;
+      return { driftResults: rest };
+    });
+  },
 
   createCollection: async (name: string): Promise<Collection | null> => {
     set({ isLoading: true, error: null });
@@ -225,7 +260,21 @@ export const useCollectionStore = create<CollectionState>((set) => ({
 
       return collection;
     } catch (error) {
-      set({ error: String(error), isLoading: false });
+      const message = String(error);
+      set({ isLoading: false });
+      useConsoleStore.getState().addLog({
+        id: crypto.randomUUID(),
+        level: 'error',
+        message: `Import failed: ${message}`,
+        args: [message],
+        timestamp: Date.now(),
+        source: 'collection-store',
+      });
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: 'Import failed',
+        details: message,
+      });
       return null;
     }
   },

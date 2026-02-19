@@ -1,0 +1,293 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bookshelf API",
+    "description": "A simple API for managing a personal bookshelf. Version 0.1 — the initial release.",
+    "version": "0.1.0",
+    "contact": {
+      "name": "API Support",
+      "email": "api@bookshelf.example"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    { "name": "books", "description": "Book management" },
+    { "name": "system", "description": "System health and metadata" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["system"],
+        "summary": "Health check",
+        "operationId": "get_health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status", "version"],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok"],
+                      "description": "Always 'ok' when the service is running"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "0.1.0"
+                    }
+                  }
+                },
+                "example": { "status": "ok", "version": "0.1.0" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books": {
+      "get": {
+        "tags": ["books"],
+        "summary": "List all books",
+        "description": "Returns all books in the collection. Note: no pagination — returns the full list.",
+        "operationId": "list_books",
+        "responses": {
+          "200": {
+            "description": "List of books",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["books", "total"],
+                  "properties": {
+                    "books": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Book" }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "Total number of books"
+                    }
+                  }
+                },
+                "example": {
+                  "books": [
+                    {
+                      "id": 1,
+                      "title": "Designing Data-Intensive Applications",
+                      "author": "Martin Kleppmann",
+                      "published_at": "2017-03-16",
+                      "genre": "Technology",
+                      "pages": 616
+                    }
+                  ],
+                  "total": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["books"],
+        "summary": "Create a book",
+        "operationId": "create_book",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "author"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "author": { "type": "string" },
+                  "published_at": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2024-01-15"
+                  },
+                  "genre": { "type": "string" },
+                  "pages": { "type": "integer", "minimum": 1 }
+                }
+              },
+              "example": {
+                "title": "Accelerate",
+                "author": "Nicole Forsgren",
+                "published_at": "2018-03-27",
+                "genre": "Technology",
+                "pages": 288
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Book created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Book" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "integer" }
+        }
+      ],
+      "get": {
+        "tags": ["books"],
+        "summary": "Get a book by ID",
+        "operationId": "get_book",
+        "responses": {
+          "200": {
+            "description": "Book found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Book" }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["books"],
+        "summary": "Replace a book",
+        "operationId": "replace_book",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "author": { "type": "string" },
+                  "published_at": { "type": "string", "format": "date" },
+                  "genre": { "type": "string" },
+                  "pages": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Book updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Book" }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["books"],
+        "summary": "Delete a book",
+        "operationId": "delete_book",
+        "responses": {
+          "200": {
+            "description": "Book deleted (note: returns 200 with body, not 204)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Book": {
+        "type": "object",
+        "required": ["id", "title", "author"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Sequential integer ID"
+          },
+          "title": { "type": "string" },
+          "author": { "type": "string" },
+          "published_at": {
+            "type": "string",
+            "format": "date",
+            "description": "Publication date in YYYY-MM-DD format"
+          },
+          "genre": { "type": "string" },
+          "pages": { "type": "integer" }
+        },
+        "example": {
+          "id": 1,
+          "title": "Designing Data-Intensive Applications",
+          "author": "Martin Kleppmann",
+          "published_at": "2017-03-16",
+          "genre": "Technology",
+          "pages": 616
+        }
+      },
+      "ErrorError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "MessageError": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

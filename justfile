@@ -122,7 +122,7 @@ lint-frontend: ensure-deps
 # TODO: Remove || true once existing markdown files are fixed in a separate PR
 # Currently non-blocking due to pre-existing lint errors in documentation files
 lint-markdown:
-    npx markdownlint "**/*.md" --ignore "node_modules" --ignore "test-results" --ignore "playwright-report" --ignore "coverage" --ignore "html" --ignore "build" --ignore "dist" --ignore "storybook-static" --ignore ".cursor/code-review-report.md" --ignore ".cursor/plans" --ignore ".tmp" --ignore "target" --ignore ".planning-docs" --ignore "CHANGELOG.md" --ignore "scripts/audit" || true
+    npx markdownlint "**/*.md" --ignore "**/node_modules" --ignore "test-results" --ignore "playwright-report" --ignore "coverage" --ignore "html" --ignore "build" --ignore "dist" --ignore "storybook-static" --ignore ".cursor/code-review-report.md" --ignore ".cursor/plans" --ignore ".tmp" --ignore "target" --ignore ".planning-docs" --ignore "CHANGELOG.md" --ignore "scripts/audit" || true
 
 # ============================================================================
 # ✅ Code Quality: Type Checking
@@ -231,6 +231,30 @@ validate-ralph:
     @grep -q "hover:bg-muted\|subtle.*interactions\|high contrast" @fix_plan.md || (echo "⚠️  @fix_plan.md missing design principles" && exit 1)
     @echo "✅ Basic validation passed"
 
+
+# ============================================================================
+# 🎬 Demo
+# ============================================================================
+
+# Set up the demo API (install dependencies)
+demo-setup:
+    @echo "📚 Setting up Bookshelf API demo..."
+    cd demo/api && npm install
+    @echo "✅ Demo ready. See demo/README.md for walkthrough."
+
+# Start demo API v0.1 (original, working version)
+demo-v1:
+    @echo "📚 Starting Bookshelf API v0.1 on http://localhost:3000"
+    @echo "   OpenAPI spec: http://localhost:3000/openapi.json"
+    @echo "   Press Ctrl+C to stop"
+    node demo/api/server.js --version=1
+
+# Start demo API v0.2 (breaking changes — triggers drift detection in runi)
+demo-v2:
+    @echo "📚 Starting Bookshelf API v0.2 on http://localhost:3000"
+    @echo "   Breaking changes: /books→/catalog, field renames, isbn required"
+    @echo "   Press Ctrl+C to stop"
+    node demo/api/server.js --version=2
 
 # ============================================================================
 # 🧹 Cleanup

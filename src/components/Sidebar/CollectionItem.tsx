@@ -13,8 +13,10 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  RefreshCw,
   Trash2,
 } from 'lucide-react';
+import { DriftReport } from '@/components/Sidebar/DriftReport';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
@@ -23,6 +25,7 @@ import {
   useSortedRequests,
 } from '@/stores/useCollectionStore';
 import type { CollectionSummary } from '@/types/collection';
+import type { DriftActionType } from '@/types/generated/DriftActionType';
 import { cn } from '@/utils/cn';
 import { focusRingClasses, useFocusVisible } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
@@ -30,6 +33,7 @@ import { truncateNavLabel } from '@/utils/truncateNavLabel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent } from '@/components/ui/Popover';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 interface CollectionItemProps {
@@ -62,6 +66,10 @@ export const CollectionItem = ({
   const collection = useCollection(summary.id);
   const sortedRequests = useSortedRequests(summary.id);
   const displayName = truncateNavLabel(summary.name);
+  const refreshCollectionSpec = useCollectionStore((state) => state.refreshCollectionSpec);
+  const dismissDriftResult = useCollectionStore((state) => state.dismissDriftResult);
+  const driftResult = useCollectionStore((state) => state.driftResults[summary.id]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [isRenaming, setIsRenaming] = useState(startInRenameMode);
   const [renameValue, setRenameValue] = useState(startInRenameMode ? summary.name : '');
@@ -201,6 +209,34 @@ export const CollectionItem = ({
     setDeletePopoverOpen(true);
   }, []);
 
+  const handleMenuRefreshSpec = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    setIsRefreshing(true);
+    void refreshCollectionSpec(summary.id).finally(() => {
+      setIsRefreshing(false);
+    });
+  }, [summary.id, refreshCollectionSpec]);
+
+  const handleDriftDismiss = useCallback((): void => {
+    dismissDriftResult(summary.id);
+  }, [summary.id, dismissDriftResult]);
+
+  const handleDriftAction = useCallback(
+    (_actionType: DriftActionType): void => {
+      // For now, all actions dismiss the drift report.
+      // In future, update_spec and fix_request will invoke backend commands.
+      dismissDriftResult(summary.id);
+    },
+    [summary.id, dismissDriftResult]
+  );
+
+  // Determine if refresh spec should be shown
+  const canRefreshSpec =
+    collection?.source.source_type === 'openapi' &&
+    collection.source.url !== undefined &&
+    collection.source.url.length > 0;
+
   const handleMenuOpenChange = useCallback((open: boolean): void => {
     setMenuOpen(open);
     if (!open) {
@@ -261,13 +297,18 @@ export const CollectionItem = ({
                 {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </span>
               <Folder size={14} className="shrink-0 text-text-muted" />
-              <span
-                className="text-sm text-text-primary truncate"
-                title={summary.name}
-                data-test-id={`collection-name-${summary.id}`}
+              <Tooltip
+                content={summary.name}
+                delayDuration={500}
+                data-test-id={`collection-tooltip-${summary.id}`}
               >
-                {displayName}
-              </span>
+                <span
+                  className="text-sm text-text-primary truncate"
+                  data-test-id={`collection-name-${summary.id}`}
+                >
+                  {displayName}
+                </span>
+              </Tooltip>
             </button>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -346,6 +387,25 @@ export const CollectionItem = ({
                               <Plus size={12} className="shrink-0" />
                               <span>Add Request</span>
                             </Menu.Item>
+                            {canRefreshSpec && (
+                              <Menu.Item
+                                label="Refresh spec"
+                                className={cn(
+                                  focusRingClasses,
+                                  'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
+                                  'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                                )}
+                                onClick={handleMenuRefreshSpec}
+                                closeOnClick={true}
+                                data-test-id={`collection-menu-refresh-spec-${summary.id}`}
+                              >
+                                <RefreshCw
+                                  size={12}
+                                  className={cn('shrink-0', isRefreshing && 'animate-spin')}
+                                />
+                                <span>{isRefreshing ? 'Refreshing…' : 'Refresh spec'}</span>
+                              </Menu.Item>
+                            )}
                             <div className="my-1 h-px bg-border-subtle" role="separator" />
                             <Menu.Item
                               label="Rename"
@@ -444,6 +504,13 @@ export const CollectionItem = ({
         <div className="ml-3 border-l border-border-subtle pb-2" data-test-id="collection-requests">
           <RequestListComposite collectionId={summary.id} requests={sortedRequests} />
         </div>
+      )}
+      {driftResult !== undefined && driftResult.changed && (
+        <DriftReport
+          result={driftResult}
+          onDismiss={handleDriftDismiss}
+          onAction={handleDriftAction}
+        />
       )}
     </div>
   );

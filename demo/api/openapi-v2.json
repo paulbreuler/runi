@@ -1,0 +1,321 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bookshelf API",
+    "description": "A simple API for managing a personal bookshelf. Version 0.2 — introduces catalog endpoints and field name updates.",
+    "version": "0.2.0",
+    "contact": {
+      "name": "API Support",
+      "email": "api@bookshelf.example"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    { "name": "catalog", "description": "Catalog management (replaces books in v0.1)" },
+    { "name": "system", "description": "System health and metadata" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["system"],
+        "summary": "Health check",
+        "operationId": "get_health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status", "version"],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["healthy"],
+                      "description": "BREAKING: changed from 'ok' to 'healthy'"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "0.2.0"
+                    }
+                  }
+                },
+                "example": { "status": "healthy", "version": "0.2.0" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books": {
+      "get": {
+        "tags": ["catalog"],
+        "summary": "DEPRECATED — list books (use /catalog)",
+        "description": "BREAKING: this endpoint now returns a deprecation notice instead of books. Use GET /catalog.",
+        "operationId": "list_books_deprecated",
+        "deprecated": true,
+        "responses": {
+          "200": {
+            "description": "Deprecation notice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deprecated": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "redirect": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog": {
+      "get": {
+        "tags": ["catalog"],
+        "summary": "List all catalog items",
+        "description": "Replaces GET /books. Note: response wrapper changed from 'books' to 'items' and field names have changed.",
+        "operationId": "list_catalog",
+        "responses": {
+          "200": {
+            "description": "List of catalog items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "count"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/CatalogItem" }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "BREAKING: renamed from 'total' to 'count'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["catalog"],
+        "summary": "Create a catalog item",
+        "description": "Replaces POST /books. BREAKING: field names changed and isbn is now required.",
+        "operationId": "create_catalog_item",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "writer", "isbn"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "BREAKING: renamed from 'title'"
+                  },
+                  "writer": {
+                    "type": "string",
+                    "description": "BREAKING: renamed from 'author'"
+                  },
+                  "publishedDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "BREAKING: renamed from 'published_at', now camelCase"
+                  },
+                  "genre": { "type": "string" },
+                  "pages": { "type": "integer", "minimum": 1 },
+                  "isbn": {
+                    "type": "string",
+                    "description": "BREAKING: new required field",
+                    "example": "978-1-449-37332-0"
+                  }
+                }
+              },
+              "example": {
+                "name": "Accelerate",
+                "writer": "Nicole Forsgren",
+                "publishedDate": "2018-03-27",
+                "genre": "Technology",
+                "pages": 288,
+                "isbn": "978-1-942788-33-1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Catalog item created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogItem" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MessageError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalog/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "integer" }
+        }
+      ],
+      "get": {
+        "tags": ["catalog"],
+        "summary": "Get a catalog item by ID",
+        "description": "Replaces GET /books/{id}.",
+        "operationId": "get_catalog_item",
+        "responses": {
+          "200": {
+            "description": "Catalog item found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogItem" }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["catalog"],
+        "summary": "Partially update a catalog item",
+        "description": "Replaces PUT /books/{id} with PATCH semantics.",
+        "operationId": "patch_catalog_item",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "writer": { "type": "string" },
+                  "publishedDate": { "type": "string", "format": "date" },
+                  "genre": { "type": "string" },
+                  "pages": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogItem" }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["catalog"],
+        "summary": "Delete a catalog item",
+        "operationId": "delete_catalog_item",
+        "responses": {
+          "204": {
+            "description": "Item deleted (no content)"
+          },
+          "404": {
+            "description": "Item not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CatalogItem": {
+        "type": "object",
+        "required": ["id", "name", "writer"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": {
+            "type": "string",
+            "description": "Book title (renamed from 'title' in v0.1)"
+          },
+          "writer": {
+            "type": "string",
+            "description": "Book author (renamed from 'author' in v0.1)"
+          },
+          "publishedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Publication date (renamed from 'published_at' in v0.1)"
+          },
+          "genre": { "type": "string" },
+          "pages": { "type": "integer" },
+          "isbn": { "type": "string" }
+        },
+        "example": {
+          "id": 1,
+          "name": "Designing Data-Intensive Applications",
+          "writer": "Martin Kleppmann",
+          "publishedDate": "2017-03-16",
+          "genre": "Technology",
+          "pages": 616,
+          "isbn": null
+        }
+      },
+      "ErrorError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "MessageError": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

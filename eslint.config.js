@@ -273,6 +273,7 @@ export default tseslint.config(
       '.tmp/', // Ephemeral files (git-ignored)
       'tests/',
       'scripts/', // Setup scripts (Node.js, not TypeScript)
+      'demo/', // Demo API server (Node.js, not TypeScript)
       'packages/', // Package workspace files
       '*.config.js',
       '*.config.ts',

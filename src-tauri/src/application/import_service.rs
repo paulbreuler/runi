@@ -16,8 +16,9 @@ use crate::domain::collection::spec_port::{
     ContentFetcher, FetchResult, ParsedSpec, SpecParseError, SpecParser, SpecSource,
 };
 use crate::domain::collection::{
-    Collection, CollectionMetadata, CollectionRequest, CollectionSource, IntelligenceMetadata,
-    RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType, SpecBinding,
+    BodyType, Collection, CollectionMetadata, CollectionRequest, CollectionSource,
+    IntelligenceMetadata, RequestBody, RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType,
+    SpecBinding,
 };
 use crate::infrastructure::spec::hasher::compute_spec_hash;
 
@@ -204,7 +205,13 @@ impl ImportService {
                     url,
                     headers: BTreeMap::new(),
                     params,
-                    body: None,
+                    body: ep.request_body.as_ref().and_then(|rb| {
+                        rb.example.as_ref().map(|_| RequestBody {
+                            body_type: BodyType::Json,
+                            content: rb.example.clone(),
+                            file: None,
+                        })
+                    }),
                     auth: None,
                     docs: ep.description.clone(),
                     is_streaming: ep.is_streaming,

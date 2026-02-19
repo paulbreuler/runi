@@ -24,10 +24,14 @@ interface MockCollectionStoreState {
   isLoading: boolean;
   error: string | null;
   pendingRenameId: string | null;
+  driftResults: Record<string, unknown>;
   loadCollections: () => Promise<void>;
   addHttpbinCollection: () => Promise<Collection | null>;
   createCollection: (name: string) => Promise<Collection | null>;
+  importCollection: (request: unknown) => Promise<Collection | null>;
   clearPendingRename: () => void;
+  refreshCollectionSpec: (id: string) => Promise<void>;
+  dismissDriftResult: (id: string) => void;
 }
 
 let mockCollectionState: MockCollectionStoreState;
@@ -37,10 +41,14 @@ const createCollectionState = (): MockCollectionStoreState => ({
   isLoading: false,
   error: null,
   pendingRenameId: null,
+  driftResults: {},
   loadCollections: vi.fn(async (): Promise<void> => undefined),
   addHttpbinCollection: vi.fn(async (): Promise<Collection | null> => null),
   createCollection: vi.fn(async (): Promise<Collection | null> => null),
+  importCollection: vi.fn(async (): Promise<Collection | null> => null),
   clearPendingRename: vi.fn(),
+  refreshCollectionSpec: vi.fn(async (): Promise<void> => undefined),
+  dismissDriftResult: vi.fn(),
 });
 
 vi.mock('@/stores/useCollectionStore', () => ({

@@ -3,8 +3,9 @@
 use super::hasher::compute_spec_hash;
 use super::openapi_types::{OpenApiParameterLocation, OpenApiParsedParameter, OpenApiParsedSpec};
 use crate::domain::collection::{
-    Collection, CollectionMetadata, CollectionRequest, CollectionSource, IntelligenceMetadata,
-    RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType, SpecBinding,
+    BodyType, Collection, CollectionMetadata, CollectionRequest, CollectionSource,
+    IntelligenceMetadata, RequestBody, RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType,
+    SpecBinding,
 };
 use std::collections::BTreeMap;
 
@@ -54,7 +55,13 @@ pub fn convert_to_collection(
                 url,
                 headers: BTreeMap::new(), // NOT HashMap
                 params,
-                body: None,
+                body: op.request_body.as_ref().and_then(|rb| {
+                    rb.example.as_ref().map(|_| RequestBody {
+                        body_type: BodyType::Json,
+                        content: rb.example.clone(),
+                        file: None,
+                    })
+                }),
                 auth: None,
                 docs: op.description.clone(),
                 is_streaming: op.is_streaming,
@@ -140,6 +147,7 @@ mod tests {
                 description: None,
                 tags: vec!["users".to_string()],
                 parameters: vec![],
+                request_body: None,
                 deprecated: false,
                 is_streaming: false,
             }],
@@ -189,6 +197,7 @@ mod tests {
             description: None,
             tags: vec![],
             parameters: vec![],
+            request_body: None,
             deprecated: false,
             is_streaming: false,
         });

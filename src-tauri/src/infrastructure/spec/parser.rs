@@ -1,14 +1,39 @@
 #![allow(dead_code)]
 
 use super::openapi_types::{
-    OpenApiParameterLocation, OpenApiParsedOperation, OpenApiParsedParameter, OpenApiParsedSpec,
-    OpenApiServer,
+    OpenApiParameterLocation, OpenApiParsedOperation, OpenApiParsedParameter,
+    OpenApiParsedRequestBody, OpenApiParsedSpec, OpenApiServer,
 };
 use super::streaming::is_streaming_operation;
 use openapiv3::OpenAPI;
 use serde_json::Value;
 
-/// Parse `OpenAPI` JSON into internal types.
+/// Parse a raw spec string (JSON or YAML) into a `serde_json::Value`.
+///
+/// Tries JSON first; if that fails, attempts YAML and converts to JSON.
+/// Returns an "Invalid format" error if neither succeeds.
+fn parse_to_json_value(content: &str) -> Result<Value, String> {
+    // Try JSON first (fast path — most common)
+    if let Ok(doc) = serde_json::from_str::<Value>(content) {
+        return Ok(doc);
+    }
+
+    // Fall back to YAML
+    let yaml_value: serde_yaml_ng::Value = serde_yaml_ng::from_str(content)
+        .map_err(|e| format!("Invalid format: not valid JSON or YAML: {e}"))?;
+
+    // Convert YAML → JSON via serde round-trip
+    let json_str = serde_json::to_string(&yaml_value)
+        .map_err(|e| format!("Invalid format: YAML-to-JSON conversion failed: {e}"))?;
+    serde_json::from_str::<Value>(&json_str)
+        .map_err(|e| format!("Invalid format: JSON re-parse after YAML conversion failed: {e}"))
+}
+
+/// Parse `OpenAPI` JSON or YAML into internal types.
+///
+/// # Supported Formats
+/// - JSON (primary)
+/// - YAML (converted to JSON internally)
 ///
 /// # Supported Versions
 /// - `OpenAPI` 3.0.x (primary)
@@ -20,7 +45,7 @@ use serde_json::Value;
 /// - Extract all parameter locations
 /// - Detect streaming from produces/responses
 pub fn parse_openapi_spec(content: &str) -> Result<OpenApiParsedSpec, String> {
-    let doc: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let doc: Value = parse_to_json_value(content)?;
     validate_openapi_value(&doc)?;
 
     // Extract info
@@ -56,8 +81,10 @@ pub fn parse_openapi_spec(content: &str) -> Result<OpenApiParsedSpec, String> {
 }
 
 /// Validate the spec against the `OpenAPI` schema when applicable.
+///
+/// Accepts both JSON and YAML input.
 pub fn validate_openapi_spec(content: &str) -> Result<(), String> {
-    let doc: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let doc: Value = parse_to_json_value(content)?;
     validate_openapi_value(&doc)
 }
 
@@ -161,6 +188,7 @@ fn parse_operation(path: &str, method: &str, op: &Value) -> OpenApiParsedOperati
         .unwrap_or_default();
 
     let parameters = parse_parameters(op);
+    let request_body = parse_request_body(op);
     let deprecated = op
         .get("deprecated")
         .and_then(Value::as_bool)
@@ -175,6 +203,7 @@ fn parse_operation(path: &str, method: &str, op: &Value) -> OpenApiParsedOperati
         description,
         tags,
         parameters,
+        request_body,
         deprecated,
         is_streaming,
     }
@@ -216,6 +245,34 @@ fn parse_parameters(op: &Value) -> Vec<OpenApiParsedParameter> {
             })
         })
         .collect()
+}
+
+/// Extract request body from an `OpenAPI` operation.
+///
+/// Prefers `content.application/json.example`, falls back to
+/// `content.application/json.schema.example`, then `None`.
+fn parse_request_body(op: &Value) -> Option<OpenApiParsedRequestBody> {
+    let rb = op.get("requestBody")?;
+    let required = rb.get("required").and_then(Value::as_bool).unwrap_or(false);
+    let content = rb.get("content")?.as_object()?;
+
+    // Prefer application/json, fall back to first content type
+    let (content_type, media_type) = content
+        .get("application/json")
+        .map(|v| ("application/json", v))
+        .or_else(|| content.iter().next().map(|(k, v)| (k.as_str(), v)))?;
+
+    // Prefer media-level example → schema-level example → None
+    let example = media_type
+        .get("example")
+        .or_else(|| media_type.get("schema").and_then(|s| s.get("example")))
+        .map(|v| serde_json::to_string(v).unwrap_or_default());
+
+    Some(OpenApiParsedRequestBody {
+        content_type: Some(content_type.to_string()),
+        example,
+        required,
+    })
 }
 
 fn generate_operation_id(method: &str, path: &str) -> String {
@@ -332,10 +389,31 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_invalid_json_returns_error() {
+    fn test_parse_invalid_input_returns_error() {
+        // "not json" is valid YAML (a scalar string), so it parses but fails
+        // OpenAPI validation because it has no "openapi" or "swagger" key.
         let result = parse_openapi_spec("not json");
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Invalid JSON"));
+        assert!(result.unwrap_err().contains("Missing OpenAPI or Swagger"));
+    }
+
+    #[test]
+    fn test_parse_invalid_yaml_returns_invalid_format() {
+        // Deliberately malformed YAML that is also not valid JSON
+        let result = parse_openapi_spec("{{{{invalid_yaml:");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid format"));
+    }
+
+    #[test]
+    fn test_parse_yaml_openapi_spec() {
+        let yaml_spec = "openapi: \"3.0.0\"\ninfo:\n  title: YAML API\n  version: \"1.0.0\"\npaths:\n  /test:\n    get:\n      operationId: getTest\n      summary: Test endpoint\n      responses:\n        '200':\n          description: OK\n";
+        let result = parse_openapi_spec(yaml_spec);
+        assert!(result.is_ok(), "Expected Ok, got: {:?}", result.err());
+        let spec = result.unwrap();
+        assert_eq!(spec.title, "YAML API");
+        assert_eq!(spec.operations.len(), 1);
+        assert_eq!(spec.operations[0].operation_id, "getTest");
     }
 
     #[test]
@@ -345,10 +423,19 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_openapi_spec_rejects_invalid_json() {
+    fn test_validate_openapi_spec_rejects_invalid_input() {
+        // "not json" is valid YAML (scalar string) but fails OpenAPI validation
         let result = validate_openapi_spec("not json");
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Invalid JSON"));
+        assert!(result.unwrap_err().contains("Missing OpenAPI or Swagger"));
+    }
+
+    #[test]
+    fn test_validate_openapi_spec_accepts_yaml() {
+        let yaml_spec =
+            "openapi: \"3.0.0\"\ninfo:\n  title: YAML API\n  version: \"1.0.0\"\npaths: {}\n";
+        let result = validate_openapi_spec(yaml_spec);
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -360,5 +447,49 @@ mod tests {
         }"#;
         let result = validate_openapi_spec(swagger);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_parse_extracts_request_body_from_operation() {
+        let spec = r#"{
+            "openapi": "3.0.0",
+            "info": { "title": "Test", "version": "1.0.0" },
+            "paths": {
+                "/pets": {
+                    "post": {
+                        "operationId": "createPet",
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": { "type": "object" },
+                                    "example": { "name": "Fido", "tag": "dog" }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Created",
+                                "content": {
+                                    "application/json": {
+                                        "schema": { "type": "object" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }"#;
+
+        let result = parse_openapi_spec(spec).unwrap();
+        let op = &result.operations[0];
+        let body = op.request_body.as_ref().expect("should have request_body");
+        assert_eq!(body.content_type, Some("application/json".to_string()));
+        assert!(body.required);
+
+        let example = body.example.as_ref().expect("should have example");
+        let parsed: serde_json::Value = serde_json::from_str(example).unwrap();
+        assert_eq!(parsed["name"], "Fido");
     }
 }

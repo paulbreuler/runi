@@ -4,9 +4,10 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Folder, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { Folder, ChevronDown, ChevronRight, Plus, Link } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
+import { ImportSpecDialog } from '@/components/Sidebar/ImportSpecDialog';
 import { SidebarScrollArea } from '@/components/Sidebar/SidebarScrollArea';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toast';
@@ -102,6 +103,7 @@ export const Sidebar = (): React.JSX.Element => {
   const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
   const createCollection = useCollectionStore((state) => state.createCollection);
   const summaries = useCollectionStore((state) => state.summaries);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const handleCreate = useCallback(async (): Promise<void> => {
     const name = generateUniqueName(
@@ -114,28 +116,44 @@ export const Sidebar = (): React.JSX.Element => {
     }
   }, [createCollection, summaries]);
 
-  const createButton = collectionsEnabled ? (
-    <Button
-      variant="ghost"
-      size="icon-xs"
-      noScale
-      className="size-5 text-text-muted hover:text-text-primary"
-      onClick={handleCreate}
-      aria-label="Create collection"
-      data-test-id="create-collection-button"
-    >
-      <Plus size={12} />
-    </Button>
+  const headerActions = collectionsEnabled ? (
+    <div className="flex items-center gap-0.5">
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        noScale
+        className="size-5 text-text-muted hover:text-text-primary"
+        onClick={() => {
+          setImportDialogOpen(true);
+        }}
+        aria-label="Import OpenAPI spec"
+        data-test-id="import-spec-button"
+      >
+        <Link size={12} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        noScale
+        className="size-5 text-text-muted hover:text-text-primary"
+        onClick={handleCreate}
+        aria-label="Create collection"
+        data-test-id="create-collection-button"
+      >
+        <Plus size={12} />
+      </Button>
+    </div>
   ) : undefined;
 
   return (
     <aside className="flex-1 min-h-0 flex flex-col bg-bg-surface" data-test-id="sidebar-content">
+      <ImportSpecDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
       <DrawerSection
         title="Collections"
         icon={<Folder size={14} />}
         defaultOpen
         testId="collections-drawer"
-        headerAction={createButton}
+        headerAction={headerActions}
       >
         <CollectionList />
       </DrawerSection>

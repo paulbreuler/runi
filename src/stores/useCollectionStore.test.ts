@@ -41,6 +41,7 @@ describe('useCollectionStore', () => {
       selectedCollectionId: null,
       selectedRequestId: null,
       expandedCollectionIds: new Set(),
+      driftResults: {},
       isLoading: false,
       error: null,
     });
@@ -437,8 +438,11 @@ describe('useCollectionStore', () => {
       expect(result.current.error).toBeNull();
     });
 
-    it('sets error when import fails', async (): Promise<void> => {
+    it('shows toast and returns null when import fails', async (): Promise<void> => {
       (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('import failed');
+
+      const toastSpy = vi.fn();
+      const unsub = globalEventBus.on('toast.show', toastSpy);
 
       const { result } = renderHook(() => useCollectionStore());
 
@@ -456,9 +460,16 @@ describe('useCollectionStore', () => {
       });
 
       expect(returned).toBeNull();
-      expect(result.current.error).toContain('import failed');
+      expect(result.current.error).toBeNull(); // no persistent error state
       expect(result.current.isLoading).toBe(false);
       expect(result.current.collections).toHaveLength(0);
+      expect(toastSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({ type: 'error', message: 'Import failed' }),
+        })
+      );
+
+      unsub();
     });
   });
 
@@ -1035,6 +1046,64 @@ describe('useCollectionStore', () => {
       expect(returned).toBe(false);
       expect(result.current.error).toContain('move failed');
       expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('refreshCollectionSpec', () => {
+    it('calls cmd_refresh_collection_spec and stores drift result', async () => {
+      const driftResult = {
+        changed: true,
+        operationsAdded: [{ method: 'POST', path: '/new' }],
+        operationsRemoved: [],
+        operationsChanged: [{ method: 'GET', path: '/users', changes: ['parameters'] }],
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(driftResult);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.refreshCollectionSpec('col-1');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_refresh_collection_spec', {
+        collectionId: 'col-1',
+      });
+      expect(result.current.driftResults['col-1']).toEqual(driftResult);
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('sets error when refresh fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('refresh failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.refreshCollectionSpec('col-1');
+      });
+
+      expect(result.current.error).toContain('refresh failed');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('dismisses drift result with dismissDriftResult', async () => {
+      useCollectionStore.setState({
+        driftResults: {
+          'col-1': {
+            changed: true,
+            operationsAdded: [],
+            operationsRemoved: [],
+            operationsChanged: [],
+          },
+        },
+      });
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      act(() => {
+        result.current.dismissDriftResult('col-1');
+      });
+
+      expect(result.current.driftResults['col-1']).toBeUndefined();
     });
   });
 

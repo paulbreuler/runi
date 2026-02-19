@@ -44,9 +44,12 @@ interface MockCollectionStoreState {
   selectedCollectionId: string | null;
   expandedCollectionIds: Set<string>;
   collections: unknown[];
+  driftResults: Record<string, unknown>;
   toggleExpanded: (id: string) => void;
   loadCollection: (id: string) => Promise<void>;
   selectCollection: (id: string | null) => void;
+  refreshCollectionSpec: (id: string) => Promise<void>;
+  dismissDriftResult: (id: string) => void;
 }
 
 let mockCollectionState: MockCollectionStoreState;
@@ -85,9 +88,12 @@ describe('CollectionItem', (): void => {
       selectedCollectionId: null,
       expandedCollectionIds: new Set(),
       collections: [],
+      driftResults: {},
       toggleExpanded: vi.fn(),
       loadCollection: vi.fn(async (): Promise<void> => undefined),
       selectCollection: vi.fn(),
+      refreshCollectionSpec: vi.fn(async (): Promise<void> => undefined),
+      dismissDriftResult: vi.fn(),
     };
   });
 
