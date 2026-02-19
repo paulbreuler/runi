@@ -58,7 +58,28 @@ export const Tooltip: React.FC<TooltipProps> = ({
     <BaseUITooltip.Root>
       <BaseUITooltip.Trigger
         delay={delayDuration}
-        render={(props) => React.cloneElement(childElement, props)}
+        render={(props) => {
+          // Compose event handlers: trigger fires first, then child's original handler.
+          // This prevents trigger props from silently overriding existing handlers
+          // (e.g. onKeyDown for F2/Delete shortcuts on buttons).
+          const mergedProps = { ...(props as Record<string, unknown>) };
+          const childProps = childElement.props as Record<string, unknown>;
+          for (const key of Object.keys(childProps)) {
+            if (
+              key.startsWith('on') &&
+              typeof childProps[key] === 'function' &&
+              typeof mergedProps[key] === 'function'
+            ) {
+              const childFn = childProps[key] as (e: unknown) => void;
+              const triggerFn = mergedProps[key] as (e: unknown) => void;
+              mergedProps[key] = (e: unknown): void => {
+                triggerFn(e);
+                childFn(e);
+              };
+            }
+          }
+          return React.cloneElement(childElement, mergedProps);
+        }}
       />
       <BaseUITooltip.Portal>
         <BaseUITooltip.Positioner sideOffset={5}>

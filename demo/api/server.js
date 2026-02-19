@@ -215,11 +215,11 @@ function mountV2(app) {
     const idx = books.findIndex((b) => b.id === Number(req.params.id));
     if (idx === -1) return res.status(404).json({ error: 'Book not found' });
     const { name, writer, publishedDate, genre, pages } = req.body;
-    if (name) books[idx].title = name;
-    if (writer) books[idx].author = writer;
-    if (publishedDate) books[idx].published_at = publishedDate;
-    if (genre) books[idx].genre = genre;
-    if (pages) books[idx].pages = pages;
+    if (name !== undefined) books[idx].title = name;
+    if (writer !== undefined) books[idx].author = writer;
+    if (publishedDate !== undefined) books[idx].published_at = publishedDate;
+    if (genre !== undefined) books[idx].genre = genre;
+    if (pages !== undefined) books[idx].pages = pages;
     res.json(toV2(books[idx]));
   });
 

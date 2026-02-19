@@ -126,7 +126,13 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         actor: 'human',
       });
     } catch (error) {
-      set({ error: String(error), isLoading: false });
+      const message = String(error);
+      set({ error: message, isLoading: false });
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: 'Failed to refresh spec',
+        details: message,
+      });
     }
   },
 

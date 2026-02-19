@@ -280,36 +280,36 @@ export const CollectionItem = ({
               isSelected ? 'bg-accent-blue/10' : 'hover:bg-bg-raised/40'
             )}
           >
-            <button
-              type="button"
-              className={cn(
-                focusRingClasses,
-                'flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer bg-transparent border-none p-0'
-              )}
-              data-test-id={`collection-item-${summary.id}`}
-              data-active={isSelected || undefined}
-              data-nav-item="true"
-              onClick={handleToggle}
-              onKeyDown={handleRowKeyDown}
-              aria-expanded={isExpanded}
+            <Tooltip
+              content={summary.name}
+              delayDuration={500}
+              data-test-id={`collection-tooltip-${summary.id}`}
             >
-              <span className="text-text-muted">
-                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </span>
-              <Folder size={14} className="shrink-0 text-text-muted" />
-              <Tooltip
-                content={summary.name}
-                delayDuration={500}
-                data-test-id={`collection-tooltip-${summary.id}`}
+              <button
+                type="button"
+                className={cn(
+                  focusRingClasses,
+                  'flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer bg-transparent border-none p-0'
+                )}
+                data-test-id={`collection-item-${summary.id}`}
+                data-active={isSelected || undefined}
+                data-nav-item="true"
+                onClick={handleToggle}
+                onKeyDown={handleRowKeyDown}
+                aria-expanded={isExpanded}
               >
+                <span className="text-text-muted">
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </span>
+                <Folder size={14} className="shrink-0 text-text-muted" />
                 <span
                   className="text-sm text-text-primary truncate"
                   data-test-id={`collection-name-${summary.id}`}
                 >
                   {displayName}
                 </span>
-              </Tooltip>
-            </button>
+              </button>
+            </Tooltip>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <div className="flex items-center gap-2 text-xs text-text-muted">
@@ -401,7 +401,10 @@ export const CollectionItem = ({
                               >
                                 <RefreshCw
                                   size={12}
-                                  className={cn('shrink-0', isRefreshing && 'animate-spin')}
+                                  className={cn(
+                                    'shrink-0',
+                                    isRefreshing && 'motion-safe:animate-spin'
+                                  )}
                                 />
                                 <span>{isRefreshing ? 'Refreshing…' : 'Refresh spec'}</span>
                               </Menu.Item>

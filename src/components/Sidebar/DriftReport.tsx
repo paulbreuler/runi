@@ -41,7 +41,10 @@ export const DriftReport = ({
             <span className="text-signal-error"> — {breakingCount} breaking</span>
           )}
           {warningCount > 0 && (
-            <span className="text-signal-warning">, {warningCount} warnings</span>
+            <span className="text-signal-warning">
+              {breakingCount > 0 ? ', ' : ' — '}
+              {warningCount} warnings
+            </span>
           )}
         </p>
         <Button

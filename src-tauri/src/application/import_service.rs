@@ -206,10 +206,16 @@ impl ImportService {
                     headers: BTreeMap::new(),
                     params,
                     body: ep.request_body.as_ref().and_then(|rb| {
-                        rb.example.as_ref().map(|_| RequestBody {
-                            body_type: BodyType::Json,
-                            content: rb.example.clone(),
-                            file: None,
+                        rb.example.as_ref().map(|_| {
+                            let body_type = rb
+                                .content_type
+                                .as_deref()
+                                .map_or(BodyType::Json, body_type_from_content_type);
+                            RequestBody {
+                                body_type,
+                                content: rb.example.clone(),
+                                file: None,
+                            }
                         })
                     }),
                     auth: None,
@@ -280,6 +286,22 @@ fn extract_query_params(
             enabled: true,
         })
         .collect()
+}
+
+/// Map a MIME content-type string to the appropriate `BodyType`.
+///
+/// Falls back to `Json` when the content-type is absent or unrecognised,
+/// since most `OpenAPI` specs use JSON and omitting the field is common.
+fn body_type_from_content_type(content_type: &str) -> BodyType {
+    if content_type.contains("json") {
+        BodyType::Json
+    } else if content_type.contains("x-www-form-urlencoded") || content_type.contains("form-data") {
+        BodyType::Form
+    } else if content_type.contains("xml") {
+        BodyType::Xml
+    } else {
+        BodyType::Raw
+    }
 }
 
 /// Generate an operation ID from method and path when none is provided.

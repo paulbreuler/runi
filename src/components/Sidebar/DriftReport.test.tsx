@@ -85,8 +85,11 @@ describe('DriftReport', () => {
     render(<DriftReport result={changedResult} onDismiss={onDismiss} onAction={onAction} />);
 
     // Check that change descriptions include the changes list
-    expect(screen.getByText(/parameters, response schema/)).toBeInTheDocument();
-    expect(screen.getByText(/request body/)).toBeInTheDocument();
+    const descNodes = screen.getAllByTestId('drift-description');
+    expect(descNodes.some((el) => el.textContent.includes('parameters, response schema'))).toBe(
+      true
+    );
+    expect(descNodes.some((el) => el.textContent.includes('request body'))).toBe(true);
   });
 
   it('calls onDismiss when dismiss button clicked', async () => {

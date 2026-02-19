@@ -193,7 +193,7 @@ describe('ImportSpecDialog', () => {
     const input = screen.getByTestId('import-spec-url-input');
     expect(input).toHaveAttribute('id', 'import-spec-url');
 
-    const label = screen.getByText('URL');
+    const label = screen.getByTestId('import-spec-url-label');
     expect(label).toHaveAttribute('for', 'import-spec-url');
   });
 

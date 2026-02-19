@@ -154,7 +154,7 @@ My API team shipped v0.2 of the Bookshelf API. Compare the two specs:
 For each breaking change:
 1. What changed exactly (field name, endpoint path, response shape)
 2. Severity — does this silently corrupt data or throw an error?
-3. Which requests in demo/collections/bookshelf-v1.yaml are affected?
+3. Which endpoints in the imported "Bookshelf API" collection are affected?
 4. Migration path — what do clients need to change?
 
 Give me a summary table sorted by severity.

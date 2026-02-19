@@ -47,27 +47,29 @@ export const ImportSpecDialog = ({
     setIsSubmitting(true);
     setLocalError(null);
 
-    const result = await importCollection({
-      url: url.trim(),
-      filePath: null,
-      inlineContent: null,
-      displayName: null,
-      repoRoot: null,
-      specPath: null,
-      refName: null,
-    });
-
-    setIsSubmitting(false);
-
-    if (result !== null) {
-      globalEventBus.emit('collection.imported', {
-        collection_id: result.id,
+    try {
+      const result = await importCollection({
         url: url.trim(),
-        actor: 'human',
+        filePath: null,
+        inlineContent: null,
+        displayName: null,
+        repoRoot: null,
+        specPath: null,
+        refName: null,
       });
-      onOpenChange(false);
-    } else {
-      setLocalError('Failed to import spec. Check the URL and try again.');
+
+      if (result !== null) {
+        globalEventBus.emit('collection.imported', {
+          collection_id: result.id,
+          url: url.trim(),
+          actor: 'human',
+        });
+        onOpenChange(false);
+      } else {
+        setLocalError('Failed to import spec. Check the URL and try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -106,7 +108,6 @@ export const ImportSpecDialog = ({
             focusRingClasses
           )}
           style={{ zIndex: OVERLAY_Z_INDEX + 1 }}
-          onKeyDown={handleKeyDown}
         >
           <Dialog.Title className="text-base font-medium text-text-primary mb-1">
             Import OpenAPI spec
@@ -121,14 +122,15 @@ export const ImportSpecDialog = ({
                 className="rounded-md border border-signal-error/30 bg-signal-error/10 px-3 py-2 text-xs text-signal-error"
                 data-test-id="import-spec-error"
                 role="alert"
-                aria-live="polite"
               >
                 {displayError}
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="import-spec-url">URL</Label>
+              <Label htmlFor="import-spec-url" data-test-id="import-spec-url-label">
+                URL
+              </Label>
               <Input
                 id="import-spec-url"
                 data-test-id="import-spec-url-input"
@@ -136,6 +138,7 @@ export const ImportSpecDialog = ({
                 onChange={(e) => {
                   setUrl(e.target.value);
                 }}
+                onKeyDown={handleKeyDown}
                 placeholder="https://…"
                 noScale
                 autoFocus
