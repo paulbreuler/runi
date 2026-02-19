@@ -94,3 +94,4 @@ scripts/audit/
 # Collections created by tests (httpbin, etc.)
 collections/
 src-tauri/collections/
+.opencode/plans/*

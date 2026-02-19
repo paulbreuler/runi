@@ -89,18 +89,12 @@ test.describe('Error Propagation with Correlation IDs', () => {
     }
 
     // Switch to Console tab
-    const consoleTab = page.getByRole('tab', { name: /console/i });
+    const consoleTab = page.getByTestId('panel-tab-console');
     await consoleTab.click();
 
     // Trigger error in Rust by making invalid request
-    // Find URL input and send button (adjust selectors based on actual UI)
-    // Try getByLabel first, fallback to getByPlaceholder if not found
-    let urlInput = page.getByLabel(/url/i).first();
-    const isLabelVisible = await urlInput.isVisible().catch(() => false);
-    if (!isLabelVisible) {
-      urlInput = page.getByPlaceholder(/url/i).first();
-    }
-    const sendButton = page.locator('[data-test-id="send-button"]').first();
+    const urlInput = page.getByTestId('url-input');
+    const sendButton = page.getByTestId('send-button');
 
     // Enter invalid URL
     await urlInput.fill('not-a-valid-url');
@@ -160,17 +154,12 @@ test.describe('Error Propagation with Correlation IDs', () => {
     }
 
     // Switch to Console tab
-    const consoleTab = page.getByRole('tab', { name: /console/i });
+    const consoleTab = page.getByTestId('panel-tab-console');
     await consoleTab.click();
 
     // Trigger an error request to generate a log with correlation ID
-    // Try getByLabel first, fallback to getByPlaceholder if not found
-    let urlInput = page.getByLabel(/url/i).first();
-    const isLabelVisible = await urlInput.isVisible().catch(() => false);
-    if (!isLabelVisible) {
-      urlInput = page.getByPlaceholder(/url/i).first();
-    }
-    const sendButton = page.locator('[data-test-id="send-button"]').first();
+    const urlInput = page.getByTestId('url-input');
+    const sendButton = page.getByTestId('send-button');
 
     // Make an error request to generate a log entry
     await urlInput.fill('not-a-valid-url');
@@ -194,8 +183,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
       const correlationId = uuidMatch ? uuidMatch[1] : first8Match![1];
 
       // Filter by correlation ID (use first 8 chars - partial match should work)
-      // Use aria-label since placeholder is just "Correlation ID..."
-      const filterInput = page.getByLabel(/filter by correlation id/i);
+      const filterInput = page.getByTestId('console-search-input');
       await filterInput.fill(correlationId.substring(0, 8));
 
       // Wait for filter to apply
@@ -226,7 +214,7 @@ test.describe('Error Propagation with Correlation IDs', () => {
     }
 
     // Switch to Console tab
-    const consoleTab = page.getByRole('tab', { name: /console/i });
+    const consoleTab = page.getByTestId('panel-tab-console');
     await consoleTab.click();
 
     // Check for startup logs (should be captured before React mount)

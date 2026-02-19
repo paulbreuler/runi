@@ -37,8 +37,20 @@ pub struct OpenApiParsedOperation {
     pub description: Option<String>,
     pub tags: Vec<String>,
     pub parameters: Vec<OpenApiParsedParameter>,
+    pub request_body: Option<OpenApiParsedRequestBody>,
     pub deprecated: bool,
     pub is_streaming: bool,
+}
+
+/// A parsed request body from an `OpenAPI` spec.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OpenApiParsedRequestBody {
+    /// Content type (e.g., "application/json").
+    pub content_type: Option<String>,
+    /// Serialized example from the spec.
+    pub example: Option<String>,
+    /// Whether the body is required.
+    pub required: bool,
 }
 
 /// A parsed parameter from an `OpenAPI` spec.

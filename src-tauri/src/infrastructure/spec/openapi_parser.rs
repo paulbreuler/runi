@@ -51,7 +51,10 @@ impl SpecParser for OpenApiParser {
 
     fn parse(&self, content: &str) -> Result<ParsedSpec, SpecParseError> {
         let openapi_spec = parse_openapi_spec(content).map_err(|e| {
-            if e.contains("Invalid JSON") || e.contains("Missing OpenAPI or Swagger") {
+            if e.contains("Invalid JSON")
+                || e.contains("Invalid format")
+                || e.contains("Missing OpenAPI or Swagger")
+            {
                 SpecParseError::InvalidFormat(e)
             } else {
                 SpecParseError::MalformedSpec {
@@ -96,7 +99,14 @@ impl SpecParser for OpenApiParser {
                             description: p.description,
                         })
                         .collect(),
-                    request_body: None, // Not extracted yet — future enhancement
+                    request_body: op.request_body.as_ref().map(|rb| {
+                        crate::domain::collection::spec_port::ParsedRequestBody {
+                            content_type: rb.content_type.clone(),
+                            schema_hint: None,
+                            example: rb.example.clone(),
+                            required: rb.required,
+                        }
+                    }),
                     deprecated: op.deprecated,
                     is_streaming: op.is_streaming,
                 })
@@ -213,14 +223,33 @@ paths:
     }
 
     #[test]
-    fn test_parse_invalid_json_returns_invalid_format() {
+    fn test_parse_invalid_input_returns_invalid_format() {
         let parser = OpenApiParser;
+        // "not json" is valid YAML (scalar string) but fails OpenAPI structure validation
         let result = parser.parse("not json");
         assert!(result.is_err());
         match result.unwrap_err() {
-            SpecParseError::InvalidFormat(msg) => assert!(msg.contains("Invalid JSON")),
+            SpecParseError::InvalidFormat(msg) => {
+                assert!(
+                    msg.contains("Missing OpenAPI or Swagger")
+                        || msg.contains("Invalid format")
+                        || msg.contains("Invalid JSON"),
+                    "Unexpected error message: {msg}"
+                );
+            }
             other => panic!("Expected InvalidFormat, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn test_parse_yaml_openapi_returns_ok() {
+        let parser = OpenApiParser;
+        let yaml_spec = "openapi: \"3.0.0\"\ninfo:\n  title: YAML API\n  version: \"1.0.0\"\npaths:\n  /test:\n    get:\n      operationId: getTest\n      summary: Test endpoint\n      responses:\n        '200':\n          description: OK\n";
+        let result = parser.parse(yaml_spec);
+        assert!(result.is_ok(), "Expected Ok, got: {:?}", result.err());
+        let spec = result.unwrap();
+        assert_eq!(spec.title, "YAML API");
+        assert_eq!(spec.endpoints.len(), 1);
     }
 
     #[test]
@@ -233,5 +262,110 @@ paths:
     fn test_format_name() {
         let parser = OpenApiParser;
         assert_eq!(parser.format_name(), "OpenAPI");
+    }
+
+    #[test]
+    fn test_parse_extracts_request_body_example() {
+        let spec_with_body = r#"{
+            "openapi": "3.0.0",
+            "info": { "title": "Test API", "version": "1.0.0" },
+            "paths": {
+                "/users": {
+                    "post": {
+                        "operationId": "createUser",
+                        "summary": "Create user",
+                        "requestBody": {
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": { "type": "object" },
+                                    "example": {
+                                        "name": "Jane Doe",
+                                        "email": "jane@example.com"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Created",
+                                "content": {
+                                    "application/json": {
+                                        "schema": { "type": "object" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }"#;
+
+        let parser = OpenApiParser;
+        let result = parser.parse(spec_with_body).unwrap();
+
+        assert_eq!(result.endpoints.len(), 1);
+        let body = result.endpoints[0].request_body.as_ref().unwrap();
+        assert_eq!(body.content_type, Some("application/json".to_string()));
+        assert!(body.required);
+
+        // Example should be serialized as JSON string
+        let example = body.example.as_ref().unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(example).unwrap();
+        assert_eq!(parsed["name"], "Jane Doe");
+        assert_eq!(parsed["email"], "jane@example.com");
+    }
+
+    #[test]
+    fn test_parse_extracts_schema_example_fallback() {
+        let spec_with_schema_example = r#"{
+            "openapi": "3.0.0",
+            "info": { "title": "Test API", "version": "1.0.0" },
+            "paths": {
+                "/items": {
+                    "post": {
+                        "operationId": "createItem",
+                        "summary": "Create item",
+                        "requestBody": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "example": { "title": "Widget", "price": 9.99 }
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Created",
+                                "content": {
+                                    "application/json": {
+                                        "schema": { "type": "object" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }"#;
+
+        let parser = OpenApiParser;
+        let result = parser.parse(spec_with_schema_example).unwrap();
+
+        let body = result.endpoints[0].request_body.as_ref().unwrap();
+        let example = body.example.as_ref().unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(example).unwrap();
+        assert_eq!(parsed["title"], "Widget");
+    }
+
+    #[test]
+    fn test_parse_no_request_body_returns_none() {
+        let parser = OpenApiParser;
+        let result = parser.parse(MINIMAL_OPENAPI).unwrap();
+
+        // GET /users has no requestBody
+        assert!(result.endpoints[0].request_body.is_none());
     }
 }

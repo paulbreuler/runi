@@ -23,6 +23,7 @@
     "core:webview:allow-create-webview",
     "core:webview:allow-create-webview-window",
     "dialog:allow-save",
+    "dialog:allow-open",
     "fs:allow-write-text-file"
   ]
 }

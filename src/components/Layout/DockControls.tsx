@@ -4,17 +4,21 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { PanelBottom, PanelLeft, PanelRight, ExternalLink } from 'lucide-react';
+import { PanelBottom, PanelLeft, PanelRight, ExternalLink, Ellipsis } from 'lucide-react';
+import { Menu } from '@base-ui/react/menu';
 import { usePanelStore, type PanelPosition } from '@/stores/usePanelStore';
 import { focusRingClasses } from '@/utils/accessibility';
 import { usePopoutWindow } from '@/hooks/usePopoutWindow';
 import { cn } from '@/utils/cn';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 interface DockControlsProps {
   /** Additional class name */
   className?: string;
   /** Called when pop-out is requested (overrides default behavior) */
   onPopout?: () => void;
+  /** When true, collapse dock buttons into a single overflow menu */
+  collapsed?: boolean;
 }
 
 interface DockButtonProps {
@@ -58,11 +62,28 @@ const DockButton = ({
 };
 
 /**
+ * Shared menu item styling — matches ContextTabs and CollectionItem patterns.
+ */
+const menuItemClasses =
+  'flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm cursor-pointer outline-none data-[highlighted]:bg-bg-raised/60 text-text-secondary data-[highlighted]:text-text-primary';
+
+const menuPopupClasses =
+  'min-w-[140px] rounded-md border border-border-default bg-bg-elevated p-1 shadow-lg outline-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none';
+
+/**
  * DockControls - Control buttons for changing panel dock position.
  *
- * Shows icons for bottom, left, right docking and pop-out to window.
+ * When `collapsed` is true (e.g. header tabs overflow), the 3 dock-position
+ * buttons + pop-out are folded into a single overflow menu behind an ellipsis
+ * trigger, reclaiming ~140 px of header space for tabs.
+ *
+ * When `collapsed` is false (default), the buttons render inline as before.
  */
-export const DockControls = ({ className, onPopout }: DockControlsProps): React.JSX.Element => {
+export const DockControls = ({
+  className,
+  onPopout,
+  collapsed = false,
+}: DockControlsProps): React.JSX.Element => {
   const { position, setPosition } = usePanelStore();
   const { openPopout } = usePopoutWindow();
 
@@ -184,6 +205,88 @@ export const DockControls = ({ className, onPopout }: DockControlsProps): React.
     }
   };
 
+  // ---- Collapsed mode: single ellipsis menu ----
+  if (collapsed) {
+    const dockOptions: Array<{ position: PanelPosition; icon: React.ReactNode; label: string }> = [
+      { position: 'bottom', icon: <PanelBottom size={14} />, label: 'Dock bottom' },
+      { position: 'left', icon: <PanelLeft size={14} />, label: 'Dock left' },
+      { position: 'right', icon: <PanelRight size={14} />, label: 'Dock right' },
+    ];
+
+    return (
+      <Menu.Root>
+        <Menu.Trigger
+          render={(props) => (
+            <button
+              {...props}
+              type="button"
+              className={cn(
+                focusRingClasses,
+                'p-1 rounded text-text-secondary hover:text-text-primary hover:bg-bg-raised/50 transition-colors',
+                className
+              )}
+              aria-label="Panel options"
+              title="Panel options"
+              data-test-id="dock-controls-menu-trigger"
+            >
+              <Ellipsis size={14} />
+            </button>
+          )}
+        />
+        <Menu.Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: OVERLAY_Z_INDEX,
+              pointerEvents: 'none',
+            }}
+          >
+            <div style={{ pointerEvents: 'auto' }}>
+              <Menu.Positioner sideOffset={4} align="end">
+                <Menu.Popup style={{ zIndex: OVERLAY_Z_INDEX }} className={menuPopupClasses}>
+                  {dockOptions.map(({ position: pos, icon, label }) => (
+                    <Menu.Item
+                      key={pos}
+                      label={label}
+                      className={cn(
+                        menuItemClasses,
+                        pos === position && 'bg-bg-raised/60 text-text-primary'
+                      )}
+                      closeOnClick={true}
+                      onClick={() => {
+                        handlePositionChange(pos);
+                      }}
+                      data-test-id={`dock-menu-${pos}`}
+                    >
+                      {icon}
+                      <span>{label}</span>
+                      {pos === position && (
+                        <span className="ml-auto text-text-muted text-[10px]">Active</span>
+                      )}
+                    </Menu.Item>
+                  ))}
+                  <Menu.Separator className="h-px bg-border-subtle my-1" />
+                  <Menu.Item
+                    label="Pop out to window"
+                    className={menuItemClasses}
+                    closeOnClick={true}
+                    onClick={handlePopout}
+                    data-test-id="dock-menu-popout"
+                  >
+                    <ExternalLink size={14} />
+                    <span>Pop out to window</span>
+                  </Menu.Item>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </div>
+          </div>
+        </Menu.Portal>
+      </Menu.Root>
+    );
+  }
+
+  // ---- Expanded mode: inline buttons (default) ----
   return (
     <div
       className={cn('flex items-center gap-0.5', className)}

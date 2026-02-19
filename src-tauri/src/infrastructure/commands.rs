@@ -30,7 +30,8 @@ use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::spec::http_fetcher::HttpContentFetcher;
 use crate::infrastructure::spec::openapi_parser::OpenApiParser;
 use crate::infrastructure::storage::collection_store::{
-    CollectionSummary, delete_collection, list_collections, load_collection, save_collection,
+    CollectionSummary, delete_collection, list_collections, load_collection, open_collection_file,
+    save_collection,
 };
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
@@ -585,6 +586,34 @@ pub async fn cmd_create_collection(
     name: String,
 ) -> Result<Collection, String> {
     let collection = create_collection_inner(&name)?;
+    emit_collection_event(
+        &app,
+        "collection:created",
+        &Actor::User,
+        json!({"id": &collection.id, "name": &collection.metadata.name}),
+    );
+    Ok(collection)
+}
+
+/// Open an existing runi collection `.yaml` file from an arbitrary disk path.
+///
+/// Reads the file, validates it, assigns a new ID, and saves it into
+/// the managed collections directory.
+pub fn open_collection_file_inner(path: &str) -> Result<Collection, String> {
+    let file_path = PathBuf::from(path);
+    open_collection_file(&file_path)
+}
+
+/// Open an existing runi collection file from disk.
+///
+/// Emits `collection:created` with `Actor::User` on success (the opened
+/// collection appears as a new collection in the UI).
+#[tauri::command]
+pub async fn cmd_open_collection_file(
+    app: tauri::AppHandle,
+    path: String,
+) -> Result<Collection, String> {
+    let collection = open_collection_file_inner(&path)?;
     emit_collection_event(
         &app,
         "collection:created",

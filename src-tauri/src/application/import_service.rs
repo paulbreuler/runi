@@ -16,8 +16,9 @@ use crate::domain::collection::spec_port::{
     ContentFetcher, FetchResult, ParsedSpec, SpecParseError, SpecParser, SpecSource,
 };
 use crate::domain::collection::{
-    Collection, CollectionMetadata, CollectionRequest, CollectionSource, IntelligenceMetadata,
-    RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType, SpecBinding,
+    BodyType, Collection, CollectionMetadata, CollectionRequest, CollectionSource,
+    IntelligenceMetadata, RequestBody, RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType,
+    SpecBinding,
 };
 use crate::infrastructure::spec::hasher::compute_spec_hash;
 
@@ -204,7 +205,19 @@ impl ImportService {
                     url,
                     headers: BTreeMap::new(),
                     params,
-                    body: None,
+                    body: ep.request_body.as_ref().and_then(|rb| {
+                        rb.example.as_ref().map(|_| {
+                            let body_type = rb
+                                .content_type
+                                .as_deref()
+                                .map_or(BodyType::Json, body_type_from_content_type);
+                            RequestBody {
+                                body_type,
+                                content: rb.example.clone(),
+                                file: None,
+                            }
+                        })
+                    }),
                     auth: None,
                     docs: ep.description.clone(),
                     is_streaming: ep.is_streaming,
@@ -275,6 +288,43 @@ fn extract_query_params(
         .collect()
 }
 
+/// Map a MIME content-type string to the appropriate [`BodyType`].
+///
+/// Strips optional parameters (e.g. `; charset=utf-8`), normalises to
+/// lowercase, then matches exact MIME types first and falls back to
+/// RFC 6838 structured suffix matching (`+json`, `+xml`).
+///
+/// Returns [`BodyType::Raw`] for unrecognised types.  The
+/// [`BodyType::Json`] fallback for *absent* content-types is handled at
+/// the call site via `map_or`.
+fn body_type_from_content_type(content_type: &str) -> BodyType {
+    // Strip parameters (e.g. "; charset=utf-8") and normalise case.
+    let mime = content_type
+        .split(';')
+        .next()
+        .unwrap_or(content_type)
+        .trim()
+        .to_ascii_lowercase();
+
+    // Exact matches on well-known MIME types.
+    match mime.as_str() {
+        "application/json" | "text/json" => return BodyType::Json,
+        "application/x-www-form-urlencoded" | "multipart/form-data" => return BodyType::Form,
+        "application/xml" | "text/xml" => return BodyType::Xml,
+        "application/graphql" => return BodyType::Graphql,
+        _ => {}
+    }
+
+    // RFC 6838 structured suffix matching (e.g. application/vnd.api+json).
+    if mime.ends_with("+json") {
+        BodyType::Json
+    } else if mime.ends_with("+xml") {
+        BodyType::Xml
+    } else {
+        BodyType::Raw
+    }
+}
+
 /// Generate an operation ID from method and path when none is provided.
 fn generate_operation_id(method: &str, path: &str) -> String {
     let cleaned = path
@@ -290,7 +340,7 @@ fn generate_operation_id(method: &str, path: &str) -> String {
 mod tests {
     use super::*;
     use crate::domain::collection::spec_port::{
-        ContentFetcher, ParsedEndpoint, ParsedServer, SpecSource,
+        ContentFetcher, ParsedEndpoint, ParsedRequestBody, ParsedServer, SpecSource,
     };
     use async_trait::async_trait;
 
@@ -535,6 +585,229 @@ mod tests {
         assert_eq!(
             collection.requests[0].binding.operation_id,
             Some("listItems".to_string())
+        );
+    }
+
+    // ── body_type_from_content_type unit tests ──────────────────────────
+
+    #[test]
+    fn test_body_type_exact_mime_matches() {
+        assert_eq!(
+            body_type_from_content_type("application/json"),
+            BodyType::Json
+        );
+        assert_eq!(body_type_from_content_type("text/json"), BodyType::Json);
+        assert_eq!(
+            body_type_from_content_type("application/x-www-form-urlencoded"),
+            BodyType::Form
+        );
+        assert_eq!(
+            body_type_from_content_type("multipart/form-data"),
+            BodyType::Form
+        );
+        assert_eq!(
+            body_type_from_content_type("application/xml"),
+            BodyType::Xml
+        );
+        assert_eq!(body_type_from_content_type("text/xml"), BodyType::Xml);
+        assert_eq!(
+            body_type_from_content_type("application/graphql"),
+            BodyType::Graphql
+        );
+        assert_eq!(body_type_from_content_type("text/plain"), BodyType::Raw);
+        assert_eq!(
+            body_type_from_content_type("application/octet-stream"),
+            BodyType::Raw
+        );
+    }
+
+    #[test]
+    fn test_body_type_structured_suffix_matching() {
+        // RFC 6838 structured syntax suffixes.
+        assert_eq!(
+            body_type_from_content_type("application/vnd.api+json"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("application/hal+json"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("application/soap+xml"),
+            BodyType::Xml
+        );
+        assert_eq!(
+            body_type_from_content_type("application/atom+xml"),
+            BodyType::Xml
+        );
+    }
+
+    #[test]
+    fn test_body_type_strips_parameters() {
+        assert_eq!(
+            body_type_from_content_type("application/json; charset=utf-8"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("text/xml; charset=iso-8859-1"),
+            BodyType::Xml
+        );
+        assert_eq!(
+            body_type_from_content_type("multipart/form-data; boundary=---abc"),
+            BodyType::Form
+        );
+    }
+
+    #[test]
+    fn test_body_type_case_insensitive() {
+        assert_eq!(
+            body_type_from_content_type("APPLICATION/JSON"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("Application/Xml"),
+            BodyType::Xml
+        );
+        assert_eq!(
+            body_type_from_content_type("Application/VND.API+JSON"),
+            BodyType::Json
+        );
+    }
+
+    #[test]
+    fn test_body_type_no_false_positives() {
+        // These previously matched via `contains("json")` / `contains("xml")`.
+        assert_eq!(body_type_from_content_type("text/json-like"), BodyType::Raw);
+        assert_eq!(
+            body_type_from_content_type("application/my-custom-xml-format"),
+            BodyType::Raw
+        );
+        assert_eq!(
+            body_type_from_content_type("application/jsonl"),
+            BodyType::Raw
+        );
+    }
+
+    // ── Body pre-population tests ───────────────────────────────────────
+
+    /// Helper to build a `ParsedSpec` with a single endpoint that has the
+    /// given `request_body`, then convert to `Collection` via `ir_to_collection`.
+    fn collection_with_body(request_body: Option<ParsedRequestBody>) -> Collection {
+        let parsed = ParsedSpec {
+            title: "Body Test".to_string(),
+            version: Some("1.0.0".to_string()),
+            description: None,
+            base_urls: vec![ParsedServer {
+                url: "https://api.test.com".to_string(),
+                description: None,
+            }],
+            endpoints: vec![ParsedEndpoint {
+                operation_id: Some("createItem".to_string()),
+                method: "POST".to_string(),
+                path: "/items".to_string(),
+                summary: Some("Create item".to_string()),
+                description: None,
+                tags: vec![],
+                parameters: vec![],
+                request_body,
+                deprecated: false,
+                is_streaming: false,
+            }],
+            auth_schemes: vec![],
+            variables: BTreeMap::new(),
+        };
+
+        let fetch = FetchResult {
+            content: "{}".to_string(),
+            source_url: "https://example.com/spec.json".to_string(),
+            is_fallback: false,
+            fetched_at: "2026-01-31T10:30:00Z".to_string(),
+        };
+
+        ImportService::ir_to_collection(
+            &parsed,
+            &fetch,
+            SourceType::Openapi,
+            &ImportOverrides::default(),
+        )
+    }
+
+    #[test]
+    fn test_ir_to_collection_populates_body_from_request_body_example() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: Some("application/json".to_string()),
+            schema_hint: None,
+            example: Some(r#"{"name":"Fido"}"#.to_string()),
+            required: true,
+        }));
+
+        let body = collection.requests[0]
+            .body
+            .as_ref()
+            .expect("body should be Some when example is present");
+        assert_eq!(body.body_type, BodyType::Json);
+        assert_eq!(body.content, Some(r#"{"name":"Fido"}"#.to_string()));
+        assert!(body.file.is_none());
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_none_when_no_example() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: Some("application/json".to_string()),
+            schema_hint: None,
+            example: None,
+            required: true,
+        }));
+
+        assert!(
+            collection.requests[0].body.is_none(),
+            "body should be None when request_body has no example"
+        );
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_none_when_no_request_body() {
+        let collection = collection_with_body(None);
+
+        assert!(
+            collection.requests[0].body.is_none(),
+            "body should be None when request_body is None"
+        );
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_uses_content_type_for_body_type() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: Some("application/xml".to_string()),
+            schema_hint: None,
+            example: Some("<root/>".to_string()),
+            required: false,
+        }));
+
+        let body = collection.requests[0]
+            .body
+            .as_ref()
+            .expect("body should be Some");
+        assert_eq!(body.body_type, BodyType::Xml);
+    }
+
+    #[test]
+    fn test_ir_to_collection_body_defaults_to_json_when_content_type_absent() {
+        let collection = collection_with_body(Some(ParsedRequestBody {
+            content_type: None,
+            schema_hint: None,
+            example: Some(r#"{"key":"val"}"#.to_string()),
+            required: false,
+        }));
+
+        let body = collection.requests[0]
+            .body
+            .as_ref()
+            .expect("body should be Some");
+        assert_eq!(
+            body.body_type,
+            BodyType::Json,
+            "absent content_type should default to Json at the call site"
         );
     }
 }

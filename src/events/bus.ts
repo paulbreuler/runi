@@ -93,7 +93,9 @@ export type EventType =
   | 'tab.save-requested'
   | 'request.saved-to-collection'
   | 'request.moved'
-  | 'request.copied';
+  | 'request.copied'
+  | 'collection.imported'
+  | 'collection.spec-refreshed';
 
 /**
  * Payload for collection.request-selected event.
@@ -195,6 +197,24 @@ export interface RequestCopiedPayload {
   copied_request_id: string;
   request_id: string;
   target_collection_id: string;
+}
+
+/**
+ * Payload for collection.imported event.
+ */
+export interface CollectionImportedPayload {
+  collection_id: string;
+  url: string;
+  actor: 'human' | 'ai';
+}
+
+/**
+ * Payload for collection.spec-refreshed event.
+ */
+export interface CollectionSpecRefreshedPayload {
+  collection_id: string;
+  changed: boolean;
+  actor: 'human' | 'ai';
 }
 
 /**

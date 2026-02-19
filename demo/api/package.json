@@ -1,0 +1,14 @@
+{
+  "name": "bookshelf-api",
+  "version": "0.1.0",
+  "description": "Demo Bookshelf API for runi showcase",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start:v1": "node server.js --version=1",
+    "start:v2": "node server.js --version=2"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
