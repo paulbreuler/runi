@@ -19,6 +19,9 @@ const mockToast = vi.hoisted(() => ({
 }));
 vi.mock('@/components/ui/Toast', () => ({ toast: mockToast }));
 
+const mockDialogOpen = vi.hoisted(() => vi.fn());
+vi.mock('@tauri-apps/plugin-dialog', () => ({ open: mockDialogOpen }));
+
 interface MockCollectionStoreState {
   summaries: CollectionSummary[];
   isLoading: boolean;
@@ -29,6 +32,7 @@ interface MockCollectionStoreState {
   addHttpbinCollection: () => Promise<Collection | null>;
   createCollection: (name: string) => Promise<Collection | null>;
   importCollection: (request: unknown) => Promise<Collection | null>;
+  openCollectionFile: (path: string) => Promise<Collection | null>;
   clearPendingRename: () => void;
   refreshCollectionSpec: (id: string) => Promise<void>;
   dismissDriftResult: (id: string) => void;
@@ -46,6 +50,7 @@ const createCollectionState = (): MockCollectionStoreState => ({
   addHttpbinCollection: vi.fn(async (): Promise<Collection | null> => null),
   createCollection: vi.fn(async (): Promise<Collection | null> => null),
   importCollection: vi.fn(async (): Promise<Collection | null> => null),
+  openCollectionFile: vi.fn(async (): Promise<Collection | null> => null),
   clearPendingRename: vi.fn(),
   refreshCollectionSpec: vi.fn(async (): Promise<void> => undefined),
   dismissDriftResult: vi.fn(),
@@ -64,6 +69,11 @@ describe('Sidebar', (): void => {
     useFeatureFlagStore.getState().resetToDefaults();
     useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', true);
     mockCollectionState = createCollectionState();
+    mockDialogOpen.mockReset();
+    mockToast.error.mockReset();
+    mockToast.success.mockReset();
+    mockToast.info.mockReset();
+    mockToast.warning.mockReset();
 
     // Mock scrollable content
     mockCollectionState.summaries = Array.from({ length: 20 }, (_, i) => ({
@@ -168,23 +178,44 @@ describe('Sidebar', (): void => {
     expect(scrollbar).toHaveAttribute('orientation', 'vertical');
   });
 
-  it('shows create collection button when collectionsEnabled is true', (): void => {
+  it('shows collection actions menu when collectionsEnabled is true', (): void => {
     render(<Sidebar />);
-    const button = screen.getByTestId('create-collection-button');
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute('aria-label', 'Create collection');
+    const trigger = screen.getByTestId('collection-actions-menu');
+    expect(trigger).toBeInTheDocument();
+    expect(trigger).toHaveAttribute('aria-label', 'Collection actions');
   });
 
-  it('hides create collection button when collectionsEnabled is false', (): void => {
+  it('hides collection actions menu when collectionsEnabled is false', (): void => {
     useFeatureFlagStore.getState().setFlag('http', 'collectionsEnabled', false);
     render(<Sidebar />);
-    expect(screen.queryByTestId('create-collection-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('collection-actions-menu')).not.toBeInTheDocument();
   });
 
-  it('calls createCollection when button is clicked', async (): Promise<void> => {
+  it('opens menu with create, open, and import items', async (): Promise<void> => {
     render(<Sidebar />);
-    const button = screen.getByTestId('create-collection-button');
-    await userEvent.click(button);
+    const trigger = screen.getByTestId('collection-actions-menu');
+    await userEvent.click(trigger);
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    expect(screen.getByTestId('collection-menu-create')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-menu-open')).toBeInTheDocument();
+    expect(screen.getByTestId('collection-menu-import')).toBeInTheDocument();
+  });
+
+  it('calls createCollection when Create collection menu item is clicked', async (): Promise<void> => {
+    render(<Sidebar />);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-create'));
     expect(mockCollectionState.createCollection).toHaveBeenCalledWith('Untitled Collection');
   });
 
@@ -199,8 +230,14 @@ describe('Sidebar', (): void => {
       },
     ];
     render(<Sidebar />);
-    const button = screen.getByTestId('create-collection-button');
-    await userEvent.click(button);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-create'));
     expect(mockCollectionState.createCollection).toHaveBeenCalledWith('Untitled Collection (2)');
   });
 
@@ -222,17 +259,110 @@ describe('Sidebar', (): void => {
       },
     ];
     render(<Sidebar />);
-    const button = screen.getByTestId('create-collection-button');
-    await userEvent.click(button);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-create'));
     expect(mockCollectionState.createCollection).toHaveBeenCalledWith('Untitled Collection (3)');
   });
 
   it('shows error toast when createCollection fails', async (): Promise<void> => {
     mockCollectionState.createCollection = vi.fn(async (): Promise<Collection | null> => null);
     render(<Sidebar />);
-    const button = screen.getByTestId('create-collection-button');
-    await userEvent.click(button);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-create'));
     expect(mockToast.error).toHaveBeenCalledWith({ message: 'Failed to create collection' });
+  });
+
+  it('opens file dialog and calls openCollectionFile when a file is selected', async (): Promise<void> => {
+    mockDialogOpen.mockResolvedValueOnce('/path/to/collection.yaml');
+    mockCollectionState.openCollectionFile = vi.fn(
+      async (): Promise<Collection | null> =>
+        ({
+          id: 'new-uuid',
+          name: 'Opened Collection',
+          requests: [],
+          created_at: new Date().toISOString(),
+          modified_at: new Date().toISOString(),
+        }) as unknown as Collection
+    );
+
+    render(<Sidebar />);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-open'));
+
+    await waitFor(() => {
+      expect(mockDialogOpen).toHaveBeenCalledWith({
+        title: 'Open Collection',
+        filters: [{ name: 'YAML Collection', extensions: ['yaml', 'yml'] }],
+        multiple: false,
+      });
+    });
+    await waitFor(() => {
+      expect(mockCollectionState.openCollectionFile).toHaveBeenCalledWith(
+        '/path/to/collection.yaml'
+      );
+    });
+    expect(mockToast.success).toHaveBeenCalledWith({ message: 'Collection opened successfully' });
+  });
+
+  it('does not call openCollectionFile when dialog is cancelled', async (): Promise<void> => {
+    mockDialogOpen.mockResolvedValueOnce(null);
+
+    render(<Sidebar />);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-open'));
+
+    await waitFor(() => {
+      expect(mockDialogOpen).toHaveBeenCalled();
+    });
+    expect(mockCollectionState.openCollectionFile).not.toHaveBeenCalled();
+    expect(mockToast.success).not.toHaveBeenCalled();
+  });
+
+  it('shows error toast when openCollectionFile fails', async (): Promise<void> => {
+    mockDialogOpen.mockResolvedValueOnce('/path/to/bad.yaml');
+    mockCollectionState.openCollectionFile = vi.fn(async (): Promise<Collection | null> => {
+      throw new Error('Invalid YAML');
+    });
+
+    render(<Sidebar />);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-open'));
+
+    await waitFor(() => {
+      expect(mockToast.error).toHaveBeenCalledWith({
+        message: 'Failed to open collection: Error: Invalid YAML',
+      });
+    });
   });
 });
 

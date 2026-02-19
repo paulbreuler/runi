@@ -17,10 +17,24 @@ declare module '*.svg' {
 }
 
 declare module '@tauri-apps/plugin-dialog' {
+  export interface DialogFilter {
+    name: string;
+    extensions: string[];
+  }
+
   export interface SaveDialogOptions {
     defaultPath?: string;
-    filters?: Array<{ name: string; extensions: string[] }>;
+    filters?: DialogFilter[];
+  }
+
+  export interface OpenDialogOptions {
+    defaultPath?: string;
+    filters?: DialogFilter[];
+    multiple?: boolean;
+    directory?: boolean;
+    title?: string;
   }
 
   export function save(options?: SaveDialogOptions): Promise<string | null>;
+  export function open(options?: OpenDialogOptions): Promise<string | string[] | null>;
 }

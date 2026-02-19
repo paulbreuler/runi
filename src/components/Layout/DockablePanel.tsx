@@ -41,6 +41,11 @@ const trayTransition = {
 // Collapsed size for horizontal docks (left/right) - 0px to occupy no layout space
 const COLLAPSED_PANEL_WIDTH = 0;
 
+// Dock controls width estimates for collapse hysteresis
+// Expanded ≈ 165px (3 position buttons + divider + pop-out + gaps)
+// Collapsed ≈ 26px (single ellipsis button)
+const DOCK_HYSTERESIS = 165 - 26;
+
 // ============================================================================
 // Tray Variants - Unified Material Feel
 // Per DESIGN_IDEOLOGY.md (read via MCP): "Components should feel like unified materials"
@@ -164,11 +169,17 @@ export const DockablePanel = ({
   // Horizontal scroll state for header
   // Base UI ScrollArea.Viewport uses a div element, so we can use HTMLDivElement
   const headerScrollRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [isScrollIdle, setIsScrollIdle] = useState(true);
   const scrollIdleTimeout = useRef<number | undefined>(undefined);
+
+  // Dock controls collapse state — independent of scroll overflow to avoid
+  // feedback loops (collapsing frees space → no overflow → expand → overflow → collapse…).
+  // Uses the scroll content's intrinsic width vs header width with hysteresis.
+  const [dockCollapsed, setDockCollapsed] = useState(false);
 
   // Compute current variant based on state - used for orchestrated animations
   const getTrayVariant = (): 'rest' | 'hover' | 'dragging' => {
@@ -310,6 +321,51 @@ export const DockablePanel = ({
       }
     };
   }, [updateScrollState, isCollapsed]);
+
+  // Dock controls collapse detection — measures whether the tab content's
+  // natural width exceeds the header's available space. Uses hysteresis:
+  // the expanded dock controls are ~165px wider than the collapsed ellipsis,
+  // so we only un-collapse when there's enough headroom to avoid oscillation.
+  useEffect(() => {
+    if (isCollapsed || headerRef.current === null || headerScrollRef.current === null) {
+      return;
+    }
+
+    const header = headerRef.current;
+    const viewport = headerScrollRef.current;
+
+    const checkDockCollapse = (): void => {
+      // scrollWidth = natural width the tab content wants to occupy
+      // clientWidth = how much space the scroll area viewport currently has
+      const contentWidth = viewport.scrollWidth;
+      const viewportWidth = viewport.clientWidth;
+      const overflow = contentWidth - viewportWidth;
+
+      setDockCollapsed((wasCollapsed) => {
+        if (!wasCollapsed) {
+          // Collapse when content overflows (or is within 8px of overflowing)
+          return overflow > -8;
+        }
+        // Un-collapse only when there's enough room for expanded controls + buffer
+        // (the viewport is currently wider because controls are collapsed,
+        //  so we need to check if it would STILL fit with expanded controls)
+        return overflow + DOCK_HYSTERESIS > -8;
+      });
+    };
+
+    checkDockCollapse();
+
+    const resizeObserver = new ResizeObserver(() => {
+      checkDockCollapse();
+    });
+
+    resizeObserver.observe(header);
+    resizeObserver.observe(viewport);
+
+    return (): void => {
+      resizeObserver.disconnect();
+    };
+  }, [isCollapsed]);
 
   // Helper function to get overflow animation props
   const getOverflowAnimation = (
@@ -679,8 +735,9 @@ export const DockablePanel = ({
           >
             {/* Panel header */}
             <div
+              ref={headerRef}
               data-test-id="panel-header"
-              className="flex items-center h-7 px-3 border-b border-border-default shrink-0 relative"
+              className="flex items-center h-7 pl-3 pr-0 border-b border-border-default shrink-0 relative"
             >
               {/* Scrollable header content */}
               <ScrollArea.Root className="flex-1 min-w-0 h-full relative">
@@ -726,10 +783,10 @@ export const DockablePanel = ({
                 </ScrollArea.Scrollbar>
               </ScrollArea.Root>
 
-              {/* Control buttons - fixed on right */}
-              <div className="flex items-center gap-1 shrink-0 ml-2">
+              {/* Control buttons - opaque bg with separator edge; tabs slide behind */}
+              <div className="flex items-center gap-1 shrink-0 pl-2 pr-3 relative z-10 bg-bg-surface self-stretch border-l border-border-default">
                 {/* Dock controls */}
-                <DockControls />
+                <DockControls collapsed={dockCollapsed} />
 
                 {/* Collapse/Minimize button */}
                 <button

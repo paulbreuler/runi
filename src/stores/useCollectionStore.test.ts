@@ -1107,6 +1107,76 @@ describe('useCollectionStore', () => {
     });
   });
 
+  describe('openCollectionFile', () => {
+    it('calls cmd_open_collection_file and adds to store', async () => {
+      const collection = buildCollection('col_opened');
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: Collection | null = null;
+      await act(async () => {
+        returned = await result.current.openCollectionFile('/path/to/collection.yaml');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_open_collection_file', {
+        path: '/path/to/collection.yaml',
+      });
+      expect(returned).not.toBeNull();
+      expect(result.current.collections).toHaveLength(1);
+      expect(result.current.selectedCollectionId).toBe('col_opened');
+      expect(result.current.expandedCollectionIds.has('col_opened')).toBe(true);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeNull();
+    });
+
+    it('sorts summaries alphabetically after opening', async () => {
+      useCollectionStore.setState({
+        summaries: [
+          {
+            id: 'col-z',
+            name: 'Zebra Collection',
+            request_count: 0,
+            source_type: 'openapi',
+            modified_at: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+
+      const collection = {
+        ...buildCollection('col-a'),
+        metadata: { ...buildCollection('col-a').metadata, name: 'Alpha Collection' },
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.openCollectionFile('/path/to/alpha.yaml');
+      });
+
+      expect(result.current.summaries[0]?.name).toBe('Alpha Collection');
+      expect(result.current.summaries[1]?.name).toBe('Zebra Collection');
+    });
+
+    it('returns null and sets error when open fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+        'Collection file not found'
+      );
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: Collection | null = null;
+      await act(async () => {
+        returned = await result.current.openCollectionFile('/bad/path.yaml');
+      });
+
+      expect(returned).toBeNull();
+      expect(result.current.error).toContain('Collection file not found');
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
+
   describe('copyRequestToCollection', () => {
     it('calls cmd_copy_request_to_collection and updates target collection', async () => {
       const sourceCollection = {

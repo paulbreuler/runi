@@ -164,6 +164,49 @@ pub fn list_collections_in_dir(dir: &Path) -> Result<Vec<CollectionSummary>, Str
     Ok(summaries)
 }
 
+/// Open an existing runi collection `.yaml` file from an arbitrary disk location.
+///
+/// Reads the file, validates it as a `Collection`, assigns a new ID,
+/// and saves it into the managed collections directory.
+pub fn open_collection_file(path: &Path) -> Result<Collection, String> {
+    let dir = get_collections_dir()?;
+    open_collection_file_in_dir(path, &dir)
+}
+
+/// Open an existing runi collection file into the specified collections directory.
+///
+/// # Behavior
+/// 1. Read file at `path`
+/// 2. Deserialize as `Collection`
+/// 3. Assign a new generated ID (the opened file is a copy)
+/// 4. Update `modified_at` timestamp
+/// 5. Check name uniqueness against existing collections
+/// 6. Save to collections dir
+pub fn open_collection_file_in_dir(path: &Path, dir: &Path) -> Result<Collection, String> {
+    if !path.exists() {
+        return Err(format!("Collection file not found: {}", path.display()));
+    }
+
+    let content =
+        fs::read_to_string(path).map_err(|e| format!("Failed to read collection file: {e}"))?;
+    let yaml_content = strip_yaml_comments(&content);
+
+    let mut collection: Collection = serde_yaml_ng::from_str(&yaml_content)
+        .map_err(|e| format!("Failed to parse collection file: {e}"))?;
+
+    // Assign a new ID — the opened collection is treated as a copy
+    collection.id = Collection::generate_id(&collection.metadata.name);
+
+    // Update modified_at to now
+    let now = chrono::Utc::now();
+    collection.metadata.modified_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
+    // Save to managed collections dir (check_name_unique runs inside save)
+    save_collection_in_dir(&collection, dir)?;
+
+    Ok(collection)
+}
+
 /// Delete a collection file.
 pub fn delete_collection(collection_id: &str) -> Result<(), String> {
     let dir = get_collections_dir()?;
@@ -425,5 +468,95 @@ mod tests {
 
         // Re-saving the same collection (same ID) must succeed
         save_collection_in_dir(&collection, &collections_dir).unwrap();
+    }
+
+    // ── open_collection_file tests ──────────────────────────────────
+
+    #[test]
+    #[serial]
+    fn test_open_collection_file_success() {
+        let external_dir = TempDir::new().unwrap();
+        let collections_dir_tmp = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(collections_dir_tmp.path());
+
+        // Write a valid collection YAML to an "external" location
+        let collection = Collection::new("External API");
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
+        let external_file = external_dir.path().join("external-api.yaml");
+        std::fs::write(&external_file, format!("{SCHEMA_COMMENT}{yaml}")).unwrap();
+
+        let opened = open_collection_file_in_dir(&external_file, &collections_dir).unwrap();
+
+        // Must get a new ID (not the original)
+        assert_ne!(opened.id, collection.id);
+        // Name preserved
+        assert_eq!(opened.metadata.name, "External API");
+        // Must be saved into the collections dir
+        let loaded = load_collection_in_dir(&opened.id, &collections_dir).unwrap();
+        assert_eq!(loaded.metadata.name, "External API");
+    }
+
+    #[test]
+    #[serial]
+    fn test_open_collection_file_not_found() {
+        let collections_dir_tmp = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(collections_dir_tmp.path());
+        let bogus_path = PathBuf::from("/tmp/nonexistent_runi_collection_file.yaml");
+
+        let result = open_collection_file_in_dir(&bogus_path, &collections_dir);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_open_collection_file_invalid_yaml() {
+        let external_dir = TempDir::new().unwrap();
+        let collections_dir_tmp = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(collections_dir_tmp.path());
+
+        let bad_file = external_dir.path().join("garbage.yaml");
+        std::fs::write(&bad_file, "this is not valid yaml: [[[").unwrap();
+
+        let result = open_collection_file_in_dir(&bad_file, &collections_dir);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Failed to parse"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_open_collection_file_not_a_collection() {
+        let external_dir = TempDir::new().unwrap();
+        let collections_dir_tmp = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(collections_dir_tmp.path());
+
+        // Valid YAML but not a Collection (missing required fields)
+        let bad_file = external_dir.path().join("not-a-collection.yaml");
+        std::fs::write(&bad_file, "foo: bar\nbaz: 123").unwrap();
+
+        let result = open_collection_file_in_dir(&bad_file, &collections_dir);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Failed to parse"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_open_collection_file_duplicate_name_rejected() {
+        let external_dir = TempDir::new().unwrap();
+        let collections_dir_tmp = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(collections_dir_tmp.path());
+
+        // Save a collection with name "My API" into the collections dir
+        save_collection_in_dir(&Collection::new("My API"), &collections_dir).unwrap();
+
+        // Write another collection file with the same name externally
+        let duplicate = Collection::new("My API");
+        let yaml = serde_yaml_ng::to_string(&duplicate).unwrap();
+        let external_file = external_dir.path().join("my-api.yaml");
+        std::fs::write(&external_file, format!("{SCHEMA_COMMENT}{yaml}")).unwrap();
+
+        let result = open_collection_file_in_dir(&external_file, &collections_dir);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("already exists"));
     }
 }

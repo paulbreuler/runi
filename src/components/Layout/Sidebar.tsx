@@ -4,7 +4,8 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Folder, ChevronDown, ChevronRight, Plus, Link } from 'lucide-react';
+import { Menu } from '@base-ui/react/menu';
+import { Folder, ChevronDown, ChevronRight, Plus, FolderOpen, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CollectionList } from '@/components/Sidebar/CollectionList';
 import { ImportSpecDialog } from '@/components/Sidebar/ImportSpecDialog';
@@ -13,8 +14,9 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toast';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useCollectionStore } from '@/stores/useCollectionStore';
-import { containedFocusRingClasses } from '@/utils/accessibility';
+import { containedFocusRingClasses, focusRingClasses } from '@/utils/accessibility';
 import { cn } from '@/utils/cn';
+import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 
 interface DrawerSectionProps {
   title: string;
@@ -102,6 +104,7 @@ const generateUniqueName = (baseName: string, existingNames: string[]): string =
 export const Sidebar = (): React.JSX.Element => {
   const { enabled: collectionsEnabled } = useFeatureFlag('http', 'collectionsEnabled');
   const createCollection = useCollectionStore((state) => state.createCollection);
+  const openCollectionFile = useCollectionStore((state) => state.openCollectionFile);
   const summaries = useCollectionStore((state) => state.summaries);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
@@ -116,33 +119,108 @@ export const Sidebar = (): React.JSX.Element => {
     }
   }, [createCollection, summaries]);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleOpenCollection = useCallback(async (): Promise<void> => {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        title: 'Open Collection',
+        filters: [{ name: 'YAML Collection', extensions: ['yaml', 'yml'] }],
+        multiple: false,
+      });
+      if (selected !== null && typeof selected === 'string') {
+        await openCollectionFile(selected);
+        toast.success({ message: 'Collection opened successfully' });
+      }
+    } catch (error) {
+      toast.error({ message: `Failed to open collection: ${String(error)}` });
+    }
+  }, [openCollectionFile]);
+
+  const menuItemClasses = cn(
+    focusRingClasses,
+    'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
+    'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+  );
+
   const headerActions = collectionsEnabled ? (
-    <div className="flex items-center gap-0.5">
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        noScale
-        className="size-5 text-text-muted hover:text-text-primary"
-        onClick={() => {
-          setImportDialogOpen(true);
-        }}
-        aria-label="Import OpenAPI spec"
-        data-test-id="import-spec-button"
-      >
-        <Link size={12} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        noScale
-        className="size-5 text-text-muted hover:text-text-primary"
-        onClick={handleCreate}
-        aria-label="Create collection"
-        data-test-id="create-collection-button"
-      >
-        <Plus size={12} />
-      </Button>
-    </div>
+    <Menu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+      <Menu.Trigger
+        nativeButton={false}
+        render={(props) => (
+          <Button
+            {...props}
+            variant="ghost"
+            size="icon-xs"
+            noScale
+            className="size-5 text-text-muted hover:text-text-primary"
+            aria-label="Collection actions"
+            data-test-id="collection-actions-menu"
+          >
+            <Plus size={12} />
+          </Button>
+        )}
+      />
+      <Menu.Portal>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: OVERLAY_Z_INDEX,
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ pointerEvents: 'auto' }}>
+            <Menu.Positioner sideOffset={4} align="end">
+              <Menu.Popup
+                style={{ zIndex: OVERLAY_Z_INDEX }}
+                className="min-w-[180px] bg-bg-elevated border border-border-default rounded-lg shadow-lg overflow-hidden py-1 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-reduce:animate-none"
+                data-test-id="collection-actions-popup"
+              >
+                <Menu.Item
+                  label="Create collection"
+                  className={menuItemClasses}
+                  onClick={() => {
+                    void handleCreate();
+                  }}
+                  closeOnClick={true}
+                  data-test-id="collection-menu-create"
+                >
+                  <Plus size={12} className="shrink-0" />
+                  <span>Create collection</span>
+                </Menu.Item>
+                <Menu.Item
+                  label="Open collection"
+                  className={menuItemClasses}
+                  onClick={() => {
+                    void handleOpenCollection();
+                  }}
+                  closeOnClick={true}
+                  data-test-id="collection-menu-open"
+                >
+                  <FolderOpen size={12} className="shrink-0" />
+                  <span>Open collection</span>
+                </Menu.Item>
+                <div className="my-1 h-px bg-border-subtle" role="separator" />
+                <Menu.Item
+                  label="Import collection"
+                  className={menuItemClasses}
+                  onClick={() => {
+                    setImportDialogOpen(true);
+                  }}
+                  closeOnClick={true}
+                  data-test-id="collection-menu-import"
+                >
+                  <Download size={12} className="shrink-0" />
+                  <span>Import collection</span>
+                </Menu.Item>
+              </Menu.Popup>
+            </Menu.Positioner>
+          </div>
+        </div>
+      </Menu.Portal>
+    </Menu.Root>
   ) : undefined;
 
   return (
