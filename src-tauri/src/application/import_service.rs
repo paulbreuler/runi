@@ -290,18 +290,36 @@ fn extract_query_params(
 
 /// Map a MIME content-type string to the appropriate [`BodyType`].
 ///
-/// Falls back to [`BodyType::Raw`] for unrecognised types.
-/// The [`BodyType::Json`] fallback for absent content-types is handled at the
-/// call site via `map_or`.
+/// Strips optional parameters (e.g. `; charset=utf-8`), normalises to
+/// lowercase, then matches exact MIME types first and falls back to
+/// RFC 6838 structured suffix matching (`+json`, `+xml`).
+///
+/// Returns [`BodyType::Raw`] for unrecognised types.  The
+/// [`BodyType::Json`] fallback for *absent* content-types is handled at
+/// the call site via `map_or`.
 fn body_type_from_content_type(content_type: &str) -> BodyType {
-    if content_type.contains("json") {
+    // Strip parameters (e.g. "; charset=utf-8") and normalise case.
+    let mime = content_type
+        .split(';')
+        .next()
+        .unwrap_or(content_type)
+        .trim()
+        .to_ascii_lowercase();
+
+    // Exact matches on well-known MIME types.
+    match mime.as_str() {
+        "application/json" | "text/json" => return BodyType::Json,
+        "application/x-www-form-urlencoded" | "multipart/form-data" => return BodyType::Form,
+        "application/xml" | "text/xml" => return BodyType::Xml,
+        "application/graphql" => return BodyType::Graphql,
+        _ => {}
+    }
+
+    // RFC 6838 structured suffix matching (e.g. application/vnd.api+json).
+    if mime.ends_with("+json") {
         BodyType::Json
-    } else if content_type.contains("x-www-form-urlencoded") || content_type.contains("form-data") {
-        BodyType::Form
-    } else if content_type.contains("xml") {
+    } else if mime.ends_with("+xml") {
         BodyType::Xml
-    } else if content_type.contains("graphql") {
-        BodyType::Graphql
     } else {
         BodyType::Raw
     }
@@ -573,15 +591,12 @@ mod tests {
     // ── body_type_from_content_type unit tests ──────────────────────────
 
     #[test]
-    fn test_body_type_from_content_type_mappings() {
+    fn test_body_type_exact_mime_matches() {
         assert_eq!(
             body_type_from_content_type("application/json"),
             BodyType::Json
         );
-        assert_eq!(
-            body_type_from_content_type("application/vnd.api+json"),
-            BodyType::Json
-        );
+        assert_eq!(body_type_from_content_type("text/json"), BodyType::Json);
         assert_eq!(
             body_type_from_content_type("application/x-www-form-urlencoded"),
             BodyType::Form
@@ -602,6 +617,73 @@ mod tests {
         assert_eq!(body_type_from_content_type("text/plain"), BodyType::Raw);
         assert_eq!(
             body_type_from_content_type("application/octet-stream"),
+            BodyType::Raw
+        );
+    }
+
+    #[test]
+    fn test_body_type_structured_suffix_matching() {
+        // RFC 6838 structured syntax suffixes.
+        assert_eq!(
+            body_type_from_content_type("application/vnd.api+json"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("application/hal+json"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("application/soap+xml"),
+            BodyType::Xml
+        );
+        assert_eq!(
+            body_type_from_content_type("application/atom+xml"),
+            BodyType::Xml
+        );
+    }
+
+    #[test]
+    fn test_body_type_strips_parameters() {
+        assert_eq!(
+            body_type_from_content_type("application/json; charset=utf-8"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("text/xml; charset=iso-8859-1"),
+            BodyType::Xml
+        );
+        assert_eq!(
+            body_type_from_content_type("multipart/form-data; boundary=---abc"),
+            BodyType::Form
+        );
+    }
+
+    #[test]
+    fn test_body_type_case_insensitive() {
+        assert_eq!(
+            body_type_from_content_type("APPLICATION/JSON"),
+            BodyType::Json
+        );
+        assert_eq!(
+            body_type_from_content_type("Application/Xml"),
+            BodyType::Xml
+        );
+        assert_eq!(
+            body_type_from_content_type("Application/VND.API+JSON"),
+            BodyType::Json
+        );
+    }
+
+    #[test]
+    fn test_body_type_no_false_positives() {
+        // These previously matched via `contains("json")` / `contains("xml")`.
+        assert_eq!(body_type_from_content_type("text/json-like"), BodyType::Raw);
+        assert_eq!(
+            body_type_from_content_type("application/my-custom-xml-format"),
+            BodyType::Raw
+        );
+        assert_eq!(
+            body_type_from_content_type("application/jsonl"),
             BodyType::Raw
         );
     }
