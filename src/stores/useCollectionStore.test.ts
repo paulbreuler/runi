@@ -1072,7 +1072,7 @@ describe('useCollectionStore', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it('sets error when refresh fails', async () => {
+    it('emits toast but does not set global error when refresh fails', async () => {
       (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('refresh failed');
 
       const { result } = renderHook(() => useCollectionStore());
@@ -1081,7 +1081,7 @@ describe('useCollectionStore', () => {
         await result.current.refreshCollectionSpec('col-1');
       });
 
-      expect(result.current.error).toContain('refresh failed');
+      expect(result.current.error).toBeNull();
       expect(result.current.isLoading).toBe(false);
     });
 

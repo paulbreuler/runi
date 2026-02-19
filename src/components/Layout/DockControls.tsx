@@ -257,6 +257,7 @@ export const DockControls = ({
                       onClick={() => {
                         handlePositionChange(pos);
                       }}
+                      data-test-id={`dock-menu-${pos}`}
                     >
                       {icon}
                       <span>{label}</span>
@@ -271,6 +272,7 @@ export const DockControls = ({
                     className={menuItemClasses}
                     closeOnClick={true}
                     onClick={handlePopout}
+                    data-test-id="dock-menu-popout"
                   >
                     <ExternalLink size={14} />
                     <span>Pop out to window</span>

@@ -26,13 +26,10 @@ export const ImportSpecDialog = ({
   const importCollection = useCollectionStore((state) => state.importCollection);
   const [url, setUrl] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [localError, setLocalError] = React.useState<string | null>(null);
-
   // Reset state when dialog opens
   React.useEffect(() => {
     if (open) {
       setUrl('');
-      setLocalError(null);
       setIsSubmitting(false);
     }
   }, [open]);
@@ -45,7 +42,6 @@ export const ImportSpecDialog = ({
     }
 
     setIsSubmitting(true);
-    setLocalError(null);
 
     try {
       const result = await importCollection({
@@ -65,9 +61,8 @@ export const ImportSpecDialog = ({
           actor: 'human',
         });
         onOpenChange(false);
-      } else {
-        setLocalError('Failed to import spec. Check the URL and try again.');
       }
+      // On failure, importCollection already emits a toast via the store — no inline banner needed.
     } finally {
       setIsSubmitting(false);
     }
@@ -83,8 +78,6 @@ export const ImportSpecDialog = ({
       void handleSubmit();
     }
   };
-
-  const displayError = localError;
 
   return (
     <Dialog.Root
@@ -117,16 +110,6 @@ export const ImportSpecDialog = ({
           </p>
 
           <div className="space-y-4">
-            {displayError !== null && (
-              <div
-                className="rounded-md border border-signal-error/30 bg-signal-error/10 px-3 py-2 text-xs text-signal-error"
-                data-test-id="import-spec-error"
-                role="alert"
-              >
-                {displayError}
-              </div>
-            )}
-
             <div className="space-y-1.5">
               <Label htmlFor="import-spec-url" data-test-id="import-spec-url-label">
                 URL

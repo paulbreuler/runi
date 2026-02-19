@@ -128,7 +128,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       });
     } catch (error) {
       const message = String(error);
-      set({ error: message, isLoading: false });
+      set({ isLoading: false });
       globalEventBus.emit<ToastEventPayload>('toast.show', {
         type: 'error',
         message: 'Failed to refresh spec',

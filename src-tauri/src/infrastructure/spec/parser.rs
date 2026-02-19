@@ -1,12 +1,14 @@
 #![allow(dead_code)]
 
+use serde_json::Value;
+
+use openapiv3::{OpenAPI, Parameter, ReferenceOr};
+
 use super::openapi_types::{
     OpenApiParameterLocation, OpenApiParsedOperation, OpenApiParsedParameter,
     OpenApiParsedRequestBody, OpenApiParsedSpec, OpenApiServer,
 };
 use super::streaming::is_streaming_operation;
-use openapiv3::{OpenAPI, Parameter, ReferenceOr};
-use serde_json::Value;
 
 /// Parse a raw spec string (JSON or YAML) into a `serde_json::Value`.
 ///
@@ -200,10 +202,17 @@ fn extract_param_schema_fields(
 ///
 /// Prefers `content.application/json.example`, falls back to
 /// `content.application/json.schema.example`, then `None`.
+///
+/// `$ref` request bodies (e.g. `"$ref": "#/components/requestBodies/..."`) are
+/// silently skipped because `openapiv3` does not auto-resolve references. A
+/// future improvement could perform manual `$ref` resolution before extraction.
 fn extract_request_body_typed(op: &openapiv3::Operation) -> Option<OpenApiParsedRequestBody> {
     let rb = match op.request_body.as_ref()? {
         ReferenceOr::Item(rb) => rb,
-        ReferenceOr::Reference { .. } => return None,
+        ReferenceOr::Reference { reference } => {
+            tracing::debug!(target: "spec::parser", %reference, "$ref request body skipped (not resolved)");
+            return None;
+        }
     };
 
     // Prefer application/json, fall back to first content type

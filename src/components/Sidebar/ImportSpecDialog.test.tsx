@@ -24,6 +24,7 @@ describe('ImportSpecDialog', () => {
       selectedCollectionId: null,
       selectedRequestId: null,
       expandedCollectionIds: new Set(),
+      driftResults: {},
       isLoading: false,
       error: null,
     });

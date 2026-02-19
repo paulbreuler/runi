@@ -319,7 +319,9 @@ describe('Sidebar', (): void => {
         '/path/to/collection.yaml'
       );
     });
-    expect(mockToast.success).toHaveBeenCalledWith({ message: 'Collection opened successfully' });
+    await waitFor(() => {
+      expect(mockToast.success).toHaveBeenCalledWith({ message: 'Collection opened successfully' });
+    });
   });
 
   it('does not call openCollectionFile when dialog is cancelled', async (): Promise<void> => {
@@ -342,11 +344,28 @@ describe('Sidebar', (): void => {
     expect(mockToast.success).not.toHaveBeenCalled();
   });
 
-  it('shows error toast when openCollectionFile fails', async (): Promise<void> => {
+  it('does not show success toast when openCollectionFile returns null', async (): Promise<void> => {
     mockDialogOpen.mockResolvedValueOnce('/path/to/bad.yaml');
-    mockCollectionState.openCollectionFile = vi.fn(async (): Promise<Collection | null> => {
-      throw new Error('Invalid YAML');
+    mockCollectionState.openCollectionFile = vi.fn(async (): Promise<Collection | null> => null);
+
+    render(<Sidebar />);
+    await userEvent.click(screen.getByTestId('collection-actions-menu'));
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('collection-actions-popup')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+    await userEvent.click(screen.getByTestId('collection-menu-open'));
+
+    await waitFor(() => {
+      expect(mockCollectionState.openCollectionFile).toHaveBeenCalledWith('/path/to/bad.yaml');
     });
+    expect(mockToast.success).not.toHaveBeenCalled();
+  });
+
+  it('shows error toast when file dialog throws', async (): Promise<void> => {
+    mockDialogOpen.mockRejectedValueOnce(new Error('Dialog error'));
 
     render(<Sidebar />);
     await userEvent.click(screen.getByTestId('collection-actions-menu'));
@@ -360,7 +379,7 @@ describe('Sidebar', (): void => {
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith({
-        message: 'Failed to open collection: Error: Invalid YAML',
+        message: 'Failed to open collection: Error: Dialog error',
       });
     });
   });

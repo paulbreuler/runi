@@ -130,8 +130,10 @@ export const Sidebar = (): React.JSX.Element => {
         multiple: false,
       });
       if (selected !== null && typeof selected === 'string') {
-        await openCollectionFile(selected);
-        toast.success({ message: 'Collection opened successfully' });
+        const result = await openCollectionFile(selected);
+        if (result !== null) {
+          toast.success({ message: 'Collection opened successfully' });
+        }
       }
     } catch (error) {
       toast.error({ message: `Failed to open collection: ${String(error)}` });
