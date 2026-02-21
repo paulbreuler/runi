@@ -91,8 +91,11 @@ describe('ImportSpecDialog', () => {
       requests: [],
     };
 
-    // Mock the importCollection to resolve successfully
-    const importCollectionMock = vi.fn().mockResolvedValue(mockCollection);
+    // Mock the importCollection to resolve successfully with ImportCollectionResult
+    const importCollectionMock = vi.fn().mockResolvedValue({
+      status: 'success',
+      collection: mockCollection,
+    });
     useCollectionStore.setState({
       importCollection: importCollectionMock,
     });
@@ -157,11 +160,14 @@ describe('ImportSpecDialog', () => {
 
   it('submits on Enter key press', async () => {
     const importCollectionMock = vi.fn().mockResolvedValue({
-      id: 'col-new',
-      metadata: { name: 'Test', tags: [], created_at: '', modified_at: '' },
-      source: { source_type: 'openapi', fetched_at: '' },
-      variables: {},
-      requests: [],
+      status: 'success',
+      collection: {
+        id: 'col-new',
+        metadata: { name: 'Test', tags: [], created_at: '', modified_at: '' },
+        source: { source_type: 'openapi', fetched_at: '' },
+        variables: {},
+        requests: [],
+      },
     });
     useCollectionStore.setState({
       importCollection: importCollectionMock,
@@ -220,6 +226,100 @@ describe('ImportSpecDialog', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('import-spec-submit')).toBeDisabled();
+    });
+  });
+
+  it('shows conflict state when import returns conflict', async () => {
+    const conflictResult = {
+      status: 'conflict' as const,
+      existing_id: 'col_existing',
+      existing_name: 'My API',
+    };
+    const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
+    useCollectionStore.setState({
+      importCollection: importCollectionMock,
+    });
+
+    render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    await userEvent.type(
+      screen.getByTestId('import-spec-url-input'),
+      'https://example.com/spec.json'
+    );
+    await userEvent.click(screen.getByTestId('import-spec-submit'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-conflict-message')).toBeInTheDocument();
+      expect(screen.getByTestId('import-conflict-replace')).toBeInTheDocument();
+      expect(screen.getByTestId('import-conflict-cancel')).toBeInTheDocument();
+    });
+
+    // Dialog should still be open
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('calls refreshCollectionSpec and closes when replace is clicked', async () => {
+    const conflictResult = {
+      status: 'conflict' as const,
+      existing_id: 'col_existing',
+      existing_name: 'My API',
+    };
+    const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
+    const refreshMock = vi.fn().mockResolvedValue(undefined);
+    useCollectionStore.setState({
+      importCollection: importCollectionMock,
+      refreshCollectionSpec: refreshMock,
+    });
+
+    render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    await userEvent.type(
+      screen.getByTestId('import-spec-url-input'),
+      'https://example.com/spec.json'
+    );
+    await userEvent.click(screen.getByTestId('import-spec-submit'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-conflict-replace')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId('import-conflict-replace'));
+
+    await waitFor(() => {
+      expect(refreshMock).toHaveBeenCalledWith('col_existing', 'https://example.com/spec.json');
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('returns to import form when conflict cancel is clicked', async () => {
+    const conflictResult = {
+      status: 'conflict' as const,
+      existing_id: 'col_existing',
+      existing_name: 'My API',
+    };
+    const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
+    useCollectionStore.setState({
+      importCollection: importCollectionMock,
+    });
+
+    render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    await userEvent.type(
+      screen.getByTestId('import-spec-url-input'),
+      'https://example.com/spec.json'
+    );
+    await userEvent.click(screen.getByTestId('import-spec-submit'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-conflict-cancel')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId('import-conflict-cancel'));
+
+    await waitFor(() => {
+      // Should return to the import form
+      expect(screen.getByTestId('import-spec-url-input')).toBeInTheDocument();
+      expect(screen.queryByTestId('import-conflict-message')).not.toBeInTheDocument();
     });
   });
 });

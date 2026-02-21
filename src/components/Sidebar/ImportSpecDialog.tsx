@@ -27,10 +27,16 @@ export const ImportSpecDialog = ({
   onOpenChange,
 }: ImportSpecDialogProps): React.ReactElement | null => {
   const importCollection = useCollectionStore((state) => state.importCollection);
+  const refreshCollectionSpec = useCollectionStore((state) => state.refreshCollectionSpec);
   const [mode, setMode] = React.useState<ImportMode>('url');
   const [url, setUrl] = React.useState('');
   const [filePath, setFilePath] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [conflict, setConflict] = React.useState<{
+    existingId: string;
+    existingName: string;
+    source: string;
+  } | null>(null);
 
   // Reset state when dialog opens
   React.useEffect(() => {
@@ -39,6 +45,7 @@ export const ImportSpecDialog = ({
       setUrl('');
       setFilePath('');
       setIsSubmitting(false);
+      setConflict(null);
     }
   }, [open]);
 
@@ -99,10 +106,11 @@ export const ImportSpecDialog = ({
     setIsSubmitting(true);
 
     try {
+      const source = mode === 'url' ? normalizeUrl(url) : filePath.trim();
       const result = await importCollection(
         mode === 'url'
           ? {
-              url: normalizeUrl(url),
+              url: source,
               filePath: null,
               inlineContent: null,
               displayName: null,
@@ -112,7 +120,7 @@ export const ImportSpecDialog = ({
             }
           : {
               url: null,
-              filePath: filePath.trim(),
+              filePath: source,
               inlineContent: null,
               displayName: null,
               repoRoot: null,
@@ -121,17 +129,42 @@ export const ImportSpecDialog = ({
             }
       );
 
-      if (result !== null) {
+      if (result !== null && result.status === 'success') {
         globalEventBus.emit('collection.imported', {
-          collection_id: result.id,
-          url: mode === 'url' ? normalizeUrl(url) : filePath.trim(),
+          collection_id: result.collection.id,
+          url: source,
           actor: 'human',
         });
         onOpenChange(false);
+      } else if (result !== null) {
+        setConflict({
+          existingId: result.existing_id,
+          existingName: result.existing_name,
+          source,
+        });
       }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReplace = async (): Promise<void> => {
+    if (conflict === null) {
+      return;
+    }
+    setIsSubmitting(true);
+
+    try {
+      await refreshCollectionSpec(conflict.existingId, conflict.source);
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+      setConflict(null);
+    }
+  };
+
+  const handleConflictCancel = (): void => {
+    setConflict(null);
   };
 
   const handleCancel = (): void => {
@@ -189,119 +222,161 @@ export const ImportSpecDialog = ({
           )}
           style={{ zIndex: OVERLAY_Z_INDEX + 1 }}
         >
-          <Dialog.Title className="text-base font-medium text-text-primary mb-1">
-            Import OpenAPI spec
-          </Dialog.Title>
-          <p className="text-xs text-text-muted mb-4">
-            Import from a live URL or a local JSON/YAML file.
-          </p>
-
-          {/* Mode toggle */}
-          <div
-            className="flex gap-1 p-0.5 bg-bg-surface rounded-md mb-4"
-            role="radiogroup"
-            aria-label="Import source"
-            data-test-id="import-mode-toggle"
-          >
-            {(['url', 'file'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                role="radio"
-                aria-checked={mode === m}
-                tabIndex={mode === m ? 0 : -1}
-                data-test-id={`import-mode-${m}`}
-                onClick={() => {
-                  setMode(m);
-                }}
-                onKeyDown={handleModeKeyDown}
-                className={cn(
-                  'flex-1 py-1 text-xs font-medium rounded transition-colors outline-none',
-                  focusRingClasses,
-                  mode === m
-                    ? 'bg-bg-elevated text-text-primary shadow-sm'
-                    : 'text-text-muted hover:text-text-secondary'
-                )}
+          {conflict !== null ? (
+            <>
+              <Dialog.Title className="text-base font-medium text-text-primary mb-1">
+                Collection already exists
+              </Dialog.Title>
+              <p
+                className="text-sm text-text-secondary mb-4"
+                data-test-id="import-conflict-message"
               >
-                {m === 'url' ? 'URL' : 'Local file'}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            {mode === 'url' ? (
-              <div className="space-y-1.5">
-                <Label htmlFor="import-spec-url" data-test-id="import-spec-url-label">
-                  URL
-                </Label>
-                <Input
-                  id="import-spec-url"
-                  data-test-id="import-spec-url-input"
-                  value={url}
-                  onChange={(e) => {
-                    setUrl(e.target.value);
+                A collection named{' '}
+                <span className="font-medium text-text-primary">
+                  &ldquo;{conflict.existingName}&rdquo;
+                </span>{' '}
+                already exists. Importing will refresh the existing collection with the new spec.
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button
+                  data-test-id="import-conflict-cancel"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleConflictCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  data-test-id="import-conflict-replace"
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    void handleReplace();
                   }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="https://…"
-                  noScale
-                  autoFocus
-                />
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Replacing…' : 'Replace'}
+                </Button>
               </div>
-            ) : (
-              <div className="space-y-1.5">
-                <Label htmlFor="import-spec-file" data-test-id="import-spec-file-label">
-                  File
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="import-spec-file"
-                    data-test-id="import-spec-file-input"
-                    value={filePath}
-                    onChange={(e) => {
-                      setFilePath(e.target.value);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="/path/to/openapi.json"
-                    noScale
-                    className="flex-1 font-mono text-xs"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    data-test-id="import-spec-browse"
-                    onClick={() => {
-                      void handleBrowse();
-                    }}
-                  >
-                    Browse
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <>
+              <Dialog.Title className="text-base font-medium text-text-primary mb-1">
+                Import OpenAPI spec
+              </Dialog.Title>
+              <p className="text-xs text-text-muted mb-4">
+                Import from a live URL or a local JSON/YAML file.
+              </p>
 
-          <div className="flex justify-end gap-2 mt-6">
-            <Button
-              data-test-id="import-spec-cancel"
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-            >
-              Cancel
-            </Button>
-            <Button
-              data-test-id="import-spec-submit"
-              variant="default"
-              size="sm"
-              disabled={!canSubmit}
-              onClick={() => {
-                void handleSubmit();
-              }}
-            >
-              {isSubmitting ? 'Importing…' : 'Import'}
-            </Button>
-          </div>
+              {/* Mode toggle */}
+              <div
+                className="flex gap-1 p-0.5 bg-bg-surface rounded-md mb-4"
+                role="radiogroup"
+                aria-label="Import source"
+                data-test-id="import-mode-toggle"
+              >
+                {(['url', 'file'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    role="radio"
+                    aria-checked={mode === m}
+                    tabIndex={mode === m ? 0 : -1}
+                    data-test-id={`import-mode-${m}`}
+                    onClick={() => {
+                      setMode(m);
+                    }}
+                    onKeyDown={handleModeKeyDown}
+                    className={cn(
+                      'flex-1 py-1 text-xs font-medium rounded transition-colors outline-none',
+                      focusRingClasses,
+                      mode === m
+                        ? 'bg-bg-elevated text-text-primary shadow-sm'
+                        : 'text-text-muted hover:text-text-secondary'
+                    )}
+                  >
+                    {m === 'url' ? 'URL' : 'Local file'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                {mode === 'url' ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="import-spec-url" data-test-id="import-spec-url-label">
+                      URL
+                    </Label>
+                    <Input
+                      id="import-spec-url"
+                      data-test-id="import-spec-url-input"
+                      value={url}
+                      onChange={(e) => {
+                        setUrl(e.target.value);
+                      }}
+                      onKeyDown={handleKeyDown}
+                      placeholder="https://…"
+                      noScale
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="import-spec-file" data-test-id="import-spec-file-label">
+                      File
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="import-spec-file"
+                        data-test-id="import-spec-file-input"
+                        value={filePath}
+                        onChange={(e) => {
+                          setFilePath(e.target.value);
+                        }}
+                        onKeyDown={handleKeyDown}
+                        placeholder="/path/to/openapi.json"
+                        noScale
+                        className="flex-1 font-mono text-xs"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        data-test-id="import-spec-browse"
+                        onClick={() => {
+                          void handleBrowse();
+                        }}
+                      >
+                        Browse
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button
+                  data-test-id="import-spec-cancel"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  data-test-id="import-spec-submit"
+                  variant="default"
+                  size="sm"
+                  disabled={!canSubmit}
+                  onClick={() => {
+                    void handleSubmit();
+                  }}
+                >
+                  {isSubmitting ? 'Importing…' : 'Import'}
+                </Button>
+              </div>
+            </>
+          )}
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

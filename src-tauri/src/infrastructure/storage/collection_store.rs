@@ -207,6 +207,21 @@ pub fn open_collection_file_in_dir(path: &Path, dir: &Path) -> Result<Collection
     Ok(collection)
 }
 
+/// Find a collection by its display name.
+///
+/// Returns the summary of the first collection matching the given name,
+/// or `None` if no match is found.
+pub fn find_collection_by_name(name: &str) -> Option<CollectionSummary> {
+    let dir = get_collections_dir().ok()?;
+    find_collection_by_name_in_dir(name, &dir)
+}
+
+/// Find a collection by name in the specified directory.
+pub fn find_collection_by_name_in_dir(name: &str, dir: &Path) -> Option<CollectionSummary> {
+    let summaries = list_collections_in_dir(dir).ok()?;
+    summaries.into_iter().find(|s| s.name == name)
+}
+
 /// Delete a collection file.
 pub fn delete_collection(collection_id: &str) -> Result<(), String> {
     let dir = get_collections_dir()?;
