@@ -191,6 +191,14 @@ export const CollectionEventProvider = ({
         }
       } catch (error) {
         console.error(`[CollectionEventProvider] Failed to subscribe to ${eventName}:`, error);
+        // Only surface subscription failures as user-visible toasts inside a Tauri runtime.
+        // In dev/e2e environments the Tauri event bus is unavailable and this failure is expected.
+        if (typeof window !== 'undefined' && '__TAURI__' in window) {
+          globalEventBus.emit<ToastEventPayload>('toast.show', {
+            type: 'error',
+            message: `Failed to subscribe to environment events`,
+          });
+        }
       }
     };
 

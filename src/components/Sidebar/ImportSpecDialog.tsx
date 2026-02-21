@@ -148,12 +148,21 @@ export const ImportSpecDialog = ({
   const handleModeKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>): void => {
     const modes: ImportMode[] = ['url', 'file'];
     const currentIndex = modes.indexOf(mode);
+    let nextIndex = currentIndex;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
-      setMode(modes[(currentIndex + 1) % modes.length] ?? 'url');
+      nextIndex = (currentIndex + 1) % modes.length;
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
-      setMode(modes[(currentIndex - 1 + modes.length) % modes.length] ?? 'file');
+      nextIndex = (currentIndex - 1 + modes.length) % modes.length;
+    }
+    if (nextIndex !== currentIndex) {
+      setMode(modes[nextIndex] ?? 'url');
+      // WAI-ARIA radiogroup: arrow keys must both select and focus the next option
+      const buttons = e.currentTarget
+        .closest('[role="radiogroup"]')
+        ?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
+      buttons?.[nextIndex]?.focus();
     }
   };
 

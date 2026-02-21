@@ -142,11 +142,13 @@ export const StatusBar = (): React.JSX.Element => {
   const activeEnvironment = collection?.active_environment ?? '';
 
   const envError = useCollectionStore((state) => state.error);
+  const clearEnvError = useCollectionStore((state) => state.clearError);
   useEffect(() => {
     if (envError !== null) {
       globalEventBus.emit<ToastEventPayload>('toast.show', { type: 'error', message: envError });
+      clearEnvError();
     }
-  }, [envError]);
+  }, [envError, clearEnvError]);
 
   const handleEnvironmentChange = (value: string | null): void => {
     if (collectionId === undefined) {
