@@ -1508,13 +1508,32 @@ impl McpServerService {
     }
 }
 
-/// Convert a `CollectionRequest` to `RequestParams` for HTTP execution.
 /// Resolve `{{key}}` template variables in a string using the provided map.
+///
+/// Single-pass scanner: each `{{...}}` placeholder is substituted at most once,
+/// preventing cascading substitutions where a resolved value contains further
+/// `{{...}}` markers.  Unknown placeholders are left verbatim.
 fn resolve_variables(template: &str, vars: &std::collections::BTreeMap<String, String>) -> String {
-    let mut result = template.to_string();
-    for (key, value) in vars {
-        result = result.replace(&format!("{{{{{key}}}}}"), value);
+    let mut result = String::with_capacity(template.len());
+    let mut rest = template;
+    while let Some(start) = rest.find("{{") {
+        result.push_str(&rest[..start]);
+        rest = &rest[start + 2..];
+        if let Some(end) = rest.find("}}") {
+            let key = &rest[..end];
+            if let Some(val) = vars.get(key) {
+                result.push_str(val);
+            } else {
+                result.push_str("{{");
+                result.push_str(key);
+                result.push_str("}}");
+            }
+            rest = &rest[end + 2..];
+        } else {
+            result.push_str("{{");
+        }
     }
+    result.push_str(rest);
     result
 }
 

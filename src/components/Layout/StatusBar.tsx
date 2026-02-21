@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Activity, Settings } from 'lucide-react';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { invoke } from '@tauri-apps/api/core';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
@@ -140,6 +141,13 @@ export const StatusBar = (): React.JSX.Element => {
   const environments = collection?.environments ?? [];
   const activeEnvironment = collection?.active_environment ?? '';
 
+  const envError = useCollectionStore((state) => state.error);
+  useEffect(() => {
+    if (envError !== null) {
+      globalEventBus.emit<ToastEventPayload>('toast.show', { type: 'error', message: envError });
+    }
+  }, [envError]);
+
   const handleEnvironmentChange = (value: string | null): void => {
     if (collectionId === undefined) {
       return;
@@ -233,17 +241,25 @@ export const StatusBar = (): React.JSX.Element => {
           <>
             <Select value={activeEnvironment} onValueChange={handleEnvironmentChange}>
               <SelectTrigger
-                role="button"
-                aria-haspopup="listbox"
+                aria-label="Active environment"
                 data-test-id="environment-switcher"
-                className="h-5 border-none bg-transparent px-1 py-0 text-xs font-mono text-text-secondary hover:bg-bg-raised hover:text-text-primary focus:ring-0 gap-1"
+                className={cn(
+                  'h-5 border-none bg-transparent px-1 py-0 text-xs font-mono text-text-secondary hover:bg-bg-raised hover:text-text-primary gap-1',
+                  focusRingClasses
+                )}
               >
                 <SelectValue placeholder="No environment" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No environment</SelectItem>
+                <SelectItem value="" data-test-id="env-option-none">
+                  No environment
+                </SelectItem>
                 {environments.map((env) => (
-                  <SelectItem key={env.name} value={env.name}>
+                  <SelectItem
+                    key={env.name}
+                    value={env.name}
+                    data-test-id={`env-option-${env.name}`}
+                  >
                     {env.name}
                   </SelectItem>
                 ))}

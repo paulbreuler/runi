@@ -83,6 +83,15 @@ export const useRequestActions = (): UseRequestActionsReturn => {
     };
     const resolvedUrl = resolveVariables(localUrl, envVars);
 
+    const unresolvedPattern = /\{\{(\w+)\}\}/;
+    if (unresolvedPattern.test(resolvedUrl)) {
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: `URL contains unresolved variable: ${unresolvedPattern.exec(resolvedUrl)?.[0] ?? '{{…}}'}. Set the variable in the active environment.`,
+      });
+      return;
+    }
+
     setLoading(true);
     setResponse(null);
     setUrl(localUrl);

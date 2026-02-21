@@ -2,6 +2,7 @@ import { type FC, useState, useCallback, useEffect, useRef } from 'react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { CanvasPanel } from './CanvasPanel';
 import { cn } from '@/utils/cn';
+import { focusRingClasses } from '@/utils/accessibility';
 
 /**
  * Sash classes - minimal, grounded resize handle styling
@@ -13,7 +14,8 @@ const getSashClasses = (orientation: 'vertical' | 'horizontal', isDragging: bool
     orientation === 'vertical' ? 'w-[2px] cursor-col-resize' : 'h-[2px] cursor-row-resize',
     'bg-border-subtle',
     'hover:bg-accent-blue',
-    isDragging && 'bg-accent-blue'
+    isDragging && 'bg-accent-blue',
+    focusRingClasses
   );
 
 /** Minimum panel percentage to prevent collapsing to zero */
@@ -301,6 +303,49 @@ const MultiPanelLayout: FC<MultiPanelLayoutProps> = ({
     setLiveRatios(null);
   }, [setLiveRatios]);
 
+  // Keyboard handler for sash accessibility
+  const handleSashKeyDown = useCallback(
+    (sashIdx: number, e: React.KeyboardEvent<HTMLDivElement>) => {
+      const step = e.shiftKey ? 10 : 1;
+      let delta = 0;
+      if (isHorizontal) {
+        if (e.key === 'ArrowLeft') {
+          delta = -step;
+        } else if (e.key === 'ArrowRight') {
+          delta = step;
+        }
+      } else {
+        if (e.key === 'ArrowUp') {
+          delta = -step;
+        } else if (e.key === 'ArrowDown') {
+          delta = step;
+        }
+      }
+      if (delta === 0) {
+        return;
+      }
+      e.preventDefault();
+      const currentRatios = liveRatios ?? getDefaultRatios();
+      const newRatios = [...currentRatios];
+      const leftVal = newRatios[sashIdx] ?? 50;
+      const rightVal = newRatios[sashIdx + 1] ?? 50;
+      let leftRatio = leftVal + delta;
+      let rightRatio = rightVal - delta;
+      if (leftRatio < MIN_PANEL_PERCENT) {
+        leftRatio = MIN_PANEL_PERCENT;
+        rightRatio = leftVal + rightVal - leftRatio;
+      }
+      if (rightRatio < MIN_PANEL_PERCENT) {
+        rightRatio = MIN_PANEL_PERCENT;
+        leftRatio = leftVal + rightVal - rightRatio;
+      }
+      newRatios[sashIdx] = leftRatio;
+      newRatios[sashIdx + 1] = rightRatio;
+      setLiveRatios(newRatios);
+    },
+    [getDefaultRatios, isHorizontal, liveRatios, setLiveRatios]
+  );
+
   // Build interleaved panels + sashes
   const elements: React.ReactNode[] = [];
 
@@ -335,6 +380,7 @@ const MultiPanelLayout: FC<MultiPanelLayoutProps> = ({
             draggingSashIndex === sashIdx
           )}
           data-test-id={`canvas-sash-${String(sashIdx)}`}
+          tabIndex={0}
           onPointerDown={(e) => {
             handleSashPointerDown(sashIdx, e);
           }}
@@ -348,13 +394,15 @@ const MultiPanelLayout: FC<MultiPanelLayoutProps> = ({
             handleSashPointerUp(sashIdx, e);
           }}
           onDoubleClick={handleSashDoubleClick}
+          onKeyDown={(e) => {
+            handleSashKeyDown(sashIdx, e);
+          }}
           role="separator"
-          aria-label={
-            isHorizontal
-              ? `Resize panels (double-click to reset)`
-              : `Resize panels (double-click to reset)`
-          }
+          aria-label="Resize panels (double-click to reset)"
           aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
+          aria-valuenow={Math.round(ratios[sashIdx] ?? 50)}
+          aria-valuemin={MIN_PANEL_PERCENT}
+          aria-valuemax={100 - MIN_PANEL_PERCENT}
         />
       );
     }

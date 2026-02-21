@@ -112,7 +112,7 @@ describe('CollectionEventProvider', () => {
     mockCollectionState.collections = [];
   });
 
-  it('subscribes to all 9 Tauri event channels on mount', async () => {
+  it('subscribes to all 13 Tauri event channels on mount', async () => {
     await act(async () => {
       render(
         <CollectionEventProvider>
@@ -125,6 +125,10 @@ describe('CollectionEventProvider', () => {
     expect(subscribedEvents).toEqual([
       'collection:created',
       'collection:deleted',
+      'collection:environment-activated',
+      'collection:environment-deactivated',
+      'collection:environment-deleted',
+      'collection:environment-updated',
       'collection:imported',
       'collection:refreshed',
       'collection:saved',
@@ -845,7 +849,7 @@ describe('CollectionEventProvider', () => {
       });
     });
 
-    it('does not call setDriftResult when changed is false', async () => {
+    it('calls setDriftResult with changed: false when spec has no changes', async () => {
       await act(async () => {
         render(
           <CollectionEventProvider>

@@ -101,7 +101,12 @@ export const EnvironmentPanel = ({
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
-        <span className="text-sm font-medium text-text-primary">Environments</span>
+        <span
+          className="text-sm font-medium text-text-primary"
+          data-test-id="environment-panel-title"
+        >
+          Environments
+        </span>
         <button
           type="button"
           onClick={onClose}
@@ -133,15 +138,21 @@ export const EnvironmentPanel = ({
             <div key={env.name} className="border-b border-border-subtle last:border-b-0">
               {/* Row header */}
               <div
-                className="flex items-center gap-2 px-3 py-2 hover:bg-bg-raised cursor-pointer"
+                className={cn(
+                  'group flex items-center gap-2 px-3 py-2 hover:bg-bg-raised cursor-pointer',
+                  focusRingClasses
+                )}
                 data-test-id={`environment-row-${env.name}`}
                 onClick={() => {
                   setExpandedEnv(isExpanded ? null : env.name);
                 }}
                 role="button"
                 tabIndex={0}
+                aria-expanded={isExpanded}
+                aria-controls={`environment-variables-${env.name}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
                     setExpandedEnv(isExpanded ? null : env.name);
                   }
                 }}
@@ -162,7 +173,7 @@ export const EnvironmentPanel = ({
                     void handleDeleteEnvironment(env.name);
                   }}
                   className={cn(
-                    'p-1 rounded text-text-muted hover:text-signal-error hover:bg-bg-raised transition-colors opacity-0 group-hover:opacity-100',
+                    'p-1 rounded text-text-muted hover:text-signal-error hover:bg-bg-raised transition-colors opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
                     focusRingClasses
                   )}
                   aria-label={`Delete environment ${env.name}`}
@@ -173,7 +184,11 @@ export const EnvironmentPanel = ({
 
               {/* Expanded variables editor */}
               {isExpanded && (
-                <div className="px-3 pb-3" data-test-id={`environment-variables-${env.name}`}>
+                <div
+                  className="px-3 pb-3"
+                  id={`environment-variables-${env.name}`}
+                  data-test-id={`environment-variables-${env.name}`}
+                >
                   <div className="bg-bg-surface rounded border border-border-subtle overflow-hidden">
                     {varKeys.length === 0 ? (
                       <div className="px-3 py-2 text-xs text-text-muted">No variables defined.</div>

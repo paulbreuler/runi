@@ -59,7 +59,7 @@ describe('EnvironmentPanel', () => {
   it('renders the panel with title', () => {
     render(<EnvironmentPanel collectionId="col-1" open={true} onClose={onClose} />);
     expect(screen.getByTestId('environment-panel')).toBeDefined();
-    expect(screen.getByText('Environments')).toBeDefined();
+    expect(screen.getByTestId('environment-panel-title')).toBeDefined();
   });
 
   it('shows add environment button', () => {

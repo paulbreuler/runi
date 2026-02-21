@@ -1196,6 +1196,27 @@ describe('useCollectionStore', () => {
         name: 'staging',
         variables: { baseUrl: 'https://staging.example.com' },
       });
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('optimistically adds new environment to local state on upsert', async () => {
+      const collection = buildCollection('col-1');
+      useCollectionStore.setState({ collections: [collection] });
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.upsertEnvironment('col-1', 'staging', {
+          baseUrl: 'https://staging.example.com',
+        });
+      });
+
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.environments).toHaveLength(1);
+      expect(col?.environments[0]?.name).toBe('staging');
+      expect(col?.environments[0]?.variables).toEqual({ baseUrl: 'https://staging.example.com' });
+      expect(result.current.isLoading).toBe(false);
     });
 
     it('sets error when upsertEnvironment fails', async () => {
@@ -1224,6 +1245,26 @@ describe('useCollectionStore', () => {
         collectionId: 'col-1',
         name: 'staging',
       });
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('optimistically removes environment from local state on delete', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        environments: [{ name: 'staging', variables: {} }],
+      };
+      useCollectionStore.setState({ collections: [collection] });
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteEnvironment('col-1', 'staging');
+      });
+
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.environments).toHaveLength(0);
+      expect(result.current.isLoading).toBe(false);
     });
 
     it('sets error when deleteEnvironment fails', async () => {
@@ -1252,6 +1293,26 @@ describe('useCollectionStore', () => {
         collectionId: 'col-1',
         name: 'staging',
       });
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('optimistically updates active_environment in local state', async () => {
+      const collection = {
+        ...buildCollection('col-1'),
+        environments: [{ name: 'staging', variables: {} }],
+      };
+      useCollectionStore.setState({ collections: [collection] });
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.setActiveEnvironment('col-1', 'staging');
+      });
+
+      const col = result.current.collections.find((c) => c.id === 'col-1');
+      expect(col?.active_environment).toBe('staging');
+      expect(result.current.isLoading).toBe(false);
     });
 
     it('calls cmd_set_active_environment with null to clear', async () => {

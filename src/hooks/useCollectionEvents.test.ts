@@ -103,7 +103,13 @@ describe('useCollectionEvents — collection:refreshed', () => {
     };
 
     await act(async () => {
-      emitEvent('collection:refreshed', refreshedPayload);
+      emitEvent('collection:refreshed', {
+        actor: { type: 'user' },
+        timestamp: '2026-01-01T00:00:00Z',
+        correlation_id: null,
+        lamport: null,
+        payload: refreshedPayload,
+      });
     });
 
     // No error thrown is sufficient

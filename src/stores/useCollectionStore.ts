@@ -735,9 +735,27 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await invoke('cmd_upsert_environment', { collectionId, name, variables });
-      set({ isLoading: false });
+      set((state) => ({
+        collections: state.collections.map((c) => {
+          if (c.id !== collectionId) {
+            return c;
+          }
+          const exists = c.environments.some((e) => e.name === name);
+          return {
+            ...c,
+            environments: exists
+              ? c.environments.map((e) => (e.name === name ? { ...e, variables } : e))
+              : [...c.environments, { name, variables }],
+          };
+        }),
+        isLoading: false,
+      }));
     } catch (error) {
       set({ error: String(error), isLoading: false });
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: String(error),
+      });
     }
   },
 
@@ -745,9 +763,20 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await invoke('cmd_delete_environment', { collectionId, name });
-      set({ isLoading: false });
+      set((state) => ({
+        collections: state.collections.map((c) =>
+          c.id === collectionId
+            ? { ...c, environments: c.environments.filter((e) => e.name !== name) }
+            : c
+        ),
+        isLoading: false,
+      }));
     } catch (error) {
       set({ error: String(error), isLoading: false });
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: String(error),
+      });
     }
   },
 
@@ -755,9 +784,18 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await invoke('cmd_set_active_environment', { collectionId, name });
-      set({ isLoading: false });
+      set((state) => ({
+        collections: state.collections.map((c) =>
+          c.id === collectionId ? { ...c, active_environment: name ?? undefined } : c
+        ),
+        isLoading: false,
+      }));
     } catch (error) {
       set({ error: String(error), isLoading: false });
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: String(error),
+      });
     }
   },
 

@@ -602,13 +602,13 @@ describe('CanvasHost - Panel Sash (Resize Handle)', () => {
     expect(sash.className).toContain('cursor-row-resize');
   });
 
-  it('sash has transparent background by default', () => {
+  it('sash has subtle border background by default', () => {
     registerTwoColumnContext();
 
     render(<CanvasHost />);
 
     const sash = screen.getByTestId('canvas-sash-0');
-    expect(sash.className).toContain('bg-transparent');
+    expect(sash.className).toContain('bg-border-subtle');
   });
 
   it('sash has hover:bg-accent-blue class for blue hover color', () => {
@@ -694,8 +694,11 @@ describe('CanvasHost - Panel Sash (Resize Handle)', () => {
     // End drag
     fireEvent.pointerUp(sash, { pointerId: 1 });
 
-    // Should return to transparent state (no forced bg-accent-blue, only hover)
-    // The bg-transparent class should be present since dragging is false
-    expect(sash.className).toContain('bg-transparent');
+    // Should return to base state - dragging class removed (only hover: variant remains)
+    // The sash always has bg-border-subtle as its base background
+    expect(sash.className).toContain('bg-border-subtle');
+    // The standalone bg-accent-blue (dragging state) should not be present;
+    // only hover:bg-accent-blue (the Tailwind hover variant) should remain
+    expect(sash.className).not.toMatch(/(?<![:-])bg-accent-blue/);
   });
 });

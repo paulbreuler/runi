@@ -120,10 +120,8 @@ export const useSuggestionStore = create<SuggestionState>((set, get) => ({
   clearAllSuggestions: async (): Promise<void> => {
     set({ loading: true, error: null });
     try {
-      // Fire the backend command. The backend emits `suggestion:cleared`,
-      // and the listener in initSuggestionStore handles the state update.
       await invoke('cmd_clear_suggestions');
-      set({ loading: false });
+      set({ suggestions: [], loading: false });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[Suggestions] Failed to clear:', message);

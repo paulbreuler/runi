@@ -355,6 +355,7 @@ help:
     @echo ""
     @echo "Demo:"
     @echo "  just demo          - Set up and run the Bookshelf API demo (v0.1)"
+    @echo "  just demo-v1       - Start the demo v0.1 server (setup already done)"
     @echo "  just demo-v2       - Start the demo with breaking changes (v0.2)"
     @echo "  just demo-setup    - Install demo dependencies only"
     @echo ""

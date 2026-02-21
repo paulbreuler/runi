@@ -288,8 +288,8 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   );
 
   // Handle collection refreshed event.
-  // NOTE: The backend emits `collection:refreshed` as a plain payload (not wrapped
-  // in an EventEnvelope), so we listen directly for CollectionRefreshedEvent.
+  // NOTE: The backend emits `collection:refreshed` wrapped in an EventEnvelope.
+  // The drift data is at envelope.payload (unwrapped by the listener in setupListeners).
   const handleCollectionRefreshed = useCallback((event: CollectionRefreshedEvent): void => {
     if (onCollectionRefreshedRef.current !== undefined) {
       onCollectionRefreshedRef.current(event);

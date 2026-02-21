@@ -32,6 +32,7 @@ import { cn } from '@/utils/cn';
 import { focusRingClasses, useFocusVisible } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent } from '@/components/ui/Popover';
@@ -224,14 +225,22 @@ export const CollectionItem = ({
     setMenuOpen(false);
     setContextMenuAnchor(null);
     void (async (): Promise<void> => {
-      const selected = await openFileDialog({
-        multiple: false,
-        filters: [{ name: 'OpenAPI', extensions: ['json', 'yaml', 'yml'] }],
-      });
-      if (typeof selected === 'string') {
-        setIsRefreshing(true);
-        void refreshCollectionSpec(summary.id, selected).finally(() => {
-          setIsRefreshing(false);
+      try {
+        const selected = await openFileDialog({
+          multiple: false,
+          filters: [{ name: 'OpenAPI', extensions: ['json', 'yaml', 'yml'] }],
+        });
+        if (typeof selected === 'string') {
+          setIsRefreshing(true);
+          void refreshCollectionSpec(summary.id, selected).finally(() => {
+            setIsRefreshing(false);
+          });
+        }
+      } catch (err) {
+        setIsRefreshing(false);
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'error',
+          message: err instanceof Error ? err.message : String(err),
         });
       }
     })();

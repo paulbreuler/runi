@@ -16,7 +16,8 @@
  * Mount this once near the app root, AFTER the stores are available.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { useCollectionEvents } from '@/hooks/useCollectionEvents';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore';
@@ -166,6 +167,48 @@ export const CollectionEventProvider = ({
   const loadCollections = useCollectionStore((s) => s.loadCollections);
   const loadCollection = useCollectionStore((s) => s.loadCollection);
   const setDriftResult = useCollectionStore((s) => s.setDriftResult);
+
+  // Listen for environment mutation events (emitted by both user commands and MCP tools)
+  useEffect((): (() => void) => {
+    let cancelled = false;
+    const unlistenFns: Array<() => void> = [];
+
+    const addEnvListener = async (eventName: string): Promise<void> => {
+      try {
+        const unlisten = await listen<{ payload: { collection_id: string } }>(
+          eventName,
+          (event): void => {
+            const collectionId = event.payload.payload.collection_id;
+            if (typeof collectionId === 'string') {
+              void loadCollection(collectionId);
+            }
+          }
+        );
+        if (cancelled) {
+          unlisten();
+        } else {
+          unlistenFns.push(unlisten);
+        }
+      } catch (error) {
+        console.error(`[CollectionEventProvider] Failed to subscribe to ${eventName}:`, error);
+      }
+    };
+
+    void Promise.all([
+      addEnvListener('collection:environment-updated'),
+      addEnvListener('collection:environment-deleted'),
+      addEnvListener('collection:environment-activated'),
+      addEnvListener('collection:environment-deactivated'),
+    ]);
+
+    return (): void => {
+      cancelled = true;
+      for (const unlisten of unlistenFns) {
+        unlisten();
+      }
+    };
+  }, [loadCollection]);
+
   useCollectionEvents({
     onCollectionCreated: (envelope): void => {
       void loadCollections();

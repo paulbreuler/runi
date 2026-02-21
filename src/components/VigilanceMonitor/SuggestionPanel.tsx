@@ -139,7 +139,6 @@ const SuggestionCard = ({
               config.bgColor
             )}
             data-test-id={`suggestion-type-icon-${suggestion.id}`}
-            aria-hidden="true"
           >
             {config.icon}
             <span data-test-id={`suggestion-type-label-${suggestion.id}`}>{config.label}</span>

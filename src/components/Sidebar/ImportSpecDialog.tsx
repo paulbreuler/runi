@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/Label';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
-import { globalEventBus } from '@/events/bus';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 type ImportMode = 'url' | 'file';
 
@@ -46,12 +46,19 @@ export const ImportSpecDialog = ({
     !isSubmitting && (mode === 'url' ? url.trim().length > 0 : filePath.trim().length > 0);
 
   const handleBrowse = async (): Promise<void> => {
-    const selected = await openFileDialog({
-      multiple: false,
-      filters: [{ name: 'OpenAPI', extensions: ['json', 'yaml', 'yml'] }],
-    });
-    if (typeof selected === 'string') {
-      setFilePath(selected);
+    try {
+      const selected = await openFileDialog({
+        multiple: false,
+        filters: [{ name: 'OpenAPI', extensions: ['json', 'yaml', 'yml'] }],
+      });
+      if (typeof selected === 'string') {
+        setFilePath(selected);
+      }
+    } catch (err) {
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
@@ -60,10 +67,23 @@ export const ImportSpecDialog = ({
     if (mode !== 'url') {
       return trimmed;
     }
-    if (/^https?:\/\//i.test(trimmed)) {
+    if (trimmed === '') {
       return trimmed;
     }
-    return `http://${trimmed}`;
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return parsed.toString();
+      }
+      return trimmed;
+    } catch {
+      /* not valid as-is */
+    }
+    try {
+      return new URL(`http://${trimmed}`).toString();
+    } catch {
+      return trimmed;
+    }
   };
 
   const handleSubmit = async (): Promise<void> => {
@@ -120,6 +140,18 @@ export const ImportSpecDialog = ({
     }
   };
 
+  const handleModeKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>): void => {
+    const modes: ImportMode[] = ['url', 'file'];
+    const currentIndex = modes.indexOf(mode);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      setMode(modes[(currentIndex + 1) % modes.length] ?? 'url');
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      setMode(modes[(currentIndex - 1 + modes.length) % modes.length] ?? 'file');
+    }
+  };
+
   return (
     <Dialog.Root
       open={open}
@@ -153,7 +185,7 @@ export const ImportSpecDialog = ({
           {/* Mode toggle */}
           <div
             className="flex gap-1 p-0.5 bg-bg-surface rounded-md mb-4"
-            role="tablist"
+            role="radiogroup"
             aria-label="Import source"
             data-test-id="import-mode-toggle"
           >
@@ -161,12 +193,14 @@ export const ImportSpecDialog = ({
               <button
                 key={m}
                 type="button"
-                role="tab"
-                aria-selected={mode === m}
+                role="radio"
+                aria-checked={mode === m}
+                tabIndex={mode === m ? 0 : -1}
                 data-test-id={`import-mode-${m}`}
                 onClick={() => {
                   setMode(m);
                 }}
+                onKeyDown={handleModeKeyDown}
                 className={cn(
                   'flex-1 py-1 text-xs font-medium rounded transition-colors outline-none',
                   focusRingClasses,

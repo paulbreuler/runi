@@ -285,8 +285,12 @@ fn url_origin(url: &str) -> Option<String> {
     // Find end of scheme (after "://")
     let after_scheme = url.find("://")?;
     let rest = &url[after_scheme + 3..];
-    // Find first "/" after host[:port]
-    let host_end = rest.find('/').unwrap_or(rest.len());
+    // Find first "/", "?", or "#" after host[:port] (strip path, query, and fragment)
+    let host_end = [rest.find('/'), rest.find('?'), rest.find('#')]
+        .iter()
+        .filter_map(|&x| x)
+        .min()
+        .unwrap_or(rest.len());
     let authority = &rest[..host_end];
     // Re-assemble scheme + authority
     let scheme = &url[..after_scheme];

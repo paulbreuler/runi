@@ -80,6 +80,9 @@ pub struct ImportCollectionRequest {
     pub ref_name: Option<String>,
 }
 
+/// Substring matched against `save_collection` errors to detect name collisions.
+const ERR_COLLECTION_ALREADY_EXISTS: &str = "already exists";
+
 /// Import a collection from any supported spec format.
 ///
 /// Thin shell: validates input, constructs domain types, delegates to `ImportService`,
@@ -124,7 +127,7 @@ pub async fn import_collection_inner(
     // On name collision, append the spec version to disambiguate (e.g., "Bookshelf API (0.2.0)").
     match save_collection(&collection) {
         Ok(_) => {}
-        Err(ref e) if e.contains("already exists") => {
+        Err(ref e) if e.contains(ERR_COLLECTION_ALREADY_EXISTS) => {
             if let Some(ref version) = collection.source.spec_version.clone() {
                 let versioned_name = format!("{} ({})", collection.metadata.name, version);
                 collection.id = Collection::generate_id(&versioned_name);
@@ -230,6 +233,15 @@ pub async fn refresh_collection_spec_inner(
 ///
 /// If `override_source` is provided it is used instead of the stored source
 /// (useful for "compare v1 collection against v2.json").
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The collection cannot be found or loaded
+/// - No source can be resolved (`override_source` is `None` and the collection has no stored URL)
+/// - Re-fetching the spec content fails
+/// - Re-parsing the new spec content fails
+/// - The collection cannot be saved after the update
 pub async fn refresh_collection_spec_inner_with_source(
     collection_id: &str,
     service: &ImportService,
@@ -243,12 +255,9 @@ pub async fn refresh_collection_spec_inner_with_source(
     let mut collection = load_collection(collection_id)?;
 
     // 2. Resolve source — override > stored url/path
-    let stored = collection
-        .source
-        .url
-        .as_deref()
+    let source_str = override_source
+        .or(collection.source.url.as_deref())
         .ok_or_else(|| "Collection has no tracked spec source".to_string())?;
-    let source_str = override_source.unwrap_or(stored);
 
     // 3. Route to File or URL based on whether the stored value looks like a path
     let spec_source = if source_str.starts_with("http://") || source_str.starts_with("https://") {
@@ -260,7 +269,7 @@ pub async fn refresh_collection_spec_inner_with_source(
     // 4. Re-fetch content
     let fetch_result = service.fetcher().fetch(&spec_source).await?;
 
-    // 4. Compute new hash — fast path if unchanged
+    // 5. Compute new hash — fast path if unchanged
     let new_hash = format!("sha256:{}", compute_spec_hash(&fetch_result.content));
     if collection.source.hash.as_deref() == Some(&new_hash) {
         // Fast path: hash unchanged, but update metadata
@@ -2514,7 +2523,8 @@ fn set_active_environment_inner(
 /// Set the active environment for a collection.
 ///
 /// Pass `name: null` to clear the active environment (disables variable interpolation).
-/// Emits `collection:environment-activated` with `Actor::User` on success.
+/// Emits `collection:environment-activated` or `collection:environment-deactivated` with
+/// `Actor::User` on success, depending on whether `name` is `Some` or `None`.
 ///
 /// # Errors
 ///
@@ -2527,9 +2537,14 @@ pub async fn cmd_set_active_environment(
     name: Option<String>,
 ) -> Result<(), String> {
     set_active_environment_inner(&collection_id, name.as_deref())?;
+    let event_name = if name.is_some() {
+        "collection:environment-activated"
+    } else {
+        "collection:environment-deactivated"
+    };
     emit_collection_event(
         &app,
-        "collection:environment-activated",
+        event_name,
         &Actor::User,
         json!({"collection_id": &collection_id, "name": &name}),
     );
