@@ -51,7 +51,26 @@ export const DriftContextBanner = ({
     return null;
   }
 
-  const bannerKey = `${collectionId}:${method}:${path}`;
+  // Find the matching operation using template matching so that resolved paths
+  // like /books/123 match the OpenAPI template path /books/{id} in the drift result.
+  const removedOp = driftResult.operationsRemoved.find(
+    (op) => op.method === method && matchesPathTemplate(path, op.path)
+  );
+  const changedOp = driftResult.operationsChanged.find(
+    (op) => op.method === method && matchesPathTemplate(path, op.path)
+  );
+
+  // Only show for removed or changed — not added
+  const matchedOp = removedOp ?? changedOp;
+  if (matchedOp === undefined) {
+    return null;
+  }
+
+  // Use the template path from the matched spec operation so the bannerKey
+  // is consistent with keys produced by acceptChange/ignoreChange, which
+  // receive the template path from DriftChangeCard.
+  const templatePath = matchedOp.path;
+  const bannerKey = `${collectionId}:${method}:${templatePath}`;
 
   // Skip if already dismissed this session
   if (dismissedBannerKeys.has(bannerKey)) {
@@ -64,25 +83,7 @@ export const DriftContextBanner = ({
     return null;
   }
 
-  // Check if operation is in the removed group.
-  // Use matchesPathTemplate so that resolved paths like /books/123 match
-  // the OpenAPI template path /books/{id} stored in the drift result.
-  const isRemoved = driftResult.operationsRemoved.some(
-    (op) => op.method === method && matchesPathTemplate(path, op.path)
-  );
-
-  // Check if operation is in the changed group
-  const changedOp = driftResult.operationsChanged.find(
-    (op) => op.method === method && matchesPathTemplate(path, op.path)
-  );
-  const isChanged = changedOp !== undefined;
-
-  // Only show for removed or changed — not added
-  if (!isRemoved && !isChanged) {
-    return null;
-  }
-
-  const isRemovedSeverity = isRemoved;
+  const isRemovedSeverity = removedOp !== undefined;
 
   const message = isRemovedSeverity
     ? `This endpoint was removed`
@@ -93,7 +94,7 @@ export const DriftContextBanner = ({
   };
 
   const handleDismiss = (): void => {
-    dismissBanner(collectionId, method, path);
+    dismissBanner(collectionId, method, templatePath);
   };
 
   return (
@@ -106,7 +107,7 @@ export const DriftContextBanner = ({
           : 'bg-signal-warning/8 text-signal-warning'
       )}
       data-test-id="drift-context-banner"
-      role={isRemovedSeverity ? 'alert' : 'status'}
+      role="status"
       aria-live={isRemovedSeverity ? 'assertive' : 'polite'}
     >
       <span

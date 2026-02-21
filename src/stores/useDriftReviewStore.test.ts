@@ -204,6 +204,26 @@ describe('useDriftReviewStore', () => {
       });
       expect(result.current.reviewState['col_2:GET:/other']?.status).toBe('ignored');
     });
+
+    it('invokes cmd_set_drift_review_decision for each key with accepted status', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      const keys = ['col_1:DELETE:/books/{id}', 'col_1:PUT:/books/{id}'];
+      act(() => {
+        result.current.acceptAll(keys);
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'DELETE',
+        path: '/books/{id}',
+        status: 'accepted',
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'PUT',
+        path: '/books/{id}',
+        status: 'accepted',
+      });
+    });
   });
 
   describe('dismissAll', () => {
@@ -216,6 +236,26 @@ describe('useDriftReviewStore', () => {
       for (const key of keys) {
         expect(result.current.reviewState[key]?.status).toBe('ignored');
       }
+    });
+
+    it('invokes cmd_set_drift_review_decision for each key with ignored status', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      const keys = ['col_1:DELETE:/books/{id}', 'col_1:PUT:/books/{id}'];
+      act(() => {
+        result.current.dismissAll(keys);
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'DELETE',
+        path: '/books/{id}',
+        status: 'ignored',
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'PUT',
+        path: '/books/{id}',
+        status: 'ignored',
+      });
     });
   });
 

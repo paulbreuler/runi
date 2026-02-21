@@ -61,7 +61,7 @@ describe('matchesPathTemplate', () => {
       expect(matchesPathTemplate('/books/123/', '/books/{id}/')).toBe(true);
     });
 
-    it('returns false when resolved segment is empty (double slash)', () => {
+    it('normalizes double slashes and matches when segment counts align', () => {
       // /books//123 splits to ['books', '123'] — same as /books/123
       // This is intentional: filter(Boolean) ignores empty segments
       expect(matchesPathTemplate('/books//123', '/books/{id}')).toBe(true);

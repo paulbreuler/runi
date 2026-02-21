@@ -115,6 +115,25 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
       }
       return { reviewState: { ...state.reviewState, ...updates } };
     });
+    // Fire-and-forget: sync each decision to Rust store so MCP tools reflect UI state.
+    for (const key of keys) {
+      const firstColon = key.indexOf(':');
+      const secondColon = key.indexOf(':', firstColon + 1);
+      if (firstColon === -1 || secondColon === -1) {
+        continue;
+      }
+      const collectionId = key.slice(0, firstColon);
+      const method = key.slice(firstColon + 1, secondColon);
+      const path = key.slice(secondColon + 1);
+      invoke<undefined>('cmd_set_drift_review_decision', {
+        collectionId,
+        method,
+        path,
+        status: 'accepted',
+      }).catch((err: unknown) => {
+        console.error('[DriftReview] Failed to sync acceptAll decision to Rust store:', err);
+      });
+    }
   },
 
   dismissAll: (keys: string[]): void => {
@@ -125,6 +144,25 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
       }
       return { reviewState: { ...state.reviewState, ...updates } };
     });
+    // Fire-and-forget: sync each decision to Rust store so MCP tools reflect UI state.
+    for (const key of keys) {
+      const firstColon = key.indexOf(':');
+      const secondColon = key.indexOf(':', firstColon + 1);
+      if (firstColon === -1 || secondColon === -1) {
+        continue;
+      }
+      const collectionId = key.slice(0, firstColon);
+      const method = key.slice(firstColon + 1, secondColon);
+      const path = key.slice(secondColon + 1);
+      invoke<undefined>('cmd_set_drift_review_decision', {
+        collectionId,
+        method,
+        path,
+        status: 'ignored',
+      }).catch((err: unknown) => {
+        console.error('[DriftReview] Failed to sync dismissAll decision to Rust store:', err);
+      });
+    }
   },
 
   dismissBanner: (collectionId: string, method: string, path: string): void => {
