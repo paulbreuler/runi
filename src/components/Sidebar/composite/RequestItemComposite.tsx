@@ -73,6 +73,33 @@ export const RequestItemComposite = ({
   const selectRequest = useCollectionStore((state) => state.selectRequest);
   const summaries = useCollectionStore((state) => state.summaries);
   const otherCollections = summaries.filter((s) => s.id !== collectionId);
+  const driftResults = useCollectionStore((state) => state.driftResults);
+
+  // Determine drift status for this request based on its spec binding
+  const requestDriftStatus = ((): 'error' | 'warning' | null => {
+    const drift = driftResults[collectionId];
+    if (drift?.changed !== true) {
+      return null;
+    }
+    const bindingMethod = request.binding.method?.toUpperCase();
+    const bindingPath = request.binding.path;
+    if (bindingMethod === undefined || bindingPath === undefined) {
+      return null;
+    }
+    const isRemoved = drift.operationsRemoved.some(
+      (op) => op.method.toUpperCase() === bindingMethod && op.path === bindingPath
+    );
+    if (isRemoved) {
+      return 'error' as const;
+    }
+    const isChanged = drift.operationsChanged.some(
+      (op) => op.method.toUpperCase() === bindingMethod && op.path === bindingPath
+    );
+    if (isChanged) {
+      return 'warning' as const;
+    }
+    return null;
+  })();
 
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -358,6 +385,21 @@ export const RequestItemComposite = ({
           </button>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Drift indicator dot */}
+            {requestDriftStatus !== null && (
+              <span
+                className={cn(
+                  'inline-block size-1.5 rounded-full shrink-0',
+                  requestDriftStatus === 'error' ? 'bg-signal-error' : 'bg-signal-warning'
+                )}
+                data-test-id={`request-drift-dot-${request.id}`}
+                aria-label={
+                  requestDriftStatus === 'error'
+                    ? 'Operation removed from spec'
+                    : 'Operation changed in spec'
+                }
+              />
+            )}
             {/* Three-dot menu trigger — visible on hover/focus */}
             <div
               className={cn(

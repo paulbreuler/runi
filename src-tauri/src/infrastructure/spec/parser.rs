@@ -51,6 +51,9 @@ pub fn parse_openapi_spec(content: &str) -> Result<OpenApiParsedSpec, String> {
 
     // OpenAPI 3.x — deserialize once, use typed field access throughout
     if doc.get("openapi").is_some() {
+        // Normalize 3.1.0 JSON-Schema type arrays to 3.0.x nullable form so the
+        // `openapiv3` crate (which targets 3.0.x) can deserialize either version.
+        let doc = normalize_31_type_arrays(doc);
         let api: OpenAPI =
             serde_json::from_value(doc).map_err(|e| format!("OpenAPI validation failed: {e}"))?;
         return Ok(extract_from_openapi_typed(&api));
@@ -74,7 +77,8 @@ pub fn validate_openapi_spec(content: &str) -> Result<(), String> {
 
 fn validate_openapi_value(doc: &Value) -> Result<(), String> {
     if doc.get("openapi").is_some() {
-        serde_json::from_value::<OpenAPI>(doc.clone())
+        let normalized = normalize_31_type_arrays(doc.clone());
+        serde_json::from_value::<OpenAPI>(normalized)
             .map_err(|e| format!("OpenAPI validation failed: {e}"))?;
         return Ok(());
     }
@@ -84,6 +88,67 @@ fn validate_openapi_value(doc: &Value) -> Result<(), String> {
     }
 
     Err("Missing OpenAPI or Swagger version field".to_string())
+}
+
+// ─── OpenAPI 3.1 → 3.0 normalization ─────────────────────────────────────────
+
+/// Recursively convert `OpenAPI` 3.1 JSON-Schema type arrays to the 3.0.x
+/// `nullable` style understood by the `openapiv3` crate.
+///
+/// `OpenAPI` 3.1 allows `"type": ["string", "null"]` (JSON Schema 2020-12).
+/// `OpenAPI` 3.0 uses `"type": "string", "nullable": true` instead.
+///
+/// This function normalises `["T", "null"]` → `type: "T", nullable: true`
+/// so that specs written against either version can be parsed successfully.
+fn normalize_31_type_arrays(value: Value) -> Value {
+    match value {
+        Value::Object(mut map) => {
+            // Check if "type" is an array containing "null"
+            let nullable_type = if let Some(Value::Array(types)) = map.get("type") {
+                let non_null: Vec<&str> = types
+                    .iter()
+                    .filter_map(|v| v.as_str())
+                    .filter(|s| *s != "null")
+                    .collect();
+                let has_null = types.iter().any(|v| v.as_str() == Some("null"));
+
+                if has_null {
+                    match non_null.as_slice() {
+                        // ["null"] → nullable with no specific type; drop "type"
+                        [] => Some(None),
+                        // ["T", "null"] → type: "T", nullable: true
+                        [single] => Some(Some((*single).to_string())),
+                        // ["T1", "T2", "null"] → too complex; leave as-is
+                        _ => None,
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+
+            if let Some(resolved) = nullable_type {
+                // Remove the array-style "type" key
+                map.remove("type");
+                // Set nullable: true
+                map.insert("nullable".to_string(), Value::Bool(true));
+                // Re-insert scalar type if present
+                if let Some(t) = resolved {
+                    map.insert("type".to_string(), Value::String(t));
+                }
+            }
+
+            // Recurse into all values
+            Value::Object(
+                map.into_iter()
+                    .map(|(k, v)| (k, normalize_31_type_arrays(v)))
+                    .collect(),
+            )
+        }
+        Value::Array(arr) => Value::Array(arr.into_iter().map(normalize_31_type_arrays).collect()),
+        other => other,
+    }
 }
 
 // ─── OpenAPI 3.x typed extraction ────────────────────────────────────────────
@@ -642,6 +707,65 @@ mod tests {
         let example = body.example.as_ref().expect("should have example");
         let parsed: serde_json::Value = serde_json::from_str(example).unwrap();
         assert_eq!(parsed["name"], "Fido");
+    }
+
+    #[test]
+    fn test_parse_openapi_31_nullable_type_arrays() {
+        // OpenAPI 3.1.0 uses JSON Schema type arrays for nullable fields.
+        // Our normaliser should convert ["string","null"] so the openapiv3 crate
+        // can parse the spec without error.
+        let spec = r#"{
+            "openapi": "3.1.0",
+            "info": { "title": "Nullable API", "version": "0.1.0" },
+            "paths": {
+                "/items": {
+                    "get": {
+                        "operationId": "listItems",
+                        "responses": {
+                            "200": {
+                                "description": "OK",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name":  { "type": "string" },
+                                                "note":  { "type": ["string", "null"] },
+                                                "count": { "type": ["null", "integer"] }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }"#;
+        let result = parse_openapi_spec(spec);
+        assert!(result.is_ok(), "Expected Ok, got: {:?}", result.err());
+        let parsed = result.unwrap();
+        assert_eq!(parsed.title, "Nullable API");
+        assert_eq!(parsed.operations.len(), 1);
+        assert_eq!(parsed.operations[0].operation_id, "listItems");
+    }
+
+    #[test]
+    fn test_normalize_31_type_arrays() {
+        let input = serde_json::json!({
+            "type": ["string", "null"],
+            "properties": {
+                "count": { "type": ["integer", "null"] },
+                "plain": { "type": "string" }
+            }
+        });
+        let output = normalize_31_type_arrays(input);
+        assert_eq!(output["type"], "string");
+        assert_eq!(output["nullable"], true);
+        assert_eq!(output["properties"]["count"]["type"], "integer");
+        assert_eq!(output["properties"]["count"]["nullable"], true);
+        assert_eq!(output["properties"]["plain"]["type"], "string");
+        assert!(output["properties"]["plain"].get("nullable").is_none());
     }
 
     #[test]

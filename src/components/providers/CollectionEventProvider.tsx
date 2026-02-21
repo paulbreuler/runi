@@ -16,15 +16,18 @@
  * Mount this once near the app root, AFTER the stores are available.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { useCollectionEvents } from '@/hooks/useCollectionEvents';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useRequestStoreRaw } from '@/stores/useRequestStore';
-import type { Actor, EventEnvelope } from '@/hooks/useCollectionEvents';
+import type { Actor, EventEnvelope, CollectionRefreshedEvent } from '@/hooks/useCollectionEvents';
 import type { RequestTabSource } from '@/types/canvas';
+import type { SpecRefreshResult } from '@/types/generated/SpecRefreshResult';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 /**
  * Push an event into the activity feed.
@@ -163,6 +166,57 @@ export const CollectionEventProvider = ({
 }): React.JSX.Element => {
   const loadCollections = useCollectionStore((s) => s.loadCollections);
   const loadCollection = useCollectionStore((s) => s.loadCollection);
+  const setDriftResult = useCollectionStore((s) => s.setDriftResult);
+
+  // Listen for environment mutation events (emitted by both user commands and MCP tools)
+  useEffect((): (() => void) => {
+    let cancelled = false;
+    const unlistenFns: Array<() => void> = [];
+
+    const addEnvListener = async (eventName: string): Promise<void> => {
+      try {
+        const unlisten = await listen<{ payload: { collection_id: string } }>(
+          eventName,
+          (event): void => {
+            const collectionId = event.payload.payload.collection_id;
+            if (typeof collectionId === 'string') {
+              void loadCollection(collectionId);
+            }
+          }
+        );
+        if (cancelled) {
+          unlisten();
+        } else {
+          unlistenFns.push(unlisten);
+        }
+      } catch (error) {
+        console.error(`[CollectionEventProvider] Failed to subscribe to ${eventName}:`, error);
+        // Only surface subscription failures as user-visible toasts inside a Tauri runtime.
+        // In dev/e2e environments the Tauri event bus is unavailable and this failure is expected.
+        if (typeof window !== 'undefined' && '__TAURI__' in window) {
+          globalEventBus.emit<ToastEventPayload>('toast.show', {
+            type: 'error',
+            message: `Failed to subscribe to environment events`,
+          });
+        }
+      }
+    };
+
+    void Promise.all([
+      addEnvListener('collection:environment-updated'),
+      addEnvListener('collection:environment-deleted'),
+      addEnvListener('collection:environment-activated'),
+      addEnvListener('collection:environment-deactivated'),
+    ]);
+
+    return (): void => {
+      cancelled = true;
+      for (const unlisten of unlistenFns) {
+        unlisten();
+      }
+    };
+  }, [loadCollection]);
+
   useCollectionEvents({
     onCollectionCreated: (envelope): void => {
       void loadCollections();
@@ -269,6 +323,23 @@ export const CollectionEventProvider = ({
         envelope.timestamp,
         extractSeq(envelope)
       );
+    },
+    onCollectionRefreshed: (event: CollectionRefreshedEvent): void => {
+      // CollectionRefreshedEvent fields are camelCase (from SpecRefreshResult serde rename_all)
+      const result: SpecRefreshResult = {
+        changed: event.changed,
+        operationsAdded: event.operationsAdded,
+        operationsRemoved: event.operationsRemoved,
+        operationsChanged: event.operationsChanged,
+      };
+      setDriftResult(event.collection_id, result);
+
+      if (event.changed && event.operationsRemoved.length > 0) {
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'warning',
+          message: `Spec refreshed — ${String(event.operationsRemoved.length)} breaking change${event.operationsRemoved.length === 1 ? '' : 's'} detected`,
+        });
+      }
     },
   });
 

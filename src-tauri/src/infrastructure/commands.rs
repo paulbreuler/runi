@@ -19,7 +19,7 @@ use crate::application::proxy_service::ProxyService;
 use crate::domain::canvas_state::CanvasStateSnapshot;
 use crate::domain::collection::spec_port::SpecSource;
 use crate::domain::collection::{
-    BodyType, Collection, CollectionRequest, RequestBody, SpecBinding,
+    BodyType, Collection, CollectionEnvironment, CollectionRequest, RequestBody, SpecBinding,
 };
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
@@ -80,6 +80,9 @@ pub struct ImportCollectionRequest {
     pub ref_name: Option<String>,
 }
 
+/// Substring matched against `save_collection` errors to detect name collisions.
+const ERR_COLLECTION_ALREADY_EXISTS: &str = "already exists";
+
 /// Import a collection from any supported spec format.
 ///
 /// Thin shell: validates input, constructs domain types, delegates to `ImportService`,
@@ -120,8 +123,22 @@ pub async fn import_collection_inner(
     } else {
         ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher))
     };
-    let collection = service.import(source, overrides).await?;
-    save_collection(&collection)?;
+    let mut collection = service.import(source, overrides).await?;
+    // On name collision, append the spec version to disambiguate (e.g., "Bookshelf API (0.2.0)").
+    match save_collection(&collection) {
+        Ok(_) => {}
+        Err(ref e) if e.contains(ERR_COLLECTION_ALREADY_EXISTS) => {
+            if let Some(ref version) = collection.source.spec_version.clone() {
+                let versioned_name = format!("{} ({})", collection.metadata.name, version);
+                collection.id = Collection::generate_id(&versioned_name);
+                collection.metadata.name = versioned_name;
+                save_collection(&collection)?;
+            } else {
+                return Err(e.clone());
+            }
+        }
+        Err(e) => return Err(e),
+    }
     Ok(collection)
 }
 
@@ -203,9 +220,32 @@ fn extract_path_from_url(url: &str) -> String {
 /// - Collection has no tracked spec source (no URL)
 /// - Re-fetch fails
 /// - Re-parse fails
+// Used by tests; production path goes through `_with_source` directly.
+#[allow(dead_code)]
 pub async fn refresh_collection_spec_inner(
     collection_id: &str,
     service: &ImportService,
+) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
+    refresh_collection_spec_inner_with_source(collection_id, service, None).await
+}
+
+/// Refresh a collection spec, optionally overriding the source with a new path.
+///
+/// If `override_source` is provided it is used instead of the stored source
+/// (useful for "compare v1 collection against v2.json").
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The collection cannot be found or loaded
+/// - No source can be resolved (`override_source` is `None` and the collection has no stored URL)
+/// - Re-fetching the spec content fails
+/// - Re-parsing the new spec content fails
+/// - The collection cannot be saved after the update
+pub async fn refresh_collection_spec_inner_with_source(
+    collection_id: &str,
+    service: &ImportService,
+    override_source: Option<&str>,
 ) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
     use crate::domain::collection::drift::compute_drift;
     use crate::domain::collection::spec_port::SpecSource;
@@ -214,21 +254,22 @@ pub async fn refresh_collection_spec_inner(
     // 1. Load collection
     let mut collection = load_collection(collection_id)?;
 
-    // 2. Validate has tracked source
-    let source_url = collection
-        .source
-        .url
-        .as_ref()
-        .ok_or_else(|| "Collection has no tracked spec source".to_string())?
-        .clone();
+    // 2. Resolve source — override > stored url/path
+    let source_str = override_source
+        .or(collection.source.url.as_deref())
+        .ok_or_else(|| "Collection has no tracked spec source".to_string())?;
 
-    // 3. Re-fetch content
-    let fetch_result = service
-        .fetcher()
-        .fetch(&SpecSource::Url(source_url))
-        .await?;
+    // 3. Route to File or URL: treat anything containing a scheme separator as a URL
+    let spec_source = if source_str.contains("://") {
+        SpecSource::Url(source_str.to_string())
+    } else {
+        SpecSource::File(std::path::PathBuf::from(source_str))
+    };
 
-    // 4. Compute new hash — fast path if unchanged
+    // 4. Re-fetch content
+    let fetch_result = service.fetcher().fetch(&spec_source).await?;
+
+    // 5. Compute new hash — fast path if unchanged
     let new_hash = format!("sha256:{}", compute_spec_hash(&fetch_result.content));
     if collection.source.hash.as_deref() == Some(&new_hash) {
         // Fast path: hash unchanged, but update metadata
@@ -335,11 +376,16 @@ pub async fn refresh_collection_spec_inner(
 
 /// Refresh a collection's spec and compute drift delta.
 ///
-/// Emits `collection:refreshed` with `Actor::User` on success.
+/// Emits `collection:refreshed` with the full `SpecRefreshResult` payload (plus
+/// `collection_id`) using `Actor::User` on success. Auto-creates suggestions for
+/// each breaking change (removed operation → `drift_fix`) and each changed
+/// operation → `optimization`).
 #[tauri::command]
 pub async fn cmd_refresh_collection_spec(
     app: tauri::AppHandle,
     collection_id: String,
+    new_spec_path: Option<String>,
+    suggestion_svc: tauri::State<'_, SuggestionServiceHandle>,
 ) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
     // Check if collection has repo_root to decide if git adapter is needed
     let needs_git = load_collection(&collection_id)
@@ -355,14 +401,109 @@ pub async fn cmd_refresh_collection_spec(
     } else {
         ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher))
     };
-    let result = refresh_collection_spec_inner(&collection_id, &service).await?;
-    emit_collection_event(
-        &app,
-        "collection:refreshed",
-        &Actor::User,
-        json!({"id": &collection_id, "changed": result.changed}),
-    );
+    let result = refresh_collection_spec_inner_with_source(
+        &collection_id,
+        &service,
+        new_spec_path.as_deref(),
+    )
+    .await?;
+
+    // Emit full result payload (not just {id, changed})
+    let mut payload = serde_json::to_value(&result).unwrap_or_else(|_| serde_json::json!({}));
+    if let serde_json::Value::Object(ref mut map) = payload {
+        map.insert(
+            "collection_id".to_string(),
+            serde_json::Value::String(collection_id.clone()),
+        );
+    }
+    emit_collection_event(&app, "collection:refreshed", &Actor::User, payload);
+
+    // Auto-create suggestions and emit suggestion:created events for each
+    auto_create_drift_suggestions(&result, &collection_id, &suggestion_svc, &app);
+
     Ok(result)
+}
+
+/// Create suggestions from drift results — one `drift_fix` per removed operation
+/// (breaking change) and one `optimization` per changed operation.
+/// Emits `suggestion:created` for each suggestion so the frontend updates in real-time.
+pub fn auto_create_drift_suggestions(
+    result: &crate::domain::collection::drift::SpecRefreshResult,
+    collection_id: &str,
+    svc: &crate::application::suggestion_service::SuggestionService,
+    app: &tauri::AppHandle,
+) {
+    use crate::domain::suggestion::{CreateSuggestionRequest, SuggestionType};
+
+    for op in &result.operations_removed {
+        let req = CreateSuggestionRequest {
+            suggestion_type: SuggestionType::DriftFix,
+            title: format!("Breaking change: {} {} removed", op.method, op.path),
+            description: format!(
+                "The operation {} {} was present in the previous spec but is missing from the \
+                 updated spec. This is a breaking change for API consumers.",
+                op.method, op.path
+            ),
+            source: "runi-drift-detector".to_string(),
+            collection_id: Some(collection_id.to_string()),
+            request_id: None,
+            endpoint: Some(format!("{} {}", op.method, op.path)),
+            action: format!(
+                "Review removal of {} {} and update affected requests",
+                op.method, op.path
+            ),
+        };
+        match svc.create_suggestion(&req) {
+            Ok(suggestion) => emit_suggestion_created(app, &suggestion),
+            Err(e) => tracing::warn!("Failed to auto-create drift_fix suggestion: {e}"),
+        }
+    }
+
+    for op in &result.operations_changed {
+        let req = CreateSuggestionRequest {
+            suggestion_type: SuggestionType::Optimization,
+            title: format!("Spec change detected: {} {}", op.method, op.path),
+            description: format!(
+                "The operation {} {} changed in the updated spec. Fields affected: {}.",
+                op.method,
+                op.path,
+                op.changes.join(", ")
+            ),
+            source: "runi-drift-detector".to_string(),
+            collection_id: Some(collection_id.to_string()),
+            request_id: None,
+            endpoint: Some(format!("{} {}", op.method, op.path)),
+            action: format!(
+                "Review changes to {} {} and update requests if needed",
+                op.method, op.path
+            ),
+        };
+        match svc.create_suggestion(&req) {
+            Ok(suggestion) => emit_suggestion_created(app, &suggestion),
+            Err(e) => tracing::warn!("Failed to auto-create optimization suggestion: {e}"),
+        }
+    }
+}
+
+/// Emit a `suggestion:created` event wrapped in an [`EventEnvelope`].
+fn emit_suggestion_created(
+    app: &tauri::AppHandle,
+    suggestion: &crate::domain::suggestion::Suggestion,
+) {
+    if let Ok(payload) = serde_json::to_value(suggestion) {
+        let envelope = EventEnvelope {
+            actor: Actor::System,
+            timestamp: chrono::Utc::now().to_rfc3339(),
+            correlation_id: None,
+            lamport: None,
+            payload,
+        };
+        if let Ok(v) = serde_json::to_value(&envelope) {
+            if let Err(e) = app.emit("suggestion:created", &v) {
+                tracing::warn!("Failed to emit suggestion:created event: {e}");
+            }
+        }
+    }
 }
 
 /// Emit a collection event wrapped in an [`EventEnvelope`].
@@ -2225,6 +2366,35 @@ pub async fn cmd_resolve_suggestion(
     Ok(suggestion)
 }
 
+/// Dismiss all pending suggestions and emit a `suggestion:cleared` event.
+///
+/// Returns the count of dismissed suggestions.
+///
+/// # Errors
+///
+/// Returns an error if the database update fails.
+#[tauri::command]
+pub async fn cmd_clear_suggestions(
+    svc: tauri::State<'_, SuggestionServiceHandle>,
+    app: tauri::AppHandle,
+) -> Result<u64, String> {
+    let count = svc.clear_all_pending()?;
+
+    let envelope = EventEnvelope {
+        actor: Actor::User,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        correlation_id: None,
+        lamport: None,
+        payload: json!({"count": count}),
+    };
+    let envelope_value = serde_json::to_value(&envelope).unwrap_or_else(|_| serde_json::json!({}));
+    if let Err(e) = app.emit("suggestion:cleared", &envelope_value) {
+        tracing::warn!("Failed to emit suggestion:cleared event: {e}");
+    }
+
+    Ok(count)
+}
+
 /// Create a `SuggestionServiceHandle` backed by the app's `SQLite` database.
 ///
 /// # Errors
@@ -2236,6 +2406,149 @@ pub fn create_suggestion_service() -> Result<SuggestionServiceHandle, String> {
     let db_path = data_dir.join("suggestions.db");
     let svc = crate::application::suggestion_service::SuggestionService::new(&db_path)?;
     Ok(Arc::new(svc))
+}
+
+// ── Environment commands ───────────────────────────────────────────────────
+
+/// Upsert a named environment on a collection (core logic, no `AppHandle`).
+///
+/// Creates the environment if it does not exist, or updates its variables if it does.
+fn upsert_environment_inner(
+    collection_id: &str,
+    name: &str,
+    variables: BTreeMap<String, String>,
+) -> Result<Collection, String> {
+    let mut collection = load_collection(collection_id)?;
+    if let Some(env) = collection.environments.iter_mut().find(|e| e.name == name) {
+        env.variables = variables;
+    } else {
+        collection.environments.push(CollectionEnvironment {
+            name: name.to_string(),
+            variables,
+        });
+    }
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Upsert a named environment on a collection.
+///
+/// Creates the environment if it does not exist, or replaces its variables if it does.
+/// Emits `collection:environment-updated` with `Actor::User` on success.
+///
+/// # Errors
+///
+/// Returns an error if the collection cannot be loaded or saved.
+#[tauri::command]
+pub async fn cmd_upsert_environment(
+    app: tauri::AppHandle,
+    collection_id: String,
+    name: String,
+    variables: BTreeMap<String, String>,
+) -> Result<(), String> {
+    upsert_environment_inner(&collection_id, &name, variables)?;
+    emit_collection_event(
+        &app,
+        "collection:environment-updated",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "name": &name}),
+    );
+    Ok(())
+}
+
+/// Delete a named environment from a collection (core logic, no `AppHandle`).
+///
+/// If the deleted environment is the active one, `active_environment` is cleared.
+fn delete_environment_inner(collection_id: &str, name: &str) -> Result<Collection, String> {
+    let mut collection = load_collection(collection_id)?;
+    let original_len = collection.environments.len();
+    collection.environments.retain(|e| e.name != name);
+    if collection.environments.len() == original_len {
+        return Err(format!("Environment not found: {name}"));
+    }
+    // Clear active_environment if it was the deleted one
+    if collection.active_environment.as_deref() == Some(name) {
+        collection.active_environment = None;
+    }
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Delete a named environment from a collection.
+///
+/// If the deleted environment was active, `active_environment` is cleared.
+/// Emits `collection:environment-deleted` with `Actor::User` on success.
+///
+/// # Errors
+///
+/// Returns an error if the collection cannot be loaded, the environment is not found,
+/// or the collection cannot be saved.
+#[tauri::command]
+pub async fn cmd_delete_environment(
+    app: tauri::AppHandle,
+    collection_id: String,
+    name: String,
+) -> Result<(), String> {
+    delete_environment_inner(&collection_id, &name)?;
+    emit_collection_event(
+        &app,
+        "collection:environment-deleted",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "name": &name}),
+    );
+    Ok(())
+}
+
+/// Set the active environment on a collection (core logic, no `AppHandle`).
+///
+/// Passing `None` clears the active environment (no variable interpolation).
+/// Returns an error if the named environment does not exist.
+fn set_active_environment_inner(
+    collection_id: &str,
+    name: Option<&str>,
+) -> Result<Collection, String> {
+    let mut collection = load_collection(collection_id)?;
+    if let Some(env_name) = name {
+        if !collection.environments.iter().any(|e| e.name == env_name) {
+            return Err(format!("Environment not found: {env_name}"));
+        }
+        collection.active_environment = Some(env_name.to_string());
+    } else {
+        collection.active_environment = None;
+    }
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Set the active environment for a collection.
+///
+/// Pass `name: null` to clear the active environment (disables variable interpolation).
+/// Emits `collection:environment-activated` or `collection:environment-deactivated` with
+/// `Actor::User` on success, depending on whether `name` is `Some` or `None`.
+///
+/// # Errors
+///
+/// Returns an error if the collection cannot be loaded, the named environment does not
+/// exist, or the collection cannot be saved.
+#[tauri::command]
+pub async fn cmd_set_active_environment(
+    app: tauri::AppHandle,
+    collection_id: String,
+    name: Option<String>,
+) -> Result<(), String> {
+    set_active_environment_inner(&collection_id, name.as_deref())?;
+    let event_name = if name.is_some() {
+        "collection:environment-activated"
+    } else {
+        "collection:environment-deactivated"
+    };
+    emit_collection_event(
+        &app,
+        event_name,
+        &Actor::User,
+        json!({"collection_id": &collection_id, "name": &name}),
+    );
+    Ok(())
 }
 
 #[cfg(test)]
@@ -4080,6 +4393,194 @@ mod tests {
             save_collection(&target).unwrap();
 
             let result = copy_request_to_collection_inner(&source.id, "nonexistent", &target.id);
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    // ── Environment command tests ─────────────────────────────────────────
+
+    #[tokio::test]
+    #[serial]
+    async fn test_upsert_environment_inner_creates_new_environment() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Env Upsert Test");
+            save_collection(&collection).unwrap();
+
+            let mut vars = BTreeMap::new();
+            vars.insert("baseUrl".to_string(), "http://localhost:3000".to_string());
+
+            let updated = upsert_environment_inner(&collection.id, "local", vars).unwrap();
+            assert_eq!(updated.environments.len(), 1);
+            assert_eq!(updated.environments[0].name, "local");
+            assert_eq!(
+                updated.environments[0].variables.get("baseUrl"),
+                Some(&"http://localhost:3000".to_string())
+            );
+
+            // Verify persisted
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.environments.len(), 1);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_upsert_environment_inner_updates_existing_environment() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Env Update Test");
+            let mut vars = BTreeMap::new();
+            vars.insert("baseUrl".to_string(), "http://old.example.com".to_string());
+            collection.environments.push(CollectionEnvironment {
+                name: "local".to_string(),
+                variables: vars,
+            });
+            save_collection(&collection).unwrap();
+
+            let mut new_vars = BTreeMap::new();
+            new_vars.insert("baseUrl".to_string(), "http://new.example.com".to_string());
+            new_vars.insert("apiKey".to_string(), "secret123".to_string());
+
+            let updated = upsert_environment_inner(&collection.id, "local", new_vars).unwrap();
+            // Still only one environment (updated, not duplicated)
+            assert_eq!(updated.environments.len(), 1);
+            assert_eq!(
+                updated.environments[0].variables.get("baseUrl"),
+                Some(&"http://new.example.com".to_string())
+            );
+            assert_eq!(
+                updated.environments[0].variables.get("apiKey"),
+                Some(&"secret123".to_string())
+            );
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_delete_environment_inner_removes_environment() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Env Delete Test");
+            collection.environments.push(CollectionEnvironment {
+                name: "local".to_string(),
+                variables: BTreeMap::new(),
+            });
+            collection.active_environment = Some("local".to_string());
+            save_collection(&collection).unwrap();
+
+            let updated = delete_environment_inner(&collection.id, "local").unwrap();
+            assert!(updated.environments.is_empty());
+            // Active environment should be cleared when it's the deleted one
+            assert!(updated.active_environment.is_none());
+
+            let loaded = load_collection(&collection.id).unwrap();
+            assert!(loaded.environments.is_empty());
+            assert!(loaded.active_environment.is_none());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_delete_environment_inner_not_found_returns_error() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Env Delete NF Test");
+            save_collection(&collection).unwrap();
+
+            let result = delete_environment_inner(&collection.id, "nonexistent");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_delete_environment_inner_preserves_active_when_not_deleted() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Env Delete Other Test");
+            collection.environments.push(CollectionEnvironment {
+                name: "local".to_string(),
+                variables: BTreeMap::new(),
+            });
+            collection.environments.push(CollectionEnvironment {
+                name: "staging".to_string(),
+                variables: BTreeMap::new(),
+            });
+            collection.active_environment = Some("local".to_string());
+            save_collection(&collection).unwrap();
+
+            let updated = delete_environment_inner(&collection.id, "staging").unwrap();
+            assert_eq!(updated.environments.len(), 1);
+            // Active environment (local) should be preserved since staging was deleted
+            assert_eq!(updated.active_environment, Some("local".to_string()));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_set_active_environment_inner_sets_active() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Env Active Test");
+            collection.environments.push(CollectionEnvironment {
+                name: "local".to_string(),
+                variables: BTreeMap::new(),
+            });
+            collection.environments.push(CollectionEnvironment {
+                name: "staging".to_string(),
+                variables: BTreeMap::new(),
+            });
+            save_collection(&collection).unwrap();
+
+            let updated = set_active_environment_inner(&collection.id, Some("staging")).unwrap();
+            assert_eq!(updated.active_environment, Some("staging".to_string()));
+
+            let loaded = load_collection(&collection.id).unwrap();
+            assert_eq!(loaded.active_environment, Some("staging".to_string()));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_set_active_environment_inner_clears_when_none() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Env Clear Test");
+            collection.environments.push(CollectionEnvironment {
+                name: "local".to_string(),
+                variables: BTreeMap::new(),
+            });
+            collection.active_environment = Some("local".to_string());
+            save_collection(&collection).unwrap();
+
+            let updated = set_active_environment_inner(&collection.id, None).unwrap();
+            assert!(updated.active_environment.is_none());
+
+            let loaded = load_collection(&collection.id).unwrap();
+            assert!(loaded.active_environment.is_none());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_set_active_environment_inner_nonexistent_returns_error() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Env NE Test");
+            save_collection(&collection).unwrap();
+
+            let result = set_active_environment_inner(&collection.id, Some("nonexistent"));
             assert!(result.is_err());
             assert!(result.unwrap_err().contains("not found"));
         })

@@ -153,7 +153,13 @@ async fn handle_tools_call(
         return handle_import_collection(id, params.arguments, service).await;
     }
     if params.name == "refresh_collection_spec" {
-        return handle_refresh_collection_spec(id, params.arguments).await;
+        return handle_refresh_collection_spec(
+            id,
+            params.arguments,
+            suggestion_service,
+            app_handle,
+        )
+        .await;
     }
     if params.name == "run_hurl_suite" {
         return handle_run_hurl_suite(id, params.arguments).await;
@@ -425,9 +431,14 @@ async fn handle_import_collection(
 }
 
 /// Handle `refresh_collection_spec` tool — async spec refresh with drift.
+///
+/// Emits `collection:refreshed` with the full payload (including `collection_id`)
+/// using `Actor::Ai`. Auto-creates drift suggestions via the suggestion service.
 async fn handle_refresh_collection_spec(
     id: Option<JsonRpcId>,
     arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    suggestion_service: Option<&SuggestionServiceHandle>,
+    app_handle: Option<&tauri::AppHandle>,
 ) -> JsonRpcResponse {
     let args = arguments.unwrap_or_default();
     let Some(collection_id) = args
@@ -446,6 +457,12 @@ async fn handle_refresh_collection_spec(
         );
     };
     let collection_id = collection_id.to_string();
+
+    // Optional: compare against a different spec file/URL instead of stored source
+    let new_spec_path = args
+        .get("new_spec_path")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_string);
 
     // Check if collection has repo_root to decide if git adapter is needed
     let needs_git =
@@ -470,10 +487,41 @@ async fn handle_refresh_collection_spec(
         )
     };
 
-    match crate::infrastructure::commands::refresh_collection_spec_inner(&collection_id, &service)
-        .await
+    match crate::infrastructure::commands::refresh_collection_spec_inner_with_source(
+        &collection_id,
+        &service,
+        new_spec_path.as_deref(),
+    )
+    .await
     {
         Ok(result) => {
+            // Emit full payload with collection_id, using Actor::Ai
+            if let Some(app) = app_handle {
+                let mut payload = serde_json::to_value(&result).unwrap_or_else(|_| json!({}));
+                if let serde_json::Value::Object(ref mut map) = payload {
+                    map.insert(
+                        "collection_id".to_string(),
+                        serde_json::Value::String(collection_id.clone()),
+                    );
+                }
+                let envelope = ai_event_envelope(payload);
+                if let Err(e) = app.emit("collection:refreshed", envelope) {
+                    tracing::warn!("Failed to emit collection:refreshed event: {e}");
+                }
+            }
+
+            // Auto-create suggestions for breaking changes, emitting events if app handle available
+            if let Some(svc) = suggestion_service {
+                if let Some(app) = app_handle {
+                    crate::infrastructure::commands::auto_create_drift_suggestions(
+                        &result,
+                        &collection_id,
+                        svc,
+                        app,
+                    );
+                }
+            }
+
             let result_json = serde_json::to_value(&result).unwrap_or_else(|_| json!({}));
             let tool_result = ToolCallResult {
                 content: vec![ToolResponseContent::Text {
@@ -1136,8 +1184,8 @@ mod tests {
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
         // 8 collection + 3 save/move/copy + 3 import/refresh/hurl + 6 canvas + 1 streaming
-        // + 2 project context + 1 execute_request + 3 suggestion = 27 total
-        assert_eq!(tools.len(), 27);
+        // + 2 project context + 1 execute_request + 3 suggestion + 3 environment = 30 total
+        assert_eq!(tools.len(), 30);
     }
 
     #[tokio::test]

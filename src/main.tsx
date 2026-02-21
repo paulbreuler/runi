@@ -206,6 +206,12 @@ const handleCrash = async (error: Error, componentStack?: string): Promise<void>
 
 const installCrashHandlers = (): void => {
   window.addEventListener('error', (event) => {
+    // ResizeObserver loop errors are benign browser warnings, not application crashes.
+    // All major browsers treat them as non-fatal and they should not trigger a crash screen.
+    if (event.message.includes('ResizeObserver loop')) {
+      event.stopImmediatePropagation();
+      return;
+    }
     const error = event.error instanceof Error ? event.error : new Error(event.message);
     void handleCrash(error);
   });

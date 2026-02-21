@@ -41,6 +41,8 @@ interface SuggestionState {
   updateSuggestion: (suggestion: Suggestion) => void;
   /** Count of pending suggestions. */
   pendingCount: () => number;
+  /** Clear all pending suggestions via Tauri command. */
+  clearAllSuggestions: () => Promise<void>;
 }
 
 export const useSuggestionStore = create<SuggestionState>((set, get) => ({
@@ -114,11 +116,28 @@ export const useSuggestionStore = create<SuggestionState>((set, get) => ({
   pendingCount: (): number => {
     return get().suggestions.filter((s) => s.status === 'pending').length;
   },
+
+  clearAllSuggestions: async (): Promise<void> => {
+    set({ loading: true, error: null });
+    try {
+      await invoke('cmd_clear_suggestions');
+      // Only remove pending suggestions; preserve accepted/dismissed history
+      set((state) => ({
+        suggestions: state.suggestions.filter((s) => s.status !== 'pending'),
+        loading: false,
+      }));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[Suggestions] Failed to clear:', message);
+      set({ error: message, loading: false });
+    }
+  },
 }));
 
 /** Unlisten handles for cleanup. */
 let createdUnlisten: UnlistenFn | null = null;
 let resolvedUnlisten: UnlistenFn | null = null;
+let clearedUnlisten: UnlistenFn | null = null;
 /** Guard against concurrent calls (TOCTOU protection). */
 let initInProgress = false;
 
@@ -149,6 +168,10 @@ export async function initSuggestionStore(): Promise<() => void> {
     resolvedUnlisten();
     resolvedUnlisten = null;
   }
+  if (clearedUnlisten !== null) {
+    clearedUnlisten();
+    clearedUnlisten = null;
+  }
 
   try {
     // Listen BEFORE fetch so no events are missed between fetch completion
@@ -163,8 +186,15 @@ export async function initSuggestionStore(): Promise<() => void> {
       useSuggestionStore.getState().updateSuggestion(event.payload.payload);
     });
 
-    // Fetch initial state after listeners are registered
-    await useSuggestionStore.getState().fetchSuggestions();
+    clearedUnlisten = await listen<{ count: number }>('suggestion:cleared', () => {
+      console.warn('[Suggestions] Event suggestion:cleared — clearing local suggestions');
+      useSuggestionStore.setState((state) => ({
+        suggestions: state.suggestions.filter((s) => s.status !== 'pending'),
+      }));
+    });
+
+    // Fetch initial state after listeners are registered (pending only)
+    await useSuggestionStore.getState().fetchSuggestions('pending');
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     useSuggestionStore.setState({ error: message });
@@ -180,6 +210,10 @@ export async function initSuggestionStore(): Promise<() => void> {
     if (resolvedUnlisten !== null) {
       resolvedUnlisten();
       resolvedUnlisten = null;
+    }
+    if (clearedUnlisten !== null) {
+      clearedUnlisten();
+      clearedUnlisten = null;
     }
   };
 }

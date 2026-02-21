@@ -54,6 +54,7 @@ const mockLoadCollections = vi.fn(async (): Promise<void> => undefined);
 const mockLoadCollection = vi.fn(async (): Promise<void> => undefined);
 const mockSelectCollection = vi.fn();
 const mockToggleExpanded = vi.fn();
+const mockSetDriftResult = vi.fn();
 
 const mockCollectionState: Record<string, unknown> = {
   loadCollections: mockLoadCollections,
@@ -62,6 +63,7 @@ const mockCollectionState: Record<string, unknown> = {
   expandedCollectionIds: new Set<string>(),
   selectCollection: mockSelectCollection,
   toggleExpanded: mockToggleExpanded,
+  setDriftResult: mockSetDriftResult,
   collections: [],
   summaries: [],
   selectedRequestId: null,
@@ -110,7 +112,7 @@ describe('CollectionEventProvider', () => {
     mockCollectionState.collections = [];
   });
 
-  it('subscribes to all 7 Tauri event channels on mount', async () => {
+  it('subscribes to all 13 Tauri event channels on mount', async () => {
     await act(async () => {
       render(
         <CollectionEventProvider>
@@ -123,6 +125,12 @@ describe('CollectionEventProvider', () => {
     expect(subscribedEvents).toEqual([
       'collection:created',
       'collection:deleted',
+      'collection:environment-activated',
+      'collection:environment-deactivated',
+      'collection:environment-deleted',
+      'collection:environment-updated',
+      'collection:imported',
+      'collection:refreshed',
       'collection:saved',
       'request:added',
       'request:deleted',
@@ -807,6 +815,68 @@ describe('CollectionEventProvider', () => {
 
       const entries = useActivityStore.getState().entries;
       expect(entries[0]?.seq).toBe(42);
+    });
+  });
+
+  describe('collection:refreshed', () => {
+    it('calls setDriftResult with the refreshed payload', async () => {
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'collection:refreshed',
+          makeEnvelope({
+            collection_id: 'col-refresh',
+            changed: true,
+            operationsAdded: [],
+            operationsRemoved: [{ method: 'DELETE', path: '/items/{id}' }],
+            operationsChanged: [],
+          })
+        );
+      });
+
+      expect(mockSetDriftResult).toHaveBeenCalledWith('col-refresh', {
+        changed: true,
+        operationsAdded: [],
+        operationsRemoved: [{ method: 'DELETE', path: '/items/{id}' }],
+        operationsChanged: [],
+      });
+    });
+
+    it('calls setDriftResult with changed: false when spec has no changes', async () => {
+      await act(async () => {
+        render(
+          <CollectionEventProvider>
+            <div />
+          </CollectionEventProvider>
+        );
+      });
+
+      act(() => {
+        emitTauriEvent(
+          'collection:refreshed',
+          makeEnvelope({
+            collection_id: 'col-no-change',
+            changed: false,
+            operationsAdded: [],
+            operationsRemoved: [],
+            operationsChanged: [],
+          })
+        );
+      });
+
+      expect(mockSetDriftResult).toHaveBeenCalledWith('col-no-change', {
+        changed: false,
+        operationsAdded: [],
+        operationsRemoved: [],
+        operationsChanged: [],
+      });
     });
   });
 });

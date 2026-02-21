@@ -626,6 +626,176 @@ describe('ContextTabs - Context Menu', () => {
       expect(screen.queryByTestId('tab-menu-save-to-collection')).not.toBeInTheDocument();
     });
   });
+
+  it('shows "Close" menu item on right-click of any request tab', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-close-1',
+      label: 'GET /api/close',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-close-1');
+
+    render(<ContextTabs />);
+
+    const tab = screen.getByTestId('context-tab-request-close-1');
+    await user.pointer({ keys: '[MouseRight]', target: tab });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-menu-close')).toBeInTheDocument();
+    });
+  });
+
+  it('"Close" menu item closes the right-clicked tab', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({
+      id: 'request-close-2',
+      label: 'GET /api/close',
+      order: 0,
+      panels: {},
+      layouts: [],
+    });
+    setActiveContext('request-close-2');
+
+    render(<ContextTabs />);
+
+    const tab = screen.getByTestId('context-tab-request-close-2');
+    await user.pointer({ keys: '[MouseRight]', target: tab });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-menu-close')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('tab-menu-close'));
+
+    await waitFor(() => {
+      expect(useCanvasStore.getState().contexts.has('request-close-2')).toBe(false);
+    });
+  });
+
+  it('shows "Close Others" menu item and it closes all other request tabs', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({ id: 'request-a', label: 'Tab A', order: 0, panels: {}, layouts: [] });
+    registerContext({ id: 'request-b', label: 'Tab B', order: 1, panels: {}, layouts: [] });
+    registerContext({ id: 'request-c', label: 'Tab C', order: 2, panels: {}, layouts: [] });
+    setActiveContext('request-b');
+
+    render(<ContextTabs />);
+
+    const tabB = screen.getByTestId('context-tab-request-b');
+    await user.pointer({ keys: '[MouseRight]', target: tabB });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-menu-close-others')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('tab-menu-close-others'));
+
+    await waitFor(() => {
+      const store = useCanvasStore.getState();
+      expect(store.contexts.has('request-a')).toBe(false);
+      expect(store.contexts.has('request-b')).toBe(true);
+      expect(store.contexts.has('request-c')).toBe(false);
+    });
+  });
+
+  it('shows "Close All" menu item and it closes every tab', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({ id: 'request-x', label: 'Tab X', order: 0, panels: {}, layouts: [] });
+    registerContext({ id: 'request-y', label: 'Tab Y', order: 1, panels: {}, layouts: [] });
+    setActiveContext('request-x');
+
+    render(<ContextTabs />);
+
+    const tabX = screen.getByTestId('context-tab-request-x');
+    await user.pointer({ keys: '[MouseRight]', target: tabX });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-menu-close-all')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('tab-menu-close-all'));
+
+    await waitFor(() => {
+      const store = useCanvasStore.getState();
+      expect(store.contexts.has('request-x')).toBe(false);
+      expect(store.contexts.has('request-y')).toBe(false);
+    });
+  });
+
+  it('shows "Close All to Right" and it closes only tabs to the right', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({ id: 'request-r1', label: 'Tab R1', order: 0, panels: {}, layouts: [] });
+    registerContext({ id: 'request-r2', label: 'Tab R2', order: 1, panels: {}, layouts: [] });
+    registerContext({ id: 'request-r3', label: 'Tab R3', order: 2, panels: {}, layouts: [] });
+    setActiveContext('request-r1');
+
+    render(<ContextTabs />);
+
+    const tabR1 = screen.getByTestId('context-tab-request-r1');
+    await user.pointer({ keys: '[MouseRight]', target: tabR1 });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-menu-close-to-right')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('tab-menu-close-to-right'));
+
+    await waitFor(() => {
+      const store = useCanvasStore.getState();
+      expect(store.contexts.has('request-r1')).toBe(true);
+      expect(store.contexts.has('request-r2')).toBe(false);
+      expect(store.contexts.has('request-r3')).toBe(false);
+    });
+  });
+
+  it('"Close All to Right" is disabled when the right-clicked tab is the last tab', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({ id: 'request-last', label: 'Tab Last', order: 0, panels: {}, layouts: [] });
+    setActiveContext('request-last');
+
+    render(<ContextTabs />);
+
+    const tab = screen.getByTestId('context-tab-request-last');
+    await user.pointer({ keys: '[MouseRight]', target: tab });
+
+    await waitFor(() => {
+      const menuItem = screen.getByTestId('tab-menu-close-to-right');
+      expect(menuItem).toHaveAttribute('data-disabled');
+    });
+  });
+
+  it('"Close Others" is disabled when there is only one tab', async () => {
+    const user = userEvent.setup();
+    const { registerContext, setActiveContext } = useCanvasStore.getState();
+
+    registerContext({ id: 'request-solo', label: 'Solo Tab', order: 0, panels: {}, layouts: [] });
+    setActiveContext('request-solo');
+
+    render(<ContextTabs />);
+
+    const tab = screen.getByTestId('context-tab-request-solo');
+    await user.pointer({ keys: '[MouseRight]', target: tab });
+
+    await waitFor(() => {
+      const menuItem = screen.getByTestId('tab-menu-close-others');
+      expect(menuItem).toHaveAttribute('data-disabled');
+    });
+  });
 });
 
 describe('ContextTabs - Visual Indicator', () => {

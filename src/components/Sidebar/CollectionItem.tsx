@@ -5,10 +5,12 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Menu } from '@base-ui/react/menu';
+import { open as openFileDialog } from '@tauri-apps/plugin-dialog';
 import {
   ChevronDown,
   ChevronRight,
   Copy,
+  FileDiff,
   Folder,
   MoreHorizontal,
   Pencil,
@@ -30,6 +32,7 @@ import { cn } from '@/utils/cn';
 import { focusRingClasses, useFocusVisible } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
 import { truncateNavLabel } from '@/utils/truncateNavLabel';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent } from '@/components/ui/Popover';
@@ -218,6 +221,31 @@ export const CollectionItem = ({
     });
   }, [summary.id, refreshCollectionSpec]);
 
+  const handleMenuCompareWithFile = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    void (async (): Promise<void> => {
+      try {
+        const selected = await openFileDialog({
+          multiple: false,
+          filters: [{ name: 'OpenAPI', extensions: ['json', 'yaml', 'yml'] }],
+        });
+        if (typeof selected === 'string') {
+          setIsRefreshing(true);
+          void refreshCollectionSpec(summary.id, selected).finally(() => {
+            setIsRefreshing(false);
+          });
+        }
+      } catch (err) {
+        setIsRefreshing(false);
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'error',
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    })();
+  }, [summary.id, refreshCollectionSpec]);
+
   const handleDriftDismiss = useCallback((): void => {
     dismissDriftResult(summary.id);
   }, [summary.id, dismissDriftResult]);
@@ -321,6 +349,33 @@ export const CollectionItem = ({
                 >
                   {summary.source_type}
                 </span>
+                {summary.spec_version !== undefined && (
+                  <>
+                    <span className="text-text-muted/70">•</span>
+                    <span
+                      className="text-xs text-text-muted"
+                      data-test-id={`collection-version-${summary.id}`}
+                    >
+                      {summary.spec_version}
+                    </span>
+                  </>
+                )}
+                {driftResult?.changed === true && (
+                  <span
+                    className={cn(
+                      'inline-block size-1.5 rounded-full shrink-0',
+                      driftResult.operationsRemoved.length > 0
+                        ? 'bg-signal-error'
+                        : 'bg-signal-warning'
+                    )}
+                    data-test-id={`collection-drift-dot-${summary.id}`}
+                    aria-label={
+                      driftResult.operationsRemoved.length > 0
+                        ? 'Breaking changes detected'
+                        : 'Changes detected'
+                    }
+                  />
+                )}
               </div>
 
               {/* Three-dot menu button — hover-revealed */}
@@ -407,6 +462,22 @@ export const CollectionItem = ({
                                   )}
                                 />
                                 <span>{isRefreshing ? 'Refreshing…' : 'Refresh spec'}</span>
+                              </Menu.Item>
+                            )}
+                            {canRefreshSpec && (
+                              <Menu.Item
+                                label="Compare with file…"
+                                className={cn(
+                                  focusRingClasses,
+                                  'w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 cursor-pointer transition-colors',
+                                  'text-text-secondary hover:bg-bg-raised hover:text-text-primary focus-visible:bg-bg-raised focus-visible:text-text-primary'
+                                )}
+                                onClick={handleMenuCompareWithFile}
+                                closeOnClick={true}
+                                data-test-id={`collection-menu-compare-with-file-${summary.id}`}
+                              >
+                                <FileDiff size={12} className="shrink-0" />
+                                <span>Compare with file…</span>
                               </Menu.Item>
                             )}
                             <div className="my-1 h-px bg-border-subtle" role="separator" />

@@ -5,7 +5,7 @@
 
 # Show common commands
 default:
-    @just ci
+    @just help
 
 # Show all commands
 list:
@@ -242,15 +242,20 @@ demo-setup:
     cd demo/api && npm install
     @echo "✅ Demo ready. See demo/README.md for walkthrough."
 
+# Run the demo end-to-end (install deps + start v0.1 server)
+demo: demo-setup demo-v1
+
 # Start demo API v0.1 (original, working version)
-demo-v1:
+demo-v1: demo-setup
+    @lsof -ti :3000 | xargs kill -9 2>/dev/null || true
     @echo "📚 Starting Bookshelf API v0.1 on http://localhost:3000"
     @echo "   OpenAPI spec: http://localhost:3000/openapi.json"
     @echo "   Press Ctrl+C to stop"
     node demo/api/server.js --version=1
 
 # Start demo API v0.2 (breaking changes — triggers drift detection in runi)
-demo-v2:
+demo-v2: demo-setup
+    @lsof -ti :3000 | xargs kill -9 2>/dev/null || true
     @echo "📚 Starting Bookshelf API v0.2 on http://localhost:3000"
     @echo "   Breaking changes: /books→/catalog, field renames, isbn required"
     @echo "   Press Ctrl+C to stop"
@@ -347,5 +352,11 @@ help:
     @echo "Planning:"
     @echo "  just heal          - Auto-heal plan (auto-detects from PR)"
     @echo "  just heal-plan <plan> - Auto-heal specific plan"
+    @echo ""
+    @echo "Demo:"
+    @echo "  just demo          - Set up and run the Bookshelf API demo (v0.1)"
+    @echo "  just demo-v1       - Start the demo v0.1 server (setup already done)"
+    @echo "  just demo-v2       - Start the demo with breaking changes (v0.2)"
+    @echo "  just demo-setup    - Install demo dependencies only"
     @echo ""
     @echo "For a full list of commands: just list"

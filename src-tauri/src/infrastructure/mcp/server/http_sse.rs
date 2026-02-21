@@ -109,15 +109,12 @@ async fn handle_post(
     headers: HeaderMap,
     body: String,
 ) -> axum::response::Response {
-    // Create session on first request if no session header
+    // Create session on first request if no session header.
+    // If the client sends a stale session ID (e.g. after app reload), create a
+    // new session transparently so the client can reconnect without errors.
     let session_id = match headers.get("mcp-session-id").and_then(|v| v.to_str().ok()) {
-        Some(id) => {
-            if !state.sessions.has_session(id).await {
-                return (StatusCode::NOT_FOUND, "Unknown session").into_response();
-            }
-            id.to_string()
-        }
-        None => state.sessions.create_session().await,
+        Some(id) if state.sessions.has_session(id).await => id.to_string(),
+        _ => state.sessions.create_session().await,
     };
 
     dispatcher::dispatch(
@@ -157,11 +154,11 @@ async fn handle_sse(
     State(state): State<McpServerState>,
     headers: HeaderMap,
 ) -> Result<Sse<ReceiverStream<Result<Event, Infallible>>>, (StatusCode, &'static str)> {
+    // Accept any session ID (valid or stale) — create a new one if stale so
+    // the client reconnects transparently after an app reload.
     let _session_id = match headers.get("mcp-session-id").and_then(|v| v.to_str().ok()) {
         Some(id) if state.sessions.has_session(id).await => id.to_string(),
-        Some(_) => {
-            return Err((StatusCode::NOT_FOUND, "Unknown session"));
-        }
+        Some(_) => state.sessions.create_session().await,
         None => {
             return Err((StatusCode::BAD_REQUEST, "Missing Mcp-Session-Id header"));
         }
@@ -477,6 +474,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_post_with_invalid_session() {
+        // A stale/unknown session ID should recover transparently: the server
+        // creates a new session and responds with 200 + a fresh Mcp-Session-Id
+        // header, rather than returning 404 and forcing a manual reconnect.
         let (state, _dir) = make_state();
         let app = router(state);
 
@@ -484,7 +484,7 @@ mod tests {
             .method("POST")
             .uri("/mcp")
             .header("Content-Type", "application/json")
-            .header("Mcp-Session-Id", "invalid-session-id")
+            .header("Mcp-Session-Id", "stale-session-id")
             .body(Body::from(
                 json!({
                     "jsonrpc": "2.0",
@@ -496,7 +496,11 @@ mod tests {
             .unwrap();
 
         let resp = app.oneshot(req).await.unwrap();
-        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert!(
+            resp.headers().contains_key("mcp-session-id"),
+            "response must carry a new Mcp-Session-Id header"
+        );
     }
 
     #[tokio::test]

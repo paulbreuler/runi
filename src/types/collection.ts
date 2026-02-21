@@ -17,6 +17,12 @@ export const SCHEMA_VERSION = 1;
 
 export type ExtensionFields = Record<`x-${string}`, unknown>;
 
+/** A named environment with variable overrides for a collection. */
+export interface CollectionEnvironment {
+  name: string;
+  variables?: Record<string, string>;
+}
+
 export interface Collection extends ExtensionFields {
   $schema: string;
   version: number;
@@ -25,6 +31,8 @@ export interface Collection extends ExtensionFields {
   source: CollectionSource;
   auth?: AuthConfig;
   variables: Record<string, string>;
+  environments: CollectionEnvironment[];
+  active_environment?: string;
   requests: CollectionRequest[];
 }
 
@@ -118,6 +126,7 @@ export interface CollectionSummary {
   request_count: number;
   source_type: string;
   modified_at: string;
+  spec_version?: string;
 }
 
 // ============================================

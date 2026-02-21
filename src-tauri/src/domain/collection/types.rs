@@ -4,6 +4,7 @@ use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use serde_yaml_ng::Value;
 use std::collections::BTreeMap;
+use ts_rs::TS;
 
 use super::binding::SpecBinding;
 use super::intelligence::IntelligenceMetadata;
@@ -12,6 +13,20 @@ use super::source::CollectionSource;
 /// Schema URL for JSON Schema validation + IDE autocomplete.
 /// Users can add: `# yaml-language-server: $schema=https://runi.dev/schema/collection/v1.json`
 pub const SCHEMA_URL: &str = "https://runi.dev/schema/collection/v1.json";
+
+/// A named environment with variable overrides for a collection.
+///
+/// Environments allow switching between different deployment targets (local, staging, production)
+/// by overriding variables like `baseUrl` without modifying requests.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+pub struct CollectionEnvironment {
+    /// Human-readable environment name (e.g., "local", "staging", "production").
+    pub name: String,
+    /// Variable key-value pairs for this environment.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub variables: BTreeMap<String, String>,
+}
 
 /// Current schema version. Simple integer, not semver.
 /// Breaking changes = bump version. Non-breaking = same version.
@@ -52,6 +67,14 @@ pub struct Collection {
     /// Default values for variables.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub variables: BTreeMap<String, String>,
+
+    /// Named environments with variable overrides.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub environments: Vec<CollectionEnvironment>,
+
+    /// The currently active environment name.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_environment: Option<String>,
 
     /// Extension fields (x-team, x-owner, etc).
     #[serde(flatten, default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -107,6 +130,8 @@ impl Collection {
             source: CollectionSource::default(),
             auth: None,
             variables: BTreeMap::new(),
+            environments: vec![],
+            active_environment: None,
             extensions: BTreeMap::new(),
             requests: vec![],
         }
@@ -492,5 +517,88 @@ mod tests {
         let id = CollectionRequest::generate_id("Get Request");
         assert!(id.starts_with("req_get_reques_"));
         assert_eq!(id.len(), "req_get_reques_".len() + 6);
+    }
+
+    // ── CollectionEnvironment tests ──────────────────────────────────────
+
+    #[test]
+    fn test_collection_environment_serializes_correctly() {
+        let mut vars = BTreeMap::new();
+        vars.insert("baseUrl".to_string(), "http://localhost:3000".to_string());
+        let env = CollectionEnvironment {
+            name: "local".to_string(),
+            variables: vars,
+        };
+        let yaml = serde_yaml_ng::to_string(&env).unwrap();
+        assert!(yaml.contains("name: local"));
+        assert!(yaml.contains("baseUrl:"), "YAML should contain baseUrl key");
+        assert!(
+            yaml.contains("localhost:3000"),
+            "YAML should contain the URL value"
+        );
+    }
+
+    #[test]
+    fn test_collection_environment_empty_variables_omitted() {
+        let env = CollectionEnvironment {
+            name: "empty".to_string(),
+            variables: BTreeMap::new(),
+        };
+        let yaml = serde_yaml_ng::to_string(&env).unwrap();
+        assert!(yaml.contains("name: empty"));
+        assert!(!yaml.contains("variables:"));
+    }
+
+    #[test]
+    fn test_collection_has_environments_field() {
+        let collection = Collection::new("Test");
+        assert!(collection.environments.is_empty());
+        assert!(collection.active_environment.is_none());
+    }
+
+    #[test]
+    fn test_collection_environments_omitted_when_empty() {
+        let collection = Collection::new("Test");
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
+        assert!(!yaml.contains("environments:"));
+        assert!(!yaml.contains("active_environment:"));
+    }
+
+    #[test]
+    fn test_collection_environments_serializes_when_present() {
+        let mut collection = Collection::new("Test");
+        let mut vars = BTreeMap::new();
+        vars.insert("baseUrl".to_string(), "http://localhost:3000".to_string());
+        collection.environments = vec![CollectionEnvironment {
+            name: "local".to_string(),
+            variables: vars,
+        }];
+        collection.active_environment = Some("local".to_string());
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
+        assert!(yaml.contains("environments:"));
+        assert!(yaml.contains("active_environment: local"));
+        assert!(yaml.contains("name: local"));
+    }
+
+    #[test]
+    fn test_collection_environment_roundtrip() {
+        let mut collection = Collection::new("Roundtrip Test");
+        let mut vars = BTreeMap::new();
+        vars.insert("baseUrl".to_string(), "https://api.example.com".to_string());
+        vars.insert("apiKey".to_string(), "secret".to_string());
+        collection.environments = vec![CollectionEnvironment {
+            name: "production".to_string(),
+            variables: vars,
+        }];
+        collection.active_environment = Some("production".to_string());
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
+        let restored: Collection = serde_yaml_ng::from_str(&yaml).unwrap();
+        assert_eq!(restored.environments.len(), 1);
+        assert_eq!(restored.environments[0].name, "production");
+        assert_eq!(
+            restored.environments[0].variables.get("baseUrl"),
+            Some(&"https://api.example.com".to_string())
+        );
+        assert_eq!(restored.active_environment, Some("production".to_string()));
     }
 }

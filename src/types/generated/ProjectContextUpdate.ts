@@ -9,6 +9,7 @@
 export type ProjectContextUpdate = { 
 /**
  * Update the active collection ID.
+ * JSON `null` → `Some(None)` (clear), absent → `None` (skip).
  */
 activeCollectionId: string | null | null, 
 /**

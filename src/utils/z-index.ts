@@ -11,6 +11,13 @@
 export const OVERLAY_Z_INDEX = 1000;
 
 /**
+ * Z-index for toast notifications.
+ * Must be above dialogs/modals (OVERLAY_Z_INDEX + 1) so toasts are always visible
+ * even when a dialog with a backdrop-blur is open.
+ */
+export const TOAST_Z_INDEX = OVERLAY_Z_INDEX + 10;
+
+/**
  * Shared z-index for the global command bar palette.
  * Must be topmost to ensure search visibility over all panels and overlays.
  */
