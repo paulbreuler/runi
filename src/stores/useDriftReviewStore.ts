@@ -29,8 +29,18 @@ interface DriftReviewUIState {
   // Actions
   openDrawer: (collectionId: string, focusKey?: string) => void;
   closeDrawer: () => void;
-  acceptChange: (collectionId: string, method: string, path: string) => void;
-  ignoreChange: (collectionId: string, method: string, path: string) => void;
+  acceptChange: (
+    collectionId: string,
+    method: string,
+    path: string,
+    skipRustSync?: boolean
+  ) => void;
+  ignoreChange: (
+    collectionId: string,
+    method: string,
+    path: string,
+    skipRustSync?: boolean
+  ) => void;
   acceptAll: (keys: string[]) => void;
   dismissAll: (keys: string[]) => void;
   dismissBanner: (collectionId: string, method: string, path: string) => void;
@@ -43,6 +53,30 @@ interface DriftReviewUIState {
 
 const makeKey = (collectionId: string, method: string, path: string): string =>
   `${collectionId}:${method}:${path}`;
+
+/**
+ * Parse a `{collectionId}:{method}:{path}` key back into its components.
+ *
+ * Splits on the **first two** colons only so that path segments containing
+ * colons (e.g. `/api/:version/books`) are handled correctly.
+ *
+ * Returns `null` when the key does not have the expected format.
+ */
+function parseKey(key: string): { collectionId: string; method: string; path: string } | null {
+  const firstColon = key.indexOf(':');
+  if (firstColon === -1) {
+    return null;
+  }
+  const secondColon = key.indexOf(':', firstColon + 1);
+  if (secondColon === -1) {
+    return null;
+  }
+  return {
+    collectionId: key.slice(0, firstColon),
+    method: key.slice(firstColon + 1, secondColon),
+    path: key.slice(secondColon + 1),
+  };
+}
 
 export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
   isOpen: false,
@@ -67,7 +101,12 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
     });
   },
 
-  acceptChange: (collectionId: string, method: string, path: string): void => {
+  acceptChange: (
+    collectionId: string,
+    method: string,
+    path: string,
+    skipRustSync = false
+  ): void => {
     const key = makeKey(collectionId, method, path);
     set((state) => ({
       reviewState: {
@@ -75,6 +114,9 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
         [key]: { status: 'accepted' },
       },
     }));
+    if (skipRustSync) {
+      return;
+    }
     // Fire-and-forget: sync decision to Rust store so MCP tools reflect UI state.
     // No await — UI is already updated optimistically above.
     // The Rust command does NOT emit events to prevent infinite loop with initDriftReviewStore.
@@ -88,7 +130,12 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
     });
   },
 
-  ignoreChange: (collectionId: string, method: string, path: string): void => {
+  ignoreChange: (
+    collectionId: string,
+    method: string,
+    path: string,
+    skipRustSync = false
+  ): void => {
     const key = makeKey(collectionId, method, path);
     set((state) => ({
       reviewState: {
@@ -96,6 +143,9 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
         [key]: { status: 'ignored' },
       },
     }));
+    if (skipRustSync) {
+      return;
+    }
     // Fire-and-forget: sync decision to Rust store so MCP tools reflect UI state.
     invoke<undefined>('cmd_set_drift_review_decision', {
       collectionId,
@@ -117,14 +167,11 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
     });
     // Fire-and-forget: sync each decision to Rust store so MCP tools reflect UI state.
     for (const key of keys) {
-      const firstColon = key.indexOf(':');
-      const secondColon = key.indexOf(':', firstColon + 1);
-      if (firstColon === -1 || secondColon === -1) {
+      const parsed = parseKey(key);
+      if (parsed === null) {
         continue;
       }
-      const collectionId = key.slice(0, firstColon);
-      const method = key.slice(firstColon + 1, secondColon);
-      const path = key.slice(secondColon + 1);
+      const { collectionId, method, path } = parsed;
       invoke<undefined>('cmd_set_drift_review_decision', {
         collectionId,
         method,
@@ -146,14 +193,11 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
     });
     // Fire-and-forget: sync each decision to Rust store so MCP tools reflect UI state.
     for (const key of keys) {
-      const firstColon = key.indexOf(':');
-      const secondColon = key.indexOf(':', firstColon + 1);
-      if (firstColon === -1 || secondColon === -1) {
+      const parsed = parseKey(key);
+      if (parsed === null) {
         continue;
       }
-      const collectionId = key.slice(0, firstColon);
-      const method = key.slice(firstColon + 1, secondColon);
-      const path = key.slice(secondColon + 1);
+      const { collectionId, method, path } = parsed;
       invoke<undefined>('cmd_set_drift_review_decision', {
         collectionId,
         method,
@@ -232,7 +276,9 @@ export async function initDriftReviewStore(): Promise<() => void> {
       'drift:change-accepted',
       (event) => {
         const { collection_id, method, path } = event.payload.payload;
-        useDriftReviewStore.getState().acceptChange(collection_id, method, path);
+        // skipRustSync=true: the MCP tool already wrote to the Rust store before
+        // emitting this event; calling invoke again would be a redundant write.
+        useDriftReviewStore.getState().acceptChange(collection_id, method, path, true);
       }
     );
 
@@ -240,7 +286,8 @@ export async function initDriftReviewStore(): Promise<() => void> {
       'drift:change-dismissed',
       (event) => {
         const { collection_id, method, path } = event.payload.payload;
-        useDriftReviewStore.getState().ignoreChange(collection_id, method, path);
+        // skipRustSync=true: same reason as above — avoid redundant Rust store write.
+        useDriftReviewStore.getState().ignoreChange(collection_id, method, path, true);
       }
     );
   } catch (err: unknown) {

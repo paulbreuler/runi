@@ -157,6 +157,15 @@ describe('useDriftReviewStore', () => {
       expect(result.current.reviewState['col_1:DELETE:/books/{id}']?.status).toBe('accepted');
       expect(result.current.reviewState['col_1:PUT:/books/{id}']?.status).toBe('accepted');
     });
+
+    it('skips Rust sync when skipRustSync is true', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      act(() => {
+        result.current.acceptChange('col_1', 'DELETE', '/books/{id}', true);
+      });
+      expect(result.current.reviewState['col_1:DELETE:/books/{id}']?.status).toBe('accepted');
+      expect(invoke).not.toHaveBeenCalled();
+    });
   });
 
   describe('ignoreChange', () => {
@@ -179,6 +188,15 @@ describe('useDriftReviewStore', () => {
         path: '/books/{id}',
         status: 'ignored',
       });
+    });
+
+    it('skips Rust sync when skipRustSync is true', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      act(() => {
+        result.current.ignoreChange('col_1', 'PUT', '/books/{id}', true);
+      });
+      expect(result.current.reviewState['col_1:PUT:/books/{id}']?.status).toBe('ignored');
+      expect(invoke).not.toHaveBeenCalled();
     });
   });
 
@@ -224,6 +242,20 @@ describe('useDriftReviewStore', () => {
         status: 'accepted',
       });
     });
+
+    it('correctly parses path containing colons (e.g. parameterized segments)', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      const key = 'col_1:GET:/api/:version/books';
+      act(() => {
+        result.current.acceptAll([key]);
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'GET',
+        path: '/api/:version/books',
+        status: 'accepted',
+      });
+    });
   });
 
   describe('dismissAll', () => {
@@ -254,6 +286,20 @@ describe('useDriftReviewStore', () => {
         collectionId: 'col_1',
         method: 'PUT',
         path: '/books/{id}',
+        status: 'ignored',
+      });
+    });
+
+    it('correctly parses path containing colons (e.g. parameterized segments)', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      const key = 'col_1:GET:/api/:version/books';
+      act(() => {
+        result.current.dismissAll([key]);
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'GET',
+        path: '/api/:version/books',
         status: 'ignored',
       });
     });

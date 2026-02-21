@@ -289,6 +289,43 @@ describe('DriftReviewDrawer', () => {
     expect(screen.queryByTestId('drift-change-card-DELETE-/books/{id}')).toBeNull();
   });
 
+  it('shows all-reviewed state when all changes are accepted or ignored', () => {
+    useDriftReviewStore.setState({
+      isOpen: true,
+      collectionId,
+      focusOperationKey: null,
+      reviewState: {
+        [`${collectionId}:DELETE:/books/{id}`]: { status: 'accepted' },
+        [`${collectionId}:PUT:/books/{id}`]: { status: 'ignored' },
+      },
+      dismissedBannerKeys: new Set(),
+    });
+    const result = makeResult(
+      [{ method: 'DELETE', path: '/books/{id}' }],
+      [{ method: 'PUT', path: '/books/{id}', changes: ['parameters'] }],
+      []
+    );
+    render(<DriftReviewDrawer collectionId={collectionId} driftResult={result} />);
+    expect(screen.getByTestId('drift-drawer-all-reviewed')).toBeInTheDocument();
+    expect(screen.getByTestId('drift-drawer-done')).toBeInTheDocument();
+  });
+
+  it('closes drawer when Done button is clicked in all-reviewed state', () => {
+    useDriftReviewStore.setState({
+      isOpen: true,
+      collectionId,
+      focusOperationKey: null,
+      reviewState: {
+        [`${collectionId}:DELETE:/books/{id}`]: { status: 'accepted' },
+      },
+      dismissedBannerKeys: new Set(),
+    });
+    const result = makeResult([{ method: 'DELETE', path: '/books/{id}' }], [], []);
+    render(<DriftReviewDrawer collectionId={collectionId} driftResult={result} />);
+    fireEvent.click(screen.getByTestId('drift-drawer-done'));
+    expect(useDriftReviewStore.getState().isOpen).toBe(false);
+  });
+
   it('retains ignored state when drawer is closed and reopened', () => {
     useDriftReviewStore.setState({
       isOpen: true,
