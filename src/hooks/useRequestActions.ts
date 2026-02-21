@@ -17,6 +17,7 @@ import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { resolveVariables } from '@/utils/variables';
+import type { RequestTabState } from '@/types/canvas';
 
 export interface UseRequestActionsReturn {
   /** Local URL state (optimistic) */
@@ -66,9 +67,7 @@ export const useRequestActions = (): UseRequestActionsReturn => {
     const canvasState = useCanvasStore.getState();
     const { activeContextId, getContextState } = canvasState;
     const tabState =
-      activeContextId !== null
-        ? (getContextState(activeContextId) as { source?: { collectionId?: string } })
-        : undefined;
+      activeContextId !== null ? (getContextState(activeContextId) as RequestTabState) : undefined;
     const collectionId = tabState?.source?.collectionId;
     const collection =
       collectionId !== undefined

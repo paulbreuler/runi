@@ -570,7 +570,10 @@ describe('CanvasHost - Panel Sash (Resize Handle)', () => {
     const sash = screen.getByTestId('canvas-sash-0');
     expect(sash).toHaveAttribute('role', 'separator');
     expect(sash).toHaveAttribute('aria-orientation', 'vertical');
-    expect(sash).toHaveAttribute('aria-label', 'Resize panels (double-click to reset)');
+    expect(sash).toHaveAttribute(
+      'aria-label',
+      'Resize between panel1 and panel2 (double-click to reset)'
+    );
   });
 
   it('sash has correct accessibility attributes for rows', () => {
@@ -581,7 +584,10 @@ describe('CanvasHost - Panel Sash (Resize Handle)', () => {
     const sash = screen.getByTestId('canvas-sash-0');
     expect(sash).toHaveAttribute('role', 'separator');
     expect(sash).toHaveAttribute('aria-orientation', 'horizontal');
-    expect(sash).toHaveAttribute('aria-label', 'Resize panels (double-click to reset)');
+    expect(sash).toHaveAttribute(
+      'aria-label',
+      'Resize between panel1 and panel2 (double-click to reset)'
+    );
   });
 
   it('sash has col-resize cursor class for columns', () => {

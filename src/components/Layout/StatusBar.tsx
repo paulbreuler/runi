@@ -29,6 +29,7 @@ import { focusRingClasses } from '@/utils/accessibility';
 import { STATUS_BAR_Z_INDEX } from '@/utils/z-index';
 import { cn } from '@/utils/cn';
 import type { AppMetrics, MemoryMetrics } from '@/types/metrics';
+import type { RequestTabState } from '@/types/canvas';
 
 const SAMPLE_INTERVAL_MS = 30_000; // 30 seconds
 
@@ -130,7 +131,7 @@ export const StatusBar = (): React.JSX.Element => {
     if (activeContextId === null) {
       return undefined;
     }
-    const tabState = getContextState(activeContextId) as { source?: { collectionId?: string } };
+    const tabState = getContextState(activeContextId) as RequestTabState;
     return tabState.source?.collectionId;
   });
   const collection = useCollectionStore((state) =>

@@ -401,7 +401,7 @@ const MultiPanelLayout: FC<MultiPanelLayoutProps> = ({
             handleSashKeyDown(sashIdx, e);
           }}
           role="separator"
-          aria-label="Resize panels (double-click to reset)"
+          aria-label={`Resize between ${resolvePanelName(arrangement.panels[sashIdx] ?? '')} and ${resolvePanelName(arrangement.panels[sashIdx + 1] ?? '')} (double-click to reset)`}
           aria-orientation={isHorizontal ? 'vertical' : 'horizontal'}
           aria-valuenow={Math.round(ratios[sashIdx] ?? 50)}
           aria-valuemin={MIN_PANEL_PERCENT}

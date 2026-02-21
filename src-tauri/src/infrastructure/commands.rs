@@ -259,8 +259,8 @@ pub async fn refresh_collection_spec_inner_with_source(
         .or(collection.source.url.as_deref())
         .ok_or_else(|| "Collection has no tracked spec source".to_string())?;
 
-    // 3. Route to File or URL based on whether the stored value looks like a path
-    let spec_source = if source_str.starts_with("http://") || source_str.starts_with("https://") {
+    // 3. Route to File or URL: treat anything containing a scheme separator as a URL
+    let spec_source = if source_str.contains("://") {
         SpecSource::Url(source_str.to_string())
     } else {
         SpecSource::File(std::path::PathBuf::from(source_str))

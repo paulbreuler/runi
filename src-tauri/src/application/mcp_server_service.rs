@@ -1501,8 +1501,13 @@ impl McpServerService {
         }
         save_collection_in_dir(&collection, self.dir())?;
 
+        let event_name = if name.is_some() {
+            "collection:environment-activated"
+        } else {
+            "collection:environment-deactivated"
+        };
         self.emit(
-            "collection:environment-activated",
+            event_name,
             json!({"collection_id": collection_id, "name": name}),
         );
 
