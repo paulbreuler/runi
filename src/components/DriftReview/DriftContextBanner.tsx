@@ -4,6 +4,7 @@
 import React from 'react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
+import { matchesPathTemplate } from '@/utils/pathTemplate';
 import { useDriftReviewStore } from '@/stores/useDriftReviewStore';
 import type { SpecRefreshResult } from '@/types/generated/SpecRefreshResult';
 import { Button } from '@/components/ui/button';
@@ -63,14 +64,16 @@ export const DriftContextBanner = ({
     return null;
   }
 
-  // Check if operation is in the removed group
+  // Check if operation is in the removed group.
+  // Use matchesPathTemplate so that resolved paths like /books/123 match
+  // the OpenAPI template path /books/{id} stored in the drift result.
   const isRemoved = driftResult.operationsRemoved.some(
-    (op) => op.method === method && op.path === path
+    (op) => op.method === method && matchesPathTemplate(path, op.path)
   );
 
   // Check if operation is in the changed group
   const changedOp = driftResult.operationsChanged.find(
-    (op) => op.method === method && op.path === path
+    (op) => op.method === method && matchesPathTemplate(path, op.path)
   );
   const isChanged = changedOp !== undefined;
 

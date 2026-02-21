@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { create } from 'zustand';
+import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import type { EventEnvelope } from '@/hooks/useCollectionEvents';
 
@@ -74,6 +75,17 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
         [key]: { status: 'accepted' },
       },
     }));
+    // Fire-and-forget: sync decision to Rust store so MCP tools reflect UI state.
+    // No await — UI is already updated optimistically above.
+    // The Rust command does NOT emit events to prevent infinite loop with initDriftReviewStore.
+    invoke<undefined>('cmd_set_drift_review_decision', {
+      collectionId,
+      method,
+      path,
+      status: 'accepted',
+    }).catch((err: unknown) => {
+      console.error('[DriftReview] Failed to sync accept decision to Rust store:', err);
+    });
   },
 
   ignoreChange: (collectionId: string, method: string, path: string): void => {
@@ -84,6 +96,15 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
         [key]: { status: 'ignored' },
       },
     }));
+    // Fire-and-forget: sync decision to Rust store so MCP tools reflect UI state.
+    invoke<undefined>('cmd_set_drift_review_decision', {
+      collectionId,
+      method,
+      path,
+      status: 'ignored',
+    }).catch((err: unknown) => {
+      console.error('[DriftReview] Failed to sync ignore decision to Rust store:', err);
+    });
   },
 
   acceptAll: (keys: string[]): void => {

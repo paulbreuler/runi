@@ -18,8 +18,6 @@ import type { HttpMethod } from '@/utils/http-colors';
 interface DriftReviewDrawerProps {
   collectionId: string;
   driftResult: SpecRefreshResult | undefined;
-  fromVersion?: string;
-  toVersion?: string;
 }
 
 interface DriftChangeCardProps {
@@ -118,8 +116,6 @@ const DriftChangeCard = ({
 export const DriftReviewDrawer = ({
   collectionId,
   driftResult,
-  fromVersion,
-  toVersion,
 }: DriftReviewDrawerProps): React.JSX.Element | null => {
   const isOpen = useDriftReviewStore((state) => state.isOpen);
   const closeDrawer = useDriftReviewStore((state) => state.closeDrawer);
@@ -216,11 +212,6 @@ export const DriftReviewDrawer = ({
               <div className="min-w-0">
                 <h2 id={titleId} className="text-sm font-semibold text-text-primary">
                   Drift Review
-                  {fromVersion !== undefined && toVersion !== undefined && (
-                    <span className="font-normal text-text-muted ml-1 font-mono text-xs">
-                      {fromVersion} → {toVersion}
-                    </span>
-                  )}
                 </h2>
                 <p className="text-xs text-text-muted mt-0.5">
                   {breakingCount > 0 && (
@@ -353,8 +344,21 @@ export const DriftReviewDrawer = ({
 
               {/* All reviewed state */}
               {allPendingKeys.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div
+                  className="flex flex-col items-center justify-center gap-3 py-8 text-center"
+                  data-test-id="drift-drawer-all-reviewed"
+                >
                   <p className="text-sm text-text-muted">All changes reviewed</p>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    noScale
+                    className={cn(focusRingClasses, 'text-xs')}
+                    data-test-id="drift-drawer-done"
+                    onClick={closeDrawer}
+                  >
+                    Done
+                  </Button>
                 </div>
               )}
             </div>

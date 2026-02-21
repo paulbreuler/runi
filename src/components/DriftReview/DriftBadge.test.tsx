@@ -86,21 +86,6 @@ describe('DriftBadge', () => {
     expect(screen.getByTestId(`drift-badge-${collectionId}`)).toBeInTheDocument();
   });
 
-  it('renders version range text when versions are provided as props', () => {
-    const result = makeResult(4, 1, 2);
-    render(
-      <DriftBadge
-        collectionId={collectionId}
-        collectionName={collectionName}
-        driftResult={result}
-        fromVersion="v0.1.0"
-        toVersion="v0.2.0"
-      />
-    );
-    expect(screen.getByTestId(`drift-badge-${collectionId}`)).toHaveTextContent('v0.1.0');
-    expect(screen.getByTestId(`drift-badge-${collectionId}`)).toHaveTextContent('v0.2.0');
-  });
-
   it('renders red breaking count chip when there are removed operations', () => {
     const result = makeResult(4, 0, 0);
     render(

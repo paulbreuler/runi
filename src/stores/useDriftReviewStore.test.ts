@@ -1,12 +1,18 @@
 // Copyright (c) 2025 runi contributors
 // SPDX-License-Identifier: MIT
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { invoke } from '@tauri-apps/api/core';
 import { renderHook, act } from '@testing-library/react';
 import { useDriftReviewStore } from './useDriftReviewStore';
 
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe('useDriftReviewStore', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     useDriftReviewStore.setState({
       isOpen: false,
       collectionId: null,
@@ -129,6 +135,19 @@ describe('useDriftReviewStore', () => {
       expect(result.current.reviewState['col_1:DELETE:/books/{id}']?.status).toBe('accepted');
     });
 
+    it('invokes cmd_set_drift_review_decision with accepted status', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      act(() => {
+        result.current.acceptChange('col_1', 'DELETE', '/books/{id}');
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'DELETE',
+        path: '/books/{id}',
+        status: 'accepted',
+      });
+    });
+
     it('can accept multiple independent changes', () => {
       const { result } = renderHook(() => useDriftReviewStore());
       act(() => {
@@ -147,6 +166,19 @@ describe('useDriftReviewStore', () => {
         result.current.ignoreChange('col_1', 'PUT', '/books/{id}');
       });
       expect(result.current.reviewState['col_1:PUT:/books/{id}']?.status).toBe('ignored');
+    });
+
+    it('invokes cmd_set_drift_review_decision with ignored status', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      act(() => {
+        result.current.ignoreChange('col_1', 'PUT', '/books/{id}');
+      });
+      expect(invoke).toHaveBeenCalledWith('cmd_set_drift_review_decision', {
+        collectionId: 'col_1',
+        method: 'PUT',
+        path: '/books/{id}',
+        status: 'ignored',
+      });
     });
   });
 

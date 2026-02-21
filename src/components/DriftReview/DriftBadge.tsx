@@ -11,8 +11,6 @@ interface DriftBadgeProps {
   collectionId: string;
   collectionName: string;
   driftResult: SpecRefreshResult | undefined;
-  fromVersion?: string;
-  toVersion?: string;
 }
 
 /**
@@ -31,8 +29,6 @@ export const DriftBadge = ({
   collectionId,
   collectionName,
   driftResult,
-  fromVersion,
-  toVersion,
 }: DriftBadgeProps): React.JSX.Element | null => {
   const openDrawer = useDriftReviewStore((state) => state.openDrawer);
   const reviewState = useDriftReviewStore((state) => state.reviewState);
@@ -87,15 +83,6 @@ export const DriftBadge = ({
       aria-label={ariaLabel}
       onClick={handleClick}
     >
-      {/* Version range — only shown when version props are available */}
-      {fromVersion !== undefined && toVersion !== undefined && (
-        <span className="text-text-muted font-mono">
-          {fromVersion}
-          <span className="mx-0.5 text-text-muted/50">→</span>
-          {toVersion}
-        </span>
-      )}
-
       {/* Breaking count chip (red) */}
       {breakingCount > 0 && (
         <span

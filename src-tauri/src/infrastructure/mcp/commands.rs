@@ -139,9 +139,21 @@ pub async fn start_server(
         canvas_state,
         project_context,
         suggestion_service,
-        drift_review_store: std::sync::Arc::new(tokio::sync::Mutex::new(
-            std::collections::HashMap::new(),
-        )),
+        drift_review_store: app_handle.as_ref().map_or_else(
+            || std::sync::Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new())),
+            |handle| {
+                handle
+                    .try_state::<crate::infrastructure::commands::DriftReviewStore>()
+                    .map_or_else(
+                        || {
+                            std::sync::Arc::new(tokio::sync::Mutex::new(
+                                std::collections::HashMap::new(),
+                            ))
+                        },
+                        |s| s.inner().clone(),
+                    )
+            },
+        ),
         app_handle: app_handle.clone(),
     };
 
