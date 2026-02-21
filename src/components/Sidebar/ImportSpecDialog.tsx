@@ -75,9 +75,14 @@ export const ImportSpecDialog = ({
       if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
         return parsed.toString();
       }
+      // Non-http(s) scheme (e.g. ftp://): return as-is; don't prepend http://
       return trimmed;
     } catch {
-      /* not valid as-is */
+      /* not valid as-is — only prepend http:// if no scheme is present */
+    }
+    // Only auto-prepend if the input doesn't already contain a scheme separator
+    if (trimmed.includes('://')) {
+      return trimmed;
     }
     try {
       return new URL(`http://${trimmed}`).toString();

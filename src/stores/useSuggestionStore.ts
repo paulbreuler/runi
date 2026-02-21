@@ -121,7 +121,11 @@ export const useSuggestionStore = create<SuggestionState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       await invoke('cmd_clear_suggestions');
-      set({ suggestions: [], loading: false });
+      // Only remove pending suggestions; preserve accepted/dismissed history
+      set((state) => ({
+        suggestions: state.suggestions.filter((s) => s.status !== 'pending'),
+        loading: false,
+      }));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[Suggestions] Failed to clear:', message);
@@ -184,7 +188,9 @@ export async function initSuggestionStore(): Promise<() => void> {
 
     clearedUnlisten = await listen<{ count: number }>('suggestion:cleared', () => {
       console.warn('[Suggestions] Event suggestion:cleared — clearing local suggestions');
-      useSuggestionStore.setState({ suggestions: [] });
+      useSuggestionStore.setState((state) => ({
+        suggestions: state.suggestions.filter((s) => s.status !== 'pending'),
+      }));
     });
 
     // Fetch initial state after listeners are registered (pending only)

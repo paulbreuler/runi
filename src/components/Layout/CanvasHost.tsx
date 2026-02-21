@@ -81,6 +81,9 @@ export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
     if (liveRatios !== null) {
       setLiveRatios(null);
     }
+    if (draggingSashIndex !== null) {
+      setDraggingSashIndex(null);
+    }
   }
 
   // Resolve placeholders ($first, $second, $third)

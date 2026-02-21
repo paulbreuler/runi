@@ -1376,6 +1376,9 @@ impl McpServerService {
             .get("name")
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: name".to_string())?;
+        if name.is_empty() {
+            return Err("Environment name cannot be empty".to_string());
+        }
         let variables_value = args
             .get("variables")
             .and_then(serde_json::Value::as_object)
@@ -1430,6 +1433,9 @@ impl McpServerService {
             .get("name")
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| "Missing required parameter: name".to_string())?;
+        if name.is_empty() {
+            return Err("Environment name cannot be empty".to_string());
+        }
 
         Self::validate_collection_id(collection_id)?;
 
@@ -1477,6 +1483,12 @@ impl McpServerService {
             .and_then(|v| if v.is_null() { None } else { v.as_str() });
 
         Self::validate_collection_id(collection_id)?;
+
+        if let Some(env_name) = name {
+            if env_name.is_empty() {
+                return Err("Environment name cannot be empty".to_string());
+            }
+        }
 
         let mut collection = load_collection_in_dir(collection_id, self.dir())?;
         if let Some(env_name) = name {

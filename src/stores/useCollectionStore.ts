@@ -766,7 +766,12 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       set((state) => ({
         collections: state.collections.map((c) =>
           c.id === collectionId
-            ? { ...c, environments: c.environments.filter((e) => e.name !== name) }
+            ? {
+                ...c,
+                environments: c.environments.filter((e) => e.name !== name),
+                active_environment:
+                  c.active_environment === name ? undefined : c.active_environment,
+              }
             : c
         ),
         isLoading: false,
