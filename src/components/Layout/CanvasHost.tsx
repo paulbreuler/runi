@@ -11,7 +11,7 @@ const getSashClasses = (orientation: 'vertical' | 'horizontal', isDragging: bool
   cn(
     'relative z-30 touch-none shrink-0 select-none',
     orientation === 'vertical' ? 'w-[2px] cursor-col-resize' : 'h-[2px] cursor-row-resize',
-    'bg-transparent',
+    'bg-border-subtle',
     'hover:bg-accent-blue',
     isDragging && 'bg-accent-blue'
   );
