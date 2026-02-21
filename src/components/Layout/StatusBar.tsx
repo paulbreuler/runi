@@ -11,10 +11,19 @@ import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { PulsingGlow } from '@/components/ui/PulsingGlow';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/Switch';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { MetricsGrid } from '@/components/Metrics/MetricsGrid';
 import { AppMetricsContainer } from '@/components/Console/AppMetricsContainer';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { useCanvasStore } from '@/stores/useCanvasStore';
 import { focusRingClasses } from '@/utils/accessibility';
 import { STATUS_BAR_Z_INDEX } from '@/utils/z-index';
 import { cn } from '@/utils/cn';
@@ -114,6 +123,29 @@ export const StatusBar = (): React.JSX.Element => {
   const { metrics, timestamp, isLive } = useMetricsStore();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
+  // Derive active collection from active canvas context's source
+  const collectionId = useCanvasStore((state) => {
+    const { activeContextId, getContextState } = state;
+    if (activeContextId === null) {
+      return undefined;
+    }
+    const tabState = getContextState(activeContextId) as { source?: { collectionId?: string } };
+    return tabState.source?.collectionId;
+  });
+  const collection = useCollectionStore((state) =>
+    collectionId !== undefined ? state.collections.find((c) => c.id === collectionId) : undefined
+  );
+  const { setActiveEnvironment } = useCollectionStore();
+
+  const environments = collection?.environments ?? [];
+  const activeEnvironment = collection?.active_environment ?? '';
+
+  const handleEnvironmentChange = (value: string | null): void => {
+    if (collectionId === undefined) {
+      return;
+    }
+    void setActiveEnvironment(collectionId, value === '' || value === null ? null : value);
+  };
   // Determine pulsing glow state
   // init: metrics.memory === undefined (strong pulse)
   // tracking: isLive === true && metrics exist AND feature is enabled (faint pulse) - pulse when active
@@ -195,11 +227,37 @@ export const StatusBar = (): React.JSX.Element => {
       data-test-id="status-bar"
     >
       {/* Left side - environment */}
-      <div className="flex items-center gap-4 opacity-70">
-        <span className="flex items-center gap-1.5">
-          <span className="text-text-muted">Environment:</span>
-          <span className="font-mono text-text-secondary">default</span>
-        </span>
+      <div className="relative flex items-center gap-2">
+        <span className="text-text-muted text-xs">Env:</span>
+        {collection !== undefined ? (
+          <>
+            <Select value={activeEnvironment} onValueChange={handleEnvironmentChange}>
+              <SelectTrigger
+                role="button"
+                aria-haspopup="listbox"
+                data-test-id="environment-switcher"
+                className="h-5 border-none bg-transparent px-1 py-0 text-xs font-mono text-text-secondary hover:bg-bg-raised hover:text-text-primary focus:ring-0 gap-1"
+              >
+                <SelectValue placeholder="No environment" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No environment</SelectItem>
+                {environments.map((env) => (
+                  <SelectItem key={env.name} value={env.name}>
+                    {env.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        ) : (
+          <span
+            className="text-xs font-mono text-text-secondary opacity-70"
+            data-test-id="status-bar-no-env"
+          >
+            No environment
+          </span>
+        )}
       </div>
       {/* Right side - metrics and version */}
       <div className="flex items-center gap-1">

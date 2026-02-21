@@ -16,9 +16,9 @@ use crate::domain::collection::spec_port::{
     ContentFetcher, FetchResult, ParsedSpec, SpecParseError, SpecParser, SpecSource,
 };
 use crate::domain::collection::{
-    BodyType, Collection, CollectionMetadata, CollectionRequest, CollectionSource,
-    IntelligenceMetadata, RequestBody, RequestParam, SCHEMA_URL, SCHEMA_VERSION, SourceType,
-    SpecBinding,
+    BodyType, Collection, CollectionEnvironment, CollectionMetadata, CollectionRequest,
+    CollectionSource, IntelligenceMetadata, RequestBody, RequestParam, SCHEMA_URL, SCHEMA_VERSION,
+    SourceType, SpecBinding,
 };
 use crate::infrastructure::spec::hasher::compute_spec_hash;
 
@@ -175,19 +175,28 @@ impl ImportService {
 
         let title = overrides.display_name.as_deref().unwrap_or(&parsed.title);
 
-        // Get base URL from first server
-        let base_url = parsed
-            .base_urls
-            .first()
-            .map_or_else(|| "https://example.com".to_string(), |s| s.url.clone());
+        // Get base URL from first server in spec, fall back to source URL origin,
+        // then to a generic placeholder
+        let spec_base_url = parsed.base_urls.first().map(|s| s.url.clone());
+        let inferred_base_url = spec_base_url
+            .or_else(|| url_origin(&fetch.source_url))
+            .unwrap_or_else(|| "https://example.com".to_string());
 
-        // Convert endpoints to requests with seq ordering
+        // Build a "local" environment with the inferred base URL
+        let mut local_vars = BTreeMap::new();
+        local_vars.insert("baseUrl".to_string(), inferred_base_url);
+        let environments = vec![CollectionEnvironment {
+            name: "local".to_string(),
+            variables: local_vars,
+        }];
+
+        // Convert endpoints to requests with seq ordering, using {{baseUrl}} template
         let requests: Vec<CollectionRequest> = parsed
             .endpoints
             .iter()
             .enumerate()
             .map(|(idx, ep)| {
-                let url = join_url(&base_url, &ep.path);
+                let url = join_url("{{baseUrl}}", &ep.path);
                 let params = extract_query_params(ep);
                 let operation_id = ep
                     .operation_id
@@ -253,10 +262,35 @@ impl ImportService {
             },
             auth: None,
             variables: BTreeMap::new(),
+            environments,
+            active_environment: Some("local".to_string()),
             extensions: BTreeMap::new(),
             requests,
         }
     }
+}
+
+/// Extract the scheme+host+port origin from a URL.
+///
+/// Returns `None` for non-HTTP(S) sources (e.g., "inline", file paths).
+///
+/// Examples:
+/// - `"https://api.example.com/v1/spec.json"` → `Some("https://api.example.com")`
+/// - `"https://api.example.com:8080/spec.json"` → `Some("https://api.example.com:8080")`
+/// - `"inline"` → `None`
+fn url_origin(url: &str) -> Option<String> {
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return None;
+    }
+    // Find end of scheme (after "://")
+    let after_scheme = url.find("://")?;
+    let rest = &url[after_scheme + 3..];
+    // Find first "/" after host[:port]
+    let host_end = rest.find('/').unwrap_or(rest.len());
+    let authority = &rest[..host_end];
+    // Re-assemble scheme + authority
+    let scheme = &url[..after_scheme];
+    Some(format!("{scheme}://{authority}"))
 }
 
 /// Join a base URL and path, normalizing double slashes.
@@ -580,12 +614,20 @@ mod tests {
         assert_eq!(collection.source.spec_version, Some("2.0.0".to_string()));
         assert!(collection.source.hash.unwrap().starts_with("sha256:"));
         assert_eq!(collection.requests.len(), 1);
-        assert_eq!(collection.requests[0].url, "https://api.test.com/items");
+        assert_eq!(collection.requests[0].url, "{{baseUrl}}/items");
         assert_eq!(collection.requests[0].seq, 1);
         assert_eq!(
             collection.requests[0].binding.operation_id,
             Some("listItems".to_string())
         );
+        // Environment should be created with inferred baseUrl from spec server
+        assert_eq!(collection.environments.len(), 1);
+        assert_eq!(collection.environments[0].name, "local");
+        assert_eq!(
+            collection.environments[0].variables.get("baseUrl"),
+            Some(&"https://api.test.com".to_string())
+        );
+        assert_eq!(collection.active_environment, Some("local".to_string()));
     }
 
     // ── body_type_from_content_type unit tests ──────────────────────────
@@ -809,5 +851,178 @@ mod tests {
             BodyType::Json,
             "absent content_type should default to Json at the call site"
         );
+    }
+
+    // ── url_origin tests ────────────────────────────────────────────────
+
+    #[test]
+    fn test_url_origin_extracts_https_origin() {
+        assert_eq!(
+            url_origin("https://api.example.com/v1/spec.json"),
+            Some("https://api.example.com".to_string())
+        );
+    }
+
+    #[test]
+    fn test_url_origin_extracts_http_origin() {
+        assert_eq!(
+            url_origin("http://localhost:8080/spec.json"),
+            Some("http://localhost:8080".to_string())
+        );
+    }
+
+    #[test]
+    fn test_url_origin_returns_none_for_inline() {
+        assert_eq!(url_origin("inline"), None);
+    }
+
+    #[test]
+    fn test_url_origin_returns_none_for_file_path() {
+        assert_eq!(url_origin("/tmp/spec.json"), None);
+    }
+
+    #[test]
+    fn test_url_origin_handles_url_without_path() {
+        assert_eq!(
+            url_origin("https://api.example.com"),
+            Some("https://api.example.com".to_string())
+        );
+    }
+
+    // ── environment creation tests ───────────────────────────────────────
+
+    #[test]
+    fn test_ir_to_collection_creates_local_environment_from_spec_server() {
+        let parsed = ParsedSpec {
+            title: "Env Test".to_string(),
+            version: Some("1.0.0".to_string()),
+            description: None,
+            base_urls: vec![ParsedServer {
+                url: "https://api.test.com".to_string(),
+                description: None,
+            }],
+            endpoints: vec![],
+            auth_schemes: vec![],
+            variables: BTreeMap::new(),
+        };
+        let fetch = FetchResult {
+            content: "{}".to_string(),
+            source_url: "https://example.com/spec.json".to_string(),
+            is_fallback: false,
+            fetched_at: "2026-01-31T10:30:00Z".to_string(),
+        };
+        let collection = ImportService::ir_to_collection(
+            &parsed,
+            &fetch,
+            SourceType::Openapi,
+            &ImportOverrides::default(),
+        );
+        assert_eq!(collection.environments.len(), 1);
+        assert_eq!(collection.environments[0].name, "local");
+        assert_eq!(
+            collection.environments[0].variables.get("baseUrl"),
+            Some(&"https://api.test.com".to_string())
+        );
+        assert_eq!(collection.active_environment, Some("local".to_string()));
+    }
+
+    #[test]
+    fn test_ir_to_collection_falls_back_to_source_url_origin_when_no_spec_server() {
+        let parsed = ParsedSpec {
+            title: "Env Fallback Test".to_string(),
+            version: None,
+            description: None,
+            base_urls: vec![],
+            endpoints: vec![],
+            auth_schemes: vec![],
+            variables: BTreeMap::new(),
+        };
+        let fetch = FetchResult {
+            content: "{}".to_string(),
+            source_url: "https://myserver.io/api/openapi.json".to_string(),
+            is_fallback: false,
+            fetched_at: "2026-01-31T10:30:00Z".to_string(),
+        };
+        let collection = ImportService::ir_to_collection(
+            &parsed,
+            &fetch,
+            SourceType::Openapi,
+            &ImportOverrides::default(),
+        );
+        assert_eq!(collection.environments.len(), 1);
+        assert_eq!(
+            collection.environments[0].variables.get("baseUrl"),
+            Some(&"https://myserver.io".to_string())
+        );
+    }
+
+    #[test]
+    fn test_ir_to_collection_falls_back_to_example_when_no_server_and_inline_source() {
+        let parsed = ParsedSpec {
+            title: "Inline Test".to_string(),
+            version: None,
+            description: None,
+            base_urls: vec![],
+            endpoints: vec![],
+            auth_schemes: vec![],
+            variables: BTreeMap::new(),
+        };
+        let fetch = FetchResult {
+            content: "{}".to_string(),
+            source_url: "inline".to_string(),
+            is_fallback: false,
+            fetched_at: "2026-01-31T10:30:00Z".to_string(),
+        };
+        let collection = ImportService::ir_to_collection(
+            &parsed,
+            &fetch,
+            SourceType::Openapi,
+            &ImportOverrides::default(),
+        );
+        assert_eq!(collection.environments.len(), 1);
+        assert_eq!(
+            collection.environments[0].variables.get("baseUrl"),
+            Some(&"https://example.com".to_string())
+        );
+    }
+
+    #[test]
+    fn test_ir_to_collection_uses_base_url_template_in_request_urls() {
+        let parsed = ParsedSpec {
+            title: "Template Test".to_string(),
+            version: Some("1.0.0".to_string()),
+            description: None,
+            base_urls: vec![ParsedServer {
+                url: "https://api.test.com".to_string(),
+                description: None,
+            }],
+            endpoints: vec![ParsedEndpoint {
+                operation_id: Some("listItems".to_string()),
+                method: "GET".to_string(),
+                path: "/items".to_string(),
+                summary: Some("List items".to_string()),
+                description: None,
+                tags: vec![],
+                parameters: vec![],
+                request_body: None,
+                deprecated: false,
+                is_streaming: false,
+            }],
+            auth_schemes: vec![],
+            variables: BTreeMap::new(),
+        };
+        let fetch = FetchResult {
+            content: "{}".to_string(),
+            source_url: "https://example.com/spec.json".to_string(),
+            is_fallback: false,
+            fetched_at: "2026-01-31T10:30:00Z".to_string(),
+        };
+        let collection = ImportService::ir_to_collection(
+            &parsed,
+            &fetch,
+            SourceType::Openapi,
+            &ImportOverrides::default(),
+        );
+        assert_eq!(collection.requests[0].url, "{{baseUrl}}/items");
     }
 }

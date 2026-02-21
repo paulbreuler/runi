@@ -232,6 +232,8 @@ pub struct CollectionSummary {
     pub request_count: usize,
     pub source_type: String,
     pub modified_at: String,
+    /// Spec version from the collection's source (e.g., "1.2.3").
+    pub spec_version: Option<String>,
 }
 
 fn load_collection_summary(path: &PathBuf) -> Result<CollectionSummary, String> {
@@ -257,6 +259,7 @@ fn load_collection_summary(path: &PathBuf) -> Result<CollectionSummary, String> 
         request_count: requests.len(),
         source_type: format!("{:?}", source.source_type).to_lowercase(),
         modified_at,
+        spec_version: source.spec_version,
     })
 }
 

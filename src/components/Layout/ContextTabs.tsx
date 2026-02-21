@@ -161,6 +161,73 @@ export const ContextTabs = (): React.JSX.Element | null => {
     setMenuTabId(null);
   }, [menuTabId]);
 
+  const closeMenuAndReset = useCallback((): void => {
+    setMenuOpen(false);
+    setContextMenuAnchor(null);
+    setMenuTabId(null);
+  }, []);
+
+  const handleMenuClose = useCallback((): void => {
+    if (menuTabId === null) {
+      closeMenuAndReset();
+      return;
+    }
+    globalEventBus.emit<ContextClosePayload>('context.close', {
+      contextId: menuTabId,
+      actor: 'human',
+    });
+    closeMenuAndReset();
+  }, [menuTabId, closeMenuAndReset]);
+
+  const handleMenuCloseOthers = useCallback((): void => {
+    if (menuTabId === null) {
+      closeMenuAndReset();
+      return;
+    }
+    const { contextOrder } = useCanvasStore.getState();
+    const toClose = contextOrder.filter((id) => id !== menuTabId && id.startsWith('request-'));
+    for (const id of toClose) {
+      globalEventBus.emit<ContextClosePayload>('context.close', {
+        contextId: id,
+        actor: 'human',
+      });
+    }
+    closeMenuAndReset();
+  }, [menuTabId, closeMenuAndReset]);
+
+  const handleMenuCloseAll = useCallback((): void => {
+    const { contextOrder } = useCanvasStore.getState();
+    const toClose = contextOrder.filter((id) => id.startsWith('request-'));
+    for (const id of toClose) {
+      globalEventBus.emit<ContextClosePayload>('context.close', {
+        contextId: id,
+        actor: 'human',
+      });
+    }
+    closeMenuAndReset();
+  }, [closeMenuAndReset]);
+
+  const handleMenuCloseToRight = useCallback((): void => {
+    if (menuTabId === null) {
+      closeMenuAndReset();
+      return;
+    }
+    const { contextOrder } = useCanvasStore.getState();
+    const pivotIndex = contextOrder.indexOf(menuTabId);
+    if (pivotIndex === -1) {
+      closeMenuAndReset();
+      return;
+    }
+    const toClose = contextOrder.slice(pivotIndex + 1).filter((id) => id.startsWith('request-'));
+    for (const id of toClose) {
+      globalEventBus.emit<ContextClosePayload>('context.close', {
+        contextId: id,
+        actor: 'human',
+      });
+    }
+    closeMenuAndReset();
+  }, [menuTabId, closeMenuAndReset]);
+
   const handleSaveDialogSave = useCallback(
     async (collectionId: string, requestName: string): Promise<void> => {
       if (saveDialogTabId === null) {
@@ -484,17 +551,72 @@ export const ContextTabs = (): React.JSX.Element | null => {
               style={{ zIndex: OVERLAY_Z_INDEX }}
               data-test-id="tab-context-menu"
             >
+              {/* Close this tab */}
+              <Menu.Item
+                className={cn(focusRingClasses, menuItemClasses)}
+                onClick={handleMenuClose}
+                data-test-id="tab-menu-close"
+              >
+                Close
+              </Menu.Item>
+
+              {/* Close other tabs */}
+              <Menu.Item
+                className={cn(
+                  focusRingClasses,
+                  menuItemClasses,
+                  'data-[disabled]:opacity-40 data-[disabled]:cursor-not-allowed'
+                )}
+                disabled={contextOrder.filter((id) => id.startsWith('request-')).length <= 1}
+                onClick={handleMenuCloseOthers}
+                data-test-id="tab-menu-close-others"
+              >
+                Close Others
+              </Menu.Item>
+
+              {/* Close all to the right */}
+              <Menu.Item
+                className={cn(
+                  focusRingClasses,
+                  menuItemClasses,
+                  'data-[disabled]:opacity-40 data-[disabled]:cursor-not-allowed'
+                )}
+                disabled={
+                  menuTabId === null ||
+                  contextOrder
+                    .slice(contextOrder.indexOf(menuTabId) + 1)
+                    .filter((id) => id.startsWith('request-')).length === 0
+                }
+                onClick={handleMenuCloseToRight}
+                data-test-id="tab-menu-close-to-right"
+              >
+                Close All to Right
+              </Menu.Item>
+
+              {/* Close all tabs */}
+              <Menu.Item
+                className={cn(focusRingClasses, menuItemClasses)}
+                onClick={handleMenuCloseAll}
+                data-test-id="tab-menu-close-all"
+              >
+                Close All
+              </Menu.Item>
+
+              {/* Separator before Save to Collection (only when applicable) */}
               {menuTabId !== null &&
                 (contextState.get(menuTabId) as unknown as RequestTabState | undefined)?.source
                   ?.type !== 'collection' && (
-                  <Menu.Item
-                    className={cn(focusRingClasses, menuItemClasses)}
-                    onClick={handleSaveToCollection}
-                    data-test-id="tab-menu-save-to-collection"
-                  >
-                    <FolderOpen size={14} className="text-text-muted" />
-                    Save to Collection...
-                  </Menu.Item>
+                  <>
+                    <div className="my-1 h-px bg-border-subtle/50" role="separator" />
+                    <Menu.Item
+                      className={cn(focusRingClasses, menuItemClasses)}
+                      onClick={handleSaveToCollection}
+                      data-test-id="tab-menu-save-to-collection"
+                    >
+                      <FolderOpen size={14} className="text-text-muted" />
+                      Save to Collection...
+                    </Menu.Item>
+                  </>
                 )}
             </Menu.Popup>
           </Menu.Positioner>

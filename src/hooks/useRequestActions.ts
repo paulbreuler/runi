@@ -14,6 +14,9 @@ import { useHistoryStore } from '@/stores/useHistoryStore';
 import { createRequestParams, type HttpMethod } from '@/types/http';
 import { useRequestStore, RequestContextIdContext } from '@/stores/useRequestStore';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
+import { useCanvasStore } from '@/stores/useCanvasStore';
+import { useCollectionStore } from '@/stores/useCollectionStore';
+import { resolveVariables } from '@/utils/variables';
 
 export interface UseRequestActionsReturn {
   /** Local URL state (optimistic) */
@@ -59,6 +62,27 @@ export const useRequestActions = (): UseRequestActionsReturn => {
       return;
     }
 
+    // Resolve environment variables before sending
+    const canvasState = useCanvasStore.getState();
+    const { activeContextId, getContextState } = canvasState;
+    const tabState =
+      activeContextId !== null
+        ? (getContextState(activeContextId) as { source?: { collectionId?: string } })
+        : undefined;
+    const collectionId = tabState?.source?.collectionId;
+    const collection =
+      collectionId !== undefined
+        ? useCollectionStore.getState().collections.find((c) => c.id === collectionId)
+        : undefined;
+    const activeEnv = collection?.environments.find(
+      (e) => e.name === collection.active_environment
+    );
+    const envVars: Record<string, string> = {
+      ...(collection?.variables ?? {}),
+      ...(activeEnv?.variables ?? {}),
+    };
+    const resolvedUrl = resolveVariables(localUrl, envVars);
+
     setLoading(true);
     setResponse(null);
     setUrl(localUrl);
@@ -69,17 +93,17 @@ export const useRequestActions = (): UseRequestActionsReturn => {
       const currentHeaders = headers;
       const currentBody = body === '' ? null : body;
 
-      const params = createRequestParams(localUrl, localMethod, {
+      const params = createRequestParams(resolvedUrl, localMethod, {
         headers: currentHeaders,
         body: currentBody,
       });
       const result = await executeRequest(params);
       setResponse(result);
 
-      // Auto-save to history after successful request
+      // Auto-save to history after successful request (use resolved URL)
       await addEntry(
         {
-          url: localUrl,
+          url: resolvedUrl,
           method: localMethod,
           headers: currentHeaders,
           body: currentBody,

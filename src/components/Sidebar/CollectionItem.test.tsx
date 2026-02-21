@@ -365,4 +365,86 @@ describe('CollectionItem', (): void => {
       expect(popover).toHaveTextContent('My Collection');
     });
   });
+
+  describe('spec_version badge', (): void => {
+    it('renders spec_version badge when spec_version is provided', (): void => {
+      const summaryWithVersion: CollectionSummary = {
+        ...simpleSummary,
+        spec_version: '3.0.1',
+      };
+      render(<CollectionItem summary={summaryWithVersion} />);
+
+      const badge = screen.getByTestId('collection-version-col_1');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveTextContent('3.0.1');
+    });
+
+    it('does not render spec_version badge when spec_version is undefined', (): void => {
+      render(<CollectionItem summary={simpleSummary} />);
+      expect(screen.queryByTestId('collection-version-col_1')).toBeNull();
+    });
+  });
+
+  describe('drift indicator dot', (): void => {
+    it('renders red drift dot when operationsRemoved is non-empty', (): void => {
+      mockCollectionState = {
+        ...mockCollectionState,
+        driftResults: {
+          col_1: {
+            changed: true,
+            operationsAdded: [],
+            operationsRemoved: [{ method: 'DELETE', path: '/users/{id}' }],
+            operationsChanged: [],
+          },
+        },
+      };
+      render(<CollectionItem summary={simpleSummary} />);
+
+      const dot = screen.getByTestId('collection-drift-dot-col_1');
+      expect(dot).toBeInTheDocument();
+      expect(dot.getAttribute('aria-label')).toBe('Breaking changes detected');
+      expect(dot.className).toContain('bg-signal-error');
+    });
+
+    it('renders amber drift dot when only operationsChanged', (): void => {
+      mockCollectionState = {
+        ...mockCollectionState,
+        driftResults: {
+          col_1: {
+            changed: true,
+            operationsAdded: [],
+            operationsRemoved: [],
+            operationsChanged: [{ method: 'GET', path: '/users', changes: ['summary'] }],
+          },
+        },
+      };
+      render(<CollectionItem summary={simpleSummary} />);
+
+      const dot = screen.getByTestId('collection-drift-dot-col_1');
+      expect(dot).toBeInTheDocument();
+      expect(dot.getAttribute('aria-label')).toBe('Changes detected');
+      expect(dot.className).toContain('bg-signal-warning');
+    });
+
+    it('does not render drift dot when changed is false', (): void => {
+      mockCollectionState = {
+        ...mockCollectionState,
+        driftResults: {
+          col_1: {
+            changed: false,
+            operationsAdded: [],
+            operationsRemoved: [],
+            operationsChanged: [],
+          },
+        },
+      };
+      render(<CollectionItem summary={simpleSummary} />);
+      expect(screen.queryByTestId('collection-drift-dot-col_1')).toBeNull();
+    });
+
+    it('does not render drift dot when no driftResult for collection', (): void => {
+      render(<CollectionItem summary={simpleSummary} />);
+      expect(screen.queryByTestId('collection-drift-dot-col_1')).toBeNull();
+    });
+  });
 });

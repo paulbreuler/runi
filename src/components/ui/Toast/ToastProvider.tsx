@@ -6,6 +6,7 @@
 import * as React from 'react';
 import { Toast as BaseUIToast } from '@base-ui/react/toast';
 import { cn } from '@/utils/cn';
+import { TOAST_Z_INDEX } from '@/utils/z-index';
 import { Toast } from './Toast';
 import { toastManager } from './useToast';
 
@@ -34,9 +35,10 @@ const ToastViewport = (): React.JSX.Element => {
     <BaseUIToast.Portal>
       <BaseUIToast.Viewport
         className={cn(
-          'fixed bottom-10 right-0 z-100 flex max-h-screen w-full flex-col-reverse p-4',
+          'fixed bottom-10 right-0 flex max-h-screen w-full flex-col-reverse p-4',
           'sm:max-w-[420px]'
         )}
+        style={{ zIndex: TOAST_Z_INDEX }}
         data-test-id="toast-viewport"
       >
         {toasts.map((toast) => (

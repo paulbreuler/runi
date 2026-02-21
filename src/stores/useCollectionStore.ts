@@ -27,8 +27,9 @@ interface CollectionState {
   isLoading: boolean;
   error: string | null;
 
-  refreshCollectionSpec: (collectionId: string) => Promise<void>;
+  refreshCollectionSpec: (collectionId: string, newSpecPath?: string) => Promise<void>;
   dismissDriftResult: (collectionId: string) => void;
+  setDriftResult: (collectionId: string, result: SpecRefreshResult) => void;
   createCollection: (name: string) => Promise<Collection | null>;
   loadCollections: () => Promise<void>;
   loadCollection: (id: string) => Promise<void>;
@@ -73,6 +74,13 @@ interface CollectionState {
     requestId: string,
     targetCollectionId: string
   ) => Promise<boolean>;
+  upsertEnvironment: (
+    collectionId: string,
+    name: string,
+    variables: Record<string, string>
+  ) => Promise<void>;
+  deleteEnvironment: (collectionId: string, name: string) => Promise<void>;
+  setActiveEnvironment: (collectionId: string, name: string | null) => Promise<void>;
   selectCollection: (id: string | null) => void;
   selectRequest: (collectionId: string, requestId: string) => void;
   toggleExpanded: (id: string) => void;
@@ -109,11 +117,12 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   isLoading: false,
   error: null,
 
-  refreshCollectionSpec: async (collectionId: string): Promise<void> => {
+  refreshCollectionSpec: async (collectionId: string, newSpecPath?: string): Promise<void> => {
     set({ isLoading: true, error: null });
     try {
       const result = await invoke<SpecRefreshResult>('cmd_refresh_collection_spec', {
         collectionId,
+        newSpecPath: newSpecPath ?? null,
       });
 
       set((state) => ({
@@ -144,6 +153,12 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     });
   },
 
+  setDriftResult: (collectionId: string, result: SpecRefreshResult): void => {
+    set((state) => ({
+      driftResults: { ...state.driftResults, [collectionId]: result },
+    }));
+  },
+
   createCollection: async (name: string): Promise<Collection | null> => {
     set({ isLoading: true, error: null });
     try {
@@ -161,6 +176,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             request_count: collection.requests.length,
             source_type: collection.source.source_type,
             modified_at: collection.metadata.modified_at,
+            spec_version: collection.source.spec_version,
           },
         ].sort((a, b) => a.name.localeCompare(b.name)),
         selectedCollectionId: collection.id,
@@ -227,6 +243,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             request_count: collection.requests.length,
             source_type: collection.source.source_type,
             modified_at: collection.metadata.modified_at,
+            spec_version: collection.source.spec_version,
           },
         ],
         selectedCollectionId: collection.id,
@@ -258,6 +275,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             request_count: collection.requests.length,
             source_type: collection.source.source_type,
             modified_at: collection.metadata.modified_at,
+            spec_version: collection.source.spec_version,
           },
         ],
         selectedCollectionId: collection.id,
@@ -303,6 +321,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             request_count: collection.requests.length,
             source_type: collection.source.source_type,
             modified_at: collection.metadata.modified_at,
+            spec_version: collection.source.spec_version,
           },
         ].sort((a, b) => a.name.localeCompare(b.name)),
         selectedCollectionId: collection.id,
@@ -446,6 +465,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
             request_count: collection.requests.length,
             source_type: collection.source.source_type,
             modified_at: collection.metadata.modified_at,
+            spec_version: collection.source.spec_version,
           },
         ].sort((a, b) => a.name.localeCompare(b.name)),
         selectedCollectionId: collection.id,
@@ -574,6 +594,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
           request_count: collection.requests.length,
           source_type: collection.source.source_type,
           modified_at: collection.metadata.modified_at,
+          spec_version: collection.source.spec_version,
         };
         return {
           collections: collectionExists
@@ -703,6 +724,40 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     } catch (error) {
       set({ error: String(error), isLoading: false });
       return false;
+    }
+  },
+
+  upsertEnvironment: async (
+    collectionId: string,
+    name: string,
+    variables: Record<string, string>
+  ): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      await invoke('cmd_upsert_environment', { collectionId, name, variables });
+      set({ isLoading: false });
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  deleteEnvironment: async (collectionId: string, name: string): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      await invoke('cmd_delete_environment', { collectionId, name });
+      set({ isLoading: false });
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
+    }
+  },
+
+  setActiveEnvironment: async (collectionId: string, name: string | null): Promise<void> => {
+    set({ isLoading: true, error: null });
+    try {
+      await invoke('cmd_set_active_environment', { collectionId, name });
+      set({ isLoading: false });
+    } catch (error) {
+      set({ error: String(error), isLoading: false });
     }
   },
 

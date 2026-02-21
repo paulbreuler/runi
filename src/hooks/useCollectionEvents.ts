@@ -21,6 +21,8 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import type { DriftOperation } from '@/types/generated/DriftOperation';
+import type { OperationChange } from '@/types/generated/OperationChange';
 
 /**
  * Who initiated this action.
@@ -108,6 +110,19 @@ export interface RequestExecutedEvent {
 }
 
 /**
+ * Collection refreshed event payload — emitted when a spec refresh completes.
+ * Contains the full SpecRefreshResult (camelCase, from serde rename_all) plus
+ * `collection_id` injected by the backend before emission.
+ */
+export interface CollectionRefreshedEvent {
+  collection_id: string;
+  changed: boolean;
+  operationsAdded: DriftOperation[];
+  operationsRemoved: DriftOperation[];
+  operationsChanged: OperationChange[];
+}
+
+/**
  * Options for the useCollectionEvents hook
  */
 export interface UseCollectionEventsOptions {
@@ -131,6 +146,9 @@ export interface UseCollectionEventsOptions {
 
   /** Callback when a request is executed */
   onRequestExecuted?: (envelope: EventEnvelope<RequestExecutedEvent>) => void;
+
+  /** Callback when a collection spec is refreshed */
+  onCollectionRefreshed?: (event: CollectionRefreshedEvent) => void;
 
   /** Callback when listener setup fails */
   onError?: (error: unknown) => void;
@@ -170,6 +188,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onRequestUpdated,
     onRequestDeleted,
     onRequestExecuted,
+    onCollectionRefreshed,
     onError,
   } = options;
 
@@ -181,6 +200,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
   const onRequestUpdatedRef = useRef(onRequestUpdated);
   const onRequestDeletedRef = useRef(onRequestDeleted);
   const onRequestExecutedRef = useRef(onRequestExecuted);
+  const onCollectionRefreshedRef = useRef(onCollectionRefreshed);
   const onErrorRef = useRef(onError);
 
   // Update refs when callbacks change
@@ -192,6 +212,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onRequestUpdatedRef.current = onRequestUpdated;
     onRequestDeletedRef.current = onRequestDeleted;
     onRequestExecutedRef.current = onRequestExecuted;
+    onCollectionRefreshedRef.current = onCollectionRefreshed;
     onErrorRef.current = onError;
   }, [
     onCollectionCreated,
@@ -201,6 +222,7 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     onRequestUpdated,
     onRequestDeleted,
     onRequestExecuted,
+    onCollectionRefreshed,
     onError,
   ]);
 
@@ -265,6 +287,15 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     []
   );
 
+  // Handle collection refreshed event.
+  // NOTE: The backend emits `collection:refreshed` as a plain payload (not wrapped
+  // in an EventEnvelope), so we listen directly for CollectionRefreshedEvent.
+  const handleCollectionRefreshed = useCallback((event: CollectionRefreshedEvent): void => {
+    if (onCollectionRefreshedRef.current !== undefined) {
+      onCollectionRefreshedRef.current(event);
+    }
+  }, []);
+
   // Subscribe to Tauri events.
   // Uses a cancelled flag to handle the race where the component unmounts
   // before async listen() calls resolve — any late-resolving listeners
@@ -289,8 +320,23 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
 
     const setupListeners = async (): Promise<void> => {
       try {
+        // collection:refreshed is wrapped in EventEnvelope like all other collection events.
+        // The drift data is at event.payload.payload (inner payload of the envelope).
+        const unlistenRefreshed = await listen<EventEnvelope<CollectionRefreshedEvent>>(
+          'collection:refreshed',
+          (event): void => {
+            handleCollectionRefreshed(event.payload.payload);
+          }
+        );
+        if (cancelled) {
+          unlistenRefreshed();
+        } else {
+          unlistenFns.push(unlistenRefreshed);
+        }
+
         await Promise.all([
           addListener('collection:created', handleCollectionCreated),
+          addListener('collection:imported', handleCollectionCreated),
           addListener('collection:deleted', handleCollectionDeleted),
           addListener('collection:saved', handleCollectionSaved),
           addListener('request:added', handleRequestAdded),
@@ -323,5 +369,6 @@ export function useCollectionEvents(options: UseCollectionEventsOptions): void {
     handleRequestUpdated,
     handleRequestDeleted,
     handleRequestExecuted,
+    handleCollectionRefreshed,
   ]);
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import type { ReactElement, HTMLAttributes } from 'react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { CanvasHost } from './CanvasHost';
@@ -440,5 +440,262 @@ describe('CanvasHost - Error Messages (Feature #3)', () => {
 
     // Should show simple empty message
     expect(container.textContent).toContain('No active context');
+  });
+});
+
+// Helper to register a two-column layout for sash tests
+const registerTwoColumnContext = (): void => {
+  useCanvasStore.getState().registerContext({
+    id: 'test-context',
+    label: 'Test',
+    icon: FileText,
+    panels: { panel1: TestPanel1, panel2: TestPanel2 },
+    layouts: [
+      {
+        id: 'columns',
+        label: 'Columns',
+        description: 'Two columns',
+        icon: LayoutGrid,
+        arrangement: { type: 'columns', panels: ['panel1', 'panel2'], ratios: [50, 50] },
+        category: 'preset',
+      },
+    ],
+  });
+};
+
+// Helper to register a two-row layout for sash tests
+const registerTwoRowContext = (): void => {
+  useCanvasStore.getState().registerContext({
+    id: 'test-context',
+    label: 'Test',
+    icon: FileText,
+    panels: { panel1: TestPanel1, panel2: TestPanel2 },
+    layouts: [
+      {
+        id: 'rows',
+        label: 'Rows',
+        description: 'Two rows',
+        icon: LayoutGrid,
+        arrangement: { type: 'rows', panels: ['panel1', 'panel2'], ratios: [50, 50] },
+        category: 'preset',
+      },
+    ],
+  });
+};
+
+// Helper to register a three-column layout for sash tests
+const registerThreeColumnContext = (): void => {
+  useCanvasStore.getState().registerContext({
+    id: 'test-context',
+    label: 'Test',
+    icon: FileText,
+    panels: { panel1: TestPanel1, panel2: TestPanel2, panel3: TestPanel3 },
+    layouts: [
+      {
+        id: 'columns',
+        label: 'Columns',
+        description: 'Three columns',
+        icon: LayoutGrid,
+        arrangement: {
+          type: 'columns',
+          panels: ['panel1', 'panel2', 'panel3'],
+          ratios: [33, 34, 33],
+        },
+        category: 'preset',
+      },
+    ],
+  });
+};
+
+describe('CanvasHost - Panel Sash (Resize Handle)', () => {
+  beforeEach(() => {
+    useCanvasStore.getState().reset();
+  });
+
+  it('renders a sash between two columns', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash).toBeInTheDocument();
+  });
+
+  it('renders a sash between two rows', () => {
+    registerTwoRowContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash).toBeInTheDocument();
+  });
+
+  it('renders two sashes for three columns', () => {
+    registerThreeColumnContext();
+
+    render(<CanvasHost />);
+
+    expect(screen.getByTestId('canvas-sash-0')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-sash-1')).toBeInTheDocument();
+  });
+
+  it('does not render a sash for single panel layout', () => {
+    useCanvasStore.getState().registerContext({
+      id: 'test-context',
+      label: 'Test',
+      icon: FileText,
+      panels: { panel1: TestPanel1 },
+      layouts: [
+        {
+          id: 'single',
+          label: 'Single',
+          description: 'Single panel',
+          icon: LayoutGrid,
+          arrangement: { type: 'single', panel: 'panel1' },
+          category: 'preset',
+        },
+      ],
+    });
+
+    render(<CanvasHost />);
+
+    expect(screen.queryByTestId('canvas-sash-0')).not.toBeInTheDocument();
+  });
+
+  it('sash has correct accessibility attributes for columns', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash).toHaveAttribute('role', 'separator');
+    expect(sash).toHaveAttribute('aria-orientation', 'vertical');
+    expect(sash).toHaveAttribute('aria-label', 'Resize panels (double-click to reset)');
+  });
+
+  it('sash has correct accessibility attributes for rows', () => {
+    registerTwoRowContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash).toHaveAttribute('role', 'separator');
+    expect(sash).toHaveAttribute('aria-orientation', 'horizontal');
+    expect(sash).toHaveAttribute('aria-label', 'Resize panels (double-click to reset)');
+  });
+
+  it('sash has col-resize cursor class for columns', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash.className).toContain('cursor-col-resize');
+  });
+
+  it('sash has row-resize cursor class for rows', () => {
+    registerTwoRowContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash.className).toContain('cursor-row-resize');
+  });
+
+  it('sash has transparent background by default', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash.className).toContain('bg-transparent');
+  });
+
+  it('sash has hover:bg-accent-blue class for blue hover color', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+    expect(sash.className).toContain('hover:bg-accent-blue');
+  });
+
+  it('panels have correct initial widths in columns with sash present', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const panel1 = screen.getByTestId('canvas-panel-panel1');
+    const panel2 = screen.getByTestId('canvas-panel-panel2');
+
+    expect(panel1).toHaveStyle({ width: '50%' });
+    expect(panel2).toHaveStyle({ width: '50%' });
+  });
+
+  it('panels have correct initial heights in rows with sash present', () => {
+    registerTwoRowContext();
+
+    render(<CanvasHost />);
+
+    const panel1 = screen.getByTestId('canvas-panel-panel1');
+    const panel2 = screen.getByTestId('canvas-panel-panel2');
+
+    expect(panel1).toHaveStyle({ height: '50%' });
+    expect(panel2).toHaveStyle({ height: '50%' });
+  });
+
+  it('renders canvas-panel-container for multi-panel layouts', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    expect(screen.getByTestId('canvas-panel-container')).toBeInTheDocument();
+  });
+
+  it('sash responds to pointer down event', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+
+    // Fire pointer down - should not throw
+    fireEvent.pointerDown(sash, { pointerId: 1 });
+
+    // The sash should now have the active (dragging) class
+    expect(sash.className).toContain('bg-accent-blue');
+  });
+
+  it('sash shows blue accent color while dragging', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+
+    // Start drag
+    fireEvent.pointerDown(sash, { pointerId: 1 });
+
+    // Should have active blue accent class (not just hover)
+    expect(sash.className).toContain('bg-accent-blue');
+  });
+
+  it('sash stops dragging on pointer up', () => {
+    registerTwoColumnContext();
+
+    render(<CanvasHost />);
+
+    const sash = screen.getByTestId('canvas-sash-0');
+
+    // Start drag
+    fireEvent.pointerDown(sash, { pointerId: 1 });
+    expect(sash.className).toContain('bg-accent-blue');
+
+    // End drag
+    fireEvent.pointerUp(sash, { pointerId: 1 });
+
+    // Should return to transparent state (no forced bg-accent-blue, only hover)
+    // The bg-transparent class should be present since dragging is false
+    expect(sash.className).toContain('bg-transparent');
   });
 });

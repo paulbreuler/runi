@@ -240,6 +240,34 @@ impl SuggestionService {
         self.get_suggestion(id)
     }
 
+    /// Dismiss all pending suggestions atomically.
+    ///
+    /// Sets `status='dismissed'` and `resolved_at=now` for every suggestion currently in
+    /// the `pending` state. Returns the count of rows affected.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database update fails.
+    pub fn clear_all_pending(&self) -> Result<u64, String> {
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| format!("Lock poisoned: {e}"))?;
+
+        let resolved_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
+        let affected = conn
+            .execute(
+                "UPDATE suggestions SET status = 'dismissed', resolved_at = ?1 \
+                 WHERE status = 'pending'",
+                rusqlite::params![resolved_at],
+            )
+            .map_err(|e| format!("Failed to dismiss pending suggestions: {e}"))?;
+
+        drop(conn);
+        Ok(affected as u64)
+    }
+
     /// Convert a database row to a `Suggestion`.
     fn row_to_suggestion(row: &rusqlite::Row<'_>) -> Result<Suggestion, String> {
         let id: String = row.get(0).map_err(|e| format!("Failed to read id: {e}"))?;
@@ -435,6 +463,58 @@ mod tests {
         assert_eq!(fetched.suggestion_type, SuggestionType::DriftFix);
         assert_eq!(fetched.collection_id, Some("col-1".to_string()));
         assert_eq!(fetched.endpoint, Some("GET /users".to_string()));
+    }
+
+    #[test]
+    fn test_clear_all_pending_dismisses_pending_suggestions() {
+        let svc = SuggestionService::in_memory().unwrap();
+
+        // Create two pending suggestions
+        svc.create_suggestion(&sample_request()).unwrap();
+        svc.create_suggestion(&CreateSuggestionRequest {
+            suggestion_type: SuggestionType::Optimization,
+            title: "Slow query".to_string(),
+            description: "N+1 detected".to_string(),
+            source: "claude".to_string(),
+            collection_id: None,
+            request_id: None,
+            endpoint: None,
+            action: "Add batch endpoint".to_string(),
+        })
+        .unwrap();
+
+        // Create one accepted suggestion (should not be affected)
+        let s3 = svc.create_suggestion(&sample_request()).unwrap();
+        svc.resolve_suggestion(&s3.id, SuggestionStatus::Accepted)
+            .unwrap();
+
+        let dismissed_count = svc.clear_all_pending().unwrap();
+        assert_eq!(dismissed_count, 2);
+
+        let pending = svc
+            .list_suggestions(Some(SuggestionStatus::Pending))
+            .unwrap();
+        assert_eq!(pending.len(), 0);
+
+        // Accepted suggestion should still be accepted
+        let accepted = svc
+            .list_suggestions(Some(SuggestionStatus::Accepted))
+            .unwrap();
+        assert_eq!(accepted.len(), 1);
+
+        // Both previously-pending are now dismissed
+        let dismissed = svc
+            .list_suggestions(Some(SuggestionStatus::Dismissed))
+            .unwrap();
+        assert_eq!(dismissed.len(), 2);
+    }
+
+    #[test]
+    fn test_clear_all_pending_returns_zero_when_no_pending() {
+        let svc = SuggestionService::in_memory().unwrap();
+
+        let count = svc.clear_all_pending().unwrap();
+        assert_eq!(count, 0);
     }
 
     #[test]

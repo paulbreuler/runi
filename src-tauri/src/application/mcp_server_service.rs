@@ -12,7 +12,8 @@ use std::sync::Arc;
 use serde_json::json;
 
 use crate::domain::collection::{
-    BodyType, Collection, CollectionRequest, IntelligenceMetadata, RequestBody, SpecBinding,
+    BodyType, Collection, CollectionEnvironment, CollectionRequest, IntelligenceMetadata,
+    RequestBody, SpecBinding,
 };
 use crate::domain::http::RequestParams;
 use crate::domain::mcp::events::{Actor, EventEmitter};
@@ -185,7 +186,8 @@ impl McpServerService {
             .find(|r| r.id == request_id)
             .ok_or_else(|| format!("Request not found: {request_id}"))?;
 
-        let params = collection_request_to_params(request, timeout_ms);
+        let vars = effective_vars(&collection);
+        let params = collection_request_to_params_with_vars(request, &vars, timeout_ms);
         Ok((params, collection_id.to_string(), request_id.to_string()))
     }
 
@@ -262,6 +264,9 @@ impl McpServerService {
             "move_request" => self.handle_move_request(&args),
             "copy_request_to_collection" => self.handle_copy_request_to_collection(&args),
             "resolve_drift" => self.handle_resolve_drift(&args),
+            "upsert_environment" => self.handle_upsert_environment(&args),
+            "delete_environment" => self.handle_delete_environment(&args),
+            "set_active_environment" => self.handle_set_active_environment(&args),
             // Async tools are handled in dispatcher (they need async I/O)
             "import_collection" | "refresh_collection_spec" | "run_hurl_suite" => {
                 Err(format!("Async tool '{name}' must be handled by dispatcher"))
@@ -677,6 +682,51 @@ impl McpServerService {
                             "description": "Replace the session tags"
                         }
                     }
+                }),
+            ),
+            // Environment tools
+            tool_def(
+                "upsert_environment",
+                "Create or update a named environment on a collection. Environments hold variable key-value pairs (e.g. baseUrl) that are interpolated into request URLs at execution time.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection" },
+                        "name": { "type": "string", "description": "Environment name (e.g. 'local', 'staging', 'production')" },
+                        "variables": {
+                            "type": "object",
+                            "description": "Variable key-value pairs for this environment",
+                            "additionalProperties": { "type": "string" }
+                        }
+                    },
+                    "required": ["collection_id", "name", "variables"]
+                }),
+            ),
+            tool_def(
+                "delete_environment",
+                "Delete a named environment from a collection. If it was the active environment, the active environment is cleared.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection" },
+                        "name": { "type": "string", "description": "Environment name to delete" }
+                    },
+                    "required": ["collection_id", "name"]
+                }),
+            ),
+            tool_def(
+                "set_active_environment",
+                "Set the active environment for a collection. Pass null for name to clear the active environment (disables variable interpolation).",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection" },
+                        "name": {
+                            "type": ["string", "null"],
+                            "description": "Environment name to activate, or null to clear"
+                        }
+                    },
+                    "required": ["collection_id"]
                 }),
             ),
         ];
@@ -1312,12 +1362,183 @@ impl McpServerService {
             is_error: false,
         })
     }
+
+    /// Upsert a named environment on a collection.
+    fn handle_upsert_environment(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        let name = args
+            .get("name")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: name".to_string())?;
+        let variables_value = args
+            .get("variables")
+            .and_then(serde_json::Value::as_object)
+            .ok_or_else(|| "Missing required parameter: variables".to_string())?;
+
+        Self::validate_collection_id(collection_id)?;
+
+        let variables: std::collections::BTreeMap<String, String> = variables_value
+            .iter()
+            .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+            .collect();
+
+        let mut collection = load_collection_in_dir(collection_id, self.dir())?;
+        if let Some(env) = collection.environments.iter_mut().find(|e| e.name == name) {
+            env.variables = variables;
+        } else {
+            collection.environments.push(CollectionEnvironment {
+                name: name.to_string(),
+                variables,
+            });
+        }
+        save_collection_in_dir(&collection, self.dir())?;
+
+        self.emit(
+            "collection:environment-updated",
+            json!({"collection_id": collection_id, "name": name}),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "collection_id": collection_id,
+                    "name": name,
+                    "message": format!("Environment '{name}' upserted on collection '{collection_id}'")
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
+
+    /// Delete a named environment from a collection.
+    fn handle_delete_environment(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        let name = args
+            .get("name")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: name".to_string())?;
+
+        Self::validate_collection_id(collection_id)?;
+
+        let mut collection = load_collection_in_dir(collection_id, self.dir())?;
+        let original_len = collection.environments.len();
+        collection.environments.retain(|e| e.name != name);
+        if collection.environments.len() == original_len {
+            return Err(format!("Environment not found: {name}"));
+        }
+        if collection.active_environment.as_deref() == Some(name) {
+            collection.active_environment = None;
+        }
+        save_collection_in_dir(&collection, self.dir())?;
+
+        self.emit(
+            "collection:environment-deleted",
+            json!({"collection_id": collection_id, "name": name}),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "collection_id": collection_id,
+                    "name": name,
+                    "message": format!("Environment '{name}' deleted from collection '{collection_id}'")
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
+
+    /// Set the active environment for a collection.
+    fn handle_set_active_environment(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        // name is optional — null means clear
+        let name: Option<&str> = args
+            .get("name")
+            .and_then(|v| if v.is_null() { None } else { v.as_str() });
+
+        Self::validate_collection_id(collection_id)?;
+
+        let mut collection = load_collection_in_dir(collection_id, self.dir())?;
+        if let Some(env_name) = name {
+            if !collection.environments.iter().any(|e| e.name == env_name) {
+                return Err(format!("Environment not found: {env_name}"));
+            }
+            collection.active_environment = Some(env_name.to_string());
+        } else {
+            collection.active_environment = None;
+        }
+        save_collection_in_dir(&collection, self.dir())?;
+
+        self.emit(
+            "collection:environment-activated",
+            json!({"collection_id": collection_id, "name": name}),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "collection_id": collection_id,
+                    "active_environment": name,
+                    "message": format!("Active environment set to '{}'", name.unwrap_or("(none)"))
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
 }
 
 /// Convert a `CollectionRequest` to `RequestParams` for HTTP execution.
-fn collection_request_to_params(req: &CollectionRequest, timeout_ms: u64) -> RequestParams {
+/// Resolve `{{key}}` template variables in a string using the provided map.
+fn resolve_variables(template: &str, vars: &std::collections::BTreeMap<String, String>) -> String {
+    let mut result = template.to_string();
+    for (key, value) in vars {
+        result = result.replace(&format!("{{{{{key}}}}}"), value);
+    }
+    result
+}
+
+/// Build the effective variable map for a collection: collection-level variables
+/// merged with the active environment's variables (env takes precedence).
+fn effective_vars(
+    collection: &crate::domain::collection::Collection,
+) -> std::collections::BTreeMap<String, String> {
+    let mut vars = collection.variables.clone();
+    if let Some(env_name) = &collection.active_environment {
+        if let Some(env) = collection.environments.iter().find(|e| &e.name == env_name) {
+            vars.extend(env.variables.clone());
+        }
+    }
+    vars
+}
+
+fn collection_request_to_params_with_vars(
+    req: &CollectionRequest,
+    vars: &std::collections::BTreeMap<String, String>,
+    timeout_ms: u64,
+) -> RequestParams {
     RequestParams {
-        url: req.url.clone(),
+        url: resolve_variables(&req.url, vars),
         method: req.method.clone(),
         headers: req
             .headers
@@ -1350,13 +1571,13 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_twenty_seven_tools() {
+    fn test_registers_thirty_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
         // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools
         // + 6 canvas tools + 1 streaming tool + 2 project context tools
-        // + 1 execute_request + 3 suggestion tools = 27 total
-        assert_eq!(tools.len(), 27);
+        // + 1 execute_request + 3 suggestion tools + 3 environment tools = 30 total
+        assert_eq!(tools.len(), 30);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
@@ -1391,6 +1612,10 @@ mod tests {
         assert!(names.contains(&"list_suggestions"));
         assert!(names.contains(&"create_suggestion"));
         assert!(names.contains(&"resolve_suggestion"));
+        // Environment tools
+        assert!(names.contains(&"upsert_environment"));
+        assert!(names.contains(&"delete_environment"));
+        assert!(names.contains(&"set_active_environment"));
     }
 
     #[test]
@@ -2449,7 +2674,8 @@ mod tests {
             ..Default::default()
         };
 
-        let params = collection_request_to_params(&req, 5000);
+        let params =
+            collection_request_to_params_with_vars(&req, &std::collections::BTreeMap::new(), 5000);
         assert_eq!(params.url, "https://api.example.com/users");
         assert_eq!(params.method, "POST");
         assert!(params.headers.is_empty());
@@ -2480,7 +2706,11 @@ mod tests {
             ..Default::default()
         };
 
-        let params = collection_request_to_params(&req, 10_000);
+        let params = collection_request_to_params_with_vars(
+            &req,
+            &std::collections::BTreeMap::new(),
+            10_000,
+        );
         assert_eq!(params.headers.len(), 2);
         assert_eq!(
             params.headers.get("Content-Type"),
@@ -2695,5 +2925,194 @@ mod tests {
         assert_eq!(captured[2].2["request_id"].as_str().unwrap(), request_id);
         assert_eq!(captured[2].2["name"].as_str().unwrap(), "To Remove");
         drop(captured);
+    }
+
+    // ── Environment MCP tool tests ────────────────────────────────────────
+
+    #[test]
+    fn test_upsert_environment_creates_new() {
+        let (mut service, _dir) = make_service();
+
+        // Create a collection first
+        let result = service
+            .call_tool("create_collection", Some(args(&[("name", "Env MCP Test")])))
+            .unwrap();
+        let text = match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        let json: serde_json::Value = serde_json::from_str(text).unwrap();
+        let collection_id = json["id"].as_str().unwrap().to_string();
+
+        // Upsert environment
+        let mut env_args = serde_json::Map::new();
+        env_args.insert("collection_id".to_string(), json!(&collection_id));
+        env_args.insert("name".to_string(), json!("local"));
+        env_args.insert(
+            "variables".to_string(),
+            json!({"baseUrl": "http://localhost:3000"}),
+        );
+
+        let result = service
+            .call_tool("upsert_environment", Some(env_args))
+            .unwrap();
+        assert!(!result.is_error);
+        let text = match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        assert!(text.contains("upserted"));
+        assert!(text.contains("local"));
+    }
+
+    #[test]
+    fn test_delete_environment_removes_it() {
+        let (mut service, _dir) = make_service();
+
+        // Create collection with an environment
+        let col_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Del Env Test")])))
+            .unwrap();
+        let text = match &col_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        let json: serde_json::Value = serde_json::from_str(text).unwrap();
+        let collection_id = json["id"].as_str().unwrap().to_string();
+
+        // Add an environment first
+        let mut env_args = serde_json::Map::new();
+        env_args.insert("collection_id".to_string(), json!(&collection_id));
+        env_args.insert("name".to_string(), json!("staging"));
+        env_args.insert(
+            "variables".to_string(),
+            json!({"baseUrl": "https://staging.example.com"}),
+        );
+        service
+            .call_tool("upsert_environment", Some(env_args))
+            .unwrap();
+
+        // Delete it
+        let result = service
+            .call_tool(
+                "delete_environment",
+                Some({
+                    let mut m = serde_json::Map::new();
+                    m.insert("collection_id".to_string(), json!(&collection_id));
+                    m.insert("name".to_string(), json!("staging"));
+                    m
+                }),
+            )
+            .unwrap();
+        assert!(!result.is_error);
+        let text = match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        assert!(text.contains("deleted"));
+    }
+
+    #[test]
+    fn test_delete_environment_not_found_returns_error() {
+        let (mut service, _dir) = make_service();
+
+        let col_result = service
+            .call_tool("create_collection", Some(args(&[("name", "Del NF Test")])))
+            .unwrap();
+        let text = match &col_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        let json: serde_json::Value = serde_json::from_str(text).unwrap();
+        let collection_id = json["id"].as_str().unwrap().to_string();
+
+        let result = service.call_tool(
+            "delete_environment",
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert("collection_id".to_string(), json!(&collection_id));
+                m.insert("name".to_string(), json!("nonexistent"));
+                m
+            }),
+        );
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_set_active_environment_success() {
+        let (mut service, _dir) = make_service();
+
+        let col_result = service
+            .call_tool(
+                "create_collection",
+                Some(args(&[("name", "Active Env Test")])),
+            )
+            .unwrap();
+        let text = match &col_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        let json: serde_json::Value = serde_json::from_str(text).unwrap();
+        let collection_id = json["id"].as_str().unwrap().to_string();
+
+        // Create the environment
+        let mut env_args = serde_json::Map::new();
+        env_args.insert("collection_id".to_string(), json!(&collection_id));
+        env_args.insert("name".to_string(), json!("production"));
+        env_args.insert(
+            "variables".to_string(),
+            json!({"baseUrl": "https://prod.example.com"}),
+        );
+        service
+            .call_tool("upsert_environment", Some(env_args))
+            .unwrap();
+
+        // Set it active
+        let result = service
+            .call_tool(
+                "set_active_environment",
+                Some({
+                    let mut m = serde_json::Map::new();
+                    m.insert("collection_id".to_string(), json!(&collection_id));
+                    m.insert("name".to_string(), json!("production"));
+                    m
+                }),
+            )
+            .unwrap();
+        assert!(!result.is_error);
+        let text = match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        assert!(text.contains("production"));
+    }
+
+    #[test]
+    fn test_set_active_environment_null_clears() {
+        let (mut service, _dir) = make_service();
+
+        let col_result = service
+            .call_tool(
+                "create_collection",
+                Some(args(&[("name", "Clear Env Test")])),
+            )
+            .unwrap();
+        let text = match &col_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        let json: serde_json::Value = serde_json::from_str(text).unwrap();
+        let collection_id = json["id"].as_str().unwrap().to_string();
+
+        // Set active to null (clear)
+        let result = service
+            .call_tool(
+                "set_active_environment",
+                Some({
+                    let mut m = serde_json::Map::new();
+                    m.insert("collection_id".to_string(), json!(&collection_id));
+                    m.insert("name".to_string(), serde_json::Value::Null);
+                    m
+                }),
+            )
+            .unwrap();
+        assert!(!result.is_error);
+        let text = match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        assert!(text.contains("(none)"));
     }
 }

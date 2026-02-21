@@ -23,8 +23,10 @@ import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useRequestStoreRaw } from '@/stores/useRequestStore';
-import type { Actor, EventEnvelope } from '@/hooks/useCollectionEvents';
+import type { Actor, EventEnvelope, CollectionRefreshedEvent } from '@/hooks/useCollectionEvents';
 import type { RequestTabSource } from '@/types/canvas';
+import type { SpecRefreshResult } from '@/types/generated/SpecRefreshResult';
+import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 
 /**
  * Push an event into the activity feed.
@@ -163,6 +165,7 @@ export const CollectionEventProvider = ({
 }): React.JSX.Element => {
   const loadCollections = useCollectionStore((s) => s.loadCollections);
   const loadCollection = useCollectionStore((s) => s.loadCollection);
+  const setDriftResult = useCollectionStore((s) => s.setDriftResult);
   useCollectionEvents({
     onCollectionCreated: (envelope): void => {
       void loadCollections();
@@ -269,6 +272,23 @@ export const CollectionEventProvider = ({
         envelope.timestamp,
         extractSeq(envelope)
       );
+    },
+    onCollectionRefreshed: (event: CollectionRefreshedEvent): void => {
+      // CollectionRefreshedEvent fields are camelCase (from SpecRefreshResult serde rename_all)
+      const result: SpecRefreshResult = {
+        changed: event.changed,
+        operationsAdded: event.operationsAdded,
+        operationsRemoved: event.operationsRemoved,
+        operationsChanged: event.operationsChanged,
+      };
+      setDriftResult(event.collection_id, result);
+
+      if (event.changed && event.operationsRemoved.length > 0) {
+        globalEventBus.emit<ToastEventPayload>('toast.show', {
+          type: 'warning',
+          message: `Spec refreshed — ${String(event.operationsRemoved.length)} breaking change${event.operationsRemoved.length === 1 ? '' : 's'} detected`,
+        });
+      }
     },
   });
 

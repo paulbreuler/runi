@@ -97,6 +97,8 @@ pub fn convert_to_collection(
         },
         auth: None,
         variables: BTreeMap::new(),
+        environments: vec![],
+        active_environment: None,
         extensions: BTreeMap::new(),
         requests,
     }

@@ -9,11 +9,19 @@
  * Cross-context panel that displays AI-generated suggestions. Shows drift fixes,
  * schema updates, test gaps, and optimization hints. Each suggestion is actionable
  * (accept/dismiss) and links to its originating context.
+ *
+ * Design principles:
+ * - "Clear all" is a destructive bulk action: visually isolated in the header, separated
+ *   from per-card actions, uses text-signal-error on hover to signal danger.
+ * - Card actions (Accept/Dismiss) are separated from card content by a top border divider,
+ *   making it impossible to confuse them with bulk actions.
+ * - Type chips are colored, pill-shaped, and scannable at a glance.
+ * - Resolved suggestions are visually muted so pending items stay dominant.
  */
 
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { AlertTriangle, CheckCircle, Eye, Lightbulb, TestTube, X, Zap } from 'lucide-react';
+import { AlertTriangle, Check, Eye, Lightbulb, TestTube, X, Zap } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import type { Suggestion } from '@/types/generated/Suggestion';
@@ -28,39 +36,68 @@ interface SuggestionPanelProps {
   onDismiss: (id: string) => void;
   /** Callback when a suggestion's context link is clicked. */
   onNavigate?: (suggestion: Suggestion) => void;
+  /** Callback to clear all pending suggestions. */
+  onClearAll?: () => void;
   /** Backend error message, if any. */
   error?: string | null;
   /** Additional CSS classes. */
   className?: string;
 }
 
-/** Icon and color mapping for suggestion types. */
-const typeConfig: Record<SuggestionType, { icon: React.ReactNode; label: string; color: string }> =
+/**
+ * Icon, label, and color config per suggestion type.
+ *
+ * Colors follow the runi signal system:
+ *   drift_fix   → amber  (warning: something has drifted)
+ *   schema_update → blue (informational update)
+ *   test_gap    → red    (missing coverage is a gap/error)
+ *   optimization → purple/AI (intelligence insight)
+ */
+const typeConfig: Record<
+  SuggestionType,
   {
-    drift_fix: {
-      icon: <AlertTriangle className="size-3.5" />,
-      label: 'Drift',
-      color: 'text-signal-warning',
-    },
-    schema_update: {
-      icon: <Eye className="size-3.5" />,
-      label: 'Schema',
-      color: 'text-accent-blue',
-    },
-    test_gap: {
-      icon: <TestTube className="size-3.5" />,
-      label: 'Test Gap',
-      color: 'text-signal-error',
-    },
-    optimization: {
-      icon: <Zap className="size-3.5" />,
-      label: 'Optimize',
-      color: 'text-signal-ai',
-    },
-  };
+    icon: React.ReactNode;
+    label: string;
+    textColor: string;
+    bgColor: string;
+  }
+> = {
+  drift_fix: {
+    icon: <AlertTriangle className="size-3" />,
+    label: 'Drift',
+    textColor: 'text-signal-warning',
+    bgColor: 'bg-signal-warning/10',
+  },
+  schema_update: {
+    icon: <Eye className="size-3" />,
+    label: 'Schema',
+    textColor: 'text-accent-blue',
+    bgColor: 'bg-accent-blue/10',
+  },
+  test_gap: {
+    icon: <TestTube className="size-3" />,
+    label: 'Test Gap',
+    textColor: 'text-signal-error',
+    bgColor: 'bg-signal-error/10',
+  },
+  optimization: {
+    icon: <Zap className="size-3" />,
+    label: 'Optimize',
+    textColor: 'text-signal-ai',
+    bgColor: 'bg-signal-ai/10',
+  },
+};
 
 /**
- * Single suggestion card within the panel.
+ * Single suggestion card.
+ *
+ * Layout:
+ *   [Type chip]  [source via]
+ *   Title
+ *   Description
+ *   [endpoint link]   [action note]
+ *   ─────────────────────────────  ← border divider (only for pending)
+ *   [✓ Accept]  [✕ Dismiss]        ← well below content, never near "Clear all"
  */
 const SuggestionCard = ({
   suggestion,
@@ -85,53 +122,63 @@ const SuggestionCard = ({
       exit={prefersReducedMotion === true ? { opacity: 0 } : { opacity: 0, y: -8, height: 0 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        'border border-border-subtle/40 rounded-md px-3 py-2.5 bg-bg-surface/30',
-        !isPending && 'opacity-50'
+        'rounded-md border border-border-subtle/40 bg-bg-surface/30 overflow-hidden',
+        !isPending && 'opacity-40'
       )}
       data-test-id={`suggestion-card-${suggestion.id}`}
     >
-      {/* Header: type badge + title */}
-      <div className="flex items-start gap-2">
-        <span
-          className={cn('mt-0.5 shrink-0', config.color)}
-          data-test-id={`suggestion-type-icon-${suggestion.id}`}
-        >
-          {config.icon}
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span
-              className={cn('text-[9px] font-mono uppercase tracking-wider', config.color)}
-              data-test-id={`suggestion-type-label-${suggestion.id}`}
-            >
-              {config.label}
-            </span>
-            {suggestion.source.length > 0 && (
-              <span className="text-[9px] font-mono text-text-muted">via {suggestion.source}</span>
+      {/* Card body */}
+      <div className="px-3 pt-2.5 pb-2">
+        {/* Row 1: type chip + source */}
+        <div className="flex items-center gap-2 mb-1.5">
+          {/* Type chip — colored pill, immediately scannable */}
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium',
+              config.textColor,
+              config.bgColor
             )}
-          </div>
-          <h4
-            className="text-xs font-medium text-text-primary leading-tight"
-            data-test-id={`suggestion-title-${suggestion.id}`}
+            data-test-id={`suggestion-type-icon-${suggestion.id}`}
+            aria-hidden="true"
           >
-            {suggestion.title}
-          </h4>
-          <p
-            className="text-[11px] text-text-muted leading-relaxed mt-1"
-            data-test-id={`suggestion-description-${suggestion.id}`}
-          >
-            {suggestion.description}
-          </p>
+            {config.icon}
+            <span data-test-id={`suggestion-type-label-${suggestion.id}`}>{config.label}</span>
+          </span>
 
-          {/* Context link */}
-          {suggestion.endpoint !== null && onNavigate !== undefined && (
+          {suggestion.source.length > 0 && (
+            <span className="text-[9px] font-mono text-text-muted/60 truncate">
+              via {suggestion.source}
+            </span>
+          )}
+        </div>
+
+        {/* Row 2: title */}
+        <h4
+          className="text-[11px] font-semibold text-text-primary leading-snug mb-1"
+          data-test-id={`suggestion-title-${suggestion.id}`}
+        >
+          {suggestion.title}
+        </h4>
+
+        {/* Row 3: description */}
+        <p
+          className="text-[11px] text-text-muted leading-relaxed mb-1.5"
+          data-test-id={`suggestion-description-${suggestion.id}`}
+        >
+          {suggestion.description}
+        </p>
+
+        {/* Row 4: context link + action note */}
+        <div className="flex items-start justify-between gap-2">
+          {suggestion.endpoint !== null && onNavigate !== undefined ? (
             <button
               type="button"
               onClick={(): void => {
                 onNavigate(suggestion);
               }}
               className={cn(
-                'text-[10px] font-mono text-accent-blue hover:text-accent-blue/80 mt-1.5 cursor-pointer outline-none rounded-sm',
+                'text-[10px] font-mono text-accent-blue hover:text-accent-blue/80',
+                'transition-colors cursor-pointer outline-none rounded-sm leading-none',
                 focusRingClasses
               )}
               data-test-id={`suggestion-context-link-${suggestion.id}`}
@@ -139,22 +186,24 @@ const SuggestionCard = ({
             >
               {suggestion.endpoint}
             </button>
+          ) : (
+            /* Keep the action node in layout even when no endpoint */
+            <span />
           )}
 
-          {/* Action description */}
           <div
-            className="text-[10px] text-text-muted/70 mt-1.5 font-mono"
+            className="text-[9px] font-mono text-text-muted/50 leading-none text-right shrink-0"
             data-test-id={`suggestion-action-${suggestion.id}`}
           >
-            Action: {suggestion.action}
+            {suggestion.action}
           </div>
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Pending: action row separated by a border — impossible to confuse with "Clear all" */}
       {isPending && (
         <div
-          className="flex items-center gap-1.5 mt-2 pl-5.5"
+          className="flex items-center gap-2 px-3 py-1.5 border-t border-border-subtle/30 bg-bg-app/20"
           role="group"
           aria-label="Suggestion actions"
         >
@@ -164,45 +213,48 @@ const SuggestionCard = ({
               onAccept(suggestion.id);
             }}
             className={cn(
-              'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
-              'bg-signal-success/10 text-signal-success hover:bg-signal-success/20',
+              'inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded',
+              'bg-signal-success/10 text-signal-success',
+              'hover:bg-signal-success/20',
               'transition-colors cursor-pointer outline-none',
               focusRingClasses
             )}
             data-test-id={`suggestion-accept-${suggestion.id}`}
             aria-label={`Accept suggestion: ${suggestion.title}`}
           >
-            <CheckCircle className="size-3" />
+            <Check className="size-3 shrink-0" />
             Accept
           </button>
+
           <button
             type="button"
             onClick={(): void => {
               onDismiss(suggestion.id);
             }}
             className={cn(
-              'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
-              'bg-text-muted/5 text-text-muted hover:bg-text-muted/10',
+              'inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded',
+              'bg-text-muted/5 text-text-muted',
+              'hover:bg-text-muted/10 hover:text-text-secondary',
               'transition-colors cursor-pointer outline-none',
               focusRingClasses
             )}
             data-test-id={`suggestion-dismiss-${suggestion.id}`}
             aria-label={`Dismiss suggestion: ${suggestion.title}`}
           >
-            <X className="size-3" />
+            <X className="size-3 shrink-0" />
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Resolved state */}
+      {/* Resolved: status stamp */}
       {!isPending && (
-        <div className="flex items-center gap-1.5 mt-2 pl-5.5">
-          <span className="text-[10px] font-mono text-text-muted capitalize">
+        <div className="flex items-center gap-2 px-3 py-1 border-t border-border-subtle/20">
+          <span className="text-[9px] font-mono text-text-muted/50 capitalize">
             {suggestion.status}
           </span>
           {suggestion.resolvedAt !== null && (
-            <span className="text-[9px] font-mono text-text-muted/50">{suggestion.resolvedAt}</span>
+            <span className="text-[9px] font-mono text-text-muted/30">{suggestion.resolvedAt}</span>
           )}
         </div>
       )}
@@ -215,16 +267,21 @@ const SuggestionCard = ({
  *
  * Cross-context panel displaying all AI-generated suggestions with
  * type badges, context links, and accept/dismiss actions.
+ *
+ * "Clear all" is a destructive bulk action rendered at the far right of the
+ * panel header — visually separated from all per-card actions by the card
+ * borders and spacing below it. Hovering reveals text-signal-error to
+ * communicate its destructive intent.
  */
 export const SuggestionPanel = ({
   suggestions,
   onAccept,
   onDismiss,
   onNavigate,
+  onClearAll,
   error,
   className,
 }: SuggestionPanelProps): React.JSX.Element => {
-  const prefersReducedMotion = useReducedMotion();
   const pendingCount = suggestions.filter((s) => s.status === 'pending').length;
 
   return (
@@ -234,30 +291,59 @@ export const SuggestionPanel = ({
       role="region"
       aria-label="AI Suggestions"
     >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-3 py-2 border-b border-border-subtle/30"
-        data-test-id="suggestion-panel-header"
-      >
-        <div className="flex items-center gap-2">
-          <Lightbulb className="size-3.5 text-signal-ai" />
-          <span className="text-xs font-medium text-text-primary">Vigilance Monitor</span>
-          {pendingCount > 0 && (
+      {/*
+       * Header — only shown when there are pending suggestions.
+       *
+       * Structure:
+       *   [Lightbulb icon]  [N pending badge]     [Clear all ←destructive]
+       *
+       * "Clear all" is right-aligned, visually distant from the badge,
+       * and uses text-signal-error on hover to telegraph its danger.
+       * It is NOT near any per-card Accept/Dismiss buttons.
+       */}
+      {pendingCount > 0 && (
+        <div
+          className="flex items-center justify-between px-3 py-2 border-b border-border-subtle/30 shrink-0"
+          data-test-id="suggestion-panel-header"
+        >
+          {/* Left: icon + count */}
+          <div className="flex items-center gap-2">
+            <Lightbulb className="size-3.5 text-signal-ai shrink-0" aria-hidden="true" />
             <span
-              className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] font-bold rounded-full bg-signal-warning/20 text-signal-warning"
+              className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[10px] font-bold rounded-full bg-signal-warning/20 text-signal-warning tabular-nums"
               data-test-id="suggestion-count-badge"
-              aria-label={`${String(pendingCount)} pending suggestions`}
+              aria-label={`${String(pendingCount)} pending suggestion${pendingCount === 1 ? '' : 's'}`}
             >
               {pendingCount}
             </span>
+            <span className="text-[10px] text-text-muted/60 font-mono">pending</span>
+          </div>
+
+          {/* Right: "Clear all" — destructive bulk action, clearly separated from card actions */}
+          {onClearAll !== undefined && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              aria-label="Clear all suggestions"
+              data-test-id="clear-all-suggestions"
+              className={cn(
+                'text-[10px] font-mono font-medium text-text-muted/50',
+                'hover:text-signal-error',
+                'transition-colors cursor-pointer outline-none rounded-sm px-1 py-0.5',
+                'border border-transparent hover:border-signal-error/20',
+                focusRingClasses
+              )}
+            >
+              Clear all
+            </button>
           )}
         </div>
-      </div>
+      )}
 
       {/* Error banner */}
       {error !== null && error !== undefined && (
         <div
-          className="mx-2 mt-2 px-2.5 py-1.5 text-[10px] font-mono text-signal-error bg-signal-error/10 border border-signal-error/20 rounded"
+          className="mx-2 mt-2 px-2.5 py-1.5 text-[10px] font-mono text-signal-error bg-signal-error/10 border border-signal-error/20 rounded shrink-0"
           data-test-id="suggestion-error"
           role="alert"
         >
@@ -274,19 +360,16 @@ export const SuggestionPanel = ({
       >
         <AnimatePresence mode="popLayout">
           {suggestions.length === 0 ? (
-            <motion.div
+            <div
               key="empty"
-              initial={prefersReducedMotion === true ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={prefersReducedMotion === true ? { duration: 0 } : { duration: 0.2 }}
-              className="flex flex-col items-center justify-center py-8 text-center"
+              className="flex flex-col items-center justify-center gap-2 h-full text-text-muted"
               data-test-id="suggestion-empty-state"
               role="listitem"
             >
-              <Lightbulb className="size-6 text-text-muted/30 mb-2" />
-              <p className="text-xs text-text-muted/50">No suggestions yet</p>
-              <p className="text-[10px] text-text-muted/30 mt-1">AI insights will appear here</p>
-            </motion.div>
+              <Lightbulb size={24} className="opacity-30" aria-hidden="true" />
+              <span className="text-xs">No suggestions yet</span>
+              <span className="text-xs opacity-60">AI insights will appear here</span>
+            </div>
           ) : (
             suggestions.map((suggestion) => (
               <div key={suggestion.id} role="listitem">

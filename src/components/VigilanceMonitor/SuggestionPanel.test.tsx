@@ -74,13 +74,16 @@ describe('SuggestionPanel', () => {
     );
   });
 
-  it('renders suggestion panel with header', () => {
-    render(<SuggestionPanel {...defaultProps} />);
+  it('renders suggestion panel with header when pending suggestions exist', () => {
+    render(<SuggestionPanel {...defaultProps} suggestions={[PENDING_SUGGESTION]} />);
     expect(screen.getByTestId('suggestion-panel')).toBeDefined();
     expect(screen.getByTestId('suggestion-panel-header')).toBeDefined();
-    expect(screen.getByTestId('suggestion-panel-header').textContent).toContain(
-      'Vigilance Monitor'
-    );
+  });
+
+  it('hides header when there are no pending suggestions', () => {
+    render(<SuggestionPanel {...defaultProps} />);
+    expect(screen.getByTestId('suggestion-panel')).toBeDefined();
+    expect(screen.queryByTestId('suggestion-panel-header')).toBeNull();
   });
 
   it('renders pending count badge', () => {
@@ -202,5 +205,49 @@ describe('SuggestionPanel', () => {
   it('does not display error banner when error is null', () => {
     render(<SuggestionPanel {...defaultProps} error={null} />);
     expect(screen.queryByTestId('suggestion-error')).toBeNull();
+  });
+
+  it('renders clear all button when pending count > 0 and onClearAll is provided', () => {
+    const onClearAll = vi.fn();
+    render(
+      <SuggestionPanel
+        {...defaultProps}
+        suggestions={[PENDING_SUGGESTION]}
+        onClearAll={onClearAll}
+      />
+    );
+    const btn = screen.getByTestId('clear-all-suggestions');
+    expect(btn).toBeDefined();
+    expect(btn.getAttribute('aria-label')).toBe('Clear all suggestions');
+  });
+
+  it('does not render clear all button when no pending suggestions', () => {
+    const onClearAll = vi.fn();
+    render(
+      <SuggestionPanel
+        {...defaultProps}
+        suggestions={[ACCEPTED_SUGGESTION]}
+        onClearAll={onClearAll}
+      />
+    );
+    expect(screen.queryByTestId('clear-all-suggestions')).toBeNull();
+  });
+
+  it('does not render clear all button when onClearAll is not provided', () => {
+    render(<SuggestionPanel {...defaultProps} suggestions={[PENDING_SUGGESTION]} />);
+    expect(screen.queryByTestId('clear-all-suggestions')).toBeNull();
+  });
+
+  it('calls onClearAll when clear all button is clicked', () => {
+    const onClearAll = vi.fn();
+    render(
+      <SuggestionPanel
+        {...defaultProps}
+        suggestions={[PENDING_SUGGESTION]}
+        onClearAll={onClearAll}
+      />
+    );
+    fireEvent.click(screen.getByTestId('clear-all-suggestions'));
+    expect(onClearAll).toHaveBeenCalledTimes(1);
   });
 });

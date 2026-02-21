@@ -92,6 +92,7 @@ const makeCollection = (id: string, name: string): Collection => ({
   metadata: { name, description: '', tags: [], created_at: '', modified_at: '' },
   source: { source_type: 'manual', fetched_at: '' },
   variables: {},
+  environments: [],
   requests: [],
 });
 

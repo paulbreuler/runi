@@ -29,6 +29,7 @@ const buildCollection = (id: string): Collection => ({
     fetched_at: '2026-01-01T00:00:00Z',
   },
   variables: {},
+  environments: [],
   requests: [],
 });
 
@@ -1067,6 +1068,7 @@ describe('useCollectionStore', () => {
 
       expect(invoke).toHaveBeenCalledWith('cmd_refresh_collection_spec', {
         collectionId: 'col-1',
+        newSpecPath: null,
       });
       expect(result.current.driftResults['col-1']).toEqual(driftResult);
       expect(result.current.isLoading).toBe(false);
@@ -1173,6 +1175,110 @@ describe('useCollectionStore', () => {
 
       expect(returned).toBeNull();
       expect(result.current.error).toContain('Collection file not found');
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('environment actions', () => {
+    it('calls cmd_upsert_environment with correct params', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.upsertEnvironment('col-1', 'staging', {
+          baseUrl: 'https://staging.example.com',
+        });
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_upsert_environment', {
+        collectionId: 'col-1',
+        name: 'staging',
+        variables: { baseUrl: 'https://staging.example.com' },
+      });
+    });
+
+    it('sets error when upsertEnvironment fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('upsert failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.upsertEnvironment('col-1', 'staging', {});
+      });
+
+      expect(result.current.error).toContain('upsert failed');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('calls cmd_delete_environment with correct params', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteEnvironment('col-1', 'staging');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_delete_environment', {
+        collectionId: 'col-1',
+        name: 'staging',
+      });
+    });
+
+    it('sets error when deleteEnvironment fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('delete env failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.deleteEnvironment('col-1', 'staging');
+      });
+
+      expect(result.current.error).toContain('delete env failed');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('calls cmd_set_active_environment with name', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.setActiveEnvironment('col-1', 'staging');
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_set_active_environment', {
+        collectionId: 'col-1',
+        name: 'staging',
+      });
+    });
+
+    it('calls cmd_set_active_environment with null to clear', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.setActiveEnvironment('col-1', null);
+      });
+
+      expect(invoke).toHaveBeenCalledWith('cmd_set_active_environment', {
+        collectionId: 'col-1',
+        name: null,
+      });
+    });
+
+    it('sets error when setActiveEnvironment fails', async () => {
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce('set active failed');
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      await act(async () => {
+        await result.current.setActiveEnvironment('col-1', 'staging');
+      });
+
+      expect(result.current.error).toContain('set active failed');
       expect(result.current.isLoading).toBe(false);
     });
   });

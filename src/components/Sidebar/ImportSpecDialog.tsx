@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import { Dialog } from '@base-ui/react/dialog';
+import { open as openFileDialog } from '@tauri-apps/plugin-dialog';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,8 @@ import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 import { globalEventBus } from '@/events/bus';
+
+type ImportMode = 'url' | 'file';
 
 interface ImportSpecDialogProps {
   open: boolean;
@@ -24,17 +27,44 @@ export const ImportSpecDialog = ({
   onOpenChange,
 }: ImportSpecDialogProps): React.ReactElement | null => {
   const importCollection = useCollectionStore((state) => state.importCollection);
+  const [mode, setMode] = React.useState<ImportMode>('url');
   const [url, setUrl] = React.useState('');
+  const [filePath, setFilePath] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   // Reset state when dialog opens
   React.useEffect(() => {
     if (open) {
+      setMode('url');
       setUrl('');
+      setFilePath('');
       setIsSubmitting(false);
     }
   }, [open]);
 
-  const canSubmit = url.trim().length > 0 && !isSubmitting;
+  const canSubmit =
+    !isSubmitting && (mode === 'url' ? url.trim().length > 0 : filePath.trim().length > 0);
+
+  const handleBrowse = async (): Promise<void> => {
+    const selected = await openFileDialog({
+      multiple: false,
+      filters: [{ name: 'OpenAPI', extensions: ['json', 'yaml', 'yml'] }],
+    });
+    if (typeof selected === 'string') {
+      setFilePath(selected);
+    }
+  };
+
+  const normalizeUrl = (raw: string): string => {
+    const trimmed = raw.trim();
+    if (mode !== 'url') {
+      return trimmed;
+    }
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    return `http://${trimmed}`;
+  };
 
   const handleSubmit = async (): Promise<void> => {
     if (!canSubmit) {
@@ -44,25 +74,36 @@ export const ImportSpecDialog = ({
     setIsSubmitting(true);
 
     try {
-      const result = await importCollection({
-        url: url.trim(),
-        filePath: null,
-        inlineContent: null,
-        displayName: null,
-        repoRoot: null,
-        specPath: null,
-        refName: null,
-      });
+      const result = await importCollection(
+        mode === 'url'
+          ? {
+              url: normalizeUrl(url),
+              filePath: null,
+              inlineContent: null,
+              displayName: null,
+              repoRoot: null,
+              specPath: null,
+              refName: null,
+            }
+          : {
+              url: null,
+              filePath: filePath.trim(),
+              inlineContent: null,
+              displayName: null,
+              repoRoot: null,
+              specPath: null,
+              refName: null,
+            }
+      );
 
       if (result !== null) {
         globalEventBus.emit('collection.imported', {
           collection_id: result.id,
-          url: url.trim(),
+          url: mode === 'url' ? normalizeUrl(url) : filePath.trim(),
           actor: 'human',
         });
         onOpenChange(false);
       }
-      // On failure, importCollection already emits a toast via the store — no inline banner needed.
     } finally {
       setIsSubmitting(false);
     }
@@ -106,27 +147,90 @@ export const ImportSpecDialog = ({
             Import OpenAPI spec
           </Dialog.Title>
           <p className="text-xs text-text-muted mb-4">
-            Enter the URL of a live API spec to create a collection.
+            Import from a live URL or a local JSON/YAML file.
           </p>
 
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="import-spec-url" data-test-id="import-spec-url-label">
-                URL
-              </Label>
-              <Input
-                id="import-spec-url"
-                data-test-id="import-spec-url-input"
-                value={url}
-                onChange={(e) => {
-                  setUrl(e.target.value);
+          {/* Mode toggle */}
+          <div
+            className="flex gap-1 p-0.5 bg-bg-surface rounded-md mb-4"
+            role="tablist"
+            aria-label="Import source"
+            data-test-id="import-mode-toggle"
+          >
+            {(['url', 'file'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={mode === m}
+                data-test-id={`import-mode-${m}`}
+                onClick={() => {
+                  setMode(m);
                 }}
-                onKeyDown={handleKeyDown}
-                placeholder="https://…"
-                noScale
-                autoFocus
-              />
-            </div>
+                className={cn(
+                  'flex-1 py-1 text-xs font-medium rounded transition-colors outline-none',
+                  focusRingClasses,
+                  mode === m
+                    ? 'bg-bg-elevated text-text-primary shadow-sm'
+                    : 'text-text-muted hover:text-text-secondary'
+                )}
+              >
+                {m === 'url' ? 'URL' : 'Local file'}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            {mode === 'url' ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="import-spec-url" data-test-id="import-spec-url-label">
+                  URL
+                </Label>
+                <Input
+                  id="import-spec-url"
+                  data-test-id="import-spec-url-input"
+                  value={url}
+                  onChange={(e) => {
+                    setUrl(e.target.value);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="https://…"
+                  noScale
+                  autoFocus
+                />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label htmlFor="import-spec-file" data-test-id="import-spec-file-label">
+                  File
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="import-spec-file"
+                    data-test-id="import-spec-file-input"
+                    value={filePath}
+                    onChange={(e) => {
+                      setFilePath(e.target.value);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    placeholder="/path/to/openapi.json"
+                    noScale
+                    className="flex-1 font-mono text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-test-id="import-spec-browse"
+                    onClick={() => {
+                      void handleBrowse();
+                    }}
+                  >
+                    Browse
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 mt-6">

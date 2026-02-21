@@ -100,6 +100,7 @@ export const MainLayout = ({
   const suggestions = useSuggestionStore((s) => s.suggestions);
   const suggestionError = useSuggestionStore((s) => s.error);
   const resolveSuggestion = useSuggestionStore((s) => s.resolveSuggestion);
+  const clearAllSuggestions = useSuggestionStore((s) => s.clearAllSuggestions);
   const pendingCount = useSuggestionStore(
     (s) => s.suggestions.filter((sg) => sg.status === 'pending').length
   );
@@ -438,6 +439,7 @@ export const MainLayout = ({
         onAccept={handleSuggestionAccept}
         onDismiss={handleSuggestionDismiss}
         onNavigate={handleSuggestionNavigate}
+        onClearAll={clearAllSuggestions}
         className="h-full"
       />
     ),
@@ -447,6 +449,7 @@ export const MainLayout = ({
       handleSuggestionAccept,
       handleSuggestionDismiss,
       handleSuggestionNavigate,
+      clearAllSuggestions,
     ]
   );
 
