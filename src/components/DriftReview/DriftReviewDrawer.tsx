@@ -117,30 +117,68 @@ export const DriftReviewDrawer = ({
   collectionId,
   driftResult,
 }: DriftReviewDrawerProps): React.JSX.Element | null => {
-  const isOpen = useDriftReviewStore((state) => state.isOpen);
+  const isOpen = useDriftReviewStore(
+    (state) => state.isOpen && state.collectionId === collectionId
+  );
   const closeDrawer = useDriftReviewStore((state) => state.closeDrawer);
   const acceptAll = useDriftReviewStore((state) => state.acceptAll);
   const dismissAll = useDriftReviewStore((state) => state.dismissAll);
   const reviewState = useDriftReviewStore((state) => state.reviewState);
   const shouldReduceMotion = useReducedMotion();
   const drawerRef = useRef<HTMLDivElement>(null);
+  /** Stores the element that had focus before the drawer opened, to restore on close. */
+  const prevFocusRef = useRef<Element | null>(null);
   const titleId = useId();
 
-  const handleEscape = useCallback(
+  /** Focus management: move focus into dialog on open, return on close. */
+  useEffect(() => {
+    if (isOpen) {
+      prevFocusRef.current = document.activeElement;
+      drawerRef.current?.focus();
+    } else {
+      if (prevFocusRef.current instanceof HTMLElement) {
+        prevFocusRef.current.focus();
+      }
+      prevFocusRef.current = null;
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = useCallback(
     (e: KeyboardEvent): void => {
       if (e.key === 'Escape' && isOpen) {
         closeDrawer();
+        return;
+      }
+      /** Focus trap: keep Tab/Shift+Tab cycling within the open dialog. */
+      if (e.key === 'Tab' && isOpen && drawerRef.current !== null) {
+        const focusableSelectors =
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const focusable = Array.from(
+          drawerRef.current.querySelectorAll<HTMLElement>(focusableSelectors)
+        );
+        const first: HTMLElement | undefined = focusable[0];
+        const last: HTMLElement | undefined = focusable[focusable.length - 1];
+        if (first === undefined || last === undefined) {
+          return;
+        }
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     },
     [isOpen, closeDrawer]
   );
 
   useEffect(() => {
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener('keydown', handleKeyDown);
     return (): void => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleEscape]);
+  }, [handleKeyDown]);
 
   if (driftResult === undefined) {
     return null;
@@ -198,6 +236,7 @@ export const DriftReviewDrawer = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
+            tabIndex={-1}
             className="fixed right-0 top-0 bottom-0 z-[51] w-[420px] max-w-[90vw] flex flex-col bg-bg-surface border-l border-border-default shadow-xl overflow-hidden"
             data-test-id="drift-review-drawer"
             {...slideAnimation}

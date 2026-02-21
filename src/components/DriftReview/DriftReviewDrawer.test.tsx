@@ -271,6 +271,7 @@ describe('DriftReviewDrawer', () => {
     const drawer = screen.getByTestId('drift-review-drawer');
     expect(drawer).toHaveAttribute('role', 'dialog');
     expect(drawer).toHaveAttribute('aria-modal', 'true');
+    expect(drawer).toHaveAttribute('tabindex', '-1');
   });
 
   it('hides reviewed (ignored) changes from the list', () => {
