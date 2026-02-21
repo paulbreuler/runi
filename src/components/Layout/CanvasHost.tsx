@@ -1,9 +1,7 @@
 import { type FC, useState, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { CanvasPanel } from './CanvasPanel';
 import { cn } from '@/utils/cn';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 /**
  * Sash classes - minimal, grounded resize handle styling
@@ -11,7 +9,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
  */
 const getSashClasses = (orientation: 'vertical' | 'horizontal', isDragging: boolean): string =>
   cn(
-    'relative z-30 touch-none transition-colors shrink-0 select-none',
+    'relative z-30 touch-none shrink-0 select-none',
     orientation === 'vertical' ? 'w-[2px] cursor-col-resize' : 'h-[2px] cursor-row-resize',
     'bg-transparent',
     'hover:bg-accent-blue',
@@ -26,7 +24,6 @@ interface CanvasHostProps {
 }
 
 export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
-  const prefersReducedMotion = usePrefersReducedMotion();
   const { activeContextId, contexts, getActiveLayout } = useCanvasStore();
 
   // Interactive panel ratios - local state overrides static layout ratios during drag
@@ -160,19 +157,9 @@ export const CanvasHost: FC<CanvasHostProps> = ({ className }) => {
   };
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={`${activeContextId}-${layout.id}`}
-        className={cn('flex-1 overflow-hidden', className)}
-        data-test-id="canvas-host"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }}
-      >
-        {renderArrangement()}
-      </motion.div>
-    </AnimatePresence>
+    <div className={cn('flex-1 overflow-hidden', className)} data-test-id="canvas-host">
+      {renderArrangement()}
+    </div>
   );
 };
 
