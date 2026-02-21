@@ -139,6 +139,9 @@ pub async fn start_server(
         canvas_state,
         project_context,
         suggestion_service,
+        drift_review_store: std::sync::Arc::new(tokio::sync::Mutex::new(
+            std::collections::HashMap::new(),
+        )),
         app_handle: app_handle.clone(),
     };
 

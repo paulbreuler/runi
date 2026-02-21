@@ -50,6 +50,17 @@ pub struct CollectionSource {
     pub ref_name: Option<String>,
 }
 
+impl CollectionSource {
+    /// Return `true` when this source is bound to a git repository.
+    ///
+    /// A source is considered repo-bound when it has either a `repo_root`
+    /// (local clone path) or a `ref_name` (git ref being tracked).
+    #[must_use]
+    pub const fn is_repo_bound(&self) -> bool {
+        self.repo_root.is_some() || self.ref_name.is_some()
+    }
+}
+
 impl Default for CollectionSource {
     fn default() -> Self {
         let now = chrono::Utc::now();
@@ -202,5 +213,39 @@ fetched_at: '2026-01-31T10:30:00Z'
         assert!(!yaml.contains("repo_root"));
         assert!(!yaml.contains("spec_path"));
         assert!(!yaml.contains("ref_name"));
+    }
+
+    #[test]
+    fn test_is_repo_bound_false_when_no_fields() {
+        let source = CollectionSource::default();
+        assert!(!source.is_repo_bound());
+    }
+
+    #[test]
+    fn test_is_repo_bound_true_when_repo_root_set() {
+        let source = CollectionSource {
+            repo_root: Some("/home/user/myrepo".to_string()),
+            ..CollectionSource::default()
+        };
+        assert!(source.is_repo_bound());
+    }
+
+    #[test]
+    fn test_is_repo_bound_true_when_ref_name_set() {
+        let source = CollectionSource {
+            ref_name: Some("main".to_string()),
+            ..CollectionSource::default()
+        };
+        assert!(source.is_repo_bound());
+    }
+
+    #[test]
+    fn test_is_repo_bound_true_when_both_set() {
+        let source = CollectionSource {
+            repo_root: Some("/home/user/myrepo".to_string()),
+            ref_name: Some("main".to_string()),
+            ..CollectionSource::default()
+        };
+        assert!(source.is_repo_bound());
     }
 }

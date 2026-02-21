@@ -568,6 +568,65 @@ impl McpServerService {
                     "required": ["collection_id", "method", "path", "action"]
                 }),
             ),
+            // Drift review tools (session-scoped accept/ignore decisions)
+            tool_def(
+                "get_drift_review",
+                "Get the current drift review state for a collection. Returns all changed operations (removed, changed, added) with their review status (pending, accepted, ignored).",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "ID of the collection to review drift for"
+                        }
+                    },
+                    "required": ["collection_id"]
+                }),
+            ),
+            tool_def(
+                "accept_drift_change",
+                "Accept a detected drift change for a specific operation. Marks it as accepted in the session-scoped review state and emits a drift:change-accepted event.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "ID of the collection containing the drift change"
+                        },
+                        "method": {
+                            "type": "string",
+                            "description": "HTTP method of the operation (e.g., GET, DELETE)"
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "URL path of the operation (e.g., /books/{id})"
+                        }
+                    },
+                    "required": ["collection_id", "method", "path"]
+                }),
+            ),
+            tool_def(
+                "dismiss_drift_change",
+                "Dismiss (ignore) a detected drift change for a specific operation. Marks it as ignored in the session-scoped review state and emits a drift:change-dismissed event.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": {
+                            "type": "string",
+                            "description": "ID of the collection containing the drift change"
+                        },
+                        "method": {
+                            "type": "string",
+                            "description": "HTTP method of the operation (e.g., GET, PUT)"
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "URL path of the operation (e.g., /books/{id})"
+                        }
+                    },
+                    "required": ["collection_id", "method", "path"]
+                }),
+            ),
             // Suggestion tools (Vigilance Monitor)
             tool_def(
                 "list_suggestions",
@@ -1607,13 +1666,14 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_thirty_tools() {
+    fn test_registers_thirty_three_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
         // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools
         // + 6 canvas tools + 1 streaming tool + 2 project context tools
-        // + 1 execute_request + 3 suggestion tools + 3 environment tools = 30 total
-        assert_eq!(tools.len(), 30);
+        // + 1 execute_request + 3 suggestion tools + 3 environment tools
+        // + 3 drift review tools = 33 total
+        assert_eq!(tools.len(), 33);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
@@ -1652,6 +1712,10 @@ mod tests {
         assert!(names.contains(&"upsert_environment"));
         assert!(names.contains(&"delete_environment"));
         assert!(names.contains(&"set_active_environment"));
+        // Drift review tools
+        assert!(names.contains(&"get_drift_review"));
+        assert!(names.contains(&"accept_drift_change"));
+        assert!(names.contains(&"dismiss_drift_change"));
     }
 
     #[test]

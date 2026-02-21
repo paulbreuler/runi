@@ -4,12 +4,18 @@ import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useRequestStoreRaw } from '@/stores/useRequestStore';
+import { useCollectionStore } from '@/stores/useCollectionStore';
 import { ContextToolbar } from './ContextToolbar';
 import { FileText, LayoutGrid } from 'lucide-react';
 import type { CanvasPanelProps, CanvasToolbarProps } from '@/types/canvas';
 import * as useCanvasPopoutModule from '@/hooks/useCanvasPopout';
 import { setFlag, resetFeatureFlags } from '@/test-utils/featureFlags';
 import { requestContextDescriptor } from '@/contexts/RequestContext';
+
+const mockInvoke = vi.fn();
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...args: unknown[]): unknown => mockInvoke(...args),
+}));
 
 // Mock panel and toolbar components
 const TestPanel = ({ panelId }: CanvasPanelProps): ReactElement => <div>Panel: {panelId}</div>;
@@ -24,9 +30,11 @@ describe('ContextToolbar', () => {
   beforeEach(() => {
     useCanvasStore.getState().reset();
     useRequestStoreRaw.setState({ contexts: {} });
+    useCollectionStore.setState({ collections: [], summaries: [] });
     resetFeatureFlags();
     setFlag('canvas', 'popout', true);
     vi.clearAllMocks();
+    mockInvoke.mockResolvedValue(null);
 
     // Default mock for useCanvasPopout
     vi.mocked(useCanvasPopoutModule.useCanvasPopout).mockReturnValue({

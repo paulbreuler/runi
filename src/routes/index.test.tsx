@@ -20,14 +20,22 @@ vi.mock('@/stores/useRequestStore', () => ({
     Provider: ({ children }: any): any => children,
     Consumer: ({ children }: any): any => children({}),
   },
-  useRequestStoreRaw: {
-    getState: vi.fn(() => ({
-      contexts: {},
-      initContext: vi.fn(),
-    })),
-    setState: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-  },
+  useRequestStoreRaw: Object.assign(
+    vi.fn((_selector?: (s: { contexts: Record<string, unknown> }) => unknown) => {
+      if (_selector !== undefined) {
+        return _selector({ contexts: {} });
+      }
+      return { contexts: {} };
+    }),
+    {
+      getState: vi.fn(() => ({
+        contexts: {},
+        initContext: vi.fn(),
+      })),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+    }
+  ),
   DEFAULT_REQUEST_STATE: {
     method: 'GET',
     url: 'https://httpbin.org/get',

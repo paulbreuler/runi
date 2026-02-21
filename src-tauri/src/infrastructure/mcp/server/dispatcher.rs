@@ -20,7 +20,7 @@ use crate::domain::mcp::protocol::{
     InitializeResult, ToolCallParams, ToolCallResult, ToolResponseContent, ToolsListResult,
 };
 use crate::infrastructure::commands::{
-    CanvasStateHandle, ProjectContextHandle, SuggestionServiceHandle,
+    CanvasStateHandle, DriftReviewStore, ProjectContextHandle, SuggestionServiceHandle,
 };
 use crate::infrastructure::http::execute_http_request;
 
@@ -37,6 +37,7 @@ pub async fn dispatch(
     canvas_state: &CanvasStateHandle,
     project_context: Option<&ProjectContextHandle>,
     suggestion_service: Option<&SuggestionServiceHandle>,
+    drift_review_store: &DriftReviewStore,
     app_handle: Option<&tauri::AppHandle>,
 ) -> Option<String> {
     let request: JsonRpcRequest = match serde_json::from_str(raw) {
@@ -68,6 +69,7 @@ pub async fn dispatch(
                 canvas_state,
                 project_context,
                 suggestion_service,
+                drift_review_store,
                 app_handle,
             )
             .await
@@ -116,6 +118,7 @@ async fn handle_tools_list(
     )
 }
 
+#[allow(clippy::too_many_arguments)] // All parameters required: MCP JSON-RPC bridge + multiple Tauri service handles
 async fn handle_tools_call(
     id: Option<JsonRpcId>,
     request: &JsonRpcRequest,
@@ -123,6 +126,7 @@ async fn handle_tools_call(
     canvas_state: &CanvasStateHandle,
     project_context: Option<&ProjectContextHandle>,
     suggestion_service: Option<&SuggestionServiceHandle>,
+    drift_review_store: &DriftReviewStore,
     app_handle: Option<&tauri::AppHandle>,
 ) -> JsonRpcResponse {
     let params: ToolCallParams = match request.params.as_ref() {
@@ -194,6 +198,21 @@ async fn handle_tools_call(
             suggestion_service,
             app_handle,
         );
+    }
+
+    // Drift review tools read from / write to shared drift review store
+    if params.name == "get_drift_review"
+        || params.name == "accept_drift_change"
+        || params.name == "dismiss_drift_change"
+    {
+        return handle_drift_review_tool(
+            id,
+            &params.name,
+            params.arguments,
+            drift_review_store,
+            app_handle,
+        )
+        .await;
     }
 
     let mut svc = service.write().await;
@@ -1133,21 +1152,258 @@ fn handle_resolve_suggestion(
     })
 }
 
+// ── Drift Review Tools ─────────────────────────────────────────────
+
+/// Handle drift review tools (`get_drift_review`, `accept_drift_change`, `dismiss_drift_change`).
+///
+/// All three tools share the same in-memory `DriftReviewStore`. Keys use the
+/// format `"{collection_id}:{method}:{path}"`. Values are `"accepted"` or
+/// `"ignored"`. Absent keys are implicitly `"pending"`.
+async fn handle_drift_review_tool(
+    id: Option<JsonRpcId>,
+    tool_name: &str,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    drift_review_store: &DriftReviewStore,
+    app_handle: Option<&tauri::AppHandle>,
+) -> JsonRpcResponse {
+    let result = match tool_name {
+        "get_drift_review" => handle_get_drift_review(arguments, drift_review_store).await,
+        "accept_drift_change" => {
+            handle_accept_drift_change(arguments, drift_review_store, app_handle).await
+        }
+        "dismiss_drift_change" => {
+            handle_dismiss_drift_change(arguments, drift_review_store, app_handle).await
+        }
+        _ => Err(format!("Unknown drift review tool: {tool_name}")),
+    };
+
+    match result {
+        Ok(tool_result) => JsonRpcResponse::success(
+            id,
+            serde_json::to_value(tool_result).unwrap_or_else(|_| json!({})),
+        ),
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
+/// Handle `get_drift_review` — return the session-scoped review state for a collection.
+///
+/// Returns all review decisions for the given collection keyed by
+/// `"{method}:{path}"`. Operations absent from the map are implicitly
+/// `"pending"`. Drift groupings (removed/changed/added) are provided by the
+/// `refresh_collection_spec` tool call that produced the drift data; this tool
+/// surfaces only the accepted/ignored decisions made since then.
+async fn handle_get_drift_review(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    drift_review_store: &DriftReviewStore,
+) -> Result<ToolCallResult, String> {
+    let args = arguments.unwrap_or_default();
+    let collection_id = args
+        .get("collection_id")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+
+    let prefix = format!("{collection_id}:");
+
+    let store = drift_review_store.lock().await;
+
+    // Collect all review decisions for this collection
+    let review_state: serde_json::Map<String, serde_json::Value> = store
+        .iter()
+        .filter_map(|(key, status)| {
+            key.strip_prefix(&prefix).map(|operation_key| {
+                (
+                    operation_key.to_string(),
+                    serde_json::Value::String(status.clone()),
+                )
+            })
+        })
+        .collect();
+
+    drop(store);
+
+    let result_json = json!({
+        "collection_id": collection_id,
+        "review_state": review_state,
+    });
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: result_json.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+/// Handle `accept_drift_change` — mark a drift change as accepted.
+///
+/// Writes `"accepted"` to the shared store for the key
+/// `"{collection_id}:{method}:{path}"` and emits a `drift:change-accepted`
+/// Tauri event wrapped in an `EventEnvelope` with `Actor::Ai`.
+///
+/// # Event payload
+///
+/// ```json
+/// {
+///   "actor": { "type": "ai", "model": null, "session_id": null },
+///   "timestamp": "<ISO-8601>",
+///   "payload": {
+///     "collection_id": "...",
+///     "method": "DELETE",
+///     "path": "/books/{id}",
+///     "status": "accepted"
+///   }
+/// }
+/// ```
+async fn handle_accept_drift_change(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    drift_review_store: &DriftReviewStore,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let args = arguments.unwrap_or_default();
+    let collection_id = args
+        .get("collection_id")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+    let method = args
+        .get("method")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: method".to_string())?;
+    let path = args
+        .get("path")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: path".to_string())?;
+
+    let key = format!("{collection_id}:{method}:{path}");
+    {
+        let mut store = drift_review_store.lock().await;
+        store.insert(key, "accepted".to_string());
+    }
+
+    let event_payload = json!({
+        "collection_id": collection_id,
+        "method": method,
+        "path": path,
+        "status": "accepted",
+    });
+
+    if let Some(app) = app_handle {
+        let envelope = ai_event_envelope(event_payload.clone());
+        if let Err(e) = app.emit("drift:change-accepted", envelope) {
+            tracing::warn!("Failed to emit drift:change-accepted event: {e}");
+        }
+    }
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: event_payload.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
+/// Handle `dismiss_drift_change` — mark a drift change as ignored.
+///
+/// Writes `"ignored"` to the shared store for the key
+/// `"{collection_id}:{method}:{path}"` and emits a `drift:change-dismissed`
+/// Tauri event wrapped in an `EventEnvelope` with `Actor::Ai`.
+///
+/// # Event payload
+///
+/// ```json
+/// {
+///   "actor": { "type": "ai", "model": null, "session_id": null },
+///   "timestamp": "<ISO-8601>",
+///   "payload": {
+///     "collection_id": "...",
+///     "method": "PUT",
+///     "path": "/books/{id}",
+///     "status": "ignored"
+///   }
+/// }
+/// ```
+async fn handle_dismiss_drift_change(
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    drift_review_store: &DriftReviewStore,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<ToolCallResult, String> {
+    let args = arguments.unwrap_or_default();
+    let collection_id = args
+        .get("collection_id")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+    let method = args
+        .get("method")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: method".to_string())?;
+    let path = args
+        .get("path")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Missing required parameter: path".to_string())?;
+
+    let key = format!("{collection_id}:{method}:{path}");
+    {
+        let mut store = drift_review_store.lock().await;
+        store.insert(key, "ignored".to_string());
+    }
+
+    let event_payload = json!({
+        "collection_id": collection_id,
+        "method": method,
+        "path": path,
+        "status": "ignored",
+    });
+
+    if let Some(app) = app_handle {
+        let envelope = ai_event_envelope(event_payload.clone());
+        if let Err(e) = app.emit("drift:change-dismissed", envelope) {
+            tracing::warn!("Failed to emit drift:change-dismissed event: {e}");
+        }
+    }
+
+    Ok(ToolCallResult {
+        content: vec![ToolResponseContent::Text {
+            text: event_payload.to_string(),
+        }],
+        is_error: false,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use tempfile::TempDir;
 
-    fn make_service() -> (Arc<RwLock<McpServerService>>, CanvasStateHandle, TempDir) {
+    fn make_service() -> (
+        Arc<RwLock<McpServerService>>,
+        CanvasStateHandle,
+        DriftReviewStore,
+        TempDir,
+    ) {
         let dir = TempDir::new().unwrap();
         let service = McpServerService::new(dir.path().to_path_buf());
         let canvas_state = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
-        (Arc::new(RwLock::new(service)), canvas_state, dir)
+        let drift_store = Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new()));
+        (
+            Arc::new(RwLock::new(service)),
+            canvas_state,
+            drift_store,
+            dir,
+        )
     }
 
     #[tokio::test]
     async fn test_dispatch_initialize() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 1,
@@ -1156,9 +1412,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1168,7 +1432,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_tools_list() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 2,
@@ -1176,21 +1440,30 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
         // 8 collection + 3 save/move/copy + 3 import/refresh/hurl + 6 canvas + 1 streaming
-        // + 2 project context + 1 execute_request + 3 suggestion + 3 environment = 30 total
-        assert_eq!(tools.len(), 30);
+        // + 2 project context + 1 execute_request + 3 suggestion + 3 environment
+        // + 3 drift review = 33 total
+        assert_eq!(tools.len(), 33);
     }
 
     #[tokio::test]
     async fn test_dispatch_tools_call_create_collection() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 3,
@@ -1202,9 +1475,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1213,7 +1494,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_tools_call_unknown_tool() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 4,
@@ -1225,9 +1506,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         // Tool errors are returned as success with is_error=true
         assert!(parsed.error.is_none());
@@ -1237,7 +1526,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_tools_call_missing_params() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 5,
@@ -1245,9 +1534,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         assert_eq!(parsed.error.unwrap().code, -32602);
@@ -1255,7 +1552,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_unknown_method() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 6,
@@ -1263,9 +1560,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         let err = parsed.error.unwrap();
@@ -1275,23 +1580,40 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_notification_returns_none() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "method": "notifications/initialized"
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None).await;
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await;
         assert!(resp.is_none());
     }
 
     #[tokio::test]
     async fn test_dispatch_parse_error() {
-        let (service, canvas_state, _dir) = make_service();
-        let resp = dispatch("not valid json", &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let (service, canvas_state, drift_store, _dir) = make_service();
+        let resp = dispatch(
+            "not valid json",
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_some());
         assert_eq!(parsed.error.unwrap().code, -32700);
@@ -1299,7 +1621,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_ping() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 7,
@@ -1307,16 +1629,24 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
     }
 
     #[tokio::test]
     async fn test_dispatch_string_id() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": "abc-123",
@@ -1324,9 +1654,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert_eq!(parsed.id, Some(JsonRpcId::String("abc-123".to_string())));
     }
@@ -1336,7 +1674,7 @@ mod tests {
         use crate::domain::mcp::transport::Transport;
         use crate::infrastructure::mcp::fake_transport::FakeTransport;
 
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let transport = FakeTransport::new();
 
         // Inject initialize request
@@ -1352,7 +1690,17 @@ mod tests {
         // Read from receiver, dispatch, send response
         let mut rx = transport.receiver().await;
         let msg = rx.recv().await.unwrap();
-        if let Some(response) = dispatch(&msg, &service, &canvas_state, None, None, None).await {
+        if let Some(response) = dispatch(
+            &msg,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        {
             transport.send(response).await.unwrap();
         }
 
@@ -1366,6 +1714,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(clippy::too_many_lines)] // Integration test for execute_request; complexity is intrinsic
     async fn test_dispatch_execute_request() {
         use std::io::{Read, Write};
         use std::net::TcpListener;
@@ -1394,7 +1743,7 @@ mod tests {
             stream.write_all(response.as_bytes()).unwrap();
         });
 
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
 
         // Create collection
         let create_req = json!({
@@ -1402,9 +1751,17 @@ mod tests {
             "params": { "name": "create_collection", "arguments": { "name": "Test" } }
         })
         .to_string();
-        let resp = dispatch(&create_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &create_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let create_result = parsed.result.unwrap();
         let content_text: serde_json::Value =
@@ -1425,9 +1782,17 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&add_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &add_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let add_result = parsed.result.unwrap();
         let add_text: serde_json::Value =
@@ -1447,9 +1812,17 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&exec_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &exec_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none(), "JSON-RPC should succeed");
         let exec_result = parsed.result.unwrap();
@@ -1467,7 +1840,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_execute_request_missing_collection() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
 
         let exec_req = json!({
             "jsonrpc": "2.0", "id": 1, "method": "tools/call",
@@ -1480,9 +1853,17 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&exec_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &exec_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(
             parsed.error.is_none(),
@@ -1497,7 +1878,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_canvas_subscribe_stream_returns_url() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 10,
@@ -1509,9 +1890,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1526,7 +1915,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_canvas_subscribe_stream_custom_stream() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0",
             "id": 11,
@@ -1538,9 +1927,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let result = parsed.result.unwrap();
         let text = result["content"][0]["text"].as_str().unwrap();
@@ -1551,7 +1948,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_open_collection_request_not_found() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
 
         // Create collection first
         let create_req = json!({
@@ -1559,9 +1956,17 @@ mod tests {
             "params": { "name": "create_collection", "arguments": { "name": "Test" } }
         })
         .to_string();
-        let resp = dispatch(&create_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &create_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let create_result = parsed.result.unwrap();
         let content_text: serde_json::Value =
@@ -1580,9 +1985,17 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&open_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &open_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(
             parsed.error.is_none(),
@@ -1597,7 +2010,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_open_collection_request_success() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
 
         // Create collection + request
         let create_req = json!({
@@ -1605,9 +2018,17 @@ mod tests {
             "params": { "name": "create_collection", "arguments": { "name": "Test" } }
         })
         .to_string();
-        let resp = dispatch(&create_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &create_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let content_text: serde_json::Value = serde_json::from_str(
             parsed.result.unwrap()["content"][0]["text"]
@@ -1630,9 +2051,17 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&add_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &add_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         let add_text: serde_json::Value = serde_json::from_str(
             parsed.result.unwrap()["content"][0]["text"]
@@ -1654,9 +2083,17 @@ mod tests {
             }
         })
         .to_string();
-        let resp = dispatch(&open_req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &open_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1675,7 +2112,7 @@ mod tests {
         use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
 
         let dir = TempDir::new().unwrap();
-        let (service, canvas_state, _server_dir) = make_service();
+        let (service, canvas_state, drift_store, _server_dir) = make_service();
 
         let inline_spec = r#"{
             "openapi": "3.0.0",
@@ -1700,9 +2137,17 @@ mod tests {
                 }
             })
             .to_string();
-            dispatch(&req, &service, &canvas_state, None, None, None)
-                .await
-                .unwrap()
+            dispatch(
+                &req,
+                &service,
+                &canvas_state,
+                None,
+                None,
+                &drift_store,
+                None,
+            )
+            .await
+            .unwrap()
         })
         .await;
 
@@ -1728,7 +2173,7 @@ mod tests {
         use crate::infrastructure::storage::collection_store::with_collections_dir_override_async;
 
         let dir = TempDir::new().unwrap();
-        let (service, canvas_state, _server_dir) = make_service();
+        let (service, canvas_state, drift_store, _server_dir) = make_service();
 
         let result = with_collections_dir_override_async(dir.path().to_path_buf(), || async {
             let req = json!({
@@ -1739,9 +2184,17 @@ mod tests {
                 }
             })
             .to_string();
-            dispatch(&req, &service, &canvas_state, None, None, None)
-                .await
-                .unwrap()
+            dispatch(
+                &req,
+                &service,
+                &canvas_state,
+                None,
+                None,
+                &drift_store,
+                None,
+            )
+            .await
+            .unwrap()
         })
         .await;
 
@@ -1760,7 +2213,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_refresh_collection_spec_missing_id() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0", "id": 1, "method": "tools/call",
             "params": {
@@ -1770,9 +2223,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1785,7 +2246,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_dispatch_run_hurl_suite_missing_path() {
-        let (service, canvas_state, _dir) = make_service();
+        let (service, canvas_state, drift_store, _dir) = make_service();
         let req = json!({
             "jsonrpc": "2.0", "id": 1, "method": "tools/call",
             "params": {
@@ -1795,9 +2256,17 @@ mod tests {
         })
         .to_string();
 
-        let resp = dispatch(&req, &service, &canvas_state, None, None, None)
-            .await
-            .unwrap();
+        let resp = dispatch(
+            &req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
         let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
         assert!(parsed.error.is_none());
         let result = parsed.result.unwrap();
@@ -1821,6 +2290,8 @@ mod tests {
             McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
         let service = Arc::new(RwLock::new(mcp_service));
         let canvas_state = Arc::new(RwLock::new(CanvasStateSnapshot::new()));
+        let drift_store: DriftReviewStore =
+            Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new()));
 
         let inline_spec = r#"{
             "openapi": "3.0.0",
@@ -1837,9 +2308,17 @@ mod tests {
                 }
             })
             .to_string();
-            dispatch(&req, &service, &canvas_state, None, None, None)
-                .await
-                .unwrap()
+            dispatch(
+                &req,
+                &service,
+                &canvas_state,
+                None,
+                None,
+                &drift_store,
+                None,
+            )
+            .await
+            .unwrap()
         })
         .await;
 
@@ -1879,5 +2358,428 @@ mod tests {
         // Verify optional fields are None
         assert!(envelope.correlation_id.is_none());
         assert!(envelope.lamport.is_none());
+    }
+
+    // ── Drift Review Tool Tests ────────────────────────────────────
+
+    /// Helper: create a fresh `DriftReviewStore`.
+    fn make_drift_store() -> DriftReviewStore {
+        Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new()))
+    }
+
+    #[tokio::test]
+    async fn test_get_drift_review_empty_returns_empty_state() {
+        let drift_store = make_drift_store();
+        let result = handle_get_drift_review(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_test_123".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+        )
+        .await
+        .unwrap();
+
+        assert!(!result.is_error);
+        let ToolResponseContent::Text { text } = &result.content[0];
+        let parsed: serde_json::Value = serde_json::from_str(text).unwrap();
+        assert_eq!(parsed["collection_id"], "col_test_123");
+        assert!(
+            parsed["review_state"].as_object().unwrap().is_empty(),
+            "review_state should be empty for a collection with no decisions"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_accept_drift_change_stores_accepted() {
+        let drift_store = make_drift_store();
+
+        let result = handle_accept_drift_change(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_abc".to_string()),
+                );
+                m.insert(
+                    "method".to_string(),
+                    serde_json::Value::String("DELETE".to_string()),
+                );
+                m.insert(
+                    "path".to_string(),
+                    serde_json::Value::String("/books/{id}".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
+
+        assert!(!result.is_error);
+
+        // Verify the store now has the accepted entry
+        let store = drift_store.lock().await;
+        assert_eq!(
+            store.get("col_abc:DELETE:/books/{id}").map(String::as_str),
+            Some("accepted")
+        );
+        drop(store);
+    }
+
+    #[tokio::test]
+    async fn test_dismiss_drift_change_stores_ignored() {
+        let drift_store = make_drift_store();
+
+        let result = handle_dismiss_drift_change(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_xyz".to_string()),
+                );
+                m.insert(
+                    "method".to_string(),
+                    serde_json::Value::String("PUT".to_string()),
+                );
+                m.insert(
+                    "path".to_string(),
+                    serde_json::Value::String("/books/{id}".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
+
+        assert!(!result.is_error);
+
+        // Verify the store has the ignored entry
+        let store = drift_store.lock().await;
+        assert_eq!(
+            store.get("col_xyz:PUT:/books/{id}").map(String::as_str),
+            Some("ignored")
+        );
+        drop(store);
+    }
+
+    #[tokio::test]
+    async fn test_accept_then_get_reflects_in_review_state() {
+        let drift_store = make_drift_store();
+
+        // Accept a change
+        handle_accept_drift_change(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_review".to_string()),
+                );
+                m.insert(
+                    "method".to_string(),
+                    serde_json::Value::String("DELETE".to_string()),
+                );
+                m.insert(
+                    "path".to_string(),
+                    serde_json::Value::String("/items/{id}".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
+
+        // Get review state for the collection
+        let result = handle_get_drift_review(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_review".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+        )
+        .await
+        .unwrap();
+
+        let ToolResponseContent::Text { text } = &result.content[0];
+        let parsed: serde_json::Value = serde_json::from_str(text).unwrap();
+        let review_state = parsed["review_state"].as_object().unwrap();
+        assert_eq!(
+            review_state
+                .get("DELETE:/items/{id}")
+                .and_then(|v| v.as_str()),
+            Some("accepted")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_dismiss_then_get_reflects_in_review_state() {
+        let drift_store = make_drift_store();
+
+        // Dismiss a change
+        handle_dismiss_drift_change(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_dismiss".to_string()),
+                );
+                m.insert(
+                    "method".to_string(),
+                    serde_json::Value::String("PUT".to_string()),
+                );
+                m.insert(
+                    "path".to_string(),
+                    serde_json::Value::String("/products/{id}".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
+
+        // Get review state
+        let result = handle_get_drift_review(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_dismiss".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+        )
+        .await
+        .unwrap();
+
+        let ToolResponseContent::Text { text } = &result.content[0];
+        let parsed: serde_json::Value = serde_json::from_str(text).unwrap();
+        let review_state = parsed["review_state"].as_object().unwrap();
+        assert_eq!(
+            review_state
+                .get("PUT:/products/{id}")
+                .and_then(|v| v.as_str()),
+            Some("ignored")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_drift_review_isolates_by_collection_id() {
+        let drift_store = make_drift_store();
+
+        // Insert entries for two different collections
+        {
+            let mut store = drift_store.lock().await;
+            store.insert("col_a:GET:/items".to_string(), "accepted".to_string());
+            store.insert(
+                "col_b:DELETE:/items/{id}".to_string(),
+                "ignored".to_string(),
+            );
+        }
+
+        // Query only col_a
+        let result = handle_get_drift_review(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_a".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+        )
+        .await
+        .unwrap();
+
+        let ToolResponseContent::Text { text } = &result.content[0];
+        let parsed: serde_json::Value = serde_json::from_str(text).unwrap();
+        let review_state = parsed["review_state"].as_object().unwrap();
+
+        // Should only contain col_a entries
+        assert!(review_state.contains_key("GET:/items"));
+        assert!(!review_state.contains_key("DELETE:/items/{id}"));
+        assert_eq!(review_state.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_accept_drift_change_missing_collection_id() {
+        let drift_store = make_drift_store();
+
+        let result = handle_accept_drift_change(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "method".to_string(),
+                    serde_json::Value::String("GET".to_string()),
+                );
+                m.insert(
+                    "path".to_string(),
+                    serde_json::Value::String("/items".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+            None,
+        )
+        .await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("collection_id"));
+    }
+
+    #[tokio::test]
+    async fn test_dismiss_drift_change_missing_method() {
+        let drift_store = make_drift_store();
+
+        let result = handle_dismiss_drift_change(
+            Some({
+                let mut m = serde_json::Map::new();
+                m.insert(
+                    "collection_id".to_string(),
+                    serde_json::Value::String("col_abc".to_string()),
+                );
+                m.insert(
+                    "path".to_string(),
+                    serde_json::Value::String("/items".to_string()),
+                );
+                m
+            }),
+            &drift_store,
+            None,
+        )
+        .await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("method"));
+    }
+
+    #[tokio::test]
+    async fn test_drift_review_tool_via_dispatch() {
+        let (service, canvas_state, drift_store, _dir) = make_service();
+
+        // Accept a change via dispatch
+        let accept_req = json!({
+            "jsonrpc": "2.0",
+            "id": 100,
+            "method": "tools/call",
+            "params": {
+                "name": "accept_drift_change",
+                "arguments": {
+                    "collection_id": "col_test",
+                    "method": "DELETE",
+                    "path": "/books/{id}"
+                }
+            }
+        })
+        .to_string();
+
+        let resp = dispatch(
+            &accept_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(parsed.error.is_none());
+        let result = parsed.result.unwrap();
+        assert!(!result["isError"].as_bool().unwrap_or(false));
+
+        // Verify via get_drift_review
+        let get_req = json!({
+            "jsonrpc": "2.0",
+            "id": 101,
+            "method": "tools/call",
+            "params": {
+                "name": "get_drift_review",
+                "arguments": { "collection_id": "col_test" }
+            }
+        })
+        .to_string();
+
+        let resp = dispatch(
+            &get_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(parsed.error.is_none());
+        let result = parsed.result.unwrap();
+        assert!(!result["isError"].as_bool().unwrap_or(false));
+
+        let text: serde_json::Value =
+            serde_json::from_str(result["content"][0]["text"].as_str().unwrap()).unwrap();
+        assert_eq!(
+            text["review_state"]["DELETE:/books/{id}"].as_str(),
+            Some("accepted")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_dismiss_drift_change_via_dispatch() {
+        let (service, canvas_state, drift_store, _dir) = make_service();
+
+        let dismiss_req = json!({
+            "jsonrpc": "2.0",
+            "id": 200,
+            "method": "tools/call",
+            "params": {
+                "name": "dismiss_drift_change",
+                "arguments": {
+                    "collection_id": "col_abc",
+                    "method": "PUT",
+                    "path": "/books/{id}"
+                }
+            }
+        })
+        .to_string();
+
+        let resp = dispatch(
+            &dismiss_req,
+            &service,
+            &canvas_state,
+            None,
+            None,
+            &drift_store,
+            None,
+        )
+        .await
+        .unwrap();
+        let parsed: JsonRpcResponse = serde_json::from_str(&resp).unwrap();
+        assert!(parsed.error.is_none());
+        let result = parsed.result.unwrap();
+        assert!(!result["isError"].as_bool().unwrap_or(false));
+
+        let text: serde_json::Value =
+            serde_json::from_str(result["content"][0]["text"].as_str().unwrap()).unwrap();
+        assert_eq!(text["status"].as_str(), Some("ignored"));
+        assert_eq!(text["method"].as_str(), Some("PUT"));
+        assert_eq!(text["path"].as_str(), Some("/books/{id}"));
     }
 }

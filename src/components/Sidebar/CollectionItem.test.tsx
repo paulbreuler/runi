@@ -9,6 +9,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { CollectionSummary } from '@/types/collection';
 import { CollectionItem } from './CollectionItem';
 
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn(),
+}));
+
 // Mock motion components to avoid animation delays in tests
 vi.mock('motion/react', () => ({
   motion: {
@@ -54,11 +58,13 @@ interface MockCollectionStoreState {
 
 let mockCollectionState: MockCollectionStoreState;
 
+let mockUseCollection: (id: string) => unknown;
+
 vi.mock('@/stores/useCollectionStore', () => ({
   useCollectionStore: (selector: (state: MockCollectionStoreState) => unknown): unknown =>
     selector(mockCollectionState),
   useIsExpanded: vi.fn(() => false),
-  useCollection: vi.fn(() => undefined),
+  useCollection: (id: string): unknown => mockUseCollection(id),
   useSortedRequests: vi.fn(() => []),
 }));
 
@@ -95,6 +101,7 @@ describe('CollectionItem', (): void => {
       refreshCollectionSpec: vi.fn(async (): Promise<void> => undefined),
       dismissDriftResult: vi.fn(),
     };
+    mockUseCollection = vi.fn(() => undefined) as (id: string) => unknown;
   });
 
   describe('rendering', (): void => {
@@ -385,8 +392,8 @@ describe('CollectionItem', (): void => {
     });
   });
 
-  describe('drift indicator dot', (): void => {
-    it('renders red drift dot when operationsRemoved is non-empty', (): void => {
+  describe('drift badge', (): void => {
+    it('renders breaking chip when operationsRemoved is non-empty', (): void => {
       mockCollectionState = {
         ...mockCollectionState,
         driftResults: {
@@ -400,13 +407,13 @@ describe('CollectionItem', (): void => {
       };
       render(<CollectionItem summary={simpleSummary} />);
 
-      const dot = screen.getByTestId('collection-drift-dot-col_1');
-      expect(dot).toBeInTheDocument();
-      expect(dot.getAttribute('aria-label')).toBe('Breaking changes detected');
-      expect(dot.className).toContain('bg-signal-error');
+      const badge = screen.getByTestId('drift-badge-col_1');
+      expect(badge).toBeInTheDocument();
+      const breakingChip = screen.getByTestId('drift-badge-breaking-col_1');
+      expect(breakingChip).toBeInTheDocument();
     });
 
-    it('renders amber drift dot when only operationsChanged', (): void => {
+    it('renders warning chip when only operationsChanged', (): void => {
       mockCollectionState = {
         ...mockCollectionState,
         driftResults: {
@@ -420,13 +427,14 @@ describe('CollectionItem', (): void => {
       };
       render(<CollectionItem summary={simpleSummary} />);
 
-      const dot = screen.getByTestId('collection-drift-dot-col_1');
-      expect(dot).toBeInTheDocument();
-      expect(dot.getAttribute('aria-label')).toBe('Changes detected');
-      expect(dot.className).toContain('bg-signal-warning');
+      const badge = screen.getByTestId('drift-badge-col_1');
+      expect(badge).toBeInTheDocument();
+      const warningChip = screen.getByTestId('drift-badge-warning-col_1');
+      expect(warningChip).toBeInTheDocument();
+      expect(screen.queryByTestId('drift-badge-breaking-col_1')).toBeNull();
     });
 
-    it('does not render drift dot when changed is false', (): void => {
+    it('does not render drift badge when changed is false', (): void => {
       mockCollectionState = {
         ...mockCollectionState,
         driftResults: {
@@ -439,12 +447,12 @@ describe('CollectionItem', (): void => {
         },
       };
       render(<CollectionItem summary={simpleSummary} />);
-      expect(screen.queryByTestId('collection-drift-dot-col_1')).toBeNull();
+      expect(screen.queryByTestId('drift-badge-col_1')).toBeNull();
     });
 
-    it('does not render drift dot when no driftResult for collection', (): void => {
+    it('does not render drift badge when no driftResult for collection', (): void => {
       render(<CollectionItem summary={simpleSummary} />);
-      expect(screen.queryByTestId('collection-drift-dot-col_1')).toBeNull();
+      expect(screen.queryByTestId('drift-badge-col_1')).toBeNull();
     });
   });
 });

@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Trash2,
 } from 'lucide-react';
-import { DriftReport } from '@/components/Sidebar/DriftReport';
+import { DriftBadge } from '@/components/DriftReview/DriftBadge';
+import { DriftReviewDrawer } from '@/components/DriftReview/DriftReviewDrawer';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
@@ -27,7 +28,6 @@ import {
   useSortedRequests,
 } from '@/stores/useCollectionStore';
 import type { CollectionSummary } from '@/types/collection';
-import type { DriftActionType } from '@/types/generated/DriftActionType';
 import { cn } from '@/utils/cn';
 import { focusRingClasses, useFocusVisible } from '@/utils/accessibility';
 import { focusWithVisibility } from '@/utils/focusVisibility';
@@ -70,7 +70,6 @@ export const CollectionItem = ({
   const sortedRequests = useSortedRequests(summary.id);
   const displayName = truncateNavLabel(summary.name);
   const refreshCollectionSpec = useCollectionStore((state) => state.refreshCollectionSpec);
-  const dismissDriftResult = useCollectionStore((state) => state.dismissDriftResult);
   const driftResult = useCollectionStore((state) => state.driftResults[summary.id]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -246,19 +245,6 @@ export const CollectionItem = ({
     })();
   }, [summary.id, refreshCollectionSpec]);
 
-  const handleDriftDismiss = useCallback((): void => {
-    dismissDriftResult(summary.id);
-  }, [summary.id, dismissDriftResult]);
-
-  const handleDriftAction = useCallback(
-    (_actionType: DriftActionType): void => {
-      // For now, all actions dismiss the drift report.
-      // In future, update_spec and fix_request will invoke backend commands.
-      dismissDriftResult(summary.id);
-    },
-    [summary.id, dismissDriftResult]
-  );
-
   // Determine if refresh spec should be shown
   const canRefreshSpec =
     collection?.source.source_type === 'openapi' &&
@@ -360,22 +346,11 @@ export const CollectionItem = ({
                     </span>
                   </>
                 )}
-                {driftResult?.changed === true && (
-                  <span
-                    className={cn(
-                      'inline-block size-1.5 rounded-full shrink-0',
-                      driftResult.operationsRemoved.length > 0
-                        ? 'bg-signal-error'
-                        : 'bg-signal-warning'
-                    )}
-                    data-test-id={`collection-drift-dot-${summary.id}`}
-                    aria-label={
-                      driftResult.operationsRemoved.length > 0
-                        ? 'Breaking changes detected'
-                        : 'Changes detected'
-                    }
-                  />
-                )}
+                <DriftBadge
+                  collectionId={summary.id}
+                  collectionName={summary.name}
+                  driftResult={driftResult}
+                />
               </div>
 
               {/* Three-dot menu button — hover-revealed */}
@@ -580,11 +555,7 @@ export const CollectionItem = ({
         </div>
       )}
       {driftResult !== undefined && driftResult.changed && (
-        <DriftReport
-          result={driftResult}
-          onDismiss={handleDriftDismiss}
-          onAction={handleDriftAction}
-        />
+        <DriftReviewDrawer collectionId={summary.id} driftResult={driftResult} />
       )}
     </div>
   );

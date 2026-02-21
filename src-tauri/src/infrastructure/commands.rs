@@ -54,6 +54,13 @@ static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
 /// the user's current context.
 pub type CanvasStateHandle = Arc<RwLock<CanvasStateSnapshot>>;
 
+/// Session-scoped drift review state.
+///
+/// Stores the review decision (accepted/ignored) for each drift change identified
+/// by key `"{collection_id}:{method}:{path}"`. Values are `"accepted"` or `"ignored"`.
+/// Entries absent from the map are implicitly `"pending"`.
+pub type DriftReviewStore = Arc<Mutex<std::collections::HashMap<String, String>>>;
+
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
 
 /// Request payload for the generic import command.
@@ -151,6 +158,7 @@ pub async fn cmd_import_collection(
     request: ImportCollectionRequest,
 ) -> Result<Collection, String> {
     let collection = import_collection_inner(request).await?;
+
     emit_collection_event(
         &app,
         "collection:created",
