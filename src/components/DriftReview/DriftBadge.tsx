@@ -64,7 +64,15 @@ export const DriftBadge = ({
     openDrawer(collectionId);
   };
 
-  const ariaLabel = `Open drift review for ${collectionName}: ${breakingCount > 0 ? `${String(breakingCount)} breaking` : ''}${breakingCount > 0 && warningCount > 0 ? ', ' : ''}${warningCount > 0 ? `${String(warningCount)} warnings` : ''}`;
+  const breakingLabel =
+    breakingCount > 0
+      ? `${String(breakingCount)} ${breakingCount === 1 ? 'breaking change' : 'breaking changes'}`
+      : '';
+  const warningLabel =
+    warningCount > 0
+      ? `${String(warningCount)} ${warningCount === 1 ? 'warning' : 'warnings'}`
+      : '';
+  const ariaLabel = `Open drift review for ${collectionName}: ${[breakingLabel, warningLabel].filter(Boolean).join(', ')}`;
 
   return (
     <button

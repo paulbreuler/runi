@@ -77,11 +77,12 @@ describe('DriftReviewDrawer', () => {
       [{ method: 'POST', path: '/books/{id}/reserve' }]
     );
     render(<DriftReviewDrawer collectionId={collectionId} driftResult={result} />);
-    const drawer = screen.getByTestId('drift-review-drawer');
-    const groups = drawer.querySelectorAll('[data-drift-group]');
-    expect(groups[0]).toHaveAttribute('data-drift-group', 'removed');
-    expect(groups[1]).toHaveAttribute('data-drift-group', 'changed');
-    expect(groups[2]).toHaveAttribute('data-drift-group', 'added');
+    const groups = screen.getAllByTestId(/^drift-group-/);
+    expect(groups.map((node) => node.getAttribute('data-test-id'))).toEqual([
+      'drift-group-removed',
+      'drift-group-changed',
+      'drift-group-added',
+    ]);
   });
 
   it('renders change cards with correct data-test-id attributes', () => {
@@ -227,7 +228,7 @@ describe('DriftReviewDrawer', () => {
     const result = makeResult(
       [{ method: 'DELETE', path: '/books/{id}' }],
       [{ method: 'PUT', path: '/books/{id}', changes: ['parameters'] }],
-      [{ method: 'POST', path: '/books', changes: [] } as never]
+      [{ method: 'POST', path: '/books' }]
     );
     render(<DriftReviewDrawer collectionId={collectionId} driftResult={result} />);
     fireEvent.click(screen.getByTestId('drift-drawer-accept-all'));

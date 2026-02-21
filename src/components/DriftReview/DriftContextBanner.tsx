@@ -103,8 +103,8 @@ export const DriftContextBanner = ({
           : 'bg-signal-warning/8 text-signal-warning'
       )}
       data-test-id="drift-context-banner"
-      role="alert"
-      aria-live="polite"
+      role={isRemovedSeverity ? 'alert' : 'status'}
+      aria-live={isRemovedSeverity ? 'assertive' : 'polite'}
     >
       <span
         className={cn(

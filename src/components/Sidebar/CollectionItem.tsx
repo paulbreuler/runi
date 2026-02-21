@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { DriftBadge } from '@/components/DriftReview/DriftBadge';
 import { DriftReviewDrawer } from '@/components/DriftReview/DriftReviewDrawer';
+import { useDriftReviewStore } from '@/stores/useDriftReviewStore';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
@@ -71,6 +72,9 @@ export const CollectionItem = ({
   const displayName = truncateNavLabel(summary.name);
   const refreshCollectionSpec = useCollectionStore((state) => state.refreshCollectionSpec);
   const driftResult = useCollectionStore((state) => state.driftResults[summary.id]);
+  const isDriftDrawerOpenForThis = useDriftReviewStore(
+    (state) => state.isOpen && state.collectionId === summary.id
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [isRenaming, setIsRenaming] = useState(startInRenameMode);
@@ -554,7 +558,7 @@ export const CollectionItem = ({
           <RequestListComposite collectionId={summary.id} requests={sortedRequests} />
         </div>
       )}
-      {driftResult !== undefined && driftResult.changed && (
+      {driftResult !== undefined && driftResult.changed && isDriftDrawerOpenForThis && (
         <DriftReviewDrawer collectionId={summary.id} driftResult={driftResult} />
       )}
     </div>

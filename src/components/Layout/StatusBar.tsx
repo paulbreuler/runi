@@ -153,6 +153,13 @@ export const StatusBar = (): React.JSX.Element => {
     }
   }, [envError, clearEnvError]);
 
+  // Reset environment panel when collection context is cleared
+  useEffect(() => {
+    if (collectionId === undefined) {
+      setIsEnvPanelOpen(false);
+    }
+  }, [collectionId]);
+
   const handleEnvironmentChange = (value: string | null): void => {
     if (collectionId === undefined) {
       return;
