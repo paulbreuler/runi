@@ -21,13 +21,13 @@ use infrastructure::commands::{
     cmd_list_suggestions, cmd_load_collection, cmd_log_frontend_error, cmd_move_request,
     cmd_open_collection_file, cmd_refresh_collection_spec, cmd_rename_collection,
     cmd_rename_request, cmd_resolve_suggestion, cmd_run_hurl_suite, cmd_save_collection,
-    cmd_save_tab_to_collection, cmd_set_active_environment, cmd_update_project_context,
-    cmd_update_request, cmd_upsert_environment, cmd_write_frontend_error_report,
-    create_project_context_service, create_proxy_service, create_suggestion_service,
-    delete_history_entry, get_config_dir, get_history_batch, get_history_count, get_history_ids,
-    get_platform, get_process_startup_time, get_system_specs, hello_world, load_feature_flags,
-    load_request_history, save_request_history, set_log_level, sync_canvas_state,
-    write_startup_timing,
+    cmd_save_tab_to_collection, cmd_set_active_environment, cmd_set_drift_review_decision,
+    cmd_update_project_context, cmd_update_request, cmd_upsert_environment,
+    cmd_write_frontend_error_report, create_drift_review_store, create_project_context_service,
+    create_proxy_service, create_suggestion_service, delete_history_entry, get_config_dir,
+    get_history_batch, get_history_count, get_history_ids, get_platform, get_process_startup_time,
+    get_system_specs, hello_world, load_feature_flags, load_request_history, save_request_history,
+    set_log_level, sync_canvas_state, write_startup_timing,
 };
 use infrastructure::http::execute_request;
 use infrastructure::logging::init_logging;
@@ -119,6 +119,7 @@ pub fn run() {
         .manage(create_proxy_service())
         .manage(create_project_context_service().expect("Failed to create project context service"))
         .manage(create_suggestion_service().expect("Failed to create suggestion service"))
+        .manage(create_drift_review_store())
         .invoke_handler(tauri::generate_handler![
             hello_world,
             execute_request,
@@ -173,7 +174,8 @@ pub fn run() {
             cmd_clear_suggestions,
             cmd_upsert_environment,
             cmd_delete_environment,
-            cmd_set_active_environment
+            cmd_set_active_environment,
+            cmd_set_drift_review_decision
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

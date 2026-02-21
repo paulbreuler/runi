@@ -4,7 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Activity, Settings } from 'lucide-react';
+import { Activity, Settings, SlidersHorizontal } from 'lucide-react';
+import { EnvironmentPanel } from '@/components/Environments/EnvironmentPanel';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { invoke } from '@tauri-apps/api/core';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
@@ -124,6 +125,7 @@ export const StatusBar = (): React.JSX.Element => {
   const setMetricsStore = useMetricsStore((state) => state.setMetrics);
   const { metrics, timestamp, isLive } = useMetricsStore();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isEnvPanelOpen, setIsEnvPanelOpen] = useState(false);
 
   // Derive active collection from active canvas context's source
   const collectionId = useCanvasStore((state) => {
@@ -150,6 +152,13 @@ export const StatusBar = (): React.JSX.Element => {
       clearEnvError();
     }
   }, [envError, clearEnvError]);
+
+  // Reset environment panel when collection context is cleared
+  useEffect(() => {
+    if (collectionId === undefined) {
+      setIsEnvPanelOpen(false);
+    }
+  }, [collectionId]);
 
   const handleEnvironmentChange = (value: string | null): void => {
     if (collectionId === undefined) {
@@ -268,6 +277,31 @@ export const StatusBar = (): React.JSX.Element => {
                 ))}
               </SelectContent>
             </Select>
+            <button
+              type="button"
+              onClick={() => {
+                setIsEnvPanelOpen((prev) => !prev);
+              }}
+              className={cn(
+                'p-0.5 rounded text-text-muted hover:text-text-primary transition-colors',
+                focusRingClasses,
+                isEnvPanelOpen && 'text-text-primary bg-bg-raised'
+              )}
+              aria-label="Manage environments"
+              aria-expanded={isEnvPanelOpen}
+              data-test-id="manage-environments-button"
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+            </button>
+            {collectionId !== undefined && (
+              <EnvironmentPanel
+                collectionId={collectionId}
+                open={isEnvPanelOpen}
+                onClose={() => {
+                  setIsEnvPanelOpen(false);
+                }}
+              />
+            )}
           </>
         ) : (
           <span

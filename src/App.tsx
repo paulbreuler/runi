@@ -15,6 +15,7 @@ import { TooltipProvider } from './components/ui/Tooltip';
 import { CommandBar } from './components/CommandBar';
 import { globalEventBus } from './events/bus';
 import { initSuggestionStore } from './stores/useSuggestionStore';
+import { initDriftReviewStore } from './stores/useDriftReviewStore';
 
 // Lazy load routes for code splitting
 const HomePage = lazy(() => import('./routes/index').then((m) => ({ default: m.HomePage })));
@@ -42,6 +43,17 @@ export const App = (): React.JSX.Element => {
   useEffect(() => {
     let cleanup: (() => void) | undefined;
     void initSuggestionStore().then((fn) => {
+      cleanup = fn;
+    });
+    return (): void => {
+      cleanup?.();
+    };
+  }, []);
+
+  // Initialize drift review store — listen for Tauri events from MCP drift tools
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    void initDriftReviewStore().then((fn) => {
       cleanup = fn;
     });
     return (): void => {

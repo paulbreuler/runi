@@ -54,6 +54,22 @@ static HISTORY_STORAGE: LazyLock<Arc<MemoryHistoryStorage>> =
 /// the user's current context.
 pub type CanvasStateHandle = Arc<RwLock<CanvasStateSnapshot>>;
 
+/// Session-scoped drift review state.
+///
+/// Stores the review decision (accepted/ignored) for each drift change identified
+/// by key `"{collection_id}:{method}:{path}"`. Values are `"accepted"` or `"ignored"`.
+/// Entries absent from the map are implicitly `"pending"`.
+pub type DriftReviewStore = Arc<Mutex<std::collections::HashMap<String, String>>>;
+
+/// Create the initial drift review store for Tauri managed state.
+///
+/// This store is shared between the Tauri command handlers (UI-driven decisions)
+/// and the MCP server (AI-driven decisions), ensuring both paths stay in sync.
+#[must_use]
+pub fn create_drift_review_store() -> DriftReviewStore {
+    Arc::new(Mutex::new(std::collections::HashMap::new()))
+}
+
 const HTTPBIN_SPEC_URL: &str = "https://httpbin.org/spec.json";
 
 /// Request payload for the generic import command.
@@ -151,6 +167,7 @@ pub async fn cmd_import_collection(
     request: ImportCollectionRequest,
 ) -> Result<Collection, String> {
     let collection = import_collection_inner(request).await?;
+
     emit_collection_event(
         &app,
         "collection:created",
@@ -483,6 +500,34 @@ pub fn auto_create_drift_suggestions(
             Err(e) => tracing::warn!("Failed to auto-create optimization suggestion: {e}"),
         }
     }
+}
+
+/// Set a drift review decision from the UI.
+///
+/// Writes the accept/ignore decision to the shared [`DriftReviewStore`] (same store
+/// used by MCP tools), ensuring that MCP `get_drift_review` reflects UI decisions.
+/// Does NOT emit events — the UI has already updated its own state optimistically,
+/// and emitting would cause an infinite loop via the `initDriftReviewStore` listener.
+///
+/// # Errors
+///
+/// Returns an error if `status` is not `"accepted"` or `"ignored"`.
+#[tauri::command]
+pub async fn cmd_set_drift_review_decision(
+    drift_store: tauri::State<'_, DriftReviewStore>,
+    collection_id: String,
+    method: String,
+    path: String,
+    status: String,
+) -> Result<(), String> {
+    if status != "accepted" && status != "ignored" {
+        return Err(format!(
+            "Invalid status: {status}; must be 'accepted' or 'ignored'"
+        ));
+    }
+    let key = format!("{collection_id}:{method}:{path}");
+    drift_store.lock().await.insert(key, status);
+    Ok(())
 }
 
 /// Emit a `suggestion:created` event wrapped in an [`EventEnvelope`].

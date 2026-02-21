@@ -85,6 +85,8 @@ pub struct McpServerState {
     pub project_context: Option<crate::infrastructure::commands::ProjectContextHandle>,
     /// Suggestion service for MCP tools (Vigilance Monitor).
     pub suggestion_service: Option<crate::infrastructure::commands::SuggestionServiceHandle>,
+    /// Drift review state (accept/ignore decisions, session-scoped).
+    pub drift_review_store: crate::infrastructure::commands::DriftReviewStore,
     /// Tauri app handle for mutation tools (tab switching, opening, closing).
     pub app_handle: Option<tauri::AppHandle>,
 }
@@ -123,6 +125,7 @@ async fn handle_post(
         &state.canvas_state,
         state.project_context.as_ref(),
         state.suggestion_service.as_ref(),
+        &state.drift_review_store,
         state.app_handle.as_ref(),
     )
     .await
@@ -412,6 +415,9 @@ mod tests {
             canvas_state: Arc::new(RwLock::new(CanvasStateSnapshot::new())),
             project_context: None,
             suggestion_service: None,
+            drift_review_store: std::sync::Arc::new(tokio::sync::Mutex::new(
+                std::collections::HashMap::new(),
+            )),
             app_handle: None,
         };
         (state, dir)

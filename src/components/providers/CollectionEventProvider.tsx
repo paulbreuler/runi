@@ -24,6 +24,7 @@ import { useActivityStore, type ActivityAction } from '@/stores/useActivityStore
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useCanvasStore } from '@/stores/useCanvasStore';
 import { useRequestStoreRaw } from '@/stores/useRequestStore';
+import { useSuggestionStore } from '@/stores/useSuggestionStore';
 import type { Actor, EventEnvelope, CollectionRefreshedEvent } from '@/hooks/useCollectionEvents';
 import type { RequestTabSource } from '@/types/canvas';
 import type { SpecRefreshResult } from '@/types/generated/SpecRefreshResult';
@@ -340,6 +341,9 @@ export const CollectionEventProvider = ({
           message: `Spec refreshed — ${String(event.operationsRemoved.length)} breaking change${event.operationsRemoved.length === 1 ? '' : 's'} detected`,
         });
       }
+
+      // Refresh Vigilance Monitor to pick up any auto-suggestions created by the backend
+      void useSuggestionStore.getState().fetchSuggestions('pending');
     },
   });
 
