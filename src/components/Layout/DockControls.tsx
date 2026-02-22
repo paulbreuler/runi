@@ -247,6 +247,7 @@ export const DockControls = ({
                 <Menu.Popup style={{ zIndex: OVERLAY_Z_INDEX }} className={menuPopupClasses}>
                   {dockOptions.map(({ position: pos, icon, label }) => (
                     <Menu.Item
+                      nativeButton={true}
                       key={pos}
                       label={label}
                       className={cn(
@@ -268,6 +269,7 @@ export const DockControls = ({
                   ))}
                   <Menu.Separator className="h-px bg-border-subtle my-1" />
                   <Menu.Item
+                    nativeButton={true}
                     label="Pop out to window"
                     className={menuItemClasses}
                     closeOnClick={true}
