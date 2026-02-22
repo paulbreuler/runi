@@ -412,7 +412,7 @@ async fn handle_import_collection(
     };
 
     match crate::infrastructure::commands::import_collection_inner(request).await {
-        Ok(collection) => {
+        Ok(crate::infrastructure::commands::ImportCollectionResult::Success { collection }) => {
             // Emit event for UI update
             {
                 let mut svc = service.write().await;
@@ -426,6 +426,30 @@ async fn handle_import_collection(
                         "name": collection.metadata.name,
                         "request_count": collection.requests.len(),
                         "message": format!("Collection '{}' imported successfully", collection.metadata.name),
+                    })
+                    .to_string(),
+                }],
+                is_error: false,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(result).unwrap_or_else(|_| json!({})),
+            )
+        }
+        Ok(crate::infrastructure::commands::ImportCollectionResult::Conflict {
+            existing_id,
+            existing_name,
+        }) => {
+            let result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: json!({
+                        "status": "conflict",
+                        "existing_id": existing_id,
+                        "existing_name": existing_name,
+                        "message": format!(
+                            "A collection named '{}' already exists. Use refresh_collection_spec to update it.",
+                            existing_name
+                        ),
                     })
                     .to_string(),
                 }],

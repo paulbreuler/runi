@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import type { Collection, CollectionRequest, CollectionSummary } from '@/types/collection';
 import { sortRequests } from '@/types/collection';
 import type { ImportCollectionRequest } from '@/types/generated/ImportCollectionRequest';
+import type { ImportCollectionResult } from '@/types/generated/ImportCollectionResult';
 import type { SpecRefreshResult } from '@/types/generated/SpecRefreshResult';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
 import { useConsoleStore } from '@/stores/useConsoleStore';
@@ -27,14 +28,14 @@ interface CollectionState {
   isLoading: boolean;
   error: string | null;
 
-  refreshCollectionSpec: (collectionId: string, newSpecPath?: string) => Promise<void>;
+  refreshCollectionSpec: (collectionId: string, newSpecPath?: string) => Promise<boolean>;
   dismissDriftResult: (collectionId: string) => void;
   setDriftResult: (collectionId: string, result: SpecRefreshResult) => void;
   createCollection: (name: string) => Promise<Collection | null>;
   loadCollections: () => Promise<void>;
   loadCollection: (id: string) => Promise<void>;
   addHttpbinCollection: () => Promise<Collection | null>;
-  importCollection: (request: ImportCollectionRequest) => Promise<Collection | null>;
+  importCollection: (request: ImportCollectionRequest) => Promise<ImportCollectionResult | null>;
   openCollectionFile: (path: string) => Promise<Collection | null>;
   deleteCollection: (id: string) => Promise<void>;
   deleteRequest: (collectionId: string, requestId: string) => Promise<void>;
@@ -117,7 +118,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   isLoading: false,
   error: null,
 
-  refreshCollectionSpec: async (collectionId: string, newSpecPath?: string): Promise<void> => {
+  refreshCollectionSpec: async (collectionId: string, newSpecPath?: string): Promise<boolean> => {
     set({ isLoading: true, error: null });
     try {
       const result = await invoke<SpecRefreshResult>('cmd_refresh_collection_spec', {
@@ -135,6 +136,8 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         changed: result.changed,
         actor: 'human',
       });
+
+      return true;
     } catch (error) {
       const message = String(error);
       set({ isLoading: false });
@@ -143,6 +146,8 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         message: 'Failed to refresh spec',
         details: message,
       });
+
+      return false;
     }
   },
 
@@ -258,32 +263,38 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     }
   },
 
-  importCollection: async (request: ImportCollectionRequest): Promise<Collection | null> => {
+  importCollection: async (
+    request: ImportCollectionRequest
+  ): Promise<ImportCollectionResult | null> => {
     set({ isLoading: true, error: null });
     try {
-      const collection = normalizeCollection(
-        await invoke<Collection>('cmd_import_collection', { request })
-      );
+      const result = await invoke<ImportCollectionResult>('cmd_import_collection', { request });
 
-      set((state) => ({
-        collections: [...state.collections, collection],
-        summaries: [
-          ...state.summaries,
-          {
-            id: collection.id,
-            name: collection.metadata.name,
-            request_count: collection.requests.length,
-            source_type: collection.source.source_type,
-            modified_at: collection.metadata.modified_at,
-            spec_version: collection.source.spec_version,
-          },
-        ],
-        selectedCollectionId: collection.id,
-        expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
-        isLoading: false,
-      }));
+      if (result.status === 'success') {
+        const collection = normalizeCollection(result.collection);
+        set((state) => ({
+          collections: [...state.collections, collection],
+          summaries: [
+            ...state.summaries,
+            {
+              id: collection.id,
+              name: collection.metadata.name,
+              request_count: collection.requests.length,
+              source_type: collection.source.source_type,
+              modified_at: collection.metadata.modified_at,
+              spec_version: collection.source.spec_version,
+            },
+          ],
+          selectedCollectionId: collection.id,
+          expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
+          isLoading: false,
+        }));
+      } else {
+        // Conflict — just stop loading, no store mutation
+        set({ isLoading: false });
+      }
 
-      return collection;
+      return result;
     } catch (error) {
       const message = String(error);
       set({ isLoading: false });

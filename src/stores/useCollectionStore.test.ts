@@ -7,6 +7,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useCollectionStore } from './useCollectionStore';
 import type { Collection } from '@/types/collection';
+import type { ImportCollectionResult } from '@/types/generated/ImportCollectionResult';
 import { invoke } from '@tauri-apps/api/core';
 import { globalEventBus } from '@/events/bus';
 
@@ -403,11 +404,14 @@ describe('useCollectionStore', () => {
   describe('importCollection', (): void => {
     it('imports collection and adds to store', async (): Promise<void> => {
       const collection = buildCollection('col_imported');
-      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(collection);
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        status: 'success',
+        collection,
+      });
 
       const { result } = renderHook(() => useCollectionStore());
 
-      let returned: Collection | null = null;
+      let returned: ImportCollectionResult | null = null;
       await act(async () => {
         returned = await result.current.importCollection({
           url: null,
@@ -432,11 +436,46 @@ describe('useCollectionStore', () => {
         },
       });
       expect(returned).not.toBeNull();
+      expect(returned!.status).toBe('success');
+      const r = returned!;
+      if (r.status === 'success') {
+        expect(r.collection.id).toBe('col_imported');
+      }
       expect(result.current.collections).toHaveLength(1);
       expect(result.current.selectedCollectionId).toBe('col_imported');
       expect(result.current.expandedCollectionIds.has('col_imported')).toBe(true);
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
+    });
+
+    it('returns conflict result when collection already exists', async (): Promise<void> => {
+      const conflictResult = {
+        status: 'conflict' as const,
+        existing_id: 'col_existing',
+        existing_name: 'Existing API',
+      };
+      (invoke as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(conflictResult);
+
+      const { result } = renderHook(() => useCollectionStore());
+
+      let returned: ImportCollectionResult | null = null;
+      await act(async () => {
+        returned = await result.current.importCollection({
+          url: 'https://example.com/spec.json',
+          filePath: null,
+          inlineContent: null,
+          displayName: null,
+          repoRoot: null,
+          specPath: null,
+          refName: null,
+        });
+      });
+
+      expect(returned).not.toBeNull();
+      expect(returned!.status).toBe('conflict');
+      // Store should NOT have added any collection
+      expect(result.current.collections).toHaveLength(0);
+      expect(result.current.summaries).toHaveLength(0);
     });
 
     it('shows toast and returns null when import fails', async (): Promise<void> => {
@@ -447,7 +486,7 @@ describe('useCollectionStore', () => {
 
       const { result } = renderHook(() => useCollectionStore());
 
-      let returned: Collection | null = null;
+      let returned: ImportCollectionResult | null = null;
       await act(async () => {
         returned = await result.current.importCollection({
           url: 'https://bad.example.com',
@@ -1062,10 +1101,12 @@ describe('useCollectionStore', () => {
 
       const { result } = renderHook(() => useCollectionStore());
 
+      let returnValue: boolean | undefined;
       await act(async () => {
-        await result.current.refreshCollectionSpec('col-1');
+        returnValue = await result.current.refreshCollectionSpec('col-1');
       });
 
+      expect(returnValue).toBe(true);
       expect(invoke).toHaveBeenCalledWith('cmd_refresh_collection_spec', {
         collectionId: 'col-1',
         newSpecPath: null,
@@ -1079,10 +1120,12 @@ describe('useCollectionStore', () => {
 
       const { result } = renderHook(() => useCollectionStore());
 
+      let returnValue: boolean | undefined;
       await act(async () => {
-        await result.current.refreshCollectionSpec('col-1');
+        returnValue = await result.current.refreshCollectionSpec('col-1');
       });
 
+      expect(returnValue).toBe(false);
       expect(result.current.error).toBeNull();
       expect(result.current.isLoading).toBe(false);
     });

@@ -30,8 +30,8 @@ use crate::infrastructure::mcp::events::TauriEventEmitter;
 use crate::infrastructure::spec::http_fetcher::HttpContentFetcher;
 use crate::infrastructure::spec::openapi_parser::OpenApiParser;
 use crate::infrastructure::storage::collection_store::{
-    CollectionSummary, delete_collection, list_collections, load_collection, open_collection_file,
-    save_collection,
+    CollectionSummary, delete_collection, find_collection_by_name, list_collections,
+    load_collection, open_collection_file, save_collection,
 };
 use crate::infrastructure::storage::history::HistoryEntry;
 use crate::infrastructure::storage::memory_storage::MemoryHistoryStorage;
@@ -96,13 +96,40 @@ pub struct ImportCollectionRequest {
     pub ref_name: Option<String>,
 }
 
-/// Substring matched against `save_collection` errors to detect name collisions.
-const ERR_COLLECTION_ALREADY_EXISTS: &str = "already exists";
+/// Result of an import operation — either success or a name conflict.
+///
+/// When the parsed spec's title matches an existing collection, a `Conflict`
+/// is returned instead of silently creating a versioned duplicate.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum ImportCollectionResult {
+    /// Import succeeded — new collection was created and saved.
+    Success {
+        /// The newly created collection.
+        ///
+        /// Note: `Collection` does not derive `TS` (due to `#[serde(flatten)]`
+        /// with `serde_yaml_ng::Value`). The frontend has a manually-maintained
+        /// `Collection` type in `src/types/collection.ts`.
+        #[ts(type = "Record<string, unknown>")]
+        collection: Box<Collection>,
+    },
+    /// A collection with the same name already exists.
+    Conflict {
+        /// ID of the existing collection.
+        existing_id: String,
+        /// Display name of the existing collection.
+        existing_name: String,
+    },
+}
 
 /// Import a collection from any supported spec format.
 ///
 /// Thin shell: validates input, constructs domain types, delegates to `ImportService`,
 /// persists via `CollectionStore`, and returns the result.
+///
+/// Returns `ImportCollectionResult::Conflict` if a collection with the same name
+/// already exists, allowing the caller to prompt the user for a replace/dismiss decision.
 ///
 /// # Errors
 ///
@@ -110,7 +137,7 @@ const ERR_COLLECTION_ALREADY_EXISTS: &str = "already exists";
 /// or the collection cannot be saved.
 pub async fn import_collection_inner(
     request: ImportCollectionRequest,
-) -> Result<Collection, String> {
+) -> Result<ImportCollectionResult, String> {
     // Validate: exactly one source must be provided
     let source = match (&request.url, &request.file_path, &request.inline_content) {
         (Some(url), None, None) => SpecSource::Url(url.clone()),
@@ -139,42 +166,43 @@ pub async fn import_collection_inner(
     } else {
         ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher))
     };
-    let mut collection = service.import(source, overrides).await?;
-    // On name collision, append the spec version to disambiguate (e.g., "Bookshelf API (0.2.0)").
-    match save_collection(&collection) {
-        Ok(_) => {}
-        Err(ref e) if e.contains(ERR_COLLECTION_ALREADY_EXISTS) => {
-            if let Some(ref version) = collection.source.spec_version.clone() {
-                let versioned_name = format!("{} ({})", collection.metadata.name, version);
-                collection.id = Collection::generate_id(&versioned_name);
-                collection.metadata.name = versioned_name;
-                save_collection(&collection)?;
-            } else {
-                return Err(e.clone());
-            }
-        }
-        Err(e) => return Err(e),
+    let collection = service.import(source, overrides).await?;
+
+    // Check for name conflict before saving
+    if let Some(existing) = find_collection_by_name(&collection.metadata.name)? {
+        return Ok(ImportCollectionResult::Conflict {
+            existing_id: existing.id,
+            existing_name: existing.name,
+        });
     }
-    Ok(collection)
+
+    save_collection(&collection)?;
+    Ok(ImportCollectionResult::Success {
+        collection: Box::new(collection),
+    })
 }
 
 /// Generic import command: import a collection from URL, file, or inline content.
 ///
-/// Emits `collection:created` with `Actor::User` on success.
+/// Returns `ImportCollectionResult::Success` with the collection on success,
+/// or `ImportCollectionResult::Conflict` if a collection with the same name exists.
+/// Only emits `collection:created` with `Actor::User` on success (not on conflict).
 #[tauri::command]
 pub async fn cmd_import_collection(
     app: tauri::AppHandle,
     request: ImportCollectionRequest,
-) -> Result<Collection, String> {
-    let collection = import_collection_inner(request).await?;
+) -> Result<ImportCollectionResult, String> {
+    let result = import_collection_inner(request).await?;
 
-    emit_collection_event(
-        &app,
-        "collection:created",
-        &Actor::User,
-        json!({"id": &collection.id, "name": &collection.metadata.name}),
-    );
-    Ok(collection)
+    if let ImportCollectionResult::Success { ref collection } = result {
+        emit_collection_event(
+            &app,
+            "collection:created",
+            &Actor::User,
+            json!({"id": &collection.id, "name": &collection.metadata.name}),
+        );
+    }
+    Ok(result)
 }
 
 /// Extract the path portion from a URL or template URL.
@@ -3337,15 +3365,21 @@ mod tests {
         })
         .await;
 
-        let collection = result.unwrap();
-        assert_eq!(
-            collection.source.source_type,
-            crate::domain::collection::SourceType::Openapi
-        );
-        assert!(collection.source.hash.is_some());
-        assert!(collection.source.spec_version.is_some());
-        assert!(!collection.source.fetched_at.is_empty());
-        assert!(!collection.requests.is_empty());
+        match result.unwrap() {
+            ImportCollectionResult::Success { collection } => {
+                assert_eq!(
+                    collection.source.source_type,
+                    crate::domain::collection::SourceType::Openapi
+                );
+                assert!(collection.source.hash.is_some());
+                assert!(collection.source.spec_version.is_some());
+                assert!(!collection.source.fetched_at.is_empty());
+                assert!(!collection.requests.is_empty());
+            }
+            ImportCollectionResult::Conflict { .. } => {
+                panic!("Expected Success, got Conflict");
+            }
+        }
     }
 
     /// Test 1.3b: File import reads from filesystem.
@@ -3372,11 +3406,17 @@ mod tests {
             })
             .await;
 
-        let collection = result.unwrap();
-        assert_eq!(
-            collection.source.source_type,
-            crate::domain::collection::SourceType::Openapi
-        );
+        match result.unwrap() {
+            ImportCollectionResult::Success { collection } => {
+                assert_eq!(
+                    collection.source.source_type,
+                    crate::domain::collection::SourceType::Openapi
+                );
+            }
+            ImportCollectionResult::Conflict { .. } => {
+                panic!("Expected Success, got Conflict");
+            }
+        }
     }
 
     /// Test 1.4: Display name override.
@@ -3398,8 +3438,14 @@ mod tests {
         })
         .await;
 
-        let collection = result.unwrap();
-        assert_eq!(collection.metadata.name, "My Custom API");
+        match result.unwrap() {
+            ImportCollectionResult::Success { collection } => {
+                assert_eq!(collection.metadata.name, "My Custom API");
+            }
+            ImportCollectionResult::Conflict { .. } => {
+                panic!("Expected Success, got Conflict");
+            }
+        }
     }
 
     /// Test 1.5: Repo tracking fields persisted.
@@ -3421,16 +3467,22 @@ mod tests {
         })
         .await;
 
-        let collection = result.unwrap();
-        assert_eq!(
-            collection.source.repo_root,
-            Some("../my-project".to_string())
-        );
-        assert_eq!(
-            collection.source.spec_path,
-            Some("api/openapi.json".to_string())
-        );
-        assert_eq!(collection.source.ref_name, Some("main".to_string()));
+        match result.unwrap() {
+            ImportCollectionResult::Success { collection } => {
+                assert_eq!(
+                    collection.source.repo_root,
+                    Some("../my-project".to_string())
+                );
+                assert_eq!(
+                    collection.source.spec_path,
+                    Some("api/openapi.json".to_string())
+                );
+                assert_eq!(collection.source.ref_name, Some("main".to_string()));
+            }
+            ImportCollectionResult::Conflict { .. } => {
+                panic!("Expected Success, got Conflict");
+            }
+        }
     }
 
     /// Test 1.6: Collection persisted to YAML file.
@@ -3448,17 +3500,61 @@ mod tests {
                 spec_path: None,
                 ref_name: None,
             };
-            let collection = import_collection_inner(request).await?;
-            // Verify it's persisted by loading it back
-            let loaded = load_collection(&collection.id)?;
-            assert_eq!(loaded.id, collection.id);
-            assert_eq!(loaded.metadata.name, collection.metadata.name);
-            assert_eq!(loaded.requests.len(), collection.requests.len());
-            Ok::<Collection, String>(collection)
+            let import_result = import_collection_inner(request).await?;
+            match import_result {
+                ImportCollectionResult::Success { collection } => {
+                    // Verify it's persisted by loading it back
+                    let loaded = load_collection(&collection.id)?;
+                    assert_eq!(loaded.id, collection.id);
+                    assert_eq!(loaded.metadata.name, collection.metadata.name);
+                    assert_eq!(loaded.requests.len(), collection.requests.len());
+                    Ok::<Collection, String>(*collection)
+                }
+                ImportCollectionResult::Conflict { .. } => {
+                    Err("Expected Success, got Conflict".to_string())
+                }
+            }
         })
         .await;
 
         assert!(result.is_ok());
+    }
+
+    /// Test: Import detects name collision and returns Conflict.
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_returns_conflict_on_duplicate_name() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // First import — should succeed
+            let request = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            let result1 = import_collection_inner(request.clone()).await.unwrap();
+            assert!(matches!(result1, ImportCollectionResult::Success { .. }));
+
+            // Second import of same spec — should return Conflict
+            let result2 = import_collection_inner(request).await.unwrap();
+            match result2 {
+                ImportCollectionResult::Conflict {
+                    existing_id,
+                    existing_name,
+                } => {
+                    assert!(!existing_id.is_empty());
+                    assert_eq!(existing_name, "Test API");
+                }
+                ImportCollectionResult::Success { .. } => {
+                    panic!("Expected Conflict, got Success");
+                }
+            }
+        })
+        .await;
     }
 
     // ── cmd_refresh_collection_spec tests ─────────────────────────────
