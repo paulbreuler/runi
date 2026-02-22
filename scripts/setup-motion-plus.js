@@ -62,9 +62,9 @@ try {
     console.log('✅ package.json already has the correct token');
   } else {
     // Has a different real token — replace it
-    // Tokens are URL-safe (letters, digits, _ and -); this pattern is intentionally
-    // narrower than a generic URL character class to avoid over-matching delimiters.
-    const updated = currentValue.replace(/token=[a-zA-Z0-9_-]+/, `token=${token}`);
+    // Use the same broad class as restore-motion-plus.js ([^&\s}'"]+) to handle
+    // any URL-safe characters (including '.', '+', '%') without partial replacement.
+    const updated = currentValue.replace(/token=[^&\s}'"]+/, `token=${token}`);
     packageJson.dependencies['motion-plus'] = updated;
     writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
     console.log('✅ Updated motion-plus token in package.json');
