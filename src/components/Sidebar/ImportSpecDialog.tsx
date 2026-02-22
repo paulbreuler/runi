@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import { Dialog } from '@base-ui/react/dialog';
+import { invoke } from '@tauri-apps/api/core';
 import { open as openFileDialog } from '@tauri-apps/plugin-dialog';
 import { useCollectionStore } from '@/stores/useCollectionStore';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { cn } from '@/utils/cn';
 import { focusRingClasses } from '@/utils/accessibility';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
 import { globalEventBus, type ToastEventPayload } from '@/events/bus';
+import type { PinnedSpecVersion } from '@/types/generated/PinnedSpecVersion';
 
 type ImportMode = 'url' | 'file';
 
@@ -36,6 +38,7 @@ export const ImportSpecDialog = ({
     existingId: string;
     existingName: string;
     source: string;
+    existingVersion: string | null;
   } | null>(null);
 
   // Reset state when dialog opens
@@ -141,6 +144,7 @@ export const ImportSpecDialog = ({
           existingId: result.existing_id,
           existingName: result.existing_name,
           source,
+          existingVersion: result.existing_version ?? null,
         });
       }
     } finally {
@@ -168,6 +172,33 @@ export const ImportSpecDialog = ({
 
   const handleConflictCancel = (): void => {
     setConflict(null);
+  };
+
+  const handlePin = async (): Promise<void> => {
+    if (conflict === null) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await invoke<PinnedSpecVersion>('cmd_pin_spec_version', {
+        collectionId: conflict.existingId,
+        source: conflict.source,
+      });
+      globalEventBus.emit('collection.imported', {
+        collection_id: conflict.existingId,
+        url: conflict.source,
+        actor: 'human',
+      });
+      onOpenChange(false);
+      setConflict(null);
+    } catch (err) {
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = (): void => {
@@ -231,7 +262,7 @@ export const ImportSpecDialog = ({
                 Collection already exists
               </Dialog.Title>
               <Dialog.Description
-                className="text-sm text-text-secondary mb-4"
+                className="text-sm text-text-secondary mb-2"
                 data-test-id="import-conflict-message"
               >
                 A collection named{' '}
@@ -240,6 +271,12 @@ export const ImportSpecDialog = ({
                 </span>{' '}
                 already exists. Importing will refresh the existing collection with the new spec.
               </Dialog.Description>
+              <p
+                className="text-xs text-text-muted mb-4"
+                data-test-id="import-conflict-version-context"
+              >
+                Currently {conflict.existingVersion ?? '(unknown)'}
+              </p>
               <div className="flex justify-end gap-2">
                 <Button
                   data-test-id="import-conflict-cancel"
@@ -250,6 +287,17 @@ export const ImportSpecDialog = ({
                   autoFocus
                 >
                   Cancel
+                </Button>
+                <Button
+                  data-test-id="import-conflict-pin-version"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void handlePin();
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Pin as new version
                 </Button>
                 <Button
                   data-test-id="import-conflict-replace"

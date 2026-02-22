@@ -82,6 +82,10 @@ pub struct Collection {
 
     /// Request definitions.
     pub requests: Vec<CollectionRequest>,
+
+    /// Pinned spec versions for comparison and version management.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pinned_versions: Vec<PinnedSpecVersion>,
 }
 
 impl Collection {
@@ -134,8 +138,44 @@ impl Collection {
             active_environment: None,
             extensions: BTreeMap::new(),
             requests: vec![],
+            pinned_versions: vec![],
         }
     }
+}
+
+/// Role of a pinned spec version.
+///
+/// `Staging` versions are candidates for activation.
+/// `Archived` versions are previous actives saved for history/comparison.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+#[serde(rename_all = "snake_case")]
+pub enum PinnedVersionRole {
+    /// A candidate version pinned for review before activation.
+    Staging,
+    /// A previously active version archived on activation of another.
+    Archived,
+}
+
+/// A pinned spec version associated with a collection.
+///
+/// Pinned versions allow users and AI to compare staged specs against the
+/// active spec before committing to a version swap.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
+pub struct PinnedSpecVersion {
+    /// Unique identifier for this pinned version.
+    pub id: String,
+    /// Human-readable label (defaults to `info.version` from spec).
+    pub label: String,
+    /// Raw YAML/JSON spec content.
+    pub spec_content: String,
+    /// Source the spec was fetched from.
+    pub source: CollectionSource,
+    /// RFC 3339 UTC timestamp when this version was pinned.
+    pub imported_at: String,
+    /// Role of this pinned version.
+    pub role: PinnedVersionRole,
 }
 
 /// Collection metadata (name, description, timestamps).
@@ -328,6 +368,13 @@ pub enum AuthType {
     Basic,
     /// API key authentication.
     ApiKey,
+}
+
+/// Generate a random 6-character hex suffix for IDs.
+///
+/// Exposed for use in infrastructure layer ID generation.
+pub fn random_hex_suffix_pub() -> String {
+    random_hex_suffix()
 }
 
 fn random_hex_suffix() -> String {
@@ -578,6 +625,66 @@ mod tests {
         assert!(yaml.contains("environments:"));
         assert!(yaml.contains("active_environment: local"));
         assert!(yaml.contains("name: local"));
+    }
+
+    // ── PinnedSpecVersion tests ──────────────────────────────────────────
+
+    #[test]
+    fn test_pinned_versions_defaults_to_empty() {
+        let collection = Collection::new("Test");
+        assert!(collection.pinned_versions.is_empty());
+    }
+
+    #[test]
+    fn test_pinned_versions_omitted_when_empty() {
+        let collection = Collection::new("Test");
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
+        assert!(!yaml.contains("pinned_versions"));
+    }
+
+    #[test]
+    fn test_pinned_spec_version_roundtrip() {
+        let pinned = PinnedSpecVersion {
+            id: "pin_abc123".to_string(),
+            label: "2.1.0".to_string(),
+            spec_content: r#"{"openapi":"3.0.0"}"#.to_string(),
+            source: CollectionSource::default(),
+            imported_at: "2026-02-22T10:00:00Z".to_string(),
+            role: PinnedVersionRole::Staging,
+        };
+        let yaml = serde_yaml_ng::to_string(&pinned).unwrap();
+        let restored: PinnedSpecVersion = serde_yaml_ng::from_str(&yaml).unwrap();
+        assert_eq!(restored.id, "pin_abc123");
+        assert_eq!(restored.label, "2.1.0");
+        assert_eq!(restored.role, PinnedVersionRole::Staging);
+    }
+
+    #[test]
+    fn test_pinned_version_role_serializes_snake_case() {
+        let staging = PinnedVersionRole::Staging;
+        let archived = PinnedVersionRole::Archived;
+        let yaml_staging = serde_yaml_ng::to_string(&staging).unwrap();
+        let yaml_archived = serde_yaml_ng::to_string(&archived).unwrap();
+        assert!(yaml_staging.contains("staging"), "got: {yaml_staging}");
+        assert!(yaml_archived.contains("archived"), "got: {yaml_archived}");
+        assert!(!yaml_staging.contains("Staging"));
+        assert!(!yaml_archived.contains("Archived"));
+    }
+
+    #[test]
+    fn test_collection_serializes_with_pinned_versions() {
+        let mut collection = Collection::new("Test");
+        collection.pinned_versions.push(PinnedSpecVersion {
+            id: "pin_abc".to_string(),
+            label: "1.0.0".to_string(),
+            spec_content: "{}".to_string(),
+            source: CollectionSource::default(),
+            imported_at: "2026-02-22T10:00:00Z".to_string(),
+            role: PinnedVersionRole::Staging,
+        });
+        let yaml = serde_yaml_ng::to_string(&collection).unwrap();
+        assert!(yaml.contains("pinned_versions"));
+        assert!(yaml.contains("pin_abc"));
     }
 
     #[test]

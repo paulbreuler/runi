@@ -9,6 +9,8 @@
  * IMPORTANT: These types MUST match src-tauri/src/domain/collection/*.rs
  */
 
+import type { PinnedSpecVersion } from '@/types/generated/PinnedSpecVersion';
+
 /** Schema URL for validation */
 export const SCHEMA_URL = 'https://runi.dev/schema/collection/v1.json';
 
@@ -34,7 +36,11 @@ export interface Collection extends ExtensionFields {
   environments: CollectionEnvironment[];
   active_environment?: string;
   requests: CollectionRequest[];
+  pinned_versions: PinnedSpecVersion[];
 }
+
+export type { PinnedSpecVersion } from '@/types/generated/PinnedSpecVersion';
+export type { PinnedVersionRole } from '@/types/generated/PinnedVersionRole';
 
 export interface CollectionMetadata {
   name: string;

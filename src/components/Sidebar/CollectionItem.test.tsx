@@ -54,6 +54,7 @@ interface MockCollectionStoreState {
   selectCollection: (id: string | null) => void;
   refreshCollectionSpec: (id: string) => Promise<void>;
   dismissDriftResult: (id: string) => void;
+  setDriftResult: (id: string, result: unknown) => void;
 }
 
 let mockCollectionState: MockCollectionStoreState;
@@ -100,6 +101,7 @@ describe('CollectionItem', (): void => {
       selectCollection: vi.fn(),
       refreshCollectionSpec: vi.fn(async (): Promise<void> => undefined),
       dismissDriftResult: vi.fn(),
+      setDriftResult: vi.fn(),
     };
     mockUseCollection = vi.fn(() => undefined) as (id: string) => unknown;
   });
@@ -389,6 +391,324 @@ describe('CollectionItem', (): void => {
     it('does not render spec_version badge when spec_version is undefined', (): void => {
       render(<CollectionItem summary={simpleSummary} />);
       expect(screen.queryByTestId('collection-version-col_1')).toBeNull();
+    });
+  });
+
+  describe('pinned version badge', (): void => {
+    const stagingVersion = {
+      id: 'pv_1',
+      label: '2.0.0',
+      spec_content: '{}',
+      source: {
+        source_type: 'openapi',
+        url: null,
+        hash: null,
+        spec_version: '2.0.0',
+        fetched_at: '2026-01-01T00:00:00Z',
+        source_commit: null,
+      },
+      imported_at: '2026-01-01T00:00:00Z',
+      role: 'staging' as const,
+    };
+    const archivedVersion = {
+      id: 'pv_2',
+      label: '1.0.0',
+      spec_content: '{}',
+      source: {
+        source_type: 'openapi',
+        url: null,
+        hash: null,
+        spec_version: '1.0.0',
+        fetched_at: '2026-01-01T00:00:00Z',
+        source_commit: null,
+      },
+      imported_at: '2025-01-01T00:00:00Z',
+      role: 'archived' as const,
+    };
+
+    it('badge is hidden when no pinned versions', (): void => {
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'manual',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: null,
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+      expect(screen.queryByTestId('collection-version-badge')).toBeNull();
+    });
+
+    it('badge shows active version with staged count when staged versions exist', (): void => {
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+      const badge = screen.getByTestId('collection-version-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveTextContent('1.5.0');
+      expect(badge).toHaveTextContent('+1');
+    });
+
+    it('badge shows only active version when no staged versions', (): void => {
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [archivedVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+      const badge = screen.getByTestId('collection-version-badge');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveTextContent('1.5.0');
+      expect(badge).not.toHaveTextContent('+');
+    });
+
+    it('badge shows v? when active version unknown', (): void => {
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: null,
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+      const badge = screen.getByTestId('collection-version-badge');
+      expect(badge).toHaveTextContent('v?');
+    });
+
+    it('badge click opens version switcher popover', async (): Promise<void> => {
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-popover')).toBeInTheDocument();
+      });
+    });
+
+    it('version switcher shows active and staged sections', async (): Promise<void> => {
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-active-row')).toBeInTheDocument();
+        expect(screen.getByTestId('version-switcher-staged-row-pv_1')).toBeInTheDocument();
+      });
+    });
+
+    it('activate confirmation shows inline when Activate is clicked', async (): Promise<void> => {
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-staged-row-pv_1')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('version-switcher-activate-pv_1'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-activate-confirm-pv_1')).toBeInTheDocument();
+        expect(screen.getByTestId('version-switcher-activate-cancel-pv_1')).toBeInTheDocument();
+      });
+    });
+
+    it('activate cancel returns to normal row buttons', async (): Promise<void> => {
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-activate-pv_1')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('version-switcher-activate-pv_1'));
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-activate-cancel-pv_1')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('version-switcher-activate-cancel-pv_1'));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('version-switcher-activate-confirm-pv_1')).toBeNull();
+        expect(screen.getByTestId('version-switcher-activate-pv_1')).toBeInTheDocument();
+      });
+    });
+
+    it('remove confirmation shows inline when Remove is clicked on staged row', async (): Promise<void> => {
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-staged-row-pv_1')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('version-switcher-remove-pv_1'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-remove-confirm-pv_1')).toBeInTheDocument();
+        expect(screen.getByTestId('version-switcher-remove-cancel-pv_1')).toBeInTheDocument();
+      });
+    });
+
+    it('archived section renders with remove button only', async (): Promise<void> => {
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [archivedVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+
+      // Archived section is collapsed by default; toggle it open
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-archived-toggle')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('version-switcher-archived-toggle'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-archived-row-pv_2')).toBeInTheDocument();
+        expect(screen.getByTestId('version-switcher-remove-pv_2')).toBeInTheDocument();
+        expect(screen.queryByTestId('version-switcher-activate-pv_2')).toBeNull();
+      });
     });
   });
 

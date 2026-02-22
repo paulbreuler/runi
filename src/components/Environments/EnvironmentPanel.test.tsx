@@ -37,6 +37,7 @@ const buildCollection = (id: string): Collection => ({
   variables: {},
   environments: [],
   requests: [],
+  pinned_versions: [],
 });
 
 describe('EnvironmentPanel', () => {

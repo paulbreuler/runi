@@ -168,6 +168,13 @@ async fn handle_tools_call(
     if params.name == "run_hurl_suite" {
         return handle_run_hurl_suite(id, params.arguments).await;
     }
+    // Pinned spec version tools — async I/O (spec fetch/parse)
+    if params.name == "pin_spec_version" {
+        return handle_pin_spec_version(id, params.arguments, app_handle).await;
+    }
+    if params.name == "activate_pinned_version" {
+        return handle_activate_pinned_version(id, params.arguments, app_handle);
+    }
 
     // Canvas tools read from/write to external state
     if params.name.starts_with("canvas_") {
@@ -439,6 +446,7 @@ async fn handle_import_collection(
         Ok(crate::infrastructure::commands::ImportCollectionResult::Conflict {
             existing_id,
             existing_name,
+            existing_version,
         }) => {
             let result = ToolCallResult {
                 content: vec![ToolResponseContent::Text {
@@ -446,6 +454,7 @@ async fn handle_import_collection(
                         "status": "conflict",
                         "existing_id": existing_id,
                         "existing_name": existing_name,
+                        "existing_version": existing_version,
                         "message": format!(
                             "A collection named '{}' already exists. Use refresh_collection_spec to update it.",
                             existing_name
@@ -1402,6 +1411,151 @@ async fn handle_dismiss_drift_change(
     })
 }
 
+/// Handle `pin_spec_version` tool — async fetch + pin as staging version.
+///
+/// Fetches or reads the spec, pins it as a [`PinnedVersionRole::Staging`] version
+/// on the collection, and emits `collection:version-pinned` with `Actor::Ai`.
+async fn handle_pin_spec_version(
+    id: Option<JsonRpcId>,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> JsonRpcResponse {
+    let args = arguments.unwrap_or_default();
+    let (collection_id, source) = if let (Some(c), Some(s)) = (
+        args.get("collection_id")
+            .and_then(serde_json::Value::as_str),
+        args.get("source").and_then(serde_json::Value::as_str),
+    ) {
+        (c.to_string(), s.to_string())
+    } else {
+        let error_result = ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: "Missing required parameters: collection_id and source".to_string(),
+            }],
+            is_error: true,
+        };
+        return JsonRpcResponse::success(
+            id,
+            serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+        );
+    };
+
+    match crate::infrastructure::commands::pin_spec_version_inner(&collection_id, &source).await {
+        Ok(collection) => {
+            // Emit event for UI update
+            if let Some(app) = app_handle {
+                let envelope = ai_event_envelope(json!({"collection_id": &collection_id}));
+                if let Err(e) = app.emit("collection:version-pinned", envelope) {
+                    tracing::warn!("Failed to emit collection:version-pinned event: {e}");
+                }
+            }
+            let result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: json!({
+                        "collection_id": collection_id,
+                        "pinned_count": collection.pinned_versions.len(),
+                        "message": "Spec version pinned as staging"
+                    })
+                    .to_string(),
+                }],
+                is_error: false,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(result).unwrap_or_else(|_| json!({})),
+            )
+        }
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
+/// Handle `activate_pinned_version` tool — swap staged version to active, archive old.
+///
+/// Activates the staged pinned version, archives the current active spec as a pinned version,
+/// runs drift detection, and emits `collection:version-activated` with `Actor::Ai`.
+fn handle_activate_pinned_version(
+    id: Option<JsonRpcId>,
+    arguments: Option<serde_json::Map<String, serde_json::Value>>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> JsonRpcResponse {
+    let args = arguments.unwrap_or_default();
+    let (collection_id, pinned_version_id) = if let (Some(c), Some(p)) = (
+        args.get("collection_id")
+            .and_then(serde_json::Value::as_str),
+        args.get("pinned_version_id")
+            .and_then(serde_json::Value::as_str),
+    ) {
+        (c.to_string(), p.to_string())
+    } else {
+        let error_result = ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: "Missing required parameters: collection_id and pinned_version_id"
+                    .to_string(),
+            }],
+            is_error: true,
+        };
+        return JsonRpcResponse::success(
+            id,
+            serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+        );
+    };
+
+    match crate::infrastructure::commands::activate_pinned_version_inner(
+        &collection_id,
+        &pinned_version_id,
+    ) {
+        Ok((collection, drift)) => {
+            if let Some(app) = app_handle {
+                let envelope = ai_event_envelope(
+                    json!({"collection_id": &collection_id, "pinned_version_id": &pinned_version_id}),
+                );
+                if let Err(e) = app.emit("collection:version-activated", envelope) {
+                    tracing::warn!("Failed to emit collection:version-activated event: {e}");
+                }
+            }
+            let result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: json!({
+                        "collection_id": collection_id,
+                        "pinned_version_id": pinned_version_id,
+                        "new_spec_version": collection.source.spec_version,
+                        "drift_changed": drift.changed,
+                        "operations_added": drift.operations_added.len(),
+                        "operations_removed": drift.operations_removed.len(),
+                        "operations_changed": drift.operations_changed.len(),
+                        "message": "Pinned version activated successfully"
+                    })
+                    .to_string(),
+                }],
+                is_error: false,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(result).unwrap_or_else(|_| json!({})),
+            )
+        }
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text { text: e }],
+                is_error: true,
+            };
+            JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            )
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1481,8 +1635,8 @@ mod tests {
         let tools = result["tools"].as_array().unwrap();
         // 8 collection + 3 save/move/copy + 3 import/refresh/hurl + 6 canvas + 1 streaming
         // + 2 project context + 1 execute_request + 3 suggestion + 3 environment
-        // + 3 drift review = 33 total
-        assert_eq!(tools.len(), 33);
+        // + 3 drift review + 3 pinned versions = 36 total
+        assert_eq!(tools.len(), 36);
     }
 
     #[tokio::test]

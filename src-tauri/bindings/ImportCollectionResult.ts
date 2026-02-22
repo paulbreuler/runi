@@ -22,4 +22,8 @@ existing_id: string,
 /**
  * Display name of the existing collection.
  */
-existing_name: string, };
+existing_name: string, 
+/**
+ * Spec version of the existing collection (e.g., "2.0.0"), if tracked.
+ */
+existing_version: string | null, };

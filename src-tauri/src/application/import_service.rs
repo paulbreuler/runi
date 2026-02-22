@@ -266,6 +266,7 @@ impl ImportService {
             active_environment: Some("local".to_string()),
             extensions: BTreeMap::new(),
             requests,
+            pinned_versions: vec![],
         }
     }
 }

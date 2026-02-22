@@ -94,6 +94,7 @@ const makeCollection = (id: string, name: string): Collection => ({
   variables: {},
   environments: [],
   requests: [],
+  pinned_versions: [],
 });
 
 const renderWithScrollContainer = (ui: React.ReactElement): ReturnType<typeof render> =>

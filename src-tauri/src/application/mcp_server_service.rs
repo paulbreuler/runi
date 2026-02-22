@@ -267,8 +267,13 @@ impl McpServerService {
             "upsert_environment" => self.handle_upsert_environment(&args),
             "delete_environment" => self.handle_delete_environment(&args),
             "set_active_environment" => self.handle_set_active_environment(&args),
+            "remove_pinned_version" => self.handle_remove_pinned_version(&args),
             // Async tools are handled in dispatcher (they need async I/O)
-            "import_collection" | "refresh_collection_spec" | "run_hurl_suite" => {
+            "import_collection"
+            | "refresh_collection_spec"
+            | "run_hurl_suite"
+            | "pin_spec_version"
+            | "activate_pinned_version" => {
                 Err(format!("Async tool '{name}' must be handled by dispatcher"))
             }
             // Canvas tools are handled in dispatcher with external state
@@ -786,6 +791,43 @@ impl McpServerService {
                         }
                     },
                     "required": ["collection_id"]
+                }),
+            ),
+            // Pinned spec version tools
+            tool_def(
+                "pin_spec_version",
+                "Fetch a spec from a URL or file path and pin it as a staging version on a collection. Use activate_pinned_version to make it active.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection" },
+                        "source": { "type": "string", "description": "URL or file path of the spec to pin" }
+                    },
+                    "required": ["collection_id", "source"]
+                }),
+            ),
+            tool_def(
+                "activate_pinned_version",
+                "Activate a staged pinned spec version. The current active spec is archived, and the staged version becomes the new active. Runs drift detection between old and new.",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection" },
+                        "pinned_version_id": { "type": "string", "description": "ID of the pinned staging version to activate" }
+                    },
+                    "required": ["collection_id", "pinned_version_id"]
+                }),
+            ),
+            tool_def(
+                "remove_pinned_version",
+                "Remove a pinned spec version from a collection (staging or archived).",
+                json!({
+                    "type": "object",
+                    "properties": {
+                        "collection_id": { "type": "string", "description": "ID of the collection" },
+                        "pinned_version_id": { "type": "string", "description": "ID of the pinned version to remove" }
+                    },
+                    "required": ["collection_id", "pinned_version_id"]
                 }),
             ),
         ];
@@ -1582,6 +1624,70 @@ impl McpServerService {
             is_error: false,
         })
     }
+    /// Handle `remove_pinned_version` MCP tool call.
+    ///
+    /// Removes a staged or archived pinned spec version from a collection.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the collection cannot be found or the pinned version ID does not exist.
+    fn handle_remove_pinned_version(
+        &mut self,
+        args: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<ToolCallResult, String> {
+        use crate::domain::collection::PinnedVersionRole;
+
+        let collection_id = args
+            .get("collection_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: collection_id".to_string())?;
+        let pinned_version_id = args
+            .get("pinned_version_id")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required parameter: pinned_version_id".to_string())?;
+
+        Self::validate_collection_id(collection_id)?;
+
+        let mut collection = load_collection_in_dir(collection_id, self.dir())?;
+        let original_len = collection.pinned_versions.len();
+        // Determine role before removal for emit payload
+        let role = collection
+            .pinned_versions
+            .iter()
+            .find(|v| v.id == pinned_version_id)
+            .map_or("unknown", |v| {
+                if v.role == PinnedVersionRole::Staging {
+                    "staging"
+                } else {
+                    "archived"
+                }
+            });
+
+        collection
+            .pinned_versions
+            .retain(|v| v.id != pinned_version_id);
+        if collection.pinned_versions.len() == original_len {
+            return Err(format!("Pinned version not found: {pinned_version_id}"));
+        }
+        save_collection_in_dir(&collection, self.dir())?;
+
+        self.emit(
+            "collection:version-removed",
+            json!({"collection_id": collection_id, "pinned_version_id": pinned_version_id, "role": role}),
+        );
+
+        Ok(ToolCallResult {
+            content: vec![ToolResponseContent::Text {
+                text: json!({
+                    "collection_id": collection_id,
+                    "pinned_version_id": pinned_version_id,
+                    "message": "Pinned version removed successfully"
+                })
+                .to_string(),
+            }],
+            is_error: false,
+        })
+    }
 }
 
 /// Resolve `{{key}}` template variables in a string using the provided map.
@@ -1666,14 +1772,14 @@ mod tests {
     }
 
     #[test]
-    fn test_registers_thirty_three_tools() {
+    fn test_registers_thirty_six_tools() {
         let (service, _dir) = make_service();
         let tools = service.list_tools();
         // 8 collection tools + 3 save/move/copy tools + 3 import/refresh/hurl tools
         // + 6 canvas tools + 1 streaming tool + 2 project context tools
         // + 1 execute_request + 3 suggestion tools + 3 environment tools
-        // + 3 drift review tools = 33 total
-        assert_eq!(tools.len(), 33);
+        // + 3 drift review tools + 3 pinned version tools = 36 total
+        assert_eq!(tools.len(), 36);
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
         // Collection tools
         assert!(names.contains(&"create_collection"));
@@ -1716,6 +1822,10 @@ mod tests {
         assert!(names.contains(&"get_drift_review"));
         assert!(names.contains(&"accept_drift_change"));
         assert!(names.contains(&"dismiss_drift_change"));
+        // Pinned spec version tools
+        assert!(names.contains(&"pin_spec_version"));
+        assert!(names.contains(&"activate_pinned_version"));
+        assert!(names.contains(&"remove_pinned_version"));
     }
 
     #[test]
