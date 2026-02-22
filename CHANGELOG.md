@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/paulbreuler/runi/compare/runi-v0.8.0...runi-v0.8.1) (2026-02-22)
+
+
+### Bug Fixes
+
+* **ci:** guard against Tauri version mismatch between Rust crate and npm package ([#156](https://github.com/paulbreuler/runi/issues/156)) ([4c18a04](https://github.com/paulbreuler/runi/commit/4c18a04157b0ecb3431ae1ee923f2c59d19f27cd))
+
 ## [0.8.0](https://github.com/paulbreuler/runi/compare/runi-v0.7.0...runi-v0.8.0) (2026-02-22)
 
 
