@@ -191,11 +191,11 @@ storybook-serve: storybook-build
 
 # Run complete CI pipeline locally (use before pushing)
 # Runs full CI suite: formatting, linting, unit tests, E2E tests, and docs checks
-ci: fmt-check lint check test test-e2e docs-check
+ci: check-tauri-versions fmt-check lint check test test-e2e docs-check
     @echo "✅ All CI checks passed!"
 
 # Run CI pipeline without E2E tests (E2E starts its own Vite dev server via Playwright webServer config)
-ci-no-e2e: fmt-check lint check test docs-check
+ci-no-e2e: check-tauri-versions fmt-check lint check test docs-check
     @echo "✅ CI checks passed (E2E skipped)!"
 
 # Run CI pipeline with integration tests (requires running app: just dev)
@@ -203,12 +203,31 @@ ci-with-integration: ci test-integration
     @echo "✅ CI + integration checks passed!"
 
 # Run CI pipeline without tests (for documentation-only changes)
-ci-no-test: fmt-check lint check docs-check
+ci-no-test: check-tauri-versions fmt-check lint check docs-check
     @echo "✅ CI checks passed (tests skipped for documentation-only changes)!"
+
+# Verify Tauri Rust crate and @tauri-apps/api npm package share the same major.minor version.
+# Tauri enforces this at build time — a mismatch causes the build to fail.
+check-tauri-versions:
+    @bash -c '\
+      CARGO_VERSION=$(grep '"'"'^tauri = '"'"' src-tauri/Cargo.toml | grep -oE '"'"'[0-9]+\.[0-9]+\.[0-9]+'"'"' | head -1); \
+      NPM_VERSION=$(node -p "require('"'"'./package.json'"'"').dependencies['"'"'@tauri-apps/api'"'"'].replace(/[\^~]/g, '"'"''"'"')"); \
+      if [ -z "$CARGO_VERSION" ]; then echo "❌ Could not read tauri version from Cargo.toml" && exit 1; fi; \
+      if [ -z "$NPM_VERSION" ]; then echo "❌ Could not read @tauri-apps/api version from package.json" && exit 1; fi; \
+      CARGO_MINOR=$(echo "$CARGO_VERSION" | cut -d. -f1-2); \
+      NPM_MINOR=$(echo "$NPM_VERSION" | cut -d. -f1-2); \
+      if [ "$CARGO_MINOR" != "$NPM_MINOR" ]; then \
+        echo "❌ Tauri version mismatch: Cargo.toml has tauri=$CARGO_VERSION but package.json has @tauri-apps/api=$NPM_VERSION"; \
+        echo "   They must share the same major.minor (e.g. both 2.10.x)."; \
+        echo "   Fix: update src-tauri/Cargo.toml tauri version to match $NPM_VERSION"; \
+        exit 1; \
+      fi; \
+      echo "✅ Tauri versions aligned (Rust $CARGO_VERSION / npm $NPM_VERSION)"; \
+    '
 
 # Pre-commit hook: fast checks including type checking and linting
 # Note: Rust checks require frontend build for Tauri context
-pre-commit: build-frontend fmt-check-rust fmt-check-frontend lint-rust lint-frontend lint-markdown check-rust check-frontend
+pre-commit: check-tauri-versions build-frontend fmt-check-rust fmt-check-frontend lint-rust lint-frontend lint-markdown check-rust check-frontend
     @echo "✅ Pre-commit checks passed!"
 
 # ============================================================================
