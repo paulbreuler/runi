@@ -211,9 +211,9 @@ ci-no-test: check-tauri-versions fmt-check lint check docs-check
 check-tauri-versions:
     @bash -c '\
       CARGO_VERSION=$(grep '"'"'^tauri = '"'"' src-tauri/Cargo.toml | grep -oE '"'"'[0-9]+\.[0-9]+\.[0-9]+'"'"' | head -1); \
-      NPM_VERSION=$(node -p "require('"'"'./package.json'"'"').dependencies['"'"'@tauri-apps/api'"'"'].replace(/[\^~]/g, '"'"''"'"')"); \
-      if [ -z "$CARGO_VERSION" ]; then echo "❌ Could not read tauri version from Cargo.toml" && exit 1; fi; \
-      if [ -z "$NPM_VERSION" ]; then echo "❌ Could not read @tauri-apps/api version from package.json" && exit 1; fi; \
+      NPM_VERSION=$(node -p "require('"'"'./package.json'"'"').dependencies['"'"'@tauri-apps/api'"'"'].replace(/^[^0-9]*/, '"'"''"'"')"); \
+      if [ -z "$CARGO_VERSION" ]; then echo "❌ Could not read tauri version from Cargo.toml"; exit 1; fi; \
+      if [ -z "$NPM_VERSION" ]; then echo "❌ Could not read @tauri-apps/api version from package.json"; exit 1; fi; \
       CARGO_MINOR=$(echo "$CARGO_VERSION" | cut -d. -f1-2); \
       NPM_MINOR=$(echo "$NPM_VERSION" | cut -d. -f1-2); \
       if [ "$CARGO_MINOR" != "$NPM_MINOR" ]; then \
