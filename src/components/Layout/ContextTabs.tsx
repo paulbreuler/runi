@@ -553,6 +553,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
             >
               {/* Close this tab */}
               <Menu.Item
+                nativeButton={true}
                 className={cn(focusRingClasses, menuItemClasses)}
                 onClick={handleMenuClose}
                 data-test-id="tab-menu-close"
@@ -562,6 +563,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
 
               {/* Close other tabs */}
               <Menu.Item
+                nativeButton={true}
                 className={cn(
                   focusRingClasses,
                   menuItemClasses,
@@ -576,6 +578,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
 
               {/* Close all to the right */}
               <Menu.Item
+                nativeButton={true}
                 className={cn(
                   focusRingClasses,
                   menuItemClasses,
@@ -595,6 +598,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
 
               {/* Close all tabs */}
               <Menu.Item
+                nativeButton={true}
                 className={cn(focusRingClasses, menuItemClasses)}
                 onClick={handleMenuCloseAll}
                 data-test-id="tab-menu-close-all"
@@ -609,6 +613,7 @@ export const ContextTabs = (): React.JSX.Element | null => {
                   <>
                     <div className="my-1 h-px bg-border-subtle/50" role="separator" />
                     <Menu.Item
+                      nativeButton={true}
                       className={cn(focusRingClasses, menuItemClasses)}
                       onClick={handleSaveToCollection}
                       data-test-id="tab-menu-save-to-collection"

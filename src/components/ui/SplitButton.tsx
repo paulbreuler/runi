@@ -246,6 +246,7 @@ export const SplitButton = ({
 
                     return (
                       <Menu.Item
+                        nativeButton={true}
                         key={item.id}
                         label={item.label}
                         className={cn(
