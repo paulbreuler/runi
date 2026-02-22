@@ -4,7 +4,6 @@
  */
 
 import { Popover as BaseUIPopover } from '@base-ui/react/popover';
-import type { VirtualElement } from '@floating-ui/utils';
 import React from 'react';
 import { cn } from '@/utils/cn';
 import { OVERLAY_Z_INDEX } from '@/utils/z-index';
@@ -39,12 +38,7 @@ export interface PopoverContentProps extends React.ComponentPropsWithoutRef<
   /** Distance between the trigger and the popover in pixels */
   sideOffset?: number;
   /** Optional anchor element for positioning (use instead of PopoverTrigger) */
-  anchor?:
-    | Element
-    | VirtualElement
-    | React.RefObject<Element | null>
-    | (() => Element | VirtualElement | null)
-    | null;
+  anchor?: Element | React.RefObject<Element | null> | (() => Element | null) | null;
 }
 
 /**

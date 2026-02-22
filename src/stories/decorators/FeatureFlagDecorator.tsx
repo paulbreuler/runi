@@ -14,7 +14,8 @@ export interface FeatureFlagDecoratorArgs {
 
 export const FeatureFlagDecorator: Decorator = (Story, context) => {
   useFeatureFlagStore.getState().resetToDefaults();
-  const { featureFlags } = context.args as FeatureFlagDecoratorArgs;
+  const ctx = context as unknown as { args: FeatureFlagDecoratorArgs };
+  const { featureFlags } = ctx.args;
 
   return (
     <FeatureFlagProvider skipHydration overrides={featureFlags}>
