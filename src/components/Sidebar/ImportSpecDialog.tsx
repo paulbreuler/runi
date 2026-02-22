@@ -227,7 +227,7 @@ export const ImportSpecDialog = ({
               <Dialog.Title className="text-base font-medium text-text-primary mb-1">
                 Collection already exists
               </Dialog.Title>
-              <p
+              <Dialog.Description
                 className="text-sm text-text-secondary mb-4"
                 data-test-id="import-conflict-message"
               >
@@ -236,7 +236,7 @@ export const ImportSpecDialog = ({
                   &ldquo;{conflict.existingName}&rdquo;
                 </span>{' '}
                 already exists. Importing will refresh the existing collection with the new spec.
-              </p>
+              </Dialog.Description>
               <div className="flex justify-end gap-2">
                 <Button
                   data-test-id="import-conflict-cancel"
@@ -265,9 +265,9 @@ export const ImportSpecDialog = ({
               <Dialog.Title className="text-base font-medium text-text-primary mb-1">
                 Import OpenAPI spec
               </Dialog.Title>
-              <p className="text-xs text-text-muted mb-4">
+              <Dialog.Description className="text-xs text-text-muted mb-4">
                 Import from a live URL or a local JSON/YAML file.
-              </p>
+              </Dialog.Description>
 
               {/* Mode toggle */}
               <div

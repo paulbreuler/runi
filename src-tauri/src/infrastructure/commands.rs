@@ -169,7 +169,7 @@ pub async fn import_collection_inner(
     let collection = service.import(source, overrides).await?;
 
     // Check for name conflict before saving
-    if let Some(existing) = find_collection_by_name(&collection.metadata.name) {
+    if let Some(existing) = find_collection_by_name(&collection.metadata.name)? {
         return Ok(ImportCollectionResult::Conflict {
             existing_id: existing.id,
             existing_name: existing.name,

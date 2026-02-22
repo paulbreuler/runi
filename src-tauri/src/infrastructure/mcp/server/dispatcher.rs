@@ -447,7 +447,7 @@ async fn handle_import_collection(
                         "existing_id": existing_id,
                         "existing_name": existing_name,
                         "message": format!(
-                            "A collection named '{}' already exists. Use replace_collection_spec to update it.",
+                            "A collection named '{}' already exists. Use refresh_collection_spec to update it.",
                             existing_name
                         ),
                     })

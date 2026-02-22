@@ -209,17 +209,22 @@ pub fn open_collection_file_in_dir(path: &Path, dir: &Path) -> Result<Collection
 
 /// Find a collection by its display name.
 ///
-/// Returns the summary of the first collection matching the given name,
-/// or `None` if no match is found.
-pub fn find_collection_by_name(name: &str) -> Option<CollectionSummary> {
-    let dir = get_collections_dir().ok()?;
+/// Returns `Ok(Some(...))` when a match is found, `Ok(None)` when no match
+/// exists, or `Err(...)` if the collections directory cannot be resolved or read.
+pub fn find_collection_by_name(name: &str) -> Result<Option<CollectionSummary>, String> {
+    let dir = get_collections_dir()?;
     find_collection_by_name_in_dir(name, &dir)
 }
 
 /// Find a collection by name in the specified directory.
-pub fn find_collection_by_name_in_dir(name: &str, dir: &Path) -> Option<CollectionSummary> {
-    let summaries = list_collections_in_dir(dir).ok()?;
-    summaries.into_iter().find(|s| s.name == name)
+///
+/// Returns `Ok(Some(...))` on match, `Ok(None)` when absent, or `Err` on I/O failure.
+pub fn find_collection_by_name_in_dir(
+    name: &str,
+    dir: &Path,
+) -> Result<Option<CollectionSummary>, String> {
+    let summaries = list_collections_in_dir(dir)?;
+    Ok(summaries.into_iter().find(|s| s.name == name))
 }
 
 /// Delete a collection file.
@@ -313,20 +318,12 @@ fn check_name_unique(collection: &Collection, dir: &Path) -> Result<(), String> 
     if !dir.exists() {
         return Ok(());
     }
-    let entries = fs::read_dir(dir).map_err(|e| format!("Failed to read collections dir: {e}"))?;
-    for entry in entries {
-        let Ok(entry) = entry else { continue };
-        let path = entry.path();
-        if !is_yaml_file(&path) || is_temp_file(&path) {
-            continue;
-        }
-        if let Ok(summary) = load_collection_summary(&path) {
-            if summary.name == collection.metadata.name && summary.id != collection.id {
-                return Err(format!(
-                    "A collection named '{}' already exists ({})",
-                    summary.name, summary.id
-                ));
-            }
+    if let Some(existing) = find_collection_by_name_in_dir(&collection.metadata.name, dir)? {
+        if existing.id != collection.id {
+            return Err(format!(
+                "A collection named '{}' already exists ({})",
+                existing.name, existing.id
+            ));
         }
     }
     Ok(())
@@ -588,7 +585,7 @@ mod tests {
         let collection = Collection::new("Stripe API");
         save_collection_in_dir(&collection, &collections_dir).unwrap();
 
-        let result = find_collection_by_name_in_dir("Stripe API", &collections_dir);
+        let result = find_collection_by_name_in_dir("Stripe API", &collections_dir).unwrap();
         assert!(result.is_some(), "Expected to find collection by name");
         let summary = result.unwrap();
         assert_eq!(summary.name, "Stripe API");
@@ -602,7 +599,7 @@ mod tests {
         let collections_dir = collections_dir_from(temp_dir.path());
         save_collection_in_dir(&Collection::new("Existing API"), &collections_dir).unwrap();
 
-        let result = find_collection_by_name_in_dir("Nonexistent", &collections_dir);
+        let result = find_collection_by_name_in_dir("Nonexistent", &collections_dir).unwrap();
         assert!(result.is_none(), "Expected None for non-matching name");
     }
 
@@ -614,7 +611,29 @@ mod tests {
         // Ensure the directory exists but is empty
         std::fs::create_dir_all(&collections_dir).unwrap();
 
-        let result = find_collection_by_name_in_dir("Any", &collections_dir);
+        let result = find_collection_by_name_in_dir("Any", &collections_dir).unwrap();
         assert!(result.is_none(), "Expected None for empty directory");
+    }
+
+    // ── find_collection_by_name wrapper tests ─────────────────────────
+
+    #[test]
+    #[serial]
+    fn test_find_collection_by_name_uses_collections_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(temp_dir.path());
+        let _guard = CollectionsDirOverrideGuard::set(collections_dir.clone());
+
+        let collection = Collection::new("GitHub API");
+        save_collection_in_dir(&collection, &collections_dir).unwrap();
+
+        let result = find_collection_by_name("GitHub API").unwrap();
+        assert!(result.is_some(), "Expected to find collection via wrapper");
+        let summary = result.unwrap();
+        assert_eq!(summary.name, "GitHub API");
+        assert_eq!(summary.id, collection.id);
+
+        let not_found = find_collection_by_name("Nonexistent API").unwrap();
+        assert!(not_found.is_none(), "Expected None for non-matching name");
     }
 }
