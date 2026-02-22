@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.8.0](https://github.com/paulbreuler/runi/compare/runi-v0.7.0...runi-v0.8.0) (2026-02-22)
+
+
+### Features
+
+* API tracking bootstrap — hexagonal spec pipeline ([#129](https://github.com/paulbreuler/runi/issues/129)) ([0d5c5ba](https://github.com/paulbreuler/runi/commit/0d5c5baa9fd37ecb489f7967c43c68f24f85d7c4))
+* **canvas:** canvas architecture integration - merged worktrees ([#122](https://github.com/paulbreuler/runi/issues/122)) ([0df3fc9](https://github.com/paulbreuler/runi/commit/0df3fc9b54f00c8aa61f81e650b068bc59d777ad))
+* **collection:** two-tier request system — save, move, copy ([#138](https://github.com/paulbreuler/runi/issues/138)) ([011e33b](https://github.com/paulbreuler/runi/commit/011e33bf6b58f35800580449f59974c68147a017))
+* **demo:** import spec from URL, drift display, and body pre-population ([#148](https://github.com/paulbreuler/runi/issues/148)) ([2bef030](https://github.com/paulbreuler/runi/commit/2bef0307f754ddeb7d13f54303b751082f5862cc))
+* **drift:** add drift review UI and MCP tools, simplify URL import ([#150](https://github.com/paulbreuler/runi/issues/150)) ([#152](https://github.com/paulbreuler/runi/issues/152)) ([75db829](https://github.com/paulbreuler/runi/commit/75db8292ac90ec5ab88af6c4d2147c1aa1375bee))
+* **editor:** migrate CodeEditor to CodeMirror 6 ([9d0cd09](https://github.com/paulbreuler/runi/commit/9d0cd09c82f46cc515459bc8f9592a3b9cac6a6b))
+* **environments:** named environments with spec-first URL resolution ([#149](https://github.com/paulbreuler/runi/issues/149)) ([22e9c5f](https://github.com/paulbreuler/runi/commit/22e9c5fd0a5f96d53cbd9b4e7f38963ed6946359))
+* **intelligence:** adopt Intent UI patterns for AI-driven interactions ([#147](https://github.com/paulbreuler/runi/issues/147)) ([64e041f](https://github.com/paulbreuler/runi/commit/64e041f9060d40e99333c8756c9f59a1c7a12cc8))
+* MCP server, event-driven collections, sidebar UX improvements ([#114](https://github.com/paulbreuler/runi/issues/114)) ([15f3b20](https://github.com/paulbreuler/runi/commit/15f3b2053aa883ad187a88dce8910d43a000f2a8))
+* **mcp:** add MCP server infrastructure ([#112](https://github.com/paulbreuler/runi/issues/112)) ([eab22f0](https://github.com/paulbreuler/runi/commit/eab22f0342b15edf8fb724ac63933a21061f3f8c))
+* **mcp:** real-time SSE streaming for canvas state sync ([#125](https://github.com/paulbreuler/runi/issues/125)) ([0bd32ef](https://github.com/paulbreuler/runi/commit/0bd32ef211352d45d5aafeb71edf70b03f540f25))
+* **sidebar:** UX polish and collection CRUD management ([#136](https://github.com/paulbreuler/runi/issues/136)) ([a24b8c9](https://github.com/paulbreuler/runi/commit/a24b8c94a27df7e5b171bd5f93cf592f4787f92e))
+* **ui:** AI activity indicators, MCP broadcast fix, and CRUD workflow ([#126](https://github.com/paulbreuler/runi/issues/126)) ([e770560](https://github.com/paulbreuler/runi/commit/e770560803384e4555da455d8298c475bb1fdc0c))
+* **ui:** AI provenance UI with signal system, composite sidebar, and Zen design overhaul ([#116](https://github.com/paulbreuler/runi/issues/116)) ([1184654](https://github.com/paulbreuler/runi/commit/1184654bb2c379a67278131215484800c2a344ba))
+* **ui:** complete plan 0018 agents 001/002/004/005 ([#119](https://github.com/paulbreuler/runi/issues/119)) ([4cd04a5](https://github.com/paulbreuler/runi/commit/4cd04a51e7473324098192a55efb150fff522007))
+* **ui:** editor-centric multi-request tabs, sidebar divider, and MCP integration tests ([#117](https://github.com/paulbreuler/runi/issues/117)) ([15a4a09](https://github.com/paulbreuler/runi/commit/15a4a09ff50a82d457cba8ea2f82495f33196b52))
+
+
+### Bug Fixes
+
+* **canvas:** apply quality fixes from architecture refactor ([#124](https://github.com/paulbreuler/runi/issues/124)) ([021e8c2](https://github.com/paulbreuler/runi/commit/021e8c20a3fe7bcdeae8f54cce16ea1ea523d7a9))
+* **canvas:** stabilize request context switching and tab reset behavior ([#146](https://github.com/paulbreuler/runi/issues/146)) ([95cc342](https://github.com/paulbreuler/runi/commit/95cc342ce367e4a40639742bb44d31477007fdbc))
+* **editor:** CodeMirror theme, layout, and theme selection ([#140](https://github.com/paulbreuler/runi/issues/140)) ([4f8905a](https://github.com/paulbreuler/runi/commit/4f8905a5062492143c288629bc7ee9b314bdecf6))
+* **editor:** complete CodeMirror 6 migration ([#137](https://github.com/paulbreuler/runi/issues/137)) ([1a0ecce](https://github.com/paulbreuler/runi/commit/1a0ecce7373bd55e8da66c9db4bb51c722bce1a7))
+* **import:** detect duplicate spec imports and offer replace instead of creating duplicates ([#153](https://github.com/paulbreuler/runi/issues/153)) ([9b61936](https://github.com/paulbreuler/runi/commit/9b61936ad40f8225bc2efbc188c43677ae201553))
+* **test:** update E2E tests for new sidebar width (300px) ([#115](https://github.com/paulbreuler/runi/issues/115)) ([e947bc3](https://github.com/paulbreuler/runi/commit/e947bc3c80ccce931e0da6eb1a6054afda8a16b2))
+* **ui:** add hover highlight to Select items ([#144](https://github.com/paulbreuler/runi/issues/144)) ([cffbef1](https://github.com/paulbreuler/runi/commit/cffbef1c3fd61bdd7a3be19918d0452f0dfe52dd))
+* **ui:** add nativeButton={true} to all Base UI Menu.Item components ([#154](https://github.com/paulbreuler/runi/issues/154)) ([8142a26](https://github.com/paulbreuler/runi/commit/8142a26c6bd6cac407c7c01337dba8c67033310a))
+* **ui:** address PR review feedback on accessibility and test selectors ([#143](https://github.com/paulbreuler/runi/issues/143)) ([3178d17](https://github.com/paulbreuler/runi/commit/3178d171f01a15bff4f3802943f69a0a4c90cb50))
+* **ui:** fix Select overlay, display name, and sidebar refresh ([#145](https://github.com/paulbreuler/runi/issues/145)) ([0656ee0](https://github.com/paulbreuler/runi/commit/0656ee00eb33878975655ad4e1f969f4dd9b4978))
+
+
+### Documentation
+
+* add multi-tool AI instructions and consolidate architecture patterns ([#118](https://github.com/paulbreuler/runi/issues/118)) ([9ccbcc9](https://github.com/paulbreuler/runi/commit/9ccbcc987c3f3c4b9eb456ee9fb299e7458ae22d))
+
 ## [Unreleased]
 
 ### Added
