@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 /**
  * Setup script for motion-plus package.
- * Reads MOTION_PLUS_TOKEN from environment variable and injects it into package.json
+ * Reads MOTION_PLUS_TOKEN from environment variable and injects it into
+ * package.json and pnpm-lock.yaml so that `pnpm install --frozen-lockfile`
+ * can resolve the private tarball in CI.
  *
  * Usage:
  *   Local:  source .env && node scripts/setup-motion-plus.js
  *   CI:     MOTION_PLUS_TOKEN=${{ secrets.MOTION_PLUS_TOKEN }} node scripts/setup-motion-plus.js
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -16,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
 const packageJsonPath = join(rootDir, 'package.json');
-const packageLockPath = join(rootDir, 'package-lock.json');
+const pnpmLockPath = join(rootDir, 'pnpm-lock.yaml');
 
 const token = process.env.MOTION_PLUS_TOKEN;
 
@@ -35,7 +37,11 @@ if (!token) {
   process.exit(1);
 }
 
-const motionPlusUrl = `https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=${token}`;
+const MOTION_PLUS_BASE = 'https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0';
+const motionPlusUrl = `${MOTION_PLUS_BASE}&token=${token}`;
+// Matches any existing motion-plus URL regardless of which token it carries
+const motionPlusUrlPattern =
+  /https:\/\/api\.motion\.dev\/registry\.tgz\?package=motion-plus&version=2\.1\.0&token=[^'"\s]*/g;
 
 try {
   // Update package.json
@@ -55,33 +61,17 @@ try {
     process.exit(1);
   }
 
-  // Update package-lock.json if it exists
-  try {
-    const packageLock = JSON.parse(readFileSync(packageLockPath, 'utf-8'));
-    let updated = false;
-
-    if (packageLock.packages?.['node_modules/motion-plus']) {
-      const current = packageLock.packages['node_modules/motion-plus'].resolved;
-      if (current !== motionPlusUrl) {
-        packageLock.packages['node_modules/motion-plus'].resolved = motionPlusUrl;
-        updated = true;
-      }
+  // Update pnpm-lock.yaml — replace every occurrence of the motion-plus URL
+  // so that `pnpm install --frozen-lockfile` succeeds in CI with the new token.
+  if (existsSync(pnpmLockPath)) {
+    const original = readFileSync(pnpmLockPath, 'utf-8');
+    const updated = original.replace(motionPlusUrlPattern, motionPlusUrl);
+    if (updated !== original) {
+      writeFileSync(pnpmLockPath, updated);
+      console.log('✅ Updated pnpm-lock.yaml with motion-plus token');
+    } else {
+      console.log('✅ pnpm-lock.yaml already has correct token');
     }
-
-    if (packageLock.packages?.['']) {
-      const deps = packageLock.packages[''].dependencies;
-      if (deps?.['motion-plus'] && deps['motion-plus'] !== motionPlusUrl) {
-        deps['motion-plus'] = motionPlusUrl;
-        updated = true;
-      }
-    }
-
-    if (updated) {
-      writeFileSync(packageLockPath, JSON.stringify(packageLock, null, 2) + '\n');
-      console.log('✅ Updated package-lock.json with motion-plus token');
-    }
-  } catch {
-    // package-lock.json might not exist yet
   }
 } catch (error) {
   console.error('❌ ERROR: Failed to update package files:', error.message);

@@ -21,7 +21,7 @@ list:
 # Or: MOTION_PLUS_TOKEN=your_token just install
 install:
     node scripts/setup-motion-plus.js
-    npm ci --legacy-peer-deps
+    pnpm install --frozen-lockfile
     cd src-tauri && cargo fetch
 
 # Start development server
@@ -35,12 +35,12 @@ dev:
 # Build for production
 # Unset CI if it's set to a numeric value (Tauri expects boolean true/false)
 build:
-    @bash -c 'if [ "$CI" = "1" ] || [ "$CI" = "0" ]; then env -u CI npm run tauri build; else npm run tauri build; fi'
+    @bash -c 'if [ "$CI" = "1" ] || [ "$CI" = "0" ]; then env -u CI pnpm run tauri build; else pnpm run tauri build; fi'
 
 # Build frontend only (required for Rust compilation)
 # Uses npx as fallback if vite isn't available (doesn't require motion-plus)
 build-frontend:
-    @bash -c 'if [ -f "node_modules/.bin/vite" ]; then npm run build; else echo "📦 Using npx vite (motion-plus not required)..."; npx vite build; fi'
+    @bash -c 'if [ -f "node_modules/.bin/vite" ]; then pnpm run build; else echo "📦 Using npx vite (motion-plus not required)..."; npx vite build; fi'
 
 # Measure startup time of release bundle
 measure-startup:
@@ -63,15 +63,15 @@ generate-types:
 # If missing or incomplete, attempts full install via 'just install' using token injection
 # Uses the existing token injection system (setup-motion-plus.js) which:
 # - Reads MOTION_PLUS_TOKEN from .env or environment
-# - Injects token into package.json (never committed)
-# - Runs npm ci to install dependencies
+# - Injects token into package.json and pnpm-lock.yaml (never committed)
+# - Runs pnpm install to install dependencies
 # Note: If token not available, individual commands use npx fallback for tools that don't need motion-plus
 ensure-deps:
     @bash -c 'if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/vite" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then export $(grep -v "^#" .env | xargs) && just install; elif [ -n "$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
 
 # Update all dependencies
 update:
-    npm update
+    pnpm update
     cd src-tauri && cargo update
 
 # ============================================================================
@@ -89,7 +89,7 @@ fmt-check-rust:
 # Note: Release-please managed files (src-tauri/tauri.conf.json, package.json) are excluded via .prettierignore
 # Uses npx as fallback if prettier isn't available (doesn't require motion-plus)
 fmt-check-frontend:
-    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format:check; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --check .; fi'
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then pnpm run format:check; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --check .; fi'
 
 # Fix all formatting
 fmt: fmt-rust fmt-frontend
@@ -101,7 +101,7 @@ fmt-rust:
 # Fix frontend formatting
 # Uses npx as fallback if prettier isn't available (doesn't require motion-plus)
 fmt-frontend:
-    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then npm run format; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --write .; fi'
+    @bash -c 'if [ -f "node_modules/.bin/prettier" ]; then pnpm run format; else echo "📦 Using npx prettier (motion-plus not required)..."; npx prettier --write .; fi'
 
 # ============================================================================
 # 🔍 Code Quality: Linting
@@ -116,7 +116,7 @@ lint-rust: build-frontend
 
 # Lint TypeScript/React
 lint-frontend: ensure-deps
-    npm run lint
+    pnpm run lint
 
 # Lint Markdown files (exclude files/directories in .gitignore)
 # TODO: Remove || true once existing markdown files are fixed in a separate PR
@@ -137,7 +137,7 @@ check-rust: build-frontend
 
 # Type check TypeScript/React
 check-frontend: ensure-deps
-    npm run check
+    pnpm run check
 
 # ============================================================================
 # 🧪 Testing
@@ -152,7 +152,7 @@ test-rust: build-frontend
 
 # Run frontend tests
 test-frontend: ensure-deps
-    npm run test -- --run
+    pnpm run test -- --run
 
 # Run E2E tests (Playwright)
 test-e2e:
@@ -172,11 +172,11 @@ test-e2e-install:
 
 # Start Storybook development server (with hot reload for development)
 storybook:
-    npm run storybook
+    pnpm run storybook
 
 # Build static Storybook site (production build, no server)
 storybook-build:
-    npm run build-storybook
+    pnpm run build-storybook
 
 # Build and serve the final production Storybook site
 # Use this to preview the production build locally (no hot reload, static files only)

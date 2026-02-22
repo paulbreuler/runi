@@ -81,7 +81,7 @@
     "codemirror": "6.0.2",
     "lucide-react": "^0.562.0",
     "motion": "^12.26.2",
-    "motion-plus": "https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=${MOTION_PLUS_TOKEN}",
+    "motion-plus": "https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=b965f83b1f64839537d8d0f13f2bd0641bb26b2a3dceea1c9a3234ec21ce0f8e",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.12.0",
@@ -139,5 +139,11 @@
     "vite": "^7.3.1",
     "vitest": "^4.0.17"
   },
-  "type": "module"
+  "type": "module",
+  "packageManager": "pnpm@10.29.3",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
 }

@@ -127,11 +127,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -150,7 +155,7 @@ jobs:
         run: node scripts/setup-motion-plus.js
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: node scripts/setup-motion-plus.js && pnpm install --frozen-lockfile
 
       - name: Build Tauri app
         run: just build
