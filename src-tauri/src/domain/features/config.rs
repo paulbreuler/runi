@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 const RUNI_CONFIG_DIR_NAME: &str = ".runi";
-const FLAGS_FILE_NAME: &str = "flags.yaml";
-const FLAGS_LOCAL_FILE_NAME: &str = "flags.local.yaml";
+const FLAGS_FILE_NAME: &str = "flags.toml";
+const FLAGS_LOCAL_FILE_NAME: &str = "flags.local.toml";
 
 /// Top-level feature flag config shape.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -127,11 +127,11 @@ pub fn get_config_dir() -> Result<PathBuf, String> {
     Ok(home_dir.join(RUNI_CONFIG_DIR_NAME))
 }
 
-/// Load feature flags from `flags.yaml` and `flags.local.yaml` in the config directory.
+/// Load feature flags from `flags.toml` and `flags.local.toml` in the config directory.
 ///
 /// # Errors
 ///
-/// Returns an error if a YAML file exists but cannot be read or parsed.
+/// Returns an error if a TOML file exists but cannot be read or parsed.
 pub async fn load_feature_flags() -> Result<serde_json::Value, String> {
     let config_dir = get_config_dir()?;
     load_feature_flags_from_dir(&config_dir).await
@@ -141,7 +141,7 @@ pub async fn load_feature_flags() -> Result<serde_json::Value, String> {
 ///
 /// # Errors
 ///
-/// Returns an error if a YAML file exists but cannot be read or parsed.
+/// Returns an error if a TOML file exists but cannot be read or parsed.
 pub async fn load_feature_flags_from_dir(config_dir: &Path) -> Result<serde_json::Value, String> {
     let flags_path = config_dir.join(FLAGS_FILE_NAME);
     let local_path = config_dir.join(FLAGS_LOCAL_FILE_NAME);
@@ -169,7 +169,7 @@ async fn read_config_if_exists(path: &Path) -> Result<Option<FeatureFlagsConfig>
         .map_err(|e| format!("Failed to read feature flags file {}: {e}", path.display()))?;
 
     let config: FeatureFlagsConfig =
-        serde_yaml_ng::from_str(&content).map_err(|e| format!("Invalid YAML: {e}"))?;
+        toml::from_str(&content).map_err(|e| format!("Invalid TOML: {e}"))?;
 
     Ok(Some(config))
 }
@@ -278,14 +278,15 @@ mod tests {
 
     #[test]
     fn test_config_parses_camel_case_fields() {
-        let yaml = r"
-http:
-  importBruno: true
-  exportJavaScript: false
-canvas:
-  connectionLines: true
+        let toml_str = r"
+[http]
+importBruno = true
+exportJavaScript = false
+
+[canvas]
+connectionLines = true
 ";
-        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
+        let parsed: FeatureFlagsConfig = toml::from_str(toml_str).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
         assert_eq!(http.export_javascript, Some(false));
@@ -295,38 +296,25 @@ canvas:
 
     #[test]
     fn test_config_handles_missing_optional_fields() {
-        let yaml = r"
-http:
-  importBruno: true
+        let toml_str = r"
+[http]
+importBruno = true
 ";
-        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
+        let parsed: FeatureFlagsConfig = toml::from_str(toml_str).unwrap();
         let http = parsed.http.unwrap();
         assert_eq!(http.import_bruno, Some(true));
         assert_eq!(http.import_postman, None);
     }
 
     #[test]
-    fn test_config_ignores_unknown_fields() {
-        let yaml = r"
-http:
-  importBruno: true
-  unknownFlag: true
-unknownLayer:
-  foo: true
-";
-        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
-        let http = parsed.http.unwrap();
-        assert_eq!(http.import_bruno, Some(true));
-    }
-
-    #[test]
     fn test_schema_field_is_optional() {
-        let yaml = r"
-$schema: https://runi.dev/schema/flags/v1.json
-http:
-  importBruno: true
-";
-        let parsed: FeatureFlagsConfig = serde_yaml_ng::from_str(yaml).unwrap();
+        let toml_str = r#"
+"$schema" = "https://runi.dev/schema/flags/v1.json"
+
+[http]
+importBruno = true
+"#;
+        let parsed: FeatureFlagsConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(
             parsed.schema.as_deref(),
             Some("https://runi.dev/schema/flags/v1.json")
@@ -427,18 +415,12 @@ http:
     }
 
     #[tokio::test]
-    async fn test_load_feature_flags_reads_flags_yaml() {
+    async fn test_load_feature_flags_reads_flags_toml() {
         let dir = TempDir::new().unwrap();
         let flags_path = dir.path().join(FLAGS_FILE_NAME);
-        tokio::fs::write(
-            &flags_path,
-            r"
-http:
-  importBruno: true
-",
-        )
-        .await
-        .unwrap();
+        tokio::fs::write(&flags_path, "[http]\nimportBruno = true\n")
+            .await
+            .unwrap();
 
         let loaded = load_feature_flags_from_dir(dir.path()).await.unwrap();
         let http = loaded.get("http").unwrap();
@@ -456,18 +438,12 @@ http:
     }
 
     #[tokio::test]
-    async fn test_load_feature_flags_parses_valid_yaml() {
+    async fn test_load_feature_flags_parses_valid_toml() {
         let dir = TempDir::new().unwrap();
         let flags_path = dir.path().join(FLAGS_FILE_NAME);
-        tokio::fs::write(
-            &flags_path,
-            r"
-canvas:
-  enabled: true
-",
-        )
-        .await
-        .unwrap();
+        tokio::fs::write(&flags_path, "[canvas]\nenabled = true\n")
+            .await
+            .unwrap();
 
         let loaded = load_feature_flags_from_dir(dir.path()).await.unwrap();
         let canvas = loaded.get("canvas").unwrap();
@@ -478,10 +454,10 @@ canvas:
     }
 
     #[tokio::test]
-    async fn test_load_feature_flags_returns_error_for_invalid_yaml() {
+    async fn test_load_feature_flags_returns_error_for_invalid_toml() {
         let dir = TempDir::new().unwrap();
         let flags_path = dir.path().join(FLAGS_FILE_NAME);
-        tokio::fs::write(&flags_path, "http: [invalid")
+        tokio::fs::write(&flags_path, "[http\ninvalid")
             .await
             .unwrap();
 

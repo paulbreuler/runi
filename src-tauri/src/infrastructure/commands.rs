@@ -2327,16 +2327,16 @@ pub async fn cmd_update_project_context(
     Ok(ctx)
 }
 
-/// Create a `ProjectContextHandle` backed by the app's `SQLite` database.
+/// Create a `ProjectContextHandle` backed by a TOML file in the data directory.
 ///
 /// # Errors
 ///
-/// Returns an error if the database cannot be opened.
+/// Returns an error if the data directory cannot be created.
 pub fn create_project_context_service() -> Result<ProjectContextHandle, String> {
     let data_dir = crate::infrastructure::storage::get_data_dir()?;
     std::fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create data dir: {e}"))?;
-    let db_path = data_dir.join("project_context.db");
-    let svc = crate::application::project_context_service::ProjectContextService::new(&db_path)?;
+    let file_path = data_dir.join("state.toml");
+    let svc = crate::application::project_context_service::ProjectContextService::new(&file_path)?;
     Ok(Arc::new(svc))
 }
 
@@ -2468,16 +2468,16 @@ pub async fn cmd_clear_suggestions(
     Ok(count)
 }
 
-/// Create a `SuggestionServiceHandle` backed by the app's `SQLite` database.
+/// Create a `SuggestionServiceHandle` backed by a TOML file in the data directory.
 ///
 /// # Errors
 ///
-/// Returns an error if the database cannot be opened.
+/// Returns an error if the data directory cannot be created.
 pub fn create_suggestion_service() -> Result<SuggestionServiceHandle, String> {
     let data_dir = crate::infrastructure::storage::get_data_dir()?;
     std::fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create data dir: {e}"))?;
-    let db_path = data_dir.join("suggestions.db");
-    let svc = crate::application::suggestion_service::SuggestionService::new(&db_path)?;
+    let file_path = data_dir.join("suggestions.toml");
+    let svc = crate::application::suggestion_service::SuggestionService::new(&file_path)?;
     Ok(Arc::new(svc))
 }
 

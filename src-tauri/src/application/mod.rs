@@ -11,5 +11,5 @@ pub mod mcp_server_service;
 pub mod project_context_service;
 /// HTTP proxy application service.
 pub mod proxy_service;
-/// Suggestion service — AI suggestion CRUD with SQLite persistence.
+/// Suggestion service — AI suggestion CRUD with TOML file persistence.
 pub mod suggestion_service;

@@ -680,10 +680,11 @@ const createCanvasStore = (): CanvasStore =>
 
           return {
             ...currentState,
-            // Don't restore activeContextId — contexts aren't persisted,
-            // so it would point to a non-existent descriptor.
-            // HomePage's effect will set the correct active context.
-            activeContextId: null,
+            // Restore the previously active context so the user returns to
+            // the same tab after restart. HomePage's useContextSync will
+            // validate the ID once descriptors are registered and fall back
+            // to the first context if it no longer exists.
+            activeContextId: persisted.activeContextId ?? null,
             activeLayoutPerContext: new Map(
               persisted.activeLayoutPerContext ?? currentState.activeLayoutPerContext
             ),

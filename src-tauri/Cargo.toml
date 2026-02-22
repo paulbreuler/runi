@@ -29,7 +29,6 @@ rand = "0.10"
 async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "ansi"] }
-rusqlite = { version = "0.38", features = ["bundled"] }
 sysinfo = "0.38"
 sha2 = "0.10"
 hex = "0.4"
@@ -45,6 +44,7 @@ keyring = "3.6"
 glob-match = "0.2"
 # Type generation
 ts-rs = "12"
+toml = "1.0.3"
 
 [dev-dependencies]
 serial_test = "3"

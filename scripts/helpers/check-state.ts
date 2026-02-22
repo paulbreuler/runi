@@ -10,32 +10,9 @@
  *   npx tsx scripts/helpers/check-state.ts              # summary
  *   npx tsx scripts/helpers/check-state.ts suggestions  # list suggestions
  *   npx tsx scripts/helpers/check-state.ts context      # get project context
- *   npx tsx scripts/helpers/check-state.ts db           # raw SQLite counts
  */
 
-import { execSync } from 'node:child_process';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
-
 const MCP_URL = 'http://127.0.0.1:3002';
-
-function getDbPath(): string {
-  const home = homedir();
-  switch (process.platform) {
-    case 'darwin':
-      return join(home, 'Library/Application Support/runi/suggestions.db');
-    case 'win32':
-      return join(process.env['APPDATA'] ?? join(home, 'AppData/Roaming'), 'runi/suggestions.db');
-    default:
-      // Linux and other POSIX platforms
-      return join(
-        process.env['XDG_DATA_HOME'] ?? join(home, '.local/share'),
-        'runi/suggestions.db'
-      );
-  }
-}
-
-const DB_PATH = getDbPath();
 
 // ---- MCP helpers ----
 
@@ -94,16 +71,6 @@ async function mcpDelete(sessionId: string): Promise<void> {
   });
 }
 
-// ---- DB helper ----
-
-function dbQuery(sql: string): string {
-  try {
-    return execSync(`sqlite3 "${DB_PATH}" "${sql}"`, { encoding: 'utf8' }).trim();
-  } catch {
-    return '(sqlite3 not available or db not found)';
-  }
-}
-
 // ---- Commands ----
 
 interface Suggestion {
@@ -154,42 +121,15 @@ async function cmdContext(sessionId: string): Promise<void> {
   console.log(JSON.stringify(ctx, null, 2));
 }
 
-function cmdDb(): void {
-  console.log('\n=== SQLite State ===');
-  console.log('Suggestions by status:');
-  const counts = dbQuery(
-    'SELECT status, COUNT(*) as n FROM suggestions GROUP BY status ORDER BY status'
-  );
-  if (counts.length > 0) {
-    for (const line of counts.split('\n')) {
-      console.log(`  ${line}`);
-    }
-  } else {
-    console.log('  (empty)');
-  }
-
-  console.log('\nProject context:');
-  const ctx = dbQuery(
-    'SELECT active_collection_id, active_request_id, investigation_notes FROM project_context LIMIT 1'
-  );
-  console.log(`  ${ctx.length > 0 ? ctx : '(empty)'}`);
-}
-
 async function cmdSummary(sessionId: string): Promise<void> {
   await cmdSuggestions(sessionId);
   await cmdContext(sessionId);
-  cmdDb();
 }
 
 // ---- Main ----
 
 async function main(): Promise<void> {
   const cmd = process.argv[2] ?? 'summary';
-
-  if (cmd === 'db') {
-    cmdDb();
-    return;
-  }
 
   let sessionId: string;
   try {
