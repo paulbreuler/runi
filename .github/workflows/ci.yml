@@ -233,7 +233,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          pnpm run storybook -- --no-open &
+          pnpm exec storybook dev -p 6006 --no-open &
           STORYBOOK_PID=$!
           echo "Started Storybook with PID ${STORYBOOK_PID}"
 
