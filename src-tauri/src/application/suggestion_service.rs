@@ -1,65 +1,55 @@
 // Copyright (c) 2026 BaseState LLC
 // SPDX-License-Identifier: MIT
 
-//! Suggestion service — CRUD operations with SQLite persistence.
+//! Suggestion service — CRUD operations with TOML file persistence.
 //!
 //! Manages AI-generated suggestions for the Vigilance Monitor panel.
-//! Suggestions are persisted in the same SQLite database as other app state.
+//! Suggestions are persisted as a TOML file at the configured path
+//! (typically `~/.runi/suggestions.toml`).
 
+use std::path::PathBuf;
 use std::sync::Mutex;
 
-use rusqlite::{Connection, params};
+use serde::{Deserialize, Serialize};
 
-use crate::domain::suggestion::{
-    CreateSuggestionRequest, Suggestion, SuggestionStatus, SuggestionType,
-};
-use crate::infrastructure::storage::migrations;
+use crate::domain::suggestion::{CreateSuggestionRequest, Suggestion, SuggestionStatus};
 
-/// Service for managing AI suggestions with `SQLite` persistence.
+/// Wrapper struct for TOML serialization of suggestion lists.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+struct SuggestionsFile {
+    /// All stored suggestions.
+    #[serde(default)]
+    suggestions: Vec<Suggestion>,
+}
+
+/// Service for managing AI suggestions with TOML file persistence.
 ///
-/// Thread-safe via internal `Mutex<Connection>`.
+/// Thread-safe via internal `Mutex<PathBuf>`.
 pub struct SuggestionService {
-    /// Database connection wrapped in a mutex for thread safety.
-    conn: Mutex<Connection>,
+    /// Path to the TOML file, wrapped in a mutex for thread safety.
+    file_path: Mutex<PathBuf>,
 }
 
 impl SuggestionService {
-    /// Create a new service backed by a `SQLite` database at the given path.
+    /// Create a new service backed by a TOML file at the given path.
     ///
-    /// Applies any pending migrations on open.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the database cannot be opened or migrations fail.
-    pub fn new(db_path: &std::path::Path) -> Result<Self, String> {
-        let conn = Connection::open(db_path).map_err(|e| {
-            format!(
-                "Failed to open suggestions database at {}: {e}",
-                db_path.display()
-            )
-        })?;
-
-        migrations::apply_migrations(&conn)?;
-
-        Ok(Self {
-            conn: Mutex::new(conn),
-        })
-    }
-
-    /// Create an in-memory database (for testing).
+    /// Creates the parent directory if it does not exist.
     ///
     /// # Errors
     ///
-    /// Returns an error if the database cannot be created or migrations fail.
-    #[cfg(test)]
-    pub fn in_memory() -> Result<Self, String> {
-        let conn = Connection::open_in_memory()
-            .map_err(|e| format!("Failed to open in-memory SQLite: {e}"))?;
-
-        migrations::apply_migrations(&conn)?;
+    /// Returns an error if the parent directory cannot be created.
+    pub fn new(file_path: &std::path::Path) -> Result<Self, String> {
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| {
+                format!(
+                    "Failed to create directory for {}: {e}",
+                    file_path.display()
+                )
+            })?;
+        }
 
         Ok(Self {
-            conn: Mutex::new(conn),
+            file_path: Mutex::new(file_path.to_path_buf()),
         })
     }
 
@@ -69,61 +59,29 @@ impl SuggestionService {
     ///
     /// # Errors
     ///
-    /// Returns an error if the database query fails.
+    /// Returns an error if the file cannot be read or parsed.
     pub fn list_suggestions(
         &self,
         status_filter: Option<SuggestionStatus>,
     ) -> Result<Vec<Suggestion>, String> {
-        let conn = self
-            .conn
+        let path = self
+            .file_path
             .lock()
-            .map_err(|e| format!("Lock poisoned: {e}"))?;
+            .map_err(|e| format!("Lock poisoned: {e}"))?
+            .clone();
 
-        let (sql, params_vec): (String, Vec<Box<dyn rusqlite::types::ToSql>>) =
-            if let Some(status) = status_filter {
-                let status_str = serde_json::to_value(status)
-                    .map_err(|e| format!("Failed to serialize status: {e}"))?
-                    .as_str()
-                    .unwrap_or("pending")
-                    .to_string();
-                (
-                    "SELECT id, suggestion_type, title, description, status, source, \
-                     collection_id, request_id, endpoint, action, created_at, resolved_at \
-                     FROM suggestions WHERE status = ?1 ORDER BY created_at DESC"
-                        .to_string(),
-                    vec![Box::new(status_str)],
-                )
-            } else {
-                (
-                    "SELECT id, suggestion_type, title, description, status, source, \
-                     collection_id, request_id, endpoint, action, created_at, resolved_at \
-                     FROM suggestions ORDER BY created_at DESC"
-                        .to_string(),
-                    vec![],
-                )
-            };
+        let file = Self::load_file(&path)?;
+        let mut suggestions: Vec<Suggestion> = match status_filter {
+            Some(status) => file
+                .suggestions
+                .into_iter()
+                .filter(|s| s.status == status)
+                .collect(),
+            None => file.suggestions,
+        };
 
-        let mut stmt = conn
-            .prepare(&sql)
-            .map_err(|e| format!("Failed to prepare statement: {e}"))?;
-
-        let param_refs: Vec<&dyn rusqlite::types::ToSql> =
-            params_vec.iter().map(AsRef::as_ref).collect();
-
-        let rows = stmt
-            .query_map(param_refs.as_slice(), |row| {
-                Ok(Self::row_to_suggestion(row))
-            })
-            .map_err(|e| format!("Failed to query suggestions: {e}"))?;
-
-        let mut suggestions = Vec::new();
-        for row in rows {
-            let suggestion = row.map_err(|e| format!("Failed to read row: {e}"))??;
-            suggestions.push(suggestion);
-        }
-
-        drop(stmt);
-        drop(conn);
+        // Sort by created_at descending (newest first)
+        suggestions.sort_by(|a, b| b.created_at.cmp(&a.created_at));
         Ok(suggestions)
     }
 
@@ -131,21 +89,20 @@ impl SuggestionService {
     ///
     /// # Errors
     ///
-    /// Returns an error if the suggestion is not found or the query fails.
+    /// Returns an error if the suggestion is not found or the file cannot be read.
+    #[allow(dead_code)]
     pub fn get_suggestion(&self, id: &str) -> Result<Suggestion, String> {
-        let conn = self
-            .conn
+        let path = self
+            .file_path
             .lock()
-            .map_err(|e| format!("Lock poisoned: {e}"))?;
+            .map_err(|e| format!("Lock poisoned: {e}"))?
+            .clone();
 
-        conn.query_row(
-            "SELECT id, suggestion_type, title, description, status, source, \
-             collection_id, request_id, endpoint, action, created_at, resolved_at \
-             FROM suggestions WHERE id = ?1",
-            params![id],
-            |row| Ok(Self::row_to_suggestion(row)),
-        )
-        .map_err(|e| format!("Suggestion not found: {e}"))?
+        let file = Self::load_file(&path)?;
+        file.suggestions
+            .into_iter()
+            .find(|s| s.id == id)
+            .ok_or_else(|| format!("Suggestion not found: {id}"))
     }
 
     /// Create a new suggestion from a request payload.
@@ -154,50 +111,20 @@ impl SuggestionService {
     ///
     /// # Errors
     ///
-    /// Returns an error if the insert fails.
+    /// Returns an error if the file cannot be read or written.
+    #[allow(clippy::significant_drop_tightening)]
     pub fn create_suggestion(&self, req: &CreateSuggestionRequest) -> Result<Suggestion, String> {
         let suggestion = Suggestion::from_request(req);
 
-        let conn = self
-            .conn
+        let path = self
+            .file_path
             .lock()
             .map_err(|e| format!("Lock poisoned: {e}"))?;
 
-        let type_str = serde_json::to_value(suggestion.suggestion_type)
-            .map_err(|e| format!("Failed to serialize type: {e}"))?
-            .as_str()
-            .unwrap_or("drift_fix")
-            .to_string();
+        let mut file = Self::load_file(&path)?;
+        file.suggestions.push(suggestion.clone());
+        Self::write_file(&path, &file)?;
 
-        let status_str = serde_json::to_value(suggestion.status)
-            .map_err(|e| format!("Failed to serialize status: {e}"))?
-            .as_str()
-            .unwrap_or("pending")
-            .to_string();
-
-        conn.execute(
-            "INSERT INTO suggestions \
-             (id, suggestion_type, title, description, status, source, \
-              collection_id, request_id, endpoint, action, created_at, resolved_at) \
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
-            params![
-                suggestion.id,
-                type_str,
-                suggestion.title,
-                suggestion.description,
-                status_str,
-                suggestion.source,
-                suggestion.collection_id,
-                suggestion.request_id,
-                suggestion.endpoint,
-                suggestion.action,
-                suggestion.created_at,
-                suggestion.resolved_at,
-            ],
-        )
-        .map_err(|e| format!("Failed to insert suggestion: {e}"))?;
-
-        drop(conn);
         Ok(suggestion)
     }
 
@@ -207,132 +134,112 @@ impl SuggestionService {
     ///
     /// # Errors
     ///
-    /// Returns an error if the suggestion is not found or the update fails.
+    /// Returns an error if the suggestion is not found or the file cannot be written.
+    #[allow(clippy::significant_drop_tightening)]
     pub fn resolve_suggestion(
         &self,
         id: &str,
         status: SuggestionStatus,
     ) -> Result<Suggestion, String> {
-        let conn = self
-            .conn
+        let path = self
+            .file_path
             .lock()
             .map_err(|e| format!("Lock poisoned: {e}"))?;
 
+        let mut file = Self::load_file(&path)?;
         let resolved_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-        let status_str = serde_json::to_value(status)
-            .map_err(|e| format!("Failed to serialize status: {e}"))?
-            .as_str()
-            .unwrap_or("accepted")
-            .to_string();
 
-        let affected = conn
-            .execute(
-                "UPDATE suggestions SET status = ?1, resolved_at = ?2 WHERE id = ?3",
-                params![status_str, resolved_at, id],
-            )
-            .map_err(|e| format!("Failed to update suggestion: {e}"))?;
+        let suggestion = file
+            .suggestions
+            .iter_mut()
+            .find(|s| s.id == id)
+            .ok_or_else(|| format!("Suggestion not found: {id}"))?;
 
-        if affected == 0 {
-            return Err(format!("Suggestion not found: {id}"));
-        }
+        suggestion.status = status;
+        suggestion.resolved_at = Some(resolved_at);
 
-        drop(conn);
-        self.get_suggestion(id)
+        let result = suggestion.clone();
+        Self::write_file(&path, &file)?;
+        Ok(result)
     }
 
     /// Dismiss all pending suggestions atomically.
     ///
-    /// Sets `status='dismissed'` and `resolved_at=now` for every suggestion currently in
-    /// the `pending` state. Returns the count of rows affected.
+    /// Sets status to `Dismissed` and `resolved_at` to now for every suggestion
+    /// currently in the `Pending` state. Returns the count of items affected.
     ///
     /// # Errors
     ///
-    /// Returns an error if the database update fails.
+    /// Returns an error if the file cannot be read or written.
+    #[allow(clippy::significant_drop_tightening)]
     pub fn clear_all_pending(&self) -> Result<u64, String> {
-        let conn = self
-            .conn
+        let path = self
+            .file_path
             .lock()
             .map_err(|e| format!("Lock poisoned: {e}"))?;
 
+        let mut file = Self::load_file(&path)?;
         let resolved_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
-        let affected = conn
-            .execute(
-                "UPDATE suggestions SET status = 'dismissed', resolved_at = ?1 \
-                 WHERE status = 'pending'",
-                rusqlite::params![resolved_at],
-            )
-            .map_err(|e| format!("Failed to dismiss pending suggestions: {e}"))?;
+        let mut count: u64 = 0;
+        for suggestion in &mut file.suggestions {
+            if suggestion.status == SuggestionStatus::Pending {
+                suggestion.status = SuggestionStatus::Dismissed;
+                suggestion.resolved_at = Some(resolved_at.clone());
+                count += 1;
+            }
+        }
 
-        drop(conn);
-        Ok(affected as u64)
+        Self::write_file(&path, &file)?;
+        Ok(count)
     }
 
-    /// Convert a database row to a `Suggestion`.
-    fn row_to_suggestion(row: &rusqlite::Row<'_>) -> Result<Suggestion, String> {
-        let id: String = row.get(0).map_err(|e| format!("Failed to read id: {e}"))?;
-        let type_str: String = row
-            .get(1)
-            .map_err(|e| format!("Failed to read suggestion_type: {e}"))?;
-        let title: String = row
-            .get(2)
-            .map_err(|e| format!("Failed to read title: {e}"))?;
-        let description: String = row
-            .get(3)
-            .map_err(|e| format!("Failed to read description: {e}"))?;
-        let status_str: String = row
-            .get(4)
-            .map_err(|e| format!("Failed to read status: {e}"))?;
-        let source: String = row
-            .get(5)
-            .map_err(|e| format!("Failed to read source: {e}"))?;
-        let collection_id: Option<String> = row
-            .get(6)
-            .map_err(|e| format!("Failed to read collection_id: {e}"))?;
-        let request_id: Option<String> = row
-            .get(7)
-            .map_err(|e| format!("Failed to read request_id: {e}"))?;
-        let endpoint: Option<String> = row
-            .get(8)
-            .map_err(|e| format!("Failed to read endpoint: {e}"))?;
-        let action: String = row
-            .get(9)
-            .map_err(|e| format!("Failed to read action: {e}"))?;
-        let created_at: String = row
-            .get(10)
-            .map_err(|e| format!("Failed to read created_at: {e}"))?;
-        let resolved_at: Option<String> = row
-            .get(11)
-            .map_err(|e| format!("Failed to read resolved_at: {e}"))?;
+    /// Load the suggestions file, returning an empty file if it doesn't exist.
+    fn load_file(path: &std::path::Path) -> Result<SuggestionsFile, String> {
+        if !path.exists() {
+            return Ok(SuggestionsFile::default());
+        }
 
-        let suggestion_type: SuggestionType =
-            serde_json::from_value(serde_json::Value::String(type_str.clone()))
-                .map_err(|e| format!("Invalid suggestion_type '{type_str}': {e}"))?;
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read {}: {e}", path.display()))?;
 
-        let status: SuggestionStatus =
-            serde_json::from_value(serde_json::Value::String(status_str.clone()))
-                .map_err(|e| format!("Invalid status '{status_str}': {e}"))?;
+        if content.trim().is_empty() {
+            return Ok(SuggestionsFile::default());
+        }
 
-        Ok(Suggestion {
-            id,
-            suggestion_type,
-            title,
-            description,
-            status,
-            source,
-            collection_id,
-            request_id,
-            endpoint,
-            action,
-            created_at,
-            resolved_at,
-        })
+        toml::from_str(&content).map_err(|e| format!("Failed to parse {}: {e}", path.display()))
+    }
+
+    /// Write the suggestions file atomically using a write-to-temp-then-rename pattern.
+    ///
+    /// This ensures the file is never left in a partially-written state if the
+    /// process is killed mid-write. The OS `rename` call is atomic on the same
+    /// filesystem, so readers always observe either the old or the new content.
+    fn write_file(path: &std::path::Path, file: &SuggestionsFile) -> Result<(), String> {
+        let content = toml::to_string_pretty(file)
+            .map_err(|e| format!("Failed to serialize suggestions: {e}"))?;
+
+        let tmp_path = path.with_extension("toml.tmp");
+        std::fs::write(&tmp_path, &content)
+            .map_err(|e| format!("Failed to write temp file {}: {e}", tmp_path.display()))?;
+        std::fs::rename(&tmp_path, path)
+            .map_err(|e| format!("Failed to rename to {}: {e}", path.display()))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::suggestion::SuggestionType;
+    use tempfile::TempDir;
+
+    /// Create a service backed by a temporary TOML file.
+    fn temp_service() -> (SuggestionService, TempDir) {
+        let dir = TempDir::new().unwrap();
+        let file_path = dir.path().join("suggestions.toml");
+        let svc = SuggestionService::new(&file_path).unwrap();
+        (svc, dir)
+    }
 
     fn sample_request() -> CreateSuggestionRequest {
         CreateSuggestionRequest {
@@ -349,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_create_and_get_suggestion() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
         let req = sample_request();
 
         let created = svc.create_suggestion(&req).unwrap();
@@ -363,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_list_suggestions_returns_all() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
 
         svc.create_suggestion(&sample_request()).unwrap();
         svc.create_suggestion(&CreateSuggestionRequest {
@@ -384,7 +291,7 @@ mod tests {
 
     #[test]
     fn test_list_suggestions_with_status_filter() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
 
         let s1 = svc.create_suggestion(&sample_request()).unwrap();
         svc.create_suggestion(&CreateSuggestionRequest {
@@ -417,7 +324,7 @@ mod tests {
 
     #[test]
     fn test_resolve_suggestion_accepted() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
         let created = svc.create_suggestion(&sample_request()).unwrap();
 
         let resolved = svc
@@ -429,7 +336,7 @@ mod tests {
 
     #[test]
     fn test_resolve_suggestion_dismissed() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
         let created = svc.create_suggestion(&sample_request()).unwrap();
 
         let resolved = svc
@@ -441,24 +348,24 @@ mod tests {
 
     #[test]
     fn test_resolve_nonexistent_returns_error() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
         let result = svc.resolve_suggestion("nonexistent", SuggestionStatus::Accepted);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_get_nonexistent_returns_error() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
         let result = svc.get_suggestion("nonexistent");
         assert!(result.is_err());
     }
 
     #[test]
     fn test_persists_across_reads() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
         let created = svc.create_suggestion(&sample_request()).unwrap();
 
-        // Re-read from DB
+        // Re-read from file
         let fetched = svc.get_suggestion(&created.id).unwrap();
         assert_eq!(fetched.suggestion_type, SuggestionType::DriftFix);
         assert_eq!(fetched.collection_id, Some("col-1".to_string()));
@@ -467,7 +374,7 @@ mod tests {
 
     #[test]
     fn test_clear_all_pending_dismisses_pending_suggestions() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
 
         // Create two pending suggestions
         svc.create_suggestion(&sample_request()).unwrap();
@@ -511,7 +418,7 @@ mod tests {
 
     #[test]
     fn test_clear_all_pending_returns_zero_when_no_pending() {
-        let svc = SuggestionService::in_memory().unwrap();
+        let (svc, _dir) = temp_service();
 
         let count = svc.clear_all_pending().unwrap();
         assert_eq!(count, 0);
@@ -521,7 +428,8 @@ mod tests {
     fn test_concurrent_creates() {
         use std::sync::Arc;
 
-        let svc = Arc::new(SuggestionService::in_memory().unwrap());
+        let (svc, _dir) = temp_service();
+        let svc = Arc::new(svc);
 
         let mut handles = Vec::new();
         for i in 0..10 {
