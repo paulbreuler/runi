@@ -577,4 +577,44 @@ mod tests {
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("already exists"));
     }
+
+    // ── find_collection_by_name_in_dir tests ───────────────────────────
+
+    #[test]
+    #[serial]
+    fn test_find_collection_by_name_in_dir_returns_matching_collection() {
+        let temp_dir = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(temp_dir.path());
+        let collection = Collection::new("Stripe API");
+        save_collection_in_dir(&collection, &collections_dir).unwrap();
+
+        let result = find_collection_by_name_in_dir("Stripe API", &collections_dir);
+        assert!(result.is_some(), "Expected to find collection by name");
+        let summary = result.unwrap();
+        assert_eq!(summary.name, "Stripe API");
+        assert_eq!(summary.id, collection.id);
+    }
+
+    #[test]
+    #[serial]
+    fn test_find_collection_by_name_in_dir_returns_none_for_nonexistent() {
+        let temp_dir = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(temp_dir.path());
+        save_collection_in_dir(&Collection::new("Existing API"), &collections_dir).unwrap();
+
+        let result = find_collection_by_name_in_dir("Nonexistent", &collections_dir);
+        assert!(result.is_none(), "Expected None for non-matching name");
+    }
+
+    #[test]
+    #[serial]
+    fn test_find_collection_by_name_in_dir_empty_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let collections_dir = collections_dir_from(temp_dir.path());
+        // Ensure the directory exists but is empty
+        std::fs::create_dir_all(&collections_dir).unwrap();
+
+        let result = find_collection_by_name_in_dir("Any", &collections_dir);
+        assert!(result.is_none(), "Expected None for empty directory");
+    }
 }
