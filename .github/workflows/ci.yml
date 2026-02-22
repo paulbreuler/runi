@@ -65,10 +65,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js environment
-        uses: ./.github/actions/setup-nodejs
+      - name: Install just
+        uses: extractions/setup-just@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
-          install-just: 'true'
+          node-version: '20'
       - name: Check Tauri version alignment
         run: just check-tauri-versions
 

@@ -96,8 +96,8 @@ importers:
         specifier: ^12.26.2
         version: 12.34.3(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       motion-plus:
-        specifier: https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=b965f83b1f64839537d8d0f13f2bd0641bb26b2a3dceea1c9a3234ec21ce0f8e
-        version: https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=b965f83b1f64839537d8d0f13f2bd0641bb26b2a3dceea1c9a3234ec21ce0f8e
+        specifier: https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_PLACEHOLDER
+        version: https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_PLACEHOLDER
       react:
         specifier: ^19.2.3
         version: 19.2.4
@@ -3293,8 +3293,8 @@ packages:
   motion-plus-dom@2.11.2:
     resolution: {integrity: sha512-WNXCn7XRS7H5ZJiwceJMbNjXbhVwjhQquJn/3LuyPkwMcxtOtQmc+cCas46bNpYNfKCyJs94oN9XRcBWmT2LxQ==}
 
-  motion-plus@https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=b965f83b1f64839537d8d0f13f2bd0641bb26b2a3dceea1c9a3234ec21ce0f8e
-    resolution: {tarball: https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=b965f83b1f64839537d8d0f13f2bd0641bb26b2a3dceea1c9a3234ec21ce0f8e
+  motion-plus@https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_PLACEHOLDER
+    resolution: {tarball: https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_PLACEHOLDER}
     version: 2.1.0
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -7648,7 +7648,7 @@ snapshots:
       - react
       - react-dom
 
-  motion-plus@https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=b965f83b1f64839537d8d0f13f2bd0641bb26b2a3dceea1c9a3234ec21ce0f8e
+  motion-plus@https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_PLACEHOLDER
     dependencies:
       motion: 12.34.3(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       motion-plus-dom: 2.11.2(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

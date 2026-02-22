@@ -19,9 +19,11 @@ list:
 # Note: Requires MOTION_PLUS_TOKEN environment variable
 # Usage: source .env && just install
 # Or: MOTION_PLUS_TOKEN=your_token just install
+# Inject token → install → restore placeholder (token never stays in committed files)
 install:
     node scripts/setup-motion-plus.js
     pnpm install --frozen-lockfile
+    node scripts/restore-motion-plus.js
     cd src-tauri && cargo fetch
 
 # Start development server
