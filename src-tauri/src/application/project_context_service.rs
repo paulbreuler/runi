@@ -58,7 +58,8 @@ impl ProjectContextService {
         let path = self
             .file_path
             .lock()
-            .map_err(|e| format!("Lock poisoned: {e}"))?;
+            .map_err(|e| format!("Lock poisoned: {e}"))?
+            .clone();
 
         Self::load_context(&path)
     }
@@ -101,13 +102,20 @@ impl ProjectContextService {
         toml::from_str(&content).map_err(|e| format!("Failed to parse {}: {e}", path.display()))
     }
 
-    /// Persist the full project context to a TOML file.
+    /// Persist the full project context to a TOML file atomically.
+    ///
+    /// Uses a write-to-temp-then-rename pattern so the file is never left in a
+    /// partially-written state. The OS `rename` call is atomic on the same
+    /// filesystem, meaning readers always observe either the old or the new content.
     fn write_context(path: &std::path::Path, ctx: &ProjectContext) -> Result<(), String> {
         let content = toml::to_string_pretty(ctx)
             .map_err(|e| format!("Failed to serialize project context: {e}"))?;
 
-        std::fs::write(path, content)
-            .map_err(|e| format!("Failed to write {}: {e}", path.display()))
+        let tmp_path = path.with_extension("toml.tmp");
+        std::fs::write(&tmp_path, &content)
+            .map_err(|e| format!("Failed to write temp file {}: {e}", tmp_path.display()))?;
+        std::fs::rename(&tmp_path, path)
+            .map_err(|e| format!("Failed to rename to {}: {e}", path.display()))
     }
 }
 

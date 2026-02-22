@@ -466,6 +466,24 @@ importBruno = true
     }
 
     #[test]
+    fn test_config_ignores_unknown_fields() {
+        let toml_str = r#"
+[http]
+importBruno = true
+someCustomFlag = "custom"
+
+[customSection]
+anotherFlag = 123
+"#;
+
+        let parsed: FeatureFlagsConfig = toml::from_str(toml_str).unwrap();
+        let http = parsed.http.unwrap();
+        // Known field is still parsed correctly.
+        assert_eq!(http.import_bruno, Some(true));
+        // Presence of unknown fields/sections does not cause deserialization to fail.
+    }
+
+    #[test]
     fn test_get_config_dir_returns_expected_path() {
         let dir = get_config_dir().unwrap();
         assert!(dir.ends_with(RUNI_CONFIG_DIR_NAME));

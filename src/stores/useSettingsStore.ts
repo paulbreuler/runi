@@ -98,6 +98,15 @@ export const useSettingsStore = create<SettingsState>()(
         followAiMode: state.followAiMode,
         openItemsRatio: state.openItemsRatio,
       }),
+      onRehydrateStorage:
+        () =>
+        (state: SettingsState | undefined): void => {
+          if (state !== undefined) {
+            invoke('set_log_level', { level: state.logLevel }).catch((error: unknown) => {
+              console.error('Failed to rehydrate log level:', error);
+            });
+          }
+        },
     }
   )
 );

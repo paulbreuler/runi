@@ -210,13 +210,20 @@ impl SuggestionService {
         toml::from_str(&content).map_err(|e| format!("Failed to parse {}: {e}", path.display()))
     }
 
-    /// Write the suggestions file.
+    /// Write the suggestions file atomically using a write-to-temp-then-rename pattern.
+    ///
+    /// This ensures the file is never left in a partially-written state if the
+    /// process is killed mid-write. The OS `rename` call is atomic on the same
+    /// filesystem, so readers always observe either the old or the new content.
     fn write_file(path: &std::path::Path, file: &SuggestionsFile) -> Result<(), String> {
         let content = toml::to_string_pretty(file)
             .map_err(|e| format!("Failed to serialize suggestions: {e}"))?;
 
-        std::fs::write(path, content)
-            .map_err(|e| format!("Failed to write {}: {e}", path.display()))
+        let tmp_path = path.with_extension("toml.tmp");
+        std::fs::write(&tmp_path, &content)
+            .map_err(|e| format!("Failed to write temp file {}: {e}", tmp_path.display()))?;
+        std::fs::rename(&tmp_path, path)
+            .map_err(|e| format!("Failed to rename to {}: {e}", path.display()))
     }
 }
 
