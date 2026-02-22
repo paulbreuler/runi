@@ -22,7 +22,7 @@ list:
 # Inject token → install → restore placeholder (token never stays in committed files)
 install:
     node scripts/setup-motion-plus.js
-    pnpm install --frozen-lockfile
+    pnpm install --no-frozen-lockfile
     node scripts/restore-motion-plus.js
     cd src-tauri && cargo fetch
 

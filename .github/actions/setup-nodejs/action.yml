@@ -34,5 +34,5 @@ runs:
           just install
         else
           node scripts/setup-motion-plus.js
-          pnpm install --frozen-lockfile
+          pnpm install --no-frozen-lockfile
         fi

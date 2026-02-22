@@ -155,7 +155,7 @@ jobs:
         run: node scripts/setup-motion-plus.js
 
       - name: Install dependencies
-        run: node scripts/setup-motion-plus.js && pnpm install --frozen-lockfile
+        run: node scripts/setup-motion-plus.js && pnpm install --no-frozen-lockfile
 
       - name: Build Tauri app
         run: just build
