@@ -16,11 +16,17 @@ runs:
       if: ${{ inputs.install-just == 'true' }}
       uses: extractions/setup-just@v2
 
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: '10.29.3'
+        run_install: false
+
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: 'npm'
+        cache: 'pnpm'
 
     - name: Install dependencies
       shell: bash
@@ -29,5 +35,5 @@ runs:
           just install
         else
           node scripts/setup-motion-plus.js
-          npm ci --legacy-peer-deps
+          pnpm install --no-frozen-lockfile
         fi
