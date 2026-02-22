@@ -318,13 +318,15 @@ fn check_name_unique(collection: &Collection, dir: &Path) -> Result<(), String> 
     if !dir.exists() {
         return Ok(());
     }
-    if let Some(existing) = find_collection_by_name_in_dir(&collection.metadata.name, dir)? {
-        if existing.id != collection.id {
-            return Err(format!(
-                "A collection named '{}' already exists ({})",
-                existing.name, existing.id
-            ));
-        }
+    let summaries = list_collections_in_dir(dir)?;
+    if summaries
+        .iter()
+        .any(|s| s.name == collection.metadata.name && s.id != collection.id)
+    {
+        return Err(format!(
+            "A collection named '{}' already exists",
+            collection.metadata.name
+        ));
     }
     Ok(())
 }

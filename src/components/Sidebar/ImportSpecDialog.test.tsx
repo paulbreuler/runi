@@ -291,6 +291,44 @@ describe('ImportSpecDialog', () => {
     });
   });
 
+  it('preserves conflict UI when refreshCollectionSpec fails so user can retry', async () => {
+    const conflictResult = {
+      status: 'conflict' as const,
+      existing_id: 'col_existing',
+      existing_name: 'My API',
+    };
+    const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
+    const refreshMock = vi.fn().mockRejectedValue(new Error('Network error'));
+    useCollectionStore.setState({
+      importCollection: importCollectionMock,
+      refreshCollectionSpec: refreshMock,
+    });
+
+    render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    await userEvent.type(
+      screen.getByTestId('import-spec-url-input'),
+      'https://example.com/spec.json'
+    );
+    await userEvent.click(screen.getByTestId('import-spec-submit'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-conflict-replace')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId('import-conflict-replace'));
+
+    await waitFor(() => {
+      expect(refreshMock).toHaveBeenCalledWith('col_existing', 'https://example.com/spec.json');
+    });
+
+    // Dialog should NOT have been closed
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+
+    // Conflict UI should still be visible so user can retry
+    expect(screen.getByTestId('import-conflict-replace')).toBeInTheDocument();
+  });
+
   it('returns to import form when conflict cancel is clicked', async () => {
     const conflictResult = {
       status: 'conflict' as const,

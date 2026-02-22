@@ -157,9 +157,14 @@ export const ImportSpecDialog = ({
     try {
       await refreshCollectionSpec(conflict.existingId, conflict.source);
       onOpenChange(false);
+      setConflict(null);
+    } catch (err) {
+      globalEventBus.emit<ToastEventPayload>('toast.show', {
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err),
+      });
     } finally {
       setIsSubmitting(false);
-      setConflict(null);
     }
   };
 
