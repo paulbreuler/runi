@@ -404,6 +404,7 @@ export const CollectionItem = ({
                             data-test-id={`collection-context-menu-${summary.id}`}
                           >
                             <Menu.Item
+                              nativeButton={true}
                               label="Add Request"
                               className={cn(
                                 focusRingClasses,
@@ -419,6 +420,7 @@ export const CollectionItem = ({
                             </Menu.Item>
                             {canRefreshSpec && (
                               <Menu.Item
+                                nativeButton={true}
                                 label="Refresh spec"
                                 className={cn(
                                   focusRingClasses,
@@ -441,6 +443,7 @@ export const CollectionItem = ({
                             )}
                             {canRefreshSpec && (
                               <Menu.Item
+                                nativeButton={true}
                                 label="Compare with file…"
                                 className={cn(
                                   focusRingClasses,
@@ -457,6 +460,7 @@ export const CollectionItem = ({
                             )}
                             <div className="my-1 h-px bg-border-subtle" role="separator" />
                             <Menu.Item
+                              nativeButton={true}
                               label="Rename"
                               className={cn(
                                 focusRingClasses,
@@ -472,6 +476,7 @@ export const CollectionItem = ({
                               <span className="ml-auto text-text-muted text-[10px]">F2</span>
                             </Menu.Item>
                             <Menu.Item
+                              nativeButton={true}
                               label="Duplicate"
                               className={cn(
                                 focusRingClasses,
@@ -487,6 +492,7 @@ export const CollectionItem = ({
                             </Menu.Item>
                             <div className="my-1 h-px bg-border-subtle" role="separator" />
                             <Menu.Item
+                              nativeButton={true}
                               label="Delete"
                               className={cn(
                                 focusRingClasses,

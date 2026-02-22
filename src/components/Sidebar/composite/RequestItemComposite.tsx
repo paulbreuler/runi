@@ -446,6 +446,7 @@ export const RequestItemComposite = ({
                       }
                     >
                       <Menu.Item
+                        nativeButton={true}
                         className={cn(focusRingClasses, menuItemClasses)}
                         onClick={handleMenuRename}
                         data-test-id={`request-menu-rename-${request.id}`}
@@ -454,6 +455,7 @@ export const RequestItemComposite = ({
                         Rename
                       </Menu.Item>
                       <Menu.Item
+                        nativeButton={true}
                         className={cn(focusRingClasses, menuItemClasses)}
                         onClick={handleMenuDuplicate}
                         data-test-id={`request-menu-duplicate-${request.id}`}
@@ -465,6 +467,7 @@ export const RequestItemComposite = ({
                         <>
                           <Menu.SubmenuRoot>
                             <Menu.SubmenuTrigger
+                              nativeButton={true}
                               className={cn(focusRingClasses, menuItemClasses, 'justify-between')}
                               data-test-id={`menu-move-to-collection-${request.id}`}
                             >
@@ -482,6 +485,7 @@ export const RequestItemComposite = ({
                                 >
                                   {otherCollections.map((col) => (
                                     <Menu.Item
+                                      nativeButton={true}
                                       key={col.id}
                                       className={cn(focusRingClasses, menuItemClasses)}
                                       onClick={() => {
@@ -498,6 +502,7 @@ export const RequestItemComposite = ({
                           </Menu.SubmenuRoot>
                           <Menu.SubmenuRoot>
                             <Menu.SubmenuTrigger
+                              nativeButton={true}
                               className={cn(focusRingClasses, menuItemClasses, 'justify-between')}
                               data-test-id={`menu-copy-to-collection-${request.id}`}
                             >
@@ -515,6 +520,7 @@ export const RequestItemComposite = ({
                                 >
                                   {otherCollections.map((col) => (
                                     <Menu.Item
+                                      nativeButton={true}
                                       key={col.id}
                                       className={cn(focusRingClasses, menuItemClasses)}
                                       onClick={() => {
@@ -532,6 +538,7 @@ export const RequestItemComposite = ({
                         </>
                       )}
                       <Menu.Item
+                        nativeButton={true}
                         className={cn(focusRingClasses, menuItemClasses, 'text-signal-error')}
                         onClick={handleMenuDelete}
                         data-test-id={`request-menu-delete-${request.id}`}

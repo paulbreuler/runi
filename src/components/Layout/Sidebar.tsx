@@ -181,6 +181,7 @@ export const Sidebar = (): React.JSX.Element => {
                 data-test-id="collection-actions-popup"
               >
                 <Menu.Item
+                  nativeButton={true}
                   label="Create collection"
                   className={menuItemClasses}
                   onClick={() => {
@@ -193,6 +194,7 @@ export const Sidebar = (): React.JSX.Element => {
                   <span>Create collection</span>
                 </Menu.Item>
                 <Menu.Item
+                  nativeButton={true}
                   label="Open collection"
                   className={menuItemClasses}
                   onClick={() => {
@@ -206,6 +208,7 @@ export const Sidebar = (): React.JSX.Element => {
                 </Menu.Item>
                 <div className="my-1 h-px bg-border-subtle" role="separator" />
                 <Menu.Item
+                  nativeButton={true}
                   label="Import collection"
                   className={menuItemClasses}
                   onClick={() => {
