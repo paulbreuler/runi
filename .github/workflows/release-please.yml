@@ -130,6 +130,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: '10.29.3'
           run_install: false
 
       - name: Install Node.js
@@ -151,10 +152,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Inject Motion+ token
-        run: node scripts/setup-motion-plus.js
-
       - name: Install dependencies
+        # Inject the Motion+ token into package.json and pnpm-lock.yaml before
+        # installing so pnpm can resolve the private tarball. --no-frozen-lockfile
+        # is required because pnpm's strict YAML pre-validation rejects the
+        # URL-based tarball key produced by the token injection; the lockfile is
+        # otherwise fully honoured for all other packages.
         run: node scripts/setup-motion-plus.js && pnpm install --no-frozen-lockfile
 
       - name: Build Tauri app

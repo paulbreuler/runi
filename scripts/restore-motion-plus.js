@@ -20,11 +20,12 @@ const packageJsonPath = join(rootDir, 'package.json');
 const pnpmLockPath = join(rootDir, 'pnpm-lock.yaml');
 
 const PLACEHOLDER = 'MOTION_PLUS_PLACEHOLDER';
-const MOTION_PLUS_BASE = 'https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0';
-const PLACEHOLDER_URL = `${MOTION_PLUS_BASE}&token=${PLACEHOLDER}`;
-// Matches any real token in a motion-plus URL (excludes the placeholder itself)
+// Version-agnostic: captures everything up to and including "&token=" so we can
+// replace only the token value. Motion tokens are URL-safe (letters, digits, _ and -),
+// so [^&\s}'".]+ safely captures the value without over-matching into other parameters.
+// The negative lookahead ensures placeholder URLs are never re-processed.
 const REAL_TOKEN_PATTERN =
-  /https:\/\/api\.motion\.dev\/registry\.tgz\?package=motion-plus&version=2\.1\.0&token=(?!MOTION_PLUS_PLACEHOLDER)[^}\s'"]+/g;
+  /(https:\/\/api\.motion\.dev\/registry\.tgz\?[^&'"}\s]+&token=)(?!MOTION_PLUS_PLACEHOLDER)[^&\s}'"]+/g;
 
 try {
   // Restore package.json
@@ -32,8 +33,13 @@ try {
 
   if (packageJson.dependencies?.['motion-plus']) {
     const current = packageJson.dependencies['motion-plus'];
-    if (current !== PLACEHOLDER_URL) {
-      packageJson.dependencies['motion-plus'] = PLACEHOLDER_URL;
+    // Replace only the token value, preserving the version and base URL
+    const restored = current.replace(
+      /(&token=)(?!MOTION_PLUS_PLACEHOLDER)[a-zA-Z0-9_-]+/,
+      `$1${PLACEHOLDER}`
+    );
+    if (restored !== current) {
+      packageJson.dependencies['motion-plus'] = restored;
       writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
       console.log('✅ Restored placeholder in package.json');
     } else {
@@ -44,7 +50,7 @@ try {
   // Restore pnpm-lock.yaml
   if (existsSync(pnpmLockPath)) {
     const original = readFileSync(pnpmLockPath, 'utf-8');
-    const restored = original.replace(REAL_TOKEN_PATTERN, PLACEHOLDER_URL);
+    const restored = original.replace(REAL_TOKEN_PATTERN, `$1${PLACEHOLDER}`);
     if (restored !== original) {
       writeFileSync(pnpmLockPath, restored);
       console.log('✅ Restored placeholder in pnpm-lock.yaml');
