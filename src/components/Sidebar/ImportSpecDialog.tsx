@@ -155,14 +155,12 @@ export const ImportSpecDialog = ({
     setIsSubmitting(true);
 
     try {
-      await refreshCollectionSpec(conflict.existingId, conflict.source);
-      onOpenChange(false);
-      setConflict(null);
-    } catch (err) {
-      globalEventBus.emit<ToastEventPayload>('toast.show', {
-        type: 'error',
-        message: err instanceof Error ? err.message : String(err),
-      });
+      const success = await refreshCollectionSpec(conflict.existingId, conflict.source);
+      if (success) {
+        onOpenChange(false);
+        setConflict(null);
+      }
+      // On failure: store already emitted toast; dialog stays open for retry
     } finally {
       setIsSubmitting(false);
     }
@@ -249,6 +247,7 @@ export const ImportSpecDialog = ({
                   size="sm"
                   onClick={handleConflictCancel}
                   disabled={isSubmitting}
+                  autoFocus
                 >
                   Cancel
                 </Button>

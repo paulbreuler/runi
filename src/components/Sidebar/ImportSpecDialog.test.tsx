@@ -265,7 +265,7 @@ describe('ImportSpecDialog', () => {
       existing_name: 'My API',
     };
     const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
-    const refreshMock = vi.fn().mockResolvedValue(undefined);
+    const refreshMock = vi.fn().mockResolvedValue(true);
     useCollectionStore.setState({
       importCollection: importCollectionMock,
       refreshCollectionSpec: refreshMock,
@@ -298,7 +298,7 @@ describe('ImportSpecDialog', () => {
       existing_name: 'My API',
     };
     const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
-    const refreshMock = vi.fn().mockRejectedValue(new Error('Network error'));
+    const refreshMock = vi.fn().mockResolvedValue(false);
     useCollectionStore.setState({
       importCollection: importCollectionMock,
       refreshCollectionSpec: refreshMock,

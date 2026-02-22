@@ -1101,10 +1101,12 @@ describe('useCollectionStore', () => {
 
       const { result } = renderHook(() => useCollectionStore());
 
+      let returnValue: boolean | undefined;
       await act(async () => {
-        await result.current.refreshCollectionSpec('col-1');
+        returnValue = await result.current.refreshCollectionSpec('col-1');
       });
 
+      expect(returnValue).toBe(true);
       expect(invoke).toHaveBeenCalledWith('cmd_refresh_collection_spec', {
         collectionId: 'col-1',
         newSpecPath: null,
@@ -1118,10 +1120,12 @@ describe('useCollectionStore', () => {
 
       const { result } = renderHook(() => useCollectionStore());
 
+      let returnValue: boolean | undefined;
       await act(async () => {
-        await result.current.refreshCollectionSpec('col-1');
+        returnValue = await result.current.refreshCollectionSpec('col-1');
       });
 
+      expect(returnValue).toBe(false);
       expect(result.current.error).toBeNull();
       expect(result.current.isLoading).toBe(false);
     });

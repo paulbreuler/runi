@@ -28,7 +28,7 @@ interface CollectionState {
   isLoading: boolean;
   error: string | null;
 
-  refreshCollectionSpec: (collectionId: string, newSpecPath?: string) => Promise<void>;
+  refreshCollectionSpec: (collectionId: string, newSpecPath?: string) => Promise<boolean>;
   dismissDriftResult: (collectionId: string) => void;
   setDriftResult: (collectionId: string, result: SpecRefreshResult) => void;
   createCollection: (name: string) => Promise<Collection | null>;
@@ -118,7 +118,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
   isLoading: false,
   error: null,
 
-  refreshCollectionSpec: async (collectionId: string, newSpecPath?: string): Promise<void> => {
+  refreshCollectionSpec: async (collectionId: string, newSpecPath?: string): Promise<boolean> => {
     set({ isLoading: true, error: null });
     try {
       const result = await invoke<SpecRefreshResult>('cmd_refresh_collection_spec', {
@@ -136,6 +136,8 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         changed: result.changed,
         actor: 'human',
       });
+
+      return true;
     } catch (error) {
       const message = String(error);
       set({ isLoading: false });
@@ -144,6 +146,8 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         message: 'Failed to refresh spec',
         details: message,
       });
+
+      return false;
     }
   },
 
