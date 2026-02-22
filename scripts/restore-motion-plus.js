@@ -36,7 +36,7 @@ try {
     const current = packageJson.dependencies['motion-plus'];
     // Replace only the token value, preserving the version and base URL
     const restored = current.replace(
-      /(&token=)(?!MOTION_PLUS_PLACEHOLDER)[a-zA-Z0-9_-]+/,
+      /(&token=)(?!MOTION_PLUS_PLACEHOLDER)[^&\s}'"]+/,
       `$1${PLACEHOLDER}`
     );
     if (restored !== current) {

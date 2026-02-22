@@ -124,7 +124,7 @@ jobs:
         run: just test-frontend
 
       - name: Build Storybook
-        run: npm run build-storybook
+        run: pnpm run build-storybook
 
       - name: Setup Playwright
         uses: ./.github/actions/setup-playwright
@@ -135,7 +135,7 @@ jobs:
         # locally but fail intermittently in CI. We're skipping them for now to unblock
         # this PR. See: https://github.com/paulbreuler/runi/issues/<issue-number>
         # TODO: Address Storybook test reliability in CI in a follow-up PR
-        run: npm run test-storybook
+        run: pnpm run test-storybook
         env:
           # Storybook tests run in browser mode, may need longer timeout
           CI: true
@@ -233,7 +233,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          npm run storybook -- --no-open &
+          pnpm run storybook -- --no-open &
           STORYBOOK_PID=$!
           echo "Started Storybook with PID ${STORYBOOK_PID}"
 
@@ -248,7 +248,7 @@ jobs:
           timeout 120 bash -c 'until curl -sf http://localhost:6006 > /dev/null; do sleep 2; done'
           echo "Storybook is ready"
 
-          npm run test-storybook:visual
+          pnpm run test-storybook:visual
 
       - name: Upload visual test results
         if: always()

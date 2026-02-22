@@ -3,9 +3,12 @@
  * Injects the Motion+ token into package.json and pnpm-lock.yaml before install.
  *
  * Replaces the MOTION_PLUS_PLACEHOLDER string with the real token so that
- * `pnpm install --frozen-lockfile` can resolve the private tarball. The token
- * is NEVER committed to source control — run restore-motion-plus.js after
- * install to revert the placeholder (local dev only; CI runners are ephemeral).
+ * `pnpm install --no-frozen-lockfile` can resolve the private tarball.
+ * (--no-frozen-lockfile is required because pnpm's strict YAML pre-validation
+ * rejects the URL-based tarball key produced by token injection.)
+ * The token is NEVER committed to source control — run restore-motion-plus.js
+ * after install to revert the placeholder (local dev only; CI runners are
+ * ephemeral).
  *
  * Usage:
  *   Local:  source .env && node scripts/setup-motion-plus.js
