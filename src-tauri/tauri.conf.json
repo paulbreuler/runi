@@ -4,7 +4,7 @@
   "identifier": "com.runi",
   "build": {
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build",
+    "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:5175",
     "frontendDist": "../dist"
   },
