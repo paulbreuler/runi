@@ -414,7 +414,7 @@ export const RequestItemComposite = ({
               <Menu.Root open={menuOpen} onOpenChange={handleMenuOpenChange}>
                 <Menu.Trigger
                   ref={triggerRef}
-                  nativeButton={false}
+                  nativeButton={true}
                   render={(props) => (
                     <Button
                       {...props}

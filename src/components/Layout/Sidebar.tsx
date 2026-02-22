@@ -149,7 +149,7 @@ export const Sidebar = (): React.JSX.Element => {
   const headerActions = collectionsEnabled ? (
     <Menu.Root open={menuOpen} onOpenChange={setMenuOpen}>
       <Menu.Trigger
-        nativeButton={false}
+        nativeButton={true}
         render={(props) => (
           <Button
             {...props}

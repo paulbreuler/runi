@@ -367,7 +367,7 @@ export const CollectionItem = ({
               >
                 <Menu.Root open={menuOpen} onOpenChange={handleMenuOpenChange}>
                   <Menu.Trigger
-                    nativeButton={false}
+                    nativeButton={true}
                     render={(props) => (
                       <Button
                         {...props}
