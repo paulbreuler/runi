@@ -34,11 +34,20 @@ describe('ImportSpecDialog', () => {
     });
   });
 
+  it('opens with local file mode active by default', () => {
+    render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    expect(screen.getByTestId('import-mode-file')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByTestId('import-mode-url')).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByTestId('import-spec-file-input')).toBeInTheDocument();
+    expect(screen.queryByTestId('import-spec-url-input')).not.toBeInTheDocument();
+  });
+
   it('renders dialog when open', () => {
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
     expect(screen.getByTestId('import-spec-dialog')).toBeInTheDocument();
-    expect(screen.getByTestId('import-spec-url-input')).toBeInTheDocument();
+    expect(screen.getByTestId('import-spec-file-input')).toBeInTheDocument();
     expect(screen.getByTestId('import-spec-submit')).toBeInTheDocument();
     expect(screen.getByTestId('import-spec-cancel')).toBeInTheDocument();
   });
@@ -49,7 +58,7 @@ describe('ImportSpecDialog', () => {
     expect(screen.queryByTestId('import-spec-dialog')).not.toBeInTheDocument();
   });
 
-  it('disables import button when URL is empty', () => {
+  it('disables import button when no file is selected', () => {
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
     expect(screen.getByTestId('import-spec-submit')).toBeDisabled();
@@ -58,6 +67,7 @@ describe('ImportSpecDialog', () => {
   it('enables import button when URL is entered', async () => {
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://petstore3.swagger.io/api/v3/openapi.json'
@@ -102,6 +112,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://petstore3.swagger.io/api/v3/openapi.json'
@@ -135,6 +146,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://invalid-url.example.com/spec.json'
@@ -175,6 +187,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     const input = screen.getByTestId('import-spec-url-input');
     await userEvent.type(input, 'https://example.com/spec.json{Enter}');
 
@@ -183,9 +196,11 @@ describe('ImportSpecDialog', () => {
     });
   });
 
-  it('resets URL when dialog reopens', async () => {
+  it('resets state when dialog reopens', async () => {
     const { rerender } = render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    // Switch to URL mode and type a URL
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://example.com/spec.json'
@@ -195,11 +210,25 @@ describe('ImportSpecDialog', () => {
     rerender(<ImportSpecDialog open={false} onOpenChange={onOpenChange} />);
     rerender(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
-    expect(screen.getByTestId('import-spec-url-input')).toHaveValue('');
+    // Should reset to file mode (default)
+    expect(screen.getByTestId('import-mode-file')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.queryByTestId('import-spec-url-input')).not.toBeInTheDocument();
   });
 
-  it('has proper label for URL input', () => {
+  it('has proper label for file input', () => {
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    const input = screen.getByTestId('import-spec-file-input');
+    expect(input).toHaveAttribute('id', 'import-spec-file');
+
+    const label = screen.getByTestId('import-spec-file-label');
+    expect(label).toHaveAttribute('for', 'import-spec-file');
+  });
+
+  it('has proper label for URL input when URL mode is active', async () => {
+    render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    await userEvent.click(screen.getByTestId('import-mode-url'));
 
     const input = screen.getByTestId('import-spec-url-input');
     expect(input).toHaveAttribute('id', 'import-spec-url');
@@ -217,6 +246,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://example.com/spec.json'
@@ -242,6 +272,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://example.com/spec.json'
@@ -273,6 +304,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://example.com/spec.json'
@@ -306,6 +338,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://example.com/spec.json'
@@ -342,6 +375,7 @@ describe('ImportSpecDialog', () => {
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
 
+    await userEvent.click(screen.getByTestId('import-mode-url'));
     await userEvent.type(
       screen.getByTestId('import-spec-url-input'),
       'https://example.com/spec.json'

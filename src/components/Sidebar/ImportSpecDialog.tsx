@@ -28,7 +28,7 @@ export const ImportSpecDialog = ({
 }: ImportSpecDialogProps): React.ReactElement | null => {
   const importCollection = useCollectionStore((state) => state.importCollection);
   const refreshCollectionSpec = useCollectionStore((state) => state.refreshCollectionSpec);
-  const [mode, setMode] = React.useState<ImportMode>('url');
+  const [mode, setMode] = React.useState<ImportMode>('file');
   const [url, setUrl] = React.useState('');
   const [filePath, setFilePath] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -41,7 +41,7 @@ export const ImportSpecDialog = ({
   // Reset state when dialog opens
   React.useEffect(() => {
     if (open) {
-      setMode('url');
+      setMode('file');
       setUrl('');
       setFilePath('');
       setIsSubmitting(false);
