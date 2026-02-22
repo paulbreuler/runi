@@ -21,11 +21,12 @@ const pnpmLockPath = join(rootDir, 'pnpm-lock.yaml');
 
 const PLACEHOLDER = 'MOTION_PLUS_PLACEHOLDER';
 // Version-agnostic: captures everything up to and including "&token=" so we can
-// replace only the token value. Motion tokens are URL-safe (letters, digits, _ and -),
-// so [^&\s}'".]+ safely captures the value without over-matching into other parameters.
+// replace only the token value. The inner character class is [^'"}\s]+ (allows &)
+// so it spans across multiple query parameters (e.g. package=...&version=...&token=).
+// Using [^&'"}\s]+ would stop at the first & and fail to reach &token=.
 // The negative lookahead ensures placeholder URLs are never re-processed.
 const REAL_TOKEN_PATTERN =
-  /(https:\/\/api\.motion\.dev\/registry\.tgz\?[^&'"}\s]+&token=)(?!MOTION_PLUS_PLACEHOLDER)[^&\s}'"]+/g;
+  /(https:\/\/api\.motion\.dev\/registry\.tgz\?[^'"}\s]+&token=)(?!MOTION_PLUS_PLACEHOLDER)[^&\s}'"]+/g;
 
 try {
   // Restore package.json
@@ -42,6 +43,12 @@ try {
       packageJson.dependencies['motion-plus'] = restored;
       writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
       console.log('✅ Restored placeholder in package.json');
+    } else if (current.includes('api.motion.dev') && !current.includes(PLACEHOLDER)) {
+      // The regex failed to match a real token — the URL format may have changed.
+      console.error(
+        '❌ package.json contains a motion.dev URL but the token could not be replaced. Possible credential leak.'
+      );
+      process.exit(1);
     } else {
       console.log('✅ package.json already has placeholder');
     }
@@ -54,6 +61,12 @@ try {
     if (restored !== original) {
       writeFileSync(pnpmLockPath, restored);
       console.log('✅ Restored placeholder in pnpm-lock.yaml');
+    } else if (original.includes('api.motion.dev') && !original.includes(PLACEHOLDER)) {
+      // The regex failed to match a real token — the URL format may have changed.
+      console.error(
+        '❌ pnpm-lock.yaml contains a motion.dev URL but no placeholder was found or restored. Possible credential leak.'
+      );
+      process.exit(1);
     } else {
       console.log('✅ pnpm-lock.yaml already has placeholder');
     }
