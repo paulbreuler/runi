@@ -1442,15 +1442,15 @@ async fn handle_pin_spec_version(
 
     match crate::infrastructure::commands::pin_spec_version_inner(&collection_id, &source).await {
         Ok(collection) => {
+            let pinned_version_id = collection
+                .pinned_versions
+                .last()
+                .map(|v| v.id.clone())
+                .unwrap_or_default();
             // Emit event for UI update
             if let Some(app) = app_handle {
-                let pinned_version_id = collection
-                    .pinned_versions
-                    .last()
-                    .map(|v| v.id.clone())
-                    .unwrap_or_default();
                 let envelope = ai_event_envelope(
-                    json!({"collection_id": &collection_id, "pinned_version_id": pinned_version_id}),
+                    json!({"collection_id": &collection_id, "pinned_version_id": &pinned_version_id}),
                 );
                 if let Err(e) = app.emit("collection.version-pinned", envelope) {
                     tracing::warn!("Failed to emit collection.version-pinned event: {e}");
@@ -1460,6 +1460,7 @@ async fn handle_pin_spec_version(
                 content: vec![ToolResponseContent::Text {
                     text: json!({
                         "collection_id": collection_id,
+                        "pinned_version_id": pinned_version_id,
                         "pinned_count": collection.pinned_versions.len(),
                         "message": "Spec version pinned as staging"
                     })

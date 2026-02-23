@@ -299,6 +299,7 @@ const VersionSwitcherPopover = ({
         noScale
         onClick={() => {
           setConfirmingRemove(version.id);
+          setConfirmingActivate(null);
         }}
         data-test-id={`version-switcher-remove-${version.id}`}
       >

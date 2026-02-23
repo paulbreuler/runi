@@ -505,8 +505,10 @@ describe('ImportSpecDialog', () => {
       existing_version: '1.0.0',
     };
     const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
+    const loadCollectionMock = vi.fn().mockResolvedValue(undefined);
     useCollectionStore.setState({
       importCollection: importCollectionMock,
+      loadCollection: loadCollectionMock,
     });
 
     render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
@@ -529,6 +531,7 @@ describe('ImportSpecDialog', () => {
         collectionId: 'col_existing',
         source: 'https://example.com/spec.json',
       });
+      expect(loadCollectionMock).toHaveBeenCalledWith('col_existing');
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
   });
