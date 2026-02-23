@@ -121,7 +121,7 @@ const VersionSwitcherPopover = ({
         collectionId: collection.id,
         pinnedVersionId,
       });
-      const header = `Comparing ${activeVersion ?? 'active'} (active) → ${versionLabel} (staged)`;
+      const header = `Comparing ${activeVersion ?? 'current spec'} (active) → ${versionLabel} (staged)`;
       setDriftResult(collection.id, result);
       openDrawer(collection.id, undefined, header);
       onClose();
