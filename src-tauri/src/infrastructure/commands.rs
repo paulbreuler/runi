@@ -2832,6 +2832,12 @@ pub fn activate_pinned_version_inner(
     // Reconstruct old spec from collection requests for drift
     let old_parsed_spec = build_parsed_spec_from_collection(&collection);
 
+    // 3. Remove staged from pinned_versions first, then archive the current
+    // active. Removing before pushing keeps staged_pos valid — a push() would
+    // append to the end (leaving existing indices intact), but removing first
+    // makes the ordering unambiguous and avoids any future confusion.
+    collection.pinned_versions.remove(staged_pos);
+
     // Archive the current active as a pinned version
     let now = chrono::Utc::now();
     let archived_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
@@ -2851,11 +2857,8 @@ pub fn activate_pinned_version_inner(
         role: PinnedVersionRole::Archived,
     });
 
-    // 3. Update collection.source from staged version
+    // 4. Update collection.source from staged version
     collection.source = staged.source.clone();
-
-    // 4. Remove staged from pinned_versions
-    collection.pinned_versions.remove(staged_pos);
 
     // 5. Compute drift between old requests/spec and new staged spec
     let new_parsed_spec = service.parse_content(&staged.spec_content)?;
@@ -5181,6 +5184,72 @@ mod tests {
             assert!(
                 drift.changed || !drift.operations_added.is_empty(),
                 "expected drift to detect the new endpoint"
+            );
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_activate_pinned_version_staged_at_non_zero_position() {
+        // Regression test: staged version at index 1 (not 0).
+        // Before the remove-then-push fix, push() would increase the vector length so that
+        // `remove(staged_pos)` with staged_pos == 1 could target the newly-pushed archived entry
+        // instead of the intended staging entry when staged_pos equalled the original last index.
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Activate Pin Position Test");
+            collection.source.spec_version = Some("1.0.0".to_string());
+            // Position 0: an existing archived version (to push staged to position 1)
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_archived_old".to_string(),
+                label: "0.9.0".to_string(),
+                spec_content: "{}".to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T09:00:00Z".to_string(),
+                role: PinnedVersionRole::Archived,
+            });
+            // Position 1: the staging version we want to activate
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_staging_at_1".to_string(),
+                label: "2.1.0".to_string(),
+                spec_content: PINNED_SPEC_V2.to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T10:00:00Z".to_string(),
+                role: PinnedVersionRole::Staging,
+            });
+            save_collection(&collection).unwrap();
+
+            let result = activate_pinned_version_inner(&collection.id, "pin_staging_at_1");
+            assert!(result.is_ok(), "activate failed: {:?}", result.err());
+            let (updated, _drift) = result.unwrap();
+
+            // Staged entry removed; only archived entries remain
+            assert!(
+                !updated
+                    .pinned_versions
+                    .iter()
+                    .any(|v| v.id == "pin_staging_at_1"),
+                "staged version should have been removed"
+            );
+
+            // Old archived entry preserved
+            assert!(
+                updated
+                    .pinned_versions
+                    .iter()
+                    .any(|v| v.id == "pin_archived_old"),
+                "original archived entry should still be present"
+            );
+
+            // New archived entry for the previous active
+            let archived_for_active = updated
+                .pinned_versions
+                .iter()
+                .find(|v| v.role == PinnedVersionRole::Archived && v.label == "1.0.0");
+            assert!(
+                archived_for_active.is_some(),
+                "expected archived entry for previous active version"
             );
         })
         .await;

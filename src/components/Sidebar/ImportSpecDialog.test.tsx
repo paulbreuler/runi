@@ -395,7 +395,7 @@ describe('ImportSpecDialog', () => {
     });
   });
 
-  it('shows version context line with both versions when available', async () => {
+  it('shows version context line with existing version', async () => {
     const conflictResult = {
       status: 'conflict' as const,
       existing_id: 'col_existing',

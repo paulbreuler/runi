@@ -186,11 +186,6 @@ export const ImportSpecDialog = ({
         source: conflict.source,
       });
       await loadCollection(conflict.existingId);
-      globalEventBus.emit('collection.imported', {
-        collection_id: conflict.existingId,
-        url: conflict.source,
-        actor: 'human',
-      });
       onOpenChange(false);
       setConflict(null);
     } catch (err) {
