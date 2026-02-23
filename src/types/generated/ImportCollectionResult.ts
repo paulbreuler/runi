@@ -3,5 +3,9 @@ import type { Collection } from "../collection";
 
 export type ImportCollectionResult =
   | { status: "success"; collection: Collection }
-  | { status: "conflict"; existing_id: string; existing_name: string };
-
+  | {
+      status: "conflict";
+      existing_id: string;
+      existing_name: string;
+      existing_version: string | null;
+    };

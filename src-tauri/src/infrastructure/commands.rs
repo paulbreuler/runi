@@ -19,7 +19,8 @@ use crate::application::proxy_service::ProxyService;
 use crate::domain::canvas_state::CanvasStateSnapshot;
 use crate::domain::collection::spec_port::SpecSource;
 use crate::domain::collection::{
-    BodyType, Collection, CollectionEnvironment, CollectionRequest, RequestBody, SpecBinding,
+    BodyType, Collection, CollectionEnvironment, CollectionRequest, CollectionSource,
+    PinnedSpecVersion, PinnedVersionRole, RequestBody, SpecBinding,
 };
 use crate::domain::features::config as feature_config;
 use crate::domain::http::{HttpResponse, RequestParams};
@@ -120,6 +121,8 @@ pub enum ImportCollectionResult {
         existing_id: String,
         /// Display name of the existing collection.
         existing_name: String,
+        /// Spec version of the existing collection (e.g., "2.0.0"), if tracked.
+        existing_version: Option<String>,
     },
 }
 
@@ -170,9 +173,14 @@ pub async fn import_collection_inner(
 
     // Check for name conflict before saving
     if let Some(existing) = find_collection_by_name(&collection.metadata.name)? {
+        // Load the full collection to get its spec_version for the conflict dialog
+        let existing_version = load_collection(&existing.id)
+            .ok()
+            .and_then(|c| c.source.spec_version);
         return Ok(ImportCollectionResult::Conflict {
             existing_id: existing.id,
             existing_name: existing.name,
+            existing_version,
         });
     }
 
@@ -251,6 +259,69 @@ fn extract_path_from_url(url: &str) -> String {
 
     // Strip query string and fragment (OpenAPI paths never include these)
     raw.split(['?', '#']).next().unwrap_or(&raw).to_string()
+}
+
+/// Build a [`ParsedSpec`] from a collection's current requests.
+///
+/// Maps each `CollectionRequest` to a `ParsedEndpoint`, using binding metadata
+/// (path, method, operation ID) when available and falling back to request fields.
+/// The resulting `ParsedSpec` represents the "old" spec state for drift comparisons.
+fn build_parsed_spec_from_collection(
+    collection: &Collection,
+) -> crate::domain::collection::spec_port::ParsedSpec {
+    use crate::domain::collection::spec_port::{
+        ParameterLocation, ParsedEndpoint, ParsedParameter, ParsedSpec,
+    };
+
+    let endpoints: Vec<ParsedEndpoint> = collection
+        .requests
+        .iter()
+        .map(|req| {
+            let path = req
+                .binding
+                .path
+                .clone()
+                .unwrap_or_else(|| extract_path_from_url(&req.url));
+            let method = req
+                .binding
+                .method
+                .clone()
+                .unwrap_or_else(|| req.method.clone());
+            ParsedEndpoint {
+                operation_id: req.binding.operation_id.clone(),
+                method,
+                path,
+                summary: Some(req.name.clone()),
+                description: req.docs.clone(),
+                tags: req.tags.clone(),
+                parameters: req
+                    .params
+                    .iter()
+                    .map(|p| ParsedParameter {
+                        name: p.key.clone(),
+                        location: ParameterLocation::Query,
+                        required: false,
+                        schema_type: None,
+                        default_value: Some(p.value.clone()),
+                        description: None,
+                    })
+                    .collect(),
+                request_body: None,
+                deprecated: false,
+                is_streaming: req.is_streaming,
+            }
+        })
+        .collect();
+
+    ParsedSpec {
+        title: collection.metadata.name.clone(),
+        version: collection.source.spec_version.clone(),
+        description: collection.metadata.description.clone(),
+        base_urls: vec![],
+        endpoints,
+        auth_schemes: vec![],
+        variables: std::collections::BTreeMap::new(),
+    }
 }
 
 /// Refresh a collection's spec from its tracked source (core logic, no `AppHandle`).
@@ -342,59 +413,8 @@ pub async fn refresh_collection_spec_inner_with_source(
     // 5. Re-parse new content into ParsedSpec
     let new_spec = service.parse_content(&fetch_result.content)?;
 
-    // 6. Reconstruct old spec endpoints from collection's requests
-    let old_endpoints: Vec<crate::domain::collection::spec_port::ParsedEndpoint> = collection
-        .requests
-        .iter()
-        .map(|req| {
-            // Use binding path/method if available, otherwise fall back to request fields
-            // Extract path portion from URL to ensure path-only comparison with new spec
-            let path = req
-                .binding
-                .path
-                .clone()
-                .unwrap_or_else(|| extract_path_from_url(&req.url));
-            let method = req
-                .binding
-                .method
-                .clone()
-                .unwrap_or_else(|| req.method.clone());
-
-            crate::domain::collection::spec_port::ParsedEndpoint {
-                operation_id: req.binding.operation_id.clone(),
-                method,
-                path,
-                summary: Some(req.name.clone()),
-                description: req.docs.clone(),
-                tags: req.tags.clone(),
-                parameters: req
-                    .params
-                    .iter()
-                    .map(|p| crate::domain::collection::spec_port::ParsedParameter {
-                        name: p.key.clone(),
-                        location: crate::domain::collection::spec_port::ParameterLocation::Query,
-                        required: false,
-                        schema_type: None,
-                        default_value: Some(p.value.clone()),
-                        description: None,
-                    })
-                    .collect(),
-                request_body: None,
-                deprecated: false,
-                is_streaming: req.is_streaming,
-            }
-        })
-        .collect();
-
-    let old_spec = crate::domain::collection::spec_port::ParsedSpec {
-        title: collection.metadata.name.clone(),
-        version: collection.source.spec_version.clone(),
-        description: collection.metadata.description.clone(),
-        base_urls: vec![],
-        endpoints: old_endpoints,
-        auth_schemes: vec![],
-        variables: std::collections::BTreeMap::new(),
-    };
+    // 6. Reconstruct old spec from collection's requests for drift comparison
+    let old_spec = build_parsed_spec_from_collection(&collection);
 
     // 7. Compute drift
     let drift = compute_drift(&old_spec, &new_spec);
@@ -2624,6 +2644,311 @@ pub async fn cmd_set_active_environment(
     Ok(())
 }
 
+// ── Pinned spec version commands ─────────────────────────────────────────────
+
+/// Fetch a spec and pin it as a staging version on a collection (inner, no `AppHandle`).
+///
+/// Downloads/reads the spec from `source_url_or_path`, parses the `info.version` field
+/// as the label, creates a [`PinnedSpecVersion`] with role [`PinnedVersionRole::Staging`],
+/// and saves the collection.
+///
+/// # Errors
+///
+/// Returns an error if the spec cannot be fetched/read, parsed, or if the collection
+/// cannot be found or saved.
+pub async fn pin_spec_version_inner(
+    collection_id: &str,
+    source_url_or_path: &str,
+) -> Result<Collection, String> {
+    use crate::domain::collection::spec_port::SpecSource;
+    use crate::infrastructure::spec::hasher::compute_spec_hash;
+
+    let mut collection = load_collection(collection_id)?;
+
+    // Route to File or URL
+    let spec_source = if source_url_or_path.contains("://") {
+        SpecSource::Url(source_url_or_path.to_string())
+    } else {
+        SpecSource::File(std::path::PathBuf::from(source_url_or_path))
+    };
+
+    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let fetch_result = service.fetcher().fetch(&spec_source).await?;
+
+    // Parse to extract version label
+    let parsed_spec = service.parse_content(&fetch_result.content)?;
+    let label = parsed_spec.version.unwrap_or_else(|| "unknown".to_string());
+
+    let now = chrono::Utc::now();
+    let imported_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let hash = format!("sha256:{}", compute_spec_hash(&fetch_result.content));
+
+    let source = CollectionSource {
+        source_type: crate::domain::collection::SourceType::Openapi,
+        url: Some(fetch_result.source_url.clone()),
+        hash: Some(hash),
+        spec_version: Some(label.clone()),
+        fetched_at: imported_at.clone(),
+        source_commit: None,
+        repo_root: None,
+        spec_path: None,
+        ref_name: None,
+    };
+
+    let id = format!(
+        "pin_{}",
+        crate::domain::collection::types::random_hex_suffix_pub()
+    );
+
+    collection.pinned_versions.push(PinnedSpecVersion {
+        id,
+        label,
+        spec_content: fetch_result.content,
+        source,
+        imported_at,
+        role: PinnedVersionRole::Staging,
+    });
+
+    save_collection(&collection)?;
+    Ok(collection)
+}
+
+/// Pin a spec version as a staging candidate on a collection.
+///
+/// Fetches or reads the spec from `source`, creates a `PinnedSpecVersion` with
+/// `role = staging`, and appends it to `collection.pinned_versions`.
+/// Emits `collection.version-pinned` with `Actor::User` on success.
+///
+/// # Errors
+///
+/// Returns an error if the spec cannot be fetched, parsed, or if the collection cannot be saved.
+#[tauri::command]
+pub async fn cmd_pin_spec_version(
+    app: tauri::AppHandle,
+    collection_id: String,
+    source: String,
+) -> Result<Collection, String> {
+    let collection = pin_spec_version_inner(&collection_id, &source).await?;
+    emit_collection_event(
+        &app,
+        "collection.version-pinned",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "pinned_version_id": collection.pinned_versions.last().map(|v| v.id.clone()).unwrap_or_default()}),
+    );
+    Ok(collection)
+}
+
+/// Remove a pinned spec version from a collection (inner, no `AppHandle`).
+///
+/// # Errors
+///
+/// Returns an error if the collection cannot be found or the pinned version ID does not exist.
+pub fn remove_pinned_version_inner(
+    collection_id: &str,
+    pinned_version_id: &str,
+) -> Result<(), String> {
+    let mut collection = load_collection(collection_id)?;
+    let original_len = collection.pinned_versions.len();
+    collection
+        .pinned_versions
+        .retain(|v| v.id != pinned_version_id);
+    if collection.pinned_versions.len() == original_len {
+        return Err(format!("Pinned version not found: {pinned_version_id}"));
+    }
+    save_collection(&collection)?;
+    Ok(())
+}
+
+/// Remove a pinned spec version from a collection.
+///
+/// Emits `collection.version-removed` with `Actor::User` on success.
+///
+/// # Errors
+///
+/// Returns an error if the pinned version ID does not exist or the collection cannot be saved.
+#[tauri::command]
+pub async fn cmd_remove_pinned_version(
+    app: tauri::AppHandle,
+    collection_id: String,
+    pinned_version_id: String,
+) -> Result<(), String> {
+    remove_pinned_version_inner(&collection_id, &pinned_version_id)?;
+    emit_collection_event(
+        &app,
+        "collection.version-removed",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "pinned_version_id": &pinned_version_id}),
+    );
+    Ok(())
+}
+
+/// Activate a pinned (staging) spec version on a collection (inner, no `AppHandle`).
+///
+/// 1. Finds the staged version by `pinned_version_id`.
+/// 2. Archives the current active spec as a new `Archived` pinned version.
+/// 3. Updates `collection.source` from the staged version's source.
+/// 4. Removes the staged version from `pinned_versions` (it is now active).
+/// 5. Computes drift between old and new active specs.
+/// 6. Saves and returns the updated collection + drift result.
+///
+/// # Errors
+///
+/// Returns an error if the collection cannot be found, the pinned version does not exist,
+/// or the collection cannot be saved.
+pub fn activate_pinned_version_inner(
+    collection_id: &str,
+    pinned_version_id: &str,
+) -> Result<
+    (
+        Collection,
+        crate::domain::collection::drift::SpecRefreshResult,
+    ),
+    String,
+> {
+    use crate::domain::collection::drift::compute_drift;
+
+    let mut collection = load_collection(collection_id)?;
+
+    // 1. Find staged version
+    let staged_pos = collection
+        .pinned_versions
+        .iter()
+        .position(|v| v.id == pinned_version_id)
+        .ok_or_else(|| format!("Pinned version not found: {pinned_version_id}"))?;
+    let staged = collection.pinned_versions[staged_pos].clone();
+
+    // Validate it's a staging version
+    if staged.role != PinnedVersionRole::Staging {
+        return Err(format!(
+            "Pinned version {pinned_version_id} is not a staging version (role: {:?})",
+            staged.role
+        ));
+    }
+
+    // 2. Save old active spec as archived pinned version
+    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let old_spec_version = collection.source.spec_version.clone();
+
+    // Reconstruct old spec from collection requests for drift
+    let old_parsed_spec = build_parsed_spec_from_collection(&collection);
+
+    // 3. Remove staged from pinned_versions first, then archive the current
+    // active. Removing before pushing keeps staged_pos valid — a push() would
+    // append to the end (leaving existing indices intact), but removing first
+    // makes the ordering unambiguous and avoids any future confusion.
+    collection.pinned_versions.remove(staged_pos);
+
+    // Archive the current active as a pinned version
+    let now = chrono::Utc::now();
+    let archived_at = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let archive_label = old_spec_version
+        .as_deref()
+        .unwrap_or("archived")
+        .to_string();
+    collection.pinned_versions.push(PinnedSpecVersion {
+        id: format!(
+            "pin_{}",
+            crate::domain::collection::types::random_hex_suffix_pub()
+        ),
+        label: archive_label,
+        spec_content: String::new(), // Old spec content not stored — archived for label/source only
+        source: collection.source.clone(),
+        imported_at: archived_at,
+        role: PinnedVersionRole::Archived,
+    });
+
+    // 4. Update collection.source from staged version
+    collection.source = staged.source.clone();
+
+    // 5. Compute drift between old requests/spec and new staged spec
+    let new_parsed_spec = service.parse_content(&staged.spec_content)?;
+    let drift = compute_drift(&old_parsed_spec, &new_parsed_spec);
+
+    // 6. Save
+    save_collection(&collection)?;
+
+    Ok((collection, drift))
+}
+
+/// Activate a staged pinned spec version, archiving the current active.
+///
+/// Swaps the active spec with the staged version, archives the old active as a pinned version,
+/// computes drift between old and new specs, and saves.
+/// Emits `collection.version-activated` with `Actor::User` on success.
+///
+/// # Errors
+///
+/// Returns an error if the pinned version ID does not exist or is not a staging version.
+#[tauri::command]
+pub async fn cmd_activate_pinned_version(
+    app: tauri::AppHandle,
+    collection_id: String,
+    pinned_version_id: String,
+) -> Result<Collection, String> {
+    let (collection, _drift) = activate_pinned_version_inner(&collection_id, &pinned_version_id)?;
+    emit_collection_event(
+        &app,
+        "collection.version-activated",
+        &Actor::User,
+        json!({"collection_id": &collection_id, "pinned_version_id": &pinned_version_id}),
+    );
+    Ok(collection)
+}
+
+/// Compare a pinned staging spec against the collection's active spec.
+///
+/// Computes drift between the collection's current requests (as old spec) and
+/// the staged pinned version's spec content (as new spec).
+///
+/// # Errors
+///
+/// Returns an error if the collection or pinned version cannot be found,
+/// or if the staged spec cannot be parsed.
+pub fn compare_spec_versions_inner(
+    collection_id: &str,
+    pinned_version_id: &str,
+) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
+    use crate::domain::collection::drift::compute_drift;
+
+    let collection = load_collection(collection_id)?;
+
+    let staged = collection
+        .pinned_versions
+        .iter()
+        .find(|v| v.id == pinned_version_id)
+        .ok_or_else(|| format!("Pinned version not found: {pinned_version_id}"))?;
+
+    // Guard: archived versions have no stored spec content
+    if staged.spec_content.is_empty() {
+        return Err(format!(
+            "Pinned version {pinned_version_id} has no stored spec content (role: {:?})",
+            staged.role
+        ));
+    }
+
+    // Reconstruct old spec from current requests
+    let old_parsed_spec = build_parsed_spec_from_collection(&collection);
+
+    // Parse staged spec
+    let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));
+    let new_parsed_spec = service.parse_content(&staged.spec_content)?;
+
+    Ok(compute_drift(&old_parsed_spec, &new_parsed_spec))
+}
+
+/// Compare a pinned spec version against the active spec and return drift.
+///
+/// # Errors
+///
+/// Returns an error if the collection or pinned version cannot be found.
+#[tauri::command]
+pub async fn cmd_compare_spec_versions(
+    collection_id: String,
+    pinned_version_id: String,
+) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
+    compare_spec_versions_inner(&collection_id, &pinned_version_id)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3545,6 +3870,7 @@ mod tests {
                 ImportCollectionResult::Conflict {
                     existing_id,
                     existing_name,
+                    ..
                 } => {
                     assert!(!existing_id.is_empty());
                     assert_eq!(existing_name, "Test API");
@@ -4726,5 +5052,301 @@ mod tests {
             assert!(result.unwrap_err().contains("not found"));
         })
         .await;
+    }
+
+    // ── Pinned spec version tests ─────────────────────────────────────────────
+
+    /// Minimal valid `OpenAPI` 3.0.0 spec with version 2.1.0 for testing.
+    const PINNED_SPEC_V2: &str = r#"{
+        "openapi": "3.0.0",
+        "info": { "title": "Pin Test API", "version": "2.1.0" },
+        "paths": {
+            "/items": {
+                "get": {
+                    "operationId": "listItems",
+                    "summary": "List items",
+                    "responses": { "200": { "description": "OK" } }
+                }
+            }
+        }
+    }"#;
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_pin_spec_version_adds_staging_entry() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Create a base collection (no source spec needed)
+            let collection = Collection::new("Pin Test");
+            save_collection(&collection).unwrap();
+
+            // Write a spec file to the temp dir
+            let spec_path = temp_dir.path().join("v2spec.json");
+            std::fs::write(&spec_path, PINNED_SPEC_V2).unwrap();
+
+            let result = pin_spec_version_inner(&collection.id, spec_path.to_str().unwrap()).await;
+
+            assert!(
+                result.is_ok(),
+                "pin_spec_version_inner failed: {:?}",
+                result.err()
+            );
+            let updated = result.unwrap();
+            assert_eq!(updated.pinned_versions.len(), 1);
+            let pinned = &updated.pinned_versions[0];
+            assert_eq!(pinned.label, "2.1.0");
+            assert_eq!(pinned.role, PinnedVersionRole::Staging);
+            assert!(pinned.id.starts_with("pin_"));
+            assert!(!pinned.spec_content.is_empty());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_remove_pinned_version_deletes_entry() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Remove Pin Test");
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_abc123".to_string(),
+                label: "1.0.0".to_string(),
+                spec_content: "{}".to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T10:00:00Z".to_string(),
+                role: PinnedVersionRole::Staging,
+            });
+            save_collection(&collection).unwrap();
+
+            let result = remove_pinned_version_inner(&collection.id, "pin_abc123");
+            assert!(result.is_ok());
+
+            let loaded = load_collection(&collection.id).unwrap();
+            assert!(loaded.pinned_versions.is_empty());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_remove_pinned_version_not_found_returns_error() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let collection = Collection::new("Remove Pin NF Test");
+            save_collection(&collection).unwrap();
+
+            let result = remove_pinned_version_inner(&collection.id, "pin_doesnotexist");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not found"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_activate_pinned_version_archives_old_active() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Create collection with a pinned staging version
+            let mut collection = Collection::new("Activate Pin Test");
+            collection.source.spec_version = Some("1.0.0".to_string());
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_staging1".to_string(),
+                label: "2.1.0".to_string(),
+                spec_content: PINNED_SPEC_V2.to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T10:00:00Z".to_string(),
+                role: PinnedVersionRole::Staging,
+            });
+            save_collection(&collection).unwrap();
+
+            let result = activate_pinned_version_inner(&collection.id, "pin_staging1");
+            assert!(result.is_ok(), "activate failed: {:?}", result.err());
+            let (updated, drift) = result.unwrap();
+
+            // Staged version is removed
+            assert!(
+                !updated
+                    .pinned_versions
+                    .iter()
+                    .any(|v| v.id == "pin_staging1")
+            );
+
+            // Archived entry created for old active
+            let archived = updated
+                .pinned_versions
+                .iter()
+                .find(|v| v.role == PinnedVersionRole::Archived);
+            assert!(archived.is_some(), "expected an archived pinned version");
+            assert_eq!(archived.unwrap().label, "1.0.0");
+
+            // Drift computed (new spec has /items GET, old had nothing)
+            assert!(
+                drift.changed || !drift.operations_added.is_empty(),
+                "expected drift to detect the new endpoint"
+            );
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_activate_pinned_version_staged_at_non_zero_position() {
+        // Regression test: staged version at index 1 (not 0).
+        // Before the remove-then-push fix, push() would increase the vector length so that
+        // `remove(staged_pos)` with staged_pos == 1 could target the newly-pushed archived entry
+        // instead of the intended staging entry when staged_pos equalled the original last index.
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Activate Pin Position Test");
+            collection.source.spec_version = Some("1.0.0".to_string());
+            // Position 0: an existing archived version (to push staged to position 1)
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_archived_old".to_string(),
+                label: "0.9.0".to_string(),
+                spec_content: "{}".to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T09:00:00Z".to_string(),
+                role: PinnedVersionRole::Archived,
+            });
+            // Position 1: the staging version we want to activate
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_staging_at_1".to_string(),
+                label: "2.1.0".to_string(),
+                spec_content: PINNED_SPEC_V2.to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T10:00:00Z".to_string(),
+                role: PinnedVersionRole::Staging,
+            });
+            save_collection(&collection).unwrap();
+
+            let result = activate_pinned_version_inner(&collection.id, "pin_staging_at_1");
+            assert!(result.is_ok(), "activate failed: {:?}", result.err());
+            let (updated, _drift) = result.unwrap();
+
+            // Staged entry removed; only archived entries remain
+            assert!(
+                !updated
+                    .pinned_versions
+                    .iter()
+                    .any(|v| v.id == "pin_staging_at_1"),
+                "staged version should have been removed"
+            );
+
+            // Old archived entry preserved
+            assert!(
+                updated
+                    .pinned_versions
+                    .iter()
+                    .any(|v| v.id == "pin_archived_old"),
+                "original archived entry should still be present"
+            );
+
+            // New archived entry for the previous active
+            let archived_for_active = updated
+                .pinned_versions
+                .iter()
+                .find(|v| v.role == PinnedVersionRole::Archived && v.label == "1.0.0");
+            assert!(
+                archived_for_active.is_some(),
+                "expected archived entry for previous active version"
+            );
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_activate_pinned_version_non_staging_returns_error() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            let mut collection = Collection::new("Activate Archived Test");
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_arch1".to_string(),
+                label: "0.9.0".to_string(),
+                spec_content: "{}".to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T10:00:00Z".to_string(),
+                role: PinnedVersionRole::Archived,
+            });
+            save_collection(&collection).unwrap();
+
+            let result = activate_pinned_version_inner(&collection.id, "pin_arch1");
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("not a staging version"));
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_cmd_compare_spec_versions_returns_drift() {
+        let temp_dir = TempDir::new().unwrap();
+        with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // Collection with no requests (represents empty old spec)
+            let mut collection = Collection::new("Compare Test");
+            collection.pinned_versions.push(PinnedSpecVersion {
+                id: "pin_cmp1".to_string(),
+                label: "2.1.0".to_string(),
+                spec_content: PINNED_SPEC_V2.to_string(),
+                source: CollectionSource::default(),
+                imported_at: "2026-02-22T10:00:00Z".to_string(),
+                role: PinnedVersionRole::Staging,
+            });
+            save_collection(&collection).unwrap();
+
+            let result = compare_spec_versions_inner(&collection.id, "pin_cmp1");
+            assert!(result.is_ok(), "compare failed: {:?}", result.err());
+            let drift = result.unwrap();
+            // Old spec has no endpoints, new has /items GET → should be added
+            assert!(!drift.operations_added.is_empty());
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn test_import_collection_conflict_includes_existing_version() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = with_collections_dir_override_async(temp_dir.path().to_path_buf(), || async {
+            // First import
+            let request1 = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            import_collection_inner(request1).await.unwrap();
+
+            // Second import with same name → conflict
+            let request2 = ImportCollectionRequest {
+                url: None,
+                file_path: None,
+                inline_content: Some(MINIMAL_OPENAPI.to_string()),
+                display_name: None,
+                repo_root: None,
+                spec_path: None,
+                ref_name: None,
+            };
+            import_collection_inner(request2).await
+        })
+        .await;
+
+        assert!(result.is_ok());
+        let import_result = result.unwrap();
+        match import_result {
+            ImportCollectionResult::Conflict {
+                existing_version, ..
+            } => {
+                // MINIMAL_OPENAPI has version "1.0.0"
+                assert_eq!(existing_version, Some("1.0.0".to_string()));
+            }
+            ImportCollectionResult::Success { .. } => {
+                panic!("Expected conflict but got success");
+            }
+        }
     }
 }

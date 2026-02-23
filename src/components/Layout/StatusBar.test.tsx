@@ -79,6 +79,7 @@ const buildCollection = (id: string): Collection => ({
   variables: {},
   environments: [],
   requests: [],
+  pinned_versions: [],
 });
 
 /** Set up useCanvasStore so the active context has the given collectionId as source. */

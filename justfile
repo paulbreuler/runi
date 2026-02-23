@@ -35,8 +35,12 @@ dev:
 # ============================================================================
 
 # Build for production
+# Run the frontend build explicitly first so pnpm is resolved in the current
+# shell (avoids "pnpm: not found" when tauri's beforeBuildCommand subprocess
+# spawns sh without the PATH set by pnpm/action-setup in CI).
 # Unset CI if it's set to a numeric value (Tauri expects boolean true/false)
 build:
+    @pnpm run build
     @bash -c 'if [ "$CI" = "1" ] || [ "$CI" = "0" ]; then env -u CI pnpm run tauri build; else pnpm run tauri build; fi'
 
 # Build frontend only (required for Rust compilation)

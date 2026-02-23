@@ -90,21 +90,25 @@ interface CollectionState {
   clearError: () => void;
 }
 
-const normalizeCollection = (collection: Collection): Collection => ({
-  ...collection,
-  requests: collection.requests.map((request) => {
-    // Runtime data from Tauri may omit fields that the type declares as required.
-    // Cast through unknown to safely provide defaults for potentially missing fields.
-    const raw = request as unknown as Record<string, unknown>;
-    return {
-      ...request,
-      headers: (raw.headers as Record<string, string> | undefined) ?? {},
-      intelligence: (raw.intelligence as typeof request.intelligence | undefined) ?? {
-        ai_generated: false,
-      },
-    };
-  }),
-});
+const normalizeCollection = (collection: Collection): Collection => {
+  const raw = collection as unknown as Record<string, unknown>;
+  return {
+    ...collection,
+    pinned_versions: (raw.pinned_versions as Collection['pinned_versions'] | undefined) ?? [],
+    requests: collection.requests.map((request) => {
+      // Runtime data from Tauri may omit fields that the type declares as required.
+      // Cast through unknown to safely provide defaults for potentially missing fields.
+      const rawReq = request as unknown as Record<string, unknown>;
+      return {
+        ...request,
+        headers: (rawReq.headers as Record<string, string> | undefined) ?? {},
+        intelligence: (rawReq.intelligence as typeof request.intelligence | undefined) ?? {
+          ai_generated: false,
+        },
+      };
+    }),
+  };
+};
 
 export const useCollectionStore = create<CollectionState>((set) => ({
   collections: [],

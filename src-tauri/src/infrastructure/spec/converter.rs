@@ -101,6 +101,7 @@ pub fn convert_to_collection(
         active_environment: None,
         extensions: BTreeMap::new(),
         requests,
+        pinned_versions: vec![],
     }
 }
 
