@@ -1414,7 +1414,7 @@ async fn handle_dismiss_drift_change(
 /// Handle `pin_spec_version` tool — async fetch + pin as staging version.
 ///
 /// Fetches or reads the spec, pins it as a [`PinnedVersionRole::Staging`] version
-/// on the collection, and emits `collection:version-pinned` with `Actor::Ai`.
+/// on the collection, and emits `collection.version-pinned` with `Actor::Ai`.
 async fn handle_pin_spec_version(
     id: Option<JsonRpcId>,
     arguments: Option<serde_json::Map<String, serde_json::Value>>,
@@ -1444,9 +1444,16 @@ async fn handle_pin_spec_version(
         Ok(collection) => {
             // Emit event for UI update
             if let Some(app) = app_handle {
-                let envelope = ai_event_envelope(json!({"collection_id": &collection_id}));
-                if let Err(e) = app.emit("collection:version-pinned", envelope) {
-                    tracing::warn!("Failed to emit collection:version-pinned event: {e}");
+                let pinned_version_id = collection
+                    .pinned_versions
+                    .last()
+                    .map(|v| v.id.clone())
+                    .unwrap_or_default();
+                let envelope = ai_event_envelope(
+                    json!({"collection_id": &collection_id, "pinned_version_id": pinned_version_id}),
+                );
+                if let Err(e) = app.emit("collection.version-pinned", envelope) {
+                    tracing::warn!("Failed to emit collection.version-pinned event: {e}");
                 }
             }
             let result = ToolCallResult {
@@ -1481,7 +1488,7 @@ async fn handle_pin_spec_version(
 /// Handle `activate_pinned_version` tool — swap staged version to active, archive old.
 ///
 /// Activates the staged pinned version, archives the current active spec as a pinned version,
-/// runs drift detection, and emits `collection:version-activated` with `Actor::Ai`.
+/// runs drift detection, and emits `collection.version-activated` with `Actor::Ai`.
 ///
 /// The inner call is offloaded to `tokio::task::spawn_blocking` because it does disk I/O
 /// and spec parsing, which must not block the Tokio executor thread.
@@ -1541,8 +1548,8 @@ async fn handle_activate_pinned_version(
                 let envelope = ai_event_envelope(
                     json!({"collection_id": &collection_id, "pinned_version_id": &pinned_version_id}),
                 );
-                if let Err(e) = app.emit("collection:version-activated", envelope) {
-                    tracing::warn!("Failed to emit collection:version-activated event: {e}");
+                if let Err(e) = app.emit("collection.version-activated", envelope) {
+                    tracing::warn!("Failed to emit collection.version-activated event: {e}");
                 }
             }
             let result = ToolCallResult {

@@ -57,6 +57,7 @@ const VersionSwitcherPopover = ({
   const loadCollection = useCollectionStore((state) => state.loadCollection);
   const [confirmingActivate, setConfirmingActivate] = useState<string | null>(null);
   const [confirmingRemove, setConfirmingRemove] = useState<string | null>(null);
+  const [comparingVersionId, setComparingVersionId] = useState<string | null>(null);
   const [archivedExpanded, setArchivedExpanded] = useState(false);
 
   const activeVersion = collection.source.spec_version ?? null;
@@ -112,6 +113,7 @@ const VersionSwitcherPopover = ({
   };
 
   const handleCompare = async (pinnedVersionId: string): Promise<void> => {
+    setComparingVersionId(pinnedVersionId);
     try {
       const result = await invoke<SpecRefreshResult>('cmd_compare_spec_versions', {
         collectionId: collection.id,
@@ -124,6 +126,8 @@ const VersionSwitcherPopover = ({
         type: 'error',
         message: err instanceof Error ? err.message : String(err),
       });
+    } finally {
+      setComparingVersionId(null);
     }
   };
 
@@ -214,12 +218,13 @@ const VersionSwitcherPopover = ({
           variant="outline"
           size="xs"
           noScale
+          disabled={comparingVersionId === version.id}
           onClick={() => {
             void handleCompare(version.id);
           }}
           data-test-id={`version-switcher-compare-${version.id}`}
         >
-          Compare
+          {comparingVersionId === version.id ? 'Comparing…' : 'Compare'}
         </Button>
         <Button
           variant="outline"
@@ -227,6 +232,7 @@ const VersionSwitcherPopover = ({
           noScale
           onClick={() => {
             setConfirmingActivate(version.id);
+            setConfirmingRemove(null);
           }}
           data-test-id={`version-switcher-activate-${version.id}`}
         >
@@ -238,6 +244,7 @@ const VersionSwitcherPopover = ({
           noScale
           onClick={() => {
             setConfirmingRemove(version.id);
+            setConfirmingActivate(null);
           }}
           data-test-id={`version-switcher-remove-${version.id}`}
         >
@@ -437,7 +444,8 @@ const VersionSwitcherPopover = ({
           type="button"
           className={cn(
             focusRingClasses,
-            'w-full flex items-center gap-2 px-3 py-[10px] rounded-b-lg text-text-muted hover:text-text-primary transition-colors'
+            'w-full flex items-center gap-2 px-3 py-[10px] rounded-b-lg text-text-muted hover:text-text-primary transition-colors',
+            archivedVersions.length === 0 && 'opacity-50 cursor-not-allowed pointer-events-none'
           )}
           onClick={() => {
             if (archivedVersions.length > 0) {

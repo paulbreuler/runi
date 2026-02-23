@@ -1672,7 +1672,7 @@ impl McpServerService {
         save_collection_in_dir(&collection, self.dir())?;
 
         self.emit(
-            "collection:version-removed",
+            "collection.version-removed",
             json!({"collection_id": collection_id, "pinned_version_id": pinned_version_id, "role": role}),
         );
 
@@ -3461,7 +3461,7 @@ mod tests {
         let captured = events.lock().expect("lock events");
         // create_collection + remove_pinned_version = 2 events
         assert_eq!(captured.len(), 2);
-        assert_eq!(captured[1].0, "collection:version-removed");
+        assert_eq!(captured[1].0, "collection.version-removed");
         assert!(matches!(
             captured[1].1,
             crate::domain::mcp::events::Actor::Ai { .. }

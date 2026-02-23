@@ -30,6 +30,7 @@ export const ImportSpecDialog = ({
 }: ImportSpecDialogProps): React.ReactElement | null => {
   const importCollection = useCollectionStore((state) => state.importCollection);
   const refreshCollectionSpec = useCollectionStore((state) => state.refreshCollectionSpec);
+  const loadCollection = useCollectionStore((state) => state.loadCollection);
   const [mode, setMode] = React.useState<ImportMode>('file');
   const [url, setUrl] = React.useState('');
   const [filePath, setFilePath] = React.useState('');
@@ -184,6 +185,7 @@ export const ImportSpecDialog = ({
         collectionId: conflict.existingId,
         source: conflict.source,
       });
+      await loadCollection(conflict.existingId);
       globalEventBus.emit('collection.imported', {
         collection_id: conflict.existingId,
         url: conflict.source,

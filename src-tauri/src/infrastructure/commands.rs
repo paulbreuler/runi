@@ -2717,7 +2717,7 @@ pub async fn pin_spec_version_inner(
 ///
 /// Fetches or reads the spec from `source`, creates a `PinnedSpecVersion` with
 /// `role = staging`, and appends it to `collection.pinned_versions`.
-/// Emits `collection:version-pinned` with `Actor::User` on success.
+/// Emits `collection.version-pinned` with `Actor::User` on success.
 ///
 /// # Errors
 ///
@@ -2731,9 +2731,9 @@ pub async fn cmd_pin_spec_version(
     let collection = pin_spec_version_inner(&collection_id, &source).await?;
     emit_collection_event(
         &app,
-        "collection:version-pinned",
+        "collection.version-pinned",
         &Actor::User,
-        json!({"collection_id": &collection_id}),
+        json!({"collection_id": &collection_id, "pinned_version_id": collection.pinned_versions.last().map(|v| v.id.clone()).unwrap_or_default()}),
     );
     Ok(collection)
 }
@@ -2761,7 +2761,7 @@ pub fn remove_pinned_version_inner(
 
 /// Remove a pinned spec version from a collection.
 ///
-/// Emits `collection:version-removed` with `Actor::User` on success.
+/// Emits `collection.version-removed` with `Actor::User` on success.
 ///
 /// # Errors
 ///
@@ -2775,7 +2775,7 @@ pub async fn cmd_remove_pinned_version(
     remove_pinned_version_inner(&collection_id, &pinned_version_id)?;
     emit_collection_event(
         &app,
-        "collection:version-removed",
+        "collection.version-removed",
         &Actor::User,
         json!({"collection_id": &collection_id, "pinned_version_id": &pinned_version_id}),
     );
@@ -2871,7 +2871,7 @@ pub fn activate_pinned_version_inner(
 ///
 /// Swaps the active spec with the staged version, archives the old active as a pinned version,
 /// computes drift between old and new specs, and saves.
-/// Emits `collection:version-activated` with `Actor::User` on success.
+/// Emits `collection.version-activated` with `Actor::User` on success.
 ///
 /// # Errors
 ///
@@ -2885,7 +2885,7 @@ pub async fn cmd_activate_pinned_version(
     let (collection, _drift) = activate_pinned_version_inner(&collection_id, &pinned_version_id)?;
     emit_collection_event(
         &app,
-        "collection:version-activated",
+        "collection.version-activated",
         &Actor::User,
         json!({"collection_id": &collection_id, "pinned_version_id": &pinned_version_id}),
     );

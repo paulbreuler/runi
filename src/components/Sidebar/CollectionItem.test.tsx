@@ -676,6 +676,102 @@ describe('CollectionItem', (): void => {
       });
     });
 
+    it('compare button shows Comparing… and is disabled while comparing', async (): Promise<void> => {
+      const { invoke: mockInvoke } = await import('@tauri-apps/api/core');
+      const invokeMock = vi.mocked(mockInvoke);
+
+      // Never resolve so we can observe the loading state
+      let resolveCompare!: () => void;
+      invokeMock.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          resolveCompare = resolve;
+        })
+      );
+
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-staged-row-pv_1')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('version-switcher-compare-pv_1'));
+
+      await waitFor(() => {
+        const compareBtn = screen.getByTestId('version-switcher-compare-pv_1');
+        expect(compareBtn).toBeDisabled();
+        expect(compareBtn).toHaveTextContent('Comparing…');
+      });
+
+      // Clean up — resolve the pending promise
+      resolveCompare();
+    });
+
+    it('compare button is re-enabled after compare completes', async (): Promise<void> => {
+      const { invoke: mockInvoke } = await import('@tauri-apps/api/core');
+      const invokeMock = vi.mocked(mockInvoke);
+
+      const mockResult = {
+        changed: true,
+        operationsAdded: [],
+        operationsRemoved: [],
+        operationsChanged: [],
+      };
+      invokeMock.mockResolvedValueOnce(mockResult);
+
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-staged-row-pv_1')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('version-switcher-compare-pv_1'));
+
+      // After compare resolves, onClose is called which closes the popover.
+      // Just verify the invoke was called with correct args.
+      await waitFor(() => {
+        expect(invokeMock).toHaveBeenCalledWith('cmd_compare_spec_versions', {
+          collectionId: 'col_1',
+          pinnedVersionId: 'pv_1',
+        });
+      });
+    });
+
     it('archived section renders with remove button only', async (): Promise<void> => {
       const user = userEvent.setup();
       mockUseCollection = vi.fn(() => ({

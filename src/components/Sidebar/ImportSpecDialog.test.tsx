@@ -532,4 +532,59 @@ describe('ImportSpecDialog', () => {
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
   });
+
+  it('"Pin as new version" calls loadCollection after invoke succeeds to update store', async () => {
+    const { invoke: mockInvoke } = await import('@tauri-apps/api/core');
+    const invokeMock = vi.mocked(mockInvoke);
+
+    const mockPinnedVersion = {
+      id: 'pv_1',
+      label: '2.0.0',
+      spec_content: '{}',
+      source: {
+        source_type: 'openapi',
+        url: 'https://example.com/spec.json',
+        hash: null,
+        spec_version: '2.0.0',
+        fetched_at: '2026-01-01T00:00:00Z',
+        source_commit: null,
+      },
+      imported_at: '2026-01-01T00:00:00Z',
+      role: 'staging',
+    };
+    invokeMock.mockResolvedValueOnce(mockPinnedVersion);
+
+    const conflictResult = {
+      status: 'conflict' as const,
+      existing_id: 'col_existing',
+      existing_name: 'My API',
+      existing_version: '1.0.0',
+    };
+    const importCollectionMock = vi.fn().mockResolvedValue(conflictResult);
+    const loadCollectionMock = vi.fn().mockResolvedValue(undefined);
+    useCollectionStore.setState({
+      importCollection: importCollectionMock,
+      loadCollection: loadCollectionMock,
+    });
+
+    render(<ImportSpecDialog open={true} onOpenChange={onOpenChange} />);
+
+    await userEvent.click(screen.getByTestId('import-mode-url'));
+    await userEvent.type(
+      screen.getByTestId('import-spec-url-input'),
+      'https://example.com/spec.json'
+    );
+    await userEvent.click(screen.getByTestId('import-spec-submit'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('import-conflict-pin-version')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId('import-conflict-pin-version'));
+
+    await waitFor(() => {
+      expect(loadCollectionMock).toHaveBeenCalledWith('col_existing');
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+  });
 });
