@@ -54,6 +54,7 @@ const VersionSwitcherPopover = ({
   onClose,
 }: VersionSwitcherPopoverProps): React.JSX.Element => {
   const setDriftResult = useCollectionStore((state) => state.setDriftResult);
+  const loadCollection = useCollectionStore((state) => state.loadCollection);
   const [confirmingActivate, setConfirmingActivate] = useState<string | null>(null);
   const [confirmingRemove, setConfirmingRemove] = useState<string | null>(null);
   const [archivedExpanded, setArchivedExpanded] = useState(false);
@@ -74,7 +75,8 @@ const VersionSwitcherPopover = ({
         collectionId: collection.id,
         pinnedVersionId,
       });
-      globalEventBus.emit('collection:version-activated', {
+      await loadCollection(collection.id);
+      globalEventBus.emit('collection.version-activated', {
         collection_id: collection.id,
         pinned_version_id: pinnedVersionId,
         actor: 'human',
@@ -94,7 +96,8 @@ const VersionSwitcherPopover = ({
         collectionId: collection.id,
         pinnedVersionId,
       });
-      globalEventBus.emit('collection:version-removed', {
+      await loadCollection(collection.id);
+      globalEventBus.emit('collection.version-removed', {
         collection_id: collection.id,
         pinned_version_id: pinnedVersionId,
         actor: 'human',
@@ -796,6 +799,8 @@ export const CollectionItem = ({
                               setVersionSwitcherOpen((v) => !v);
                             }}
                             aria-label={`Version history for ${summary.name}`}
+                            aria-expanded={versionSwitcherOpen}
+                            aria-haspopup="true"
                           >
                             <span
                               className="text-text-muted"

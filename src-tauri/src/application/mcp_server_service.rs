@@ -3325,4 +3325,155 @@ mod tests {
         };
         assert!(text.contains("(none)"));
     }
+
+    // -------------------------------------------------------------------------
+    // handle_remove_pinned_version tests
+    // -------------------------------------------------------------------------
+
+    /// Helper: create a collection with a single staging pinned version and return
+    /// `(collection_id, pinned_version_id)`.
+    fn create_collection_with_staging_version(
+        service: &mut McpServerService,
+        dir: &TempDir,
+        col_name: &str,
+        pin_id: &str,
+    ) -> (String, String) {
+        use crate::domain::collection::{CollectionSource, PinnedSpecVersion, PinnedVersionRole};
+
+        let create_result = service
+            .call_tool("create_collection", Some(args(&[("name", col_name)])))
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap().to_string();
+
+        // Load, add pinned version, save directly to the temp dir
+        let mut collection = load_collection_in_dir(&collection_id, dir.path()).unwrap();
+        collection.pinned_versions.push(PinnedSpecVersion {
+            id: pin_id.to_string(),
+            label: "1.0.0-staging".to_string(),
+            spec_content: "{}".to_string(),
+            source: CollectionSource::default(),
+            imported_at: "2026-02-22T10:00:00Z".to_string(),
+            role: PinnedVersionRole::Staging,
+        });
+        save_collection_in_dir(&collection, dir.path()).unwrap();
+
+        (collection_id, pin_id.to_string())
+    }
+
+    #[test]
+    fn test_remove_pinned_version_success() {
+        let (mut service, dir) = make_service();
+
+        let (collection_id, pinned_version_id) = create_collection_with_staging_version(
+            &mut service,
+            &dir,
+            "Remove Version Test",
+            "pin_rm1",
+        );
+
+        let result = service
+            .call_tool(
+                "remove_pinned_version",
+                Some(args(&[
+                    ("collection_id", &collection_id),
+                    ("pinned_version_id", &pinned_version_id),
+                ])),
+            )
+            .unwrap();
+
+        assert!(!result.is_error);
+        let text = match &result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        };
+        assert!(text.contains("removed successfully"));
+
+        // Verify the version is gone from the saved collection
+        let updated = load_collection_in_dir(&collection_id, dir.path()).unwrap();
+        assert!(
+            updated
+                .pinned_versions
+                .iter()
+                .all(|v| v.id != pinned_version_id),
+            "pinned version should have been removed"
+        );
+    }
+
+    #[test]
+    fn test_remove_pinned_version_not_found_returns_error() {
+        let (mut service, _dir) = make_service();
+
+        let create_result = service
+            .call_tool(
+                "create_collection",
+                Some(args(&[("name", "NotFound Test")])),
+            )
+            .unwrap();
+        let created: serde_json::Value = serde_json::from_str(match &create_result.content[0] {
+            ToolResponseContent::Text { text } => text,
+        })
+        .unwrap();
+        let collection_id = created["id"].as_str().unwrap().to_string();
+
+        let result = service.call_tool(
+            "remove_pinned_version",
+            Some(args(&[
+                ("collection_id", &collection_id),
+                ("pinned_version_id", "pin_nonexistent"),
+            ])),
+        );
+
+        assert!(result.is_err());
+        assert!(
+            result.unwrap_err().contains("not found"),
+            "error should mention 'not found'"
+        );
+    }
+
+    #[test]
+    fn test_remove_pinned_version_emits_event() {
+        let dir = TempDir::new().unwrap();
+        let emitter = crate::domain::mcp::events::TestEventEmitter::new();
+        let events = emitter.events_handle();
+        let mut service =
+            McpServerService::with_emitter(dir.path().to_path_buf(), Arc::new(emitter));
+
+        let (collection_id, pinned_version_id) = create_collection_with_staging_version(
+            &mut service,
+            &dir,
+            "Remove Event Test",
+            "pin_ev1",
+        );
+
+        service
+            .call_tool(
+                "remove_pinned_version",
+                Some(args(&[
+                    ("collection_id", &collection_id),
+                    ("pinned_version_id", &pinned_version_id),
+                ])),
+            )
+            .unwrap();
+
+        let captured = events.lock().expect("lock events");
+        // create_collection + remove_pinned_version = 2 events
+        assert_eq!(captured.len(), 2);
+        assert_eq!(captured[1].0, "collection:version-removed");
+        assert!(matches!(
+            captured[1].1,
+            crate::domain::mcp::events::Actor::Ai { .. }
+        ));
+        assert_eq!(
+            captured[1].2["collection_id"].as_str().unwrap(),
+            collection_id
+        );
+        assert_eq!(
+            captured[1].2["pinned_version_id"].as_str().unwrap(),
+            pinned_version_id
+        );
+        drop(captured);
+    }
 }

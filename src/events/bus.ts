@@ -96,9 +96,9 @@ export type EventType =
   | 'request.copied'
   | 'collection.imported'
   | 'collection.spec-refreshed'
-  | 'collection:version-pinned'
-  | 'collection:version-activated'
-  | 'collection:version-removed';
+  | 'collection.version-pinned'
+  | 'collection.version-activated'
+  | 'collection.version-removed';
 
 /**
  * Payload for collection.request-selected event.

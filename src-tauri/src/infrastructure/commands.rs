@@ -261,6 +261,69 @@ fn extract_path_from_url(url: &str) -> String {
     raw.split(['?', '#']).next().unwrap_or(&raw).to_string()
 }
 
+/// Build a [`ParsedSpec`] from a collection's current requests.
+///
+/// Maps each `CollectionRequest` to a `ParsedEndpoint`, using binding metadata
+/// (path, method, operation ID) when available and falling back to request fields.
+/// The resulting `ParsedSpec` represents the "old" spec state for drift comparisons.
+fn build_parsed_spec_from_collection(
+    collection: &Collection,
+) -> crate::domain::collection::spec_port::ParsedSpec {
+    use crate::domain::collection::spec_port::{
+        ParameterLocation, ParsedEndpoint, ParsedParameter, ParsedSpec,
+    };
+
+    let endpoints: Vec<ParsedEndpoint> = collection
+        .requests
+        .iter()
+        .map(|req| {
+            let path = req
+                .binding
+                .path
+                .clone()
+                .unwrap_or_else(|| extract_path_from_url(&req.url));
+            let method = req
+                .binding
+                .method
+                .clone()
+                .unwrap_or_else(|| req.method.clone());
+            ParsedEndpoint {
+                operation_id: req.binding.operation_id.clone(),
+                method,
+                path,
+                summary: Some(req.name.clone()),
+                description: req.docs.clone(),
+                tags: req.tags.clone(),
+                parameters: req
+                    .params
+                    .iter()
+                    .map(|p| ParsedParameter {
+                        name: p.key.clone(),
+                        location: ParameterLocation::Query,
+                        required: false,
+                        schema_type: None,
+                        default_value: Some(p.value.clone()),
+                        description: None,
+                    })
+                    .collect(),
+                request_body: None,
+                deprecated: false,
+                is_streaming: req.is_streaming,
+            }
+        })
+        .collect();
+
+    ParsedSpec {
+        title: collection.metadata.name.clone(),
+        version: collection.source.spec_version.clone(),
+        description: collection.metadata.description.clone(),
+        base_urls: vec![],
+        endpoints,
+        auth_schemes: vec![],
+        variables: std::collections::BTreeMap::new(),
+    }
+}
+
 /// Refresh a collection's spec from its tracked source (core logic, no `AppHandle`).
 ///
 /// Re-fetches the spec, computes hash for fast-path skip, then structural drift
@@ -350,59 +413,8 @@ pub async fn refresh_collection_spec_inner_with_source(
     // 5. Re-parse new content into ParsedSpec
     let new_spec = service.parse_content(&fetch_result.content)?;
 
-    // 6. Reconstruct old spec endpoints from collection's requests
-    let old_endpoints: Vec<crate::domain::collection::spec_port::ParsedEndpoint> = collection
-        .requests
-        .iter()
-        .map(|req| {
-            // Use binding path/method if available, otherwise fall back to request fields
-            // Extract path portion from URL to ensure path-only comparison with new spec
-            let path = req
-                .binding
-                .path
-                .clone()
-                .unwrap_or_else(|| extract_path_from_url(&req.url));
-            let method = req
-                .binding
-                .method
-                .clone()
-                .unwrap_or_else(|| req.method.clone());
-
-            crate::domain::collection::spec_port::ParsedEndpoint {
-                operation_id: req.binding.operation_id.clone(),
-                method,
-                path,
-                summary: Some(req.name.clone()),
-                description: req.docs.clone(),
-                tags: req.tags.clone(),
-                parameters: req
-                    .params
-                    .iter()
-                    .map(|p| crate::domain::collection::spec_port::ParsedParameter {
-                        name: p.key.clone(),
-                        location: crate::domain::collection::spec_port::ParameterLocation::Query,
-                        required: false,
-                        schema_type: None,
-                        default_value: Some(p.value.clone()),
-                        description: None,
-                    })
-                    .collect(),
-                request_body: None,
-                deprecated: false,
-                is_streaming: req.is_streaming,
-            }
-        })
-        .collect();
-
-    let old_spec = crate::domain::collection::spec_port::ParsedSpec {
-        title: collection.metadata.name.clone(),
-        version: collection.source.spec_version.clone(),
-        description: collection.metadata.description.clone(),
-        base_urls: vec![],
-        endpoints: old_endpoints,
-        auth_schemes: vec![],
-        variables: std::collections::BTreeMap::new(),
-    };
+    // 6. Reconstruct old spec from collection's requests for drift comparison
+    let old_spec = build_parsed_spec_from_collection(&collection);
 
     // 7. Compute drift
     let drift = compute_drift(&old_spec, &new_spec);
@@ -2794,7 +2806,6 @@ pub fn activate_pinned_version_inner(
     String,
 > {
     use crate::domain::collection::drift::compute_drift;
-    use crate::domain::collection::spec_port::ParsedEndpoint;
 
     let mut collection = load_collection(collection_id)?;
 
@@ -2819,55 +2830,7 @@ pub fn activate_pinned_version_inner(
     let old_spec_version = collection.source.spec_version.clone();
 
     // Reconstruct old spec from collection requests for drift
-    let old_endpoints: Vec<ParsedEndpoint> = collection
-        .requests
-        .iter()
-        .map(|req| {
-            let path = req
-                .binding
-                .path
-                .clone()
-                .unwrap_or_else(|| extract_path_from_url(&req.url));
-            let method = req
-                .binding
-                .method
-                .clone()
-                .unwrap_or_else(|| req.method.clone());
-            ParsedEndpoint {
-                operation_id: req.binding.operation_id.clone(),
-                method,
-                path,
-                summary: Some(req.name.clone()),
-                description: req.docs.clone(),
-                tags: req.tags.clone(),
-                parameters: req
-                    .params
-                    .iter()
-                    .map(|p| crate::domain::collection::spec_port::ParsedParameter {
-                        name: p.key.clone(),
-                        location: crate::domain::collection::spec_port::ParameterLocation::Query,
-                        required: false,
-                        schema_type: None,
-                        default_value: Some(p.value.clone()),
-                        description: None,
-                    })
-                    .collect(),
-                request_body: None,
-                deprecated: false,
-                is_streaming: req.is_streaming,
-            }
-        })
-        .collect();
-
-    let old_parsed_spec = crate::domain::collection::spec_port::ParsedSpec {
-        title: collection.metadata.name.clone(),
-        version: old_spec_version.clone(),
-        description: collection.metadata.description.clone(),
-        base_urls: vec![],
-        endpoints: old_endpoints,
-        auth_schemes: vec![],
-        variables: std::collections::BTreeMap::new(),
-    };
+    let old_parsed_spec = build_parsed_spec_from_collection(&collection);
 
     // Archive the current active as a pinned version
     let now = chrono::Utc::now();
@@ -2943,7 +2906,6 @@ pub fn compare_spec_versions_inner(
     pinned_version_id: &str,
 ) -> Result<crate::domain::collection::drift::SpecRefreshResult, String> {
     use crate::domain::collection::drift::compute_drift;
-    use crate::domain::collection::spec_port::ParsedEndpoint;
 
     let collection = load_collection(collection_id)?;
 
@@ -2953,56 +2915,16 @@ pub fn compare_spec_versions_inner(
         .find(|v| v.id == pinned_version_id)
         .ok_or_else(|| format!("Pinned version not found: {pinned_version_id}"))?;
 
-    // Reconstruct old spec from current requests
-    let old_endpoints: Vec<ParsedEndpoint> = collection
-        .requests
-        .iter()
-        .map(|req| {
-            let path = req
-                .binding
-                .path
-                .clone()
-                .unwrap_or_else(|| extract_path_from_url(&req.url));
-            let method = req
-                .binding
-                .method
-                .clone()
-                .unwrap_or_else(|| req.method.clone());
-            ParsedEndpoint {
-                operation_id: req.binding.operation_id.clone(),
-                method,
-                path,
-                summary: Some(req.name.clone()),
-                description: req.docs.clone(),
-                tags: req.tags.clone(),
-                parameters: req
-                    .params
-                    .iter()
-                    .map(|p| crate::domain::collection::spec_port::ParsedParameter {
-                        name: p.key.clone(),
-                        location: crate::domain::collection::spec_port::ParameterLocation::Query,
-                        required: false,
-                        schema_type: None,
-                        default_value: Some(p.value.clone()),
-                        description: None,
-                    })
-                    .collect(),
-                request_body: None,
-                deprecated: false,
-                is_streaming: req.is_streaming,
-            }
-        })
-        .collect();
+    // Guard: archived versions have no stored spec content
+    if staged.spec_content.is_empty() {
+        return Err(format!(
+            "Pinned version {pinned_version_id} has no stored spec content (role: {:?})",
+            staged.role
+        ));
+    }
 
-    let old_parsed_spec = crate::domain::collection::spec_port::ParsedSpec {
-        title: collection.metadata.name.clone(),
-        version: collection.source.spec_version.clone(),
-        description: collection.metadata.description.clone(),
-        base_urls: vec![],
-        endpoints: old_endpoints,
-        auth_schemes: vec![],
-        variables: std::collections::BTreeMap::new(),
-    };
+    // Reconstruct old spec from current requests
+    let old_parsed_spec = build_parsed_spec_from_collection(&collection);
 
     // Parse staged spec
     let service = ImportService::new(vec![Box::new(OpenApiParser)], Box::new(HttpContentFetcher));

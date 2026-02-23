@@ -173,7 +173,7 @@ async fn handle_tools_call(
         return handle_pin_spec_version(id, params.arguments, app_handle).await;
     }
     if params.name == "activate_pinned_version" {
-        return handle_activate_pinned_version(id, params.arguments, app_handle);
+        return handle_activate_pinned_version(id, params.arguments, app_handle).await;
     }
 
     // Canvas tools read from/write to external state
@@ -1482,7 +1482,10 @@ async fn handle_pin_spec_version(
 ///
 /// Activates the staged pinned version, archives the current active spec as a pinned version,
 /// runs drift detection, and emits `collection:version-activated` with `Actor::Ai`.
-fn handle_activate_pinned_version(
+///
+/// The inner call is offloaded to `tokio::task::spawn_blocking` because it does disk I/O
+/// and spec parsing, which must not block the Tokio executor thread.
+async fn handle_activate_pinned_version(
     id: Option<JsonRpcId>,
     arguments: Option<serde_json::Map<String, serde_json::Value>>,
     app_handle: Option<&tauri::AppHandle>,
@@ -1509,10 +1512,30 @@ fn handle_activate_pinned_version(
         );
     };
 
-    match crate::infrastructure::commands::activate_pinned_version_inner(
-        &collection_id,
-        &pinned_version_id,
-    ) {
+    let cid = collection_id.clone();
+    let pvid = pinned_version_id.clone();
+    let join_result = tokio::task::spawn_blocking(move || {
+        crate::infrastructure::commands::activate_pinned_version_inner(&cid, &pvid)
+    })
+    .await;
+
+    let inner_result = match join_result {
+        Ok(r) => r,
+        Err(e) => {
+            let error_result = ToolCallResult {
+                content: vec![ToolResponseContent::Text {
+                    text: format!("Task join error: {e}"),
+                }],
+                is_error: true,
+            };
+            return JsonRpcResponse::success(
+                id,
+                serde_json::to_value(error_result).unwrap_or_else(|_| json!({})),
+            );
+        }
+    };
+
+    match inner_result {
         Ok((collection, drift)) => {
             if let Some(app) = app_handle {
                 let envelope = ai_event_envelope(
