@@ -19,6 +19,11 @@ interface DriftReviewUIState {
   collectionId: string | null;
   /** When set, drawer scrolls to this operation on open */
   focusOperationKey: string | null;
+  /**
+   * When set, the drawer renders this label as its title instead of "Drift Review".
+   * Used for spec-vs-spec comparisons (e.g. "Comparing v0.1 (active) → v0.2 (staged)").
+   */
+  comparisonHeader: string | null;
 
   /** Per-change review state (session-scoped, not persisted) */
   reviewState: ReviewStateMap;
@@ -27,7 +32,7 @@ interface DriftReviewUIState {
   dismissedBannerKeys: Set<string>;
 
   // Actions
-  openDrawer: (collectionId: string, focusKey?: string) => void;
+  openDrawer: (collectionId: string, focusKey?: string, comparisonHeader?: string) => void;
   closeDrawer: () => void;
   acceptChange: (
     collectionId: string,
@@ -82,14 +87,16 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
   isOpen: false,
   collectionId: null,
   focusOperationKey: null,
+  comparisonHeader: null,
   reviewState: {},
   dismissedBannerKeys: new Set(),
 
-  openDrawer: (collectionId: string, focusKey?: string): void => {
+  openDrawer: (collectionId: string, focusKey?: string, comparisonHeader?: string): void => {
     set({
       isOpen: true,
       collectionId,
       focusOperationKey: focusKey ?? null,
+      comparisonHeader: comparisonHeader ?? null,
     });
   },
 
@@ -98,6 +105,7 @@ export const useDriftReviewStore = create<DriftReviewUIState>((set, get) => ({
       isOpen: false,
       collectionId: null,
       focusOperationKey: null,
+      comparisonHeader: null,
     });
   },
 

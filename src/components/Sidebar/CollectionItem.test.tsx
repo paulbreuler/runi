@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { CollectionSummary } from '@/types/collection';
 import { CollectionItem } from './CollectionItem';
+import { useDriftReviewStore } from '@/stores/useDriftReviewStore';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
@@ -104,6 +105,14 @@ describe('CollectionItem', (): void => {
       setDriftResult: vi.fn(),
     };
     mockUseCollection = vi.fn(() => undefined) as (id: string) => unknown;
+    useDriftReviewStore.setState({
+      isOpen: false,
+      collectionId: null,
+      focusOperationKey: null,
+      comparisonHeader: null,
+      reviewState: {},
+      dismissedBannerKeys: new Set(),
+    });
   });
 
   describe('rendering', (): void => {
@@ -769,6 +778,53 @@ describe('CollectionItem', (): void => {
           collectionId: 'col_1',
           pinnedVersionId: 'pv_1',
         });
+      });
+    });
+
+    it('compare button opens drift drawer with comparison header', async (): Promise<void> => {
+      const { invoke: mockInvoke } = await import('@tauri-apps/api/core');
+      const invokeMock = vi.mocked(mockInvoke);
+
+      const mockResult = {
+        changed: true,
+        operationsAdded: [{ method: 'GET', path: '/items' }],
+        operationsRemoved: [],
+        operationsChanged: [],
+      };
+      invokeMock.mockResolvedValueOnce(mockResult);
+
+      const user = userEvent.setup();
+      mockUseCollection = vi.fn(() => ({
+        id: 'col_1',
+        metadata: { name: 'My Collection', tags: [], created_at: '', modified_at: '' },
+        source: {
+          source_type: 'openapi',
+          fetched_at: '',
+          url: null,
+          hash: null,
+          spec_version: '1.5.0',
+          source_commit: null,
+        },
+        requests: [],
+        environments: [],
+        variables: {},
+        pinned_versions: [stagingVersion],
+      }));
+      render(<CollectionItem summary={simpleSummary} />);
+
+      await user.click(screen.getByTestId('collection-version-badge'));
+      await waitFor(() => {
+        expect(screen.getByTestId('version-switcher-staged-row-pv_1')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByTestId('version-switcher-compare-pv_1'));
+
+      await waitFor(() => {
+        expect(useDriftReviewStore.getState().isOpen).toBe(true);
+        expect(useDriftReviewStore.getState().collectionId).toBe('col_1');
+        const header = useDriftReviewStore.getState().comparisonHeader;
+        expect(header).toContain('1.5.0');
+        expect(header).toContain('2.0.0');
       });
     });
 

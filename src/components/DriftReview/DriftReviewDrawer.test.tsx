@@ -34,6 +34,7 @@ describe('DriftReviewDrawer', () => {
       isOpen: false,
       collectionId: null,
       focusOperationKey: null,
+      comparisonHeader: null,
       reviewState: {},
       dismissedBannerKeys: new Set(),
     });
@@ -308,6 +309,37 @@ describe('DriftReviewDrawer', () => {
     render(<DriftReviewDrawer collectionId={collectionId} driftResult={result} />);
     expect(screen.getByTestId('drift-drawer-all-reviewed')).toBeInTheDocument();
     expect(screen.getByTestId('drift-drawer-done')).toBeInTheDocument();
+  });
+
+  it('shows default Drift Review title when no comparisonHeader', () => {
+    useDriftReviewStore.setState({
+      isOpen: true,
+      collectionId,
+      focusOperationKey: null,
+      comparisonHeader: null,
+      reviewState: {},
+      dismissedBannerKeys: new Set(),
+    });
+    const result = makeResult([{ method: 'GET', path: '/books' }], [], []);
+    render(<DriftReviewDrawer collectionId={collectionId} driftResult={result} />);
+    expect(screen.getByTestId('drift-drawer-title')).toHaveTextContent('Drift Review');
+    expect(screen.queryByTestId('drift-drawer-comparison-header')).toBeNull();
+  });
+
+  it('shows comparison header text when comparisonHeader is set in store', () => {
+    useDriftReviewStore.setState({
+      isOpen: true,
+      collectionId,
+      focusOperationKey: null,
+      comparisonHeader: 'Comparing 1.5.0 (active) → 2.0.0 (staged)',
+      reviewState: {},
+      dismissedBannerKeys: new Set(),
+    });
+    const result = makeResult([{ method: 'GET', path: '/books' }], [], []);
+    render(<DriftReviewDrawer collectionId={collectionId} driftResult={result} />);
+    expect(screen.getByTestId('drift-drawer-comparison-header')).toHaveTextContent(
+      'Comparing 1.5.0 (active) → 2.0.0 (staged)'
+    );
   });
 
   it('closes drawer when Done button is clicked in all-reviewed state', () => {

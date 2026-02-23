@@ -124,6 +124,7 @@ export const DriftReviewDrawer = ({
   const acceptAll = useDriftReviewStore((state) => state.acceptAll);
   const dismissAll = useDriftReviewStore((state) => state.dismissAll);
   const reviewState = useDriftReviewStore((state) => state.reviewState);
+  const comparisonHeader = useDriftReviewStore((state) => state.comparisonHeader);
   const shouldReduceMotion = useReducedMotion();
   const drawerRef = useRef<HTMLDivElement>(null);
   /** Stores the element that had focus before the drawer opened, to restore on close. */
@@ -249,9 +250,23 @@ export const DriftReviewDrawer = ({
             {/* Header */}
             <div className="shrink-0 flex items-start justify-between gap-2 px-4 py-3 border-b border-border-subtle">
               <div className="min-w-0">
-                <h2 id={titleId} className="text-sm font-semibold text-text-primary">
-                  Drift Review
-                </h2>
+                {comparisonHeader !== null ? (
+                  <h2
+                    id={titleId}
+                    className="text-sm font-semibold text-text-primary"
+                    data-test-id="drift-drawer-comparison-header"
+                  >
+                    {comparisonHeader}
+                  </h2>
+                ) : (
+                  <h2
+                    id={titleId}
+                    className="text-sm font-semibold text-text-primary"
+                    data-test-id="drift-drawer-title"
+                  >
+                    Drift Review
+                  </h2>
+                )}
                 <p className="text-xs text-text-muted mt-0.5">
                   {breakingCount > 0 && (
                     <span className="text-signal-error">{breakingCount} breaking</span>
