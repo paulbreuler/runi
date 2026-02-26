@@ -16,6 +16,7 @@ on:
         default: false
 
 permissions:
+  actions: write
   contents: write
   issues: write
   pull-requests: write
@@ -94,6 +95,15 @@ jobs:
         id: release
         with:
           config-file: release-please-config.json
+
+      - name: Trigger artifact upload workflow
+        if: steps.release.outputs.release_created == 'true' && steps.release.outputs.tag_name != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          gh workflow run release-artifacts.yml --ref main -f tag="$RELEASE_TAG"
+          echo "🚀 Triggered Release Artifacts workflow for tag: $RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Release summary
         run: |
