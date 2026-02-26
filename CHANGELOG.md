@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/paulbreuler/runi/compare/runi-v0.9.1...runi-v0.9.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* **release:** auto-dispatch artifact workflow after release ([933905f](https://github.com/paulbreuler/runi/commit/933905f9dc01665ef21bab5ce36e4987364af386))
+
 ## [0.9.1](https://github.com/paulbreuler/runi/compare/runi-v0.9.0...runi-v0.9.1) (2026-02-26)
 
 
