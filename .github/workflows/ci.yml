@@ -327,6 +327,7 @@ jobs:
       - name: Prepare release artifacts
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p release-artifacts
           VERSION=$(node -p "require('./package.json').version")
 
@@ -363,29 +364,29 @@ jobs:
           }
 
           if [ -d "src-tauri/target/release/bundle" ]; then
-            find src-tauri/target/release/bundle -name "*.dmg" -type f | while read -r dmg; do
+            while IFS= read -r dmg; do
               ARCH=$(detect_arch "$dmg" "$(uname -m)")
               DEST="release-artifacts/runi-${VERSION}-macos-${ARCH}.dmg"
               copy_unique "$dmg" "$DEST"
-            done
+            done < <(find src-tauri/target/release/bundle -name "*.dmg" -type f)
 
-            find src-tauri/target/release/bundle -name "*.deb" -type f | while read -r deb; do
+            while IFS= read -r deb; do
               ARCH=$(detect_arch "$deb" "x86_64")
               DEST="release-artifacts/runi-${VERSION}-linux-${ARCH}.deb"
               copy_unique "$deb" "$DEST"
-            done
+            done < <(find src-tauri/target/release/bundle -name "*.deb" -type f)
 
-            find src-tauri/target/release/bundle -name "*.rpm" -type f | while read -r rpm; do
+            while IFS= read -r rpm; do
               ARCH=$(detect_arch "$rpm" "x86_64")
               DEST="release-artifacts/runi-${VERSION}-linux-${ARCH}.rpm"
               copy_unique "$rpm" "$DEST"
-            done
+            done < <(find src-tauri/target/release/bundle -name "*.rpm" -type f)
 
-            find src-tauri/target/release/bundle -name "*.AppImage" -type f | while read -r appimage; do
+            while IFS= read -r appimage; do
               ARCH=$(detect_arch "$appimage" "x86_64")
               DEST="release-artifacts/runi-${VERSION}-linux-${ARCH}-portable.AppImage"
               copy_unique "$appimage" "$DEST"
-            done
+            done < <(find src-tauri/target/release/bundle -name "*.AppImage" -type f)
           fi
 
           if ! ls release-artifacts/runi-* >/dev/null 2>&1; then
@@ -401,7 +402,7 @@ jobs:
         with:
           name: release-binaries-${{ github.sha }}-${{ matrix.os }}
           path: release-artifacts/*
-          retention-days: 14
+          retention-days: 90
 
   release:
     name: Release/Publish
