@@ -17,6 +17,7 @@ describe('useDriftReviewStore', () => {
       isOpen: false,
       collectionId: null,
       focusOperationKey: null,
+      comparisonHeader: null,
       reviewState: {},
       dismissedBannerKeys: new Set(),
     });
@@ -77,6 +78,22 @@ describe('useDriftReviewStore', () => {
       });
       expect(result.current.focusOperationKey).toBeNull();
     });
+
+    it('stores comparisonHeader when provided', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      act(() => {
+        result.current.openDrawer('col_1', undefined, 'Comparing v0.1 (active) → v0.2 (staged)');
+      });
+      expect(result.current.comparisonHeader).toBe('Comparing v0.1 (active) → v0.2 (staged)');
+    });
+
+    it('comparisonHeader is null when not provided', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      act(() => {
+        result.current.openDrawer('col_1');
+      });
+      expect(result.current.comparisonHeader).toBeNull();
+    });
   });
 
   describe('closeDrawer', () => {
@@ -111,6 +128,17 @@ describe('useDriftReviewStore', () => {
         result.current.closeDrawer();
       });
       expect(result.current.focusOperationKey).toBeNull();
+    });
+
+    it('clears comparisonHeader on close', () => {
+      const { result } = renderHook(() => useDriftReviewStore());
+      act(() => {
+        result.current.openDrawer('col_1', undefined, 'Comparing v0.1 → v0.2 (staged)');
+      });
+      act(() => {
+        result.current.closeDrawer();
+      });
+      expect(result.current.comparisonHeader).toBeNull();
     });
   });
 

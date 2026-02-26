@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { DriftBadge } from '@/components/DriftReview/DriftBadge';
 import { DriftReviewDrawer } from '@/components/DriftReview/DriftReviewDrawer';
+import { useDriftReviewStore } from '@/stores/useDriftReviewStore';
 import { RequestListComposite } from '@/components/Sidebar/composite';
 import {
   useCollection,
@@ -55,6 +56,7 @@ const VersionSwitcherPopover = ({
 }: VersionSwitcherPopoverProps): React.JSX.Element => {
   const setDriftResult = useCollectionStore((state) => state.setDriftResult);
   const loadCollection = useCollectionStore((state) => state.loadCollection);
+  const openDrawer = useDriftReviewStore((state) => state.openDrawer);
   const [confirmingActivate, setConfirmingActivate] = useState<string | null>(null);
   const [confirmingRemove, setConfirmingRemove] = useState<string | null>(null);
   const [comparingVersionId, setComparingVersionId] = useState<string | null>(null);
@@ -112,14 +114,16 @@ const VersionSwitcherPopover = ({
     }
   };
 
-  const handleCompare = async (pinnedVersionId: string): Promise<void> => {
+  const handleCompare = async (pinnedVersionId: string, versionLabel: string): Promise<void> => {
     setComparingVersionId(pinnedVersionId);
     try {
       const result = await invoke<SpecRefreshResult>('cmd_compare_spec_versions', {
         collectionId: collection.id,
         pinnedVersionId,
       });
+      const header = `Comparing ${activeVersion ?? 'current spec'} (active) → ${versionLabel} (staged)`;
       setDriftResult(collection.id, result);
+      openDrawer(collection.id, undefined, header);
       onClose();
     } catch (err) {
       globalEventBus.emit<ToastEventPayload>('toast.show', {
@@ -220,7 +224,7 @@ const VersionSwitcherPopover = ({
           noScale
           disabled={comparingVersionId === version.id}
           onClick={() => {
-            void handleCompare(version.id);
+            void handleCompare(version.id, version.label);
           }}
           data-test-id={`version-switcher-compare-${version.id}`}
         >

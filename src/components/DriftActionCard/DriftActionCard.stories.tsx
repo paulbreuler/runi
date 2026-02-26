@@ -54,7 +54,7 @@ const defaultArgs: DriftActionCardProps = {
 };
 
 const meta = {
-  title: 'DriftActionCard',
+  title: 'DriftReview/DriftActionCard',
   component: DriftActionCard,
   parameters: {
     layout: 'padded',
