@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.0](https://github.com/paulbreuler/runi/compare/runi-v0.8.1...runi-v0.9.0) (2026-02-26)
+
+
+### Features
+
+* **import:** pinned spec versions + import flow improvements ([#161](https://github.com/paulbreuler/runi/issues/161)) ([af71a64](https://github.com/paulbreuler/runi/commit/af71a6495127450ff613c8f7346132a224992e24))
+* **storage:** restore session state and migrate to TOML storage ([#155](https://github.com/paulbreuler/runi/issues/155)) ([d5035d4](https://github.com/paulbreuler/runi/commit/d5035d4c72ccb85148b732a23af8ea526cbaab36))
+* **versions:** spec-vs-spec comparison view in DriftReviewDrawer ([#162](https://github.com/paulbreuler/runi/issues/162)) ([0db73b1](https://github.com/paulbreuler/runi/commit/0db73b1d01cc694991ff6fbe98f5b3d5945b485f))
+
+
+### Bug Fixes
+
+* **release:** decouple artifact publishing from release-please ([#163](https://github.com/paulbreuler/runi/issues/163)) ([fb60548](https://github.com/paulbreuler/runi/commit/fb60548f3f948cf53c6824718a3cc05ad7d90992))
+
+
+### Chores
+
+* standardise on pnpm across all environments ([#160](https://github.com/paulbreuler/runi/issues/160)) ([4559ce8](https://github.com/paulbreuler/runi/commit/4559ce8d97f73142e769d1cab52f3fa6f0ba0331))
+
 ## [0.8.1](https://github.com/paulbreuler/runi/compare/runi-v0.8.0...runi-v0.8.1) (2026-02-22)
 
 
