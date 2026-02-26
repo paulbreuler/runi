@@ -10,7 +10,7 @@ const COLLECTIONS_DIR_NAME: &str = "collections";
 const SCHEMA_COMMENT: &str =
     "# yaml-language-server: $schema=https://runi.dev/schema/collection/v1.json\n";
 
-/// Get the collections storage directory.
+/// Resolve the collections storage directory path.
 ///
 /// ## Resolution Order
 /// 1. Environment variable `RUNI_COLLECTIONS_DIR` (if set)
@@ -24,11 +24,10 @@ const SCHEMA_COMMENT: &str =
 /// - Default (dev): `/path/to/runi/collections/` (repo root)
 /// - Default (prod): `./collections/` (user's project directory)
 /// - Override: `RUNI_COLLECTIONS_DIR=/path/to/collections runi`
-pub fn get_collections_dir() -> Result<PathBuf, String> {
+fn resolve_collections_dir() -> Result<PathBuf, String> {
     // Check test override first (cfg(test) only)
     #[cfg(test)]
     if let Some(override_dir) = collections_dir_override() {
-        ensure_dir(&override_dir)?;
         return Ok(override_dir);
     }
 
@@ -41,7 +40,6 @@ pub fn get_collections_dir() -> Result<PathBuf, String> {
                 dir.display()
             ));
         }
-        ensure_dir(&dir)?;
         return Ok(dir);
     }
 
@@ -63,6 +61,12 @@ pub fn get_collections_dir() -> Result<PathBuf, String> {
     };
 
     let dir = base_dir.join(COLLECTIONS_DIR_NAME);
+    Ok(dir)
+}
+
+/// Get the collections storage directory and ensure it exists.
+pub fn get_collections_dir() -> Result<PathBuf, String> {
+    let dir = resolve_collections_dir()?;
     ensure_dir(&dir)?;
     Ok(dir)
 }
@@ -135,13 +139,15 @@ pub fn load_collection_in_dir(collection_id: &str, dir: &Path) -> Result<Collect
 
 /// List all saved collections (metadata only for performance).
 pub fn list_collections() -> Result<Vec<CollectionSummary>, String> {
-    let dir = get_collections_dir()?;
+    let dir = resolve_collections_dir()?;
     list_collections_in_dir(&dir)
 }
 
 /// List all saved collections in the specified directory.
 pub fn list_collections_in_dir(dir: &Path) -> Result<Vec<CollectionSummary>, String> {
-    ensure_dir(dir)?;
+    if !dir.exists() {
+        return Ok(Vec::new());
+    }
 
     let mut summaries = Vec::new();
     let entries =
@@ -212,7 +218,7 @@ pub fn open_collection_file_in_dir(path: &Path, dir: &Path) -> Result<Collection
 /// Returns `Ok(Some(...))` when a match is found, `Ok(None)` when no match
 /// exists, or `Err(...)` if the collections directory cannot be resolved or read.
 pub fn find_collection_by_name(name: &str) -> Result<Option<CollectionSummary>, String> {
-    let dir = get_collections_dir()?;
+    let dir = resolve_collections_dir()?;
     find_collection_by_name_in_dir(name, &dir)
 }
 
@@ -637,5 +643,23 @@ mod tests {
 
         let not_found = find_collection_by_name("Nonexistent API").unwrap();
         assert!(not_found.is_none(), "Expected None for non-matching name");
+    }
+
+    #[test]
+    #[serial]
+    fn test_list_collections_does_not_create_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let missing_dir = temp_dir.path().join("missing-collections");
+        let _guard = CollectionsDirOverrideGuard::set(missing_dir.clone());
+
+        let list = list_collections().unwrap();
+        assert!(
+            list.is_empty(),
+            "Expected empty list when directory is missing"
+        );
+        assert!(
+            !missing_dir.exists(),
+            "Expected list_collections to avoid creating directory"
+        );
     }
 }
