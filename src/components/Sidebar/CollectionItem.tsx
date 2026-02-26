@@ -144,7 +144,7 @@ const VersionSwitcherPopover = ({
           </p>
           {activeVersion !== null && (
             <p className="text-[10px] text-text-muted">
-              {activeVersion} will be moved to Archived.
+              {activeVersion} will become the standby version.
             </p>
           )}
           <div className="flex items-center gap-1.5 pt-0.5">
@@ -255,6 +255,43 @@ const VersionSwitcherPopover = ({
   };
 
   const renderArchivedRowContent = (version: PinnedSpecVersion): React.JSX.Element => {
+    if (confirmingActivate === version.id) {
+      return (
+        <div
+          className="rounded-md p-2 space-y-1.5"
+          style={{ background: '#3b82f60f', border: '1px solid #3b82f640' }}
+          data-test-id={`version-switcher-activate-confirm-block-${version.id}`}
+        >
+          <p className="text-[11px] font-medium text-text-primary">
+            Restore {version.label} as the working spec?
+          </p>
+          <div className="flex items-center gap-1.5 pt-0.5">
+            <Button
+              variant="outline"
+              size="xs"
+              noScale
+              onClick={() => {
+                setConfirmingActivate(null);
+              }}
+              data-test-id={`version-switcher-activate-cancel-${version.id}`}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              size="xs"
+              noScale
+              onClick={() => {
+                void handleActivate(version.id);
+              }}
+              data-test-id={`version-switcher-activate-confirm-${version.id}`}
+            >
+              Restore
+            </Button>
+          </div>
+        </div>
+      );
+    }
     if (confirmingRemove === version.id) {
       return (
         <div
@@ -293,18 +330,32 @@ const VersionSwitcherPopover = ({
       );
     }
     return (
-      <Button
-        variant="outline"
-        size="xs"
-        noScale
-        onClick={() => {
-          setConfirmingRemove(version.id);
-          setConfirmingActivate(null);
-        }}
-        data-test-id={`version-switcher-remove-${version.id}`}
-      >
-        Remove
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="xs"
+          noScale
+          onClick={() => {
+            setConfirmingActivate(version.id);
+            setConfirmingRemove(null);
+          }}
+          data-test-id={`version-switcher-activate-${version.id}`}
+        >
+          Restore
+        </Button>
+        <Button
+          variant="outline"
+          size="xs"
+          noScale
+          onClick={() => {
+            setConfirmingRemove(version.id);
+            setConfirmingActivate(null);
+          }}
+          data-test-id={`version-switcher-remove-${version.id}`}
+        >
+          Remove
+        </Button>
+      </div>
     );
   };
 
@@ -761,7 +812,12 @@ export const CollectionItem = ({
 
             <div className="flex items-center gap-1.5 shrink-0">
               <div className="flex items-center gap-2 text-xs text-text-muted">
-                <span data-test-id={`collection-count-${summary.id}`}>{summary.request_count}</span>
+                <span
+                  className="inline-block min-w-[3ch] text-right tabular-nums"
+                  data-test-id={`collection-count-${summary.id}`}
+                >
+                  {summary.request_count}
+                </span>
                 <span className="text-text-muted/70">•</span>
                 <span
                   className="uppercase tracking-wider"
@@ -769,7 +825,51 @@ export const CollectionItem = ({
                 >
                   {summary.source_type}
                 </span>
-                {summary.spec_version !== undefined && (
+                {summary.pinned_version_count > 0 ? (
+                  <>
+                    <span className="text-text-muted/70">•</span>
+                    <Popover open={versionSwitcherOpen} onOpenChange={setVersionSwitcherOpen}>
+                      <button
+                        ref={versionBadgeRef}
+                        type="button"
+                        className={cn(
+                          focusRingClasses,
+                          'inline-flex items-center gap-0.5 text-xs text-text-muted cursor-pointer hover:text-text-primary transition-colors bg-transparent border-none p-0'
+                        )}
+                        data-test-id="collection-version-badge"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (collection === undefined) {
+                            void loadCollection(summary.id);
+                          }
+                          setVersionSwitcherOpen((v) => !v);
+                        }}
+                        aria-label={`Version history for ${summary.name}`}
+                        aria-expanded={versionSwitcherOpen}
+                        aria-haspopup="true"
+                      >
+                        {summary.spec_version ?? 'v?'}
+                        <ChevronDown size={10} className="shrink-0" />
+                      </button>
+                      {collection !== undefined && (
+                        <PopoverContent
+                          side="right"
+                          align="start"
+                          anchor={versionBadgeRef}
+                          className="p-0"
+                          data-test-id="version-switcher-popover-container"
+                        >
+                          <VersionSwitcherPopover
+                            collection={collection}
+                            onClose={() => {
+                              setVersionSwitcherOpen(false);
+                            }}
+                          />
+                        </PopoverContent>
+                      )}
+                    </Popover>
+                  </>
+                ) : summary.spec_version !== undefined ? (
                   <>
                     <span className="text-text-muted/70">•</span>
                     <span
@@ -779,68 +879,7 @@ export const CollectionItem = ({
                       {summary.spec_version}
                     </span>
                   </>
-                )}
-                {collection !== undefined &&
-                  collection.pinned_versions.length > 0 &&
-                  ((): React.ReactElement | null => {
-                    const stagedVersionCount = collection.pinned_versions.filter(
-                      (v) => v.role === 'staging'
-                    ).length;
-                    const activeLabel = collection.source.spec_version ?? null;
-                    const badgeText =
-                      stagedVersionCount > 0
-                        ? `${activeLabel ?? 'v?'} · +${String(stagedVersionCount)}`
-                        : (activeLabel ?? 'v?');
-                    return (
-                      <>
-                        <span className="text-text-muted/70">•</span>
-                        <Popover open={versionSwitcherOpen} onOpenChange={setVersionSwitcherOpen}>
-                          <button
-                            ref={versionBadgeRef}
-                            type="button"
-                            className={cn(
-                              focusRingClasses,
-                              'inline-flex items-center gap-1 rounded-full border border-border-default bg-bg-raised px-2 py-0.5 cursor-pointer hover:bg-bg-elevated transition-colors'
-                            )}
-                            data-test-id="collection-version-badge"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setVersionSwitcherOpen((v) => !v);
-                            }}
-                            aria-label={`Version history for ${summary.name}`}
-                            aria-expanded={versionSwitcherOpen}
-                            aria-haspopup="true"
-                          >
-                            <span
-                              className="text-text-muted"
-                              style={{
-                                fontFamily: 'JetBrains Mono, monospace',
-                                fontSize: 10,
-                                fontWeight: 700,
-                              }}
-                            >
-                              {badgeText}
-                            </span>
-                            <ChevronDown size={10} className="text-text-muted shrink-0" />
-                          </button>
-                          <PopoverContent
-                            side="right"
-                            align="start"
-                            anchor={versionBadgeRef}
-                            className="p-0"
-                            data-test-id="version-switcher-popover-container"
-                          >
-                            <VersionSwitcherPopover
-                              collection={collection}
-                              onClose={() => {
-                                setVersionSwitcherOpen(false);
-                              }}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </>
-                    );
-                  })()}
+                ) : null}
                 <DriftBadge
                   collectionId={summary.id}
                   collectionName={summary.name}

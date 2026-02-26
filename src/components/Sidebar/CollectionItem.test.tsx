@@ -75,7 +75,19 @@ const simpleSummary: CollectionSummary = {
   request_count: 5,
   source_type: 'manual',
   modified_at: '2026-01-01T00:00:00Z',
+  pinned_version_count: 0,
 };
+
+/** Summary with spec_version + pinned_version_count for version switcher tests. */
+const versionedSummary = (
+  specVersion: string | undefined = '1.5.0',
+  pinnedCount = 1
+): CollectionSummary => ({
+  ...simpleSummary,
+  source_type: 'openapi',
+  spec_version: specVersion,
+  pinned_version_count: pinnedCount,
+});
 
 /** Helper to open the three-dot menu and wait for items to appear */
 const openMenu = async (user: ReturnType<typeof userEvent.setup>): Promise<void> => {
@@ -464,11 +476,10 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
       const badge = screen.getByTestId('collection-version-badge');
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveTextContent('1.5.0');
-      expect(badge).toHaveTextContent('+1');
     });
 
     it('badge shows only active version when no staged versions', (): void => {
@@ -488,7 +499,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [archivedVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
       const badge = screen.getByTestId('collection-version-badge');
       expect(badge).toBeInTheDocument();
       expect(badge).toHaveTextContent('1.5.0');
@@ -512,7 +523,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={{ ...versionedSummary(), spec_version: undefined }} />);
       const badge = screen.getByTestId('collection-version-badge');
       expect(badge).toHaveTextContent('v?');
     });
@@ -535,7 +546,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
 
@@ -562,7 +573,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
 
@@ -590,7 +601,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
       await waitFor(() => {
@@ -623,7 +634,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
       await waitFor(() => {
@@ -661,7 +672,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
       await waitFor(() => {
@@ -705,7 +716,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
       await waitFor(() => {
@@ -753,7 +764,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [stagingVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
       await waitFor(() => {
@@ -772,7 +783,7 @@ describe('CollectionItem', (): void => {
       });
     });
 
-    it('archived section renders with remove button only', async (): Promise<void> => {
+    it('archived section renders with restore and remove buttons', async (): Promise<void> => {
       const user = userEvent.setup();
       mockUseCollection = vi.fn(() => ({
         id: 'col_1',
@@ -790,7 +801,7 @@ describe('CollectionItem', (): void => {
         variables: {},
         pinned_versions: [archivedVersion],
       }));
-      render(<CollectionItem summary={simpleSummary} />);
+      render(<CollectionItem summary={versionedSummary()} />);
 
       await user.click(screen.getByTestId('collection-version-badge'));
 
@@ -803,7 +814,7 @@ describe('CollectionItem', (): void => {
       await waitFor(() => {
         expect(screen.getByTestId('version-switcher-archived-row-pv_2')).toBeInTheDocument();
         expect(screen.getByTestId('version-switcher-remove-pv_2')).toBeInTheDocument();
-        expect(screen.queryByTestId('version-switcher-activate-pv_2')).toBeNull();
+        expect(screen.getByTestId('version-switcher-activate-pv_2')).toBeInTheDocument();
       });
     });
   });

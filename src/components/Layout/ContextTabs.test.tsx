@@ -909,6 +909,7 @@ describe('ContextTabs - Save Errors', () => {
           request_count: 0,
           source_type: 'manual',
           modified_at: '',
+          pinned_version_count: 0,
         },
       ],
       error: 'Save failed from store',

@@ -145,6 +145,7 @@ describe('useCollectionStore', () => {
           request_count: 0,
           source_type: 'openapi',
           modified_at: '2026-01-01T00:00:00Z',
+          pinned_version_count: 0,
         },
       ],
       selectedCollectionId: 'col_1',
@@ -315,6 +316,7 @@ describe('useCollectionStore', () => {
             request_count: 2,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -371,6 +373,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -559,6 +562,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -609,6 +613,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -656,6 +661,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -718,6 +724,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -767,6 +774,7 @@ describe('useCollectionStore', () => {
             request_count: 1,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -897,6 +905,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -1015,6 +1024,7 @@ describe('useCollectionStore', () => {
             request_count: 1,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
           {
             id: 'col-target',
@@ -1022,6 +1032,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -1185,6 +1196,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -1418,6 +1430,7 @@ describe('useCollectionStore', () => {
             request_count: 1,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
           {
             id: 'col-target',
@@ -1425,6 +1438,7 @@ describe('useCollectionStore', () => {
             request_count: 0,
             source_type: 'openapi',
             modified_at: '2026-01-01T00:00:00Z',
+            pinned_version_count: 0,
           },
         ],
       });

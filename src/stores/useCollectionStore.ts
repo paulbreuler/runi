@@ -110,6 +110,17 @@ const normalizeCollection = (collection: Collection): Collection => {
   };
 };
 
+/** Build a CollectionSummary from a full Collection. */
+const toSummary = (c: Collection): CollectionSummary => ({
+  id: c.id,
+  name: c.metadata.name,
+  request_count: c.requests.length,
+  source_type: c.source.source_type,
+  modified_at: c.metadata.modified_at,
+  spec_version: c.source.spec_version,
+  pinned_version_count: c.pinned_versions.length,
+});
+
 export const useCollectionStore = create<CollectionState>((set) => ({
   collections: [],
   summaries: [],
@@ -177,17 +188,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
 
       set((state) => ({
         collections: [...state.collections, collection],
-        summaries: [
-          ...state.summaries,
-          {
-            id: collection.id,
-            name: collection.metadata.name,
-            request_count: collection.requests.length,
-            source_type: collection.source.source_type,
-            modified_at: collection.metadata.modified_at,
-            spec_version: collection.source.spec_version,
-          },
-        ].sort((a, b) => a.name.localeCompare(b.name)),
+        summaries: [...state.summaries, toSummary(collection)].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
         selectedCollectionId: collection.id,
         expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
         pendingRenameId: collection.id,
@@ -228,7 +231,11 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         } else {
           collections.push(collection);
         }
-        return { collections, isLoading: false };
+
+        // Sync summaries so the sidebar header reflects the latest source
+        const summaries = state.summaries.map((s) => (s.id === id ? toSummary(collection) : s));
+
+        return { collections, summaries, isLoading: false };
       });
     } catch (error) {
       set({ error: String(error), isLoading: false });
@@ -244,17 +251,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
 
       set((state) => ({
         collections: [...state.collections, collection],
-        summaries: [
-          ...state.summaries,
-          {
-            id: collection.id,
-            name: collection.metadata.name,
-            request_count: collection.requests.length,
-            source_type: collection.source.source_type,
-            modified_at: collection.metadata.modified_at,
-            spec_version: collection.source.spec_version,
-          },
-        ],
+        summaries: [...state.summaries, toSummary(collection)],
         selectedCollectionId: collection.id,
         expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
         isLoading: false,
@@ -278,17 +275,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         const collection = normalizeCollection(result.collection);
         set((state) => ({
           collections: [...state.collections, collection],
-          summaries: [
-            ...state.summaries,
-            {
-              id: collection.id,
-              name: collection.metadata.name,
-              request_count: collection.requests.length,
-              source_type: collection.source.source_type,
-              modified_at: collection.metadata.modified_at,
-              spec_version: collection.source.spec_version,
-            },
-          ],
+          summaries: [...state.summaries, toSummary(collection)],
           selectedCollectionId: collection.id,
           expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
           isLoading: false,
@@ -328,17 +315,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
 
       set((state) => ({
         collections: [...state.collections, collection],
-        summaries: [
-          ...state.summaries,
-          {
-            id: collection.id,
-            name: collection.metadata.name,
-            request_count: collection.requests.length,
-            source_type: collection.source.source_type,
-            modified_at: collection.metadata.modified_at,
-            spec_version: collection.source.spec_version,
-          },
-        ].sort((a, b) => a.name.localeCompare(b.name)),
+        summaries: [...state.summaries, toSummary(collection)].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
         selectedCollectionId: collection.id,
         expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
         isLoading: false,
@@ -472,17 +451,9 @@ export const useCollectionStore = create<CollectionState>((set) => ({
 
       set((state) => ({
         collections: [...state.collections, collection],
-        summaries: [
-          ...state.summaries,
-          {
-            id: collection.id,
-            name: collection.metadata.name,
-            request_count: collection.requests.length,
-            source_type: collection.source.source_type,
-            modified_at: collection.metadata.modified_at,
-            spec_version: collection.source.spec_version,
-          },
-        ].sort((a, b) => a.name.localeCompare(b.name)),
+        summaries: [...state.summaries, toSummary(collection)].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
         selectedCollectionId: collection.id,
         expandedCollectionIds: new Set([...state.expandedCollectionIds, collection.id]),
         pendingRenameId: collection.id,
@@ -603,14 +574,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       set((state) => {
         const collectionExists = state.collections.some((c) => c.id === collectionId);
         const summaryExists = state.summaries.some((s) => s.id === collectionId);
-        const updatedSummary = {
-          id: collectionId,
-          name: collection.metadata.name,
-          request_count: collection.requests.length,
-          source_type: collection.source.source_type,
-          modified_at: collection.metadata.modified_at,
-          spec_version: collection.source.spec_version,
-        };
+        const updatedSummary = toSummary(collection);
         return {
           collections: collectionExists
             ? state.collections.map((c) => (c.id === collectionId ? collection : c))

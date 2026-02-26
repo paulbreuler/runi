@@ -504,6 +504,7 @@ describe('RequestItemComposite', (): void => {
             request_count: 0,
             source_type: 'manual',
             modified_at: '',
+            pinned_version_count: 0,
           },
           {
             id: 'col_2',
@@ -511,6 +512,7 @@ describe('RequestItemComposite', (): void => {
             request_count: 0,
             source_type: 'manual',
             modified_at: '',
+            pinned_version_count: 0,
           },
           {
             id: 'col_3',
@@ -518,6 +520,7 @@ describe('RequestItemComposite', (): void => {
             request_count: 0,
             source_type: 'manual',
             modified_at: '',
+            pinned_version_count: 0,
           },
         ],
       });
@@ -652,6 +655,7 @@ describe('RequestItemComposite', (): void => {
             request_count: 0,
             source_type: 'manual',
             modified_at: '',
+            pinned_version_count: 0,
           },
           {
             id: 'col_2',
@@ -659,6 +663,7 @@ describe('RequestItemComposite', (): void => {
             request_count: 0,
             source_type: 'manual',
             modified_at: '',
+            pinned_version_count: 0,
           },
         ],
       });

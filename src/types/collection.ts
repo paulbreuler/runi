@@ -133,6 +133,7 @@ export interface CollectionSummary {
   source_type: string;
   modified_at: string;
   spec_version?: string;
+  pinned_version_count: number;
 }
 
 // ============================================

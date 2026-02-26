@@ -158,40 +158,12 @@ impl ImportService {
             .and_then(|git| git.resolve_commit(repo_root, ref_name).ok())
     }
 
-    /// The single shared IR → Collection converter.
+    /// Convert a `ParsedSpec` into a list of `CollectionRequest`s.
     ///
-    /// This is the compiler IR insight: one converter for all formats.
-    /// Each parser transpiles its native format into `ParsedSpec` IR,
-    /// and this method transpiles IR into `Collection`.
-    fn ir_to_collection(
-        parsed: &ParsedSpec,
-        fetch: &FetchResult,
-        source_type: SourceType,
-        overrides: &ImportOverrides,
-    ) -> Collection {
-        let now = chrono::Utc::now();
-        let timestamp = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
-        let hash = compute_spec_hash(&fetch.content);
-
-        let title = overrides.display_name.as_deref().unwrap_or(&parsed.title);
-
-        // Get base URL from first server in spec, fall back to source URL origin,
-        // then to a generic placeholder
-        let spec_base_url = parsed.base_urls.first().map(|s| s.url.clone());
-        let inferred_base_url = spec_base_url
-            .or_else(|| url_origin(&fetch.source_url))
-            .unwrap_or_else(|| "https://example.com".to_string());
-
-        // Build a "local" environment with the inferred base URL
-        let mut local_vars = BTreeMap::new();
-        local_vars.insert("baseUrl".to_string(), inferred_base_url);
-        let environments = vec![CollectionEnvironment {
-            name: "local".to_string(),
-            variables: local_vars,
-        }];
-
-        // Convert endpoints to requests with seq ordering, using {{baseUrl}} template
-        let requests: Vec<CollectionRequest> = parsed
+    /// Public so that callers (e.g. version activation) can regenerate
+    /// requests from a new spec without re-importing a full collection.
+    pub fn parsed_spec_to_requests(parsed: &ParsedSpec) -> Vec<CollectionRequest> {
+        parsed
             .endpoints
             .iter()
             .enumerate()
@@ -236,7 +208,43 @@ impl ImportService {
                     extensions: BTreeMap::new(),
                 }
             })
-            .collect();
+            .collect()
+    }
+
+    /// The single shared IR → Collection converter.
+    ///
+    /// This is the compiler IR insight: one converter for all formats.
+    /// Each parser transpiles its native format into `ParsedSpec` IR,
+    /// and this method transpiles IR into `Collection`.
+    fn ir_to_collection(
+        parsed: &ParsedSpec,
+        fetch: &FetchResult,
+        source_type: SourceType,
+        overrides: &ImportOverrides,
+    ) -> Collection {
+        let now = chrono::Utc::now();
+        let timestamp = now.format("%Y-%m-%dT%H:%M:%SZ").to_string();
+        let hash = compute_spec_hash(&fetch.content);
+
+        let title = overrides.display_name.as_deref().unwrap_or(&parsed.title);
+
+        // Get base URL from first server in spec, fall back to source URL origin,
+        // then to a generic placeholder
+        let spec_base_url = parsed.base_urls.first().map(|s| s.url.clone());
+        let inferred_base_url = spec_base_url
+            .or_else(|| url_origin(&fetch.source_url))
+            .unwrap_or_else(|| "https://example.com".to_string());
+
+        // Build a "local" environment with the inferred base URL
+        let mut local_vars = BTreeMap::new();
+        local_vars.insert("baseUrl".to_string(), inferred_base_url);
+        let environments = vec![CollectionEnvironment {
+            name: "local".to_string(),
+            variables: local_vars,
+        }];
+
+        // Convert endpoints to requests with seq ordering, using {{baseUrl}} template
+        let requests = Self::parsed_spec_to_requests(parsed);
 
         Collection {
             schema: SCHEMA_URL.to_string(),

@@ -82,6 +82,7 @@ describe('Sidebar', (): void => {
       request_count: 5,
       source_type: 'manual',
       modified_at: new Date().toISOString(),
+      pinned_version_count: 0,
     }));
   });
   it('renders sidebar with proper structure', (): void => {
@@ -227,6 +228,7 @@ describe('Sidebar', (): void => {
         request_count: 0,
         source_type: 'manual',
         modified_at: new Date().toISOString(),
+        pinned_version_count: 0,
       },
     ];
     render(<Sidebar />);
@@ -249,6 +251,7 @@ describe('Sidebar', (): void => {
         request_count: 0,
         source_type: 'manual',
         modified_at: new Date().toISOString(),
+        pinned_version_count: 0,
       },
       {
         id: 'col-2',
@@ -256,6 +259,7 @@ describe('Sidebar', (): void => {
         request_count: 0,
         source_type: 'manual',
         modified_at: new Date().toISOString(),
+        pinned_version_count: 0,
       },
     ];
     render(<Sidebar />);

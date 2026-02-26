@@ -254,6 +254,8 @@ pub struct CollectionSummary {
     pub modified_at: String,
     /// Spec version from the collection's source (e.g., "1.2.3").
     pub spec_version: Option<String>,
+    /// Number of pinned versions (staging + archived).
+    pub pinned_version_count: usize,
 }
 
 fn load_collection_summary(path: &PathBuf) -> Result<CollectionSummary, String> {
@@ -267,6 +269,7 @@ fn load_collection_summary(path: &PathBuf) -> Result<CollectionSummary, String> 
         metadata,
         source,
         requests,
+        pinned_versions,
         ..
     } = collection;
     let CollectionMetadata {
@@ -280,6 +283,7 @@ fn load_collection_summary(path: &PathBuf) -> Result<CollectionSummary, String> 
         source_type: format!("{:?}", source.source_type).to_lowercase(),
         modified_at,
         spec_version: source.spec_version,
+        pinned_version_count: pinned_versions.len(),
     })
 }
 

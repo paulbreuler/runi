@@ -63,6 +63,7 @@ const LongListWrapper = (): React.JSX.Element => {
       request_count: 5,
       source_type: 'manual',
       modified_at: new Date().toISOString(),
+      pinned_version_count: 0,
     }));
 
     useCollectionStore.setState({

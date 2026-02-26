@@ -21,6 +21,7 @@ const mockSummaries: CollectionSummary[] = [
     request_count: 3,
     source_type: 'manual',
     modified_at: '2026-01-01T00:00:00Z',
+    pinned_version_count: 0,
   },
   {
     id: 'col-2',
@@ -28,6 +29,7 @@ const mockSummaries: CollectionSummary[] = [
     request_count: 5,
     source_type: 'openapi',
     modified_at: '2026-01-02T00:00:00Z',
+    pinned_version_count: 0,
   },
 ];
 
