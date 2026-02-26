@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/paulbreuler/runi/compare/runi-v0.9.0...runi-v0.9.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* **history:** scope ResponsePanel story assertions to active tabpanel ([51880a0](https://github.com/paulbreuler/runi/commit/51880a0c7b815dc982123dbee3901867dad458fb))
+
 ## [0.9.0](https://github.com/paulbreuler/runi/compare/runi-v0.8.1...runi-v0.9.0) (2026-02-26)
 
 
