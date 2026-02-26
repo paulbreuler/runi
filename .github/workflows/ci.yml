@@ -260,10 +260,143 @@ jobs:
             test-results/
           retention-days: 7
 
+  release-binaries:
+    name: Build Release Binaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [frontend, rust, e2e, storybook-visual]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.message, 'chore(main): release') &&
+      needs.frontend.result == 'success' &&
+      needs.rust.result == 'success' &&
+      needs.e2e.result == 'success' &&
+      needs.storybook-visual.result != 'failure'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    env:
+      CARGO_TERM_COLOR: always
+      MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-nodejs
+        with:
+          node-version: '20'
+          install-just: 'true'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build Tauri app
+        run: just build
+
+      - name: Prepare release artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-artifacts
+          VERSION=$(node -p "require('./package.json').version")
+
+          detect_arch() {
+            local filename="$1"
+            local fallback_arch="$2"
+            local arch=""
+
+            if echo "$filename" | grep -qiE "aarch64|arm64"; then
+              arch="aarch64"
+            elif echo "$filename" | grep -qiE "x86_64|amd64"; then
+              arch="x86_64"
+            elif [ -n "$fallback_arch" ]; then
+              case "$fallback_arch" in
+                arm64) arch="aarch64" ;;
+                x86_64|amd64) arch="x86_64" ;;
+                *) arch="x86_64" ;;
+              esac
+            else
+              arch="x86_64"
+            fi
+
+            echo "$arch"
+          }
+
+          copy_unique() {
+            local src="$1"
+            local dest="$2"
+            if [ -e "$dest" ]; then
+              echo "Duplicate destination artifact detected: $dest" >&2
+              exit 1
+            fi
+            cp "$src" "$dest"
+          }
+
+          if [ -d "src-tauri/target/release/bundle" ]; then
+            while IFS= read -r dmg; do
+              ARCH=$(detect_arch "$dmg" "$(uname -m)")
+              DEST="release-artifacts/runi-${VERSION}-macos-${ARCH}.dmg"
+              copy_unique "$dmg" "$DEST"
+            done < <(find src-tauri/target/release/bundle -name "*.dmg" -type f)
+
+            while IFS= read -r deb; do
+              ARCH=$(detect_arch "$deb" "x86_64")
+              DEST="release-artifacts/runi-${VERSION}-linux-${ARCH}.deb"
+              copy_unique "$deb" "$DEST"
+            done < <(find src-tauri/target/release/bundle -name "*.deb" -type f)
+
+            while IFS= read -r rpm; do
+              ARCH=$(detect_arch "$rpm" "x86_64")
+              DEST="release-artifacts/runi-${VERSION}-linux-${ARCH}.rpm"
+              copy_unique "$rpm" "$DEST"
+            done < <(find src-tauri/target/release/bundle -name "*.rpm" -type f)
+
+            while IFS= read -r appimage; do
+              ARCH=$(detect_arch "$appimage" "x86_64")
+              DEST="release-artifacts/runi-${VERSION}-linux-${ARCH}-portable.AppImage"
+              copy_unique "$appimage" "$DEST"
+            done < <(find src-tauri/target/release/bundle -name "*.AppImage" -type f)
+          fi
+
+          if ! ls release-artifacts/runi-* >/dev/null 2>&1; then
+            echo "No release artifacts generated" >&2
+            exit 1
+          fi
+
+          echo "Prepared release artifacts:" >> "$GITHUB_STEP_SUMMARY"
+          ls -lh release-artifacts/ >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-binaries-${{ github.sha }}-${{ matrix.os }}
+          path: release-artifacts/*
+          retention-days: 90
+
   release:
     name: Release/Publish
     runs-on: ubuntu-latest
-    needs: [frontend, rust, e2e, storybook-visual]
+    needs: [frontend, rust, e2e, storybook-visual, release-binaries]
     # Note: storybook-visual has continue-on-error: true, so it can "succeed" even if tests fail.
     # We check != 'failure' to allow release when visual tests are informational/in-progress,
     # but block release if the job itself fails (e.g., setup errors).
@@ -273,6 +406,7 @@ jobs:
       needs.frontend.result == 'success' &&
       needs.rust.result == 'success' &&
       needs.e2e.result == 'success' &&
+      needs.release-binaries.result == 'success' &&
       needs.storybook-visual.result != 'failure'
     steps:
       - name: Release status
@@ -282,5 +416,5 @@ jobs:
           echo "📦 Release Flow:"
           echo "  1. Release Please workflow creates/updates a release PR"
           echo "  2. When release PR is merged → CI runs (validations/tests)"
-          echo "  3. After CI passes → Release is created and artifacts are built/published"
-          echo "  4. Artifacts are only published after all validations pass"
+          echo "  3. CI produces release binaries and stores them as artifacts keyed by commit SHA"
+          echo "  4. On release publish, Release Artifacts workflow promotes CI binaries to the GitHub release"

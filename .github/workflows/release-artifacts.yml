@@ -1,0 +1,119 @@
+name: Release Artifacts
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build/upload (e.g. runi-v0.9.0)'
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  resolve-tag:
+    name: Resolve release tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - name: Checkout repository metadata
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag from event/input
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="${{ inputs.tag }}"
+          fi
+
+          if [ -z "$TAG" ]; then
+            echo "Tag is empty" >&2
+            exit 1
+          fi
+
+          if [[ "$TAG" != runi-v* ]]; then
+            echo "Unexpected tag format: $TAG (expected runi-v*)" >&2
+            exit 1
+          fi
+
+          git fetch --tags --force
+          if ! git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag not found: $TAG" >&2
+            exit 1
+          fi
+
+          SHA=$(git rev-list -n 1 "$TAG")
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Using tag: $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "Tag commit SHA: $SHA" >> "$GITHUB_STEP_SUMMARY"
+  promote-to-release:
+    name: Upload artifacts to GitHub Release
+    needs: [resolve-tag]
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ needs.resolve-tag.outputs.tag }}
+      RELEASE_SHA: ${{ needs.resolve-tag.outputs.sha }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Find successful CI run for tagged commit
+        id: ci-run
+        run: |
+          RUN_ID=$(gh api --paginate "repos/${GH_REPO}/actions/workflows/ci.yml/runs?branch=main&event=push&head_sha=${RELEASE_SHA}&status=completed&per_page=100" --jq '.workflow_runs[] | select(.conclusion == "success") | .id' | head -n1)
+          if [ -z "$RUN_ID" ]; then
+            echo "No successful CI run found for commit ${RELEASE_SHA}" >&2
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "Using CI run: $RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Download release artifacts from CI run
+        env:
+          RUN_ID: ${{ steps.ci-run.outputs.run_id }}
+        run: |
+          mkdir -p release-artifacts
+
+          ARTIFACT_NAMES=$(gh api "repos/${GH_REPO}/actions/runs/${RUN_ID}/artifacts?per_page=100" --jq ".artifacts[] | select(.name | startswith(\"release-binaries-${RELEASE_SHA}-\")) | .name")
+
+          if [ -z "$ARTIFACT_NAMES" ]; then
+            echo "No release-binaries artifacts found for commit ${RELEASE_SHA} in CI run ${RUN_ID}" >&2
+            exit 1
+          fi
+
+          while IFS= read -r artifact_name; do
+            [ -z "$artifact_name" ] && continue
+            echo "Downloading artifact: $artifact_name"
+            gh run download "$RUN_ID" --name "$artifact_name" --dir release-artifacts
+          done <<< "$ARTIFACT_NAMES"
+
+      - name: Validate downloaded artifacts
+        run: |
+          if ! ls release-artifacts/runi-* >/dev/null 2>&1; then
+            echo "No artifacts were downloaded" >&2
+            exit 1
+          fi
+          echo "Artifacts to upload:" >> "$GITHUB_STEP_SUMMARY"
+          ls -lh release-artifacts/ >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify release exists
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release '$RELEASE_TAG' not found. Create/publish the release first, then rerun this workflow." >&2
+            exit 1
+          fi
+
+      - name: Upload artifacts to release
+        run: gh release upload "$RELEASE_TAG" release-artifacts/* --clobber
