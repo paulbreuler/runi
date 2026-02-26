@@ -70,15 +70,18 @@ export const Playground: Story = {
     await step('Arrow Right → focus Request Body and activate', async () => {
       await userEvent.keyboard('{ArrowRight}');
       await expect(requestTab).toHaveFocus();
-      const codeBox = canvas.getByTestId('code-box');
+      const panel = canvas.getByRole('tabpanel');
+      const codeBox = within(panel).getByTestId('code-box');
       await expect(codeBox).toHaveTextContent('John Doe');
+      await expect(codeBox).not.toHaveTextContent('"id"');
     });
 
     await step('Arrow Left → focus Response Body and activate', async () => {
       await userEvent.keyboard('{ArrowLeft}');
       await expect(responseTab).toHaveFocus();
-      const codeBox = canvas.getByTestId('code-box');
-      await expect(codeBox).toHaveTextContent('id');
+      const panel = canvas.getByRole('tabpanel');
+      const codeBox = within(panel).getByTestId('code-box');
+      await expect(codeBox).toHaveTextContent('"id"');
     });
   },
 };
