@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3](https://github.com/paulbreuler/runi/compare/runi-v0.9.2...runi-v0.9.3) (2026-02-27)
+
+
+### Bug Fixes
+
+* **storage:** avoid creating collections directory on startup ([312a5ac](https://github.com/paulbreuler/runi/commit/312a5acce956f1df64c1488a29cf883feb922fc8))
+
 ## [0.9.2](https://github.com/paulbreuler/runi/compare/runi-v0.9.1...runi-v0.9.2) (2026-02-26)
 
 
