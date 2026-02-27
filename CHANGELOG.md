@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/paulbreuler/runi/compare/runi-v0.10.0...runi-v0.10.1) (2026-02-27)
+
+
+### Bug Fixes
+
+* **ci:** generate combined checksums.txt in release workflow ([eb02e39](https://github.com/paulbreuler/runi/commit/eb02e39cd741fb5f236aa51ba44e0855117429ae))
+
 ## [0.10.0](https://github.com/paulbreuler/runi/compare/runi-v0.9.3...runi-v0.10.0) (2026-02-27)
 
 
