@@ -99,12 +99,13 @@ jobs:
             gh run download "$RUN_ID" --name "$artifact_name" --dir release-artifacts
           done <<< "$ARTIFACT_NAMES"
 
-      - name: Validate downloaded artifacts
+      - name: Validate downloaded artifacts and generate checksums
         run: |
           if ! ls release-artifacts/runi-* >/dev/null 2>&1; then
             echo "No artifacts were downloaded" >&2
             exit 1
           fi
+          ( cd release-artifacts && shasum -a 256 runi-* | sort > checksums.txt )
           echo "Artifacts to upload:" >> "$GITHUB_STEP_SUMMARY"
           ls -lh release-artifacts/ >> "$GITHUB_STEP_SUMMARY"
 

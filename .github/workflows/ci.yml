@@ -388,8 +388,6 @@ jobs:
             exit 1
           fi
 
-          ( cd release-artifacts && shasum -a 256 runi-* > checksums.txt )
-
           echo "Prepared release artifacts:" >> "$GITHUB_STEP_SUMMARY"
           ls -lh release-artifacts/ >> "$GITHUB_STEP_SUMMARY"
 
