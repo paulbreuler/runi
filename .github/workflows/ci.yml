@@ -19,7 +19,7 @@ jobs:
       has-docs-changes: ${{ steps.filter.outputs.has-docs-changes }}
       has-workflow-changes: ${{ steps.filter.outputs.has-workflow-changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -64,11 +64,11 @@ jobs:
     name: Tauri Version Alignment
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install just
         uses: extractions/setup-just@v2
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
       - name: Check Tauri version alignment
@@ -80,7 +80,7 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.has-docs-changes == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js environment
         uses: ./.github/actions/setup-nodejs
@@ -98,7 +98,7 @@ jobs:
     needs: [check-changes, check-tauri-versions]
     if: needs.check-changes.outputs.has-code-changes == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js environment
         uses: ./.github/actions/setup-nodejs
@@ -142,7 +142,7 @@ jobs:
 
       - name: Upload Storybook test coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: storybook-coverage
           path: coverage/
@@ -157,7 +157,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -174,7 +174,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache Rust dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/bin/
@@ -203,7 +203,7 @@ jobs:
     needs: frontend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js environment
         uses: ./.github/actions/setup-nodejs
@@ -219,7 +219,7 @@ jobs:
     needs: frontend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js environment
         uses: ./.github/actions/setup-nodejs
@@ -252,7 +252,7 @@ jobs:
 
       - name: Upload visual test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: storybook-visual-results
           path: |
@@ -272,6 +272,11 @@ jobs:
       needs.rust.result == 'success' &&
       needs.e2e.result == 'success' &&
       needs.storybook-visual.result != 'failure'
+    # id-token + attestations required for SLSA provenance via actions/attest-build-provenance
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -280,7 +285,7 @@ jobs:
       CARGO_TERM_COLOR: always
       MOTION_PLUS_TOKEN: ${{ secrets.MOTION_PLUS_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -298,7 +303,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache Rust dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/bin/
@@ -383,15 +388,27 @@ jobs:
             exit 1
           fi
 
+          ( cd release-artifacts && shasum -a 256 runi-* > checksums.txt )
+
           echo "Prepared release artifacts:" >> "$GITHUB_STEP_SUMMARY"
           ls -lh release-artifacts/ >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-binaries-${{ github.sha }}-${{ matrix.os }}
           path: release-artifacts/*
           retention-days: 90
+
+      # Generates SLSA provenance attestations for each artifact, signed via
+      # GitHub's OIDC identity and stored in GitHub's immutable Sigstore
+      # transparency log. Users verify with:
+      #   gh attestation verify <file> --repo paulbreuler/runi
+      # Ref: https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: release-artifacts/runi-*
 
   release:
     name: Release/Publish

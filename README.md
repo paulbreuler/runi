@@ -64,7 +64,7 @@
 
 ---
 
-> **Pre-alpha.** runi is under active development. The vision is solidifying,
+> **Alpha.** runi is under active development. The vision is solidifying,
 > the foundations are being laid. Expect rough edges — and rapid evolution.
 > Star the repo to follow along the learning journey.
 >
@@ -172,6 +172,14 @@ you need a second opinion. runi is that opinion.
 > available. See [CLAUDE.md](./CLAUDE.md#signal-system) for the complete signal
 > reference.
 
+#### MCP Control Surface
+
+AI is a native co-driver in runi via MCP-first workflows.
+
+- Built-in MCP server infrastructure for event-driven UI actions
+- Real-time SSE streaming for canvas state sync
+- AI activity/provenance signals so agent-driven actions stay observable
+
 #### Temporal Awareness
 
 - See how your API evolved over time
@@ -196,6 +204,36 @@ APIs as territory, not lists:
 ---
 
 ## Installation
+
+### Download (macOS)
+
+Download the latest `.dmg` from the [Releases](https://github.com/paulbreuler/runi/releases) page.
+
+> **macOS "app is damaged" warning:** Release builds are not yet code-signed or
+> notarized (Apple Developer signing is pending). macOS Gatekeeper will block
+> the app when downloaded from the internet. To open it, run:
+>
+> ```bash
+> xattr -cr /Applications/runi.app
+> ```
+>
+> **Do this at your own risk.** This removes the macOS quarantine flag, bypassing
+> Gatekeeper's signature check. Only do this if you trust the source. Before
+> running the command, verify the download using the
+> [GitHub CLI](https://cli.github.com):
+>
+> ```bash
+> gh attestation verify runi-*.dmg --repo paulbreuler/runi
+> ```
+>
+> This checks the artifact's SHA-256 digest against a signed SLSA provenance
+> attestation recorded in GitHub's Sigstore transparency log at build time —
+> the attestation cannot be forged without compromising GitHub's OIDC signing
+> infrastructure. A passing check confirms the file was produced by this
+> repository's CI pipeline and has not been tampered with.
+>
+> Once Apple code signing and notarization are in place this workaround will
+> not be needed.
 
 ### Build from Source
 
@@ -265,28 +303,27 @@ just dev
 
 ## Project Status
 
-**Rung 1 (HTTP client) is in place:** request/response, network history, timing
-waterfall, metrics, and signal UI. Next we harden that and move to spec +
-collections, then drift, then AI verification.
+**Rung 1 is stable, and Rung 2 foundations are in place:** request/response,
+network history, timing waterfall, metrics/signals, plus canvas/MCP/spec
+infrastructure from recent releases.
 
-### Now (Phase 1 — Polish & quick wins)
+### Shipped (0.8.x–0.9.x)
 
 - [x] HTTP client core
 - [x] Network history panel with filtering
 - [x] Timing waterfall visualization
 - [x] Metrics and signal system UI
-- [x] Code display unification (ResponseViewer → CodeSnippet)
-- [ ] Any remaining Rung 1 cleanup
+- [x] Collections CRUD with two-tier request system
+- [x] Spatial canvas architecture and context tabs/layouts
+- [x] [MCP](https://modelcontextprotocol.io/) server infrastructure and SSE sync
+- [x] Spec import improvements (URL import, duplicate handling, pinned versions)
+- [x] Drift review UI with spec-vs-spec comparison
 
-### Next (Phase 2–4 — Spec intelligence)
+### In Progress
 
-- [ ] Collections as YAML
-- [ ] OpenAPI spec import and spec-aware UI
-- [ ] Spec binding and drift detection
-- [ ] Response validation
-- [ ] AI verification against bound specs
-- [ ] [MCP](https://modelcontextprotocol.io/) control surface
-- [ ] Temporal awareness (spec version history)
+- [ ] Spec binding UX hardening and broader response validation coverage
+- [ ] AI verification workflows against bound specs
+- [ ] Temporal awareness polish (spec evolution)
 - [ ] Semantic links between specs
 
 ### Later
@@ -300,7 +337,10 @@ collections, then drift, then AI verification.
 
 ## Migrating from Postman/Bruno
 
-Import functionality is coming soon. Planned commands:
+Import support is available in-app and evolving. Current work is focused on
+spec import quality and drift-aware workflows.
+
+Planned CLI commands:
 
 ```bash
 # From Postman
