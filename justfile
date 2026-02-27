@@ -38,10 +38,12 @@ dev:
 # Run the frontend build explicitly first so pnpm is resolved in the current
 # shell (avoids "pnpm: not found" when tauri's beforeBuildCommand subprocess
 # spawns sh without the PATH set by pnpm/action-setup in CI).
-# Unset CI if it's set to a numeric value (Tauri expects boolean true/false)
+# Always unset CI for tauri build: Tauri's bundler skips AppleScript-based DMG
+# window layout (background image, icon positions) when CI is set, producing a
+# plain DMG. GitHub Actions sets CI=true; old code only caught CI=1 or CI=0.
 build:
     @pnpm run build
-    @bash -c 'if [ "$CI" = "1" ] || [ "$CI" = "0" ]; then env -u CI pnpm run tauri build; else pnpm run tauri build; fi'
+    @env -u CI pnpm run tauri build
 
 # Build frontend only (required for Rust compilation)
 # Uses npx as fallback if vite isn't available (doesn't require motion-plus)
