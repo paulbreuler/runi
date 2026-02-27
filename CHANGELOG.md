@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0](https://github.com/paulbreuler/runi/compare/runi-v0.9.3...runi-v0.10.0) (2026-02-27)
+
+
+### Features
+
+* **ci:** add SLSA provenance attestations and macOS install guidance ([785b12a](https://github.com/paulbreuler/runi/commit/785b12afa297c58b189df35fef4f04975d045ac5))
+
+
+### Bug Fixes
+
+* **build:** restore DMG background by unsetting CI for tauri build ([568f335](https://github.com/paulbreuler/runi/commit/568f3357873f1141f29e742d8d8d3ea5a8c73c2b))
+* **ci:** format github funding metadata ([1d56e92](https://github.com/paulbreuler/runi/commit/1d56e92bb600531e0baa0dff00474a5fe7808ef3))
+
 ## [0.9.3](https://github.com/paulbreuler/runi/compare/runi-v0.9.2...runi-v0.9.3) (2026-02-27)
 
 
