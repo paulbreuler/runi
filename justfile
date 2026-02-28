@@ -16,8 +16,8 @@ list:
 # ============================================================================
 
 # Install all development dependencies
-# Note: Requires MOTION_PLUS_TOKEN environment variable
-# Usage: source .env && just install
+# Motion+ token is optional; without it, runi uses fallback rendering
+# Optional token usage: source .env && just install
 # Or: MOTION_PLUS_TOKEN=your_token just install
 # Inject token → install → restore placeholder (token never stays in committed files)
 install:
@@ -28,6 +28,7 @@ install:
 
 # Start development server
 dev:
+    @bash -c 'if [ -z "$MOTION_PLUS_TOKEN" ] && { [ ! -f ".env" ] || ! grep -q "^MOTION_PLUS_TOKEN=" .env; }; then echo "⚠️  MOTION_PLUS_TOKEN not set; running in fallback mode (Motion+ premium animations disabled)."; fi'
     TAURI_CLI_WATCHER_IGNORE_FILENAME=.gitignore pnpm tauri dev
 
 # ============================================================================
@@ -42,6 +43,7 @@ dev:
 # window layout (background image, icon positions) when CI is set, producing a
 # plain DMG. GitHub Actions sets CI=true; old code only caught CI=1 or CI=0.
 build:
+    @bash -c 'if [ -z "$MOTION_PLUS_TOKEN" ] && { [ ! -f ".env" ] || ! grep -q "^MOTION_PLUS_TOKEN=" .env; }; then echo "⚠️  MOTION_PLUS_TOKEN not set; building in fallback mode (Motion+ premium animations disabled)."; fi'
     @pnpm run build
     @env -u CI pnpm run tauri build
 
@@ -68,14 +70,14 @@ generate-types:
 
 # Ensure dependencies are installed (check and install if needed)
 # Checks if node_modules exists and key dependencies are present
-# If missing or incomplete, attempts full install via 'just install' using token injection
+# If missing or incomplete, runs full install via 'just install'
 # Uses the existing token injection system (setup-motion-plus.js) which:
 # - Reads MOTION_PLUS_TOKEN from .env or environment
-# - Injects token into package.json and pnpm-lock.yaml (never committed)
+# - Injects token into package.json and pnpm-lock.yaml when token is present (never committed)
 # - Runs pnpm install to install dependencies
-# Note: If token not available, individual commands use npx fallback for tools that don't need motion-plus
+# Note: If token is not available, install continues in fallback mode (Motion+ premium disabled)
 ensure-deps:
-    @bash -c 'if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/vite" ]; then echo "📦 Installing dependencies (requires MOTION_PLUS_TOKEN)..."; if [ -f ".env" ]; then export $(grep -v "^#" .env | xargs) && just install; elif [ -n "$MOTION_PLUS_TOKEN" ]; then just install; else echo "⚠️  MOTION_PLUS_TOKEN not set - some commands will use npx fallback"; fi; fi'
+    @bash -c 'if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/vite" ]; then echo "📦 Installing dependencies..."; if [ -f ".env" ]; then export $(grep -v "^#" .env | xargs); fi; if [ -z "$MOTION_PLUS_TOKEN" ] && { [ ! -f ".env" ] || ! grep -q "^MOTION_PLUS_TOKEN=" .env; }; then echo "⚠️  MOTION_PLUS_TOKEN not set; installing in fallback mode (Motion+ premium animations disabled)."; fi; just install; fi'
 
 # Update all dependencies
 update:

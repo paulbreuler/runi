@@ -81,13 +81,15 @@
     "codemirror": "6.0.2",
     "lucide-react": "^0.562.0",
     "motion": "^12.26.2",
-    "motion-plus": "https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_PLACEHOLDER",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.12.0",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0",
     "zustand": "^5.0.10"
+  },
+  "optionalDependencies": {
+    "motion-plus": "https://api.motion.dev/registry.tgz?package=motion-plus&version=2.1.0&token=MOTION_PLUS_PLACEHOLDER"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",

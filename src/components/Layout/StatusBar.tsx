@@ -29,6 +29,7 @@ import { useCanvasStore } from '@/stores/useCanvasStore';
 import { focusRingClasses } from '@/utils/accessibility';
 import { STATUS_BAR_Z_INDEX } from '@/utils/z-index';
 import { cn } from '@/utils/cn';
+import { loadMotionPlusAnimateNumber } from '@/utils/loadMotionPlusAnimateNumber';
 import type { AppMetrics, MemoryMetrics } from '@/types/metrics';
 import type { RequestTabState } from '@/types/canvas';
 
@@ -53,13 +54,11 @@ const NextSampleCountdown: React.FC<{
 
   // Load AnimateNumber immediately
   useEffect(() => {
-    import('motion-plus/react')
-      .then((mod) => {
-        setAnimateNumber(() => mod.AnimateNumber);
-      })
-      .catch(() => {
-        // Fallback to static display if import fails
-      });
+    void loadMotionPlusAnimateNumber().then((animateNumberComponent) => {
+      if (animateNumberComponent !== null) {
+        setAnimateNumber(() => animateNumberComponent);
+      }
+    });
   }, []);
 
   // Update countdown every second

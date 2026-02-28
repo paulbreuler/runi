@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { cn } from '@/utils/cn';
+import { loadMotionPlusAnimateNumber } from '@/utils/loadMotionPlusAnimateNumber';
 
 export interface MetricCellProps {
   /** Metric value */
@@ -44,13 +45,11 @@ export const MetricCell: React.FC<MetricCellProps> = ({
 
   React.useEffect(() => {
     // Load immediately on mount
-    import('motion-plus/react')
-      .then((mod) => {
-        setAnimateNumber(() => mod.AnimateNumber);
-      })
-      .catch(() => {
-        // Fallback to static display if import fails
-      });
+    void loadMotionPlusAnimateNumber().then((animateNumberComponent) => {
+      if (animateNumberComponent !== null) {
+        setAnimateNumber(() => animateNumberComponent);
+      }
+    });
   }, []);
 
   // Determine color based on threshold

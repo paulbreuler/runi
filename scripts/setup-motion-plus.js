@@ -30,32 +30,29 @@ const PLACEHOLDER = 'MOTION_PLUS_PLACEHOLDER';
 const token = process.env.MOTION_PLUS_TOKEN;
 
 if (!token) {
-  console.error('❌ ERROR: MOTION_PLUS_TOKEN environment variable is not set');
-  console.error('');
-  console.error('Set it in one of these ways:');
-  console.error('');
-  console.error('1. Create a .env file (recommended for local dev):');
-  console.error('   echo "MOTION_PLUS_TOKEN=your_token" > .env');
-  console.error('   source .env && node scripts/setup-motion-plus.js');
-  console.error('');
-  console.error('2. Export directly:');
-  console.error('   export MOTION_PLUS_TOKEN=your_token');
-  console.error('');
-  process.exit(1);
+  console.log('⚠️  MOTION_PLUS_TOKEN not set; continuing with Motion+ fallback mode.');
+  process.exit(0);
 }
 
 try {
   // Update package.json
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
-  if (!packageJson.dependencies?.['motion-plus']) {
+  const dependencyGroup =
+    packageJson.dependencies?.['motion-plus'] !== undefined
+      ? 'dependencies'
+      : packageJson.optionalDependencies?.['motion-plus'] !== undefined
+        ? 'optionalDependencies'
+        : null;
+
+  if (dependencyGroup === null) {
     console.error('❌ ERROR: motion-plus dependency not found in package.json');
     process.exit(1);
   }
 
-  const currentValue = packageJson.dependencies['motion-plus'];
+  const currentValue = packageJson[dependencyGroup]['motion-plus'];
   if (currentValue.includes(PLACEHOLDER)) {
-    packageJson.dependencies['motion-plus'] = currentValue.replace(PLACEHOLDER, token);
+    packageJson[dependencyGroup]['motion-plus'] = currentValue.replace(PLACEHOLDER, token);
     writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
     console.log('✅ Injected motion-plus token into package.json');
   } else if (currentValue.includes(token)) {
@@ -65,7 +62,7 @@ try {
     // Use the same broad class as restore-motion-plus.js ([^&\s}'"]+) to handle
     // any URL-safe characters (including '.', '+', '%') without partial replacement.
     const updated = currentValue.replace(/token=[^&\s}'"]+/, `token=${token}`);
-    packageJson.dependencies['motion-plus'] = updated;
+    packageJson[dependencyGroup]['motion-plus'] = updated;
     writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
     console.log('✅ Updated motion-plus token in package.json');
   }

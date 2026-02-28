@@ -247,8 +247,49 @@ just build
 **Requirements:** Rust 1.80+, Node.js 20+, pnpm,
 [just](https://github.com/casey/just) (task runner)
 
+**Optional:** `MOTION_PLUS_TOKEN` for premium Motion+ animations. Without it,
+runi uses built-in fallback rendering.
+
 > **Note:** All commands use `just` for consistency between local development
 > and CI. See `justfile` for the complete command list.
+
+### Local Development on Windows (PowerShell)
+
+If `just` or `pnpm` is not available in your shell, use this bootstrap flow:
+
+```powershell
+# 1) Enable pnpm via Corepack (ships with Node 20+)
+corepack prepare pnpm@10.29.3 --activate
+
+# 2) (Optional) enable Motion+ premium animations
+# Create .env with: MOTION_PLUS_TOKEN=your_token
+if (Test-Path .env) {
+  Get-Content .env | Where-Object { $_ -and -not $_.StartsWith('#') } | ForEach-Object {
+    $k, $v = $_ -split '=', 2
+    [Environment]::SetEnvironmentVariable($k.Trim(), $v.Trim(), 'Process')
+  }
+}
+
+# 3) Install dependencies (works with or without token)
+corepack pnpm install --no-frozen-lockfile
+
+# 4) Start frontend-only dev server (no Rust/Tauri required)
+corepack pnpm dev
+
+# 5) Start full Tauri app (requires Rust toolchain)
+corepack pnpm tauri dev
+```
+
+If you prefer `just`, install it first and continue using `just install` and `just dev`.
+
+### Troubleshooting Local Run
+
+- `just` not recognized: install [`just`](https://github.com/casey/just) or use direct `corepack pnpm ...` commands.
+- `pnpm` not recognized: run `corepack prepare pnpm@10.29.3 --activate`, then use `corepack pnpm ...`.
+- `ERR_PNPM_FETCH_401` for `motion-plus`: this is safe in fallback mode when
+  `motion-plus` is treated as optional; set `MOTION_PLUS_TOKEN` only if you
+  want Motion+ premium animations.
+- `cargo` not recognized / `tauri dev` fails: install Rust via [rustup](https://rustup.rs/), then restart your terminal.
 
 ---
 

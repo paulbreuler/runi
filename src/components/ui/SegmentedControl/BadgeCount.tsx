@@ -13,6 +13,7 @@ import * as React from 'react';
 import { Zap } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { cn } from '@/utils/cn';
+import { loadMotionPlusAnimateNumber } from '@/utils/loadMotionPlusAnimateNumber';
 import { OVER_9000_THRESHOLD } from './config';
 import { usePowerLevelContext } from './usePowerLevel';
 
@@ -123,13 +124,11 @@ export const BadgeCount = ({
 
   React.useEffect(() => {
     if (animate && AnimateNumber === null && !prefersReducedMotion) {
-      import('motion-plus/react')
-        .then((mod) => {
-          setAnimateNumber(() => mod.AnimateNumber);
-        })
-        .catch(() => {
-          // Fallback to static display if import fails
-        });
+      void loadMotionPlusAnimateNumber().then((animateNumberComponent) => {
+        if (animateNumberComponent !== null) {
+          setAnimateNumber(() => animateNumberComponent);
+        }
+      });
     }
   }, [animate, AnimateNumber, prefersReducedMotion]);
 

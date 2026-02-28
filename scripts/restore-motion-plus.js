@@ -32,15 +32,22 @@ try {
   // Restore package.json
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
-  if (packageJson.dependencies?.['motion-plus']) {
-    const current = packageJson.dependencies['motion-plus'];
+  const dependencyGroup =
+    packageJson.dependencies?.['motion-plus'] !== undefined
+      ? 'dependencies'
+      : packageJson.optionalDependencies?.['motion-plus'] !== undefined
+        ? 'optionalDependencies'
+        : null;
+
+  if (dependencyGroup !== null) {
+    const current = packageJson[dependencyGroup]['motion-plus'];
     // Replace only the token value, preserving the version and base URL
     const restored = current.replace(
       /(&token=)(?!MOTION_PLUS_PLACEHOLDER)[^&\s}'"]+/,
       `$1${PLACEHOLDER}`
     );
     if (restored !== current) {
-      packageJson.dependencies['motion-plus'] = restored;
+      packageJson[dependencyGroup]['motion-plus'] = restored;
       writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
       console.log('✅ Restored placeholder in package.json');
     } else if (current.includes('api.motion.dev') && !current.includes(PLACEHOLDER)) {
